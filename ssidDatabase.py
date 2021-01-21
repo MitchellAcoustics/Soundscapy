@@ -38,6 +38,7 @@ LOCATION_IDS = {
 IGNORE_LIST = ["AllLondon", "AllyPally", "CoventGd1", "OxfordSt"]
 
 
+# Dealing with Directories!
 def collect_all_dirs(
     root_directory: Path,
     location_ids: list,
@@ -76,6 +77,8 @@ def collect_all_dirs(
     33
     >>> len(full_spectrum_list)
     6
+    >>> len(full_wav_list)
+    3
     """
 
     # Input tests
