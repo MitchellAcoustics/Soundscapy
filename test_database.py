@@ -1,6 +1,7 @@
 import ssidDatabase as db
 from pathlib import Path
 from pytest import raises
+import random
 
 TEST_DIR = Path("test_DB")
 
@@ -62,3 +63,20 @@ def test_wav_dirs_collection():
     ]
     full_wav_list = db._wav_dirs(bin_dirs)
     assert len(full_wav_list) == 3
+
+
+# Integrated test
+def test_all_dirs_collection():
+    locations = ["LocationA1", "LocationA2", "LocationB1"]
+    sampled_locations = random.sample(locations, 2)
+    sampled_params = random.sample(db.PARAM_LIST, 4)
+
+    ts_list, spectrum_list, wav_list = db.collect_all_dirs(
+        TEST_DIR, sampled_locations, sampled_params
+    )
+    # ts_list should have a param dir for each location dir
+    assert len(ts_list) == 2 * 4
+    # spectrum_list should have 2 dirs for each location dir
+    assert len(spectrum_list) == 2 * 2
+    # wav_list should have 1 dir for each location dir
+    assert len(wav_list) == 2
