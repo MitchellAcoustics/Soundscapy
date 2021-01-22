@@ -11,8 +11,35 @@ import random
 TEST_DIR = Path("soundscapy/test/test_DB")
 
 
+def test__flatten():
+    assert db._flatten([["list1a", "list1b"], ["list2"]]) == [
+        "list1a",
+        "list1b",
+        "list2",
+    ]
+
+
+# SurveyFrame tests
+def test_SurveyFrame_input_sanity():
+
+    # create_empty
+    with raises(ValueError) as exception:
+        test_sf = db.SurveyFrame().create_empty(
+            variable_categories=["indexing", "testy"]
+        )
+
+
+def test_SurveyFrame_create_custom_cols():
+    empty_sf = db.SurveyFrame().create_empty(
+        variable_categories=[], add_columns=["col_1", "col_2"]
+    )
+    res = empty_sf.columns == ["col_1", "col_2"]
+    assert res.all()
+
+
 def test_input_sanity():
     # Does the function raise appropriate input errors?
+    # collect_all_dirs
     with raises(TypeError) as exception:
         db.collect_all_dirs(["test"], ["LocationA"], ["LevelA"])
     with raises(FileNotFoundError) as exception:

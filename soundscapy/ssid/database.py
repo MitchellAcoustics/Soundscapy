@@ -1,41 +1,60 @@
+import sys, os
+
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath + "/../../")
+
+from datetime import date
 from pathlib import Path
 
+import pandas as pd
+
 # Constants and Labels
-PARAM_LIST = [
-    "LevelA",
-    "LevelC",
-    "LevelZ",
-    "Loudness",
-    "Roughness",
-    "Sharpness",
-    "Tonality",
-    "FluctuationStrength",
-    "SIL",
-    "THD",
-    "Impulsiveness",
-]
+from soundscapy.ssid.parameters import (
+    PARAM_LIST,
+    LOCATION_IDS,
+    IGNORE_LIST,
+    CATEGORISED_VARS,
+    SURVEY_VARS,
+)
 
-LOCATION_IDS = {
-    "London": [
-        "CamdenTown",
-        "EustonTap",
-        "MarchmontGarden",
-        "PancrasLock",
-        "RegentsParkFields",
-        "RegentsParkJapan",
-        "RussellSq",
-        "StPaulsCross",
-        "StPaulsRow",
-        "TateModern",
-        "TorringtonSq",
-    ],
-    "Venice": ["SanMarco", "MonumentoGaribaldi",],
-    "Granada": ["CampoPrincipe", "CarloV", "MiradorSanNicolas", "PlazaBibRambla",],
-    "Groningen": ["GroningenNoorderplantsoen"],
-    "Test": ["LocationA", "LocationB"],
-}
+# General helper functions
+_flatten = lambda t: [item for sublist in t for item in sublist]
 
-IGNORE_LIST = ["AllLondon", "AllyPally", "CoventGd1", "OxfordSt"]
+# Dealing with Surveys!
+class SurveyFrame(pd.DataFrame):
+    _analysis_date = date.today().isoformat()
+
+    @property
+    def _constructor(self):
+        return SurveyFrame
+
+    @classmethod
+    def create_empty(
+        self,
+        variable_categories: list = [
+            "indexing",
+            "sound_source_dominance",
+            "raw_PAQs",
+            "overall_soundscape",
+        ],
+        add_columns: list = [],
+        index=None,
+        dtype=None,
+    ):
+
+        # input sanity
+        if not set(variable_categories).issubset(list(CATEGORISED_VARS.keys())):
+            raise ValueError(
+                "Category not found in defined sets of variables. See parameters.CATEGORISEDVARS"
+            )
+
+        cols = _flatten(
+            [CATEGORISED_VARS.get(k, "col_missing") for k in variable_categories]
+        )
+        if add_columns:
+            cols.extend(add_columns)
+
+        return SurveyFrame(columns=cols, index=index, dtype=dtype)
 
 
 # Dealing with Directories!
