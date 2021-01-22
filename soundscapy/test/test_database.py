@@ -1,9 +1,14 @@
-import ssidDatabase as db
+import sys, os
+
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath + "/../../")
+
+import soundscapy.ssid.database as db
 from pathlib import Path
 from pytest import raises
 import random
 
-TEST_DIR = Path("test_DB")
+TEST_DIR = Path("soundscapy/test/test_DB")
 
 
 def test_input_sanity():
