@@ -72,7 +72,7 @@ def collect_all_dirs(
     
     Examples
     ________
-    >>> full_ts_list, full_spectrum_list, full_wav_list = collect_all_dirs(TEST_DIR, LOCATION_IDS["Test"], PARAM_LIST)
+    >>> full_ts_list, full_spectrum_list, full_wav_list = collect_all_dirs(TEST_DIR, ["LocationA", "LocationB"], PARAM_LIST)
     >>> len(full_ts_list)
     33
     >>> len(full_spectrum_list)
@@ -194,6 +194,6 @@ def _wav_dirs(bin_dirs):
 if __name__ == "__main__":
     import doctest
 
-    TEST_DIR = Path("test_DB")
+    TEST_DIR = Path("../test/test_DB")
     doctest.testmod(verbose=False, optionflags=doctest.ELLIPSIS)
 
