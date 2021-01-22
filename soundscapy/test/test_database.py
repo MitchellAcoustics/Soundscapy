@@ -37,6 +37,21 @@ def test_SurveyFrame_create_custom_cols():
     assert res.all()
 
 
+def test_SurveyFrame_create_empty_with_index():
+    empty_sf = db.SurveyFrame().create_empty(
+        variable_categories=[], add_columns=["col_1"], index=range(10)
+    )
+    empty_sf.col_1 = 1
+    assert empty_sf.values.sum() == 10
+
+    empty_sf = db.SurveyFrame().create_empty(
+        variable_categories=["raw_PAQs"], index=range(10)
+    )
+    for col in empty_sf.columns:
+        empty_sf[col] = 1
+    assert empty_sf.values.sum() == 80
+
+
 def test_input_sanity():
     # Does the function raise appropriate input errors?
     # collect_all_dirs

@@ -56,6 +56,9 @@ class SurveyFrame(pd.DataFrame):
 
         return SurveyFrame(columns=cols, index=index, dtype=dtype)
 
+    # @classmethod
+
+
 
 # Dealing with Directories!
 def collect_all_dirs(
