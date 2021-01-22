@@ -8,6 +8,8 @@ from pathlib import Path
 from pytest import raises
 import random
 
+from datetime import date
+
 TEST_DIR = Path("soundscapy/test/test_DB")
 
 
@@ -21,12 +23,16 @@ def test__flatten():
 
 # SurveyFrame tests
 def test_SurveyFrame_input_sanity():
-
-    # create_empty
+    # create_empty with a bad key for category type
     with raises(ValueError) as exception:
         test_sf = db.SurveyFrame().create_empty(
             variable_categories=["indexing", "testy"]
         )
+
+
+def test_SurveyFrame_analysis_date():
+    test_sf = db.SurveyFrame()
+    assert test_sf._analysis_date == date.today().isoformat()
 
 
 def test_SurveyFrame_create_custom_cols():

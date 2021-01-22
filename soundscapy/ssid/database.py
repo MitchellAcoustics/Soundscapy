@@ -41,7 +41,6 @@ class SurveyFrame(pd.DataFrame):
         index=None,
         dtype=None,
     ):
-
         # input sanity
         if not set(variable_categories).issubset(list(CATEGORISED_VARS.keys())):
             raise ValueError(
@@ -56,8 +55,10 @@ class SurveyFrame(pd.DataFrame):
 
         return SurveyFrame(columns=cols, index=index, dtype=dtype)
 
-    # @classmethod
-
+    # TODO: Write method to generate from csv, checking aliases for column names.
+    @classmethod
+    def read_csv(filename):
+        
 
 
 # Dealing with Directories!
