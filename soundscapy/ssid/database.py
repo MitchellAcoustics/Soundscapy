@@ -56,9 +56,9 @@ class SurveyFrame(pd.DataFrame):
         return SurveyFrame(columns=cols, index=index, dtype=dtype)
 
     # TODO: Write method to generate from csv, checking aliases for column names.
-    @classmethod
-    def read_csv(filename):
-        
+    # @classmethod
+    # def read_csv(filename):
+
 
 
 # Dealing with Directories!
