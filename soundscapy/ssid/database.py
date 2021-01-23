@@ -74,30 +74,25 @@ class SurveyFrame(pd.DataFrame):
         add_columns=[],
         nrows=None,
     ):
+        # TODO: Write docs
         # input sanity
         if not set(variable_categories).issubset(list(CATEGORISED_VARS.keys())):
             raise ValueError(
                 "Category not found in defined sets of variables. See parameters.CATEGORISED_VARS"
             )
 
-        use_cols = _flatten(
-            [CATEGORISED_VARS.get(k, "col_missing") for k in variable_categories]
-        )
-        if add_columns:
-            use_cols.extend(add_columns)
-
-        if not variable_categories and not add_columns:
-            use_cols = None
+        use_cols = SurveyFrame._get_the_cols(variable_categories, add_columns)
 
         all_cols = _flatten(CATEGORISED_VARS.values())
         index_col = "record_id" if use_RecordID_as_index else None
+        index_col = False if "record_id" not in use_cols else index_col
 
         # TODO Deal with use_cols not in file, right now raises ValueError from pandas
         # Deal with it using aliases. `try` block?
         # put into own function? def _pandas_read_csv_w_aliases()
         # or maybe just a `+check_col_names` function?
 
-        use_cols = _check_csv_col_names(filepath, use_cols)
+        use_cols = SurveyFrame._check_csv_col_names(filepath, use_cols)
 
         df = pd.read_csv(
             filepath,
@@ -118,55 +113,154 @@ class SurveyFrame(pd.DataFrame):
 
         return sf
 
+    #! from_excel not really tested!
+    @classmethod
+    def from_excel(
+        self,
+        filepath,
+        clean_cols=False,  # TODO: Change to True when clean_cols func created
+        use_RecordID_as_index: bool = True,
+        variable_categories: list = DEFAULT_CATS,
+        drop_columns=[],
+        add_columns=[],
+        nrows=None,
+    ):
+        # TODO: Write docs
+        # input sanity
+        if not set(variable_categories).issubset(list(CATEGORISED_VARS.keys())):
+            raise ValueError(
+                "Category not found in defined sets of variables. See parameters.CATEGORISED_VARS"
+            )
+
+        use_cols = SurveyFrame._get_the_cols(variable_categories, add_columns)
+
+        all_cols = _flatten(CATEGORISED_VARS.values())
+        index_col = "record_id" if use_RecordID_as_index else None
+        index_col = False if "record_id" not in use_cols else index_col
+
+        # TODO Deal with use_cols not in file, right now raises ValueError from pandas
+        # Deal with it using aliases. `try` block?
+        # put into own function? def _pandas_read_csv_w_aliases()
+        # or maybe just a `+check_col_names` function?
+
+        use_cols = SurveyFrame._check_excel_col_names(filepath, use_cols)
+
+        df = pd.read_excel(
+            filepath, header=0, usecols=use_cols, index_col=index_col, nrows=nrows,
+        )
+        df = df.drop(drop_columns, axis=1)
+
+        sf = SurveyFrame(df)
+        sf._csv_file = filepath
+
+        if clean_cols:
+            sf = sf.clean_cols()
+
+        return sf
+
+    @staticmethod
+    def _get_the_cols(variable_categories, add_columns):
+        use_cols = _flatten(
+            [CATEGORISED_VARS.get(k, "col_missing") for k in variable_categories]
+        )
+        if add_columns:
+            use_cols.extend(add_columns)
+
+        if not variable_categories and not add_columns:
+            use_cols = None
+        return use_cols
+
     # TODO: clean_cols function
     def clean_cols():
         return None
 
     # TODO: complex_paqs function
 
+    @staticmethod
+    def _check_csv_col_names(filepath, use_cols):
+        """Compares the desired columns with those present in the csv file.
 
-def _check_csv_col_names(filepath, use_cols):
-    """Compares the desired columns with those present in the csv file.
+        Where a column is requested but not present, we check element-wise through the provided aliases from parameters.SURVEY_VARS and try those instead. If an alias is present in the file, we'll pass it to pandas to read in the csv.
 
-    Where a column is requested but not present, we check element-wise through the provided aliases from parameters.SURVEY_VARS and try those instead. If an alias is present in the file, we'll pass it to pandas to read in the csv.
+        Parameters
+        ----------
+        filepath : filepath_or_buffer
+            csv file to pass to pandas.read_csv()
+        use_cols : list
+            columns (variable) labels you'd like to read in
 
-    Parameters
-    ----------
-    filepath : filepath_or_buffer
-        csv file to pass to pandas.read_csv()
-    use_cols : list
-        columns (variable) labels you'd like to read in
+        Returns
+        -------
+        list
+            use_cols with missing items replaced by their alias
+        """
+        # TODO Tests for _check_csv_col_names()
+        with open(filepath, newline="") as f:
+            reader = csv.reader(f)
+            headers = next(reader)
 
-    Returns
-    -------
-    list
-        use_cols with missing items replaced by their alias
-    """
-    # TODO Tests for _check_csv_col_names()
-    with open(filepath, newline="") as f:
-        reader = csv.reader(f)
-        headers = next(reader)
+        # Pull out items in cols but not in csv header
+        missing_headers = np.setdiff1d(use_cols, headers)
+        if len(missing_headers) > 0:
+            for missing_item in missing_headers:
+                if missing_item in SURVEY_VARS.keys():
+                    aliases = SURVEY_VARS[missing_item]["aliases"]
+                    for alias in aliases:
+                        if alias in headers:
+                            use_cols.remove(missing_item)
+                            use_cols.append(alias)
 
-    # Pull out items in cols but not in csv header
-    missing_headers = np.setdiff1d(use_cols, headers)
-    if len(missing_headers) > 0:
-        for missing_item in missing_headers:
-            if missing_item in SURVEY_VARS.keys():
-                aliases = SURVEY_VARS[missing_item]["aliases"]
-                for alias in aliases:
-                    if alias in headers:
-                        use_cols.remove(missing_item)
-                        use_cols.append(alias)
+                else:
+                    # TODO Search through all aliases to find which label it matches with
+                    # How?
+                    warnings.warn(
+                        f"Warning: Can't find a matching alias for {missing_item} which is in the csv. Removing it before passing to pandas."
+                    )
+                    use_cols.remove(missing_item)
 
-            else:
-                # TODO Search through all aliases to find which label it matches with
-                # How?
-                warnings.warn(
-                    f"Warning: Can't find a matching alias for {missing_item} which is in the csv. Removing it before passing to pandas."
-                )
-                use_cols.remove(missing_item)
+        return use_cols  # Exit if nothing is missing
 
-    return use_cols  # Exit if nothing is missing
+    @staticmethod
+    def _check_excel_col_names(filepath, use_cols):
+        """Compares the desired columns with those present in the csv file.
+
+        Where a column is requested but not present, we check element-wise through the provided aliases from parameters.SURVEY_VARS and try those instead. If an alias is present in the file, we'll pass it to pandas to read in the csv.
+
+        Parameters
+        ----------
+        filepath : filepath_or_buffer
+            csv file to pass to pandas.read_csv()
+        use_cols : list
+            columns (variable) labels you'd like to read in
+
+        Returns
+        -------
+        list
+            use_cols with missing items replaced by their alias
+        """
+        # TODO Tests for _check_csv_col_names()
+        headers = pd.read_excel(filepath, header=None, nrows=1).iloc[0].array
+
+        # Pull out items in cols but not in csv header
+        missing_headers = np.setdiff1d(use_cols, headers)
+        if len(missing_headers) > 0:
+            for missing_item in missing_headers:
+                if missing_item in SURVEY_VARS.keys():
+                    aliases = SURVEY_VARS[missing_item]["aliases"]
+                    for alias in aliases:
+                        if alias in headers:
+                            use_cols.remove(missing_item)
+                            use_cols.append(alias)
+
+                else:
+                    # TODO Search through all aliases to find which label it matches with
+                    # How?
+                    warnings.warn(
+                        f"Warning: Can't find a matching alias for {missing_item} which is in the csv. Removing it before passing to pandas."
+                    )
+                    use_cols.remove(missing_item)
+
+        return use_cols  # Exit if nothing is missing
 
 
 # Dealing with Directories!
