@@ -30,6 +30,13 @@ def test_SurveyFrame_input_sanity():
         )
 
 
+def test__check_csv_col_names():
+    use_cols = ['GroupID', 'often', 'pleasant']
+    headers = ['GroupID', 'sss04', 'paq01']
+    # ! Can't get this test written properly
+    # Need to use mock for csv reader?
+    # assert df._check_csv_col_names(mocked_file, use_cols) == headers
+
 def test_SurveyFrame_analysis_date():
     test_sf = db.SurveyFrame()
     assert test_sf._analysis_date == date.today().isoformat()

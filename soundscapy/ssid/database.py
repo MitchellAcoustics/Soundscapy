@@ -1,27 +1,40 @@
-import sys, os
+import os
+import sys
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + "/../../")
 
+import csv
 from datetime import date
 from pathlib import Path
+import warnings
 
+import numpy as np
 import pandas as pd
 
 # Constants and Labels
 from soundscapy.ssid.parameters import (
-    PARAM_LIST,
-    LOCATION_IDS,
-    IGNORE_LIST,
     CATEGORISED_VARS,
+    IGNORE_LIST,
+    LOCATION_IDS,
+    PARAM_LIST,
     SURVEY_VARS,
 )
+
+DEFAULT_CATS = [
+    "indexing",
+    "sound_source_dominance",
+    "raw_PAQs",
+    "overall_soundscape",
+]
 
 # General helper functions
 _flatten = lambda t: [item for sublist in t for item in sublist]
 
 # Dealing with Surveys!
 class SurveyFrame(pd.DataFrame):
+    # TODO Add Documentation
+    # TODO Add Example doctesting
     _analysis_date = date.today().isoformat()
 
     @property
@@ -31,12 +44,7 @@ class SurveyFrame(pd.DataFrame):
     @classmethod
     def create_empty(
         self,
-        variable_categories: list = [
-            "indexing",
-            "sound_source_dominance",
-            "raw_PAQs",
-            "overall_soundscape",
-        ],
+        variable_categories: list = DEFAULT_CATS,
         add_columns: list = [],
         index=None,
         dtype=None,
@@ -44,7 +52,7 @@ class SurveyFrame(pd.DataFrame):
         # input sanity
         if not set(variable_categories).issubset(list(CATEGORISED_VARS.keys())):
             raise ValueError(
-                "Category not found in defined sets of variables. See parameters.CATEGORISEDVARS"
+                "Category not found in defined sets of variables. See parameters.CATEGORISED_VARS"
             )
 
         cols = _flatten(
@@ -55,10 +63,110 @@ class SurveyFrame(pd.DataFrame):
 
         return SurveyFrame(columns=cols, index=index, dtype=dtype)
 
-    # TODO: Write method to generate from csv, checking aliases for column names.
-    # @classmethod
-    # def read_csv(filename):
+    @classmethod
+    def from_csv(
+        self,
+        filepath,
+        clean_cols=False,  # TODO: Change to True when clean_cols func created
+        use_RecordID_as_index: bool = True,
+        variable_categories: list = DEFAULT_CATS,
+        drop_columns=[],
+        add_columns=[],
+        nrows=None,
+    ):
+        # input sanity
+        if not set(variable_categories).issubset(list(CATEGORISED_VARS.keys())):
+            raise ValueError(
+                "Category not found in defined sets of variables. See parameters.CATEGORISED_VARS"
+            )
 
+        use_cols = _flatten(
+            [CATEGORISED_VARS.get(k, "col_missing") for k in variable_categories]
+        )
+        if add_columns:
+            use_cols.extend(add_columns)
+
+        if not variable_categories and not add_columns:
+            use_cols = None
+
+        all_cols = _flatten(CATEGORISED_VARS.values())
+        index_col = "record_id" if use_RecordID_as_index else None
+
+        # TODO Deal with use_cols not in file, right now raises ValueError from pandas
+        # Deal with it using aliases. `try` block?
+        # put into own function? def _pandas_read_csv_w_aliases()
+        # or maybe just a `+check_col_names` function?
+
+        use_cols = _check_csv_col_names(filepath, use_cols)
+
+        df = pd.read_csv(
+            filepath,
+            sep=",",
+            header=0,
+            usecols=use_cols,
+            index_col=index_col,
+            skipinitialspace=True,
+            nrows=nrows,
+        )
+        df = df.drop(drop_columns, axis=1)
+
+        sf = SurveyFrame(df)
+        sf._csv_file = filepath
+
+        if clean_cols:
+            sf = sf.clean_cols()
+
+        return sf
+
+    # TODO: clean_cols function
+    def clean_cols():
+        return None
+
+    # TODO: complex_paqs function
+
+
+def _check_csv_col_names(filepath, use_cols):
+    """Compares the desired columns with those present in the csv file.
+
+    Where a column is requested but not present, we check element-wise through the provided aliases from parameters.SURVEY_VARS and try those instead. If an alias is present in the file, we'll pass it to pandas to read in the csv.
+
+    Parameters
+    ----------
+    filepath : filepath_or_buffer
+        csv file to pass to pandas.read_csv()
+    use_cols : list
+        columns (variable) labels you'd like to read in
+
+    Returns
+    -------
+    list
+        use_cols with missing items replaced by their alias
+    """
+    # TODO Tests for _check_csv_col_names()
+    with open(filepath, newline="") as f:
+        reader = csv.reader(f)
+        headers = next(reader)
+
+    # Pull out items in cols but not in csv header
+    missing_headers = np.setdiff1d(use_cols, headers)
+    if len(missing_headers) > 0:
+        for missing_item in missing_headers:
+            if missing_item in SURVEY_VARS.keys():
+                aliases = SURVEY_VARS[missing_item]["aliases"]
+                for alias in aliases:
+                    if alias in headers:
+                        use_cols.remove(missing_item)
+                        use_cols.append(alias)
+
+            else:
+                # TODO Search through all aliases to find which label it matches with
+                # How?
+                warnings.warn(
+                    f"Warning: Can't find a matching alias for {missing_item} which is in the csv. Removing it before passing to pandas."
+                )
+                use_cols.remove(missing_item)
+
+    return use_cols  # Exit if nothing is missing
 
 
 # Dealing with Directories!
@@ -217,6 +325,5 @@ def _wav_dirs(bin_dirs):
 if __name__ == "__main__":
     import doctest
 
-    TEST_DIR = Path("../test/test_DB")
+    TEST_DIR = Path("../../soundscapy/test/test_DB")
     doctest.testmod(verbose=False, optionflags=doctest.ELLIPSIS)
-
