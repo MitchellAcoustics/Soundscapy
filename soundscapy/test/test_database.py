@@ -3,6 +3,7 @@ import sys, os
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + "/../../")
 
+from soundscapy.ssid.parameters import CATEGORISED_VARS
 import soundscapy.ssid.database as db
 from pathlib import Path
 from pytest import raises
@@ -31,11 +32,59 @@ def test_SurveyFrame_input_sanity():
 
 
 def test__check_csv_col_names():
-    use_cols = ['GroupID', 'often', 'pleasant']
-    headers = ['GroupID', 'sss04', 'paq01']
+    use_cols = ["GroupID", "often", "pleasant"]
+    headers = ["GroupID", "sss04", "paq01"]
     # ! Can't get this test written properly
     # Need to use mock for csv reader?
     # assert df._check_csv_col_names(mocked_file, use_cols) == headers
+
+
+def test_fill_missing_paqs():
+    sf = db.SurveyFrame().create_empty(["raw_PAQs"], index=range(10))
+    sf = sf.fill_missing_paqs()
+    assert sf.values.sum() == 30 * 8
+
+
+def test_calculate_complex_paqs():
+    sf = db.SurveyFrame().create_empty(index=range(10))
+    Pleasant, Eventful = sf.calculate_complex_paqs(fill_val=3)
+    assert Pleasant.sum() == 0
+    assert Eventful.sum() == 0
+
+    # Full pleasantness
+    sf = db.SurveyFrame().create_empty(index=range(1))
+    sf[
+        [
+            "pleasant",
+            "vibrant",
+            "eventful",
+            "chaotic",
+            "annoying",
+            "monotonous",
+            "uneventful",
+            "calm",
+        ]
+    ] = [5, 5, 1, 1, 1, 1, 1, 5]
+    Pleasant, Eventful = sf.calculate_complex_paqs(scale_to_one=True)
+    assert Pleasant.values == 1
+
+    # Full Eventfulness
+    sf = db.SurveyFrame().create_empty(index=range(1))
+    sf[
+        [
+            "pleasant",
+            "vibrant",
+            "eventful",
+            "chaotic",
+            "annoying",
+            "monotonous",
+            "uneventful",
+            "calm",
+        ]
+    ] = [5, 5, 5, 5, 1, 1, 1, 1]
+    Pleasant, Eventful = sf.calculate_complex_paqs(scale_to_one=True)
+    assert Eventful.values == 1
+
 
 def test_SurveyFrame_analysis_date():
     test_sf = db.SurveyFrame()

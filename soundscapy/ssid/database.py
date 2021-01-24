@@ -171,9 +171,6 @@ class SurveyFrame(pd.DataFrame):
         return use_cols
 
     # TODO: clean_cols function
-    def clean_cols():
-        return None
-
     # TODO: complex_paqs function
 
     @staticmethod
@@ -261,6 +258,63 @@ class SurveyFrame(pd.DataFrame):
                     use_cols.remove(missing_item)
 
         return use_cols  # Exit if nothing is missing
+
+    def fill_missing_paqs(self, fill_val=3):
+        self[CATEGORISED_VARS["raw_PAQs"]] = self[CATEGORISED_VARS["raw_PAQs"]].fillna(
+            value=fill_val
+        )
+        return self
+
+    def calculate_complex_paqs(
+        self, scale_to_one: bool = True, fill_na: bool = True, fill_val=3
+    ):
+        """Calculate the complex Pleasant and Eventful projections of the PAQs.
+        Uses the projection formulae from ISO  12913 Part 3:
+
+        P =(p−a)+cos45°*(ca−ch)+cos45°*(v−m)
+        E =(e−u)+cos45°*(ch−ca)+cos45°*(v−m)
+
+        Parameters
+        ----------
+        scale_to_one : bool, optional
+            Scale the complex values from -1 to 1, by default True
+        fill_na : bool, optional
+            Fill missing raw_PAQ values, by default True
+        fill_val : int, optional
+            Value to fill missing raw_PAQs with, by default 3
+
+        Returns
+        -------
+        (pd.Series, pd.Series)
+            pandas Series containing the new complex Pleasant and Eventful vectors
+        """
+        if fill_na:
+            self = self.fill_missing_paqs(fill_val=fill_val)
+
+        # TODO: Add check for raw_PAQ column names
+        # TODO: add handling for if sf already contains Pleasant and Eventful values
+
+        proj = np.cos(np.deg2rad(45))
+        scale = 4 + np.sqrt(32)
+
+        # TODO: Add if statements for too much missing data
+        # P =(p−a)+cos45°(ca−ch)+cos45°(v−m)
+        complex_pleasant = (
+            (self.pleasant.fillna(0) - self.annoying.fillna(0))
+            + proj * (self.calm.fillna(0) - self.chaotic.fillna(0))
+            + proj * (self.vibrant.fillna(0) - self.monotonous.fillna(0))
+        )
+        Pleasant = complex_pleasant / scale if scale_to_one else complex_pleasant
+
+        # E =(e−u)+cos45°(ch−ca)+cos45°(v−m)
+        complex_eventful = (
+            (self.eventful.fillna(0) - self.uneventful.fillna(0))
+            + proj * (self.chaotic.fillna(0) - self.calm.fillna(0))
+            + proj * (self.vibrant.fillna(0) - self.monotonous.fillna(0))
+        )
+        Eventful = complex_eventful / scale if scale_to_one else complex_eventful
+        
+        return Pleasant, Eventful
 
 
 # Dealing with Directories!
