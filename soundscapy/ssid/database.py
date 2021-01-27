@@ -1,41 +1,7 @@
 from pathlib import Path
 
 # Constants and Labels
-PARAM_LIST = [
-    "LevelA",
-    "LevelC",
-    "LevelZ",
-    "Loudness",
-    "Roughness",
-    "Sharpness",
-    "Tonality",
-    "FluctuationStrength",
-    "SIL",
-    "THD",
-    "Impulsiveness",
-]
-
-LOCATION_IDS = {
-    "London": [
-        "CamdenTown",
-        "EustonTap",
-        "MarchmontGarden",
-        "PancrasLock",
-        "RegentsParkFields",
-        "RegentsParkJapan",
-        "RussellSq",
-        "StPaulsCross",
-        "StPaulsRow",
-        "TateModern",
-        "TorringtonSq",
-    ],
-    "Venice": ["SanMarco", "MonumentoGaribaldi",],
-    "Granada": ["CampoPrincipe", "CarloV", "MiradorSanNicolas", "PlazaBibRambla",],
-    "Groningen": ["GroningenNoorderplantsoen"],
-    "Test": ["LocationA", "LocationB"],
-}
-
-IGNORE_LIST = ["AllLondon", "AllyPally", "CoventGd1", "OxfordSt"]
+from soundscapy.ssid.parameters import PARAM_LIST, LOCATION_IDS, IGNORE_LIST
 
 
 # Dealing with Directories!
@@ -87,7 +53,7 @@ def collect_all_dirs(
             "The directory should be provided as a WindowsPath object from pathlib."
         )
     if not root_directory.is_dir():
-        raise FileNotFoundError("Path does not exist.")
+        raise FileNotFoundError("Path does not exist.", root_directory.absolute())
 
     # Collect list of session id directories
     session_dirs = [session for session in root_directory.iterdir() if session.is_dir()]

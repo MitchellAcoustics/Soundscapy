@@ -49,6 +49,9 @@ def test_ts_dirs_collection():
             "OFF_LocationB1_FULL_2021-01-13", "OFF_LocationB1_BIN_2021-01-13"
         ),
     ]
+    for item in bin_dirs:
+        print(item.absolute())
+        print(item.is_dir())
     param_list = ["LevelA", "Loudness"]
     full_ts_list = db._ts_dirs(bin_dirs, param_list)
     assert len(full_ts_list) == 6
