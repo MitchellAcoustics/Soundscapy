@@ -1,7 +1,80 @@
+from os import supports_dir_fd
 from pathlib import Path
+import numpy as np
+from pandas.core.frame import DataFrame
 
 # Constants and Labels
-from soundscapy.ssid.parameters import PARAM_LIST, LOCATION_IDS, IGNORE_LIST
+from soundscapy.ssid.parameters import (
+    PARAM_LIST,
+    LOCATION_IDS,
+    IGNORE_LIST,
+    CATEGORISED_VARS,
+)
+
+
+# Survey database functions
+def fill_missing_paqs(df, features, fill_val=3):
+    df[features] = df[features].fillna(
+        value=fill_val
+    )
+    return df
+
+
+def calculate_complex_paqs(
+    df, scale_to_one: bool = True, fill_na: bool = True, fill_val=3, append_var_names=""
+):
+    """Calculate the complex Pleasant and Eventful projections of the PAQs.
+    Uses the projection formulae from ISO  12913 Part 3:
+
+    P =(p−a)+cos45°*(ca−ch)+cos45°*(v−m)
+    E =(e−u)+cos45°*(ch−ca)+cos45°*(v−m)
+
+    Parameters
+    ----------
+    scale_to_one : bool, optional
+        Scale the complex values from -1 to 1, by default True
+    fill_na : bool, optional
+        Fill missing raw_PAQ values, by default True
+    fill_val : int, optional
+        Value to fill missing raw_PAQs with, by default 3
+
+    Returns
+    -------
+    (pd.Series, pd.Series)
+        pandas Series containing the new complex Pleasant and Eventful vectors
+    """
+    features = CATEGORISED_VARS["raw_PAQs"]
+    features = [var + append_var_names for var in features]
+
+    if fill_na:
+        df = fill_missing_paqs(df, features, fill_val=fill_val)
+
+    # TODO: Add check for raw_PAQ column names
+    # TODO: add handling for if sf already contains Pleasant and Eventful values
+
+    proj = np.cos(np.deg2rad(45))
+    scale = 4 + np.sqrt(32)
+
+    # TODO: Add if statements for too much missing data
+    # P =(p−a)+cos45°(ca−ch)+cos45°(v−m)
+    complex_pleasant = (
+        (df["pleasant" + append_var_names] - df["annoying" + append_var_names])
+        + proj * (df["calm" + append_var_names] - df["chaotic" + append_var_names])
+        + proj
+        * (df["vibrant" + append_var_names] - df["monotonous" + append_var_names])
+    )
+    Pleasant = complex_pleasant / scale if scale_to_one else complex_pleasant
+
+    # E =(e−u)+cos45°(ch−ca)+cos45°(v−m)
+    complex_eventful = (
+        (df["eventful" + append_var_names] - df["uneventful" + append_var_names])
+        + proj * (df["chaotic" + append_var_names] - df["calm" + append_var_names])
+        + proj
+        * (df["vibrant" + append_var_names] - df["monotonous" + append_var_names])
+    )
+    Eventful = complex_eventful / scale if scale_to_one else complex_eventful
+
+    return Pleasant, Eventful
 
 
 # Dealing with Directories!

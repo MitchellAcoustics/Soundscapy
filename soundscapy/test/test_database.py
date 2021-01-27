@@ -7,6 +7,7 @@ import soundscapy.ssid.database as db
 from pathlib import Path
 from pytest import raises
 import random
+import pandas as pd
 
 TEST_DIR = Path("soundscapy/test/test_DB")
 
@@ -88,3 +89,53 @@ def test_all_dirs_collection():
     assert len(spectrum_list) == 2 * 2
     # wav_list should have 1 dir for each location dir
     assert len(wav_list) == 2
+
+
+def test_calculate_complex_paqs():
+    df = pd.DataFrame(index=range(1))
+    df[
+        [
+            "pleasant",
+            "vibrant",
+            "eventful",
+            "chaotic",
+            "annoying",
+            "monotonous",
+            "uneventful",
+            "calm",
+        ]
+    ] = [5, 5, 5, 5, 1, 1, 1, 1]
+    Pleasant, Eventful = db.calculate_complex_paqs(df, scale_to_one=True, fill_na=False)
+    assert Eventful.values == 1
+
+    df = pd.DataFrame(index=range(1))
+    df[
+        [
+            "pleasant",
+            "vibrant",
+            "eventful",
+            "chaotic",
+            "annoying",
+            "monotonous",
+            "uneventful",
+            "calm",
+        ]
+    ] = [5, 5, 1, 1, 1, 1, 1, 5]
+    Pleasant, Eventful = db.calculate_complex_paqs(df, scale_to_one=True, fill_na=False)
+    assert Pleasant.values == 1
+
+    df = pd.DataFrame(index=range(1))
+    df[
+        [
+            "pleasant_a",
+            "vibrant_a",
+            "eventful_a",
+            "chaotic_a",
+            "annoying_a",
+            "monotonous_a",
+            "uneventful_a",
+            "calm_a",
+        ]
+    ] = [5, 5, 1, 1, 1, 1, 1, 5]
+    Pleasant, Eventful = db.calculate_complex_paqs(df, scale_to_one=True, fill_na=False, append_var_names="_a")
+    assert Pleasant.values == 1
