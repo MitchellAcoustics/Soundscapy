@@ -12,7 +12,7 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: |
-          C:\Miniconda\condabin\conda.bat env update --file environment.yml --name base
+          C:\Miniconda\condabin\conda.bat env create --file environment.yml --name base
           C:\Miniconda\condabin\conda.bat init powershell
       - name: Lint with flake8
         run: |
@@ -26,7 +26,6 @@ jobs:
       - name: Test with pytest
         run: |
           # Activate the base environment
-          C:\Miniconda\condabin\conda.bat env update --file environment.yml --name base
           C:\Miniconda\condabin\conda.bat activate base
           C:\Miniconda\condabin\conda.bat install pytest
           pytest
