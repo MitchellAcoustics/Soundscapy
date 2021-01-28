@@ -1,7 +1,7 @@
-from acoustics import Signal
+# from acoustics import Signal
 
-def spectrogram(wavfile):
+# def spectrogram(wavfile):
     
-    s = Signal.from_wav(wavfile)
-    return s.spectrogram()
+#     s = Signal.from_wav(wavfile)
+#     return s.spectrogram()
 
