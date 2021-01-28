@@ -26,7 +26,7 @@ jobs:
       - name: Test with pytest
         run: |
           # Activate the base environment
+          C:\Miniconda\condabin\conda.bat env update --file environment.yml --name base
           C:\Miniconda\condabin\conda.bat activate base
           C:\Miniconda\condabin\conda.bat install pytest
-          C:\Miniconda\condabin\conda.bat install numpy
           pytest
