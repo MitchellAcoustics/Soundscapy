@@ -1,11 +1,21 @@
+import matplotlib.pyplot as plt
 import soundfile as sf
 from scipy import signal
-import matplotlib.pyplot as plt
 
 
 def spectrogram_2ch(filepath, method="matplotlib", plot=True):
     # TODO: Write docs
     # TODO: Write tests
+
+    # Input sanity
+    methodlist = ["scipy", "matplotlib"]
+    if method not in methodlist:
+        raise ValueError(
+            "unknown value for method {}, must be one of {}".format(method, methodlist)
+        )
+    if not filepath.is_file():
+        raise FileNotFoundError("File does not exist.", filepath.absolute())
+
     data, samplerate = sf.read(filepath)
 
     ch1 = data[:, 0]
@@ -25,6 +35,7 @@ def spectrogram_2ch(filepath, method="matplotlib", plot=True):
 
         if plot:
             # To plot directly from scipy results, very slow
+            #! for some reason, plotting this is extra slow, but should be good matrix output
             plt.subplot(211)
             plt.pcolormesh(t_1, f_1, Sxx_1, shading="gouraud")
             plt.ylabel("Frequency [Hz]")

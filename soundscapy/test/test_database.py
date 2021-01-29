@@ -137,5 +137,7 @@ def test_calculate_complex_paqs():
             "calm_a",
         ]
     ] = [5, 5, 1, 1, 1, 1, 1, 5]
-    Pleasant, Eventful = db.calculate_complex_paqs(df, scale_to_one=True, fill_na=False, append_var_names="_a")
+    Pleasant, Eventful = db.calculate_complex_paqs(
+        df, scale_to_one=True, fill_na=False, append_var_names="_a"
+    )
     assert Pleasant.values == 1
