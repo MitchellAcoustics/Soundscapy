@@ -22,3 +22,7 @@ jobs:
       uses: matthewrmshin/conda-action@v1
       with:
         args: pytest
+    - run: pytest  
+
+# ----
+
