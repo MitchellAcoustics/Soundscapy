@@ -22,3 +22,5 @@ jobs:
       with:
         env-file-name: 'environment.yml'
         activate-env: True  
+    - name: GitHub Action for pytest
+      uses: cclauss/GitHub-Action-for-pytest@0.5.0
