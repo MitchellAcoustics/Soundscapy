@@ -1,27 +1,29 @@
-from os import supports_dir_fd
 from pathlib import Path
+
 import numpy as np
-from pandas.core.frame import DataFrame
+import pandas as pd
 
 # Constants and Labels
-from soundscapy.ssid.parameters import (
-    PARAM_LIST,
-    LOCATION_IDS,
-    IGNORE_LIST,
+from soundscapy.parameters import (
     CATEGORISED_VARS,
+    IGNORE_LIST,
+    LOCATION_IDS,
+    PARAM_LIST,
 )
 
 
 # Survey database functions
-def fill_missing_paqs(df, features, fill_val=3):
-    df[features] = df[features].fillna(
-        value=fill_val
-    )
+def fill_missing_paqs(df: pd.DataFrame, features, fill_val=3):
+    df[features] = df[features].fillna(value=fill_val)
     return df
 
 
 def calculate_complex_paqs(
-    df, scale_to_one: bool = True, fill_na: bool = True, fill_val=3, append_var_names=""
+    df: pd.DataFrame,
+    scale_to_one: bool = True,
+    fill_na: bool = True,
+    fill_val=3,
+    append_var_names="",
 ):
     """Calculate the complex Pleasant and Eventful projections of the PAQs.
     Uses the projection formulae from ISO  12913 Part 3:
