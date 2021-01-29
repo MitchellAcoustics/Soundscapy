@@ -20,4 +20,4 @@ jobs:
       id: step1
       uses: fdiblen/anaconda-action@0.1.7
       with:
-        envFileName: 'environment.yml'
+        env-file-name: 'environment.yml'
