@@ -21,4 +21,4 @@ jobs:
       uses: fdiblen/anaconda-action@0.1.7
       with:
         env-file-name: 'environment.yml'
-        activateEnv: True  
+        activate-env: True  
