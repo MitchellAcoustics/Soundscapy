@@ -1,0 +1,26 @@
+name: 'Anaconda Github Action'
+
+on: [push]
+
+jobs:
+  test_job:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        pythonVersion: [3.6, 3.7, 3.8]
+        exclude:
+          - os: macos-latest
+            pythonVersion: 3.8
+          - os: windows-latest
+            pythonVersion: 3.6
+    steps:
+    - uses: actions/checkout@v2
+    - name: Anaconda-Action
+      id: step1
+      uses: fdiblen/anaconda-action@0.1.7
+      with:
+        env-file-name: 'environment.yml'
+        activate-env: True  
+    - name: GitHub Action for pytest
+      uses: cclauss/GitHub-Action-for-pytest@0.5.0
