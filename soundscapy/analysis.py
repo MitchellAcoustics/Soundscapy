@@ -71,7 +71,7 @@ def spectrogram_2ch(filepath, method="matplotlib", plot=True):
 def loudness_from_wav(
     wavfile: Union[str, Path],
     ref_file: Union[str, Path] = "",
-    ref_level: float = "",
+    ref_level: float = None,
     method: str = "time_varying",
     field_type: str = "F",
     time_skip: float = 0.2,
@@ -149,7 +149,7 @@ def loudness_from_wav(
     """
 
     # Even though these values should logically be floats,
-    if not isinstance(ref_level, (float, int)):
+    if ref_level and not isinstance(ref_level, (float, int)):
         raise TypeError("ref_level must be a number.")
     if not isinstance(time_skip, (float, int)):
         raise TypeError("time_skip must be a number")
