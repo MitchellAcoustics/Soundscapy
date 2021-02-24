@@ -1,4 +1,6 @@
+from datetime import time
 from pathlib import Path
+import csv 
 
 import numpy as np
 import pandas as pd
@@ -77,6 +79,25 @@ def calculate_complex_paqs(
     Eventful = complex_eventful / scale if scale_to_one else complex_eventful
 
     return Pleasant, Eventful
+
+
+# Parsing HEAD Acoustics files
+def time_series_from_head_csv(filepath):
+    timeseries = pd.read_csv(
+        filepath,
+        header=None,
+        usecols=[0,1],
+        index_col=0,
+        sep=",",
+        squeeze=True,
+        skiprows=27
+    )
+    timeseries = timeseries.rename("data")
+    with open(filepath) as csvDataFile:
+        recording = list(csv.reader(csvDataFile))[0][0]
+        recording = recording.split("	")[-1]
+
+    return timeseries, recording
 
 
 # Dealing with Directories!
