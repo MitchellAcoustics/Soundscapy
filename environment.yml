@@ -1,5 +1,6 @@
 name: Soundscapy-dev
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -12,8 +13,8 @@ dependencies:
   - blas=1.0=mkl
   - bleach=3.3.0=pyhd3eb1b0_0
   - brotlipy=0.7.0=py38h27cfd23_1003
-  - ca-certificates=2021.1.19=h06a4308_1
-  - certifi=2020.12.5=py38h06a4308_0
+  - ca-certificates=2020.12.5=ha878542_0
+  - certifi=2020.12.5=py38h578d9bd_1
   - cffi=1.14.5=py38h261ae71_0
   - chardet=4.0.0=py38h06a4308_1003
   - cryptography=3.4.7=py38hd23ed53_0
@@ -75,6 +76,7 @@ dependencies:
   - ptyprocess=0.7.0=pyhd3eb1b0_2
   - py=1.10.0=pyhd3eb1b0_0
   - pycparser=2.20=py_2
+  - pydub=0.25.1=pyhd8ed1ab_0
   - pygments=2.8.1=pyhd3eb1b0_0
   - pyopenssl=20.0.1=pyhd3eb1b0_1
   - pyparsing=2.4.7=pyhd3eb1b0_0
@@ -83,6 +85,7 @@ dependencies:
   - pytest=6.2.3=py38h06a4308_2
   - python=3.8.8=hdb3f193_4
   - python-dateutil=2.8.1=pyhd3eb1b0_0
+  - python_abi=3.8=1_cp38
   - pytz=2021.1=pyhd3eb1b0_0
   - pyzmq=20.0.0=py38h2531618_1
   - readline=8.1=h27cfd23_0
@@ -114,4 +117,4 @@ dependencies:
     - pillow==8.2.0
     - scipy==1.6.2
     - tabulate==0.8.9
-prefix: /home/andrew/.conda/envs/Soundscapy-dev
+prefix: /home/andrew/miniconda3/envs/Soundscapy-dev
