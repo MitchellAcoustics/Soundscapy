@@ -1,7 +1,9 @@
 import os
 import sys
-from soundscapy.ssid import plotting
+
 import janitor
+
+from soundscapy.ssid import plotting
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + "/../../")
@@ -15,14 +17,8 @@ import numpy as np
 import pandas as pd
 
 # Constants and Labels
-from soundscapy.ssid.parameters import (
-    CATEGORISED_VARS,
-    IGNORE_LIST,
-    LOCATION_IDS,
-    PARAM_LIST,
-    SURVEY_VARS,
-    PAQ_COLS,
-)
+from .parameters import CATEGORISED_VARS, PARAM_LIST, SURVEY_VARS, PAQ_COLS
+from .plotting import default_bw_adjust
 
 DEFAULT_CATS = [
     "indexing",
@@ -34,6 +30,7 @@ DEFAULT_CATS = [
 # General helper functions
 _flatten = lambda t: [item for sublist in t for item in sublist]
 
+
 def load_isd_dataset(
     version="latest",
     clean_cols=False,
@@ -44,18 +41,19 @@ def load_isd_dataset(
 ):
     # TODO: Write docs
     version = "V0.2.2" if version == "latest" else version
-    if version == "V0.2.1":
-        url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
-    elif version == "V0.2.2":
-        url = "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
+    urls = {
+        "V0.2.1": "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx",
+        "V0.2.2": "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx",
+    }
 
-    df = pd.read_excel(url, header=0, **read_kwargs)
+    df = pd.read_excel(urls[version], header=0, **read_kwargs)
     df = df.drop(drop_columns, axis=1)
     sf = SurveyFrame(df)
     if use_RecordID_as_index:
         sf = sf.convert_column_to_index("RecordID")
     sf._version = version
     return sf
+
 
 # Dealing with Surveys!
 class SurveyFrame(pd.DataFrame):
@@ -160,7 +158,7 @@ class SurveyFrame(pd.DataFrame):
 
         return sf
 
-    #! from_excel not really tested!
+    # ! from_excel not really tested!
     @classmethod
     def from_excel(
         self,
@@ -448,6 +446,80 @@ class SurveyFrame(pd.DataFrame):
             legend_loc,
             s,
             **scatter_kwargs,
+        )
+
+    def circumplex_density(
+        self,
+        ax=None,
+        title="Soundscape Density Plot",
+        x="ISOPleasant",
+        y="ISOEventful",
+        prim_labels=True,
+        diagonal_lines=False,
+        palette="Blues",
+        fill=True,
+        bw_adjust=default_bw_adjust,
+        alpha=0.95,
+        legend=False,
+        legend_loc="lower left",
+        **density_kwargs,
+    ):
+        return plotting.circumplex_density(
+            sf=self,
+            ax=ax,
+            title=title,
+            x=x,
+            y=y,
+            prim_labels=prim_labels,
+            diagonal_lines=diagonal_lines,
+            palette=palette,
+            fill=fill,
+            bw_adjust=bw_adjust,
+            alpha=alpha,
+            legend=legend,
+            legend_loc=legend_loc,
+            **density_kwargs,
+        )
+
+    def circumplex_jointplot_density(
+        self,
+        title="Soundscape Joint Plot",
+        x="ISOPleasant",
+        y="ISOEventful",
+        prim_labels=False,
+        diagonal_lines=False,
+        palette="Blues",
+        fill=True,
+        bw_adjust=default_bw_adjust,
+        alpha=0.95,
+        legend=False,
+        legend_loc="lower left",
+        s=100,
+        marginal_kind="kde",
+        joint_kind="density",
+        group=None,
+        joint_kwargs={},
+        marginal_kwargs={"fill": True},
+    ):
+        return plotting.circumplex_jointplot_density(
+            self,
+            title=title,
+            x=x,
+            y=y,
+            prim_labels=prim_labels,
+            diagonal_lines=diagonal_lines,
+            palette=palette,
+            fill=fill,
+            bw_adjust=bw_adjust,
+            alpha=alpha,
+            legend=legend,
+            legend_loc=legend_loc,
+            s=s,
+            marginal_kind=marginal_kind,
+            joint_kind=joint_kind,
+            group=group,
+            joint_kwargs=joint_kwargs,
+            marginal_kwargs=marginal_kwargs,
         )
 
 

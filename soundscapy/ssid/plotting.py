@@ -15,6 +15,7 @@ default_bw_adjust = 1.2
 
 #%%
 
+
 def paq_radar(sf, ax=None, index=None):
     # TODO: Resize the plot
     if index:
@@ -65,23 +66,23 @@ def paq_radar(sf, ax=None, index=None):
 
 
 def circumplex_scatter(
-        sf,
-        ax,
-        title="Soundscape Scatter Plot",
-        group=None,
-        x="ISOPleasant",
-        y="ISOEventful",
-        prim_labels=True,
-        diagonal_lines=False,
-        palette=None,
-        legend=False,
-        legend_loc="lower left",
-        s=100,
-        **scatter_kwargs,
+    sf,
+    ax,
+    title="Soundscape Scatter Plot",
+    group=None,
+    x="ISOPleasant",
+    y="ISOEventful",
+    prim_labels=True,
+    diagonal_lines=False,
+    palette=None,
+    legend=False,
+    legend_loc="lower left",
+    s=100,
+    **scatter_kwargs,
 ):
     if palette is None:
         n_colors = len(sf[group].unique()) if group else len(sf)
-        palette = sns.color_palette("husl", n_colors, as_cmap=False)
+        palette = sns.color_palette("husl", as_cmap=True)
 
     if group is None:
         group = sf.index.values
@@ -107,20 +108,20 @@ def circumplex_scatter(
 
 
 def circumplex_density(
-        sf,
-        ax=None,
-        title="Soundscape Density Plot",
-        x="ISOPleasant",
-        y="ISOEventful",
-        prim_labels=True,
-        diagonal_lines=False,
-        palette="Blues",
-        fill=True,
-        bw_adjust=default_bw_adjust,
-        alpha=0.95,
-        legend=False,
-        legend_loc="lower left",
-        **density_kwargs,
+    sf,
+    ax=None,
+    title="Soundscape Density Plot",
+    x="ISOPleasant",
+    y="ISOEventful",
+    prim_labels=True,
+    diagonal_lines=False,
+    palette="Blues",
+    fill=True,
+    bw_adjust=default_bw_adjust,
+    alpha=0.95,
+    legend=False,
+    legend_loc="lower left",
+    **density_kwargs,
 ):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(5, 5))
@@ -147,40 +148,61 @@ def circumplex_density(
 
 
 def circumplex_jointplot_density(
-        sf,
-        title="Soundscape Joint Plot",
-        x="ISOPleasant",
-        y="ISOEventful",
-        prim_labels=False,
-        diagonal_lines=False,
-        palette="Blues",
-        fill=True,
-        bw_adjust=default_bw_adjust,
-        alpha=0.95,
-        legend=False,
-        legend_loc="lower left",
-        marginal_kind="kde",
-        hue=None,
-        joint_kwargs={},
-        marginal_kwargs={"fill": True},
+    sf,
+    title="Soundscape Joint Plot",
+    x="ISOPleasant",
+    y="ISOEventful",
+    prim_labels=False,
+    diagonal_lines=False,
+    palette="Blues",
+    fill=True,
+    bw_adjust=default_bw_adjust,
+    alpha=0.95,
+    legend=False,
+    legend_loc="lower left",
+    s=100,
+    marginal_kind="kde",
+    joint_kind="density",
+    group=None,
+    joint_kwargs={},
+    marginal_kwargs={"fill": True},
 ):
     g = sns.JointGrid()
-    circumplex_density(
-        sf,
-        g.ax_joint,
-        title=None,
-        x=x,
-        y=y,
-        prim_labels=prim_labels,
-        diagonal_lines=diagonal_lines,
-        palette=palette,
-        hue=hue,
-        fill=fill,
-        bw_adjust=bw_adjust,
-        alpha=alpha,
-        legend=legend,
-        **joint_kwargs,
-    )
+    if joint_kind == "density":
+        circumplex_density(
+            sf,
+            g.ax_joint,
+            title=None,
+            x=x,
+            y=y,
+            prim_labels=prim_labels,
+            diagonal_lines=diagonal_lines,
+            palette=palette,
+            hue=group,
+            fill=fill,
+            bw_adjust=bw_adjust,
+            alpha=alpha,
+            legend=legend,
+            **joint_kwargs,
+        )
+    elif joint_kind == "scatter":
+        circumplex_scatter(
+            sf,
+            g.ax_joint,
+            title=None,
+            group=group,
+            x=x,
+            y=y,
+            prim_labels=prim_labels,
+            diagonal_lines=diagonal_lines,
+            palette=palette,
+            legend=legend,
+            legend_loc=legend_loc,
+            s=s,
+            **joint_kwargs,
+        )
+    else:
+        raise AttributeError("joint_kind not recognised")
     if legend:
         _move_legend(g.ax_joint, legend_loc)
 
@@ -188,7 +210,7 @@ def circumplex_jointplot_density(
         sns.histplot(
             data=sf,
             x=x,
-            hue=hue,
+            hue=group,
             ax=g.ax_marg_x,
             binrange=(-1, 1),
             legend=False,
@@ -197,7 +219,7 @@ def circumplex_jointplot_density(
         sns.histplot(
             data=sf,
             y=y,
-            hue=hue,
+            hue=group,
             ax=g.ax_marg_y,
             binrange=(-1, 1),
             legend=False,
@@ -207,7 +229,7 @@ def circumplex_jointplot_density(
         sns.kdeplot(
             data=sf,
             x=x,
-            hue=hue,
+            hue=group,
             ax=g.ax_marg_x,
             bw_adjust=bw_adjust,
             legend=False,
@@ -216,7 +238,7 @@ def circumplex_jointplot_density(
         sns.kdeplot(
             data=sf,
             y=y,
-            hue=hue,
+            hue=group,
             ax=g.ax_marg_y,
             bw_adjust=bw_adjust,
             legend=False,
