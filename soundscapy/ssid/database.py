@@ -1,5 +1,7 @@
 import os
 import sys
+from soundscapy.ssid import plotting
+import janitor
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + "/../../")
@@ -19,6 +21,7 @@ from soundscapy.ssid.parameters import (
     LOCATION_IDS,
     PARAM_LIST,
     SURVEY_VARS,
+    PAQ_COLS,
 )
 
 DEFAULT_CATS = [
@@ -30,6 +33,29 @@ DEFAULT_CATS = [
 
 # General helper functions
 _flatten = lambda t: [item for sublist in t for item in sublist]
+
+def load_isd_dataset(
+    version="latest",
+    clean_cols=False,
+    use_RecordID_as_index: bool = True,
+    drop_columns=[],
+    add_columns=[],
+    **read_kwargs,
+):
+    # TODO: Write docs
+    version = "V0.2.2" if version == "latest" else version
+    if version == "V0.2.1":
+        url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
+    elif version == "V0.2.2":
+        url = "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
+
+    df = pd.read_excel(url, header=0, **read_kwargs)
+    df = df.drop(drop_columns, axis=1)
+    sf = SurveyFrame(df)
+    if use_RecordID_as_index:
+        sf = sf.convert_column_to_index("RecordID")
+    sf._version = version
+    return sf
 
 # Dealing with Surveys!
 class SurveyFrame(pd.DataFrame):
@@ -62,6 +88,27 @@ class SurveyFrame(pd.DataFrame):
             cols.extend(add_columns)
 
         return SurveyFrame(columns=cols, index=index, dtype=dtype)
+
+    @classmethod
+    def simulate_dataset(
+        self, n=3000, add_complex_paqs=False, **complex_kwargs,
+    ):
+        sf = SurveyFrame(np.random.randint(1, 5, size=(n, 8)), columns=PAQ_COLS)
+        if add_complex_paqs:
+            sf.add_complex_paqs(**complex_kwargs)
+        return sf
+
+    @classmethod
+    def load_isd_dataset(
+        self,
+        version="latest",
+        clean_cols=False,
+        use_RecordID_as_index: bool = True,
+        drop_columns=[],
+        add_columns=[],
+        **read_kwargs,
+    ):
+        return load_isd_dataset()
 
     @classmethod
     def from_csv(
@@ -266,7 +313,11 @@ class SurveyFrame(pd.DataFrame):
         return self
 
     def calculate_complex_paqs(
-        self, scale_to_one: bool = True, fill_na: bool = True, fill_val=3
+        self,
+        scale_to_one: bool = True,
+        projection: bool = True,
+        fill_na: bool = True,
+        fill_val=3,
     ):
         """Calculate the complex Pleasant and Eventful projections of the PAQs.
         Uses the projection formulae from ISO  12913 Part 3:
@@ -292,9 +343,9 @@ class SurveyFrame(pd.DataFrame):
             self = self.fill_missing_paqs(fill_val=fill_val)
 
         # TODO: Add check for raw_PAQ column names
-        # TODO: add handling for if sf already contains Pleasant and Eventful values
+        # TODO: add handling for if sf already contains ISOPleasant and ISOEventful values
 
-        proj = np.cos(np.deg2rad(45))
+        proj = np.cos(np.deg2rad(45)) if projection else 1
         scale = 4 + np.sqrt(32)
 
         # TODO: Add if statements for too much missing data
@@ -304,7 +355,7 @@ class SurveyFrame(pd.DataFrame):
             + proj * (self.calm.fillna(0) - self.chaotic.fillna(0))
             + proj * (self.vibrant.fillna(0) - self.monotonous.fillna(0))
         )
-        Pleasant = complex_pleasant / scale if scale_to_one else complex_pleasant
+        ISOPleasant = complex_pleasant / scale if scale_to_one else complex_pleasant
 
         # E =(e−u)+cos45°(ch−ca)+cos45°(v−m)
         complex_eventful = (
@@ -312,9 +363,92 @@ class SurveyFrame(pd.DataFrame):
             + proj * (self.chaotic.fillna(0) - self.calm.fillna(0))
             + proj * (self.vibrant.fillna(0) - self.monotonous.fillna(0))
         )
-        Eventful = complex_eventful / scale if scale_to_one else complex_eventful
-        
-        return Pleasant, Eventful
+        ISOEventful = complex_eventful / scale if scale_to_one else complex_eventful
+
+        return ISOPleasant, ISOEventful
+
+    def convert_column_to_index(self, col="GroupID", drop=False):
+        """Reassign an existing column as the dataframe index"""
+        assert col in self.columns, f"col: {col} not found in dataframe"
+        self.index = self[col]
+        if drop:
+            self = self.drop(col, axis=1)
+        return self
+
+    def add_complex_paqs(
+        self,
+        names=("ISOPleasant", "ISOEventful"),
+        scale_to_one: bool = True,
+        projection: bool = True,
+        fill_na: bool = True,
+        fill_val: int = 3,
+    ):
+        isopl, isoev = self.calculate_complex_paqs(
+            scale_to_one, projection, fill_na, fill_val
+        )
+        self[names[0]] = isopl
+        self[names[1]] = isoev
+        return self
+
+    def filter_record_ids(self, record_ids: list, **kwargs):
+        return janitor.filter_column_isin(self, "RecordID", record_ids, **kwargs)
+
+    def filter_group_ids(self, group_ids: list, **kwargs):
+        return janitor.filter_column_isin(self, "GroupID", group_ids, **kwargs)
+
+    def filter_session_ids(self, session_ids: list, **kwargs):
+        return janitor.filter_column_isin(self, "SessionID", session_ids, **kwargs)
+
+    def filter_location_ids(self, location_ids: list, **kwargs):
+        return janitor.filter_column_isin(self, "LocationID", location_ids, **kwargs)
+
+    def filter_lockdown(self, is_lockdown=False):
+        complement = True if is_lockdown else False
+        return janitor.filter_on(self, "Lockdown == 0", complement)
+
+    def return_paqs(self, incl_ids: bool = True, other_cols: list = None):
+        cols = PAQ_COLS
+        if incl_ids:
+            id_cols = []
+            for name in ["RecordID", "GroupID", "SessionID", "LocationID"]:
+                if name in self.columns:
+                    id_cols.append(name)
+            cols = id_cols + cols
+        if other_cols:
+            cols = cols + other_cols
+        return self[cols]
+
+    # Plotting
+    def circumplex_scatter(
+        self,
+        ax,
+        title="Soundscape Scatter Plot",
+        group=None,
+        x="ISOPleasant",
+        y="ISOEventful",
+        prim_labels=True,
+        diagonal_lines=False,
+        palette=None,
+        legend=False,
+        legend_loc="lower left",
+        s=100,
+        **scatter_kwargs,
+    ):
+        return plotting.circumplex_scatter(
+            self,
+            ax,
+            title,
+            group,
+            x,
+            y,
+            prim_labels,
+            diagonal_lines,
+            palette,
+            legend,
+            legend_loc,
+            s,
+            **scatter_kwargs,
+        )
 
 
 # Dealing with Directories!
