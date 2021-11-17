@@ -1,27 +1,30 @@
 #%%
 
-import pandas as pd
-import pandas_flavor as pf
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import seaborn as sns
 from math import pi
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from .parameters import PAQ_COLS
 
 diag_lines_zorder = 1
 diag_labels_zorder = 4
 prim_lines_zorder = 2
 data_zorder = 3
 default_bw_adjust = 1.2
+default_figsize = (8,8)
 
 #%%
 
 
-def paq_radar(sf, ax=None, index=None):
+def paq_radar(sf, ax=None, index=None, figsize=default_figsize):
     # TODO: Resize the plot
     if index:
         sf = sf.convert_column_to_index(col=index)
     data = sf[PAQ_COLS]
     if ax is None:
+        plt.figure(figsize=figsize)
         ax = plt.axes(polar=True)
     # ---------- Part 1: create background
     # Number of variables
@@ -67,7 +70,7 @@ def paq_radar(sf, ax=None, index=None):
 
 def circumplex_scatter(
     sf,
-    ax,
+    ax=None,
     title="Soundscape Scatter Plot",
     group=None,
     x="ISOPleasant",
@@ -78,8 +81,12 @@ def circumplex_scatter(
     legend=False,
     legend_loc="lower left",
     s=100,
+    figsize=default_figsize,
     **scatter_kwargs,
 ):
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+
     if palette is None:
         n_colors = len(sf[group].unique()) if group else len(sf)
         palette = sns.color_palette("husl", as_cmap=True)
@@ -121,10 +128,11 @@ def circumplex_density(
     alpha=0.95,
     legend=False,
     legend_loc="lower left",
+    figsize=default_figsize,
     **density_kwargs,
 ):
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     sns.kdeplot(
         data=sf,
@@ -147,7 +155,7 @@ def circumplex_density(
     return ax
 
 
-def circumplex_jointplot_density(
+def circumplex_jointplot(
     sf,
     title="Soundscape Joint Plot",
     x="ISOPleasant",
@@ -178,11 +186,11 @@ def circumplex_jointplot_density(
             prim_labels=prim_labels,
             diagonal_lines=diagonal_lines,
             palette=palette,
-            hue=group,
             fill=fill,
             bw_adjust=bw_adjust,
             alpha=alpha,
             legend=legend,
+            hue=group,
             **joint_kwargs,
         )
     elif joint_kind == "scatter":

@@ -18,7 +18,7 @@ import pandas as pd
 
 # Constants and Labels
 from .parameters import CATEGORISED_VARS, PARAM_LIST, SURVEY_VARS, PAQ_COLS
-from .plotting import default_bw_adjust
+from .plotting import default_bw_adjust, default_figsize
 
 DEFAULT_CATS = [
     "indexing",
@@ -55,6 +55,15 @@ def load_isd_dataset(
     return sf
 
 
+def simulated_dataset(
+    n=3000, add_complex_paqs=False, **complex_kwargs,
+):
+    sf = SurveyFrame(np.random.randint(1, 5, size=(n, 8)), columns=PAQ_COLS)
+    if add_complex_paqs:
+        sf.add_complex_paqs(**complex_kwargs)
+    return sf
+
+
 # Dealing with Surveys!
 class SurveyFrame(pd.DataFrame):
     # TODO Add Documentation
@@ -86,15 +95,6 @@ class SurveyFrame(pd.DataFrame):
             cols.extend(add_columns)
 
         return SurveyFrame(columns=cols, index=index, dtype=dtype)
-
-    @classmethod
-    def simulate_dataset(
-        self, n=3000, add_complex_paqs=False, **complex_kwargs,
-    ):
-        sf = SurveyFrame(np.random.randint(1, 5, size=(n, 8)), columns=PAQ_COLS)
-        if add_complex_paqs:
-            sf.add_complex_paqs(**complex_kwargs)
-        return sf
 
     @classmethod
     def load_isd_dataset(
@@ -419,7 +419,7 @@ class SurveyFrame(pd.DataFrame):
     # Plotting
     def circumplex_scatter(
         self,
-        ax,
+        ax=None,
         title="Soundscape Scatter Plot",
         group=None,
         x="ISOPleasant",
@@ -430,21 +430,23 @@ class SurveyFrame(pd.DataFrame):
         legend=False,
         legend_loc="lower left",
         s=100,
+        figsize=default_figsize,
         **scatter_kwargs,
     ):
         return plotting.circumplex_scatter(
             self,
-            ax,
-            title,
-            group,
-            x,
-            y,
-            prim_labels,
-            diagonal_lines,
-            palette,
-            legend,
-            legend_loc,
-            s,
+            ax=ax,
+            title=title,
+            group=group,
+            x=x,
+            y=y,
+            prim_labels=prim_labels,
+            diagonal_lines=diagonal_lines,
+            palette=palette,
+            legend=legend,
+            legend_loc=legend_loc,
+            s=s,
+            figsize=figsize,
             **scatter_kwargs,
         )
 
@@ -462,6 +464,7 @@ class SurveyFrame(pd.DataFrame):
         alpha=0.95,
         legend=False,
         legend_loc="lower left",
+        figsize=default_figsize,
         **density_kwargs,
     ):
         return plotting.circumplex_density(
@@ -478,10 +481,11 @@ class SurveyFrame(pd.DataFrame):
             alpha=alpha,
             legend=legend,
             legend_loc=legend_loc,
+            figsize=figsize,
             **density_kwargs,
         )
 
-    def circumplex_jointplot_density(
+    def circumplex_jointplot(
         self,
         title="Soundscape Joint Plot",
         x="ISOPleasant",
@@ -501,7 +505,7 @@ class SurveyFrame(pd.DataFrame):
         joint_kwargs={},
         marginal_kwargs={"fill": True},
     ):
-        return plotting.circumplex_jointplot_density(
+        return plotting.circumplex_jointplot(
             self,
             title=title,
             x=x,
