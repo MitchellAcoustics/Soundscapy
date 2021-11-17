@@ -13,7 +13,7 @@ diag_labels_zorder = 4
 prim_lines_zorder = 2
 data_zorder = 3
 default_bw_adjust = 1.2
-default_figsize = (8,8)
+default_figsize = (8, 8)
 
 #%%
 
@@ -124,6 +124,7 @@ def circumplex_density(
     diagonal_lines=False,
     palette="Blues",
     fill=True,
+    group=None,
     bw_adjust=default_bw_adjust,
     alpha=0.95,
     legend=False,
@@ -145,6 +146,7 @@ def circumplex_density(
         legend=legend,
         zorder=data_zorder,
         bw_adjust=bw_adjust,
+        hue=group,
         **density_kwargs,
     )
     _circumplex_grid(ax, prim_labels, diagonal_lines)
@@ -169,7 +171,7 @@ def circumplex_jointplot(
     legend=False,
     legend_loc="lower left",
     s=100,
-    marginal_kind="kde",
+    marginal_kind="density",
     joint_kind="density",
     group=None,
     joint_kwargs={},
@@ -186,11 +188,11 @@ def circumplex_jointplot(
             prim_labels=prim_labels,
             diagonal_lines=diagonal_lines,
             palette=palette,
+            group=group,
             fill=fill,
             bw_adjust=bw_adjust,
             alpha=alpha,
             legend=legend,
-            hue=group,
             **joint_kwargs,
         )
     elif joint_kind == "scatter":
@@ -233,7 +235,7 @@ def circumplex_jointplot(
             legend=False,
             **marginal_kwargs,
         )
-    elif marginal_kind == "kde":
+    elif marginal_kind == "density":
         sns.kdeplot(
             data=sf,
             x=x,
