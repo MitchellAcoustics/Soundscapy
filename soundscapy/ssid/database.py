@@ -401,16 +401,18 @@ class SurveyFrame(pd.DataFrame):
         return janitor.filter_column_isin(self, "LocationID", location_ids, **kwargs)
 
     def filter_lockdown(self, is_lockdown=False):
-        complement = True if is_lockdown else False
+        complement = bool(is_lockdown)
         return janitor.filter_on(self, "Lockdown == 0", complement)
 
     def return_paqs(self, incl_ids: bool = True, other_cols: list = None):
         cols = PAQ_COLS
         if incl_ids:
-            id_cols = []
-            for name in ["RecordID", "GroupID", "SessionID", "LocationID"]:
-                if name in self.columns:
-                    id_cols.append(name)
+            id_cols = [
+                name
+                for name in ["RecordID", "GroupID", "SessionID", "LocationID"]
+                if name in self.columns
+            ]
+
             cols = id_cols + cols
         if other_cols:
             cols = cols + other_cols
@@ -602,24 +604,9 @@ def collect_all_dirs(
         ][0]
         bin_dirs.append(bin_dir)
 
-    if include_TS:
-        # Collect Time Series parameter directories
-        full_ts_list = _ts_dirs(bin_dirs, param_list)
-    else:
-        full_ts_list = []
-
-    if include_spectrum:
-        # Collect Spectrum directories
-        full_spectrum_list = _spectrum_dirs(bin_dirs)
-    else:
-        full_spectrum_list = []
-
-    if include_WAV:
-        # Collect WAV directories
-        full_wav_list = _wav_dirs(bin_dirs)
-    else:
-        full_wav_list = []
-
+    full_ts_list = _ts_dirs(bin_dirs, param_list) if include_TS else []
+    full_spectrum_list = _spectrum_dirs(bin_dirs) if include_spectrum else []
+    full_wav_list = _wav_dirs(bin_dirs) if include_WAV else []
     return full_ts_list, full_spectrum_list, full_wav_list
 
 
