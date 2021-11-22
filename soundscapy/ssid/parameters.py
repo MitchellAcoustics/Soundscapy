@@ -13,6 +13,17 @@ PARAM_LIST = [
     "Impulsiveness",
 ]
 
+PAQ_COLS = [
+    "pleasant",
+    "vibrant",
+    "eventful",
+    "chaotic",
+    "annoying",
+    "monotonous",
+    "uneventful",
+    "calm",
+]
+
 LOCATION_IDS = {
     "London": [
         "CamdenTown",
