@@ -321,7 +321,65 @@ def single_lmplot(
     return g
 
 
-# def grouped_lmplot(sf, x, y, groups, group_order=None, ylim=None):
+def grouped_lmplot(
+    sf,
+    x,
+    y,
+    groups,
+    group_order=None,
+    ylim=None,
+    xlim=None,
+    order=1,
+    fit_reg=True,
+    col_wrap=4,
+    scatter_kws=None,
+    line_kws=None,
+    facet_kws={"sharex": False},
+    **kwargs,
+):
+    if y in ["ISOPleasant", "ISOEventful"] and ylim is None:
+        ylim = (-1, 1)
+    grid = sns.lmplot(
+        x=x,
+        y=y,
+        col=groups,
+        order=order,
+        col_wrap=col_wrap,
+        data=sf,
+        fit_reg=fit_reg,
+        height=4,
+        facet_kws=facet_kws,
+        scatter_kws=scatter_kws,
+        line_kws=line_kws,
+        **kwargs,
+    )
+    grid.set(ylim=ylim)
+    grid.set(xlim=xlim)
+    if group_order is None:
+        group_order = sf[groups].unique()
+
+    if fit_reg:
+        for location, ax in zip(group_order, grid.axes.ravel()):
+            df = sf.loc[sf[groups] == location, [y, x]].dropna()
+            r, p = pearsonr(df[y], df[x])
+            if p < 0.01:
+                symb = "**"
+            elif p < 0.05:
+                symb = "*"
+            else:
+                symb = ""
+            fontweight = 750 if p < 0.05 else None
+
+            text = f"{round(r, 2)}{symb}"
+            ax.text(
+                np.mean(ax.get_xlim()),
+                min(ax.get_ylim()) * 0.75,
+                text,
+                ha="center",
+                fontweight=fontweight,
+            )
+    grid.set_titles("{col_name}")
+    return grid
 
 
 def _move_legend(ax, new_loc, **kws):
