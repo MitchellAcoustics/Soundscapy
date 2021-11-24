@@ -19,7 +19,16 @@ default_figsize = (8, 8)
 
 
 def paq_radar(sf, ax=None, index=None, figsize=default_figsize):
-    # TODO: Resize the plot
+    """Plots a radar (spider) plot showing the 8 PAQs in their appropriate relationships
+    This plot is very useful for visualising the original PAQs, before they undergo the ISO transformation.
+    Radar plots are not typically recommended for most purposes, but they are particularly appropriate here where
+    the spatial relationship between the PAQs is actually meaningful.
+    :param sf: SurveyFrame
+    :param ax: matplotlib Axes if adding to a multiplot, default None
+    :param index: column to convert to index for labelling, default None if index is already correctly set
+    :param figsize:
+    :return: matplotlib Axes containing the radar plot
+    """
     if index:
         sf = sf.convert_column_to_index(col=index)
     data = sf[PAQ_COLS]
