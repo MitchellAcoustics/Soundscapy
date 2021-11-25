@@ -1,7 +1,7 @@
 #%%
 
 from math import pi
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -279,14 +279,19 @@ def single_lmplot(
     ylim=None,
     xlim=None,
     order=1,
-    reg=True,
+    fit_reg=True,
+    corr='pearson',
     **kwargs,
 ):
     if y in ["ISOPleasant", "ISOEventful"] and ylim is None:
         ylim = (-1, 1)
-    if reg:
+    if corr:
         df = sf[[y, x]].dropna()
-        r, p = pearsonr(df[y], df[x])
+        if corr == 'pearson':
+            r, p = pearsonr(df[y], df[x])
+        elif corr == 'spearman':
+            r, p == spearmanr(df[y], df[x])
+            
         if p < 0.01:
             symb = "**"
         elif p < 0.05:
@@ -299,7 +304,7 @@ def single_lmplot(
 
     if groups is None:
         g = sns.lmplot(
-            x=x, y=y, data=sf, height=8, aspect=1, order=order, fit_reg=reg, **kwargs
+            x=x, y=y, data=sf, height=8, aspect=1, order=order, fit_reg=fit_reg, **kwargs
         )
     else:
         g = sns.lmplot(
@@ -311,7 +316,7 @@ def single_lmplot(
             order=order,
             hue=groups,
             hue_order=group_order,
-            fit_reg=reg,
+            fit_reg=fit_reg,
             **kwargs,
         )
 
@@ -340,6 +345,7 @@ def grouped_lmplot(
     xlim=None,
     order=1,
     fit_reg=True,
+    corr='pearson',
     col_wrap=4,
     scatter_kws=None,
     line_kws=None,
@@ -367,10 +373,13 @@ def grouped_lmplot(
     if group_order is None:
         group_order = sf[groups].unique()
 
-    if fit_reg:
+    if corr:
         for location, ax in zip(group_order, grid.axes.ravel()):
             df = sf.loc[sf[groups] == location, [y, x]].dropna()
-            r, p = pearsonr(df[y], df[x])
+            if corr == 'pearson':
+                r, p = pearsonr(df[y], df[x])
+            elif corr == 'spearman':
+                r, p = spearmanr(df[y], df[x])
             if p < 0.01:
                 symb = "**"
             elif p < 0.05:
