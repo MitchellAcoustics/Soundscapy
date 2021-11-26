@@ -162,5 +162,6 @@ dmypy.json
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,vscode
-.vscode/settings.json
-Cultural-comparison-analysis.ipynb
+/.vscode
+/notebooks
+/.idea
