@@ -11,4 +11,5 @@ dependencies:
   - matplotlib
   - pandas
   - openpyxl
+  - jupyterlab
 prefix: /opt/miniconda3/envs/isd-dev
