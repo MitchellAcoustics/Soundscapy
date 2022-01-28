@@ -165,6 +165,8 @@ dmypy.json
 /.vscode
 /.idea
 .vscode/settings.json
+Cultural-comparison-analysis.ipynb
+=======
 /notebooks/
 .idea/.name
 .idea/misc.xml
