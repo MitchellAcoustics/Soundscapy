@@ -400,6 +400,9 @@ class SurveyFrame(pd.DataFrame):
     def filter_location_ids(self, location_ids: list, **kwargs):
         return janitor.filter_column_isin(self, "LocationID", location_ids, **kwargs)
 
+    def filter_country(self, countries: list, **kwargs):
+        return janitor.filter_column_isin(self, "Country", countries, **kwargs)
+
     def filter_lockdown(self, is_lockdown=False):
         complement = True if is_lockdown else False
         return janitor.filter_on(self, "Lockdown == 0", complement)

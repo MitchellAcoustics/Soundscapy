@@ -162,4 +162,16 @@ dmypy.json
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,vscode
+<<<<<<< Updated upstream
+/.vscode
+/notebooks
+/.idea
+=======
 .vscode/settings.json
+/notebooks/
+.idea/.name
+.idea/misc.xml
+.idea/Soundscapy.iml
+.idea/vcs.xml
+.idea/workspace.xml
+>>>>>>> Stashed changes
