@@ -1,0 +1,14 @@
+name: isd-dev
+channels:
+  - https://conda.anaconda.org/conda-forge/
+  - defaults
+dependencies:
+  - seaborn
+  - pyjanitor
+  - python
+  - pandas-flavor
+  - jupyter
+  - matplotlib
+  - pandas
+  - openpyxl
+prefix: /opt/miniconda3/envs/isd-dev
