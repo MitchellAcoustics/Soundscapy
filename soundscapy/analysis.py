@@ -157,7 +157,7 @@ def loudness_from_wav(
     # Input sanity!
     methodlist = ["time_varying", "stationary"]
     if method not in methodlist:
-        if method in ["stationary_levels", "Stationary_Levels"]:
+        if method in {"stationary_levels", "Stationary_Levels"}:
             raise ValueError(
                 "Calculating loudness from pre-calculated levels has its own method! (or it soon will...)"
             )
