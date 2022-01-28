@@ -400,6 +400,9 @@ class SurveyFrame(pd.DataFrame):
     def filter_location_ids(self, location_ids: list, **kwargs):
         return janitor.filter_column_isin(self, "LocationID", location_ids, **kwargs)
 
+    def filter_country(self, countries: list, **kwargs):
+        return janitor.filter_column_isin(self, "Country", countries, **kwargs)
+
     def filter_lockdown(self, is_lockdown=False):
         complement = True if is_lockdown else False
         return janitor.filter_on(self, "Lockdown == 0", complement)
@@ -602,24 +605,9 @@ def collect_all_dirs(
         ][0]
         bin_dirs.append(bin_dir)
 
-    if include_TS:
-        # Collect Time Series parameter directories
-        full_ts_list = _ts_dirs(bin_dirs, param_list)
-    else:
-        full_ts_list = []
-
-    if include_spectrum:
-        # Collect Spectrum directories
-        full_spectrum_list = _spectrum_dirs(bin_dirs)
-    else:
-        full_spectrum_list = []
-
-    if include_WAV:
-        # Collect WAV directories
-        full_wav_list = _wav_dirs(bin_dirs)
-    else:
-        full_wav_list = []
-
+    full_ts_list = _ts_dirs(bin_dirs, param_list) if include_TS else []
+    full_spectrum_list = _spectrum_dirs(bin_dirs) if include_spectrum else []
+    full_wav_list = _wav_dirs(bin_dirs) if include_WAV else []
     return full_ts_list, full_spectrum_list, full_wav_list
 
 
