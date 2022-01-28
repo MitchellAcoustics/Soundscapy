@@ -162,7 +162,10 @@ dmypy.json
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,vscode
+/.vscode
+/.idea
 .vscode/settings.json
+/notebooks/
 .idea/.name
 .idea/misc.xml
 .idea/Soundscapy.iml
