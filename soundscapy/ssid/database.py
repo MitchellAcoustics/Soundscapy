@@ -404,16 +404,18 @@ class SurveyFrame(pd.DataFrame):
         return janitor.filter_column_isin(self, "Country", countries, **kwargs)
 
     def filter_lockdown(self, is_lockdown=False):
-        complement = True if is_lockdown else False
+        complement = bool(is_lockdown)
         return janitor.filter_on(self, "Lockdown == 0", complement)
 
     def return_paqs(self, incl_ids: bool = True, other_cols: list = None):
         cols = PAQ_COLS
         if incl_ids:
-            id_cols = []
-            for name in ["RecordID", "GroupID", "SessionID", "LocationID"]:
-                if name in self.columns:
-                    id_cols.append(name)
+            id_cols = [
+                name
+                for name in ["RecordID", "GroupID", "SessionID", "LocationID"]
+                if name in self.columns
+            ]
+
             cols = id_cols + cols
         if other_cols:
             cols = cols + other_cols
