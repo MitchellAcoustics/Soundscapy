@@ -31,28 +31,27 @@ DEFAULT_CATS = [
 _flatten = lambda t: [item for sublist in t for item in sublist]
 
 
-def load_isd_dataset(
-    version="latest",
-    clean_cols=False,
-    use_RecordID_as_index: bool = True,
-    drop_columns=[],
-    add_columns=[],
-    **read_kwargs,
-):
-    # TODO: Write docs
-    version = "V0.2.2" if version == "latest" else version
-    urls = {
-        "V0.2.1": "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx",
-        "V0.2.2": "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx",
-    }
+def load_isd_dataset(version="latest"):
+    """Automatically fetch and load the ISD dataset from Zenodo
 
-    df = pd.read_excel(urls[version], header=0, **read_kwargs)
-    df = df.drop(drop_columns, axis=1)
-    sf = SurveyFrame(df)
-    if use_RecordID_as_index:
-        sf = sf.convert_column_to_index("RecordID")
-    sf._version = version
-    return sf
+    Parameters
+    ----------
+    version : str, optional
+        version number of the dataset to fetch, by default "latest"
+
+    Returns
+    -------
+    pd.Dataframe
+        ISD data
+    """
+    if version == "V0.2.1":
+        url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
+    elif version in ["V0.2.2", "v0.2.2"]:
+        url = "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
+    elif version in ["v0.2.3", "latest"]:
+        url = "https://zenodo.org/record/5914762/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
+
+    return pd.read_excel(url)
 
 
 def simulated_dataset(
