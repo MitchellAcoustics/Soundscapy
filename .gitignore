@@ -173,3 +173,5 @@ Cultural-comparison-analysis.ipynb
 .idea/Soundscapy.iml
 .idea/vcs.xml
 .idea/workspace.xml
+soundscapy/.DS_Store
+.DS_Store
