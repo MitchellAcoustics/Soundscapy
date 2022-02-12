@@ -1071,13 +1071,6 @@ def _deal_w_default_labels(ax, prim_labels):
 
 
 def _primary_lines_and_labels(ax, prim_labels, line_weights):
-    prim_ax_font = {
-        "fontstyle": "italic",
-        "fontsize": "medium",
-        "fontweight": "bold",
-        "c": "grey",
-        "alpha": 1,
-    }
     x_lim = ax.get_xlim()
     y_lim = ax.get_ylim()
 
@@ -1103,6 +1096,13 @@ def _primary_lines_and_labels(ax, prim_labels, line_weights):
     )
 
     if prim_labels is True:
+        prim_ax_font = {
+            "fontstyle": "italic",
+            "fontsize": "medium",
+            "fontweight": "bold",
+            "c": "grey",
+            "alpha": 1,
+        }
         ### Labels
         ax.text(  # ISOPleasant Label
             x=x_lim[1] + 0.01,
