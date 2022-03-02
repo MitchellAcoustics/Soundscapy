@@ -1,7 +1,8 @@
 import janitor
 
-# myPath = os.path.dirname(os.path.abspath(__file__))
-# sys.path.insert(0, myPath + "/../../")
+# Add soundscapy to the Python path
+import sys
+sys.path.append('..')
 
 from pathlib import Path
 
@@ -9,8 +10,8 @@ import numpy as np
 import pandas as pd
 
 # Constants and Labels
-from ssid.parameters import CATEGORISED_VARS, PARAM_LIST, SURVEY_VARS, PAQ_COLS
-from ssid.plotting import default_bw_adjust, default_figsize
+from soundscapy.ssid.parameters import CATEGORISED_VARS, PARAM_LIST, SURVEY_VARS, PAQ_COLS
+from soundscapy.ssid.plotting import default_bw_adjust, default_figsize
 
 DEFAULT_CATS = [
     "indexing",

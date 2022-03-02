@@ -28,19 +28,20 @@ This file can also be imported as a module.
 """
 #%%
 from datetime import date
-from math import pi
 
 import janitor
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pandas_flavor as pf
 import seaborn as sns
-from pandas.api.extensions import register_dataframe_accessor, register_series_accessor
+from pandas.api.extensions import register_dataframe_accessor
 
-import ssid.database as db
-import ssid.plotting as ssidplot
+# Add soundscapy to the Python path
+import sys
+sys.path.append('..')
+import soundscapy.ssid.database as db
+import soundscapy.ssid.plotting as ssidplot
 
 #%%
 
