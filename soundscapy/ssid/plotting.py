@@ -15,6 +15,7 @@ diag_labels_zorder = 4
 prim_lines_zorder = 2
 data_zorder = 3
 default_bw_adjust = 1.2
+default_figsize = (5,5)
 
 #%%
 

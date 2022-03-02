@@ -1,25 +1,16 @@
-import os
-import sys
-
 import janitor
 
-from soundscapy.ssid import plotting
+# myPath = os.path.dirname(os.path.abspath(__file__))
+# sys.path.insert(0, myPath + "/../../")
 
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath + "/../../")
-
-import csv
-from datetime import date
 from pathlib import Path
-import warnings
 
 import numpy as np
 import pandas as pd
-from pandas.api.extensions import register_dataframe_accessor, register_series_accessor
 
 # Constants and Labels
-from .parameters import CATEGORISED_VARS, PARAM_LIST, SURVEY_VARS, PAQ_COLS
-from .plotting import default_bw_adjust, default_figsize
+from ssid.parameters import CATEGORISED_VARS, PARAM_LIST, SURVEY_VARS, PAQ_COLS
+from ssid.plotting import default_bw_adjust, default_figsize
 
 DEFAULT_CATS = [
     "indexing",
