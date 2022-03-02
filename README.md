@@ -9,7 +9,7 @@ For this under-development version, I suggest installing from source in the foll
 Create a suitable conda environment by downloading just the environment.yml file:
 ```
 conda env create -f environment.yml
-conda activate isd-dev
+conda activate soundscapy-dev
 ```
 Then, install soundscapy from the github source:
 ```
