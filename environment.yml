@@ -1,4 +1,4 @@
-name: isd-dev
+name: soundscapy-dev
 channels:
   - https://conda.anaconda.org/conda-forge/
   - defaults
