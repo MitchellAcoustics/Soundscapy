@@ -2,6 +2,8 @@ import janitor
 
 # Add soundscapy to the Python path
 import sys
+
+from matplotlib.pyplot import switch_backend
 sys.path.append('..')
 
 from pathlib import Path
@@ -10,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 # Constants and Labels
-from soundscapy.ssid.parameters import CATEGORISED_VARS, PARAM_LIST, SURVEY_VARS, PAQ_COLS
+from soundscapy.ssid.parameters import CATEGORISED_VARS, PAQ_IDS, PARAM_LIST, SURVEY_VARS, PAQ_NAMES
 from soundscapy.ssid.plotting import default_bw_adjust, default_figsize
 
 DEFAULT_CATS = [
@@ -50,6 +52,74 @@ def load_isd_dataset(version="latest"):
     return pd.read_excel(url)
 
 
+def validate_dataset(df, paq_aliases=None, allow_na=False, verbose=1, val_range=(5,1)):
+    if verbose > 0:
+        print("Renaming PAQ columns.")
+    df = rename_paqs(df, paq_aliases)
+
+    if verbose > 0:
+        print("Checking PAQ data quality.")
+    if l := paq_data_quality(df, verbose, allow_na, val_range):
+        df = df.drop(df.index[l])
+
+    return df
+
+def rename_paqs(df, paq_aliases=None, verbose=0):
+    if paq_aliases is None:
+        if any(i in b for i in PAQ_NAMES for b in df.columns):
+            if verbose > 0:
+                print("PAQs already correctly named.")
+            return df
+        if any(i in b for i in PAQ_IDS for b in df.columns):
+            paq_aliases = PAQ_IDS
+            
+    if type(paq_aliases) == list:
+        return df.rename(columns=
+                  {
+                      paq_aliases[0]: PAQ_NAMES[0],
+                      paq_aliases[1]: PAQ_NAMES[1],
+                      paq_aliases[2]: PAQ_NAMES[2],
+                      paq_aliases[3]: PAQ_NAMES[3],
+                      paq_aliases[4]: PAQ_NAMES[4],
+                      paq_aliases[5]: PAQ_NAMES[5],
+                      paq_aliases[6]: PAQ_NAMES[6],
+                      paq_aliases[7]: PAQ_NAMES[7]
+                  })
+    elif type(paq_aliases) == dict:
+        return df.rename(columns=paq_aliases)
+    
+def paq_data_quality(df, verbose=0, allow_na=False, val_range=(5,1)):
+    paqs = df.isd.return_paqs(incl_ids=False)
+    l = []
+    for i in range(len(paqs)):
+        row = paqs.iloc[i]
+        if allow_na and row.isna().sum() == 8: # if we allow completely missing data (i.e. lockdown data)to be included, then we skip over it here
+            continue
+        if (
+            row['pleasant']
+            == row['vibrant']
+            == row['eventful']
+            == row['chaotic']
+            == row['annoying']
+            == row['monotonous']
+            == row['uneventful']
+            == row['calm']
+            and row.sum() != np.mean(val_range)
+        ):
+            l.append(i)
+        elif row.isna().sum() > 4:
+            l.append(i)
+        elif row.max() > max(val_range) or row.min() < min(val_range):
+            l.append(i)
+    if l:
+        if verbose > 0:
+            print(f"Identified {len(l)} samples to remove.\n{l}")
+        return l
+    if verbose > 0:
+        print("PAQ quality confirmed. No rows dropped.")
+    return None
+
+
 def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
     """Generate random PAQ responses
 
@@ -69,7 +139,7 @@ def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
         dataframe of randomly generated PAQ response
     """
     np.random.seed(42)
-    df = pd.DataFrame(np.random.randint(1, 5, size=(n, 8)), columns=PAQ_COLS)
+    df = pd.DataFrame(np.random.randint(1, 5, size=(n, 8)), columns=PAQ_NAMES)
     if add_paq_coords:
         ISOPl, ISOEv = calculate_paq_coords(df, **coord_kwargs)
         df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
@@ -79,6 +149,7 @@ def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
 def calculate_paq_coords(
     results_df: pd.DataFrame,
     scale_to_one: bool = True,
+    val_range: tuple = (5,1),
     projection: bool = True,
 ):
     """Calculates the projected ISOPleasant and ISOEventful coordinates
@@ -103,7 +174,7 @@ def calculate_paq_coords(
     """
 
     proj = np.cos(np.deg2rad(45)) if projection else 1
-    scale = 4 + np.sqrt(32)
+    scale = _circ_scale(val_range, proj) if scale_to_one else 1
 
     # TODO: Add if statements for too much missing data
     # P =(p−a)+cos45°(ca−ch)+cos45°(v−m)
@@ -112,7 +183,7 @@ def calculate_paq_coords(
         + proj * (results_df.calm.fillna(3) - results_df.chaotic.fillna(3))
         + proj * (results_df.vibrant.fillna(3) - results_df.monotonous.fillna(3))
     )
-    ISOPleasant = complex_pleasant / scale if scale_to_one else complex_pleasant
+    ISOPleasant = complex_pleasant / scale
 
     # E =(e−u)+cos45°(ch−ca)+cos45°(v−m)
     complex_eventful = (
@@ -120,10 +191,14 @@ def calculate_paq_coords(
         + proj * (results_df.chaotic.fillna(3) - results_df.calm.fillna(3))
         + proj * (results_df.vibrant.fillna(3) - results_df.monotonous.fillna(3))
     )
-    ISOEventful = complex_eventful / scale if scale_to_one else complex_eventful
+    ISOEventful = complex_eventful / scale
 
     return ISOPleasant, ISOEventful
 
+
+def _circ_scale(range, proj):
+    diff = max(range)-min(range)
+    return diff + diff*np.sqrt(2)
 
 
 def convert_column_to_index(df, col="GroupID", drop=False):

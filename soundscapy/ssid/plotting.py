@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-from .parameters import PAQ_COLS
+from .parameters import PAQ_NAMES
 
 diag_lines_zorder = 1
 diag_labels_zorder = 4
@@ -39,7 +39,7 @@ def paq_radar_plot(data, ax=None, index=None):
     # TODO: Resize the plot
     if index:
         data = data.isd.convert_column_to_index(col=index)
-    data = data[PAQ_COLS]
+    data = data[PAQ_NAMES]
     if ax is None:
         ax = plt.axes(polar=True)
     # ---------- Part 1: create background

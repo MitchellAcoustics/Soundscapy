@@ -13,7 +13,7 @@ PARAM_LIST = [
     "Impulsiveness",
 ]
 
-PAQ_COLS = [
+PAQ_NAMES = [
     "pleasant",
     "vibrant",
     "eventful",
@@ -22,6 +22,17 @@ PAQ_COLS = [
     "monotonous",
     "uneventful",
     "calm",
+]
+
+PAQ_IDS = [
+    "PAQ1",
+    "PAQ2",
+    "PAQ3",
+    "PAQ4",
+    "PAQ5",
+    "PAQ6",
+    "PAQ7",
+    "PAQ8",
 ]
 
 LOCATION_IDS = {

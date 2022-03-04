@@ -46,16 +46,7 @@ import soundscapy.ssid.plotting as ssidplot
 #%%
 
 # Define the names of the PAQ columns
-PAQ_COLS = [
-    "pleasant",
-    "vibrant",
-    "eventful",
-    "chaotic",
-    "annoying",
-    "monotonous",
-    "uneventful",
-    "calm",
-]
+from soundscapy.ssid.parameters import PAQ_NAMES, PAQ_IDS
 
 # Default plot settings
 diag_lines_zorder = 1
@@ -231,6 +222,12 @@ class ISDAccessor:
     def __init__(self, df):
         self._df = df
         self._analysis_date = date.today().isoformat()
+        
+    def validate_dataset(self, paq_aliases=None, allow_na=False, verbose=1, val_range=(5,1)):
+        return db.validate_dataset(self._df, paq_aliases, allow_na, verbose, val_range)
+    
+    def paq_data_quality(self, verbose=0):
+        return db.paq_data_quality(self._df, verbose)
 
     def filter_group_ids(self, group_ids: list, **kwargs):
         return janitor.filter_column_isin(self._df, "GroupID", group_ids, **kwargs)
@@ -265,7 +262,7 @@ class ISDAccessor:
             other columns to also include, by default None
 
         """
-        cols = PAQ_COLS
+        cols = PAQ_NAMES
         if incl_ids:
             id_cols = [
                 name
@@ -281,6 +278,7 @@ class ISDAccessor:
     def add_paq_coords(
         self,
         scale_to_one: bool = True,
+        val_range=(5,1),
         projection: bool = True,
         names=("ISOPleasant", "ISOEventful"),
     ):
@@ -297,9 +295,8 @@ class ISDAccessor:
         names : list, optional
             Names for new coordinate columns, by default ["ISOPleasant", "ISOEventful"]
         """
-        isopl, isoev = db.calculate_paq_coords(self._df, scale_to_one, projection)
-        self._df = self._df.add_column(names[0], isopl).add_column(names[1], isoev)
-        return self._df
+        isopl, isoev = db.calculate_paq_coords(self._df, scale_to_one, val_range, projection)
+        return self._df.add_column(names[0], isopl).add_column(names[1], isoev)
 
     def location_describe(
         self, location, type="percent", pl_threshold=0, ev_threshold=0
@@ -546,7 +543,7 @@ def iso_annotation(
     )
 
 
-def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
+def simulation(n=3000, add_paq_coords=False, val_range=(5,1), **coord_kwargs):
     """Generate random PAQ responses
 
     The PAQ responses will follow a uniform random distribution
@@ -566,9 +563,9 @@ def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
         dataframe of randomly generated PAQ response
     """
     np.random.seed(42)
-    df = pd.DataFrame(np.random.randint(1, 5, size=(n, 8)), columns=PAQ_COLS)
+    df = pd.DataFrame(np.random.randint(min(val_range), max(val_range), size=(n, 8)), columns=PAQ_NAMES)
     if add_paq_coords:
-        ISOPl, ISOEv = calculate_paq_coords(df, **coord_kwargs)
+        ISOPl, ISOEv = db.calculate_paq_coords(df, **coord_kwargs)
         df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
     return df
 
