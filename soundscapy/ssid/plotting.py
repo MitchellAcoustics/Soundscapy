@@ -15,7 +15,7 @@ diag_labels_zorder = 4
 prim_lines_zorder = 2
 data_zorder = 3
 default_bw_adjust = 1.2
-default_figsize = (5,5)
+default_figsize = (5, 5)
 
 #%%
 
@@ -441,8 +441,6 @@ def circumplex_jointplot_density(
     return g
 
 
-
-
 def _move_legend(ax, new_loc, **kws):
     """Moves legend to desired relative location.
 
@@ -461,7 +459,18 @@ def _move_legend(ax, new_loc, **kws):
 
 
 def _circumplex_grid(ax, prim_labels=True, diagonal_lines=False):
+    """Create the base layer grids and label lines for the soundscape circumplex
 
+    Parameters
+    ----------
+    axes : matplotlib.pyplot.Axes
+        plt subplot Axes to add the circumplex grids to
+    prim_labsl: bool, optional
+        flag for whether to include the custom primary labels ISOPleasant and ISOEventful, by default True
+        If using your own x and y names, you should set this to False.
+    diagonal_lines : bool, optional
+        flag for whether the include the diagonal dimensions (calm, etc), by default False
+    """
     # Setting up the grids
     sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
     line_weights = 1.5
@@ -631,6 +640,7 @@ def _diagonal_lines_and_labels(ax, line_weights):
 
 # Unsupported right now.
 
+
 def single_lmplot(
     sf,
     x,
@@ -641,19 +651,19 @@ def single_lmplot(
     xlim=None,
     order=1,
     fit_reg=True,
-    corr='pearson',
+    corr="pearson",
     **kwargs,
 ):
-    """ Unfinished and unsupported """
+    """Unfinished and unsupported"""
     if y in ["ISOPleasant", "ISOEventful"] and ylim is None:
         ylim = (-1, 1)
     if corr:
         df = sf[[y, x]].dropna()
-        if corr == 'pearson':
+        if corr == "pearson":
             r, p = pearsonr(df[y], df[x])
-        elif corr == 'spearman':
+        elif corr == "spearman":
             r, p == spearmanr(df[y], df[x])
-            
+
         if p < 0.01:
             symb = "**"
         elif p < 0.05:
@@ -666,7 +676,14 @@ def single_lmplot(
 
     if groups is None:
         g = sns.lmplot(
-            x=x, y=y, data=sf, height=8, aspect=1, order=order, fit_reg=fit_reg, **kwargs
+            x=x,
+            y=y,
+            data=sf,
+            height=8,
+            aspect=1,
+            order=order,
+            fit_reg=fit_reg,
+            **kwargs,
         )
     else:
         g = sns.lmplot(
@@ -707,14 +724,14 @@ def grouped_lmplot(
     xlim=None,
     order=1,
     fit_reg=True,
-    corr='pearson',
+    corr="pearson",
     col_wrap=4,
     scatter_kws=None,
     line_kws=None,
     facet_kws={"sharex": False},
     **kwargs,
 ):
-    """ Unfinished and unsupported """
+    """Unfinished and unsupported"""
     if y in ["ISOPleasant", "ISOEventful"] and ylim is None:
         ylim = (-1, 1)
     grid = sns.lmplot(
@@ -739,9 +756,9 @@ def grouped_lmplot(
     if corr:
         for location, ax in zip(group_order, grid.axes.ravel()):
             df = sf.loc[sf[groups] == location, [y, x]].dropna()
-            if corr == 'pearson':
+            if corr == "pearson":
                 r, p = pearsonr(df[y], df[x])
-            elif corr == 'spearman':
+            elif corr == "spearman":
                 r, p = spearmanr(df[y], df[x])
             if p < 0.01:
                 symb = "**"
@@ -763,3 +780,63 @@ def grouped_lmplot(
     return grid
 
 
+def iso_annotation(
+    ax,
+    data,
+    location,
+    x_adj=0,
+    y_adj=0,
+    x_key="ISOPleasant",
+    y_key="ISOEventful",
+    ha="center",
+    va="center",
+    fontsize="small",
+    arrowprops=dict(arrowstyle="-", ec="black"),
+    **text_kwargs,
+):
+    """add text annotations to circumplex plot based on coordinate values
+
+    Directly uses plt.annotate
+
+    Parameters
+    ----------
+    ax : matplotlib.pyplot.Axes
+        existing plt axes to add to
+    data : pd.Dataframe
+        dataframe of coordinate points
+    location : str
+        name of the coordinate to plot
+    x_adj : int, optional
+        value to adjust x location by, by default 0
+    y_adj : int, optional
+        value to adjust y location by, by default 0
+    x_key : str, optional
+        name of x column, by default "ISOPleasant"
+    y_key : str, optional
+        name of y column, by default "ISOEventful"
+    ha : str, optional
+        horizontal alignment, by default "center"
+    va : str, optional
+        vertical alignment, by default "center"
+    fontsize : str, optional
+        by default "small"
+    arrowprops : dict, optional
+        dict of properties to send to plt.annotate, by default dict(arrowstyle="-", ec="black")
+    """
+    ax.annotate(
+        text=data["LocationID"][location],
+        xy=(
+            data[x_key][location],
+            data[y_key][location],
+        ),
+        xytext=(
+            data[x_key][location] + x_adj,
+            data[y_key][location] + y_adj,
+        ),
+        ha=ha,
+        va=va,
+        arrowprops=arrowprops,
+        annotation_clip=True,
+        fontsize=fontsize,
+        **text_kwargs,
+    )

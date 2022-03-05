@@ -49,8 +49,16 @@ LOCATION_IDS = {
         "TateModern",
         "TorringtonSq",
     ],
-    "Venice": ["SanMarco", "MonumentoGaribaldi",],
-    "Granada": ["CampoPrincipe", "CarloV", "MiradorSanNicolas", "PlazaBibRambla",],
+    "Venice": [
+        "SanMarco",
+        "MonumentoGaribaldi",
+    ],
+    "Granada": [
+        "CampoPrincipe",
+        "CarloV",
+        "MiradorSanNicolas",
+        "PlazaBibRambla",
+    ],
     "Groningen": ["GroningenNoorderplantsoen"],
     "Test": ["LocationA", "LocationB"],
 }
@@ -134,10 +142,18 @@ category_levels = {
 
 # ? Add a 'type' tag? i.e. "type": "Likert" or "type": "Ordinal"
 SURVEY_VARS = {
-    "GroupID": {"aliases": ["group_id"],},
-    "SessionID": {"aliases": ["session_id"],},
-    "LocationID": {"aliases": ["location_id"],},
-    "RecordID": {"aliases": ["record_id"],},
+    "GroupID": {
+        "aliases": ["group_id"],
+    },
+    "SessionID": {
+        "aliases": ["session_id"],
+    },
+    "LocationID": {
+        "aliases": ["location_id"],
+    },
+    "RecordID": {
+        "aliases": ["record_id"],
+    },
     "Traffic": {
         "aliases": ["ssi01"],
         "levels": category_levels["sound_source_dominance"],
@@ -178,8 +194,14 @@ SURVEY_VARS = {
         "levels": category_levels["PAQ"],
         "text": "Uneventful",
     },
-    "calm": {"aliases": ["paq05", "ca"], "levels": category_levels["PAQ"],},
-    "annoying": {"aliases": ["paq06", "an"], "levels": category_levels["PAQ"],},
+    "calm": {
+        "aliases": ["paq05", "ca"],
+        "levels": category_levels["PAQ"],
+    },
+    "annoying": {
+        "aliases": ["paq06", "an"],
+        "levels": category_levels["PAQ"],
+    },
     "eventful": {
         "aliases": ["paq07", "ev"],
         "levels": category_levels["PAQ"],
@@ -240,7 +262,10 @@ SURVEY_VARS = {
         "levels": category_levels["who"],
         "text": "My daily life has been filled with things that interest me.",
     },
-    "WHO_sum": {"aliases": ["WHO_SUM", "who"], "range": (1, 100),},
+    "WHO_sum": {
+        "aliases": ["WHO_SUM", "who"],
+        "range": (1, 100),
+    },
     "Age": {
         "aliases": ["age", "age00"],
         "range": (18, 100),
@@ -290,7 +315,11 @@ SURVEY_VARS = {
     },
     "Resid": {
         "aliases": ["misc00", "Resident"],
-        "levels": {1: "A local", 2: "A tourist", 3: "Other",},
+        "levels": {
+            1: "A local",
+            2: "A tourist",
+            3: "Other",
+        },
         "text": "Would you consider yourself...",
     },
     "AnythingElse": {
@@ -299,4 +328,3 @@ SURVEY_VARS = {
         "text": "Is there anything else you want to let us know about the sound environment?",
     },
 }
-

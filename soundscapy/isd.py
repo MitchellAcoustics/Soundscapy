@@ -39,7 +39,8 @@ from pandas.api.extensions import register_dataframe_accessor
 
 # Add soundscapy to the Python path
 import sys
-sys.path.append('..')
+
+sys.path.append("..")
 import soundscapy.ssid.database as db
 import soundscapy.ssid.plotting as ssidplot
 
@@ -72,160 +73,17 @@ def load_isd_dataset(version="latest"):
     return db.load_isd_dataset(version)
 
 
-def circumplex_grids(axes, diagonal_lines=False):
-    """Create the base layer grids and label lines for the soundscape circumplex
-
-    Parameters
-    ----------
-    axes : matplotlib.pyplot.Axes
-        plt subplot Axes to add the circumplex grids to
-    diagonal_lines : bool, optional
-        flag for whether the include the diagonal dimensions (calm, etc), by default False
-    """
-    sns.set_palette("Blues")
-    sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
-    line_weights = 1.5
-
-    x_lim = axes.get_xlim()
-    y_lim = axes.get_ylim()
-
-    # grids and ticks
-    axes.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-    axes.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-
-    axes.grid(b=True, which="major", color="grey", alpha=0.5)
-    axes.grid(
-        b=True,
-        which="minor",
-        color="grey",
-        linestyle="dashed",
-        linewidth=0.5,
-        alpha=0.4,
-    )
-
-    # hide axis labels
-    axes.xaxis.label.set_visible(False)
-    axes.yaxis.label.set_visible(False)
-
-    # axes label font dict
-    prim_ax_font = {
-        "fontstyle": "italic",
-        "fontsize": "medium",
-        "fontweight": "bold",
-        "c": "grey",
-        "alpha": 1,
-    }
-
-    # Add lines and labels for circumplex model
-    ## Primary Axes
-    axes.plot(  # Horizontal line
-        [-1, 1],
-        [0, 0],
-        linestyle="dashed",
-        color="grey",
-        alpha=1,
-        lw=line_weights,
-    )
-    axes.plot(  # vertical line
-        [0, 0],
-        [1, -1],
-        linestyle="dashed",
-        color="grey",
-        alpha=1,
-        lw=line_weights,
-    )
-
-    ### Labels
-    axes.text(  # ISOPleasant Label
-        x=x_lim[1] + 0.01,
-        y=0,
-        s="ISO\nPleasant",
-        ha="left",
-        va="center",
-        fontdict=prim_ax_font,
-    )
-    axes.text(  # ISOEventful Label
-        x=0,
-        y=y_lim[1] + 0.01,
-        s="ISO\nEventful",
-        ha="center",
-        va="bottom",
-        fontdict=prim_ax_font,
-    )
-
-    ## Diagonal Axes
-
-    if diagonal_lines:
-        diag_ax_font = {
-            "fontstyle": "italic",
-            "fontsize": "small",
-            "fontweight": "bold",
-            "c": "grey",
-            "alpha": 0.75,
-        }
-
-        axes.plot(  # uppward diagonal
-            [-1, 1],
-            [-1, 1],
-            linestyle="dashed",
-            color="grey",
-            alpha=0.5,
-            lw=line_weights,
-        )
-        axes.plot(  # downward diagonal
-            [-1, 1],
-            [1, -1],
-            linestyle="dashed",
-            color="grey",
-            alpha=0.5,
-            lw=line_weights,
-        )
-
-        ### Labels
-        # TODO: Add diagonal labels
-        axes.text(  # Vibrant label
-            x=x_lim[1] / 2,
-            y=y_lim[1] / 2,
-            s="(vibrant)",
-            ha="center",
-            va="center",
-            fontdict=diag_ax_font,
-        )
-        axes.text(  # Chaotic label
-            x=x_lim[0] / 2,
-            y=y_lim[1] / 2,
-            s="(chaotic)",
-            ha="center",
-            va="center",
-            fontdict=diag_ax_font,
-        )
-        axes.text(  # monotonous label
-            x=x_lim[0] / 2,
-            y=y_lim[0] / 2,
-            s="(monotonous)",
-            ha="center",
-            va="center",
-            fontdict=diag_ax_font,
-        )
-        axes.text(  # calm label
-            x=x_lim[1] / 2,
-            y=y_lim[0] / 2,
-            s="(calm)",
-            ha="center",
-            va="center",
-            fontdict=diag_ax_font,
-        )
-
-
 @register_dataframe_accessor("isd")
 class ISDAccessor:
     def __init__(self, df):
         self._df = df
         self._analysis_date = date.today().isoformat()
-        
-    def validate_dataset(self, paq_aliases=None, allow_na=False, verbose=1, val_range=(5,1)):
+
+    def validate_dataset(
+        self, paq_aliases=None, allow_na=False, verbose=1, val_range=(5, 1)
+    ):
         return db.validate_dataset(self._df, paq_aliases, allow_na, verbose, val_range)
-    
+
     def paq_data_quality(self, verbose=0):
         return db.paq_data_quality(self._df, verbose)
 
@@ -246,10 +104,9 @@ class ISDAccessor:
     def filter_lockdown(self, is_lockdown=False):
         complement = bool(is_lockdown)
         return janitor.filter_on(self._df, "Lockdown == 0", complement)
-    
+
     def convert_column_to_index(self, col="GroupID", drop=False):
         return db.convert_column_to_index(self._df, col, drop)
-
 
     def return_paqs(self, incl_ids=True, other_cols=None):
         """Return only the PAQ columns
@@ -278,7 +135,7 @@ class ISDAccessor:
     def add_paq_coords(
         self,
         scale_to_one: bool = True,
-        val_range=(5,1),
+        val_range=(5, 1),
         projection: bool = True,
         names=("ISOPleasant", "ISOEventful"),
     ):
@@ -295,7 +152,9 @@ class ISDAccessor:
         names : list, optional
             Names for new coordinate columns, by default ["ISOPleasant", "ISOEventful"]
         """
-        isopl, isoev = db.calculate_paq_coords(self._df, scale_to_one, val_range, projection)
+        isopl, isoev = db.calculate_paq_coords(
+            self._df, scale_to_one, val_range, projection
+        )
         return self._df.add_column(names[0], isopl).add_column(names[1], isoev)
 
     def location_describe(
@@ -481,69 +340,7 @@ class ISDAccessor:
         )
 
 
-def iso_annotation(
-    ax,
-    data,
-    location,
-    x_adj=0,
-    y_adj=0,
-    x_key="ISOPleasant",
-    y_key="ISOEventful",
-    ha="center",
-    va="center",
-    fontsize="small",
-    arrowprops=dict(arrowstyle="-", ec="black"),
-    **text_kwargs,
-):
-    """add text annotations to circumplex plot based on coordinate values
-
-    Directly uses plt.annotate
-
-    Parameters
-    ----------
-    ax : matplotlib.pyplot.Axes
-        existing plt axes to add to
-    data : pd.Dataframe
-        dataframe of coordinate points
-    location : str
-        name of the coordinate to plot
-    x_adj : int, optional
-        value to adjust x location by, by default 0
-    y_adj : int, optional
-        value to adjust y location by, by default 0
-    x_key : str, optional
-        name of x column, by default "ISOPleasant"
-    y_key : str, optional
-        name of y column, by default "ISOEventful"
-    ha : str, optional
-        horizontal alignment, by default "center"
-    va : str, optional
-        vertical alignment, by default "center"
-    fontsize : str, optional
-        by default "small"
-    arrowprops : dict, optional
-        dict of properties to send to plt.annotate, by default dict(arrowstyle="-", ec="black")
-    """
-    ax.annotate(
-        text=data["LocationID"][location],
-        xy=(
-            data[x_key][location],
-            data[y_key][location],
-        ),
-        xytext=(
-            data[x_key][location] + x_adj,
-            data[y_key][location] + y_adj,
-        ),
-        ha=ha,
-        va=va,
-        arrowprops=arrowprops,
-        annotation_clip=True,
-        fontsize=fontsize,
-        **text_kwargs,
-    )
-
-
-def simulation(n=3000, add_paq_coords=False, val_range=(5,1), **coord_kwargs):
+def simulation(n=3000, add_paq_coords=False, val_range=(5, 1), **coord_kwargs):
     """Generate random PAQ responses
 
     The PAQ responses will follow a uniform random distribution
@@ -563,7 +360,10 @@ def simulation(n=3000, add_paq_coords=False, val_range=(5,1), **coord_kwargs):
         dataframe of randomly generated PAQ response
     """
     np.random.seed(42)
-    df = pd.DataFrame(np.random.randint(min(val_range), max(val_range), size=(n, 8)), columns=PAQ_NAMES)
+    df = pd.DataFrame(
+        np.random.randint(min(val_range), max(val_range), size=(n, 8)),
+        columns=PAQ_NAMES,
+    )
     if add_paq_coords:
         ISOPl, ISOEv = db.calculate_paq_coords(df, **coord_kwargs)
         df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
