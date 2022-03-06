@@ -3,7 +3,7 @@
 
 A python library for analysing and visualising soundscape assessments. 
 
-Disclaimer: This module is still heavily in development, and might break what you're working on.
+**Disclaimer:** This module is still heavily in development, and might break what you're working on.
 
 ## Installation
 
