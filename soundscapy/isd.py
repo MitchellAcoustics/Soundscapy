@@ -27,7 +27,11 @@ This file can also be imported as a module.
 
 """
 #%%
+# Add soundscapy to the Python path
+import sys
 from datetime import date
+from itertools import groupby
+from typing import Union
 
 import janitor
 import matplotlib as mpl
@@ -37,17 +41,15 @@ import pandas as pd
 import seaborn as sns
 from pandas.api.extensions import register_dataframe_accessor
 
-# Add soundscapy to the Python path
-import sys
-
 sys.path.append("..")
 import soundscapy.ssid.database as db
 import soundscapy.ssid.plotting as ssidplot
 
+# Define the names of the PAQ columns
+from soundscapy.ssid.parameters import PAQ_IDS, PAQ_NAMES
+
 #%%
 
-# Define the names of the PAQ columns
-from soundscapy.ssid.parameters import PAQ_NAMES, PAQ_IDS
 
 # Default plot settings
 diag_lines_zorder = 1
@@ -87,23 +89,36 @@ class ISDAccessor:
     def paq_data_quality(self, verbose=0):
         return db.paq_data_quality(self._df, verbose)
 
-    def filter_group_ids(self, group_ids: list, **kwargs):
-        return janitor.filter_column_isin(self._df, "GroupID", group_ids, **kwargs)
+    def filter_group_ids(self, group_ids):
+        if isinstance(group_ids, str):
+            return self._df.query("GroupID == @group_ids")
+        elif isinstance(group_ids, (list, tuple)):
+            return self._df.query("GroupID in @group_ids")
 
-    def filter_record_ids(self, record_ids: list, **kwargs):
-        return janitor.filter_column_isin(self._df, "RecordID", record_ids, **kwargs)
+    def filter_record_ids(self, record_ids: Union[tuple, str]):
+        if isinstance(record_ids, str):
+            return self._df.query("RecordID == @record_ids")
+        elif isinstance(record_ids, (list, tuple)):
+            return self._df.query("RecordID in @record_ids")
 
     def filter_session_ids(self, session_ids: list, **kwargs):
-        return janitor.filter_column_isin(self._df, "SessionID", session_ids, **kwargs)
+        if isinstance(session_ids, str):
+            return self._df.query("SessionID == @session_ids")
+        elif isinstance(session_ids, (list, tuple)):
+            return self._df.query("SessionID in @session_ids")
 
-    def filter_location_ids(self, location_ids: list, **kwargs):
-        return janitor.filter_column_isin(
-            self._df, "LocationID", location_ids, **kwargs
-        )
+    def filter_location_ids(self, location_ids):
+        if isinstance(location_ids, str):
+            return self._df.query("LocationID == @location_ids")
+        elif isinstance(location_ids, (list, tuple)):
+            return self._df.query("LocationID in @location_ids")
 
     def filter_lockdown(self, is_lockdown=False):
-        complement = bool(is_lockdown)
-        return janitor.filter_on(self._df, "Lockdown == 0", complement)
+        return (
+            self._df.query("Lockdown == 1")
+            if is_lockdown
+            else self._df.query("Lockdown == 0")
+        )
 
     def convert_column_to_index(self, col="GroupID", drop=False):
         return db.convert_column_to_index(self._df, col, drop)
