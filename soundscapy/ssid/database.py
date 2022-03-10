@@ -49,7 +49,7 @@ def load_isd_dataset(version="latest"):
     elif version in ["v0.2.3", "V0.2.3"]:
         url = "https://zenodo.org/record/5914762/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
 
-    return pd.read_excel(url)
+    return pd.read_excel(url, engine="openpyxl")
 
 
 def validate_dataset(df, paq_aliases=None, allow_na=False, verbose=1, val_range=(5,1)):
