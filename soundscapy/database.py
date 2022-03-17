@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 # Constants and Labels
-from soundscapy.ssid.parameters import CATEGORISED_VARS, PAQ_IDS, PARAM_LIST, SURVEY_VARS, PAQ_NAMES
-from soundscapy.ssid.plotting import default_bw_adjust, default_figsize
+from soundscapy.parameters import CATEGORISED_VARS, PAQ_IDS, PARAM_LIST, SURVEY_VARS, PAQ_NAMES
+from soundscapy.plotting import default_bw_adjust, default_figsize
 
 DEFAULT_CATS = [
     "indexing",

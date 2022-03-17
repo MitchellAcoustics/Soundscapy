@@ -42,11 +42,11 @@ import seaborn as sns
 from pandas.api.extensions import register_dataframe_accessor
 
 sys.path.append("..")
-import soundscapy.ssid.database as db
-import soundscapy.ssid.plotting as ssidplot
+import soundscapy.database as db
+import soundscapy.plotting as ssidplot
 
 # Define the names of the PAQ columns
-from soundscapy.ssid.parameters import PAQ_IDS, PAQ_NAMES
+from soundscapy.parameters import PAQ_IDS, PAQ_NAMES
 
 #%%
 
