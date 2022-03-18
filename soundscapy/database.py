@@ -1,18 +1,21 @@
-import janitor
-
 # Add soundscapy to the Python path
 import sys
+from re import X
 
+import janitor
 from matplotlib.pyplot import switch_backend
+
 sys.path.append('..')
 
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from pyod.models.ecod import ECOD
 
 # Constants and Labels
-from soundscapy.parameters import CATEGORISED_VARS, PAQ_IDS, PARAM_LIST, SURVEY_VARS, PAQ_NAMES
+from soundscapy.parameters import (CATEGORISED_VARS, PAQ_IDS, PAQ_NAMES,
+                                   PARAM_LIST, SURVEY_VARS)
 from soundscapy.plotting import default_bw_adjust, default_figsize
 
 DEFAULT_CATS = [
@@ -52,14 +55,14 @@ def load_isd_dataset(version="latest"):
     return pd.read_excel(url, engine="openpyxl")
 
 
-def validate_dataset(df, paq_aliases=None, allow_na=False, verbose=1, val_range=(5,1)):
+def validate_dataset(df, paq_aliases=None, allow_lockdown=True, allow_na=False, verbose=1, val_range=(5,1)):
     if verbose > 0:
         print("Renaming PAQ columns.")
     df = rename_paqs(df, paq_aliases)
 
     if verbose > 0:
         print("Checking PAQ data quality.")
-    if l := paq_data_quality(df, verbose, allow_na, val_range):
+    if l := paq_data_quality(df, verbose, allow_lockdown, allow_na, val_range):
         df = df.drop(df.index[l])
 
     return df
@@ -88,12 +91,15 @@ def rename_paqs(df, paq_aliases=None, verbose=0):
     elif type(paq_aliases) == dict:
         return df.rename(columns=paq_aliases)
     
-def paq_data_quality(df, verbose=0, allow_na=False, val_range=(5,1)):
+def paq_data_quality(df, verbose=0, allow_lockdown=True, allow_na=False, val_range=(5,1)):
     paqs = df.isd.return_paqs(incl_ids=False)
     l = []
     for i in range(len(paqs)):
         row = paqs.iloc[i]
-        if allow_na and row.isna().sum() == 8: # if we allow completely missing data (i.e. lockdown data)to be included, then we skip over it here
+        if allow_lockdown and df.iloc[i]['Lockdown'] == 1: 
+            continue
+        if allow_na is False and row.isna().sum() > 0:
+            l.append(i)
             continue
         if (
             row['pleasant']

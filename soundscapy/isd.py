@@ -82,9 +82,9 @@ class ISDAccessor:
         self._analysis_date = date.today().isoformat()
 
     def validate_dataset(
-        self, paq_aliases=None, allow_na=False, verbose=1, val_range=(5, 1)
+        self, paq_aliases=None, allow_lockdown=True, allow_na=False, verbose=1, val_range=(5, 1)
     ):
-        return db.validate_dataset(self._df, paq_aliases, allow_na, verbose, val_range)
+        return db.validate_dataset(self._df, paq_aliases, allow_lockdown, allow_na, verbose, val_range)
 
     def paq_data_quality(self, verbose=0):
         return db.paq_data_quality(self._df, verbose)
