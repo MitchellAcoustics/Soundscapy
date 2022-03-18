@@ -14,8 +14,7 @@ import pandas as pd
 from pyod.models.ecod import ECOD
 
 # Constants and Labels
-from soundscapy.parameters import (CATEGORISED_VARS, PAQ_IDS, PAQ_NAMES,
-                                   PARAM_LIST, SURVEY_VARS)
+from soundscapy.parameters import CATEGORISED_VARS, PAQ_IDS, PAQ_NAMES
 from soundscapy.plotting import default_bw_adjust, default_figsize
 
 DEFAULT_CATS = [
@@ -55,14 +54,14 @@ def load_isd_dataset(version="latest"):
     return pd.read_excel(url, engine="openpyxl")
 
 
-def validate_dataset(df, paq_aliases=None, allow_lockdown=True, allow_na=False, verbose=1, val_range=(5,1)):
+def validate_dataset(df, paq_aliases=None, allow_lockdown=True, allow_paq_na=False, verbose=1, val_range=(5,1)):
     if verbose > 0:
         print("Renaming PAQ columns.")
     df = rename_paqs(df, paq_aliases)
 
     if verbose > 0:
         print("Checking PAQ data quality.")
-    if l := paq_data_quality(df, verbose, allow_lockdown, allow_na, val_range):
+    if l := paq_data_quality(df, verbose, allow_lockdown, allow_paq_na, val_range):
         df = df.drop(df.index[l])
 
     return df
@@ -124,6 +123,67 @@ def paq_data_quality(df, verbose=0, allow_lockdown=True, allow_na=False, val_ran
     if verbose > 0:
         print("PAQ quality confirmed. No rows dropped.")
     return None
+
+
+def ecod(df, features=PAQ_NAMES, **kwargs):
+    """Unsupervised outlier detection using Empirical Cumulative Distribution Functions (ECOD)
+
+    calls to PyOD to implement ECOD
+    Is able to do multivariate outlier detection. 
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Validated ISD-style dataframe
+            Must have no NAs in the features columns.
+        features : list or str, optional
+            features to include in outlier detection, by default PAQ_NAMES
+
+        Returns
+        -------
+        pyod.models.ecod.ECOD
+            Fitted PyOD base detector
+    """
+    clf = ECOD(**kwargs)
+    x = df[features]
+    if len(features) == 1 or type(features) == str:
+        x=x.values.reshape(-1,1)
+    clf.fit(x)
+    return clf
+
+
+def grouped_ecod(df, groupby, features=PAQ_NAMES, new_col='outlier', **kwargs):
+    """Implements the ECOD within groups
+    
+    It is typically best to perform outlier detection within the same soundscape or location, so this allows you to perform the ECOD for each group independently. In  testing, this gives much more reasonable results.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Validated ISD-style dataframe
+        Must have no NAs in the features columns.
+    groupby : str
+        Column in df to group by
+    features : list or str, optional
+        features to include in outlier detection, by default PAQ_NAMES
+    new_col : str, optional
+        A new column will be added to the original dataframe with 0 or 1 to indicate identified outliers, by default 'outlier'
+
+    Returns
+    -------
+    pd.DataFrame
+        original df with outlier column added
+    """
+    df[new_col] = 0
+    fits = {}
+    for group in df[groupby].unique():
+        grp = df[df[groupby] == group]
+        clf = ecod(grp, features, **kwargs)
+        fits[group] = clf
+        df.loc[df[groupby] == group, new_col] = clf.labels_
+    return df, fits
+    
+
 
 
 def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
