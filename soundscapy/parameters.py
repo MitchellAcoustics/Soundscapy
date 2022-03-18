@@ -1,16 +1,19 @@
 # Constants and Labels
 PARAM_LIST = [
-    "LevelA",
-    "LevelC",
-    "LevelZ",
-    "Loudness",
-    "Roughness",
-    "Sharpness",
-    "Tonality",
-    "FluctuationStrength",
-    "SIL",
-    "THD",
-    "Impulsiveness",
+    "LAeq_L(A)(dB(SPL))",
+    "LZeq_L(dB(SPL))",
+    "LA10_LA90(dB(SPL))",
+    "LC10_LC90(dB(SPL))",
+    "LCeq_LAeq(dB(SPL))",
+    "Loudness_N5(soneGF)",
+    "N10_N90(soneGF)",
+    "Rough_HM_R(asper)",
+    "Sharpness_S(acum)",
+    "Ton_HM_Avg,arith(tuHMS)",
+    "FS_Avg,arith(vacil)",
+    "RA_2D_cp(cPa)",
+    "PA(Zwicker)",
+    "I_HM_Avg,arith(iu)",
 ]
 
 PAQ_NAMES = [
