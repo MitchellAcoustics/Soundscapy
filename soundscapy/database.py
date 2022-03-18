@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from pyod.models.ecod import ECOD
+from pyod.models.mcd import MCD
 
 # Constants and Labels
 from soundscapy.parameters import CATEGORISED_VARS, PAQ_IDS, PAQ_NAMES
@@ -171,8 +172,8 @@ def grouped_ecod(df, groupby, features=PAQ_NAMES, new_col='outlier', **kwargs):
 
     Returns
     -------
-    pd.DataFrame
-        original df with outlier column added
+    tuple
+        (original df with outlier column added, dict of fitted pyod objects)
     """
     df[new_col] = 0
     fits = {}
@@ -182,7 +183,25 @@ def grouped_ecod(df, groupby, features=PAQ_NAMES, new_col='outlier', **kwargs):
         fits[group] = clf
         df.loc[df[groupby] == group, new_col] = clf.labels_
     return df, fits
-    
+
+
+def mcd(df, features=PAQ_NAMES, **kwargs):
+    clf = MCD(**kwargs)
+    x = df[features]
+    if len(features) == 1 or type(features) == str:
+        x = x.values.reshape(-1,1)
+    clf.fit(x)
+    return clf
+
+def grouped_mcd(df, groupby, features=PAQ_NAMES, new_col='outlier', **kwargs):
+    df[new_col] = 0
+    fits = {}
+    for group in df[groupby].unique():
+        grp = df[df[groupby] == group]
+        clf = mcd(grp, features, **kwargs)
+        fits[group] = clf
+        df.loc[df[groupby] == group, new_col] = clf.labels_
+    return df, fits
 
 
 
