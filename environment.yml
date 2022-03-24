@@ -12,4 +12,5 @@ dependencies:
   - pandas
   - openpyxl
   - jupyterlab
-prefix: /opt/miniconda3/envs/isd-dev
+  - pyod
+prefix: /opt/miniconda3/envs/soundscapy-dev
