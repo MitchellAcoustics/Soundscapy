@@ -27,17 +27,23 @@ An example notebook which reproduces the figures used in our recent paper "How t
 
 If you are using Soundscapy in your research, please help our scientific visibility by citing our work! Please include a citation to our accompanying paper:
 
-Mitchell, A., Aletta, F., & Kang, J. (Accepted 2022). How to analyse and represent quantitative soundscape data. *JASA Express Letters*
+Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and represent quantitative soundscape data. *JASA Express Letters, 2*, 37201. [https://doi.org/10.1121/10.0009794](https://doi.org/10.1121/10.0009794)
+
 
 <!---
 Bibtex:
 ```
-@Article{Mitchell2022analyse,
-  author    = {Andrew Mitchell and Francesco Aletta and Jian Kang},
-  journal   = {JASA Express Letters},
-  title     = {How to analyse and represent quantitative data},
-  year      = {2022},
-  publisher = {Acoustical Society of America ({ASA})},
+@Article{Mitchell2022How,
+  author         = {Mitchell, Andrew and Aletta, Francesco and Kang, Jian},
+  journal        = {JASA Express Letters},
+  title          = {How to analyse and represent quantitative soundscape data},
+  year           = {2022},
+  number         = {3},
+  pages          = {037201},
+  volume         = {2},
+  doi            = {10.1121/10.0009794},
+  eprint         = {https://doi.org/10.1121/10.0009794},
 }
+
 ```
 --->
