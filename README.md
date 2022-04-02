@@ -16,7 +16,7 @@ conda activate soundscapy-dev
 ```
 Then, install soundscapy from the github source:
 ```
-pip install git+git://github.com/MitchellAcoustics/Soundscapy@main
+pip install git+https://github.com/MitchellAcoustics/Soundscapy@main
 ```
 
 ## Examples
