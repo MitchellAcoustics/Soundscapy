@@ -93,6 +93,8 @@ def circumplex_scatter(
     y="ISOEventful",
     prim_labels=True,
     diagonal_lines=False,
+    xlim=(-1,1),
+    ylim=(-1,1),
     figsize=(5, 5),
     palette=None,
     legend=False,
@@ -155,7 +157,7 @@ def circumplex_scatter(
         **scatter_kwargs,
     )
     ax = _deal_w_default_labels(ax, prim_labels)
-    _circumplex_grid(ax, prim_labels, diagonal_lines)
+    _circumplex_grid(ax, prim_labels, diagonal_lines, xlim, ylim)
     _set_circum_title(ax, prim_labels, title)
     if legend:
         _move_legend(ax, legend_loc)
@@ -170,6 +172,8 @@ def circumplex_density(
     y="ISOEventful",
     prim_labels=True,
     diagonal_lines=False,
+    xlim=(-1,1),
+    ylim=(-1,1),
     incl_scatter=False,
     incl_outline=False,
     figsize=(5, 5),
@@ -299,7 +303,7 @@ def circumplex_density(
         **density_kwargs,
     )
 
-    _circumplex_grid(ax, prim_labels, diagonal_lines)
+    _circumplex_grid(ax, prim_labels, diagonal_lines, xlim, ylim)
     _set_circum_title(ax, prim_labels, title)
     _deal_w_default_labels(ax, prim_labels)
     if legend:
@@ -314,6 +318,8 @@ def circumplex_jointplot_density(
     y="ISOEventful",
     prim_labels=False,
     diagonal_lines=False,
+    xlim=(-1,1),
+    ylim=(-1,1),
     palette="Blues",
     incl_scatter=False,
     scatter_color="black",
@@ -381,6 +387,8 @@ def circumplex_jointplot_density(
         y=y,
         prim_labels=prim_labels,
         diagonal_lines=diagonal_lines,
+        xlim=xlim,
+        ylim=ylim,
         palette=palette,
         incl_scatter=incl_scatter,
         scatter_color=scatter_color,
@@ -458,7 +466,7 @@ def _move_legend(ax, new_loc, **kws):
     ax.legend(handles, labels, loc=new_loc, title=title, **kws)
 
 
-def _circumplex_grid(ax, prim_labels=True, diagonal_lines=False):
+def _circumplex_grid(ax, prim_labels=True, diagonal_lines=False, xlim=(-1,1), ylim=(-1,1)):
     """Create the base layer grids and label lines for the soundscape circumplex
 
     Parameters
@@ -474,8 +482,8 @@ def _circumplex_grid(ax, prim_labels=True, diagonal_lines=False):
     # Setting up the grids
     sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
     line_weights = 1.5
-    ax.set_xlim(-1, 1)
-    ax.set_ylim(-1, 1)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
 
     # grids and ticks
     ax.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
@@ -521,7 +529,7 @@ def _primary_lines_and_labels(ax, prim_labels, line_weights):
     # Add lines and labels for circumplex model
     ## Primary Axes
     ax.plot(  # Horizontal line
-        [-1, 1],
+        [x_lim[0], x_lim[1]],
         [0, 0],
         linestyle="dashed",
         color="grey",
@@ -531,7 +539,7 @@ def _primary_lines_and_labels(ax, prim_labels, line_weights):
     )
     ax.plot(  # vertical line
         [0, 0],
-        [1, -1],
+        [y_lim[0], y_lim[1]],
         linestyle="dashed",
         color="grey",
         alpha=1,
@@ -580,8 +588,8 @@ def _diagonal_lines_and_labels(ax, line_weights):
     y_lim = ax.get_ylim()
 
     ax.plot(  # uppward diagonal
-        [-1, 1],
-        [-1, 1],
+        [x_lim[0], x_lim[1]],
+        [y_lim[0], y_lim[1]],
         linestyle="dashed",
         color="grey",
         alpha=0.5,
@@ -589,8 +597,8 @@ def _diagonal_lines_and_labels(ax, line_weights):
         zorder=diag_lines_zorder,
     )
     ax.plot(  # downward diagonal
-        [-1, 1],
-        [1, -1],
+        [x_lim[0], x_lim[1]],
+        [y_lim[1], y_lim[0]],
         linestyle="dashed",
         color="grey",
         alpha=0.5,
