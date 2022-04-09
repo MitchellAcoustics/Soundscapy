@@ -11,7 +11,7 @@ analyse and represent soundscape perception'. JASA Express Letters. in order to
 replicate the results and figures presented in that article. This will 
 eventually be superseded by a full Python package named Soundscapy.
 
-The current version works by using `pandas_flavor` and `janitor` to attach 
+The current version works by using pandas accessor functionality to attach 
 methods to the pandas dataframe containing the ISD data. These can then be 
 accessed and used in the same way as class methods. This API may change in the 
 future as I find more stable ways to achieve this behaviour.
