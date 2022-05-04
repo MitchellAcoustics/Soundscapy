@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: Soundscapy
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Andrew
+    family-names: Mitchell
+    email: andrew.mitchell.18@ucl.ac.uk
+    affiliation: University College London
+    orcid: 'https://orcid.org/0000-0003-0978-5046'
+repository-code: 'https://github.com/MitchellAcoustics/Soundscapy'
+keywords:
+  - soundscape
+  - acoustics
+  - psychoacoustics
+license: BSD-3-Clause
