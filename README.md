@@ -47,3 +47,23 @@ Bibtex:
 
 ```
 --->
+
+## Development Plans
+
+As noted, this package is in heavy development to make it more useable, more stable, and to add features and improvements. At this stage it is mostly limited to doing basic quality checks of soundscape survey data and creating the soundscape distribution plots. Some planned improvements are:
+
+ * Simplify the plotting options
+ * Possibly improve how the plots and data are handled - a more OOP approach would be good.
+ * Add appropriate tests and documentation.
+ * Bug fixes, particularly around setting color palettes.
+
+Large planned feature additions are:
+
+ * Add better methods for cleaning datasets, including robust outlier exclusion and imputation.
+ * Add handling of .wav files.
+ * Integrate environmental acoustic and psychoacoustic batch processing. This will involve using existing packages (e.g. MoSQito, python-acoustics) to do the metric calculations, but adding useful functionality for processing many files at once, tieing them to a specific survey response, and implementing a configuration file for maintaining consistent analysis settings.
+ * Integrate the predictive modelling results from the SSID team's research to enable a single pipelined from recording -> psychoacoustics -> predicted soundscape perception (this is very much a pie-in-the-sky future plan, which may not be possible).
+
+### Contributing
+
+If you would like to contribute or if you have any bugs you have found while using `Soundscapy', please feel free to get in touch or submit an issue or pull request!
