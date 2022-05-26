@@ -45,8 +45,10 @@ def load_isd_dataset(version="latest"):
         ISD data
     """
     version = "v0.2.3" if version == "latest" else version
-
-    if version == "V0.2.1":
+    
+    if version in ["V0.2.0", "v0.2.0"]:
+        url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
+    elif version in ["V0.2.1", "v0.2.1"]:
         url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
     elif version in ["V0.2.2", "v0.2.2"]:
         url = "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
