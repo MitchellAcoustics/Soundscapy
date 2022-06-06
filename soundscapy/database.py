@@ -262,7 +262,7 @@ def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
         dataframe of randomly generated PAQ response
     """
     np.random.seed(42)
-    df = pd.DataFrame(np.random.randint(1, 5, size=(n, 8)), columns=PAQ_NAMES)
+    df = pd.DataFrame(np.random.randint(1, 6, size=(n, 8)), columns=PAQ_NAMES)
     if add_paq_coords:
         ISOPl, ISOEv = calculate_paq_coords(df, **coord_kwargs)
         df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
