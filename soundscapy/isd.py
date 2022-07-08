@@ -89,14 +89,6 @@ class ISDAccessor:
     def paq_data_quality(self, verbose=0):
         return db.paq_data_quality(self._df, verbose)
     
-    def paq_grouped_outliers(self, groupby="LocationID", contamination=0.1, **kwaargs):
-        df, fits = db.grouped_ecod(self._df, groupby, features=PAQ_NAMES, new_col="PAQ_outliers", contamination=contamination)
-        return df
-    
-    def iso_grouped_outliers(self, groupby="LocationID", contamination=0.1, **kwaargs):
-        df, fits = db.grouped_ecod(self._df, groupby, features=['ISOPleasant', 'ISOEventful'], new_col="ISO_outliers", contamination=contamination)
-        return df
-
     def filter_group_ids(self, group_ids):
         if isinstance(group_ids, str):
             return self._df.query("GroupID == @group_ids")

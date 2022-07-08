@@ -11,8 +11,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pyod.models.ecod import ECOD
-from pyod.models.mcd import MCD
 
 # Constants and Labels
 from soundscapy.parameters import CATEGORISED_VARS, PAQ_IDS, PAQ_NAMES
@@ -162,85 +160,6 @@ def paq_data_quality(
     if verbose > 0:
         print("PAQ quality confirmed. No rows dropped.")
     return None
-
-
-def ecod(df, features=PAQ_NAMES, **kwargs):
-    """Unsupervised outlier detection using Empirical Cumulative Distribution Functions (ECOD)
-
-    calls to PyOD to implement ECOD
-    Is able to do multivariate outlier detection.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Validated ISD-style dataframe
-            Must have no NAs in the features columns.
-        features : list or str, optional
-            features to include in outlier detection, by default PAQ_NAMES
-
-        Returns
-        -------
-        pyod.models.ecod.ECOD
-            Fitted PyOD base detector
-    """
-    clf = ECOD(**kwargs)
-    x = df[features]
-    if len(features) == 1 or type(features) == str:
-        x = x.values.reshape(-1, 1)
-    clf.fit(x)
-    return clf
-
-
-def grouped_ecod(df, groupby, features=PAQ_NAMES, new_col="outlier", **kwargs):
-    """Implements the ECOD within groups
-
-    It is typically best to perform outlier detection within the same soundscape or location, so this allows you to perform the ECOD for each group independently. In  testing, this gives much more reasonable results.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Validated ISD-style dataframe
-        Must have no NAs in the features columns.
-    groupby : str
-        Column in df to group by
-    features : list or str, optional
-        features to include in outlier detection, by default PAQ_NAMES
-    new_col : str, optional
-        A new column will be added to the original dataframe with 0 or 1 to indicate identified outliers, by default 'outlier'
-
-    Returns
-    -------
-    tuple
-        (original df with outlier column added, dict of fitted pyod objects)
-    """
-    df[new_col] = 0
-    fits = {}
-    for group in df[groupby].unique():
-        grp = df[df[groupby] == group]
-        clf = ecod(grp, features, **kwargs)
-        fits[group] = clf
-        df.loc[df[groupby] == group, new_col] = clf.labels_
-    return df, fits
-
-
-def mcd(df, features=PAQ_NAMES, **kwargs):
-    clf = MCD(**kwargs)
-    x = df[features]
-    if len(features) == 1 or type(features) == str:
-        x = x.values.reshape(-1, 1)
-    clf.fit(x)
-    return clf
-
-
-def grouped_mcd(df, groupby, features=PAQ_NAMES, new_col="outlier", **kwargs):
-    df[new_col] = 0
-    fits = {}
-    for group in df[groupby].unique():
-        grp = df[df[groupby] == group]
-        clf = mcd(grp, features, **kwargs)
-        fits[group] = clf
-        df.loc[df[groupby] == group, new_col] = clf.labels_
-    return df, fits
 
 
 def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
