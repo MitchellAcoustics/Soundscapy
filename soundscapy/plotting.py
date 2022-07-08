@@ -96,7 +96,7 @@ def circumplex_scatter(
     xlim=(-1,1),
     ylim=(-1,1),
     figsize=(5, 5),
-    palette=None,
+    palette='colorblind',
     legend=False,
     legend_loc="lower left",
     s=10,
@@ -126,7 +126,7 @@ def circumplex_scatter(
         by default (5, 5)
     palette : string, list, dict or matplotlib.colors.Colormap, optional
         Method for choosing the colors to use when mapping the hue semantic. String values are passed to seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object implies numeric mapping.
-        by default None
+        by default colorblind
     legend : bool, optional
         whether to include legend with the hue values, by default False
     legend_loc : str, optional
@@ -140,9 +140,6 @@ def circumplex_scatter(
     """
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
-    if palette is None:
-        n_colors = len(data[hue].unique()) if hue else len(data)
-        palette = sns.color_palette("husl", n_colors, as_cmap=False)
 
     s = sns.scatterplot(
         data=data,
@@ -177,7 +174,7 @@ def circumplex_density(
     incl_scatter=False,
     incl_outline=False,
     figsize=(5, 5),
-    palette="Blues",
+    palette="colorblind",
     scatter_color="black",
     outline_color="black",
     fill_color="blue",
@@ -220,7 +217,7 @@ def circumplex_density(
         by default (5, 5)
     palette : str, optional
         Method for choosing the colors to use when mapping the hue semantic. String values are passed to seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object implies numeric mapping.
-        by default "Blues"
+        by default "colorblind"
     scatter_color : str, optional
         define a color for the scatter points. Does not work with a hue grouping variable, by default "black"
     outline_color : str, optional
@@ -320,7 +317,7 @@ def circumplex_jointplot_density(
     diagonal_lines=False,
     xlim=(-1,1),
     ylim=(-1,1),
-    palette="Blues",
+    palette="colorblind",
     incl_scatter=False,
     scatter_color="black",
     fill=True,
@@ -350,7 +347,7 @@ def circumplex_jointplot_density(
     diagonal_lines : bool, optional
         whether to include diagonal dimension axis labels in the joint plot, by default False
     palette : str, optional
-        [description], by default "Blues"
+        [description], by default "colorblind"
     incl_scatter : bool, optional
         plot coordinate scatter underneath density plot, by default False
     scatter_color : str, optional
