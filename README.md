@@ -7,16 +7,10 @@ A python library for analysing and visualising soundscape assessments.
 
 ## Installation
 
-For this under-development version, I suggest installing from source in the following way. 
+The package is still under development, but can be installed with pip:
 
-Create a suitable conda environment by downloading just the environment.yml file:
 ```
-conda env create -f environment.yml
-conda activate soundscapy-dev
-```
-Then, install soundscapy from the github source:
-```
-pip install git+https://github.com/MitchellAcoustics/Soundscapy@main
+pip install soundscapy
 ```
 
 ## Examples
