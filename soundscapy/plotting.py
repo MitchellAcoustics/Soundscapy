@@ -93,10 +93,10 @@ def circumplex_scatter(
     y="ISOEventful",
     prim_labels=True,
     diagonal_lines=False,
-    xlim=(-1,1),
-    ylim=(-1,1),
+    xlim=(-1, 1),
+    ylim=(-1, 1),
     figsize=(5, 5),
-    palette='colorblind',
+    palette="colorblind",
     legend=False,
     legend_loc="lower left",
     s=10,
@@ -169,8 +169,8 @@ def circumplex_density(
     y="ISOEventful",
     prim_labels=True,
     diagonal_lines=False,
-    xlim=(-1,1),
-    ylim=(-1,1),
+    xlim=(-1, 1),
+    ylim=(-1, 1),
     incl_scatter=False,
     incl_outline=False,
     figsize=(5, 5),
@@ -315,8 +315,8 @@ def circumplex_jointplot_density(
     y="ISOEventful",
     prim_labels=False,
     diagonal_lines=False,
-    xlim=(-1,1),
-    ylim=(-1,1),
+    xlim=(-1, 1),
+    ylim=(-1, 1),
     palette="colorblind",
     incl_scatter=False,
     scatter_color="black",
@@ -463,7 +463,9 @@ def _move_legend(ax, new_loc, **kws):
     ax.legend(handles, labels, loc=new_loc, title=title, **kws)
 
 
-def _circumplex_grid(ax, prim_labels=True, diagonal_lines=False, xlim=(-1,1), ylim=(-1,1)):
+def _circumplex_grid(
+    ax, prim_labels=True, diagonal_lines=False, xlim=(-1, 1), ylim=(-1, 1)
+):
     """Create the base layer grids and label lines for the soundscape circumplex
 
     Parameters

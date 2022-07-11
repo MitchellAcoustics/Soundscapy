@@ -43,7 +43,7 @@ def load_isd_dataset(version="latest"):
         ISD data
     """
     version = "v0.2.3" if version == "latest" else version
-    
+
     if version in ["V0.2.0", "v0.2.0"]:
         url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
     elif version in ["V0.2.1", "v0.2.1"]:
@@ -77,8 +77,7 @@ def validate_dataset(
         if True will keep Lockdown data in the df, by default True
     allow_paq_na : bool, optional
         remove rows which have any missing PAQ values
-        otherwise will remove those with 50% missing, by default False
-    verbose : int, optional
+        otherwise will remove those with 50% missing, by default False    verbose : int, optional
         how much info to print while running, by default 1
     val_range : tuple, optional
         min and max range of the PAQ response values, by default (5, 1)
