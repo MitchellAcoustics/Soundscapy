@@ -141,18 +141,7 @@ class ISDAccessor:
             other columns to also include, by default None
 
         """
-        cols = PAQ_NAMES
-        if incl_ids:
-            id_cols = [
-                name
-                for name in ["RecordID", "GroupID", "SessionID", "LocationID"]
-                if name in self._df.columns
-            ]
-
-            cols = id_cols + cols
-        if other_cols:
-            cols = cols + other_cols
-        return self._df[cols]
+        return db.return_paqs(df, incl_ids, other_cols)
 
     def add_paq_coords(
         self,

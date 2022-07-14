@@ -1,3 +1,4 @@
+#%%
 # Add soundscapy to the Python path
 import sys
 from re import X
@@ -28,7 +29,7 @@ _flatten = lambda t: [item for sublist in t for item in sublist]
 
 ###########
 
-
+#%%
 def load_isd_dataset(version="latest"):
     """Automatically fetch and load the ISD dataset from Zenodo
 
@@ -56,6 +57,7 @@ def load_isd_dataset(version="latest"):
     return pd.read_excel(url, engine="openpyxl")
 
 
+#%%
 def validate_dataset(
     df,
     paq_aliases=None,
@@ -237,6 +239,50 @@ def calculate_paq_coords(
     return ISOPleasant, ISOEventful
 
 
+#%%
+def return_paqs(df, incl_ids=True, other_cols=None):
+    """Return only the PAQ columns
+
+    Parameters
+    ----------
+    incl_ids : bool, optional
+        whether to include ID cols too (i.e. RecordID, GroupID, etc), by default True
+    other_cols : list, optional
+        other columns to also include, by default None
+
+    """
+    cols = PAQ_NAMES
+    if incl_ids:
+        id_cols = [
+            name
+            for name in ["RecordID", "GroupID", "SessionID", "LocationID"]
+            if name in df.columns
+        ]
+
+        cols = id_cols + cols
+    if other_cols:
+        cols = cols + other_cols
+    return df[cols]
+
+
+def mean_responses(df: pd.DataFrame, group="LocationID") -> pd.DataFrame:
+    """Calculate the mean responses for each PAQ
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing ISD formatted data
+
+    Returns
+    -------
+    pd.Dataframe
+        Dataframe containing the mean responses for each PAQ
+    """
+    df = return_paqs(df, incl_ids=False, other_cols=[group])
+    return df.groupby(group).mean()
+
+
+#%%
 def _circ_scale(range, proj):
     diff = max(range) - min(range)
     return diff + diff * np.sqrt(2)
@@ -394,3 +440,5 @@ if __name__ == "__main__":
 
     TEST_DIR = Path("../../soundscapy/test/test_DB")
     doctest.testmod(verbose=False, optionflags=doctest.ELLIPSIS)
+
+# %%
