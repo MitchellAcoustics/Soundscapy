@@ -15,8 +15,7 @@ def load_analyse_binaural(wav_file, levels, analysis_settings, parallel:bool = F
     b = Binaural.from_wav(wav_file)
     decibel = (levels[recording]["Left"], levels[recording]["Right"])
     b.calibrate_to(decibel, inplace=True)
-    res = process_all_metrics(b, analysis_settings, parallel, verbose=verbose)
-    return res
+    return process_all_metrics(b, analysis_settings, parallel, verbose=verbose)
 
 
 #%%
@@ -60,12 +59,12 @@ if __name__ == "__main__":
 
     df = prep_multiindex_df(levels, incl_metric=True)
 
-    start = time.perf_counter()
-    df = parallel_process(
-        wav_folder.glob("*.wav"), df, levels, analysis_settings, verbose=True
-    )
-    end = time.perf_counter()
-    print(f"Time taken: {end-start:.2f} seconds")
+    # start = time.perf_counter()
+    # df = parallel_process(
+    #     wav_folder.glob("*.wav"), df, levels, analysis_settings, verbose=True
+    # )
+    # end = time.perf_counter()
+    # print(f"Time taken: {end-start:.2f} seconds")
 
     # df.to_excel(
     #     base_path.joinpath("Data", "Test", f"ParallelTest_{datetime.today()}.xlsx")
