@@ -43,10 +43,10 @@ PythonAcoustics:
         channel: ["Left", "Right"]
         label: 'SEL'
 
-# MoSQITO 
+# MoSQITo
 # supported metrics: loudness_zwtv, sharpness_din_from_loudness, roughness_dw
 # supported stats: avg/mean, max, min, kurt, skew, any integer from 1-99
-MoSQITO:
+MoSQITo:
     loudness_zwtv:
         run: false
         main: 5
@@ -104,7 +104,6 @@ MoSQITO:
         parallel: true
 
 scikit-maad:
-maad:
     all_temporal_alpha_indices:
         run: false
         channel: ["Left", "Right"]

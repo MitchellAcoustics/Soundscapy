@@ -4,7 +4,6 @@
 from pathlib import Path
 from time import localtime, strftime
 from typing import Union
-
 import yaml
 
 
@@ -62,14 +61,17 @@ class AnalysisSettings(dict):
             whether to force all metrics to run regardless of what is set in their options, by default False
 
             Use Cautiously. This can be useful if you want to run all metrics, but don't want to change the yaml file.
-            Warning: If both mosqito:loudness_zwtv and mosqitsharpness_din_from_loudness are present in the settings file, this will result in the loudness calc being run twice.
+            Warning: If both mosqito:loudness_zwtv and mosqito:sharpness_din_from_loudness are present in the settings
+            file, this will result in the loudness calc being run twice.
 
         Returns
         -------
         AnalysisSettings
             AnalysisSettings object
         """
-        return cls(AnalysisSettings.from_yaml(Path("soundscapy", "default_settings.yaml"), run_stats, force_run_all))
+        import soundscapy
+        root = Path(soundscapy.__path__[0])
+        return cls(AnalysisSettings.from_yaml(Path(root, "default_settings.yaml"), run_stats, force_run_all))
 
     def parse_maad_all_alpha_indices(self, metric: str):
         """Generate relevant settings for the maad all_alpha_indices methods.
@@ -86,7 +88,7 @@ class AnalysisSettings(dict):
         channel: tuple or list of str, or str
             channel(s) to run the metric on
         """
-        lib_settings = self["maad"].copy()
+        lib_settings = self["scikit-maad"].copy()
         run = lib_settings[metric]["run"] or self.force_run_all
         channel = lib_settings[metric]["channel"].copy()
         return run, channel
@@ -200,3 +202,5 @@ class AnalysisSettings(dict):
         run = lib_settings[metric]["run"] or self.force_run_all
         return run, channel, statistics, label, func_args
 
+
+#%%
