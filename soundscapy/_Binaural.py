@@ -1,5 +1,4 @@
 # %%
-# from WavAnalysis import *
 from pathlib import Path
 
 from acoustics import Signal
@@ -161,7 +160,7 @@ class Binaural(Signal):
         return_time_series: bool = False,
         verbose: bool = False,
         analysis_settings: AnalysisSettings = None,
-        **func_args,
+        func_args={},
     ):
         """Run a metric from the python acoustics library
 
@@ -265,7 +264,7 @@ class Binaural(Signal):
         parallel: bool = True,
         verbose: bool = False,
         analysis_settings: AnalysisSettings = None,
-        **func_args,
+        func_args={},
     ):
         """Run a metric from the mosqito library
 
@@ -363,7 +362,7 @@ class Binaural(Signal):
         as_df: bool = True,
         verbose: bool = False,
         analysis_settings: AnalysisSettings = None,
-        **func_args,
+        func_args={},
     ):
         """Run a metric from the scikit-maad library
 

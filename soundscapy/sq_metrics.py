@@ -89,7 +89,7 @@ def pyacoustics_metric_1ch(
     as_df: bool = False,
     return_time_series: bool = False,
     verbose: bool = False,
-    **func_args,
+    func_args={},
 ):
     """Run a metric from the pyacoustics library on a single channel object.
 
@@ -195,7 +195,7 @@ def mosqito_metric_1ch(
     as_df: bool = False,
     return_time_series: bool = False,
     verbose: bool = False,
-    **func_args,
+    func_args={},
 ):
     """Calculating a metric and accompanying statistics from Mosqito.
 
@@ -313,7 +313,9 @@ def mosqito_metric_1ch(
 
 
 #%%
-def maad_metric_1ch(s, metric: str, as_df: bool = False, verbose: bool = False, **func_args):
+def maad_metric_1ch(
+    s, metric: str, as_df: bool = False, verbose: bool = False, func_args={}
+):
     """Run a metric from the scikit-maad library (or suite of indices) on a single channel signal.
 
     Currently only supports running all of the alpha indices at once.
@@ -344,8 +346,12 @@ def maad_metric_1ch(s, metric: str, as_df: bool = False, verbose: bool = False, 
         print(f" - Calculating scikit-maad {metric}")
     # Start the calc
     if metric == "all_spectral_alpha_indices":
-        Sxx, tn, fn, ext = maad.sound.spectrogram(s, s.fs, **func_args) # spectral requires the spectrogram
-        res = maad.features.all_spectral_alpha_indices(Sxx, tn, fn, extent=ext, **func_args)[0]
+        Sxx, tn, fn, ext = maad.sound.spectrogram(
+            s, s.fs, **func_args
+        )  # spectral requires the spectrogram
+        res = maad.features.all_spectral_alpha_indices(
+            Sxx, tn, fn, extent=ext, **func_args
+        )[0]
 
     elif metric == "all_temporal_alpha_indices":
         res = maad.features.all_temporal_alpha_indices(s, s.fs, **func_args)
