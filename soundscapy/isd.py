@@ -123,6 +123,8 @@ class ISDAccessor:
             else self._df.query("Lockdown == 0")
         )
 
+    # TODO: add mean_responses method
+
     def convert_column_to_index(self, col="GroupID", drop=False):
         return db.convert_column_to_index(self._df, col, drop)
 
