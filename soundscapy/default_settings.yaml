@@ -48,7 +48,7 @@ PythonAcoustics:
 # supported stats: avg/mean, max, min, kurt, skew, any integer from 1-99
 MoSQITo:
     loudness_zwtv:
-        run: false
+        run: true
         main: 5
         statistics: [10, 50, 90, 95, 'min', 'max', 'kurt', 'skew', 'avg']
         channel: ["Left", "Right"]
@@ -62,7 +62,7 @@ MoSQITo:
         main: "avg"
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
-        label: "S"
+        label: "S_L"
         parallel: true
         func_args:
             weighting: "din"
@@ -70,11 +70,11 @@ MoSQITo:
             field_type: "free"
 
     sharpness_din_perseg:
-        run: false
+        run: true
         main: "avg"
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
-        label: "S"
+        label: "S_perseg"
         parallel: false # Not really necessary for din_perseg
         func_args:
             weighting: "aures"
@@ -88,7 +88,7 @@ MoSQITo:
         main: "avg"
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
-        label: "S"
+        label: "S_din_tv"
         parallel: true
         func_args:
             weighting: "din"
@@ -109,5 +109,5 @@ scikit-maad:
         channel: ["Left", "Right"]
 
     all_spectral_alpha_indices:
-        run: false
+        run: true
         channel: ["Left", "Right"]

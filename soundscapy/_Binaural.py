@@ -225,7 +225,7 @@ class Binaural(Signal):
                 as_df,
                 return_time_series,
                 verbose,
-                **func_args,
+                func_args,
             )
 
         else:
@@ -238,7 +238,7 @@ class Binaural(Signal):
                 as_df,
                 return_time_series,
                 verbose,
-                **func_args,
+                func_args,
             )
 
     # # Mosqito Metrics
@@ -338,7 +338,7 @@ class Binaural(Signal):
                 as_df,
                 return_time_series,
                 verbose,
-                **func_args,
+                func_args,
             )
         else:
             return mosqito_metric_2ch(
@@ -351,7 +351,7 @@ class Binaural(Signal):
                 return_time_series,
                 parallel,
                 verbose,
-                **func_args,
+                func_args,
             )
 
     # scikit-maad metrics
@@ -405,9 +405,9 @@ class Binaural(Signal):
         channel = ("Left", "Right") if channel is None else channel
         s = self._get_channel(channel)
         if s.channels == 1:
-            return maad_metric_1ch(s, metric, as_df, verbose, **func_args)
+            return maad_metric_1ch(s, metric, as_df, verbose, func_args)
         else:
-            return maad_metric_2ch(s, metric, channel, as_df, verbose, **func_args)
+            return maad_metric_2ch(s, metric, channel, as_df, verbose, func_args)
 
     def process_all_metrics(
         self,

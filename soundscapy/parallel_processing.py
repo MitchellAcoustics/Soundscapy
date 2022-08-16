@@ -26,7 +26,7 @@ def load_analyse_binaural(
 def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=True):
     # Parallel processing with Pool.apply_async() without callback function
 
-    pool = mp.Pool(mp.cpu_count() - 2)
+    pool = mp.Pool(mp.cpu_count())
     results = []
     result_objects = [
         pool.apply_async(
@@ -61,9 +61,11 @@ if __name__ == "__main__":
     df = prep_multiindex_df(levels, incl_metric=True)
 
     start = time.perf_counter()
+
     df = parallel_process(
         wav_folder.glob("*.wav"), df, levels, analysis_settings, verbose=True
     )
+
     end = time.perf_counter()
     print(f"Time taken: {end-start:.2f} seconds")
 

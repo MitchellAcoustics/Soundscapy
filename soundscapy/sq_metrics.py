@@ -70,112 +70,6 @@ def _stat_calcs(
 
 
 #%%
-def pyacoustics_metric_1ch(
-    s,
-    metric: str,
-    statistics: Union[list, tuple] = (
-        5,
-        10,
-        50,
-        90,
-        95,
-        "avg",
-        "max",
-        "min",
-        "kurt",
-        "skew",
-    ),
-    label: str = None,
-    as_df: bool = False,
-    return_time_series: bool = False,
-    verbose: bool = False,
-    func_args={},
-):
-    """Run a metric from the pyacoustics library on a single channel object.
-
-    Parameters
-    ----------
-    s : Signal or Binaural (single channel slice)
-        Single channel signal to calculate the metric for
-    metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
-        The metric to run
-    statistics : tuple or list, optional
-        List of level statistics to calculate (e.g. L_5, L_90, etc),
-            by default (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew")
-    label : str, optional
-        Label to use for the metric in the results dictionary, by default None
-        If None, will pull from default label for that metric given in DEFAULT_LABELS
-    as_df : bool, optional
-        Whether to return a pandas DataFrame, by default False
-        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-    return_time_series : bool, optional
-        Whether to return the time series of the metric, by default False
-        Cannot return time series if as_df is True
-    verbose : bool, optional
-        Whether to print status updates, by default False
-    **func_args : dict, optional
-        Additional keyword arguments to pass to the metric function, by default {}
-
-    Returns
-    -------
-    dict
-        dictionary of the calculated statistics.
-        key is metric name + statistic (e.g. LZeq_5, LZeq_90, etc)
-        value is the calculated statistic
-
-    Raises
-    ------
-    ValueError
-        Metric must be one of {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
-    """
-    if s.channels != 1:
-        raise ValueError("Signal must be single channel")
-    try:
-        label = label or DEFAULT_LABELS[metric]
-    except KeyError as e:
-        raise ValueError(f"Metric {metric} not recognized.") from e
-    if as_df and return_time_series:
-        warnings.warn(
-            "Cannot return both a dataframe and time series. Returning dataframe only."
-        )
-
-        return_time_series = False
-    if verbose:
-        print(f" - Calculating Python Acoustics: {metric} {statistics}")
-    res = {}
-    if metric in {"LZeq", "Leq", "LAeq", "LCeq"}:
-        if metric in {"LZeq", "Leq"}:
-            weighting = "Z"
-        elif metric == "LAeq":
-            weighting = "A"
-        elif metric == "LCeq":
-            weighting = "C"
-        if "avg" in statistics or "mean" in statistics:
-            stat = "avg" if "avg" in statistics else "mean"
-            res[f"{label}"] = s.weigh(weighting).leq()
-            statistics = list(statistics)
-            statistics.remove(stat)
-        if len(statistics) > 0:
-            res = _stat_calcs(
-                label, s.weigh(weighting).levels(**func_args)[1], res, statistics
-            )
-
-        if return_time_series:
-            res[f"{label}_ts"] = s.weigh(weighting).levels(**func_args)
-    elif metric == "SEL":
-        res[f"{label}"] = s.sound_exposure_level()
-    else:
-        raise ValueError(f"Metric {metric} not recognized.")
-    if not as_df:
-        return res
-    try:
-        rec = s.recording
-        return pd.DataFrame(res, index=[rec])
-    except AttributeError:
-        return pd.DataFrame(res, index=[0])
-
-
-#%%
 def mosqito_metric_1ch(
     s,
     metric: str,
@@ -368,3 +262,109 @@ def maad_metric_1ch(
 
 
 # %%
+
+#%%
+def pyacoustics_metric_1ch(
+    s,
+    metric: str,
+    statistics: Union[list, tuple] = (
+        5,
+        10,
+        50,
+        90,
+        95,
+        "avg",
+        "max",
+        "min",
+        "kurt",
+        "skew",
+    ),
+    label: str = None,
+    as_df: bool = False,
+    return_time_series: bool = False,
+    verbose: bool = False,
+    func_args={},
+):
+    """Run a metric from the pyacoustics library on a single channel object.
+
+    Parameters
+    ----------
+    s : Signal or Binaural (single channel slice)
+        Single channel signal to calculate the metric for
+    metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
+        The metric to run
+    statistics : tuple or list, optional
+        List of level statistics to calculate (e.g. L_5, L_90, etc),
+            by default (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew")
+    label : str, optional
+        Label to use for the metric in the results dictionary, by default None
+        If None, will pull from default label for that metric given in DEFAULT_LABELS
+    as_df : bool, optional
+        Whether to return a pandas DataFrame, by default False
+        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
+    return_time_series : bool, optional
+        Whether to return the time series of the metric, by default False
+        Cannot return time series if as_df is True
+    verbose : bool, optional
+        Whether to print status updates, by default False
+    **func_args : dict, optional
+        Additional keyword arguments to pass to the metric function, by default {}
+
+    Returns
+    -------
+    dict
+        dictionary of the calculated statistics.
+        key is metric name + statistic (e.g. LZeq_5, LZeq_90, etc)
+        value is the calculated statistic
+
+    Raises
+    ------
+    ValueError
+        Metric must be one of {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
+    """
+    if s.channels != 1:
+        raise ValueError("Signal must be single channel")
+    try:
+        label = label or DEFAULT_LABELS[metric]
+    except KeyError as e:
+        raise ValueError(f"Metric {metric} not recognized.") from e
+    if as_df and return_time_series:
+        warnings.warn(
+            "Cannot return both a dataframe and time series. Returning dataframe only."
+        )
+
+        return_time_series = False
+    if verbose:
+        print(f" - Calculating Python Acoustics: {metric} {statistics}")
+    res = {}
+    if metric in {"LZeq", "Leq", "LAeq", "LCeq"}:
+        if metric in {"LZeq", "Leq"}:
+            weighting = "Z"
+        elif metric == "LAeq":
+            weighting = "A"
+        elif metric == "LCeq":
+            weighting = "C"
+        if "avg" in statistics or "mean" in statistics:
+            stat = "avg" if "avg" in statistics else "mean"
+            res[f"{label}"] = s.weigh(weighting).leq()
+            statistics = list(statistics)
+            statistics.remove(stat)
+        if len(statistics) > 0:
+            res = _stat_calcs(
+                label, s.weigh(weighting).levels(**func_args)[1], res, statistics
+            )
+
+        if return_time_series:
+            res[f"{label}_ts"] = s.weigh(weighting).levels(**func_args)
+    elif metric == "SEL":
+        res[f"{label}"] = s.sound_exposure_level()
+    else:
+        raise ValueError(f"Metric {metric} not recognized.")
+    if not as_df:
+        return res
+    try:
+        rec = s.recording
+        return pd.DataFrame(res, index=[rec])
+    except AttributeError:
+        return pd.DataFrame(res, index=[0])
+

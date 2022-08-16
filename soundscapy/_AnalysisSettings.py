@@ -1,6 +1,5 @@
 
 # %%
-# from WavAnalysis import *
 from pathlib import Path
 from time import localtime, strftime
 from typing import Union
@@ -140,18 +139,18 @@ class AnalysisSettings(dict):
             arguments to pass to the underlying metric function from MoSQITo
         """
         run, channel, statistics, label, func_args = self._parse_method(
-            "MoSQITO", metric
+            "MoSQITo", metric
         )
         try:
-            parallel = self["MoSQITO"][metric]["parallel"]
+            parallel = self["MoSQITo"][metric]["parallel"]
         except KeyError:
             parallel = False
         # Check for sub metric
         # if sub metric is present, don't run this metric
         if (
             metric == "loudness_zwtv"
-            and "sharpness_din_from_loudness" in self["MoSQITO"].keys()
-            and self["MoSQITO"]["sharpness_din_from_loudness"]["run"]
+            and "sharpness_din_from_loudness" in self["MoSQITo"].keys()
+            and self["MoSQITo"]["sharpness_din_from_loudness"]["run"]
             and self.force_run_all is False
         ):
             run = False
