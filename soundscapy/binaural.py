@@ -56,7 +56,7 @@ def pyacoustics_metric_2ch(
     as_df: bool = False,
     return_time_series: bool = False,
     verbose: bool = False,
-    **func_args,
+    func_args={},
 ):
     """Run a metric from the python acoustics library on a Binaural object.
 
@@ -151,12 +151,25 @@ def _parallel_mosqito_metric_2ch(
     label: str = None,
     channel_names: Union[tuple, list] = ("Left", "Right"),
     return_time_series: bool = False,
-    **func_args,
+    verbose: bool = False,
+    func_args={},
 ):
     pool = mp.Pool(mp.cpu_count())
     result_objects = pool.starmap(
         mosqito_metric_1ch,
-        [(b[i], metric, statistics, label, return_time_series) for i in [0, 1]],
+        [
+            (
+                b[i],
+                metric,
+                statistics,
+                label,
+                False,
+                return_time_series,
+                verbose,
+                func_args,
+            )
+            for i in [0, 1]
+        ],
     )
 
     pool.close()
@@ -184,7 +197,7 @@ def mosqito_metric_2ch(
     return_time_series: bool = False,
     parallel: bool = True,
     verbose: bool = False,
-    **func_args,
+    func_args={},
 ):
     """function for calculating metrics from Mosqito.
 
@@ -218,6 +231,8 @@ def mosqito_metric_2ch(
         automatically be set to False.
     verbose : bool, optional
         Whether to print status updates, by default False
+    func_args : dict, optional
+        Additional arguments to pass to the metric function, by default {}
 
     Returns
     -------
@@ -240,7 +255,7 @@ def mosqito_metric_2ch(
         parallel = False
     if parallel:
         res = _parallel_mosqito_metric_2ch(
-            b, metric, statistics, label, channel_names, return_time_series, **func_args
+            b, metric, statistics, label, channel_names, return_time_series, verbose
         )
 
     else:
@@ -251,6 +266,7 @@ def mosqito_metric_2ch(
             label,
             as_df=False,
             return_time_series=return_time_series,
+            verbose=verbose,
             **func_args,
         )
 
@@ -261,6 +277,7 @@ def mosqito_metric_2ch(
             label,
             as_df=False,
             return_time_series=return_time_series,
+            verbose=verbose,
             **func_args,
         )
 
@@ -443,9 +460,9 @@ def process_all_metrics(
                         results_df,
                         b.mosqito_metric(
                             metric,
-                            analysis_settings=analysis_settings,
                             parallel=parallel,
                             verbose=verbose,
+                            analysis_settings=analysis_settings,
                         ),
                     ),
                     axis=1,
@@ -457,12 +474,13 @@ def process_all_metrics(
                     (
                         results_df,
                         b.maad_metric(
-                            metric, analysis_settings=analysis_settings, verbose=verbose
+                            metric, verbose=verbose, analysis_settings=analysis_settings
                         ),
                     ),
                     axis=1,
                 )
 
     return results_df
+
 
 # %%
