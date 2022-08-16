@@ -253,6 +253,7 @@ class Binaural(Signal):
         channel: Union[int, tuple, list, str] = ("Left", "Right"),
         as_df: bool = True,
         return_time_series: bool = False,
+        parallel: bool = True,
         verbose: bool = False,
         analysis_settings: AnalysisSettings = None,
         **func_args
@@ -295,6 +296,7 @@ class Binaural(Signal):
                 channel,
                 statistics,
                 label,
+                parallel,
                 func_args,
             ) = analysis_settings.parse_mosqito(metric)
             if run is False:
@@ -323,6 +325,7 @@ class Binaural(Signal):
                 channel,
                 as_df,
                 return_time_series,
+                parallel,
                 verbose,
                 **func_args
             )
@@ -387,7 +390,7 @@ class Binaural(Signal):
             )            
 
 
-    def process_all_metrics(self, analysis_settings: AnalysisSettings, verbose:bool = False):
+    def process_all_metrics(self, analysis_settings: AnalysisSettings, parallel:bool = False, verbose:bool = False):
         """Run all metrics specified in the AnalysisSettings object
 
         Parameters
@@ -403,7 +406,7 @@ class Binaural(Signal):
             MultiIndex Dataframe of results.
             Index includes "Recording" and "Channel" with a column for each metric.
         """
-        return process_all_metrics(self, analysis_settings, verbose)
+        return process_all_metrics(self, analysis_settings, parallel, verbose)
 
 
 __all__ = ["Binaural"]

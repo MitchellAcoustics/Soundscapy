@@ -3,6 +3,7 @@ from typing import Union
 import pandas as pd
 
 from sq_metrics import *
+import multiprocessing as mp
 
 # %%
 
@@ -125,12 +126,47 @@ def pyacoustics_metric_2ch(
         except:
             rec = 0
         df = pd.DataFrame.from_dict(res, orient="index")
-        df['Recording'] = rec
-        df['Channel'] = df.index
+        df["Recording"] = rec
+        df["Channel"] = df.index
         df.set_index(["Recording", "Channel"], inplace=True)
         return df
     else:
         return res
+
+
+def _parallel_mosqito_metric_2ch(
+    b,
+    metric: str,
+    statistics: Union[tuple, list] = (
+        5,
+        10,
+        50,
+        90,
+        95,
+        "avg",
+        "max",
+        "min",
+        "kurt",
+        "skew",
+    ),
+    label: str = None,
+    channel_names: Union[tuple, list] = ("Left", "Right"),
+    return_time_series: bool = False,
+    **func_args,
+):
+    pool = mp.Pool(mp.cpu_count())
+    results = {}
+
+    result_objects = pool.starmap(
+        mosqito_metric_1ch,
+        [(b[i], metric, statistics, label, return_time_series) for i in [0, 1]],
+    )
+    pool.close()
+
+    for i, channel in enumerate(channel_names):
+        results[channel] = result_objects[i]
+
+    return results
 
 
 def mosqito_metric_2ch(
@@ -152,6 +188,7 @@ def mosqito_metric_2ch(
     channel_names: Union[tuple, list] = ("Left", "Right"),
     as_df: bool = False,
     return_time_series: bool = False,
+    parallel: bool = True,
     verbose: bool = False,
     **func_args,
 ):
@@ -187,41 +224,60 @@ def mosqito_metric_2ch(
 
     if verbose:
         if metric == "sharpness_din_from_loudness":
-            print(" - Calculating MoSQITo metrics: `sharpness_din` from `loudness_zwtv`")
+            print(
+                " - Calculating MoSQITo metrics: `sharpness_din` from `loudness_zwtv`"
+            )
         else:
             print(f" - Calculating MoSQITo metric: {metric}")
 
-    res_l = mosqito_metric_1ch(
-        b[0],
-        metric,
-        statistics,
-        label,
-        as_df=False,
-        return_time_series=return_time_series,
-        **func_args,
-    )
-    res_r = mosqito_metric_1ch(
-        b[1],
-        metric,
-        statistics,
-        label,
-        as_df=False,
-        return_time_series=return_time_series,
-        **func_args,
-    )
+    # Make sure we're not already running in a parallel process
+    # (e.g. if called from `parallel_process`)
+    if mp.current_process().daemon:  # True if already a subprocess
+        parallel = False
 
-    res = {
-        channel_names[0]: res_l,
-        channel_names[1]: res_r,
-    }
+    if parallel:
+        res = _parallel_mosqito_metric_2ch(
+            b,
+            metric,
+            statistics,
+            label,
+            channel_names,
+            return_time_series,
+            **func_args,
+        )
+
+    else:
+        res_l = mosqito_metric_1ch(
+            b[0],
+            metric,
+            statistics,
+            label,
+            as_df=False,
+            return_time_series=return_time_series,
+            **func_args,
+        )
+        res_r = mosqito_metric_1ch(
+            b[1],
+            metric,
+            statistics,
+            label,
+            as_df=False,
+            return_time_series=return_time_series,
+            **func_args,
+        )
+
+        res = {
+            channel_names[0]: res_l,
+            channel_names[1]: res_r,
+        }
     if as_df:
         try:
             rec = b.recording
         except:
             rec = 0
         df = pd.DataFrame.from_dict(res, orient="index")
-        df['Recording'] = rec
-        df['Channel'] = df.index
+        df["Recording"] = rec
+        df["Channel"] = df.index
         df.set_index(["Recording", "Channel"], inplace=True)
         return df
     else:
@@ -273,8 +329,8 @@ def maad_metric_2ch(
         except:
             rec = 0
         df = pd.DataFrame.from_dict(res, orient="index")
-        df['Recording'] = rec
-        df['Channel'] = df.index
+        df["Recording"] = rec
+        df["Channel"] = df.index
         df.set_index(["Recording", "Channel"], inplace=True)
         return df
     else:
@@ -331,13 +387,14 @@ def add_results(results_df: pd.DataFrame, results: pd.DataFrame):
         # Check if results_df already has the columns in results
         results_df = results_df.join(results)
     else:
-        results_df.update(results, errors='ignore')
+        results_df.update(results, errors="ignore")
     return results_df
 
 
 def process_all_metrics(
     b,
     analysis_settings,
+    parallel: bool = True,
     verbose: bool = False,
 ):
     """Loop through all metrics included in `analysis_settings` and add results to `results_df`
@@ -368,32 +425,41 @@ def process_all_metrics(
         # Ptyhon Acoustics metrics
         if library == "PythonAcoustics":
             for metric in analysis_settings[library].keys():
-                results_df = pd.concat((
-                    results_df,
-                    b.pyacoustics_metric(
-                        metric, analysis_settings=analysis_settings, verbose=verbose
-                    )),
-                    axis=1
+                results_df = pd.concat(
+                    (
+                        results_df,
+                        b.pyacoustics_metric(
+                            metric, analysis_settings=analysis_settings, verbose=verbose
+                        ),
+                    ),
+                    axis=1,
                 )
         # MosQITO metrics
         elif library == "MoSQITO":
             for metric in analysis_settings[library].keys():
-                results_df = pd.concat((
-                    results_df,
-                    b.mosqito_metric(
-                        metric, analysis_settings=analysis_settings, verbose=verbose
-                    )),
-                    axis=1
+                results_df = pd.concat(
+                    (
+                        results_df,
+                        b.mosqito_metric(
+                            metric,
+                            analysis_settings=analysis_settings,
+                            parallel=parallel,
+                            verbose=verbose,
+                        ),
+                    ),
+                    axis=1,
                 )
         # scikit-maad metrics
         elif library == "maad":
             for metric in analysis_settings[library].keys():
-                results_df = pd.concat((
-                    results_df,
-                    b.maad_metric(
-                        metric, analysis_settings=analysis_settings, verbose=verbose
-                    )),
-                    axis=1
+                results_df = pd.concat(
+                    (
+                        results_df,
+                        b.maad_metric(
+                            metric, analysis_settings=analysis_settings, verbose=verbose
+                        ),
+                    ),
+                    axis=1,
                 )
 
     return results_df

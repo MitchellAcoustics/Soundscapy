@@ -140,7 +140,10 @@ class AnalysisSettings(dict):
         run, channel, statistics, label, func_args = self._parse_method(
             "MoSQITO", metric
         )
-
+        try:
+            parallel = self["MoSQITO"][metric]["parallel"]
+        except KeyError:
+            parallel = False
         # Check for sub metric
         # if sub metric is present, don't run this metric
         if (
@@ -150,7 +153,7 @@ class AnalysisSettings(dict):
             and self.force_run_all is False
         ):
             run = False
-        return run, channel, statistics, label, func_args
+        return run, channel, statistics, label, parallel, func_args
 
     def _parse_method(self, library: str, metric: str):
         """Helper function to return relevant settings for a library
