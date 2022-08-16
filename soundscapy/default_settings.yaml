@@ -53,6 +53,7 @@ MoSQITO:
         statistics: [10, 50, 90, 95, 'min', 'max', 'kurt', 'skew', 'avg']
         channel: ["Left", "Right"]
         label: "N"
+        parallel: true
         func_args:
             field_type: "free"
 
@@ -62,6 +63,7 @@ MoSQITO:
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
         label: "S"
+        parallel: true
         func_args:
             weighting: "din"
             skip: 0.5
@@ -73,6 +75,7 @@ MoSQITO:
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
         label: "S"
+        parallel: false # Not really necessary for din_perseg
         func_args:
             weighting: "aures"
             nperseg: 4096
@@ -86,6 +89,7 @@ MoSQITO:
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
         label: "S"
+        parallel: true
         func_args:
             weighting: "din"
             field_type: "free"
@@ -97,6 +101,7 @@ MoSQITO:
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
         label: "R"
+        parallel: true
 
 scikit-maad:
 maad:

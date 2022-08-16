@@ -26,6 +26,7 @@ DEFAULT_LABELS = {
     "sharpness_din_from_loudness": "S",
     "sharpness_din_tv": "S",
 }
+# TODO: Redo documentation after refactoring
 
 #%%
 # Metrics calculations
@@ -128,7 +129,7 @@ def pyacoustics_metric_1ch(
             "Cannot return both a dataframe and time series. Returning dataframe only."
         )
         return_time_series = False
-    
+
     if verbose:
         print(f" - Calculating Python Acoustics: {metric} {statistics}")
 
@@ -248,7 +249,9 @@ def mosqito_metric_1ch(
     res = {}
     if metric == "sharpness_din_from_loudness":
         if verbose:
-            print(f"   -- Calculating MoSqITo: loudness_zwtv for sharpness_din_from_loudness")
+            print(
+                f"   -- Calculating MoSqITo: loudness_zwtv for sharpness_din_from_loudness"
+            )
         field_type = func_args["field_type"] if "field_type" in func_args else "free"
         N, N_spec, bark_axis, time_axis = loudness_zwtv(s, s.fs, field_type=field_type)
         res = _stat_calcs("N", N, res, statistics)
@@ -335,15 +338,17 @@ def maad_metric_1ch(
 
     elif metric == "all_spectral_alpha_indices":
         Sxx, tn, fn, ext = maad.sound.spectrogram(s, s.fs, **func_args)
-        res = maad.features.all_spectral_alpha_indices(Sxx, tn, fn, extent=ext, **func_args)[0]
+        res = maad.features.all_spectral_alpha_indices(
+            Sxx, tn, fn, extent=ext, **func_args
+        )[0]
     else:
         raise ValueError(f"Metric {metric} not recognized.")
 
     if as_df:
-    # Add the recording name as the index
+        # Add the recording name as the index
         try:
-            res['Recording'] = s.recording
-            res.set_index(['Recording'], inplace=True)
+            res["Recording"] = s.recording
+            res.set_index(["Recording"], inplace=True)
             return res
         except:
             return res
