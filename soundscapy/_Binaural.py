@@ -21,7 +21,7 @@ class Binaural(Signal):
     A signal consisting of 2D samples (array) and a sampling frequency (fs).
 
     Subclasses the Signal class from python acoustics.
-    Also adds attributes for the recording name and analysis settings.
+    Also adds attributes for the recording name.
     Adds the ability to do binaural analysis using the acoustics, scikit-maad and mosqito libraries.
     Optimised for batch processing with analysis settings predefined in a yaml file and passed to the class via the AnalysisSettings class.
 
@@ -43,15 +43,15 @@ class Binaural(Signal):
         self.fs = getattr(obj, "fs", None)
         self.recording = getattr(obj, "recording", None)
 
-
     def calibrate_to(self, decibel: Union[float, list, tuple], inplace: bool = False):
-        """Binaural signal class for analysis of binaural signals.
+        """Calibrate two channel signal to predefined Leq/dB levels.
 
         Parameters
         ----------
         decibel : float, list or tuple of float
             Value(s) to calibrate to in dB (Leq)
             Can also handle np.ndarray and pd.Series of length 2.
+            If only one value is passed, will calibrate both channels to the same value.
         inplace : bool, optional
             Whether to perform inplace or not, by default False
 
@@ -62,8 +62,6 @@ class Binaural(Signal):
 
         Raises
         ------
-        ValueError
-            If decibel is not a (float, int) or a list or tuple of length 2.
         ValueError
             If decibel is not a (float, int) or a list or tuple of length 2.
 
@@ -95,7 +93,8 @@ class Binaural(Signal):
     def from_wav(
         cls,
         filename: Union[Path, str],
-        normalize: bool = True,
+        calibrate_to: Union[float, list, tuple] = None,
+        normalize: bool = False,
     ):
         """Load a wav file and return a Binaural object
 
@@ -106,8 +105,12 @@ class Binaural(Signal):
         ----------
         filename : Path, str
             Filename of wav file to load
+        calibrate_to : float, list or tuple of float, optional
+            Value(s) to calibrate to in dB (Leq)
+            Can also handle np.ndarray and pd.Series of length 2.
+            If only one value is passed, will calibrate both channels to the same value.
         normalize : bool, optional
-            Whether to normalize the signal, by default True
+            Whether to normalize the signal, by default False
 
         Returns
         -------
@@ -119,21 +122,27 @@ class Binaural(Signal):
         acoustics.Signal.from_wav : Base method for loading wav files
         """
         s = super().from_wav(filename, normalize)
+        if calibrate_to is not None:
+            s.calibrate_to(calibrate_to, inplace=True)
         return cls(s, s.fs, recording=filename.stem)
 
     def _get_channel(self, channel):
         if self.channels == 1:
             return self
-        elif channel == None or channel == "both" or channel == ("Left", "Right") or channel == ["Left", "Right"]:
+        elif (
+            channel is None
+            or channel == "both"
+            or channel == ("Left", "Right")
+            or channel == ["Left", "Right"]
+        ):
             return self
-        elif channel == "Left" or channel == 0 or channel == "L":
+        elif channel in ["Left", 0, "L"]:
             return self[0]
-        elif channel == "Right" or channel == 1 or channel == "R":
+        elif channel in ["Right", 1, "R"]:
             return self[1]
         else:
             warnings.warn("Channel not recognised. Returning Binaural object as is.")
             return self
-        
 
     # Python Acoustics metrics
     def pyacoustics_metric(
@@ -157,7 +166,7 @@ class Binaural(Signal):
         as_df: bool = True,
         return_time_series: bool = False,
         analysis_settings: AnalysisSettings = None,
-        **func_args
+        **func_args,
     ):
         """Run a metric from the python acoustics library
 
@@ -165,15 +174,21 @@ class Binaural(Signal):
         ----------
         metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
             The metric to run.
-        channel : tuple, list, or str, optional
-            Which channels to process, by default None
-            If None, will process both channels
         statistics : tuple or list, optional
             List of level statistics to calulate (e.g. L_5, L_90, etc.),
                 by default ( 5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew", )
         label : str, optional
             Label to use for the metric, by default None
-            If None, will pull from default label for that metric given in WavAnalysis.DEFAULT_LABELS
+            If None, will pull from default label for that metric given in sq_metrics.DEFAULT_LABELS
+        channel : tuple, list, or str, optional
+            Which channels to process, by default None
+            If None, will process both channels
+        as_df: bool, optional
+            Whether to return a dataframe or not, by default True
+            If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
+        return_time_series: bool, optional
+            Whether to return the time series of the metric, by default False
+            Cannot return time series if as_df is True
         verbose : bool, optional
             Whether to print status updates, by default False
         analysis_settings : AnalysisSettings, optional
@@ -217,7 +232,7 @@ class Binaural(Signal):
                 as_df,
                 return_time_series,
                 verbose,
-                **func_args
+                **func_args,
             )
 
         else:
@@ -230,7 +245,7 @@ class Binaural(Signal):
                 as_df,
                 return_time_series,
                 verbose,
-                **func_args
+                **func_args,
             )
 
     # # Mosqito Metrics
@@ -256,7 +271,7 @@ class Binaural(Signal):
         parallel: bool = True,
         verbose: bool = False,
         analysis_settings: AnalysisSettings = None,
-        **func_args
+        **func_args,
     ):
         """Run a metric from the mosqito library
 
@@ -314,7 +329,7 @@ class Binaural(Signal):
                 as_df,
                 return_time_series,
                 verbose,
-                **func_args
+                **func_args,
             )
         else:
             return mosqito_metric_2ch(
@@ -327,7 +342,7 @@ class Binaural(Signal):
                 return_time_series,
                 parallel,
                 verbose,
-                **func_args
+                **func_args,
             )
 
     # scikit-maad metrics
@@ -338,7 +353,7 @@ class Binaural(Signal):
         as_df: bool = True,
         verbose: bool = False,
         analysis_settings: AnalysisSettings = None,
-        **func_args
+        **func_args,
     ):
         """Run a metric from the scikit-maad library
 
@@ -369,28 +384,25 @@ class Binaural(Signal):
             If metric name is not recognised.
         """
         if analysis_settings:
-            if metric in ("all_temporal_alpha_indices", "all_spectral_alpha_indices"):
+            if metric in {"all_temporal_alpha_indices", "all_spectral_alpha_indices"}:
                 run, channel = analysis_settings.parse_maad_all_alpha_indices(metric)
             else:
                 raise ValueError(f"Metric {metric} not recognised")
             if run is False:
                 return None
-
         channel = ("Left", "Right") if channel is None else channel
-
         s = self._get_channel(channel)
-
         if s.channels == 1:
-            return maad_metric_1ch(
-                s, metric, as_df, verbose, **func_args
-            )
+            return maad_metric_1ch(s, metric, as_df, verbose, **func_args)
         else:
-            return maad_metric_2ch(
-                s, metric, channel, as_df, verbose, **func_args
-            )            
+            return maad_metric_2ch(s, metric, channel, as_df, verbose, **func_args)
 
-
-    def process_all_metrics(self, analysis_settings: AnalysisSettings, parallel:bool = False, verbose:bool = False):
+    def process_all_metrics(
+        self,
+        analysis_settings: AnalysisSettings,
+        parallel: bool = False,
+        verbose: bool = False,
+    ):
         """Run all metrics specified in the AnalysisSettings object
 
         Parameters
