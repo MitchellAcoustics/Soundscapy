@@ -5,17 +5,6 @@ import pandas as pd
 from soundscapy.sq_metrics import *
 import multiprocessing as mp
 
-# %%
-
-# Only used once to create the calibration json file
-
-# levels = pd.read_excel(base_path.joinpath("EuropeLZeq.xlsx"), header=1, index_col=0)
-# levels = levels.drop(columns=["Unnamed: 1", "Unnamed: 3", "Unnamed: 5"])
-# levels.index = levels.index.str.split(" ").str[0]
-# levels = levels.to_dict(orient='index')
-# with open(base_path.joinpath("Levels.json")) as f:
-#     levels = json.load(f)
-
 
 # %%
 
@@ -82,6 +71,8 @@ def pyacoustics_metric_2ch(
         Cannot return time series if as_df is True
     verbose : bool, optional
         Whether to print status updates, by default False
+    func_args : dict, optional
+        Arguments to pass to the metric function, by default {}
 
     Returns
     -------
@@ -106,7 +97,7 @@ def pyacoustics_metric_2ch(
         label,
         as_df=False,
         return_time_series=return_time_series,
-        **func_args,
+        func_args=func_args,
     )
 
     res_r = pyacoustics_metric_1ch(
@@ -116,7 +107,7 @@ def pyacoustics_metric_2ch(
         label,
         as_df=False,
         return_time_series=return_time_series,
-        **func_args,
+        func_args=func_args,
     )
 
     res = {channel_names[0]: res_l, channel_names[1]: res_r}
@@ -267,7 +258,7 @@ def mosqito_metric_2ch(
             as_df=False,
             return_time_series=return_time_series,
             verbose=verbose,
-            **func_args,
+            func_args=func_args,
         )
 
         res_r = mosqito_metric_1ch(
@@ -278,7 +269,7 @@ def mosqito_metric_2ch(
             as_df=False,
             return_time_series=return_time_series,
             verbose=verbose,
-            **func_args,
+            func_args=func_args,
         )
 
         res = {channel_names[0]: res_l, channel_names[1]: res_r}
@@ -301,15 +292,15 @@ def maad_metric_2ch(
     channel_names: Union[tuple, list] = ("Left", "Right"),
     as_df: bool = False,
     verbose: bool = False,
-    **func_args,
+    func_args={},
 ):
     """Run a metric from the scikit-maad library (or suite of indices) on a binaural signal.
 
-    Currently only supports running all of the alpha indices at once.
+    Currently only supports running all the alpha indices at once.
 
     Parameters
     ----------
-    s : Binaural
+    b : Binaural
         Binaural signal to calculate the alpha indices for
     metric : {"all_temporal_alpha_indices", "all_spectral_alpha_indices"}
         Metric to calculate
@@ -320,6 +311,8 @@ def maad_metric_2ch(
         If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
     verbose : bool, optional
         Whether to print status updates, by default False
+    func_args : dict, optional
+        Additional arguments to pass to the metric function, by default {}
 
     Returns
     -------
@@ -440,7 +433,7 @@ def process_all_metrics(
 
     # Loop through options in analysis_settings
     for library in analysis_settings.keys():
-        # Ptyhon Acoustics metrics
+        # Python Acoustics metrics
         if library == "PythonAcoustics":
             for metric in analysis_settings[library].keys():
                 results_df = pd.concat(
@@ -452,8 +445,8 @@ def process_all_metrics(
                     ),
                     axis=1,
                 )
-        # MosQITO metrics
-        elif library == "MoSQITO":
+        # MoSQITO metrics
+        elif library == "MoSQITo":
             for metric in analysis_settings[library].keys():
                 results_df = pd.concat(
                     (
@@ -468,7 +461,7 @@ def process_all_metrics(
                     axis=1,
                 )
         # scikit-maad metrics
-        elif library == "maad":
+        elif library == "scikit-maad":
             for metric in analysis_settings[library].keys():
                 results_df = pd.concat(
                     (
