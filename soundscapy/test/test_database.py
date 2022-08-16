@@ -3,9 +3,9 @@ import sys
 
 import pandas as pd
 from pytest import approx
-
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, f"{myPath}/../../")
+#
+# myPath = os.path.dirname(os.path.abspath(__file__))
+# sys.path.insert(0, f"{myPath}/../../")
 
 import soundscapy.database as db
 from pytest import raises
