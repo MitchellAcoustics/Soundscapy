@@ -1,8 +1,8 @@
 #%%
 import multiprocessing as mp
-from binaural import *
-from _Binaural import Binaural
-from _AnalysisSettings import AnalysisSettings
+from soundscapy.binaural import *
+from soundscapy import Binaural
+from soundscapy import AnalysisSettings
 from pathlib import Path
 import json
 import time
@@ -59,12 +59,12 @@ if __name__ == "__main__":
 
     df = prep_multiindex_df(levels, incl_metric=True)
 
-    # start = time.perf_counter()
-    # df = parallel_process(
-    #     wav_folder.glob("*.wav"), df, levels, analysis_settings, verbose=True
-    # )
-    # end = time.perf_counter()
-    # print(f"Time taken: {end-start:.2f} seconds")
+    start = time.perf_counter()
+    df = parallel_process(
+        wav_folder.glob("*.wav"), df, levels, analysis_settings, verbose=True
+    )
+    end = time.perf_counter()
+    print(f"Time taken: {end-start:.2f} seconds")
 
     # df.to_excel(
     #     base_path.joinpath("Data", "Test", f"ParallelTest_{datetime.today()}.xlsx")

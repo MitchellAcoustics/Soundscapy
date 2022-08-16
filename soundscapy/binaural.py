@@ -2,7 +2,7 @@
 from typing import Union
 import pandas as pd
 
-from sq_metrics import *
+from soundscapy.sq_metrics import *
 import multiprocessing as mp
 
 # %%
@@ -66,25 +66,27 @@ def pyacoustics_metric_2ch(
         Binaural signal to calculate the metric for
     metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
         The metric to run
-    recording : str, optional
-        Name of the recording to process, by default "Rec
-    channel : Union, optional
-        Which channels to process, by default None
-        if None will process both channels
     statistics : tuple or list, optional
         List of level statistics to calculate (e.g. L_5, L_90, etc),
             by default (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew")
     label : str, optional
         Label to use for the metric in the results dictionary, by default None
         If None, will pull from default label for that metric given in DEFAULT_LABELS
+    channel_names : tuple or list, optional
+        Custom names for the channels, by default ("Left", "Right")
+    as_df : bool, optional
+        Whether to return a pandas DataFrame, by default False
+        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
+    return_time_series : bool, optional
+        Whether to return the time series of the metric, by default False
+        Cannot return time series if as_df is True
     verbose : bool, optional
         Whether to print status updates, by default False
 
     Returns
     -------
-    pd.DataFrame
-        MultiIndex DataFrame with the results of the metric calculation
-        Index includes "Recording" and "Channel"
+    dict or pd.DataFrame
+        Dictionary of results if as_df is False, otherwise a pandas DataFrame
 
     See Also
     --------
@@ -94,9 +96,9 @@ def pyacoustics_metric_2ch(
         raise ValueError(
             "Must be 2 channel signal. Use `pyacoustics_metric_1ch instead`."
         )
+
     if verbose:
         print(f" - Calculating Python Acoustics metrics: {metric}")
-
     res_l = pyacoustics_metric_1ch(
         b[0],
         metric,
@@ -106,6 +108,7 @@ def pyacoustics_metric_2ch(
         return_time_series=return_time_series,
         **func_args,
     )
+
     res_r = pyacoustics_metric_1ch(
         b[1],
         metric,
@@ -116,22 +119,18 @@ def pyacoustics_metric_2ch(
         **func_args,
     )
 
-    res = {
-        channel_names[0]: res_l,
-        channel_names[1]: res_r,
-    }
-    if as_df:
-        try:
-            rec = b.recording
-        except:
-            rec = 0
-        df = pd.DataFrame.from_dict(res, orient="index")
-        df["Recording"] = rec
-        df["Channel"] = df.index
-        df.set_index(["Recording", "Channel"], inplace=True)
-        return df
-    else:
+    res = {channel_names[0]: res_l, channel_names[1]: res_r}
+    if not as_df:
         return res
+    try:
+        rec = b.recording
+    except AttributeError:
+        rec = 0
+    df = pd.DataFrame.from_dict(res, orient="index")
+    df["Recording"] = rec
+    df["Channel"] = df.index
+    df.set_index(["Recording", "Channel"], inplace=True)
+    return df
 
 
 def _parallel_mosqito_metric_2ch(
@@ -155,18 +154,13 @@ def _parallel_mosqito_metric_2ch(
     **func_args,
 ):
     pool = mp.Pool(mp.cpu_count())
-    results = {}
-
     result_objects = pool.starmap(
         mosqito_metric_1ch,
         [(b[i], metric, statistics, label, return_time_series) for i in [0, 1]],
     )
+
     pool.close()
-
-    for i, channel in enumerate(channel_names):
-        results[channel] = result_objects[i]
-
-    return results
+    return {channel: result_objects[i] for i, channel in enumerate(channel_names)}
 
 
 def mosqito_metric_2ch(
@@ -197,31 +191,41 @@ def mosqito_metric_2ch(
     Parameters
     ----------
     b : Binaural
-        Binaural signal to calculate the alpha indices for
+        Binaural signal to calculate the sound quality indices for
     metric : {"loudness_zwtv", "sharpness_din_from_loudness", "sharpness_din_perseg",
     "sharpness_din_tv", "roughness_dw"}
         Metric to calculate
-    recording : str, optional
-        Name of the recording, by default None
-    channel : tuple or list of str, or str, optional
-        Which channels to process, by default None
-    statistics : tuple or list
-        Statistics to calculate
+    statistics : tuple or list, optional
+        List of level statistics to calculate (e.g. L_5, L_90, etc.),
+            by default (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew")
     label : str, optional
         Label to use for the metric in the results dictionary, by default None
         If None, will pull from default label for that metric given in DEFAULT_LABELS
+    channel_names : tuple or list, optional
+        Custom names for the channels, by default ("Left", "Right")
+    as_df : bool, optional
+        Whether to return a pandas DataFrame, by default False
+        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
+    return_time_series : bool, optional
+        Whether to return the time series of the metric, by default False
+        Only works for metrics that return a time series array.
+        Cannot be returned in a dataframe. Will raise a warning if both `as_df`
+        and `return_time_series` are True and will only return the DataFrame with the other stats.
+    parallel : bool, optional
+        Whether to run the channels in parallel, by default True
+        If False, will run each channel sequentially.
+        If being run as part of a larger parallel analysis (e.g. processing many recordings at once), this will
+        automatically be set to False.
     verbose : bool, optional
         Whether to print status updates, by default False
 
     Returns
     -------
-    pd.DataFrame
-        MultiIndex DataFrame of results.
-        Index includes "Recording" and "Channel" with a column for each statistic
+    dict or pd.DataFrame
+        Dictionary of results if as_df is False, otherwise a pandas DataFrame
     """
     if b.channels != 2:
         raise ValueError("Must be 2 channel signal. Use `mosqito_metric_1ch` instead.")
-
     if verbose:
         if metric == "sharpness_din_from_loudness":
             print(
@@ -232,18 +236,11 @@ def mosqito_metric_2ch(
 
     # Make sure we're not already running in a parallel process
     # (e.g. if called from `parallel_process`)
-    if mp.current_process().daemon:  # True if already a subprocess
+    if mp.current_process().daemon:
         parallel = False
-
     if parallel:
         res = _parallel_mosqito_metric_2ch(
-            b,
-            metric,
-            statistics,
-            label,
-            channel_names,
-            return_time_series,
-            **func_args,
+            b, metric, statistics, label, channel_names, return_time_series, **func_args
         )
 
     else:
@@ -256,6 +253,7 @@ def mosqito_metric_2ch(
             return_time_series=return_time_series,
             **func_args,
         )
+
         res_r = mosqito_metric_1ch(
             b[1],
             metric,
@@ -266,22 +264,18 @@ def mosqito_metric_2ch(
             **func_args,
         )
 
-        res = {
-            channel_names[0]: res_l,
-            channel_names[1]: res_r,
-        }
-    if as_df:
-        try:
-            rec = b.recording
-        except:
-            rec = 0
-        df = pd.DataFrame.from_dict(res, orient="index")
-        df["Recording"] = rec
-        df["Channel"] = df.index
-        df.set_index(["Recording", "Channel"], inplace=True)
-        return df
-    else:
+        res = {channel_names[0]: res_l, channel_names[1]: res_r}
+    if not as_df:
         return res
+    try:
+        rec = b.recording
+    except AttributeError:
+        rec = 0
+    df = pd.DataFrame.from_dict(res, orient="index")
+    df["Recording"] = rec
+    df["Channel"] = df.index
+    df.set_index(["Recording", "Channel"], inplace=True)
+    return df
 
 
 def maad_metric_2ch(
@@ -290,51 +284,55 @@ def maad_metric_2ch(
     channel_names: Union[tuple, list] = ("Left", "Right"),
     as_df: bool = False,
     verbose: bool = False,
+    **func_args,
 ):
-    """Specific function for calculating all alpha temporal indices according to scikit-maad's function.
+    """Run a metric from the scikit-maad library (or suite of indices) on a binaural signal.
+
+    Currently only supports running all of the alpha indices at once.
 
     Parameters
     ----------
     s : Binaural
-        Binary signal to calculate the alpha indices for
-    recording : str, optional
-        Recording name, by default None
-    channel : tuple or list of str, or str, optional
-        Which channels to process, by default None
-    verbose : , optional
+        Binaural signal to calculate the alpha indices for
+    metric : {"all_temporal_alpha_indices", "all_spectral_alpha_indices"}
+        Metric to calculate
+    channel_names : tuple or list, optional
+        Custom names for the channels, by default ("Left", "Right").
+    as_df : bool, optional
+        Whether to return a pandas DataFrame, by default False
+        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
+    verbose : bool, optional
         Whether to print status updates, by default False
 
     Returns
     -------
-    pd.DataFrame
-        MultiIndex DataFrame of results.
-        Index includes "Recording" and "Channel" with a column for each statistic
+    dict or pd.DataFrame
+        Dictionary of results if as_df is False, otherwise a pandas DataFrame
+
+    See Also
+    --------
+    scikit-maad library
+    `sq_metrics.maad_metric_1ch`
+
     """
     if b.channels != 2:
         raise ValueError("Must be 2 channel signal. Use `maad_metric_1ch` instead.")
-
     if verbose:
         print(f" - Calculating scikit-maad {metric}")
-
     res_l = maad_metric_1ch(b[0], metric, as_df=False)
     res_r = maad_metric_1ch(b[1], metric, as_df=False)
-
-    res = {
-        channel_names[0]: res_l,
-        channel_names[1]: res_r,
-    }
-    if as_df:
-        try:
-            rec = b.recording
-        except:
-            rec = 0
-        df = pd.DataFrame.from_dict(res, orient="index")
-        df["Recording"] = rec
-        df["Channel"] = df.index
-        df.set_index(["Recording", "Channel"], inplace=True)
-        return df
-    else:
+    res = {channel_names[0]: res_l, channel_names[1]: res_r}
+    if not as_df:
         return res
+    try:
+        rec = b.recording
+    except AttributeError:
+        rec = 0
+    df = pd.DataFrame.from_dict(res, orient="index")
+    df["Recording"] = rec
+    df["Channel"] = df.index
+    df.set_index(["Recording", "Channel"], inplace=True)
+    return df
 
 
 # Analysis dataframe functions
@@ -345,7 +343,7 @@ def prep_multiindex_df(dictionary: dict, label: str = "Leq", incl_metric: bool =
     ----------
     dictionary : dict
         Dict of results with recording name as key, channels {"Left", "Right"} as second key, and Leq metric as value
-    metric_name : str, optional
+    label : str, optional
         Name of metric included, by default "Leq"
     incl_metric : bool, optional
         Whether to include the metric value in the resulting dataframe, by default True
@@ -368,14 +366,14 @@ def prep_multiindex_df(dictionary: dict, label: str = "Leq", incl_metric: bool =
     return df
 
 
-def add_results(results_df: pd.DataFrame, results: pd.DataFrame):
+def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
     """Add results to MultiIndex dataframe
 
     Parameters
     ----------
     results_df : pd.DataFrame
         MultiIndex dataframe to add results to
-    results : pd.DataFrame
+    metric_results : pd.DataFrame
         MultiIndex dataframe of results to add
 
     Returns
@@ -383,19 +381,16 @@ def add_results(results_df: pd.DataFrame, results: pd.DataFrame):
     pd.DataFrame
         Index includes "Recording" and "Channel" with a column for each index.
     """
-    if not set(results.columns).issubset(set(results_df.columns)):
+    if not set(metric_results.columns).issubset(set(results_df.columns)):
         # Check if results_df already has the columns in results
-        results_df = results_df.join(results)
+        results_df = results_df.join(metric_results)
     else:
-        results_df.update(results, errors="ignore")
+        results_df.update(metric_results, errors="ignore")
     return results_df
 
 
 def process_all_metrics(
-    b,
-    analysis_settings,
-    parallel: bool = True,
-    verbose: bool = False,
+    b, analysis_settings, parallel: bool = True, verbose: bool = False,
 ):
     """Loop through all metrics included in `analysis_settings` and add results to `results_df`
 
@@ -405,6 +400,12 @@ def process_all_metrics(
         Binaural signal to process
     analysis_settings : AnalysisSettings
         Settings for analysis, including `run` tag for whether to run a metric
+    parallel : bool, optional
+        Whether to run the channels in parallel for `binaural.mosqito_metric_2ch`, by default True
+        If False, will run each channel sequentially.
+        If being run as part of a larger parallel analysis (e.g. processing many recordings at once), this will
+        automatically be set to False.
+        Applies only to `binaural.mosqito_metric_2ch`. The other metrics are considered fast enough not to bother.
     verbose : bool, optional
         Whether to print status updates, by default False
 
@@ -429,7 +430,7 @@ def process_all_metrics(
                     (
                         results_df,
                         b.pyacoustics_metric(
-                            metric, analysis_settings=analysis_settings, verbose=verbose
+                            metric, verbose=verbose, analysis_settings=analysis_settings
                         ),
                     ),
                     axis=1,
@@ -463,15 +464,5 @@ def process_all_metrics(
                 )
 
     return results_df
-
-
-# %%
-
-# from acoustics import Signal
-# from pathlib import Path
-
-# wav_folder = Path("test", "data")
-# binaural_wav = wav_folder.joinpath("CT101.wav")
-# s = Signal.from_wav(binaural_wav)
 
 # %%

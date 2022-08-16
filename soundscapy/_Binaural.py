@@ -1,18 +1,12 @@
 # %%
 # from WavAnalysis import *
 from pathlib import Path
-from time import localtime, strftime
-from typing import Union
 
-import numpy as np
-import pytest
-import yaml
 from acoustics import Signal
-from pytest import approx
 
-from binaural import *
-from sq_metrics import *
-from _AnalysisSettings import AnalysisSettings
+from soundscapy.binaural import *
+from soundscapy.sq_metrics import *
+from soundscapy import AnalysisSettings
 
 
 # %%
@@ -23,7 +17,8 @@ class Binaural(Signal):
     Subclasses the Signal class from python acoustics.
     Also adds attributes for the recording name.
     Adds the ability to do binaural analysis using the acoustics, scikit-maad and mosqito libraries.
-    Optimised for batch processing with analysis settings predefined in a yaml file and passed to the class via the AnalysisSettings class.
+    Optimised for batch processing with analysis settings predefined in a yaml file and passed to the class
+    via the AnalysisSettings class.
 
     See Also
     --------
@@ -162,9 +157,9 @@ class Binaural(Signal):
         ),
         label: str = None,
         channel: Union[str, int, list, tuple] = ("Left", "Right"),
-        verbose: bool = False,
         as_df: bool = True,
         return_time_series: bool = False,
+        verbose: bool = False,
         analysis_settings: AnalysisSettings = None,
         **func_args,
     ):
@@ -198,16 +193,15 @@ class Binaural(Signal):
             Can pass any *args or **kwargs to the underlying python acoustics method.
         Returns
         -------
-        pd.DataFrame
-            MultiIndex Dataframe of results.
-            Index includes "Recording" and "Channel" with a column for each statistic.
+        dict or pd.DataFrame
+            Dictionary of results if as_df is False, otherwise a pandas DataFrame
 
         See Also
         --------
-        WavAnalysis.pyacoustics_metric
-        acoustics.standards_iso_tr_25417_2007.equivalent_sound_pressure_level : Base method for Leq calculation
-        acoustics.standards.iec_61672_1_2013.sound_exposure_level : Base method for SEL calculation
-        acoustics.standards.iec_61672_1_2013.time_weighted_sound_level : Base method for Leq level time series calculation
+        `sq_metrics.pyacoustics_metric`
+        `acoustics.standards_iso_tr_25417_2007.equivalent_sound_pressure_level` : Base method for Leq calculation
+        `acoustics.standards.iec_61672_1_2013.sound_exposure_level` : Base method for SEL calculation
+        `acoustics.standards.iec_61672_1_2013.time_weighted_sound_level` : Base method for Leq level time series calculation
         """
         if analysis_settings:
             (
@@ -285,14 +279,25 @@ class Binaural(Signal):
             will be calculated first and then the sharpness will be calculated from that.
             This is because the sharpness_from loudness metric requires the loudness metric to be
             calculated. Loudness will be returned as well
-        channel : tuple or list of str or str, optional
-            Which channels to process, by default None
-        statistics : Union, optional
-            List of level statistics to calulate (e.g. L_5, L_90, etc.),
+        statistics : tuple or list, optional
+            List of level statistics to calculate (e.g. L_5, L_90, etc.),
                 by default (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew")
         label : str, optional
             Label to use for the metric, by default None
-            If None, will pull from default label for that metric given in WavAnalysis.DEFAULT_LABELS
+            If None, will pull from default label for that metric given in sq_metrics.DEFAULT_LABELS
+        channel : tuple or list of str or str, optional
+            Which channels to process, by default ("Left", "Right")
+        as_df: bool, optional
+            Whether to return a dataframe or not, by default True
+            If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
+        return_time_series: bool, optional
+            Whether to return the time series of the metric, by default False
+            Cannot return time series if as_df is True
+        parallel : bool, optional
+            Whether to run the channels in parallel, by default True
+            If False, will run each channel sequentially.
+            If being run as part of a larger parallel analysis (e.g. processing many recordings at once), this will
+            automatically be set to False.
         verbose : bool, optional
             Whether to print status updates, by default False
         analysis_settings : AnalysisSettings, optional
@@ -302,8 +307,13 @@ class Binaural(Signal):
             Can pass any *args or **kwargs to the underlying python acoustics method.
         Returns
         -------
-        pd.DataFrame
-            Index includes "Recording" and "Channel" with a column for each index.
+        dict or pd.DataFrame
+            Dictionary of results if as_df is False, otherwise a pandas DataFrame
+
+        See Also
+        --------
+        binaural.mosqito_metric_2ch : Method for running metrics on 2 channels
+        binaural.mosqito_metric_1ch : Method for running metrics on 1 channel
         """
         if analysis_settings:
             (
@@ -365,6 +375,9 @@ class Binaural(Signal):
             The metric to run
         channel : tuple, list or str, optional
             Which channels to process, by default None
+        as_df: bool, optional
+            Whether to return a dataframe or not, by default True
+            If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
         verbose : bool, optional
             Whether to print status updates, by default False
         analysis_settings : AnalysisSettings, optional
@@ -374,9 +387,9 @@ class Binaural(Signal):
             Can pass any *args or **kwargs to the underlying python acoustics method.
         Returns
         -------
-        pd.DataFrame
-            MultiIndex Dataframe of results.
-            Index includes "Recording" and "Channel" with a column for each index.
+        dict or pd.DataFrame
+            Dictionary of results if as_df is False, otherwise a pandas DataFrame
+
 
         Raises
         ------
@@ -400,7 +413,7 @@ class Binaural(Signal):
     def process_all_metrics(
         self,
         analysis_settings: AnalysisSettings,
-        parallel: bool = False,
+        parallel: bool = True,
         verbose: bool = False,
     ):
         """Run all metrics specified in the AnalysisSettings object
@@ -409,6 +422,12 @@ class Binaural(Signal):
         ----------
         analysis_settings : AnalysisSettings
             Analysis settings object
+        parallel : bool, optional
+            Whether to run the channels in parallel for `binaural.mosqito_metric_2ch`, by default True
+            If False, will run each channel sequentially.
+            If being run as part of a larger parallel analysis (e.g. processing many recordings at once), this will
+            automatically be set to False.
+            Applies only to `binaural.mosqito_metric_2ch`. The other metrics are considered fast enough not to bother.
         verbose : bool, optional
             Whether to print status updates, by default False
 
