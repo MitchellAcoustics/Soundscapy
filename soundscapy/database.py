@@ -1,3 +1,4 @@
+#%%
 # Add soundscapy to the Python path
 import sys
 from re import X
@@ -11,8 +12,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pyod.models.ecod import ECOD
-from pyod.models.mcd import MCD
 
 # Constants and Labels
 from soundscapy.parameters import CATEGORISED_VARS, PAQ_IDS, PAQ_NAMES
@@ -30,7 +29,7 @@ _flatten = lambda t: [item for sublist in t for item in sublist]
 
 ###########
 
-
+#%%
 def load_isd_dataset(version="latest"):
     """Automatically fetch and load the ISD dataset from Zenodo
 
@@ -46,7 +45,9 @@ def load_isd_dataset(version="latest"):
     """
     version = "v0.2.3" if version == "latest" else version
 
-    if version == "V0.2.1":
+    if version in ["V0.2.0", "v0.2.0"]:
+        url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
+    elif version in ["V0.2.1", "v0.2.1"]:
         url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
     elif version in ["V0.2.2", "v0.2.2"]:
         url = "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
@@ -56,6 +57,7 @@ def load_isd_dataset(version="latest"):
     return pd.read_excel(url, engine="openpyxl")
 
 
+#%%
 def validate_dataset(
     df,
     paq_aliases=None,
@@ -77,8 +79,7 @@ def validate_dataset(
         if True will keep Lockdown data in the df, by default True
     allow_paq_na : bool, optional
         remove rows which have any missing PAQ values
-        otherwise will remove those with 50% missing, by default False
-    verbose : int, optional
+        otherwise will remove those with 50% missing, by default False    verbose : int, optional
         how much info to print while running, by default 1
     val_range : tuple, optional
         min and max range of the PAQ response values, by default (5, 1)
@@ -162,85 +163,6 @@ def paq_data_quality(
     return None
 
 
-def ecod(df, features=PAQ_NAMES, **kwargs):
-    """Unsupervised outlier detection using Empirical Cumulative Distribution Functions (ECOD)
-
-    calls to PyOD to implement ECOD
-    Is able to do multivariate outlier detection.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Validated ISD-style dataframe
-            Must have no NAs in the features columns.
-        features : list or str, optional
-            features to include in outlier detection, by default PAQ_NAMES
-
-        Returns
-        -------
-        pyod.models.ecod.ECOD
-            Fitted PyOD base detector
-    """
-    clf = ECOD(**kwargs)
-    x = df[features]
-    if len(features) == 1 or type(features) == str:
-        x = x.values.reshape(-1, 1)
-    clf.fit(x)
-    return clf
-
-
-def grouped_ecod(df, groupby, features=PAQ_NAMES, new_col="outlier", **kwargs):
-    """Implements the ECOD within groups
-
-    It is typically best to perform outlier detection within the same soundscape or location, so this allows you to perform the ECOD for each group independently. In  testing, this gives much more reasonable results.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Validated ISD-style dataframe
-        Must have no NAs in the features columns.
-    groupby : str
-        Column in df to group by
-    features : list or str, optional
-        features to include in outlier detection, by default PAQ_NAMES
-    new_col : str, optional
-        A new column will be added to the original dataframe with 0 or 1 to indicate identified outliers, by default 'outlier'
-
-    Returns
-    -------
-    tuple
-        (original df with outlier column added, dict of fitted pyod objects)
-    """
-    df[new_col] = 0
-    fits = {}
-    for group in df[groupby].unique():
-        grp = df[df[groupby] == group]
-        clf = ecod(grp, features, **kwargs)
-        fits[group] = clf
-        df.loc[df[groupby] == group, new_col] = clf.labels_
-    return df, fits
-
-
-def mcd(df, features=PAQ_NAMES, **kwargs):
-    clf = MCD(**kwargs)
-    x = df[features]
-    if len(features) == 1 or type(features) == str:
-        x = x.values.reshape(-1, 1)
-    clf.fit(x)
-    return clf
-
-
-def grouped_mcd(df, groupby, features=PAQ_NAMES, new_col="outlier", **kwargs):
-    df[new_col] = 0
-    fits = {}
-    for group in df[groupby].unique():
-        grp = df[df[groupby] == group]
-        clf = mcd(grp, features, **kwargs)
-        fits[group] = clf
-        df.loc[df[groupby] == group, new_col] = clf.labels_
-    return df, fits
-
-
 def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
     """Generate random PAQ responses
 
@@ -260,7 +182,7 @@ def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
         dataframe of randomly generated PAQ response
     """
     np.random.seed(42)
-    df = pd.DataFrame(np.random.randint(1, 5, size=(n, 8)), columns=PAQ_NAMES)
+    df = pd.DataFrame(np.random.randint(1, 6, size=(n, 8)), columns=PAQ_NAMES)
     if add_paq_coords:
         ISOPl, ISOEv = calculate_paq_coords(df, **coord_kwargs)
         df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
@@ -317,6 +239,50 @@ def calculate_paq_coords(
     return ISOPleasant, ISOEventful
 
 
+#%%
+def return_paqs(df, incl_ids=True, other_cols=None):
+    """Return only the PAQ columns
+
+    Parameters
+    ----------
+    incl_ids : bool, optional
+        whether to include ID cols too (i.e. RecordID, GroupID, etc), by default True
+    other_cols : list, optional
+        other columns to also include, by default None
+
+    """
+    cols = PAQ_NAMES
+    if incl_ids:
+        id_cols = [
+            name
+            for name in ["RecordID", "GroupID", "SessionID", "LocationID"]
+            if name in df.columns
+        ]
+
+        cols = id_cols + cols
+    if other_cols:
+        cols = cols + other_cols
+    return df[cols]
+
+
+def mean_responses(df: pd.DataFrame, group="LocationID") -> pd.DataFrame:
+    """Calculate the mean responses for each PAQ
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing ISD formatted data
+
+    Returns
+    -------
+    pd.Dataframe
+        Dataframe containing the mean responses for each PAQ
+    """
+    df = return_paqs(df, incl_ids=False, other_cols=[group])
+    return df.groupby(group).mean()
+
+
+#%%
 def _circ_scale(range, proj):
     diff = max(range) - min(range)
     return diff + diff * np.sqrt(2)
@@ -474,3 +440,5 @@ if __name__ == "__main__":
 
     TEST_DIR = Path("../../soundscapy/test/test_DB")
     doctest.testmod(verbose=False, optionflags=doctest.ELLIPSIS)
+
+# %%

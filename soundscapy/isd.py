@@ -82,20 +82,19 @@ class ISDAccessor:
         self._analysis_date = date.today().isoformat()
 
     def validate_dataset(
-        self, paq_aliases=None, allow_lockdown=True, allow_na=False, verbose=1, val_range=(5, 1)
+        self,
+        paq_aliases=None,
+        allow_lockdown=True,
+        allow_na=False,
+        verbose=1,
+        val_range=(5, 1),
     ):
-        return db.validate_dataset(self._df, paq_aliases, allow_lockdown, allow_na, verbose, val_range)
+        return db.validate_dataset(
+            self._df, paq_aliases, allow_lockdown, allow_na, verbose, val_range
+        )
 
     def paq_data_quality(self, verbose=0):
         return db.paq_data_quality(self._df, verbose)
-    
-    def paq_grouped_outliers(self, groupby="LocationID", contamination=0.1, **kwaargs):
-        df, fits = db.grouped_ecod(self._df, groupby, features=PAQ_NAMES, new_col="PAQ_outliers", contamination=contamination)
-        return df
-    
-    def iso_grouped_outliers(self, groupby="LocationID", contamination=0.1, **kwaargs):
-        df, fits = db.grouped_ecod(self._df, groupby, features=['ISOPleasant', 'ISOEventful'], new_col="ISO_outliers", contamination=contamination)
-        return df
 
     def filter_group_ids(self, group_ids):
         if isinstance(group_ids, str):
@@ -142,18 +141,7 @@ class ISDAccessor:
             other columns to also include, by default None
 
         """
-        cols = PAQ_NAMES
-        if incl_ids:
-            id_cols = [
-                name
-                for name in ["RecordID", "GroupID", "SessionID", "LocationID"]
-                if name in self._df.columns
-            ]
-
-            cols = id_cols + cols
-        if other_cols:
-            cols = cols + other_cols
-        return self._df[cols]
+        return db.return_paqs(df, incl_ids, other_cols)
 
     def add_paq_coords(
         self,
@@ -244,10 +232,10 @@ class ISDAccessor:
         y="ISOEventful",
         prim_labels=True,
         diagonal_lines=False,
-        xlim=(-1,1),
-        ylim=(-1,1),
+        xlim=(-1, 1),
+        ylim=(-1, 1),
         figsize=(5, 5),
-        palette=None,
+        palette="colorblind",
         legend=False,
         legend_loc="lower left",
         s=10,
@@ -282,10 +270,10 @@ class ISDAccessor:
         diagonal_lines=False,
         incl_scatter=False,
         incl_outline=False,
-        xlim=(-1,1),
-        ylim=(-1,1),
+        xlim=(-1, 1),
+        ylim=(-1, 1),
         figsize=(5, 5),
-        palette="Blues",
+        palette="colorblind",
         scatter_color="black",
         outline_color="black",
         fill_color="blue",
@@ -336,9 +324,9 @@ class ISDAccessor:
         y="ISOEventful",
         prim_labels=False,
         diagonal_lines=False,
-        xlim=(-1,1),
-        ylim=(-1,1),
-        palette="Blues",
+        xlim=(-1, 1),
+        ylim=(-1, 1),
+        palette="colorblind",
         incl_scatter=False,
         scatter_color="black",
         fill=True,

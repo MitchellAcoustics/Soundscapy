@@ -3,20 +3,14 @@
 
 A python library for analysing and visualising soundscape assessments. 
 
-**Disclaimer:** This module is still heavily in development, and might break what you're working on.
+**Disclaimer:** This module is still heavily in development, and might break what you're working on. It will also likely require a decent amount of troubleshooting at this stage. I promise bug fixes and cleaning up is coming!
 
 ## Installation
 
-For this under-development version, I suggest installing from source in the following way. 
+The package is still under development, but can be installed with pip:
 
-Create a suitable conda environment by downloading just the environment.yml file:
 ```
-conda env create -f environment.yml
-conda activate soundscapy-dev
-```
-Then, install soundscapy from the github source:
-```
-pip install git+https://github.com/MitchellAcoustics/Soundscapy@main
+pip install soundscapy
 ```
 
 ## Examples
@@ -47,3 +41,23 @@ Bibtex:
 
 ```
 --->
+
+## Development Plans
+
+As noted, this package is in heavy development to make it more useable, more stable, and to add features and improvements. At this stage it is mostly limited to doing basic quality checks of soundscape survey data and creating the soundscape distribution plots. Some planned improvements are:
+
+ * Simplify the plotting options
+ * Possibly improve how the plots and data are handled - a more OOP approach would be good.
+ * Add appropriate tests and documentation.
+ * Bug fixes, particularly around setting color palettes.
+
+Large planned feature additions are:
+
+ * Add better methods for cleaning datasets, including robust outlier exclusion and imputation.
+ * Add handling of .wav files.
+ * Integrate environmental acoustic and psychoacoustic batch processing. This will involve using existing packages (e.g. MoSQito, python-acoustics) to do the metric calculations, but adding useful functionality for processing many files at once, tieing them to a specific survey response, and implementing a configuration file for maintaining consistent analysis settings.
+ * Integrate the predictive modelling results from the SSID team's research to enable a single pipelined from recording -> psychoacoustics -> predicted soundscape perception (this is very much a pie-in-the-sky future plan, which may not be possible).
+
+### Contributing
+
+If you would like to contribute or if you have any bugs you have found while using `Soundscapy', please feel free to get in touch or submit an issue or pull request!

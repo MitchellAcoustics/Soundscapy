@@ -93,10 +93,10 @@ def circumplex_scatter(
     y="ISOEventful",
     prim_labels=True,
     diagonal_lines=False,
-    xlim=(-1,1),
-    ylim=(-1,1),
+    xlim=(-1, 1),
+    ylim=(-1, 1),
     figsize=(5, 5),
-    palette=None,
+    palette="colorblind",
     legend=False,
     legend_loc="lower left",
     s=10,
@@ -126,7 +126,7 @@ def circumplex_scatter(
         by default (5, 5)
     palette : string, list, dict or matplotlib.colors.Colormap, optional
         Method for choosing the colors to use when mapping the hue semantic. String values are passed to seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object implies numeric mapping.
-        by default None
+        by default colorblind
     legend : bool, optional
         whether to include legend with the hue values, by default False
     legend_loc : str, optional
@@ -140,9 +140,6 @@ def circumplex_scatter(
     """
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
-    if palette is None:
-        n_colors = len(data[hue].unique()) if hue else len(data)
-        palette = sns.color_palette("husl", n_colors, as_cmap=False)
 
     s = sns.scatterplot(
         data=data,
@@ -172,12 +169,12 @@ def circumplex_density(
     y="ISOEventful",
     prim_labels=True,
     diagonal_lines=False,
-    xlim=(-1,1),
-    ylim=(-1,1),
+    xlim=(-1, 1),
+    ylim=(-1, 1),
     incl_scatter=False,
     incl_outline=False,
     figsize=(5, 5),
-    palette="Blues",
+    palette="colorblind",
     scatter_color="black",
     outline_color="black",
     fill_color="blue",
@@ -220,7 +217,7 @@ def circumplex_density(
         by default (5, 5)
     palette : str, optional
         Method for choosing the colors to use when mapping the hue semantic. String values are passed to seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object implies numeric mapping.
-        by default "Blues"
+        by default "colorblind"
     scatter_color : str, optional
         define a color for the scatter points. Does not work with a hue grouping variable, by default "black"
     outline_color : str, optional
@@ -318,9 +315,9 @@ def circumplex_jointplot_density(
     y="ISOEventful",
     prim_labels=False,
     diagonal_lines=False,
-    xlim=(-1,1),
-    ylim=(-1,1),
-    palette="Blues",
+    xlim=(-1, 1),
+    ylim=(-1, 1),
+    palette="colorblind",
     incl_scatter=False,
     scatter_color="black",
     fill=True,
@@ -350,7 +347,7 @@ def circumplex_jointplot_density(
     diagonal_lines : bool, optional
         whether to include diagonal dimension axis labels in the joint plot, by default False
     palette : str, optional
-        [description], by default "Blues"
+        [description], by default "colorblind"
     incl_scatter : bool, optional
         plot coordinate scatter underneath density plot, by default False
     scatter_color : str, optional
@@ -466,7 +463,9 @@ def _move_legend(ax, new_loc, **kws):
     ax.legend(handles, labels, loc=new_loc, title=title, **kws)
 
 
-def _circumplex_grid(ax, prim_labels=True, diagonal_lines=False, xlim=(-1,1), ylim=(-1,1)):
+def _circumplex_grid(
+    ax, prim_labels=True, diagonal_lines=False, xlim=(-1, 1), ylim=(-1, 1)
+):
     """Create the base layer grids and label lines for the soundscape circumplex
 
     Parameters
@@ -830,6 +829,13 @@ def iso_annotation(
         by default "small"
     arrowprops : dict, optional
         dict of properties to send to plt.annotate, by default dict(arrowstyle="-", ec="black")
+
+    Example
+    -------
+    >>> fig, axes = plt.subplots(1,1, figsize=(5,5))
+    >>> df_mean.isd.circumplex_scatter(ax=axes, xlim=(-.5, .5), ylim=(-.5, .5), prim_labels=False)
+    >>> for location in df_mean.LocationID:
+    >>>     plotting.iso_annotation(axes, df_mean, location)
     """
     ax.annotate(
         text=data["LocationID"][location],
