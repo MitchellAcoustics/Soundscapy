@@ -58,7 +58,7 @@ MoSQITo:
             field_type: "free"
 
     sharpness_din_from_loudness:
-        run: true
+        run: false
         main: "avg"
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
@@ -109,5 +109,5 @@ scikit-maad:
         channel: ["Left", "Right"]
 
     all_spectral_alpha_indices:
-        run: true
+        run: false
         channel: ["Left", "Right"]
