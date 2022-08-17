@@ -78,12 +78,12 @@ class ISDAccessor:
         self._analysis_date = date.today().isoformat()
 
     def validate_dataset(
-            self,
-            paq_aliases=None,
-            allow_lockdown=True,
-            allow_na=False,
-            verbose=1,
-            val_range=(5, 1),
+        self,
+        paq_aliases=None,
+        allow_lockdown=True,
+        allow_na=False,
+        verbose=1,
+        val_range=(5, 1),
     ):
         return db.validate_dataset(
             self._df, paq_aliases, allow_lockdown, allow_na, verbose, val_range
@@ -142,11 +142,11 @@ class ISDAccessor:
         return db.return_paqs(self._df, incl_ids, other_cols)
 
     def add_paq_coords(
-            self,
-            scale_to_one: bool = True,
-            val_range=(5, 1),
-            projection: bool = True,
-            names=("ISOPleasant", "ISOEventful"),
+        self,
+        scale_to_one: bool = True,
+        val_range=(5, 1),
+        projection: bool = True,
+        names=("ISOPleasant", "ISOEventful"),
     ):
         """Calculate and add ISO coordinates as new columns in dataframe
 
@@ -156,6 +156,8 @@ class ISDAccessor:
         ----------
         scale_to_one : bool, optional
             Should the coordinates be scaled to (-1, +1), by default True
+        val_range: tuple, optional
+            (max, min) range of original PAQ responses, by default (5, 1)
         projection : bool, optional
             Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
         names : list, optional
@@ -167,7 +169,7 @@ class ISDAccessor:
         return self._df.add_column(names[0], isopl).add_column(names[1], isoev)
 
     def location_describe(
-            self, location, type="percent", pl_threshold=0, ev_threshold=0
+        self, location, type="percent", pl_threshold=0, ev_threshold=0
     ):
         loc_df = self.filter_location_ids(location_ids=[location])
         count = len(loc_df)
@@ -222,22 +224,22 @@ class ISDAccessor:
         return ssidplot.paq_radar_plot(self._df, ax, index)
 
     def circumplex_scatter(
-            self,
-            ax=None,
-            title="Soundscape Scatter Plot",
-            hue=None,
-            x="ISOPleasant",
-            y="ISOEventful",
-            prim_labels=True,
-            diagonal_lines=False,
-            xlim=(-1, 1),
-            ylim=(-1, 1),
-            figsize=(5, 5),
-            palette="colorblind",
-            legend=False,
-            legend_loc="lower left",
-            s=10,
-            **scatter_kwargs,
+        self,
+        ax=None,
+        title="Soundscape Scatter Plot",
+        hue=None,
+        x="ISOPleasant",
+        y="ISOEventful",
+        prim_labels=True,
+        diagonal_lines=False,
+        xlim=(-1, 1),
+        ylim=(-1, 1),
+        figsize=(5, 5),
+        palette="colorblind",
+        legend=False,
+        legend_loc="lower left",
+        s=10,
+        **scatter_kwargs,
     ):
         return ssidplot.circumplex_scatter(
             self._df,
@@ -259,32 +261,32 @@ class ISDAccessor:
         )
 
     def circumplex_density(
-            self,
-            ax=None,
-            title="Soundscape Density Plot",
-            x="ISOPleasant",
-            y="ISOEventful",
-            prim_labels=True,
-            diagonal_lines=False,
-            incl_scatter=False,
-            incl_outline=False,
-            xlim=(-1, 1),
-            ylim=(-1, 1),
-            figsize=(5, 5),
-            palette="colorblind",
-            scatter_color="black",
-            outline_color="black",
-            fill_color="blue",
-            fill=True,
-            hue=None,
-            common_norm=False,
-            bw_adjust=default_bw_adjust,
-            alpha=0.95,
-            legend=False,
-            legend_loc="lower left",
-            s=10,
-            scatter_kwargs={},
-            **density_kwargs,
+        self,
+        ax=None,
+        title="Soundscape Density Plot",
+        x="ISOPleasant",
+        y="ISOEventful",
+        prim_labels=True,
+        diagonal_lines=False,
+        incl_scatter=False,
+        incl_outline=False,
+        xlim=(-1, 1),
+        ylim=(-1, 1),
+        figsize=(5, 5),
+        palette="colorblind",
+        scatter_color="black",
+        outline_color="black",
+        fill_color="blue",
+        fill=True,
+        hue=None,
+        common_norm=False,
+        bw_adjust=default_bw_adjust,
+        alpha=0.95,
+        legend=False,
+        legend_loc="lower left",
+        s=10,
+        scatter_kwargs={},
+        **density_kwargs,
     ):  # sourcery skip: default-mutable-arg
         return ssidplot.circumplex_density(
             self._df,
@@ -296,46 +298,46 @@ class ISDAccessor:
             diagonal_lines,
             xlim,
             ylim,
-            incl_scatter,
-            incl_outline,
-            figsize,
-            palette,
-            scatter_color,
-            outline_color,
-            fill_color,
-            fill,
-            hue,
-            common_norm,
-            bw_adjust,
-            alpha,
-            legend,
-            legend_loc,
-            s,
-            scatter_kwargs,
+            incl_scatter=incl_scatter,
+            incl_outline=incl_outline,
+            figsize=figsize,
+            palette=palette,
+            scatter_color=scatter_color,
+            outline_color=outline_color,
+            fill_color=fill_color,
+            fill=fill,
+            hue=hue,
+            common_norm=common_norm,
+            bw_adjust=bw_adjust,
+            alpha=alpha,
+            legend=legend,
+            legend_loc=legend_loc,
+            s=s,
+            scatter_kwargs=scatter_kwargs,
             **density_kwargs,
         )
 
     def circumplex_jointplot_density(
-            self,
-            title="Soundscape Joint Plot",
-            x="ISOPleasant",
-            y="ISOEventful",
-            prim_labels=False,
-            diagonal_lines=False,
-            xlim=(-1, 1),
-            ylim=(-1, 1),
-            palette="colorblind",
-            incl_scatter=False,
-            scatter_color="black",
-            fill=True,
-            bw_adjust=default_bw_adjust,
-            alpha=0.95,
-            legend=False,
-            legend_loc="lower left",
-            marginal_kind="kde",
-            hue=None,
-            joint_kwargs={},
-            marginal_kwargs={"fill": True},
+        self,
+        title="Soundscape Joint Plot",
+        x="ISOPleasant",
+        y="ISOEventful",
+        prim_labels=False,
+        diagonal_lines=False,
+        xlim=(-1, 1),
+        ylim=(-1, 1),
+        palette="colorblind",
+        incl_scatter=False,
+        scatter_color="black",
+        fill=True,
+        bw_adjust=default_bw_adjust,
+        alpha=0.95,
+        legend=False,
+        legend_loc="lower left",
+        marginal_kind="kde",
+        hue=None,
+        joint_kwargs={},
+        marginal_kwargs={"fill": True},
     ):  # sourcery skip: default-mutable-arg
         return ssidplot.circumplex_jointplot_density(
             self._df,
@@ -374,6 +376,8 @@ def simulation(n=3000, add_paq_coords=False, val_range=(5, 1), **coord_kwargs):
         number of samples to simulate, by default 3000
     add_paq_coords : bool, optional
         should we also calculate the ISO coordinates, by default False
+    val_range: tuple, optional
+            (max, min) range of original PAQ responses, by default (5, 1)
 
     Returns
     -------
@@ -382,12 +386,13 @@ def simulation(n=3000, add_paq_coords=False, val_range=(5, 1), **coord_kwargs):
     """
     np.random.seed(42)
     df = pd.DataFrame(
-        np.random.randint(min(val_range), max(val_range), size=(n, 8)),
+        np.random.randint(min(val_range), max(val_range)+1, size=(n, 8)),
         columns=PAQ_NAMES,
     )
     if add_paq_coords:
         ISOPl, ISOEv = db.calculate_paq_coords(df, **coord_kwargs)
         df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
     return df
+
 
 # %%

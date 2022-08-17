@@ -167,10 +167,11 @@ def circumplex_density(
     title="Soundscape Density Plot",
     x="ISOPleasant",
     y="ISOEventful",
-    prim_labels=True,
+    prim_labels=False,
     diagonal_lines=False,
     xlim=(-1, 1),
     ylim=(-1, 1),
+    density_type="simple",
     incl_scatter=False,
     incl_outline=False,
     figsize=(5, 5),
@@ -191,12 +192,15 @@ def circumplex_density(
 ):
     """Create a bivariate distribution plot of ISOCoordinates
 
-    This method works by creating a circumplex_grid, then overlaying a sns.kdeplot() using the ISOCoordinate data. IF a scatter is also included, it overlays a sns.scatterplot() using the given options underneath the density plot.
+    This method works by creating a circumplex_grid, then overlaying a sns.kdeplot() using the ISOCoordinate data.
+    If a scatter is also included, it overlays a sns.scatterplot() using the given options underneath the density plot.
 
-    If using a hue grouping, it is recommended to only plot the 50th percentile contour so as to not create a cluttered figure. This can be done with the options thresh = 0.5, levels = 2.
+    If using a hue grouping, it is recommended to only plot the 50th percentile contour so as to not create a cluttered
+    figure. This can be done with the options thresh = 0.5, levels = 2.
 
     Parameters
     ----------
+    density_type
     ax : plt.Axes, optional
         existing subplot axes, by default None
     title : str, optional
@@ -386,11 +390,11 @@ def circumplex_jointplot_density(
         diagonal_lines=diagonal_lines,
         xlim=xlim,
         ylim=ylim,
-        palette=palette,
         incl_scatter=incl_scatter,
+        palette=palette,
         scatter_color=scatter_color,
-        hue=hue,
         fill=fill,
+        hue=hue,
         bw_adjust=bw_adjust,
         alpha=alpha,
         legend=legend,
@@ -839,14 +843,8 @@ def iso_annotation(
     """
     ax.annotate(
         text=data["LocationID"][location],
-        xy=(
-            data[x_key][location],
-            data[y_key][location],
-        ),
-        xytext=(
-            data[x_key][location] + x_adj,
-            data[y_key][location] + y_adj,
-        ),
+        xy=(data[x_key][location], data[y_key][location],),
+        xytext=(data[x_key][location] + x_adj, data[y_key][location] + y_adj,),
         ha=ha,
         va=va,
         arrowprops=arrowprops,
