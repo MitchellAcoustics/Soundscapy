@@ -257,7 +257,6 @@ def mosqito_metric_2ch(
             label,
             as_df=False,
             return_time_series=return_time_series,
-            verbose=verbose,
             func_args=func_args,
         )
 
@@ -268,7 +267,6 @@ def mosqito_metric_2ch(
             label,
             as_df=False,
             return_time_series=return_time_series,
-            verbose=verbose,
             func_args=func_args,
         )
 
@@ -400,7 +398,10 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
 
 
 def process_all_metrics(
-    b, analysis_settings, parallel: bool = True, verbose: bool = False,
+    b,
+    analysis_settings,
+    parallel: bool = True,
+    verbose: bool = False,
 ):
     """Loop through all metrics included in `analysis_settings` and add results to `results_df`
 

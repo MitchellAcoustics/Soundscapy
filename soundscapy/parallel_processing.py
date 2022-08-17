@@ -24,7 +24,7 @@ def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
 def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=True):
     # Parallel processing with Pool.apply_async() without callback function
 
-    pool = mp.Pool(mp.cpu_count())
+    pool = mp.Pool(mp.cpu_count()-1)
     results = []
     result_objects = [
         pool.apply_async(

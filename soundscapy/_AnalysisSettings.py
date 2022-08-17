@@ -11,10 +11,11 @@ class AnalysisSettings(dict):
     each of which has a dict of settings.
     """
 
-    def __init__(self, data, run_stats=True, force_run_all=False):
+    def __init__(self, data, run_stats=True, force_run_all=False, filepath: Union[str, Path]=None):
         super().__init__(data)
         self.run_stats = run_stats
         self.force_run_all = force_run_all
+        self.filepath = filepath
         runtime = strftime("%Y-%m-%d %H:%M:%S", localtime())
         super().__setitem__("runtime", runtime)
 
@@ -42,7 +43,7 @@ class AnalysisSettings(dict):
             AnalysisSettings object
         """
         with open(filename, "r") as f:
-            return cls(yaml.safe_load(f), run_stats)
+            return cls(yaml.safe_load(f), run_stats, force_run_all, filename)
 
     @classmethod
     def default(cls, run_stats=True, force_run_all=False):
@@ -75,6 +76,11 @@ class AnalysisSettings(dict):
                 Path(root, "default_settings.yaml"), run_stats, force_run_all
             )
         )
+
+    def reload(self):
+        """Reload the settings from the yaml file.
+        """
+        return self.from_yaml(self.filepath, self.run_stats, self.force_run_all)
 
     def parse_maad_all_alpha_indices(self, metric: str):
         """Generate relevant settings for the maad all_alpha_indices methods.

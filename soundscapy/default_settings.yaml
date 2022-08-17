@@ -48,7 +48,7 @@ PythonAcoustics:
 # supported stats: avg/mean, max, min, kurt, skew, any integer from 1-99
 MoSQITo:
     loudness_zwtv:
-        run: true
+        run: false
         main: 5
         statistics: [10, 50, 90, 95, 'min', 'max', 'kurt', 'skew', 'avg']
         channel: ["Left", "Right"]
@@ -96,7 +96,7 @@ MoSQITo:
             skip: 0.5
 
     roughness_dw:
-        run: false
+        run: true
         main: "avg"
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
