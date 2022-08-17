@@ -1,21 +1,13 @@
-#%%
+# %%
 # Add soundscapy to the Python path
-import sys
-from re import X
-
 import janitor
-from matplotlib.pyplot import switch_backend
-
-sys.path.append("..")
-
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 # Constants and Labels
-from soundscapy.parameters import CATEGORISED_VARS, PAQ_IDS, PAQ_NAMES
-from soundscapy.plotting import default_bw_adjust, default_figsize
+from soundscapy.parameters import PAQ_IDS, PAQ_NAMES
 
 DEFAULT_CATS = [
     "indexing",
@@ -27,9 +19,10 @@ DEFAULT_CATS = [
 # General helper functions
 _flatten = lambda t: [item for sublist in t for item in sublist]
 
+
 ###########
 
-#%%
+# %%
 def load_isd_dataset(version="latest"):
     """Automatically fetch and load the ISD dataset from Zenodo
 
@@ -43,21 +36,23 @@ def load_isd_dataset(version="latest"):
     pd.Dataframe
         ISD data
     """
-    version = "v0.2.3" if version == "latest" else version
+    if version.lower() not in ["latest", "v0.2.3", "v0.2.2", "v0.2.1", "v0.2.0"]:
+        raise ValueError(f"Version {version} not recognised.")
 
-    if version in ["V0.2.0", "v0.2.0"]:
+    version = "v0.2.3" if version == "latest" else version
+    if version in ["V0.2.0", "v0.2.0", "V0.2.1", "v0.2.1"]:
         url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
-    elif version in ["V0.2.1", "v0.2.1"]:
-        url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
+
     elif version in ["V0.2.2", "v0.2.2"]:
         url = "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
+
     elif version in ["v0.2.3", "V0.2.3"]:
         url = "https://zenodo.org/record/5914762/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
 
     return pd.read_excel(url, engine="openpyxl")
 
 
-#%%
+# %%
 def validate_dataset(
     df,
     paq_aliases=None,
@@ -163,7 +158,7 @@ def paq_data_quality(
     return None
 
 
-def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
+def simulation(n=3000, val_range=(1, 5), add_paq_coords=False, **coord_kwargs):
     """Generate random PAQ responses
 
     The PAQ responses will follow a uniform random distribution
@@ -182,7 +177,10 @@ def simulation(n=3000, add_paq_coords=False, **coord_kwargs):
         dataframe of randomly generated PAQ response
     """
     np.random.seed(42)
-    df = pd.DataFrame(np.random.randint(1, 6, size=(n, 8)), columns=PAQ_NAMES)
+    df = pd.DataFrame(
+        np.random.randint(min(val_range), max(val_range) + 1, size=(n, 8)),
+        columns=PAQ_NAMES,
+    )
     if add_paq_coords:
         ISOPl, ISOEv = calculate_paq_coords(df, **coord_kwargs)
         df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
@@ -239,7 +237,7 @@ def calculate_paq_coords(
     return ISOPleasant, ISOEventful
 
 
-#%%
+# %%
 def return_paqs(df, incl_ids=True, other_cols=None):
     """Return only the PAQ columns
 
@@ -282,7 +280,7 @@ def mean_responses(df: pd.DataFrame, group="LocationID") -> pd.DataFrame:
     return df.groupby(group).mean()
 
 
-#%%
+# %%
 def _circ_scale(range, proj):
     diff = max(range) - min(range)
     return diff + diff * np.sqrt(2)

@@ -26,19 +26,15 @@ top of your file.
 This file can also be imported as a module.
 
 """
-#%%
+# %%
 # Add soundscapy to the Python path
 import sys
 from datetime import date
-from itertools import groupby
 from typing import Union
 
 import janitor
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from pandas.api.extensions import register_dataframe_accessor
 
 sys.path.append("..")
@@ -46,9 +42,9 @@ import soundscapy.database as db
 import soundscapy.plotting as ssidplot
 
 # Define the names of the PAQ columns
-from soundscapy.parameters import PAQ_IDS, PAQ_NAMES
+from soundscapy.parameters import PAQ_NAMES
 
-#%%
+# %%
 
 
 # Default plot settings
@@ -127,6 +123,8 @@ class ISDAccessor:
             else self._df.query("Lockdown == 0")
         )
 
+    # TODO: add mean_responses method
+
     def convert_column_to_index(self, col="GroupID", drop=False):
         return db.convert_column_to_index(self._df, col, drop)
 
@@ -141,7 +139,7 @@ class ISDAccessor:
             other columns to also include, by default None
 
         """
-        return db.return_paqs(df, incl_ids, other_cols)
+        return db.return_paqs(self._df, incl_ids, other_cols)
 
     def add_paq_coords(
         self,
@@ -158,6 +156,8 @@ class ISDAccessor:
         ----------
         scale_to_one : bool, optional
             Should the coordinates be scaled to (-1, +1), by default True
+        val_range: tuple, optional
+            (max, min) range of original PAQ responses, by default (5, 1)
         projection : bool, optional
             Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
         names : list, optional
@@ -298,22 +298,22 @@ class ISDAccessor:
             diagonal_lines,
             xlim,
             ylim,
-            incl_scatter,
-            incl_outline,
-            figsize,
-            palette,
-            scatter_color,
-            outline_color,
-            fill_color,
-            fill,
-            hue,
-            common_norm,
-            bw_adjust,
-            alpha,
-            legend,
-            legend_loc,
-            s,
-            scatter_kwargs,
+            incl_scatter=incl_scatter,
+            incl_outline=incl_outline,
+            figsize=figsize,
+            palette=palette,
+            scatter_color=scatter_color,
+            outline_color=outline_color,
+            fill_color=fill_color,
+            fill=fill,
+            hue=hue,
+            common_norm=common_norm,
+            bw_adjust=bw_adjust,
+            alpha=alpha,
+            legend=legend,
+            legend_loc=legend_loc,
+            s=s,
+            scatter_kwargs=scatter_kwargs,
             **density_kwargs,
         )
 
@@ -376,6 +376,8 @@ def simulation(n=3000, add_paq_coords=False, val_range=(5, 1), **coord_kwargs):
         number of samples to simulate, by default 3000
     add_paq_coords : bool, optional
         should we also calculate the ISO coordinates, by default False
+    val_range: tuple, optional
+            (max, min) range of original PAQ responses, by default (5, 1)
 
     Returns
     -------
@@ -384,7 +386,7 @@ def simulation(n=3000, add_paq_coords=False, val_range=(5, 1), **coord_kwargs):
     """
     np.random.seed(42)
     df = pd.DataFrame(
-        np.random.randint(min(val_range), max(val_range), size=(n, 8)),
+        np.random.randint(min(val_range), max(val_range) + 1, size=(n, 8)),
         columns=PAQ_NAMES,
     )
     if add_paq_coords:
