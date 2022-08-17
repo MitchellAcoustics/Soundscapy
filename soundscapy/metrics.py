@@ -88,7 +88,6 @@ def mosqito_metric_1ch(
     label=None,
     as_df: bool = False,
     return_time_series: bool = False,
-    verbose: bool = False,
     func_args={},
 ):
     """Calculating a metric and accompanying statistics from Mosqito.
@@ -147,8 +146,6 @@ def mosqito_metric_1ch(
             "Cannot return both a dataframe and time series. Returning dataframe only."
         )
         return_time_series = False
-    if verbose:
-        print(f" - Calculating MoSQITo {metric}: {statistics}")
 
     # Start the calc
     res = {}
@@ -164,11 +161,6 @@ def mosqito_metric_1ch(
             res[f"{label}_ts"] = (time_axis, R)
     elif metric == "sharpness_din_from_loudness":
         # The `sharpness_din_from_loudness` requires the loudness to be calculated first.
-        if verbose:
-            print(
-                "   -- Calculating MoSqITo: loudness_zwtv for sharpness_din_from_loudness"
-            )
-
         field_type = func_args.get("field_type", "free")
         N, N_spec, bark_axis, time_axis = loudness_zwtv(s, s.fs, field_type=field_type)
         res = _stat_calcs("N", N, res, statistics)
@@ -177,8 +169,6 @@ def mosqito_metric_1ch(
 
         # Calculate the sharpness_din_from_loudness metric
         func_args.pop("field_type", None)
-        if verbose:
-            print("   -- Calculating MoSqITo: sharpness_din_from_loudness")
         S = sharpness_din_from_loudness(N, N_spec, **func_args)
         res = _stat_calcs(label, S, res, statistics)
         if return_time_series:

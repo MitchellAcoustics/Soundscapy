@@ -330,16 +330,7 @@ class Binaural(Signal):
         s = self._get_channel(channel)
 
         if s.channels == 1:
-            return mosqito_metric_1ch(
-                s,
-                metric,
-                statistics,
-                label,
-                as_df,
-                return_time_series,
-                verbose,
-                func_args,
-            )
+            return mosqito_metric_1ch(s, metric, statistics, label, as_df, return_time_series, func_args)
         else:
             return mosqito_metric_2ch(
                 s,
