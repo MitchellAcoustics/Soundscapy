@@ -4,7 +4,7 @@ from pathlib import Path
 from acoustics import Signal
 
 from soundscapy.binaural import *
-from soundscapy.sq_metrics import *
+from soundscapy.metrics import *
 from soundscapy import AnalysisSettings
 
 

@@ -1,4 +1,3 @@
-
 # %%
 from pathlib import Path
 from time import localtime, strftime
@@ -69,8 +68,13 @@ class AnalysisSettings(dict):
             AnalysisSettings object
         """
         import soundscapy
+
         root = Path(soundscapy.__path__[0])
-        return cls(AnalysisSettings.from_yaml(Path(root, "default_settings.yaml"), run_stats, force_run_all))
+        return cls(
+            AnalysisSettings.from_yaml(
+                Path(root, "default_settings.yaml"), run_stats, force_run_all
+            )
+        )
 
     def parse_maad_all_alpha_indices(self, metric: str):
         """Generate relevant settings for the maad all_alpha_indices methods.

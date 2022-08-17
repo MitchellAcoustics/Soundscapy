@@ -1,4 +1,3 @@
-name = 'soundscapy'
 """
 Soundscapy
 ==========

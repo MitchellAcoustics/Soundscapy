@@ -2,7 +2,7 @@
 from typing import Union
 import pandas as pd
 
-from soundscapy.sq_metrics import *
+from soundscapy.metrics import *
 import multiprocessing as mp
 
 

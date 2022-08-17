@@ -1,13 +1,6 @@
-import os
-import sys
-
 import pandas as pd
 from pytest import approx
 import pytest
-#
-# myPath = os.path.dirname(os.path.abspath(__file__))
-# sys.path.insert(0, f"{myPath}/../../")
-
 import soundscapy.database as db
 from pytest import raises
 
@@ -135,12 +128,6 @@ def test_simulation():
 
 
 if __name__ == "__main__":
-    test_load_isd_dataset_wrong_version()
-    test_load_isd_dataset()
-    test_calculate_paq_coords()
-    test_calculate_paq_coords_val_range()
-    test_calculate_paq_coords_min_max()
-    test_calculate_paq_coords_val_range_min_max()
-    test_simulation()
+    pytest.main()
 
 # %%

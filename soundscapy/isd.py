@@ -386,7 +386,7 @@ def simulation(n=3000, add_paq_coords=False, val_range=(5, 1), **coord_kwargs):
     """
     np.random.seed(42)
     df = pd.DataFrame(
-        np.random.randint(min(val_range), max(val_range)+1, size=(n, 8)),
+        np.random.randint(min(val_range), max(val_range) + 1, size=(n, 8)),
         columns=PAQ_NAMES,
     )
     if add_paq_coords:

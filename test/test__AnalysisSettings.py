@@ -13,8 +13,12 @@ def test_default():
 
 
 def test_from_yaml():
-    assert isinstance(AnalysisSettings.from_yaml("../soundscapy/analysis/default_settings.yaml"), dict)
+    assert isinstance(AnalysisSettings.from_yaml("../soundscapy/default_settings.yaml"), dict)
     assert (
-        AnalysisSettings.from_yaml("../soundscapy/analysis/default_settings.yaml")
+        AnalysisSettings.from_yaml("../soundscapy/default_settings.yaml")
         == AnalysisSettings.default()
     )
+
+
+if __name__ == "__main__":
+    pytest.main()

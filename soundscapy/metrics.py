@@ -367,4 +367,3 @@ def pyacoustics_metric_1ch(
         return pd.DataFrame(res, index=[rec])
     except AttributeError:
         return pd.DataFrame(res, index=[0])
-

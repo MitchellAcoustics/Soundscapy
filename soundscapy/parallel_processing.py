@@ -10,10 +10,8 @@ import time
 #%%
 
 
-def load_analyse_binaural(
-    wav_file, levels, analysis_settings, verbose=True
-):
-    print("Processing {}".format(wav_file.stem))
+def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
+    print(f"Processing {wav_file.stem}")
     b = Binaural.from_wav(wav_file)
     decibel = (levels[b.recording]["Left"], levels[b.recording]["Right"])
     b.calibrate_to(decibel, inplace=True)
@@ -30,8 +28,7 @@ def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=T
     results = []
     result_objects = [
         pool.apply_async(
-            load_analyse_binaural,
-            args=(wav_file, levels, analysis_settings, verbose),
+            load_analyse_binaural, args=(wav_file, levels, analysis_settings, verbose),
         )
         for wav_file in wav_files
     ]
