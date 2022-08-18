@@ -15,7 +15,16 @@ pip install soundscapy
 
 ## Examples
 
+We are currently working on writing more comprehensive examples and documentation, please bear with us in the meantime. 
+
 An example notebook which reproduces the figures used in our recent paper "How to analyse and represent quantitative soundscape data" is provided in the `examples` folder.
+
+## Acknowledgements
+
+The newly added Binaural analysis functionality relies directly on three acoustic analysis libraries: 
+ * [python-acoustics](https://github.com/python-acoustics/python-acoustics) for the standard environmental and building acoustics metrics, 
+ * [scikit-maad](https://github.com/scikit-maad/scikit-maad) for the bioacoustics and ecological soundscape metrics, and
+ * [MoSQITo](https://github.com/Eomys/MoSQITo) for the psychoacoustics metrics. We thank each of these packages for their great work in making advanced acoustic analysis more accessible.
 
 ## Citation
 
@@ -46,17 +55,17 @@ Bibtex:
 
 As noted, this package is in heavy development to make it more useable, more stable, and to add features and improvements. At this stage it is mostly limited to doing basic quality checks of soundscape survey data and creating the soundscape distribution plots. Some planned improvements are:
 
- * Simplify the plotting options
- * Possibly improve how the plots and data are handled - a more OOP approach would be good.
- * Add appropriate tests and documentation.
- * Bug fixes, particularly around setting color palettes.
+ - [ ] Simplify the plotting options
+ - [ ] Possibly improve how the plots and data are handled - a more OOP approach would be good.
+ - [ ] Add appropriate tests and documentation.
+ - [ ] Bug fixes, ~~particularly around setting color palettes.~~
 
 Large planned feature additions are:
 
- * Add better methods for cleaning datasets, including robust outlier exclusion and imputation.
- * Add handling of .wav files.
- * Integrate environmental acoustic and psychoacoustic batch processing. This will involve using existing packages (e.g. MoSQito, python-acoustics) to do the metric calculations, but adding useful functionality for processing many files at once, tieing them to a specific survey response, and implementing a configuration file for maintaining consistent analysis settings.
- * Integrate the predictive modelling results from the SSID team's research to enable a single pipelined from recording -> psychoacoustics -> predicted soundscape perception (this is very much a pie-in-the-sky future plan, which may not be possible).
+ - [ ] Add better methods for cleaning datasets, including robust outlier exclusion and imputation.
+ - [x] Add handling of .wav files.
+ - [x] Integrate environmental acoustic and psychoacoustic batch processing. This will involve using existing packages (e.g. MoSQito, python-acoustics) to do the metric calculations, but adding useful functionality for processing many files at once, tieing them to a specific survey response, and implementing a configuration file for maintaining consistent analysis settings.
+ - [ ] Integrate the predictive modelling results from the SSID team's research to enable a single pipelined from recording -> psychoacoustics -> predicted soundscape perception (this is very much a pie-in-the-sky future plan, which may not be possible).
 
 ### Contributing
 
