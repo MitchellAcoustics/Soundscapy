@@ -142,7 +142,6 @@ def _parallel_mosqito_metric_2ch(
     label: str = None,
     channel_names: Union[tuple, list] = ("Left", "Right"),
     return_time_series: bool = False,
-    verbose: bool = False,
     func_args={},
 ):
     pool = mp.Pool(mp.cpu_count())
@@ -156,7 +155,6 @@ def _parallel_mosqito_metric_2ch(
                 label,
                 False,
                 return_time_series,
-                verbose,
                 func_args,
             )
             for i in [0, 1]
@@ -246,7 +244,7 @@ def mosqito_metric_2ch(
         parallel = False
     if parallel:
         res = _parallel_mosqito_metric_2ch(
-            b, metric, statistics, label, channel_names, return_time_series, verbose
+            b, metric, statistics, label, channel_names, return_time_series
         )
 
     else:
