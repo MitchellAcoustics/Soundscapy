@@ -1,8 +1,7 @@
 # %%
-from typing import Union
 import pandas as pd
 
-from soundscapy.metrics import *
+from soundscapy.analysis.metrics import *
 import multiprocessing as mp
 
 
