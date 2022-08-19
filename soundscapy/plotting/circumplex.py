@@ -366,7 +366,7 @@ def jointplot(
     alpha=0.75,
     color=None,
     joint_kws={},
-    marginal_kws={"fill": True},
+    marginal_kws={"fill": True, "common_norm": False},
     hue=None,
     palette="colorblind",
     hue_order=None,
