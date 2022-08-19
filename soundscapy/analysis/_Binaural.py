@@ -3,8 +3,8 @@ from pathlib import Path
 
 from acoustics import Signal
 
-from soundscapy.binaural import *
-from soundscapy.metrics import *
+from soundscapy.analysis.binaural import *
+from soundscapy.analysis.metrics import *
 from soundscapy import AnalysisSettings
 
 

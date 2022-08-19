@@ -1,14 +1,15 @@
-#%%
+"""Plotting functions for visualising circumplex data."""
 
-from math import pi
+#%%
+import matplotlib.axes
+import pandas as pd
 from scipy.stats import pearsonr, spearmanr
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-
-from .parameters import PAQ_NAMES
+from typing import Union
 
 diag_lines_zorder = 1
 diag_labels_zorder = 4
@@ -19,88 +20,42 @@ default_figsize = (5, 5)
 
 #%%
 
-
-def paq_radar_plot(data, ax=None, index=None):
-    """Generate a radar/spider plot of PAQ values
-
-    Parameters
-    ----------
-    data : pd.Dataframe
-        dataframe of PAQ values
-        recommended max number of values: 3
-    ax : matplotlib.pyplot.Axes, optional
-        existing subplot axes to plot to, by default None
-
-    Returns
-    -------
-    plt.Axes
-        matplotlib Axes with radar plot
-    """
-    # TODO: Resize the plot
-    if index:
-        data = data.isd.convert_column_to_index(col=index)
-    data = data[PAQ_NAMES]
-    if ax is None:
-        ax = plt.axes(polar=True)
-    # ---------- Part 1: create background
-    # Number of variables
-    categories = [
-        "          pleasant",
-        "    vibrant",
-        "eventful",
-        "chaotic    ",
-        "annoying          ",
-        "monotonous            ",
-        "uneventful",
-        "calm",
-    ]
-    N = len(categories)
-
-    # What will be the angle of each axis in the plot (we divide the plot / number of variable)
-    angles = [n / float(N) * 2 * pi for n in range(N)]
-    angles += angles[:1]
-
-    # Draw one axe per variable + add labels
-    plt.xticks(angles[:-1], categories)
-
-    # Draw ylabels
-    ax.set_rlabel_position(0)
-    plt.yticks([1, 2, 3, 4, 5], ["1", "2", "3", "4", "5"], color="grey", size=8)
-    plt.ylim(1, 5)
-
-    # -------- Part 2: Add plots
-
-    # Plot each individual = each line of the data
-    fill_col = ["b", "r", "g"]
-    for i in range(len(data.index)):
-        # Ind1
-        values = data.iloc[i].values.flatten().tolist()
-        values += values[:1]
-        ax.plot(angles, values, linewidth=1, linestyle="solid", label=data.index[i])
-        ax.fill(angles, values, fill_col[i], alpha=0.25)
-
-    # Add legend
-    ax.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
-    return ax
+simple_density = dict(thresh=0.5, levels=2, incl_outline=True, alpha=0.5)
 
 
-def circumplex_scatter(
-    data,
-    ax=None,
-    title="Soundscape Scatter Plot",
-    hue=None,
+def scatter(
+    data=None,
     x="ISOPleasant",
     y="ISOEventful",
-    prim_labels=True,
+    title="Soundscape Scatter Plot",
     diagonal_lines=False,
     xlim=(-1, 1),
     ylim=(-1, 1),
     figsize=(5, 5),
-    palette="colorblind",
-    legend=False,
     legend_loc="lower left",
-    s=10,
-    **scatter_kwargs,
+    hue=None,
+    style=None,
+    s=20,
+    palette="colorblind",
+    hue_order=None,
+    hue_norm=None,
+    sizes=None,
+    size_order=None,
+    size_norm=None,
+    markers=True,
+    style_order=None,
+    x_bins=None,
+    y_bins=None,
+    units=None,
+    estimator=None,
+    ci=95,
+    n_boot=1000,
+    alpha=None,
+    x_jitter=None,
+    y_jitter=None,
+    legend="auto",
+    ax=None,
+    **scatter_kws,
 ):
     """Plot ISOcoordinates as scatter points on a soundscape circumplex grid
 
@@ -108,6 +63,24 @@ def circumplex_scatter(
 
     Parameters
     ----------
+    style
+    hue_order
+    hue_norm
+    sizes
+    size_order
+    size_norm
+    markers
+    style_order
+    x_bins
+    y_bins
+    units
+    estimator
+    ci
+    n_boot
+    alpha
+    x_jitter
+    y_jitter
+    legend
     ax : plt.Axes, optional
         existing matplotlib axes, by default None
     title : str, optional
@@ -118,8 +91,6 @@ def circumplex_scatter(
         column name for x variable, by default "ISOPleasant"
     y : str, optional
         column name for y variable, by default "ISOEventful"
-    prim_labels : bool, optional
-        whether to include ISOPleasant and ISOeventful labels, by default True
     diagonal_lines : bool, optional
         whether to include diagonal dimension labels (e.g. calm, etc.), by default False
     figsize : tuple, optional
@@ -146,113 +117,138 @@ def circumplex_scatter(
         x=x,
         y=y,
         hue=hue,
+        style=style,
         s=s,
-        ax=ax,
-        legend=legend,
         palette=palette,
+        hue_order=hue_order,
+        hue_norm=hue_norm,
+        sizes=sizes,
+        size_order=size_order,
+        size_norm=size_norm,
+        markers=markers,
+        style_order=style_order,
+        x_bins=x_bins,
+        y_bins=y_bins,
+        units=units,
+        estimator=estimator,
+        ci=ci,
+        n_boot=n_boot,
+        alpha=alpha,
+        x_jitter=x_jitter,
+        y_jitter=y_jitter,
+        legend=legend,
+        ax=ax,
         zorder=data_zorder,
-        **scatter_kwargs,
+        **scatter_kws,
     )
-    ax = _deal_w_default_labels(ax, prim_labels)
-    _circumplex_grid(ax, prim_labels, diagonal_lines, xlim, ylim)
-    _set_circum_title(ax, prim_labels, title)
-    if legend:
+    ax = _deal_w_default_labels(ax, False)
+    _circumplex_grid(ax, False, diagonal_lines, xlim, ylim)
+    _set_circum_title(ax, False, title)
+    if legend and hue:
         _move_legend(ax, legend_loc)
     return s
 
 
-def circumplex_density(
-    data,
-    ax=None,
-    title="Soundscape Density Plot",
-    x="ISOPleasant",
-    y="ISOEventful",
-    prim_labels=False,
-    diagonal_lines=False,
-    xlim=(-1, 1),
-    ylim=(-1, 1),
-    density_type="simple",
-    incl_scatter=False,
-    incl_outline=False,
-    figsize=(5, 5),
+# TODO: Consider changing to displot
+def density(
+    data: Union[pd.DataFrame, np.ndarray] = None,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    incl_scatter: bool = True,
+    density_type: str = "full",
+    title: str = "Soundscapy Density Plot",
+    diagonal_lines: bool = False,
+    xlim: tuple = (-1, 1),
+    ylim: tuple = (-1, 1),
+    scatter_kws: dict = dict(s=25, linewidth=0),
+    incl_outline: bool = False,
+    figsize: tuple = (5, 5),
+    legend_loc: str = "lower left",
+    alpha: float = 0.75,
+    gridsize: int = 200,
+    kernel: str = None,
+    cut: Union[float, int] = 3,
+    clip: tuple[int] = None,
+    legend: bool = False,
+    cumulative: bool = False,
+    cbar: bool = False,
+    cbar_ax: matplotlib.axes.Axes = None,
+    cbar_kws: dict = None,
+    ax: matplotlib.axes.Axes = None,
+    weights: str = None,
+    hue: str = None,
     palette="colorblind",
-    scatter_color="black",
-    outline_color="black",
-    fill_color="blue",
-    fill=True,
-    hue=None,
-    common_norm=False,
-    bw_adjust=default_bw_adjust,
-    alpha=0.95,
-    legend=False,
-    legend_loc="lower left",
-    s=10,
-    scatter_kwargs={},
-    **density_kwargs,
+    hue_order: list[str] = None,
+    hue_norm=None,
+    multiple: str = "layer",
+    common_norm: bool = False,
+    common_grid: bool = False,
+    levels: int = 10,
+    thresh: float = 0.05,
+    bw_method="scott",
+    bw_adjust: Union[float, int] = 1,
+    log_scale: Union[bool, int, float] = None,
+    color: str = "blue",
+    fill: bool = True,
+    data2: Union[pd.DataFrame, np.ndarray] = None,
+    warn_singular: bool = True,
+    **kwargs,
 ):
-    """Create a bivariate distribution plot of ISOCoordinates
-
-    This method works by creating a circumplex_grid, then overlaying a sns.kdeplot() using the ISOCoordinate data.
-    If a scatter is also included, it overlays a sns.scatterplot() using the given options underneath the density plot.
-
-    If using a hue grouping, it is recommended to only plot the 50th percentile contour so as to not create a cluttered
-    figure. This can be done with the options thresh = 0.5, levels = 2.
+    """Plot a density plot of ISOCoordinates.
 
     Parameters
     ----------
-    density_type
-    ax : plt.Axes, optional
-        existing subplot axes, by default None
-    title : str, optional
-        by default "Soundscape Density Plot"
     x : str, optional
-        column name for x variable, by default "ISOPleasant"
+        Column name for x variable, by default None
     y : str, optional
-        column name for y variable, by default "ISOEventful"
-    prim_labels : bool, optional
-        whether to include ISOPleasant and ISOEventful axis labels, by default True
-    diagonal_lines : bool, optional
-        whether to include diagonal dimension axis labels (i.e. calm, etc.), by default False
-    incl_scatter : bool, optional
-        plot coordinate scatter underneath density plot, by default False
-    incl_outline : bool, optional
-        include a thicker outline around the density plot, by default False
-    figsize : tuple, optional
-        by default (5, 5)
-    palette : str, optional
-        Method for choosing the colors to use when mapping the hue semantic. String values are passed to seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object implies numeric mapping.
-        by default "colorblind"
-    scatter_color : str, optional
-        define a color for the scatter points. Does not work with a hue grouping variable, by default "black"
-    outline_color : str, optional
-        define a color for the add'l density outline, by default "black"
-    fill_color : str, optional
-        define a color for the density fill, does not work with a hue grouping variable, by default "blue"
-    fill : bool, optional
-        whether to fill the density plot, by default True
-    hue : vector or key in data, optional
-        Grouping variable that will produce points with different colors. Can be either categorical or numeric, although color mapping will behave differently in latter case, by default None
-    common_norm : bool, optional
-        [description], by default False
-    bw_adjust : [type], optional
-        [description], by default default_bw_adjust
-    alpha : float, optional
-        [description], by default 0.95
+        Column name for y variable, by default None
+    gridsize : int, optional
+        Grid size for the plot, by default 200
+    kernel : str, optional
+        Kernel for density estimation, by default None
+    cut : Union[float, int], optional
+        Cutoff for the kernel density estimation, by default 3
+    clip : tuple[int], optional
+        Clip limits for the density estimation, by default None
     legend : bool, optional
-        whether to include the hue labels legend, by default False
-    legend_loc : str, optional
-        relative location of the legend, by default "lower left"
-    s : int, optional
-        size of the scatter points, by default 10
-    scatter_kwargs : dict, optional
-        additional arguments for sns.scatterplot(), by default {}
-
-    Returns
-    -------
-    plt.Axes
+        Whether to include a legend, by default True
+    cumulative : bool, optional
+        Whether to plot the cumulative density, by default False
+    cbar : bool, optional
+        Whether to include a colorbar, by default False
+    cbar_ax : matplotlib.axes.Axes, optional
+        Existing axes object to use for the colorbar, by default None
+    cbar_kws : dict, optional
+        Keyword arguments for the colorbar, by default None
+    ax : matplotlib.axes.Axes, optional
+        Existing axes object to use for the plot, by default None
+    weights : str, optional
+        Column name for weights, by default None
+    hue : str, optional
+        Column name for hue, by default None
+    palette : Union[str, list, dict, matplotlib.colors.Colormap], optional
+        Method for choosing the colors to use when mapping the hue semantic. String values are passed to seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object implies numeric mapping.
+        by default colorblind
+    hue_order : list[str], optional
+        Order to use for the hue variable, by default None
+    hue_norm : Union[tuple, matplotlib.colors.Normalize], optional
+        Normalization to use for the hue variable, by default None
+    multiple : str, optional
+        Whether to plot multiple densities on the same axes, by default 'layer'
+    common_norm : bool, optional
+        Whether to use the same normalization for all dens
     """
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    if bw_adjust is None:
+        bw_adjust = default_bw_adjust
+
+    if density_type == "simple":
+        thresh = simple_density["thresh"]
+        levels = simple_density["levels"]
+        alpha = simple_density["alpha"]
+        incl_outline = simple_density["incl_outline"]
 
     if incl_scatter:
         d = sns.scatterplot(
@@ -260,13 +256,10 @@ def circumplex_density(
             x=x,
             y=y,
             hue=hue,
-            s=s,
             ax=ax,
-            legend=legend,
-            color=scatter_color,
             palette=palette,
             zorder=data_zorder,
-            **scatter_kwargs,
+            **scatter_kws,
         )
 
     if incl_outline:
@@ -274,42 +267,235 @@ def circumplex_density(
             data=data,
             x=x,
             y=y,
-            fill=False,
-            ax=ax,
             alpha=1,
-            color=outline_color,
-            palette=palette,
+            gridsize=gridsize,
+            kernel=kernel,
+            cut=cut,
+            clip=clip,
+            cumulative=cumulative,
+            cbar=cbar,
+            cbar_ax=cbar_ax,
+            cbar_kws=cbar_kws,
+            ax=ax,
+            weights=weights,
             hue=hue,
+            palette=palette,
+            hue_order=hue_order,
+            hue_norm=hue_norm,
+            multiple=multiple,
             common_norm=common_norm,
-            legend=legend,
-            zorder=data_zorder,
+            common_grid=common_grid,
+            levels=levels,
+            thresh=thresh,
+            bw_method=bw_method,
             bw_adjust=bw_adjust,
-            **density_kwargs,
+            log_scale=log_scale,
+            color=color,
+            fill=False,
+            data2=data2,
+            warn_singular=warn_singular,
+            zorder=data_zorder,
+            **kwargs,
         )
 
     d = sns.kdeplot(
         data=data,
         x=x,
         y=y,
-        fill=fill,
-        ax=ax,
         alpha=alpha,
-        palette=palette,
-        color=fill_color,
-        hue=hue,
-        common_norm=common_norm,
+        gridsize=gridsize,
+        kernel=kernel,
+        cut=cut,
+        clip=clip,
         legend=legend,
-        zorder=data_zorder,
+        cumulative=cumulative,
+        cbar=cbar,
+        cbar_ax=cbar_ax,
+        cbar_kws=cbar_kws,
+        ax=ax,
+        weights=weights,
+        hue=hue,
+        palette=palette,
+        hue_order=hue_order,
+        hue_norm=hue_norm,
+        multiple=multiple,
+        common_norm=common_norm,
+        common_grid=common_grid,
+        levels=levels,
+        thresh=thresh,
+        bw_method=bw_method,
         bw_adjust=bw_adjust,
-        **density_kwargs,
+        log_scale=log_scale,
+        color=color,
+        fill=fill,
+        data2=data2,
+        warn_singular=warn_singular,
+        zorder=data_zorder,
+        **kwargs,
     )
 
-    _circumplex_grid(ax, prim_labels, diagonal_lines, xlim, ylim)
-    _set_circum_title(ax, prim_labels, title)
-    _deal_w_default_labels(ax, prim_labels)
+    _circumplex_grid(
+        ax, prim_labels=False, diagonal_lines=diagonal_lines, xlim=xlim, ylim=ylim
+    )
+    _set_circum_title(ax, prim_labels=False, title=title)
+    _deal_w_default_labels(ax, prim_labels=False)
     if legend:
         _move_legend(ax, legend_loc)
+
     return d
+
+
+#
+# def density(
+#     data=None,
+#     *,
+#     ax=None,
+#     title="Soundscape Density Plot",
+#     x="ISOPleasant",
+#     y="ISOEventful",
+#     prim_labels=False,
+#     diagonal_lines=False,
+#     xlim=(-1, 1),
+#     ylim=(-1, 1),
+#     incl_scatter=False,
+#     incl_outline=False,
+#     figsize=(5, 5),
+#     palette="colorblind",
+#     scatter_color="black",
+#     outline_color="black",
+#     fill_color="blue",
+#     fill=True,
+#     hue=None,
+#     common_norm=False,
+#     bw_adjust=default_bw_adjust,
+#     alpha=0.95,
+#     legend=False,
+#     legend_loc="lower left",
+#     s=10,
+#     scatter_kwargs={},
+#     **density_kwargs,
+# ):
+#     """Create a bivariate distribution plot of ISOCoordinates
+#
+#     This method works by creating a circumplex_grid, then overlaying a sns.kdeplot() using the ISOCoordinate data.
+#     If a scatter is also included, it overlays a sns.scatterplot() using the given options underneath the density plot.
+#
+#     If using a hue grouping, it is recommended to only plot the 50th percentile contour so as to not create a cluttered
+#     figure. This can be done with the options thresh = 0.5, levels = 2.
+#
+#     Parameters
+#     ----------
+#     *
+#     density_type
+#     ax : plt.Axes, optional
+#         existing subplot axes, by default None
+#     title : str, optional
+#         by default "Soundscape Density Plot"
+#     x : str, optional
+#         column name for x variable, by default "ISOPleasant"
+#     y : str, optional
+#         column name for y variable, by default "ISOEventful"
+#     prim_labels : bool, optional
+#         whether to include ISOPleasant and ISOEventful axis labels, by default True
+#     diagonal_lines : bool, optional
+#         whether to include diagonal dimension axis labels (i.e. calm, etc.), by default False
+#     incl_scatter : bool, optional
+#         plot coordinate scatter underneath density plot, by default False
+#     incl_outline : bool, optional
+#         include a thicker outline around the density plot, by default False
+#     figsize : tuple, optional
+#         by default (5, 5)
+#     palette : str, optional
+#         Method for choosing the colors to use when mapping the hue semantic. String values are passed to seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object implies numeric mapping.
+#         by default "colorblind"
+#     scatter_color : str, optional
+#         define a color for the scatter points. Does not work with a hue grouping variable, by default "black"
+#     outline_color : str, optional
+#         define a color for the add'l density outline, by default "black"
+#     fill_color : str, optional
+#         define a color for the density fill, does not work with a hue grouping variable, by default "blue"
+#     fill : bool, optional
+#         whether to fill the density plot, by default True
+#     hue : vector or key in data, optional
+#         Grouping variable that will produce points with different colors. Can be either categorical or numeric, although color mapping will behave differently in latter case, by default None
+#     common_norm : bool, optional
+#         [description], by default False
+#     bw_adjust : [type], optional
+#         [description], by default default_bw_adjust
+#     alpha : float, optional
+#         [description], by default 0.95
+#     legend : bool, optional
+#         whether to include the hue labels legend, by default False
+#     legend_loc : str, optional
+#         relative location of the legend, by default "lower left"
+#     s : int, optional
+#         size of the scatter points, by default 10
+#     scatter_kwargs : dict, optional
+#         additional arguments for sns.scatterplot(), by default {}
+#
+#     Returns
+#     -------
+#     plt.Axes
+#     """
+#     if ax is None:
+#         fig, ax = plt.subplots(1, 1, figsize=figsize)
+#
+#     if incl_scatter:
+#         d = sns.scatterplot(
+#             data=data,
+#             x=x,
+#             y=y,
+#             hue=hue,
+#             s=s,
+#             ax=ax,
+#             legend=legend,
+#             color=scatter_color,
+#             palette=palette,
+#             zorder=data_zorder,
+#             **scatter_kwargs,
+#         )
+#
+#     if incl_outline:
+#         d = sns.kdeplot(
+#             data=data,
+#             x=x,
+#             y=y,
+#             fill=False,
+#             ax=ax,
+#             alpha=1,
+#             color=outline_color,
+#             palette=palette,
+#             hue=hue,
+#             common_norm=common_norm,
+#             legend=legend,
+#             zorder=data_zorder,
+#             bw_adjust=bw_adjust,
+#             **density_kwargs,
+#         )
+#
+#     d = sns.kdeplot(
+#         data=data,
+#         x=x,
+#         y=y,
+#         fill=fill,
+#         ax=ax,
+#         alpha=alpha,
+#         palette=palette,
+#         color=fill_color,
+#         hue=hue,
+#         common_norm=common_norm,
+#         legend=legend,
+#         zorder=data_zorder,
+#         bw_adjust=bw_adjust,
+#         **density_kwargs,
+#     )
+#
+#     _circumplex_grid(ax, prim_labels, diagonal_lines, xlim, ylim)
+#     _set_circum_title(ax, prim_labels, title)
+#     _deal_w_default_labels(ax, prim_labels)
+#     if legend:
+#         _move_legend(ax, legend_loc)
+#     return d
 
 
 def circumplex_jointplot_density(
@@ -336,7 +522,7 @@ def circumplex_jointplot_density(
 ):
     """Create a jointplot with distribution or scatter in the center and distributions on the margins.
 
-    This method works by calling sns.jointplot() and creating a circumplex grid in the joint position, then overlaying a circumplex_density or circumplex_scatter plot. The options for both the joint and marginal plots can be passed through the sns.jointplot() separately to customise them separately. The marginal distribution plots can be either a density or histogram.
+    This method works by calling sns.jointplot() and creating a circumplex grid in the joint position, then overlaying a density or circumplex_scatter plot. The options for both the joint and marginal plots can be passed through the sns.jointplot() separately to customise them separately. The marginal distribution plots can be either a density or histogram.
 
     Parameters
     ----------
@@ -380,9 +566,9 @@ def circumplex_jointplot_density(
     plt.Axes
     """
     g = sns.JointGrid()
-    circumplex_density(
+    density(
         data,
-        g.ax_joint,
+        ax=g.ax_joint,
         title=None,
         x=x,
         y=y,
@@ -837,7 +1023,7 @@ def iso_annotation(
     Example
     -------
     >>> fig, axes = plt.subplots(1,1, figsize=(5,5))
-    >>> df_mean.isd.circumplex_scatter(ax=axes, xlim=(-.5, .5), ylim=(-.5, .5), prim_labels=False)
+    >>> df_mean.isd.scatter(xlim=(-.5, .5),ylim=(-.5, .5),ax=axes)
     >>> for location in df_mean.LocationID:
     >>>     plotting.iso_annotation(axes, df_mean, location)
     """

@@ -1,6 +1,5 @@
 #%%
-import multiprocessing as mp
-from soundscapy.binaural import *
+from soundscapy.analysis.binaural import *
 from soundscapy import Binaural
 from soundscapy import AnalysisSettings
 from pathlib import Path
