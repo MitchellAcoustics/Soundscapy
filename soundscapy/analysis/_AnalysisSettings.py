@@ -73,7 +73,7 @@ class AnalysisSettings(dict):
         root = Path(soundscapy.__path__[0])
         return cls(
             AnalysisSettings.from_yaml(
-                Path(root, "default_settings.yaml"), run_stats, force_run_all
+                Path(root, "analysis", "default_settings.yaml"), run_stats, force_run_all
             )
         )
 
