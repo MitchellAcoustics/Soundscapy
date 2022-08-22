@@ -63,54 +63,96 @@ def scatter(
 
     Parameters
     ----------
-    style
-    hue_order
-    hue_norm
-    sizes
-    size_order
-    size_norm
-    markers
-    style_order
-    x_bins
-    y_bins
-    units
-    estimator
-    ci
-    n_boot
-    alpha
-    x_jitter
-    y_jitter
-    legend
-    ax : plt.Axes, optional
-        existing matplotlib axes, by default None
-    title : str, optional
-        , by default "Soundscape Scatter Plot"
-    hue : vector or key in data, optional
-        Grouping variable that will produce points with different colors. Can be either categorical or numeric,
-        although color mapping will behave differently in latter case, by default None
-    x : str, optional
+    data : pd.DataFrame, np.ndarray, mapping or sequence
+        Input data structure. Either a long-form collection of vectors that can be assigned to
+        named variables or a wide-form dataset that will be internally reshaped.
+    x : vector or key in `data`, optional
         column name for x variable, by default "ISOPleasant"
-    y : str, optional
+    y : vector or key in `data`, optional
         column name for y variable, by default "ISOEventful"
+
+     - Soundscapy specific parameters -
+    We have made all of the `seaborn.scatterplot` arguments available, but have also added or changed some specific
+    options for circumplex plotting.
+
+    title : str, optional
+        Title to add to circumplex plot, by default "Soundscape Scatter Plot"
     diagonal_lines : bool, optional
         whether to include diagonal dimension labels (e.g. calm, etc.), by default False
+    xlim, ylim : tuple, optional
+        Limits of the circumplex plot, by default (-1, 1)
+        It's recommended to set these such that the x and y axes have the same aspect
     figsize : tuple, optional
-        by default (5, 5)
+        Size of the figure to return if `ax` is None, by default (5, 5)
+    legend_loc : str, optional
+        relative location of legend, by default "lower left"
     palette : string, list, dict or matplotlib.colors.Colormap, optional
         Method for choosing the colors to use when mapping the hue semantic. String values are passed to
         seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping.
         by default colorblind
-    legend : bool, optional
-        whether to include legend with the hue values, by default False
-    legend_loc : str, optional
-        relative location of legend, by default "lower left"
     s : int, optional
         size of scatter points, by default 10
 
+     - `seaborn.scatterplot` parameters -
+
+    hue : vector or key in data, optional
+        Grouping variable that will produce points with different colors. Can be either categorical or numeric,
+        although color mapping will behave differently in latter case, by default None
+    style : vector or key in data
+        Grouping variable that will produce points with different markers. Can have a numeric dtype but will always
+        be treated as categorical.
+    hue_order : vector of strings
+        Specify the order of processing and plotting for categorical levels of the `hue` semantic
+    hue_norm : tuple or matplotlib.colors.Normalize
+        Either a pair of values that set the normalization range in data units or an object that will map from data
+        units into a [0, 1] interval. Usage implies numeric mapping.
+    sizes : list, dict, or tuple
+        An object that determines how sizes are chosen when `size` is used. It can always be a list of size values or
+        a dict mapping levels of the `size` variable to sizes. When `size` is numeric, it can also be a tuple
+        specifying the minimum and maximum size to use such that other values are normalized within this range.
+    size_order : list
+        Specified order for appearance of the `size` variable levels, otherwise they are determined from the data. Not
+        relevant when the `size` variable is numeric.
+    size_norm : tuple or Normalization object
+        Normalization in data units for scaling plot objects when the `size` variable is numeric.
+    markers : boolean, list, or dictionary
+        Object determining how to draw the markers for different levels of the `style` variable. Setting to `True` will
+        use default markers, or you can pass a list of markers or a dictionary mapping levels of the `style` variable
+        to markers. Setting to `False` will draw marker-less lines. Markers are specified as in matplotlib.
+    style_order : list
+        Specified order for appearance of the `style` variable levels otherwise they are determined from the data. Not
+        relevant when the `style` variable is numeric.
+    {x,y}_bins : lists or arrays or functions
+        Current non-functional.
+    units : vector or key in `data`
+        Grouping variable identifying sampling units. When used, a separate line will be drawn for each unit with
+        appropriate semantics, but no legend entry will be added. Useful for showing distribution of experimental
+        replicates when exact identities are not needed. *Currently non-functional.*
+    estimator : name of pandas method or callable or None
+        Method for aggregating across multiple observations of the y variable at the same x level. If None, all
+        observations will be drawn. *Currently non-functional.*
+    ci : int or "sd" or None
+        Size of the confidence interval to draw when aggregating with an estimator. “sd” means to draw the standard
+        deviation of the data. Setting to `None` will skip bootstrapping. *Currently non-functional.*
+    n_boot : int
+        Number of bootstraps to use for computing the confidence interval. *Currently non-functional.*
+    alpha : float
+        Proportional opacity of the points.
+    {x,y}_jitter : booleans or floats
+        *Currently non-functional.*
+    legend : {"auto", "brief", "full" or False}, optional
+        How to draw the legend. If “brief”, numeric hue and size variables will be represented with a sample of evenly
+        spaced values. If “full”, every group will get an entry in the legend. If “auto”, choose between brief or full
+        representation based on number of levels. If False, no legend data is added and no legend is drawn.
+        by default, "auto"
+    ax : matplotlib.axes.Axes, optional
+        Pre-existing matplotlib axes for the plot, by default None
+        If `None` call `matplotlib.pyplot.subplots` with `figsize` internally.
+
     Returns
     -------
-    plt.Axes
+    matplotlib.axes.Axes
     """
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -199,49 +241,126 @@ def density(
 ):
     """Plot a density plot of ISOCoordinates.
 
+    Creates a wrapper around `seaborn.kdeplot` and adds functionality and styling to customise it for circumplex plots.
+    The density plot is a combination of a kernel density estimate and a scatter plot.
+
     Parameters
     ----------
-    x : str, optional
-        Column name for x variable, by default None
-    y : str, optional
-        Column name for y variable, by default None
+    data : pd.DataFrame, np.ndarray, mapping or sequence
+        Input data structure. Either a long-form collection of vectors that can be assigned to
+        named variables or a wide-form dataset that will be internally reshaped.
+    x : vector or key in `data`, optional
+        Column name for x variable, by default "ISOPleasant"
+    y : vector or key in `data`, optional
+        Column name for y variable, by default "ISOEventful"
+
+    - Soundscapy specific parameters -
+    incl_scatter : bool, optional
+        Whether to include a scatter plot of the data, by default True
+    density_type : {"full", "simple"}, optional
+        Type of density plot to draw, by default "full"
+    title : str, optional
+        Title to add to circumplex plot, by default "Soundscapy Density Plot"
+    diagonal_lines : bool, optional
+        Whether to include diagonal dimension labels (e.g. calm, etc.), by default False
+    xlim, ylim : tuple, optional
+        Limits of the circumplex plot, by default (-1, 1)
+        It's recommended to set these such that the x and y axes have the same aspect
+    scatter_kws : dict, optional
+        Keyword arguments to pass to `seaborn.scatterplot`, by default dict(s=25, linewidth=0)
+    incl_outline : bool, optional
+    figsize : tuple, optional
+        Size of the figure to return if `ax` is None, by default (5, 5)
+    legend_loc : str, optional
+        Relative location of legend, by default "lower left"
+    alpha : float, optional
+        Proportional opacity of the heatmap fill, by default 0.75
+
+     - Seaborn kdeplot arguments -
+
     gridsize : int, optional
-        Grid size for the plot, by default 200
+        Nuber of points on each dimension of the evaluation grid, by default 200
     kernel : str, optional
-        Kernel for density estimation, by default None
+        Function that defines the kernel, by default None
     cut : Union[float, int], optional
-        Cutoff for the kernel density estimation, by default 3
+        Factor, multiplied by the smoothing bandwidth, that determines how far the evaluation grid extends past the
+        extreme datapoints. When set to 0, truncate the curve at the data limits, by default 3
     clip : tuple[int], optional
-        Clip limits for the density estimation, by default None
+        Do not evaluate the density outside of these limits, by default None
     legend : bool, optional
-        Whether to include a legend, by default True
+        If False, suppress the legend for semantic variables, by default True
     cumulative : bool, optional
-        Whether to plot the cumulative density, by default False
+        If True, estimate a cumulative distribution function, by default False
     cbar : bool, optional
-        Whether to include a colorbar, by default False
+        If True, add a colorbar to annotate the color mapping in a bivariate plot. Note: does not currently support
+        plots with a `hue` variable well, by default False
     cbar_ax : matplotlib.axes.Axes, optional
-        Existing axes object to use for the colorbar, by default None
+        Pre-existing axes for the colorbar, by default None
     cbar_kws : dict, optional
         Keyword arguments for the colorbar, by default None
     ax : matplotlib.axes.Axes, optional
-        Existing axes object to use for the plot, by default None
-    weights : str, optional
-        Column name for weights, by default None
-    hue : str, optional
-        Column name for hue, by default None
+        Pre-existing axes object to use for the plot, by default None
+    weights : vector or key in `data`, optional
+        If provided, weight the kernel density estimation using these values, by default None
+    hue : vector or key in `data`, optional
+        Semantic variable that is mapped to determine the color of plot elements, by default None
     palette : Union[str, list, dict, matplotlib.colors.Colormap], optional
         Method for choosing the colors to use when mapping the hue semantic. String values are passed to
         seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping.
         by default colorblind
     hue_order : list[str], optional
-        Order to use for the hue variable, by default None
+        Specify the order of processing and plotting for categorical levels of the `hue` semantic, by default None
     hue_norm : Union[tuple, matplotlib.colors.Normalize], optional
-        Normalization to use for the hue variable, by default None
-    multiple : str, optional
-        Whether to plot multiple densities on the same axes, by default 'layer'
+        Either a pair of values that set the normalization range in data units or an object , by default None
+    multiple : {"layer", "stack", "fill"}, optional
+        Whether to plot multiple elements when semantic mapping creates subsets. Only relevant with univariate data,
+        by default 'layer'
     common_norm : bool, optional
-        Whether to use the same normalization for all dens
+        If True, scale each conditional density by the number of observations such that the total area under all
+        densities sums to 1. Otherwise, normalize each density independently, by default False
+    common_grid : bool, optional
+        If True, use the same evaluation grid for each kernel density estimate. Only relevant with univariate data.
+        by default, False
+    levels : int or vector, optional
+        Number of contour levels or values to draw contours at. A vector argument must have increasing values in [0, 1].
+         Levels correspond to iso-proportions of the density: e.g., 20% of the probability mass will lie below the
+         contour drawn for 0.2. Only relevant with bivariate data.
+         by default, 10
+    thresh : number in [0, 1]
+        Lowest iso-proportion level at which to draw a contour line. Ignored with `levels` is a vector. Only relevant
+        with bivariate data.
+    bw_method : string, scalar, or callable, optional
+        Method for determining the smoothing bandwidth to use; passed to `scipy.stats.gaussian_kde`.
+    bw_adjust : number, optional
+        Factor that multiplicatively scales the value chosen using `bw_method`. Increasing will make the curve smoother.
+        See Notes.
+    log_scale : bool or number, or pair of bools or numbers, optional
+        Set axis scale(s) to log. A single value sets the data axis for univariate distributions and both axes for
+        bivariate distributions. A pair of values sets each axis independently. Numeric values are interpreted as the
+        desired base (default 10). If False, defer to the existing Axes scale.
+        by default None
+    color : matplotlib color
+        Single color specification for when hue mapping is not used. Otherwise the plot will try to hook into the
+        matplotlib property cycle, by default "blue"
+    fill : bool, optional
+        If True, fill in the area under univariate density curves or between bivariate contours. If None, the default
+        depends on `multiple`. by default True.
+    data2 : Union[pd.DataFrame, np.ndarray] optional
+        Second set of data to plot when `multiple` is "stack" or "fill".
+    warn_singular : bool, optional
+        If True, issue a warning when trying to estimate the density of data with zero variance, by default True
+    **kwargs : dict, optional#
+        Other keyword arguments are passed to one of the following matplotlib functions:
+        - `matplotlib.axes.Axes.plot()` (univariate, `fill=False`),
+        - `matplotlib.axes.fill_between()` (univariate, `fill=True`),
+        - `matplotlib.axes.Axes.contour()` (bivariate, `fill=True`),
+        - `matplotlib.axes.Axes.contourf()` (bivariate, `fill=True`).
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        Axes object containing the plot.
     """
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -388,26 +507,19 @@ def jointplot(
 
     Parameters
     ----------
-    common_norm
-    thresh
-    levels
-    incl_outline
-    density_type
-    scatter_kws
-    color
-    height
-    ratio
-    space
-    dropna
-    marginal_ticks
-    hue_order
-    hue_norm
-    title : str, optional
-        by default "Soundscape Joint Plot"
-    x : str, optional
+    data : pd.DataFrame, np.ndarray, mapping, or sequence
+        Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a
+        wide-form dataset that will be internally reshaped.
+    x : vector or key in `data`, optional
         column name for x variable, by default "ISOPleasant"
-    y : str, optional
+    y : vector or key in `data`, optional
         column name for y variable, by default "ISOEventful"
+
+     - Soundscapy specific parameters -
+    incl_scatter : bool, optional
+        Whether to include a scatter plot of the data, by default True
+    density_type : str, optional
+        Type of density plot to draw, by default "full"
     diagonal_lines : bool, optional
         whether to include diagonal dimension axis labels in the joint plot, by default False
     palette : str, optional
@@ -433,6 +545,44 @@ def jointplot(
         Arguments to pass to density or scatter joint plot, by default {}
     marginal_kws : dict, optional
         Arguments to pass to marginal distribution plots, by default {"fill": True}
+
+
+     - Seaborn arguments -
+    hue : vector or key in `data`, optional
+        Semantic variable that is mapped to determine the color of plot elements.
+    palette : string, list, dict, or `matplotlib.colors.Colormap`, optional
+        Method for choosing the colors to use when mapping the `hue` semantic. String values are passed to
+        `color_palette()`. List or dict values imply categorical mapping, while a colormap object implies numeric
+        mapping.
+        by default, `"colorblind"`
+    hue_order : vector of strings, optional.
+        Specify the order of processing and plotting for categorical levels of the `hue` semantic.
+    hue_norm : tuple or matplotlib.colors.Normalize, optional
+        Either a pair of values that set the normalization range in data units or an object that will map from data
+        units into a [0, 1] interval. Usage implies numeric mapping.
+    common_norm : bool, optional
+        If True, scale each conditional density by the number of observations such that the total area under all
+        densities sums to 1. Otherwise, normalize each density independently, by default False.
+    fill : bool, optional
+        If True, fill in the area under univariate density curves or between bivariate contours. If None, the default
+        depends on `multiple`. by default True
+    bw_adjust : number, optional
+        Factor that multiplicatively scales the value chosen using `bw_method`. Increasing will make the curve smoother.
+        See Notes. by default default_bw_adjust (1.2)
+    thresh : number in [0, 1], optional
+        Lowest iso-proportional level at which to draw a contour line. Ignored when `levels` is a vector. Only relevant
+        with bivariate plots. by default 0.1
+    levels : int or vector, optional
+        Number of contour levels or values to draw contours at. A vector argument must have increasing values in [0, 1].
+        Levels correspond to iso-proportionas of the density: e.g. 20% of the probability mass will lie below the
+        contour drawn for 0.2. Only relevant with bivariate data.
+        by default 10
+    legend : bool, optional
+        If False, suppress the legend for semantic variables, by default False
+    legend_loc : str, optional
+        Relative location of the legend, by default "lower left"
+    marginal_kind : str, optional
+        density or histogram plot in the margins, by default "kde"
 
     Returns
     -------
