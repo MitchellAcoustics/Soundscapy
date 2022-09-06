@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/main/Light%20Logo.png" width="300">
+<img src="https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/main/LightLogo.png" width="300">
 
 # Soundscapy
 
