@@ -1,4 +1,7 @@
+<img src="https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/main/Light%20Logo.png" width="300">
+
 # Soundscapy
+
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MitchellAcoustics/Soundscapy/main?labpath=examples%2FHowToAnalyseAndRepresentSoundscapes.ipynb) 
 
 A python library for analysing and visualising soundscape assessments. 
