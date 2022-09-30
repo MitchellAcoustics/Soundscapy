@@ -9,7 +9,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-from typing import Union
+from typing import Union, Tuple, List
 
 diag_lines_zorder = 1
 diag_labels_zorder = 4
@@ -44,15 +44,7 @@ def scatter(
     size_norm=None,
     markers=True,
     style_order=None,
-    x_bins=None,
-    y_bins=None,
-    units=None,
-    estimator=None,
-    ci=95,
-    n_boot=1000,
     alpha=None,
-    x_jitter=None,
-    y_jitter=None,
     legend="auto",
     ax=None,
     **scatter_kws,
@@ -123,24 +115,8 @@ def scatter(
     style_order : list
         Specified order for appearance of the `style` variable levels otherwise they are determined from the data. Not
         relevant when the `style` variable is numeric.
-    {x,y}_bins : lists or arrays or functions
-        Current non-functional.
-    units : vector or key in `data`
-        Grouping variable identifying sampling units. When used, a separate line will be drawn for each unit with
-        appropriate semantics, but no legend entry will be added. Useful for showing distribution of experimental
-        replicates when exact identities are not needed. *Currently non-functional.*
-    estimator : name of pandas method or callable or None
-        Method for aggregating across multiple observations of the y variable at the same x level. If None, all
-        observations will be drawn. *Currently non-functional.*
-    ci : int or "sd" or None
-        Size of the confidence interval to draw when aggregating with an estimator. “sd” means to draw the standard
-        deviation of the data. Setting to `None` will skip bootstrapping. *Currently non-functional.*
-    n_boot : int
-        Number of bootstraps to use for computing the confidence interval. *Currently non-functional.*
     alpha : float
         Proportional opacity of the points.
-    {x,y}_jitter : booleans or floats
-        *Currently non-functional.*
     legend : {"auto", "brief", "full" or False}, optional
         How to draw the legend. If “brief”, numeric hue and size variables will be represented with a sample of evenly
         spaced values. If “full”, every group will get an entry in the legend. If “auto”, choose between brief or full
@@ -172,15 +148,7 @@ def scatter(
         size_norm=size_norm,
         markers=markers,
         style_order=style_order,
-        x_bins=x_bins,
-        y_bins=y_bins,
-        units=units,
-        estimator=estimator,
-        ci=ci,
-        n_boot=n_boot,
         alpha=alpha,
-        x_jitter=x_jitter,
-        y_jitter=y_jitter,
         legend=legend,
         ax=ax,
         zorder=data_zorder,
@@ -213,7 +181,7 @@ def density(
     gridsize: int = 200,
     kernel: str = None,
     cut: Union[float, int] = 3,
-    clip: tuple[int] = None,
+    clip: Tuple[int] = None,
     legend: bool = False,
     cumulative: bool = False,
     cbar: bool = False,
@@ -223,7 +191,7 @@ def density(
     weights: str = None,
     hue: str = None,
     palette="colorblind",
-    hue_order: list[str] = None,
+    hue_order: List[str] = None,
     hue_norm=None,
     multiple: str = "layer",
     common_norm: bool = False,
@@ -1070,8 +1038,14 @@ def iso_annotation(
     """
     ax.annotate(
         text=data["LocationID"][location],
-        xy=(data[x_key][location], data[y_key][location],),
-        xytext=(data[x_key][location] + x_adj, data[y_key][location] + y_adj,),
+        xy=(
+            data[x_key][location],
+            data[y_key][location],
+        ),
+        xytext=(
+            data[x_key][location] + x_adj,
+            data[y_key][location] + y_adj,
+        ),
         ha=ha,
         va=va,
         arrowprops=arrowprops,

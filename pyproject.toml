@@ -4,18 +4,18 @@
 
 [project]
 name = "soundscapy"
-version = "0.3.4"
+version = "0.3.5"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [{name = "Andrew Mitchell", email =  "andrew.mitchell.18@ucl.ac.uk"}]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.7.12"
 license = {file = "LICENSE"}
 dependencies = [
-    "pandas~=1.4.3",
+    "pandas~=1.2.3",
     "openpyxl~=3.0.10",
     "numpy~=1.21.5",
-    "matplotlib~=3.5.1",
-    "seaborn~=0.11.2",
+    "matplotlib~=3.5.2",
+    "seaborn~=0.12.0",
     "scipy~=1.7.3",
     "acoustics~=0.2.6",
     "mosqito~=1.0.8",
@@ -35,7 +35,7 @@ Home = "https://github.com/MitchellAcoustics/Soundscapy"
 
 [project.optional-dependencies]
 test = [
-    "pytest~=7.1.2"
+    "pytest~=7.1.3"
 ]
 dev = [
     "jupyter~=1.0.0",

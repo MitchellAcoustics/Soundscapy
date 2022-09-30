@@ -90,11 +90,12 @@ def validate_dataset(
 
     if verbose > 0:
         print("Checking PAQ data quality.")
-    if l := paq_data_quality(df, verbose, allow_lockdown, allow_paq_na, val_range):
+    l = paq_data_quality(df, verbose, allow_lockdown, allow_paq_na, val_range)
+    if l is None:
+        excl_df = None
+    else:
         excl_df = df.iloc[l, :]
         df = df.drop(df.index[l])
-    else:
-        excl_df = None
     return df, excl_df
 
 
