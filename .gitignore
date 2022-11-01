@@ -175,3 +175,4 @@ soundscapy/archive
 .idea/workspace.xml
 soundscapy/.DS_Store
 .DS_Store
+/pyproject-poetry.toml
