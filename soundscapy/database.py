@@ -64,7 +64,7 @@ def return_paqs(df, incl_ids=True, other_cols=None):
         other columns to also include, by default None
 
     """
-    cols = PAQ_NAMES
+    cols = PAQ_IDS
     if incl_ids:
         id_cols = [
             name
@@ -248,12 +248,6 @@ def _wav_dirs(bin_dirs):
     return wav_dirs
 
 
-if __name__ == "__main__":
-    import doctest
-
-    TEST_DIR = Path("../../soundscapy/test/test_DB")
-    doctest.testmod(verbose=False, optionflags=doctest.ELLIPSIS)
-
 # %%
 def validate_dataset(
     df,
@@ -303,24 +297,24 @@ def validate_dataset(
 
 def rename_paqs(df, paq_aliases=None, verbose=0):
     if paq_aliases is None:
-        if any(i in b for i in PAQ_NAMES for b in df.columns):
+        if any(i in b for i in PAQ_IDS for b in df.columns):
             if verbose > 0:
                 print("PAQs already correctly named.")
             return df
-        if any(i in b for i in PAQ_IDS for b in df.columns):
-            paq_aliases = PAQ_IDS
+        if any(i in b for i in PAQ_NAMES for b in df.columns):
+            paq_aliases = PAQ_NAMES
 
     if type(paq_aliases) == list:
         return df.rename(
             columns={
-                paq_aliases[0]: PAQ_NAMES[0],
-                paq_aliases[1]: PAQ_NAMES[1],
-                paq_aliases[2]: PAQ_NAMES[2],
-                paq_aliases[3]: PAQ_NAMES[3],
-                paq_aliases[4]: PAQ_NAMES[4],
-                paq_aliases[5]: PAQ_NAMES[5],
-                paq_aliases[6]: PAQ_NAMES[6],
-                paq_aliases[7]: PAQ_NAMES[7],
+                paq_aliases[0]: PAQ_IDS[0],
+                paq_aliases[1]: PAQ_IDS[1],
+                paq_aliases[2]: PAQ_IDS[2],
+                paq_aliases[3]: PAQ_IDS[3],
+                paq_aliases[4]: PAQ_IDS[4],
+                paq_aliases[5]: PAQ_IDS[5],
+                paq_aliases[6]: PAQ_IDS[6],
+                paq_aliases[7]: PAQ_IDS[7],
             }
         )
     elif type(paq_aliases) == dict:
@@ -340,10 +334,10 @@ def paq_data_quality(
         if allow_na is False and row.isna().sum() > 0:
             l.append(i)
             continue
-        if row["pleasant"] == row["vibrant"] == row["eventful"] == row[
-            "chaotic"
-        ] == row["annoying"] == row["monotonous"] == row["uneventful"] == row[
-            "calm"
+        if row["PAQ1"] == row["PAQ2"] == row["PAQ3"] == row[
+            "PAQ4"
+        ] == row["PAQ5"] == row["PAQ6"] == row["PAQ7"] == row[
+            "PAQ8"
         ] and row.sum() != np.mean(
             val_range
         ):
@@ -382,7 +376,7 @@ def simulation(n=3000, val_range=(1, 5), add_paq_coords=False, **coord_kwargs):
     np.random.seed(42)
     df = pd.DataFrame(
         np.random.randint(min(val_range), max(val_range) + 1, size=(n, 8)),
-        columns=PAQ_NAMES,
+        columns=PAQ_IDS,
     )
     if add_paq_coords:
         ISOPl, ISOEv = calculate_paq_coords(df, **coord_kwargs)
@@ -423,17 +417,17 @@ def calculate_paq_coords(
     # TODO: Add if statements for too much missing data
     # P =(p−a)+cos45°(ca−ch)+cos45°(v−m)
     complex_pleasant = (
-        (results_df.pleasant.fillna(3) - results_df.annoying.fillna(3))
-        + proj * (results_df.calm.fillna(3) - results_df.chaotic.fillna(3))
-        + proj * (results_df.vibrant.fillna(3) - results_df.monotonous.fillna(3))
+        (results_df.PAQ1.fillna(3) - results_df.PAQ5.fillna(3))
+        + proj * (results_df.PAQ8.fillna(3) - results_df.PAQ4.fillna(3))
+        + proj * (results_df.PAQ2.fillna(3) - results_df.PAQ6.fillna(3))
     )
     ISOPleasant = complex_pleasant / scale
 
     # E =(e−u)+cos45°(ch−ca)+cos45°(v−m)
     complex_eventful = (
-        (results_df.eventful.fillna(3) - results_df.uneventful.fillna(3))
-        + proj * (results_df.chaotic.fillna(3) - results_df.calm.fillna(3))
-        + proj * (results_df.vibrant.fillna(3) - results_df.monotonous.fillna(3))
+        (results_df.PAQ3.fillna(3) - results_df.PAQ7.fillna(3))
+        + proj * (results_df.PAQ4.fillna(3) - results_df.PAQ8.fillna(3))
+        + proj * (results_df.PAQ2.fillna(3) - results_df.PAQ6.fillna(3))
     )
     ISOEventful = complex_eventful / scale
 
@@ -441,3 +435,8 @@ def calculate_paq_coords(
 
 
 # %%
+if __name__ == "__main__":
+    import doctest
+
+    TEST_DIR = Path("../../soundscapy/test/test_DB")
+    doctest.testmod(verbose=False, optionflags=doctest.ELLIPSIS)

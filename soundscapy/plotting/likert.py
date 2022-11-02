@@ -22,6 +22,7 @@ def paq_radar_plot(data, ax=None, index=None):
         matplotlib Axes with radar plot
     """
     # TODO: Resize the plot
+    # TODO WARNING: Likely broken now
     if index:
         data = data.isd.convert_column_to_index(col=index)
     data = data[PAQ_NAMES]
