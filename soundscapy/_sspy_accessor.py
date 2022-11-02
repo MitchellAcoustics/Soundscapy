@@ -1,29 +1,6 @@
-"""ISD analysis functions
+"""Soundscapy Dataframe Accessor
 By: Andrew Mitchell - Research Fellow, UCL and Alan Turing Institute
 andrew.mitchell.18@ucl.ac.uk
-
-This module provides a collection of scripts and methods for analysing the 
-soundscape assessment data contained in the International Soundscape Database
-(ISD). 
-
-This version of the code is provided alongside Mitchell et al. (2022) 'How to
-analyse and represent soundscape perception'. JASA Express Letters. in order to 
-replicate the results and figures presented in that article. This will 
-eventually be superseded by a full Python package named Soundscapy.
-
-The current version works by using pandas accessor functionality to attach 
-methods to the pandas dataframe containing the ISD data. These can then be 
-accessed and used in the same way as class methods. This API may change in the 
-future as I find more stable ways to achieve this behaviour.
-
-This module requires that `pandas`, `matplotlib`, `seaborn`, `pandas_flavor` 
-and `janitor` be installed within the Python environment you are running this 
-script in. In general the functions are provided as pandas_flavor style 
-dataframe methods. This enables them to be accessed as if they were a class 
-method of the pandas Dataframe, all that is needed is to import isd.py at the 
-top of your file.
-
-This file can also be imported as a module.
 
 """
 # %%
@@ -42,7 +19,7 @@ import soundscapy.plotting.likert
 
 sys.path.append("..")
 import soundscapy.database as db
-import soundscapy.plotting.circumplex as ssidplot
+import soundscapy.plotting.circumplex as sspyplot
 
 # Define the names of the PAQ columns
 from soundscapy.parameters import PAQ_NAMES
@@ -58,27 +35,12 @@ data_zorder = 3
 default_bw_adjust = 1.2
 
 
-def load_isd_dataset(version="latest"):
-    """Automatically fetch and load the ISD dataset from Zenodo
-
-    Parameters
-    ----------
-    version : str, optional
-        version number of the dataset to fetch, by default "latest"
-
-    Returns
-    -------
-    pd.Dataframe
-        ISD data
-    """
-    return db.load_isd_dataset(version)
-
-
-@register_dataframe_accessor("isd")
-class ISDAccessor:
+@register_dataframe_accessor("sspy")
+class SSPYAccessor:
     def __init__(self, df):
         self._df = df
         self._analysis_date = date.today().isoformat()
+        self._metadata = {}
 
     def validate_dataset(
         self,
@@ -330,7 +292,7 @@ class ISDAccessor:
         -------
         matplotlib.axes.Axes
         """
-        return ssidplot.scatter(
+        return sspyplot.scatter(
             self._df,
             x=x,
             y=y,
@@ -525,7 +487,7 @@ class ISDAccessor:
             Axes object containing the plot.
         """
 
-        return ssidplot.density(
+        return sspyplot.density(
             data=self._df,
             x=x,
             y=y,
@@ -690,7 +652,7 @@ class ISDAccessor:
         plt.Axes
         """
 
-        return ssidplot.jointplot(
+        return sspyplot.jointplot(
             data=self._df,
             x=x,
             y=y,
@@ -719,38 +681,6 @@ class ISDAccessor:
             legend=legend,
             marginal_kind=marginal_kind,
         )
-
-
-def simulation(n=3000, add_paq_coords=False, val_range=(5, 1), **coord_kwargs):
-    """Generate random PAQ responses
-
-    The PAQ responses will follow a uniform random distribution
-    for each PAQ, meaning e.g. for calm either 1, 2, 3, 4, or 5
-    is equally likely.
-
-    Parameters
-    ----------
-    n : int, optional
-        number of samples to simulate, by default 3000
-    add_paq_coords : bool, optional
-        should we also calculate the ISO coordinates, by default False
-    val_range: tuple, optional
-            (max, min) range of original PAQ responses, by default (5, 1)
-
-    Returns
-    -------
-    pd.Dataframe
-        dataframe of randomly generated PAQ response
-    """
-    np.random.seed(42)
-    df = pd.DataFrame(
-        np.random.randint(min(val_range), max(val_range) + 1, size=(n, 8)),
-        columns=PAQ_NAMES,
-    )
-    if add_paq_coords:
-        ISOPl, ISOEv = db.calculate_paq_coords(df, **coord_kwargs)
-        df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
-    return df
 
 
 # %%
