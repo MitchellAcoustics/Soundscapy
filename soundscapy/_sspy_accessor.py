@@ -57,40 +57,15 @@ class SSPYAccessor:
     def paq_data_quality(self, verbose=0):
         return db.paq_data_quality(self._df, verbose)
 
-    def filter_group_ids(self, group_ids):
-        if isinstance(group_ids, str):
-            return self._df.query("GroupID == @group_ids")
-        elif isinstance(group_ids, (list, tuple)):
-            return self._df.query("GroupID in @group_ids")
-
-    def filter_record_ids(self, record_ids: Union[tuple, str]):
-        if isinstance(record_ids, str):
-            return self._df.query("RecordID == @record_ids")
-        elif isinstance(record_ids, (list, tuple)):
-            return self._df.query("RecordID in @record_ids")
-
-    def filter_session_ids(self, session_ids: list, **kwargs):
-        if isinstance(session_ids, str):
-            return self._df.query("SessionID == @session_ids")
-        elif isinstance(session_ids, (list, tuple)):
-            return self._df.query("SessionID in @session_ids")
-
-    def filter_location_ids(self, location_ids):
-        if isinstance(location_ids, str):
-            return self._df.query("LocationID == @location_ids")
-        elif isinstance(location_ids, (list, tuple)):
-            return self._df.query("LocationID in @location_ids")
-
-    def filter_lockdown(self, is_lockdown=False):
-        return (
-            self._df.query("Lockdown == 1")
-            if is_lockdown
-            else self._df.query("Lockdown == 0")
-        )
+    def filter(self, filter_by, condition):
+        if isinstance(condition, str):
+            return self._df.query(f"{filter_by} == @condition")
+        elif isinstance(condition, (list, tuple)):
+            return self._df.query(f"{filter_by} in @condition")
 
     # TODO: add mean_responses method
 
-    def convert_column_to_index(self, col="GroupID", drop=False):
+    def convert_column_to_index(self, col, drop=False):
         return db.convert_column_to_index(self._df, col, drop)
 
     def return_paqs(self, incl_ids=True, other_cols=None):
@@ -133,53 +108,12 @@ class SSPYAccessor:
         )
         return self._df.add_column(names[0], isopl).add_column(names[1], isoev)
 
-    def location_describe(
-        self, location, type="percent", pl_threshold=0, ev_threshold=0
-    ):
-        loc_df = self.filter_location_ids(location_ids=[location])
-        count = len(loc_df)
-        pl_count = len(loc_df[loc_df["ISOPleasant"] > pl_threshold])
-        ev_count = len(loc_df[loc_df["ISOEventful"] > ev_threshold])
-        vibrant_count = len(
-            loc_df.query("ISOPleasant > @pl_threshold & ISOEventful > @ev_threshold")
-        )
-        chaotic_count = len(
-            loc_df.query("ISOPleasant < @pl_threshold & ISOEventful > @ev_threshold")
-        )
-        mono_count = len(
-            loc_df.query("ISOPleasant < @pl_threshold & ISOEventful < @ev_threshold")
-        )
-        calm_count = len(
-            loc_df.query("ISOPleasant > @pl_threshold & ISOEventful < @ev_threshold")
-        )
 
-        res = {
-            "count": count,
-            "ISOPleasant": round(loc_df["ISOPleasant"].mean(), 3),
-            "ISOEventful": round(loc_df["ISOEventful"].mean(), 3),
-        }
-        if type == "percent":
-            res["pleasant"] = round(pl_count / count, 3)
-            res["eventful"] = round(ev_count / count, 3)
-            res["vibrant"] = round(vibrant_count / count, 3)
-            res["chaotic"] = round(chaotic_count / count, 3)
-            res["monotonous"] = round(mono_count / count, 3)
-            res["calm"] = round(calm_count / count, 3)
 
-        elif type == "count":
-            res["pleasant"] = pl_count
-            res["eventful"] = ev_count
-            res["vibrant"] = vibrant_count
-            res["chaotic"] = chaotic_count
-            res["monotonous"] = mono_count
-            res["calm"] = calm_count
-
-        return res
-
-    def soundscapy_describe(self, type="percent"):
+    def soundscapy_describe(self, group_by, type="percent"):
         res = {
             location: self.location_describe(location, type=type)
-            for location in self._df["LocationID"].unique()
+            for location in self._df[group_by].unique()
         }
 
         res = pd.DataFrame.from_dict(res, orient="index")
