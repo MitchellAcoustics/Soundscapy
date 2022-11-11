@@ -1,11 +1,9 @@
-# %%
 from pathlib import Path
 from time import localtime, strftime
 from typing import Union
 import yaml
 
 
-# %%
 class AnalysisSettings(dict):
     """Dict of settings for analysis methods. Each library has a dict of metrics,
     each of which has a dict of settings.

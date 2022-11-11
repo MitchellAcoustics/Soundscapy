@@ -1,4 +1,5 @@
 """ISD analysis functions
+
 By: Andrew Mitchell - Research Fellow, UCL and Alan Turing Institute
 andrew.mitchell.18@ucl.ac.uk
 
@@ -26,7 +27,7 @@ top of your file.
 This file can also be imported as a module.
 
 """
-# %%
+
 # Add soundscapy to the Python path
 import sys
 from datetime import date
@@ -46,8 +47,6 @@ import soundscapy.plotting.circumplex as ssidplot
 
 # Define the names of the PAQ columns
 from soundscapy.parameters import PAQ_NAMES
-
-# %%
 
 
 # Default plot settings
@@ -751,6 +750,3 @@ def simulation(n=3000, add_paq_coords=False, val_range=(5, 1), **coord_kwargs):
         ISOPl, ISOEv = db.calculate_paq_coords(df, **coord_kwargs)
         df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
     return df
-
-
-# %%

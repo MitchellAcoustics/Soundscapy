@@ -1,4 +1,7 @@
-# %%
+"""
+The module containing functions for dealing with soundscape survey data.
+"""
+
 # Add soundscapy to the Python path
 import janitor
 from pathlib import Path
@@ -21,8 +24,6 @@ _flatten = lambda t: [item for sublist in t for item in sublist]
 
 
 ###########
-
-# %%
 def load_isd_dataset(version="latest"):
     """Automatically fetch and load the ISD dataset from Zenodo
 
@@ -52,7 +53,6 @@ def load_isd_dataset(version="latest"):
     return pd.read_excel(url, engine="openpyxl")
 
 
-# %%
 def validate_dataset(
     df,
     paq_aliases=None,
@@ -238,7 +238,6 @@ def calculate_paq_coords(
     return ISOPleasant, ISOEventful
 
 
-# %%
 def return_paqs(df, incl_ids=True, other_cols=None):
     """Return only the PAQ columns
 
@@ -281,7 +280,6 @@ def mean_responses(df: pd.DataFrame, group="LocationID") -> pd.DataFrame:
     return df.groupby(group).mean()
 
 
-# %%
 def _circ_scale(range, proj):
     diff = max(range) - min(range)
     return diff + diff * np.sqrt(2)
@@ -439,5 +437,3 @@ if __name__ == "__main__":
 
     TEST_DIR = Path("../../soundscapy/test/test_DB")
     doctest.testmod(verbose=False, optionflags=doctest.ELLIPSIS)
-
-# %%
