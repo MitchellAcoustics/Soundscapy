@@ -1,9 +1,9 @@
 import pandas as pd
 from pytest import approx
 import pytest
+import soundscapy
 import soundscapy.database as db
 from pytest import raises
-
 
 basic_test_df = pd.DataFrame(
     {
@@ -33,13 +33,14 @@ name_test_df = pd.DataFrame(
     }
 )
 
+
 def test_load_isd_dataset_wrong_version():
     with raises(ValueError):
-        df = db.load_isd_dataset(version="v0.1.0")
+        df = soundscapy.isd.load_isd_dataset(version="v0.1.0")
 
 
 def test_load_isd_dataset():
-    df = db.load_isd_dataset(version="v0.2.1")
+    df = soundscapy.isd.load_isd_dataset(version="v0.2.1")
     assert df.shape == (1909, 77)
 
 
@@ -71,7 +72,9 @@ def test_rename_paqs():
         "m": [4, 1],
     }
     df = pd.DataFrame(vals)
-    df = db.rename_paqs(df, paq_aliases={"pl": "PAQ1", "ch": "PAQ4", "ca": "PAQ8", "v": "PAQ2", "ev": "PAQ3", "un": "PAQ7", "ann": "PAQ5", "m": "PAQ6"})
+    df = db.rename_paqs(df,
+                        paq_aliases={"pl": "PAQ1", "ch": "PAQ4", "ca": "PAQ8", "v": "PAQ2", "ev": "PAQ3", "un": "PAQ7",
+                                     "ann": "PAQ5", "m": "PAQ6"})
     assert df.columns.tolist() == [
         "RecordID",
         "PAQ1",
@@ -82,6 +85,7 @@ def test_rename_paqs():
         "PAQ7",
         "PAQ5",
         "PAQ6"]
+
 
 def test_calculate_paq_coords():
     coords = db.calculate_paq_coords(basic_test_df)
@@ -95,7 +99,7 @@ def test_calculate_paq_coords():
 
 def test_return_paqs():
     df = basic_test_df
-    df['add1'] = df['PAQ1'] + df['PAQ2'] # Just add some random columns to test
+    df['add1'] = df['PAQ1'] + df['PAQ2']  # Just add some random columns to test
     df['add2'] = df['PAQ3'] + df['PAQ4']
 
     assert db.return_paqs(df).columns.tolist() == [
@@ -120,6 +124,7 @@ def test_return_paqs():
         "PAQ8",
         "add1"]
 
+
 def test_calculate_paq_coords_val_range():
     df = basic_test_df.copy()
     df = df * 10
@@ -131,13 +136,15 @@ def test_calculate_paq_coords_val_range():
         0.14, abs=0.05
     )  # ISOEventful coords
 
+
 def test_paq_data_quality():
     df = basic_test_df.copy()
-    wrong_data = pd.DataFrame({"RecordID": ["EX3"], "PAQ1": [4], "PAQ2": [4], "PAQ3": [4], "PAQ4": [4], "PAQ5": [4], "PAQ6": [4], "PAQ7": [4], "PAQ8": [4]})
+    wrong_data = pd.DataFrame(
+        {"RecordID": ["EX3"], "PAQ1": [4], "PAQ2": [4], "PAQ3": [4], "PAQ4": [4], "PAQ5": [4], "PAQ6": [4], "PAQ7": [4],
+         "PAQ8": [4]})
     df = df.append(wrong_data)
     l = db.paq_data_quality(df)
     assert l == [2]
-
 
 
 def test_calculate_paq_coords_min_max():

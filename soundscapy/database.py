@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 # Constants and Labels
-from soundscapy.parameters import PAQ_IDS, PAQ_NAMES
+from soundscapy.databases.parameters import PAQ_IDS, PAQ_NAMES
 
 DEFAULT_CATS = [
     "indexing",

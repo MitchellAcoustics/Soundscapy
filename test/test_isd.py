@@ -1,7 +1,7 @@
 import pandas as pd
 from pytest import approx
 import pytest
-import soundscapy.database as db
+import soundscapy.databases as db
 from pytest import raises
 
 name_test_df = pd.DataFrame(
@@ -18,3 +18,5 @@ name_test_df = pd.DataFrame(
     }
 )
 
+if __name__ == "__main__":
+    pytest.main()

@@ -9,7 +9,6 @@ import sys
 from datetime import date
 from typing import Union, Tuple, List
 
-import janitor
 import numpy as np
 import pandas as pd
 from pandas.api.extensions import register_dataframe_accessor
@@ -22,7 +21,6 @@ import soundscapy.database as db
 import soundscapy.plotting.circumplex as sspyplot
 
 # Define the names of the PAQ columns
-from soundscapy.parameters import PAQ_NAMES
 
 # %%
 
