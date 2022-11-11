@@ -8,3 +8,4 @@ jupytext
 jupyter
 matplotlib
 numpy
+soundscapy
