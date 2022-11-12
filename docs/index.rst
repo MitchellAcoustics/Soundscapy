@@ -14,7 +14,7 @@
 Soundscape assessment and visualisation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**soundscapy** is a Python library for analysing and visualising soundscape assessments. This package was designed to (1) load and process soundscapy assessment data, (2) visualise the data, and (3) enable psychoacoustic analysis of soundscape recordings.
+**soundscapy** is a Python library for analysing and visualising soundscape assessments. This package was designed to (1) load and process soundscape assessment data, (2) visualise the data, and (3) enable psychoacoustic analysis of soundscape recordings.
 
 Check out the :doc:`usage` section for further information, including how to :ref:`install <installation>` Soundscapy.
 
@@ -35,7 +35,7 @@ Check out the :doc:`usage` section for further information, including how to :re
    :maxdepth: 1
    :caption: Documentation
 
-   API Reference <_autosummary/soundscapy>
+   API Reference <autoapi/soundscapy/index>
 
 Citing soundscapy
 ~~~~~~~~~~~~~~~~~
