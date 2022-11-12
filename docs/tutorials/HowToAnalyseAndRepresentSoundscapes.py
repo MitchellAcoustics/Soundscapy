@@ -266,11 +266,11 @@ plt.tight_layout()
 ### A comparison of two days in the same location:
 """
 
-    # %% pycharm={"name": "#%%\n"}
-    fig, ax = plt.subplots(1,1,figsize=(5,5))
-    location='RegentsParkFields'
-    ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue='SessionID', legend=True, lw=4, thresh=0.5, levels=2)
-    ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue="SessionID", s=10)
+# %% pycharm={"name": "#%%\n"}
+fig, ax = plt.subplots(1,1,figsize=(5,5))
+location='RegentsParkFields'
+ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue='SessionID', legend=True, lw=4, thresh=0.5, levels=2)
+ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue="SessionID", s=10)
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
 """

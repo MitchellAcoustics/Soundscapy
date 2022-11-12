@@ -13,7 +13,7 @@
 import os
 import sys
 from importlib.machinery import SourceFileLoader
-sys.path.insert(0, os.path.abspath(''))  # Source code dir relative to this file
+sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this file
 
 # -- Project information -----------------------------------------------------
 
