@@ -19,9 +19,9 @@
 }*/
 
 /* Override hyperlink colour */
-/* a {
-    color: #b2355c;
-}*/
+a {
+    color: #50c6cc;
+}
 
 /* Make content width wider*/
 .wy-nav-content {
