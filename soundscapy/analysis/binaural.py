@@ -1,11 +1,8 @@
-# %%
 import pandas as pd
 
 from soundscapy.analysis.metrics import *
 import multiprocessing as mp
 
-
-# %%
 
 DEFAULT_LABELS = {
     "LZeq": "LZeq",
@@ -20,7 +17,6 @@ DEFAULT_LABELS = {
     "sharpness_din_tv": "S",
 }
 
-# %%
 # 2ch Metrics calculations
 
 

@@ -1,4 +1,3 @@
-# %%
 from pathlib import Path
 
 from acoustics import Signal
@@ -8,7 +7,6 @@ from soundscapy.analysis.metrics import *
 from soundscapy import AnalysisSettings
 
 
-# %%
 class Binaural(Signal):
     """Binaural signal class for analysis of binaural signals.
     A signal consisting of 2D samples (array) and a sampling frequency (fs).

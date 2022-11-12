@@ -1,12 +1,9 @@
-#%%
 from soundscapy.analysis.binaural import *
 from soundscapy import Binaural
 from soundscapy import AnalysisSettings
 from pathlib import Path
 import json
 import time
-
-#%%
 
 
 def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
@@ -17,17 +14,15 @@ def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
     return process_all_metrics(b, analysis_settings, parallel=False, verbose=verbose)
 
 
-#%%
-
-
 def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=True):
     # Parallel processing with Pool.apply_async() without callback function
 
-    pool = mp.Pool(mp.cpu_count()-1)
+    pool = mp.Pool(mp.cpu_count() - 1)
     results = []
     result_objects = [
         pool.apply_async(
-            load_analyse_binaural, args=(wav_file, levels, analysis_settings, verbose),
+            load_analyse_binaural,
+            args=(wav_file, levels, analysis_settings, verbose),
         )
         for wav_file in wav_files
     ]
@@ -42,7 +37,6 @@ def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=T
     return results_df
 
 
-#%%
 if __name__ == "__main__":
     from datetime import datetime
 
@@ -66,5 +60,3 @@ if __name__ == "__main__":
     print(f"Time taken: {end-start:.2f} seconds")
 
     df.to_excel(base_path.joinpath("test", f"ParallelTest_{datetime.today()}.xlsx"))
-
-# %%

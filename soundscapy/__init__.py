@@ -1,7 +1,4 @@
 """
-Soundscapy
-==========
-
 Soundscapy is a Python library for soundscape analysis and visualisation.
 """
 

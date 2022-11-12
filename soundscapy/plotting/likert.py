@@ -1,3 +1,6 @@
+"""
+Plotting functions for visualising Likert scale data.
+"""
 from math import pi
 
 from matplotlib import pyplot as plt
