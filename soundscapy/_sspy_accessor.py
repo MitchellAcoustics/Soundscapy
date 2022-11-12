@@ -1,7 +1,4 @@
 """Soundscapy Dataframe Accessor
-By: Andrew Mitchell - Research Fellow, UCL and Alan Turing Institute
-andrew.mitchell.18@ucl.ac.uk
-
 """
 
 # Add soundscapy to the Python path
@@ -54,6 +51,19 @@ class SSPYAccessor:
         return db.paq_data_quality(self._df, verbose)
 
     def filter(self, filter_by, condition):
+        """Filter the dataframe by a condition
+
+        Parameters
+        ----------
+        filter_by : str
+            Column to filter by
+        condition : str
+            Condition to filter by
+
+        Returns
+        -------
+        pd.DataFrame
+        """
         if isinstance(condition, str):
             return self._df.query(f"{filter_by} == @condition")
         elif isinstance(condition, (list, tuple)):

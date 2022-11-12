@@ -72,9 +72,9 @@ sys.path.append('../..')
 # %autoreload 2
 
 # Import Soundscapy
-from soundscapy import isd
+import soundscapy
 
-df = isd.load_isd_dataset()
+df = soundscapy.isd.load_isd_dataset()
 df
 
 # %% [markdown]
@@ -106,7 +106,7 @@ In order to validate that the dataset includes the data we would expect, and to 
 """
 
 # %%
-df, excl = df.isd.validate_dataset(allow_na=False)
+df, excl = df.sspy.validate_dataset(allow_na=False)
 df
 
 # %% [markdown]
@@ -115,7 +115,7 @@ When samples are found which need to be excluded based on the PAQ quality checks
 """
 
 # %%
-excl.isd.return_paqs()
+excl.sspy.return_paqs()
 
 # %% [markdown]
 """
@@ -127,7 +127,7 @@ Start by returning a version of the dataset which only includes the PAQs so we w
 """
 
 # %%
-paqs = df.isd.return_paqs()
+paqs = df.sspy.return_paqs()
 paqs
 
 # %% [markdown]
@@ -136,7 +136,7 @@ Now, calculate the ISOCoordinate values.
 """
 
 # %%
-paqs = paqs.isd.add_paq_coords()
+paqs = paqs.sspy.add_paq_coords()
 paqs
 
 # %% [markdown]
@@ -161,10 +161,10 @@ sample_transform = {
     "calm": [40, 10],
 }
 sample_transform = pd.DataFrame().from_dict(sample_transform)
-sample_transform, excl = sample_transform.isd.validate_dataset(val_range=val_range)
+sample_transform, excl = sample_transform.sspy.validate_dataset(val_range=val_range)
 
 # %%
-sample_transform = sample_transform.isd.add_paq_coords(val_range=val_range)
+sample_transform = sample_transform.sspy.add_paq_coords(val_range=val_range)
 sample_transform
 
 # %% [markdown]
@@ -175,10 +175,10 @@ sample_transform
 """
 
 # %%
-df.isd.filter_location_ids(['CamdenTown', 'PancrasLock'])
+df.sspy.filter("LocationID", ['CamdenTown', 'PancrasLock'])
 
 # %%
-df.isd.filter_session_ids(['RegentsParkJapan1']).head()
+df.sspy.filter("SessionID", ['RegentsParkJapan1']).head()
 
 # %% [markdown]
 """
@@ -186,7 +186,7 @@ However, if more complex filters or some other custom filter is needed, `pandas`
 """
 
 # %%
-df.query("Gender == 'Female'")
+df.sspy.filter("Gender", "Female")
 
 # %% [markdown]
 """
@@ -202,7 +202,7 @@ All of these filters can also be chained together. So, for instance, to return s
 """
 
 # %%
-df.isd.filter_location_ids(['CamdenTown']).query("Gender == 'Female' and Age > 50")
+df.sspy.filter("LocationID", ['CamdenTown']).query("Gender == 'Female' and Age > 50")
 
 # %% [markdown]
 """
@@ -218,7 +218,7 @@ First, we filter down to one location that we want to look at. Then, using the `
 """
 
 # %%
-df.isd.filter_location_ids(['RussellSq']).isd.scatter()
+df.sspy.filter("LocationID", ['RussellSq']).sspy.scatter()
 
 # %% [markdown]
 """
@@ -230,7 +230,7 @@ This plot can be further customised though. For instance, if you don't like or n
 """
 
 # %%
-df.isd.filter_location_ids(['RussellSq']).isd.scatter(diagonal_lines=True)
+df.sspy.filter("LocationID", 'RussellSq').sspy.scatter(diagonal_lines=True)
 
 # %% [markdown]
 """
@@ -238,7 +238,7 @@ It's also often very useful to plot the different sessions taken in the same loc
 """
 
 # %%
-df.isd.filter_location_ids(['RussellSq']).isd.scatter(hue='SessionID', legend=True, s=20, title='RussellSq Sessions')
+df.sspy.filter("LocationID", 'RussellSq').sspy.scatter(hue='SessionID', legend=True, s=20, title='RussellSq Sessions')
 
 # %% [markdown]
 """
@@ -248,7 +248,7 @@ The real power of `Soundscapy` is in creating plots of the distribution of sound
 """
 
 # %%
-df.isd.filter_location_ids(['RussellSq']).isd.density()
+df.sspy.filter("LocationID", 'RussellSq').sspy.density()
 
 # %% [markdown]
 """
@@ -256,7 +256,7 @@ This can be customised in the same ways as the scatter plots. To see how the sca
 """
 
 # %%
-df.isd.filter_location_ids('RussellSq').isd.density(incl_scatter=True, alpha=0.75, hue="LocationID")
+df.sspy.filter("LocationID", 'RussellSq').sspy.density(incl_scatter=True, alpha=0.75, hue="LocationID")
 
 # %% [markdown]
 """
@@ -266,7 +266,7 @@ This is done by digging into `seaborn` `kdeplot()` and using its parameters `thr
 """
 
 # %%
-df.isd.filter_location_ids(['RegentsParkJapan']).isd.density(
+df.sspy.filter("LocationID", ['RegentsParkJapan']).sspy.density(
     title="Median perception contour and scatter plot of individual assessments\n\n",
     density_type="simple",
     hue="LocationID",
@@ -280,9 +280,10 @@ As we said, this is particularly useful for comparing different soundscapes. So 
 """
 
 # %%
-df.isd.filter_location_ids(
+df.sspy.filter(
+    "LocationID",
     ["CamdenTown", "RussellSq", "PancrasLock"]
-).isd.density(
+).sspy.density(
     title="Comparison of the soundscapes of three urban spaces\n\n",
     hue="LocationID",
     density_type="simple",
@@ -301,6 +302,6 @@ df.isd.filter_location_ids(
 """
 
 # %%
-df.isd.filter_location_ids(["CamdenTown", "RussellSq"]).isd.jointplot(hue="LocationID", marginal_kind="kde", density_type="full")
+df.sspy.filter("LocationID", ["CamdenTown", "RussellSq"]).sspy.jointplot(hue="LocationID", marginal_kind="kde", density_type="full")
 
 # %%

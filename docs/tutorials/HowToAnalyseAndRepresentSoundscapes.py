@@ -12,7 +12,7 @@
 #     name: python3
 # ---
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 # How to analyse and represent soundscape perception
 
@@ -25,14 +25,13 @@ The ISD contains survey and acoustic data collected in urban public spaces with 
 In this notebook we will walk you through both using the code itself and interpreting the soundscape perception of urban spaces.
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 # Add soundscapy to the Python path
 import sys
 sys.path.append('../..')
 # imports
 # %matplotlib inline
-import janitor as jn
-from soundscapy import isd
+import soundscapy
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -42,7 +41,7 @@ warnings.simplefilter('ignore')
 
 # %config InlineBackend.figure_format = 'svg'
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 r"""
 ## The current ISO 12913 framework
 
@@ -67,7 +66,7 @@ where the PAs are arranged around the circumplex as shown in Figure 1. The $\cos
 To give an example of this, we create two example survey responses, with different PAQ answers:
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 sample_transform = {
     "RecordID": ["EX1", "EX2"],
     "pleasant": [4, 2],
@@ -80,32 +79,33 @@ sample_transform = {
     "calm": [4, 1],
 }
 sample_transform = pd.DataFrame().from_dict(sample_transform)
-sample_transform = sample_transform.isd.convert_column_to_index("RecordID")
+sample_transform = sample_transform.sspy.convert_column_to_index("RecordID")
 sample_transform
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 We can visualise how these individual PAQ answers are arranged on the circumplex with a radar plot.
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 fig = plt.figure(figsize=(4, 4))
 plt.rcParams["figure.dpi"] = 350
-sample_transform.isd.paq_radar()
+sample_transform.sspy.paq_radar()
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 Now, we can apply the transform formula from above to calculate the ISOPleasant and ISOEventful values and add them to the dataframe.
 """
 
-# %% pycharm={"name": "#%%\n"}
-sample_transform = sample_transform.isd.add_paq_coords(scale_to_one=True)
+# %%
+sample_transform = soundscapy.database.rename_paqs(sample_transform)
+sample_transform = sample_transform.sspy.add_paq_coords(scale_to_one=True)
 sample_transform
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 Finally, we can plot these values on a two dimensional plane to visualise how the transform went from the 8 dimensions shown in the radar plot to the two ISO dimensions. This is done by calling the `circumplex_scatter()` function included in `isd.py`. This will create a plotting axis with the appropriate circumplex grid and labels, then plot the ISOPleasant and ISOEventful values as the x and y coordinates.
 
@@ -114,10 +114,10 @@ This treatment of the 8 PAs makes several assumptions and inferences about the r
 >  According to the two-dimensional model, vibrant soundscapes are both pleasant and eventful, chaotic soundscapes are both eventful and unpleasant, monotonous soundscapes are both unpleasant and uneventful, and finally calm soundscapes are both uneventful and pleasant.
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 colors = ["b", "r"]
 palette = sns.color_palette(colors)
-sample_transform.isd.scatter(
+sample_transform.sspy.scatter(
     hue="RecordID",
     legend="brief",
     s=100,
@@ -127,7 +127,7 @@ sample_transform.isd.scatter(
 )
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 ## The way forward: Probabilistic soundscape representation
 
@@ -138,20 +138,20 @@ We therefore present a series of visualisations of the soundscape assessments of
 To begin, we can load the dataset directly from the ISD:
 """
 
-# %% pycharm={"name": "#%%\n"}
-ssid = isd.load_isd_dataset()
+# %%
+ssid = soundscapy.isd.load_isd_dataset()
 ssid = ssid.isd.filter_lockdown()
-ssid, excl = ssid.isd.validate_dataset(allow_na=False)
+ssid, excl = ssid.sspy.validate_dataset(allow_na=False)
 ssid.head()
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 First, rather than calculating the median response to each PA in the location, then calculating the circumplex coordinates, the coordinates for each individual response are calculated. This results in a vector of ISOPleasant, ISOEventful values which are continuous variables from -1 to +1 and can be analysed statistically by calculating summary statistics (mean, standard deviation, quintiles, etc.) and through the use of regression modelling, which can often be simpler and more familiar than the recommended methods of analysing ordinal data. This also enables each individual's response to be placed within the pleasant-eventful space. All of the responses for a location can then be plotted, giving an overall scatter plot for a location, as demonstrated in (i). 
 """
 
-# %% pycharm={"name": "#%%\n"}
-ssid.isd.filter_location_ids(["PancrasLock"]).isd.jointplot(
+# %%
+ssid.isd.filter_location_ids(["PancrasLock"]).sspy.jointplot(
     title="(a) Example distribution of the soundscape perception of an urban park",
     diagonal_lines=True,
     hue="LocationID",
@@ -160,7 +160,7 @@ ssid.isd.filter_location_ids(["PancrasLock"]).isd.jointplot(
 )
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 Once these individual responses are plotted, we then overlay a heatmap of the bivariate distribution (with color maps for each decile) and marginal distribution plots. In this way, three primary characteristics of the soundscape perception can be seen: 
 
@@ -173,10 +173,10 @@ Fig (i) includes several in-depth visualisations of the distribution of soundsca
 When visualised this way, it is possible to identify outliers and responses which are the result of anamolous sound events. For instance if, during a survey session at a calm park, a fleet of helicopters flies overhead, driving the participants to respond that the soundscape is highly chaotic, we would see a group of scatter points in the chaotic quadrant which appear obviously outside the general pattern of responses. In a simpler analysis method, these responses would either be entirely discarded as outliers or surveys and soundwalks would be halted entirely -- ignoring what is in fact a significant impact on that location, its soundscape, and how useful it may be for the community -- or would be included within the statistical analysis, significantly impacting the central tendency and dispersion metrics (i.e. median and range) without consideration for the context. This is the situation shown in Fig (ii) where it is obvious that there is strong agreement that Regents Park Fields is highly pleasant and calm, however we can see numerous responses which assessed it as highly chaotic when a series of military helicopter fly overs drastically changed the sound environment of the space for nearly 20 minutes.
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 location = "RegentsParkFields"
 fig, ax = plt.subplots(1,1, figsize=(7, 7))
-ssid.isd.filter_location_ids([location]).isd.density(
+ssid.isd.filter_location_ids([location]).sspy.density(
     title="(b) Median perception contour and scatter plot of individual assessments\n\n",
     ax=ax,
     hue="LocationID",
@@ -186,17 +186,17 @@ ssid.isd.filter_location_ids([location]).isd.density(
 )
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 Fig (iii) demonstrates how this simplified representation makes it possible to compare the soundscape of several locations in a sophisticated way. The soundscape assessments of three urban spaces, Camden Town, Pancras Lock, and Russell Square, are shown overlaid with each other. We can see that Camden Town, a busy and crowded street corner with high levels of traffic noise and amplified music, is generally perceived as chaotic, but the median contour shape which characterises it also crosses over into the vibrant quadrant. We can also see that, for a part of the sample, Russell Square and Pancras Lock are both perceived as similarly pleasant, however some portion of the responses perceived Pancras Lock as being somewhat chaotic and annoying. This kind of visualisation is able to highlight these similarities between the soundscapes in the locations and identify how they differ. From here, further investigation could lead us to answer what is it that led to those people perceiving the location as unpleasant, and what similarities does the soundscape of Pancras Lock have with Russell Square that could perhaps be enhanced to increase the proportion of people perceiving it as more pleasant.
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 fig, ax = plt.subplots(1,1, figsize=(7,7))
 
 ssid.isd.filter_location_ids(
     ["CamdenTown", "RussellSq", "PancrasLock"]
-).isd.density(
+).sspy.density(
     title="(c) Comparison of the soundscapes of three urban spaces\n\n",
     ax=ax,
     hue="LocationID",
@@ -207,12 +207,12 @@ ssid.isd.filter_location_ids(
 )
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 In addition to solely analysing the distributions of the perceptual responses themselves, this method can also be combined with other acoustic, environmental, and contextual data. The final example, in Fig (iv) demonstrates how this method can better demonstrate the complex relationships between acoustic features of the sound environment and the soundscape perception. The data in the ISD includes approximately 30 second long binaural audio recordings taken while each participant was responding to the soundscape survey, providing an indication of the exact sound environment they were exposed to. For Fig (iv) the entire dataset of 1,338 responses at all 13 locations has been split according to the analysis of these recordings giving a set of less than 65 dB LAeq and  a set of more than 65 dB. The bivariate distribution of these two conditions are then plotted. 
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 ssid["dBLevel"] = pd.cut(
     ssid["LAeq_L(A)(dB(SPL))"],
     bins=(0, 63, 150),
@@ -223,12 +223,12 @@ ssid["dBLevel"] = pd.cut(
 ssid.head()
 
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 ssid["dBLevel"].describe()
 
 
-# %% pycharm={"name": "#%%\n"}
-ssid.isd.jointplot(
+# %%
+ssid.sspy.jointplot(
     marginal_kind="kde",
     title="(d) Soundscape perception as a function of sound level",
     diagonal_lines=False,
@@ -242,7 +242,7 @@ ssid.isd.jointplot(
 )
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 ## Other examples
 
@@ -251,36 +251,35 @@ In addition to the visualisation demonstrations given above which were included 
 ### The soundscape shape of all 13 locations:
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 fig, axes = plt.subplots(4, 4, figsize=(12, 12))
 for i, location in enumerate(ssid.LocationID.unique()):
-    ssid.isd.filter_location_ids(location_ids=[location]).isd.density(
+    ssid.isd.filter_location_ids(location_ids=[location]).sspy.density(
         ax=axes.flatten()[i], title=location
     )
 
 plt.tight_layout()
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 ### A comparison of two days in the same location:
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 fig, ax = plt.subplots(1,1,figsize=(5,5))
 location='RegentsParkFields'
-ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue='SessionID', legend=True, lw=4, thresh=0.5, levels=2)
-ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue="SessionID", s=10)
+ssid.isd.filter_location_ids(location_ids=[location]).sspy.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue='SessionID', legend=True)
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 ### All of the survey days in every location:
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 fig, axes = plt.subplots(4, 4, figsize=(16, 16))
 for i, location in enumerate(ssid["LocationID"].unique()):
-    ssid.isd.filter_location_ids(location).isd.density(
+    ssid.isd.filter_location_ids(location).sspy.density(
         ax=axes.flatten()[i],
         title=location,
         fill=False,
@@ -288,7 +287,7 @@ for i, location in enumerate(ssid["LocationID"].unique()):
         legend=True,
         density_type="simple"
     )
-    ssid.isd.filter_location_ids(location).isd.scatter(
+    ssid.isd.filter_location_ids(location).sspy.scatter(
         ax=axes.flatten()[i],
         title=location,
         hue="SessionID",
@@ -297,7 +296,7 @@ for i, location in enumerate(ssid["LocationID"].unique()):
 plt.tight_layout()
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 ### Statistical analysis of the ISD dataset
 
@@ -308,31 +307,31 @@ Finally, although acknowledging the distribution of responses is crucial, it is 
 We have included a function for creating a numerical summary of each location. For this, we first calculate the mean ISOPleasant and ISOEventful value for the location, giving a single coordinate to describe the location in the circumplex. We then calculate the percentage of overall responses falling in the `pleasant` or `eventful` halfs, or in the `vibrant`, `chaotic`, etc. quadrants.
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 results = ssid.isd.soundscapy_describe()
 results
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 The standard `describe()` method in pandas can also still be used to calculate other summary statistics.
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 ssid.describe()
 
 
-# %% [markdown] pycharm={"name": "#%% md\n"}
+# %% [markdown]
 """
 Finally, the mean coordinate values for each location can be plotted in the soundscape circumplex.
 """
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 from soundscapy.database import mean_responses
 means = mean_responses(ssid, group="LocationID")
-means = means.isd.add_paq_coords()
-means.isd.scatter(hue="LocationID", s=40, legend=False, xlim=(-0.25, 0.75), ylim=(-0.25, 0.75))
+means = means.sspy.add_paq_coords()
+means.sspy.scatter(hue="LocationID", s=40, legend=False, xlim=(-0.25, 0.75), ylim=(-0.25, 0.75))
 
-# %% pycharm={"name": "#%%\n"}
+# %%
 
-# %% pycharm={"name": "#%%\n"}
+# %%
