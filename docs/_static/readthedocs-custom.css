@@ -1,0 +1,30 @@
+/* Override nav bar color */
+.wy-side-nav-search {
+    background-color: #010e20;
+}
+/* .wy-side-nav-search > a {
+    color: #010e20
+}*/
+
+/* Override text bar color */
+/* .caption-text {
+    color: #50c6cc;
+}*/
+
+/* Override code signature colour */
+/*.rst-content dl:not(.docutils) dt {
+    background: #fbfbb6;
+    color: #b2355c;
+    border-top: solid 3px #b2355c;
+}*/
+
+/* Override hyperlink colour */
+/* a {
+    color: #50c6cc;
+}*/
+
+/* Make content width wider*/
+.wy-nav-content {
+    max-width: none;
+}
+

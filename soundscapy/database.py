@@ -1,4 +1,7 @@
-# %%
+"""
+The module containing functions for dealing with soundscape survey data.
+"""
+
 # Add soundscapy to the Python path
 import janitor
 from pathlib import Path
@@ -80,7 +83,6 @@ def convert_column_to_index(df, col: str, drop=False):
     return df
 
 
-# %%
 def validate_dataset(
     df,
     paq_aliases=None,

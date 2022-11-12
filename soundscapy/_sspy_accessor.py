@@ -3,7 +3,7 @@ By: Andrew Mitchell - Research Fellow, UCL and Alan Turing Institute
 andrew.mitchell.18@ucl.ac.uk
 
 """
-# %%
+
 # Add soundscapy to the Python path
 import sys
 from datetime import date
@@ -21,8 +21,6 @@ import soundscapy.database as db
 import soundscapy.plotting.circumplex as sspyplot
 
 # Define the names of the PAQ columns
-
-# %%
 
 
 # Default plot settings

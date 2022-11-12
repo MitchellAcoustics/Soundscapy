@@ -176,3 +176,4 @@ soundscapy/archive
 soundscapy/.DS_Store
 .DS_Store
 /pyproject-poetry.toml
+/docs/_autosummary/

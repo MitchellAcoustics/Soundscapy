@@ -1,6 +1,5 @@
 """Plotting functions for visualising circumplex data."""
 
-#%%
 import matplotlib.axes
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
@@ -18,7 +17,6 @@ data_zorder = 3
 default_bw_adjust = 1.2
 default_figsize = (5, 5)
 
-#%%
 
 simple_density = dict(thresh=0.5, levels=2, incl_outline=True, alpha=0.5)
 
@@ -51,7 +49,8 @@ def scatter(
 ):
     """Plot ISOcoordinates as scatter points on a soundscape circumplex grid
 
-    Makes use of seaborn.scatterplot
+    Makes use of seaborn.scatterplot. We have made all of the `seaborn.scatterplot` arguments available, but have also added or changed some specific
+    options for circumplex plotting.
 
     Parameters
     ----------
@@ -62,11 +61,6 @@ def scatter(
         column name for x variable, by default "ISOPleasant"
     y : vector or key in `data`, optional
         column name for y variable, by default "ISOEventful"
-
-     - Soundscapy specific parameters -
-    We have made all of the `seaborn.scatterplot` arguments available, but have also added or changed some specific
-    options for circumplex plotting.
-
     title : str, optional
         Title to add to circumplex plot, by default "Soundscape Scatter Plot"
     diagonal_lines : bool, optional
@@ -85,9 +79,6 @@ def scatter(
         by default colorblind
     s : int, optional
         size of scatter points, by default 10
-
-     - `seaborn.scatterplot` parameters -
-
     hue : vector or key in data, optional
         Grouping variable that will produce points with different colors. Can be either categorical or numeric,
         although color mapping will behave differently in latter case, by default None
@@ -221,8 +212,6 @@ def density(
         Column name for x variable, by default "ISOPleasant"
     y : vector or key in `data`, optional
         Column name for y variable, by default "ISOEventful"
-
-    - Soundscapy specific parameters -
     incl_scatter : bool, optional
         Whether to include a scatter plot of the data, by default True
     density_type : {"full", "simple"}, optional
@@ -243,9 +232,6 @@ def density(
         Relative location of legend, by default "lower left"
     alpha : float, optional
         Proportional opacity of the heatmap fill, by default 0.75
-
-     - Seaborn kdeplot arguments -
-
     gridsize : int, optional
         Nuber of points on each dimension of the evaluation grid, by default 200
     kernel : str, optional
@@ -482,8 +468,6 @@ def jointplot(
         column name for x variable, by default "ISOPleasant"
     y : vector or key in `data`, optional
         column name for y variable, by default "ISOEventful"
-
-     - Soundscapy specific parameters -
     incl_scatter : bool, optional
         Whether to include a scatter plot of the data, by default True
     density_type : str, optional
@@ -513,9 +497,6 @@ def jointplot(
         Arguments to pass to density or scatter joint plot, by default {}
     marginal_kws : dict, optional
         Arguments to pass to marginal distribution plots, by default {"fill": True}
-
-
-     - Seaborn arguments -
     hue : vector or key in `data`, optional
         Semantic variable that is mapped to determine the color of plot elements.
     palette : string, list, dict, or `matplotlib.colors.Colormap`, optional
