@@ -1,4 +1,9 @@
 """Soundscapy Dataframe Accessor
+
+This module contains the Soundscapy Dataframe Accessor, which is used to add methods to Pandas Dataframes.
+This method is used to simplify the direct manipulation of soundscape survey-type data, allowing methods to be chained.
+The accessor is added to the dataframe by importing the module, and is accessed by using the `sspy` attribute of the dataframe.
+The sspy accessor is intended to be general to any soundscape survey data, functions for specific survey types are contained in the `isd` and `araus` modules.
 """
 
 # Add soundscapy to the Python path
@@ -37,12 +42,39 @@ class SSPYAccessor:
 
     def validate_dataset(
         self,
-        paq_aliases=None,
-        allow_lockdown=True,
-        allow_na=False,
-        verbose=1,
-        val_range=(5, 1),
+        paq_aliases: Union[List, Dict]=None,
+        allow_lockdown: bool=True,
+        allow_na: bool=False,
+        verbose: int=1,
+        val_range: Tuple=(1, 5),
     ):
+        """Performs data quality checks and validates that the dataset fits the expected format
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            ISD style dataframe, incl PAQ data
+        paq_aliases : list or dict, optional
+            list of PAQ names (in order)
+            or dict of PAQ names with new names as values, by default None
+        allow_lockdown : bool, optional
+            if True will keep Lockdown data in the df, by default True
+        allow_paq_na : bool, optional
+            remove rows which have any missing PAQ values
+            otherwise will remove those with 50% missing, by default False    verbose : int, optional
+            how much info to print while running, by default 1
+        val_range : tuple, optional
+            min and max range of the PAQ response values, by default (5, 1)
+
+        Returns
+        -------
+        tuple
+            cleaned dataframe, dataframe of excluded samples
+
+        See Also
+        --------
+        :func:`soundscapy.database.validate_dataset`
+        """
         return db.validate_dataset(
             self._df, paq_aliases, allow_lockdown, allow_na, verbose, val_range
         )

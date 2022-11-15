@@ -36,6 +36,7 @@ extensions = [
     # 'sphinx.ext.autodoc',  # Core Sphinx library for auto html doc generation from docstrings
     'sphinx.ext.autosummary',  # Create neat summary tables for modules/classes/methods etc
     'autoapi.extension',  # Auto-generate API documentation from code
+    'sphinx.ext.napoleon',  # Support for NumPy and Google style docstrings
     'sphinx.ext.autodoc.typehints',  # Show type hints in the documentation
     'sphinx.ext.intersphinx',  # Link to other project's documentation (see mapping below)
     'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
@@ -47,7 +48,13 @@ extensions = [
 # Mappings for sphinx.ext.intersphinx. Projects have to have Sphinx-generated doc! (.inv file)
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
+    "acoustics": ("https://python-acoustics.github.io/python-acoustics/", None),
 }
+
+# Napoleon settings
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = False
+
 
 autoapi_dirs = ['../soundscapy']  # Where to look for source code to auto-generate API docs from
 autoapi_add_toctree_entry = False  # Don't add auto-generated API docs to the TOC tree

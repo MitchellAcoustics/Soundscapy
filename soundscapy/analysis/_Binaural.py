@@ -195,10 +195,10 @@ class Binaural(Signal):
 
         See Also
         --------
-        `sq_metrics.pyacoustics_metric`
-        `acoustics.standards_iso_tr_25417_2007.equivalent_sound_pressure_level` : Base method for Leq calculation
-        `acoustics.standards.iec_61672_1_2013.sound_exposure_level` : Base method for SEL calculation
-        `acoustics.standards.iec_61672_1_2013.time_weighted_sound_level` : Base method for Leq level time series calculation
+        metrics.pyacoustics_metric
+        acoustics.standards_iso_tr_25417_2007.equivalent_sound_pressure_level : Base method for Leq calculation
+        acoustics.standards.iec_61672_1_2013.sound_exposure_level : Base method for SEL calculation
+        acoustics.standards.iec_61672_1_2013.time_weighted_sound_level : Base method for Leq level time series calculation
         """
         if analysis_settings:
             (
@@ -429,4 +429,3 @@ class Binaural(Signal):
 
 
 __all__ = ["Binaural"]
-# %%

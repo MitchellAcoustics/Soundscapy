@@ -5,6 +5,7 @@ The module containing functions for dealing with soundscape survey data.
 # Add soundscapy to the Python path
 import janitor
 from pathlib import Path
+from typing import Union, Tuple, List, Dict
 
 import numpy as np
 import pandas as pd
@@ -84,12 +85,12 @@ def convert_column_to_index(df, col: str, drop=False):
 
 
 def validate_dataset(
-    df,
-    paq_aliases=None,
-    allow_lockdown=False,
-    allow_paq_na=False,
-    verbose=1,
-    val_range=(5, 1),
+    df: pd.DataFrame,
+    paq_aliases: Union[List, Dict] =None,
+    allow_lockdown: bool=False,
+    allow_paq_na: bool=False,
+    verbose: int=1,
+    val_range: Tuple=(1, 5),
 ):
     """Performs data quality checks and validates that the dataset fits the expected format
 
