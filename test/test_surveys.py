@@ -33,6 +33,63 @@ name_test_df = pd.DataFrame(
     }
 )
 
+grouped_test_df = pd.DataFrame(
+    {
+        "RecordID": ["EX1", "EX2", "EX3", "EX4"],
+        "GroupID": ["A", "A", "B", "B"],
+        "PAQ1": [4, 2, 3, 5],
+        "PAQ2": [4, 3, 5, 2],
+        "PAQ3": [4, 5, 2, 3],
+        "PAQ4": [2, 5, 3, 4],
+        "PAQ5": [1, 5, 4, 2],
+        "PAQ6": [3, 5, 2, 4],
+        "PAQ7": [3, 3, 5, 1],
+        "PAQ8": [4, 1, 2, 5],
+    }
+)
+
+def test_return_paqs():
+    df = basic_test_df
+    df['add1'] = df['PAQ1'] + df['PAQ2']  # Just add some random columns to test
+    df['add2'] = df['PAQ3'] + df['PAQ4']
+
+    assert db.return_paqs(df).columns.tolist() == [
+        "RecordID",
+        "PAQ1",
+        "PAQ2",
+        "PAQ3",
+        "PAQ4",
+        "PAQ5",
+        "PAQ6",
+        "PAQ7",
+        "PAQ8"]
+
+    assert db.return_paqs(df, incl_ids=False, other_cols=['add1']).columns.tolist() == [
+        "PAQ1",
+        "PAQ2",
+        "PAQ3",
+        "PAQ4",
+        "PAQ5",
+        "PAQ6",
+        "PAQ7",
+        "PAQ8",
+        "add1"]
+
+
+
+def test_mean_responses():
+    """
+    Test that the mean_responses function returns the correct values
+    """
+    df = grouped_test_df.copy()
+    mean = db.mean_responses(df, group="GroupID")
+    assert mean.loc['A', "PAQ1"] == approx(3, abs=0.05) and mean.loc["A", "PAQ5"] == approx(
+        3, abs=0.05
+    )
+    assert mean.loc["B", "PAQ5"] == approx(3, abs=0.05) and mean.loc["B", "PAQ6"] == approx(
+        3, abs=0.05
+    )
+
 
 def test_load_isd_dataset_wrong_version():
     with raises(ValueError):
@@ -96,33 +153,6 @@ def test_calculate_paq_coords():
         0.35, abs=0.05
     )  # ISOEventful coords
 
-
-def test_return_paqs():
-    df = basic_test_df
-    df['add1'] = df['PAQ1'] + df['PAQ2']  # Just add some random columns to test
-    df['add2'] = df['PAQ3'] + df['PAQ4']
-
-    assert db.return_paqs(df).columns.tolist() == [
-        "RecordID",
-        "PAQ1",
-        "PAQ2",
-        "PAQ3",
-        "PAQ4",
-        "PAQ5",
-        "PAQ6",
-        "PAQ7",
-        "PAQ8"]
-
-    assert db.return_paqs(df, incl_ids=False, other_cols=['add1']).columns.tolist() == [
-        "PAQ1",
-        "PAQ2",
-        "PAQ3",
-        "PAQ4",
-        "PAQ5",
-        "PAQ6",
-        "PAQ7",
-        "PAQ8",
-        "add1"]
 
 
 def test_calculate_paq_coords_val_range():
