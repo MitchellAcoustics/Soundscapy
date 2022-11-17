@@ -70,7 +70,7 @@ def mean_responses(df: pd.DataFrame, group: str) -> pd.DataFrame:
 
 
 # %%
-def _circ_scale(range, proj):
+def _circ_scale(range):
     diff = max(range) - min(range)
     return diff + diff * np.sqrt(2)
 
@@ -247,7 +247,7 @@ def calculate_paq_coords(
     """
 
     proj = np.cos(np.deg2rad(45)) if projection else 1
-    scale = _circ_scale(val_range, proj) if scale_to_one else 1
+    scale = _circ_scale(val_range) if scale_to_one else 1
 
     # TODO: Add if statements for too much missing data
     # P =(p−a)+cos45°(ca−ch)+cos45°(v−m)
