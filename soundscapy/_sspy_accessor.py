@@ -9,7 +9,7 @@ The sspy accessor is intended to be general to any soundscape survey data, funct
 # Add soundscapy to the Python path
 import sys
 from datetime import date
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ import matplotlib
 import soundscapy.plotting.likert
 
 sys.path.append("..")
-import soundscapy.database as db
+import soundscapy.surveys as db
 import soundscapy.plotting.circumplex as sspyplot
 
 # Define the names of the PAQ columns

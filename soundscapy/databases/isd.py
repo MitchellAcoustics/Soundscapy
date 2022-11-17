@@ -9,7 +9,7 @@ from pandas.api.extensions import register_dataframe_accessor
 
 # Constants and Labels
 from soundscapy.databases.parameters import PAQ_NAMES
-import soundscapy.databases as db
+from soundscapy.surveys import *
 
 
 @register_dataframe_accessor("isd")
@@ -27,7 +27,7 @@ class ISDAccessor:
         verbose=1,
         val_range=(1, 5),
     ):
-        return db.validate_dataset(
+        return validate_dataset(
             self._obj,
             paq_aliases=paq_aliases,
             allow_lockdown=allow_lockdown,
@@ -37,7 +37,7 @@ class ISDAccessor:
         )
 
     def paq_data_quality(self, verbose=0):
-        return db.paq_data_quality(self._obj, verbose=verbose)
+        return paq_data_quality(self._obj, verbose=verbose)
 
     def filter_group_ids(self, group_ids):
         return self._obj.sspy.filter("GroupID", group_ids)
@@ -59,10 +59,10 @@ class ISDAccessor:
         )
 
     def convert_group_ids_to_index(self, drop=False):
-        return db.convert_column_to_index(self._obj, "Group_ID", drop=drop)
+        return convert_column_to_index(self._obj, "Group_ID", drop=drop)
 
     def return_paqs(self, incl_ids=True, other_cols=None):
-        return db.return_paqs(self._obj, incl_ids=incl_ids, other_cols=other_cols)
+        return return_paqs(self._obj, incl_ids=incl_ids, other_cols=other_cols)
 
     def location_describe(
                 self, location, type="percent", pl_threshold=0, ev_threshold=0
@@ -116,6 +116,66 @@ class ISDAccessor:
         res = pd.DataFrame.from_dict(res, orient="index")
         return res
 
+    def mean_responses(self, group="LocationID") -> pd.DataFrame:
+        """Calculate the mean responses for each PAQ
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Dataframe containing ISD formatted data
+
+        Returns
+        -------
+        pd.Dataframe
+            Dataframe containing the mean responses for each PAQ
+        """
+        return mean_responses(self._obj, group=group)
+
+
+    def convert_column_to_index(self, col="GroupID", drop=True):
+        """Reassign an existing column as the dataframe index."""
+        return convert_column_to_index(self._obj, col=col, drop=drop)
+
+
+    def validate_isd(
+            self,
+            paq_aliases=None,
+            allow_lockdown=False,
+            allow_paq_na=False,
+            verbose=1,
+            val_range=(1, 5),
+    ):
+        """Validate the ISD dataset.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Dataframe containing ISD formatted data
+        paq_aliases : dict, optional
+            Dictionary of PAQ aliases, by default None
+        allow_lockdown : bool, optional
+            Allow lockdown PAQs?, by default False
+        allow_paq_na : bool, optional
+            Allow missing PAQs?, by default False
+        verbose : int, optional
+            Verbosity level, by default 1
+        val_range : tuple, optional
+            Range of valid values, by default (1,5)
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe containing the validation results
+        """
+        return validate_dataset(
+            self._obj,
+            paq_aliases=paq_aliases,
+            allow_lockdown=allow_lockdown,
+            allow_paq_na=allow_paq_na,
+            verbose=verbose,
+            val_range=val_range,
+        )
+
 
 def load_isd_dataset(version="latest"):
     """Automatically fetch and load the ISD dataset from Zenodo
@@ -146,65 +206,7 @@ def load_isd_dataset(version="latest"):
     return pd.read_excel(url, engine="openpyxl")
 
 
-def mean_responses(df: pd.DataFrame, group="LocationID") -> pd.DataFrame:
-    """Calculate the mean responses for each PAQ
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Dataframe containing ISD formatted data
-
-    Returns
-    -------
-    pd.Dataframe
-        Dataframe containing the mean responses for each PAQ
-    """
-    return db.mean_responses_by_group(df, group=group)
-
-
-def convert_column_to_index(df, col="GroupID", drop=True):
-    """Reassign an existing column as the dataframe index."""
-    return db.convert_column_to_index(df, col=col, drop=drop)
-
-
-def validate_isd(
-    df,
-    paq_aliases=None,
-    allow_lockdown=False,
-    allow_paq_na=False,
-    verbose=1,
-    val_range=(1, 5),
-):
-    """Validate the ISD dataset.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Dataframe containing ISD formatted data
-    paq_aliases : dict, optional
-        Dictionary of PAQ aliases, by default None
-    allow_lockdown : bool, optional
-        Allow lockdown PAQs?, by default False
-    allow_paq_na : bool, optional
-        Allow missing PAQs?, by default False
-    verbose : int, optional
-        Verbosity level, by default 1
-    val_range : tuple, optional
-        Range of valid values, by default (1,5)
-
-    Returns
-    -------
-    pd.DataFrame
-        Dataframe containing the validation results
-    """
-    return db.validate_dataset(
-        df,
-        paq_aliases=paq_aliases,
-        allow_lockdown=allow_lockdown,
-        allow_paq_na=allow_paq_na,
-        verbose=verbose,
-        val_range=val_range,
-    )
 
 
 # Dealing with Directories!

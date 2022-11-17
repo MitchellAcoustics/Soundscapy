@@ -100,7 +100,7 @@ Now, we can apply the transform formula from above to calculate the ISOPleasant 
 """
 
 # %%
-sample_transform = soundscapy.database.rename_paqs(sample_transform)
+sample_transform = soundscapy.surveys.rename_paqs(sample_transform)
 sample_transform = sample_transform.sspy.add_paq_coords(scale_to_one=True)
 sample_transform
 
@@ -327,7 +327,7 @@ Finally, the mean coordinate values for each location can be plotted in the soun
 """
 
 # %%
-from soundscapy.database import mean_responses
+from soundscapy.surveys import mean_responses
 means = mean_responses(ssid, group="LocationID")
 means = means.sspy.add_paq_coords()
 means.sspy.scatter(hue="LocationID", s=40, legend=False, xlim=(-0.25, 0.75), ylim=(-0.25, 0.75))

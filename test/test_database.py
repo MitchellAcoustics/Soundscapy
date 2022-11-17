@@ -2,7 +2,7 @@ import pandas as pd
 from pytest import approx
 import pytest
 import soundscapy
-import soundscapy.database as db
+import soundscapy.surveys as db
 from pytest import raises
 
 basic_test_df = pd.DataFrame(
