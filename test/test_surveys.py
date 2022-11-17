@@ -48,10 +48,11 @@ grouped_test_df = pd.DataFrame(
     }
 )
 
+
 def test_return_paqs():
     df = basic_test_df
-    df['add1'] = df['PAQ1'] + df['PAQ2']  # Just add some random columns to test
-    df['add2'] = df['PAQ3'] + df['PAQ4']
+    df["add1"] = df["PAQ1"] + df["PAQ2"]  # Just add some random columns to test
+    df["add2"] = df["PAQ3"] + df["PAQ4"]
 
     assert db.return_paqs(df).columns.tolist() == [
         "RecordID",
@@ -62,9 +63,10 @@ def test_return_paqs():
         "PAQ5",
         "PAQ6",
         "PAQ7",
-        "PAQ8"]
+        "PAQ8",
+    ]
 
-    assert db.return_paqs(df, incl_ids=False, other_cols=['add1']).columns.tolist() == [
+    assert db.return_paqs(df, incl_ids=False, other_cols=["add1"]).columns.tolist() == [
         "PAQ1",
         "PAQ2",
         "PAQ3",
@@ -73,8 +75,8 @@ def test_return_paqs():
         "PAQ6",
         "PAQ7",
         "PAQ8",
-        "add1"]
-
+        "add1",
+    ]
 
 
 def test_mean_responses():
@@ -83,12 +85,16 @@ def test_mean_responses():
     """
     df = grouped_test_df.copy()
     mean = db.mean_responses(df, group="GroupID")
-    assert mean.loc['A', "PAQ1"] == approx(3, abs=0.05) and mean.loc["A", "PAQ5"] == approx(
-        3, abs=0.05
-    )
-    assert mean.loc["B", "PAQ5"] == approx(3, abs=0.05) and mean.loc["B", "PAQ6"] == approx(
-        3, abs=0.05
-    )
+    assert mean.loc["A", "PAQ1"] == approx(3, abs=0.05) and mean.loc[
+        "A", "PAQ5"
+    ] == approx(3, abs=0.05)
+    assert mean.loc["B", "PAQ5"] == approx(3, abs=0.05) and mean.loc[
+        "B", "PAQ6"
+    ] == approx(3, abs=0.05)
+
+
+def test__circ_scale():
+    assert soundscapy.surveys._circ_scale((1, 5)) == approx(9.66, abs=0.1)
 
 def test__circ_scale():
     assert soundscapy.surveys._circ_scale((1, 5)) == approx(9.66, abs=0.1)
@@ -114,7 +120,8 @@ def test_rename_descriptors():
         "PAQ5",
         "PAQ6",
         "PAQ7",
-        "PAQ8"]
+        "PAQ8",
+    ]
 
 
 # write a test for db.rename_paqs that checks that the columns are renamed correctly
@@ -131,9 +138,19 @@ def test_rename_paqs():
         "m": [4, 1],
     }
     df = pd.DataFrame(vals)
-    df = db.rename_paqs(df,
-                        paq_aliases={"pl": "PAQ1", "ch": "PAQ4", "ca": "PAQ8", "v": "PAQ2", "ev": "PAQ3", "un": "PAQ7",
-                                     "ann": "PAQ5", "m": "PAQ6"})
+    df = db.rename_paqs(
+        df,
+        paq_aliases={
+            "pl": "PAQ1",
+            "ch": "PAQ4",
+            "ca": "PAQ8",
+            "v": "PAQ2",
+            "ev": "PAQ3",
+            "un": "PAQ7",
+            "ann": "PAQ5",
+            "m": "PAQ6",
+        },
+    )
     assert df.columns.tolist() == [
         "RecordID",
         "PAQ1",
@@ -143,7 +160,8 @@ def test_rename_paqs():
         "PAQ3",
         "PAQ7",
         "PAQ5",
-        "PAQ6"]
+        "PAQ6",
+    ]
 
 
 def test_calculate_paq_coords():
@@ -154,7 +172,6 @@ def test_calculate_paq_coords():
     assert coords[1][0] == approx(0.03, abs=0.05) and coords[1][1] == approx(
         0.35, abs=0.05
     )  # ISOEventful coords
-
 
 
 def test_calculate_paq_coords_val_range():
@@ -172,8 +189,18 @@ def test_calculate_paq_coords_val_range():
 def test_paq_data_quality():
     df = basic_test_df.copy()
     wrong_data = pd.DataFrame(
-        {"RecordID": ["EX3"], "PAQ1": [4], "PAQ2": [4], "PAQ3": [4], "PAQ4": [4], "PAQ5": [4], "PAQ6": [4], "PAQ7": [4],
-         "PAQ8": [4]})
+        {
+            "RecordID": ["EX3"],
+            "PAQ1": [4],
+            "PAQ2": [4],
+            "PAQ3": [4],
+            "PAQ4": [4],
+            "PAQ5": [4],
+            "PAQ6": [4],
+            "PAQ7": [4],
+            "PAQ8": [4],
+        }
+    )
     df = df.append(wrong_data)
     l = db.paq_data_quality(df)
     assert l == [2]
