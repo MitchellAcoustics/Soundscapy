@@ -96,6 +96,23 @@ def test_mean_responses():
 def test__circ_scale():
     assert soundscapy.surveys._circ_scale((1, 5)) == approx(9.66, abs=0.1)
 
+
+def test__convert_to_polar_coords():
+    # example values taken from (Gurtman & Pincus, 2003)
+    r, theta = soundscapy.surveys._convert_to_polar_coords(0.022, 1.582)
+    assert r == approx(1.58, abs=0.05) and theta == approx(89, abs=0.5)
+
+
+def test_calculate_polar_coords():
+    coords = db.calculate_polar_coords(basic_test_df)
+    assert coords[0][0] == approx(0.53, abs=0.05) and coords[0][1] == approx(
+        0.83, abs=0.05
+    )  # radius coords
+    assert coords[1][0] == approx(3.27, abs=0.1) and coords[1][1] == approx(
+        154.8, abs=0.1
+    )  # theta coords
+
+
 def test_load_isd_dataset_wrong_version():
     with raises(ValueError):
         df = soundscapy.isd.load_isd_dataset(version="v0.1.0")

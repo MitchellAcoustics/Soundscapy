@@ -86,11 +86,11 @@ def convert_column_to_index(df, col: str, drop=False):
 
 def validate_dataset(
     df: pd.DataFrame,
-    paq_aliases: Union[List, Dict] =None,
-    allow_lockdown: bool=False,
-    allow_paq_na: bool=False,
-    verbose: int=1,
-    val_range: Tuple=(1, 5),
+    paq_aliases: Union[List, Dict] = None,
+    allow_lockdown: bool = False,
+    allow_paq_na: bool = False,
+    verbose: int = 1,
+    val_range: Tuple = (1, 5),
 ):
     """Performs data quality checks and validates that the dataset fits the expected format
 
@@ -169,11 +169,9 @@ def paq_data_quality(
         if allow_na is False and row.isna().sum() > 0:
             l.append(i)
             continue
-        if row["PAQ1"] == row["PAQ2"] == row["PAQ3"] == row[
-            "PAQ4"
-        ] == row["PAQ5"] == row["PAQ6"] == row["PAQ7"] == row[
-            "PAQ8"
-        ] and row.sum() != np.mean(
+        if row["PAQ1"] == row["PAQ2"] == row["PAQ3"] == row["PAQ4"] == row[
+            "PAQ5"
+        ] == row["PAQ6"] == row["PAQ7"] == row["PAQ8"] and row.sum() != np.mean(
             val_range
         ):
             l.append(i)
@@ -267,6 +265,50 @@ def calculate_paq_coords(
     ISOEventful = complex_eventful / scale
 
     return ISOPleasant, ISOEventful
+
+
+def calculate_polar_coords(results_df: pd.DataFrame, val_range: tuple = (5, 1)):
+    """Calculates the polar coordinates
+
+    If a value is missing, by default it is replaced with neutral (3).
+    The raw PAQ values should be Likert data from 1 to 5 and the column
+    names should match the PAQ_cols given above.
+
+    Parameters
+    ----------
+    results_df : pd.DataFrame
+        Dataframe containing ISD formatted data
+    val_range : tuple, optional
+        The range of values for the PAQs, by default (5, 1)
+
+    Returns
+    -------
+    tuple
+        Polar coordinates
+    """
+    isopl, isoev = calculate_paq_coords(results_df, val_range=val_range)
+    r, theta = _convert_to_polar_coords(isopl, isoev)
+    return r, theta
+
+
+def _convert_to_polar_coords(x, y):
+    """Convert cartesian coordinates to polar coordinates
+
+    Parameters
+    ----------
+    x : float
+        x coordinate
+    y : float
+        y coordinate
+
+    Returns
+    -------
+    tuple
+        (r, theta) polar coordinates
+    """
+    r = np.sqrt(x ** 2 + y ** 2)
+    theta = np.rad2deg(np.arctan2(y, x))
+    return r, theta
 
 
 # %%
