@@ -320,7 +320,7 @@ def ssm_metrics(
     projection: bool = True,
     verbose: int = 0,
 ):
-    """Calculate the SSM metrics for each PAQ
+    """Calculate the SSM metrics for each response
 
     Parameters
     ----------
