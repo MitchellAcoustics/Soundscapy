@@ -9,6 +9,7 @@ from typing import Union, Tuple, List, Dict
 
 import numpy as np
 import pandas as pd
+from scipy import optimize
 
 # Constants and Labels
 from soundscapy.databases.parameters import PAQ_IDS, PAQ_NAMES
@@ -267,10 +268,11 @@ def calculate_paq_coords(
     return ISOPleasant, ISOEventful
 
 
-def calculate_polar_coords(results_df: pd.DataFrame, val_range: tuple = (5, 1), scale_to_one: bool = True):
+def calculate_polar_coords(results_df: pd.DataFrame):
     """Calculates the polar coordinates
 
-    If a value is missing, by default it is replaced with neutral (3).
+    Based on the calculation given in Gurtman and Pincus (2003), pg. 416.
+
     The raw PAQ values should be Likert data from 1 to 5 and the column
     names should match the PAQ_cols given above.
 
@@ -278,17 +280,15 @@ def calculate_polar_coords(results_df: pd.DataFrame, val_range: tuple = (5, 1), 
     ----------
     results_df : pd.DataFrame
         Dataframe containing ISD formatted data
-    val_range : tuple, optional
-        The range of values for the PAQs, by default (5, 1)
-    scale_to_one : bool, optional
-        Should the x, y coordinates be scaled to (-1, +1), by default True
 
     Returns
     -------
     tuple
         Polar coordinates
     """
-    isopl, isoev = calculate_paq_coords(results_df, val_range=val_range, scale_to_one=scale_to_one)
+    isopl, isoev = calculate_paq_coords(results_df, scale_to_one=False)
+    isopl = isopl * 0.25
+    isoev = isoev * 0.25
     r, theta = _convert_to_polar_coords(isopl, isoev)
     return r, theta
 
@@ -315,10 +315,10 @@ def _convert_to_polar_coords(x, y):
 def ssm_metrics(
     df: pd.DataFrame,
     paq_cols: list = PAQ_IDS,
+    method: str = 'cosine',
     val_range: tuple = (5, 1),
     scale_to_one: bool = True,
-    projection: bool = True,
-    verbose: int = 0,
+    angles: Tuple = (0, 45, 90, 135, 180, 225, 270, 315),
 ):
     """Calculate the SSM metrics for each response
 
@@ -328,14 +328,11 @@ def ssm_metrics(
         Dataframe containing ISD formatted data
     paq_cols : list, optional
         List of PAQ columns, by default PAQ_IDS
-    val_range : tuple, optional
-        The range of values for the PAQs, by default (5, 1)
-    scale_to_one : bool, optional
-        Should the x, y coordinates be scaled to (-1, +1), by default True
-    projection : bool, optional
-        Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
-    verbose : int, optional
-        Verbosity level, by default 0
+    method : str, optional
+        Method by which to calculate the SSM, by default 'cosine'
+        'cosine' fits a cosine model to the data, using the Structural Summary Method developed
+        by Gurtman (1994; Gurtman & Balakrishnan, 1998).
+        'polar_conversion' directly converts the ISO coordinates to polar coordinates.
 
     Returns
     -------
@@ -350,22 +347,90 @@ def ssm_metrics(
     # if not _check_paq_range(df, paq_cols, val_range, verbose):
     #     raise ValueError("PAQ values are not within the specified range.")
 
-    # Calculate the coordinates
-    r, theta = calculate_polar_coords(df, val_range=val_range, scale_to_one=scale_to_one)
 
-    mean = np.mean(df[paq_cols], axis=1)
-    mean = mean / abs(max(val_range) - min(val_range)) if scale_to_one else mean
+    if method == 'polar':
+        # Calculate the coordinates
+        vl, theta = calculate_polar_coords(df)
+
+        mean = np.mean(df[paq_cols], axis=1)
+        mean = mean / abs(max(val_range) - min(val_range)) if scale_to_one else mean
+
+        # Calculate the SSM metrics
+        df = janitor.add_columns(
+            df,
+            vl=vl,
+            theta=theta,
+            mean_level=mean,
+        )
+        return df
+
+    elif method == 'cosine':
+
+        ssm_df = df[paq_cols].apply(lambda y: ssm_cosine_fit(y, angles=angles), axis=1, result_type='expand')
+
+        df = janitor.add_columns(
+            df,
+            amp=ssm_df.iloc[:, 0],
+            delta=ssm_df.iloc[:, 1],
+            elev=ssm_df.iloc[:, 2],
+            dev=ssm_df.iloc[:, 3],
+            r2=ssm_df.iloc[:, 4],
+        )
+        return df
+
+    else:
+        raise ValueError("Method must be either 'polar' or 'cosine'.")
 
 
-    # Calculate the SSM metrics
-    df = janitor.add_columns(
-        df,
-        amp=r,
-        delta=theta,
-        elev=mean,
+def ssm_cosine_fit(y, angles=(0, 45, 90, 135, 180, 225, 270, 315), bounds=([0, 0, 0, -np.inf], [np.inf, 360, np.inf, np.inf])):
+    """Fit a cosine model to the data
+
+    Parameters
+    ----------
+    angles : list
+        List of angles
+    y : list
+        List of y values
+    bounds : tuple
+        Bounds for the parameters
+
+    Returns
+    -------
+    tuple
+        (amp, delta, elev, dev)
+    """
+    def form(theta, amp, delta, elev, dev):
+        return elev + amp * np.cos(np.radians(theta - delta)) + dev
+
+    param, covariance = optimize.curve_fit(
+        form,
+        xdata = angles,
+        ydata = y,
+        bounds = bounds,
     )
-    return df
+    r2 = _r2_score(y, form(angles, *param))
+    amp, delta, elev, dev = param
+    return amp, delta, elev, dev, r2
 
+def _r2_score(y, y_hat):
+    """Calculates the R2 score
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Actual values
+    y_hat : np.ndarray
+        Predicted values
+
+    Returns
+    -------
+    float
+        R2 score
+    """
+    y_bar = np.mean(y)
+    ss_tot = np.sum((y - y_bar) ** 2)
+    ss_res = np.sum((y - y_hat) ** 2)
+    return 1 - (ss_res / ss_tot)
 
 # %%
 if __name__ == "__main__":
