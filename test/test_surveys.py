@@ -96,9 +96,6 @@ def test_mean_responses():
 def test__circ_scale():
     assert soundscapy.surveys._circ_scale((1, 5)) == approx(9.66, abs=0.1)
 
-def test__circ_scale():
-    assert soundscapy.surveys._circ_scale((1, 5)) == approx(9.66, abs=0.1)
-
 def test_load_isd_dataset_wrong_version():
     with raises(ValueError):
         df = soundscapy.isd.load_isd_dataset(version="v0.1.0")
