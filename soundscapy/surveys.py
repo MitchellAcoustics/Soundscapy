@@ -267,7 +267,7 @@ def calculate_paq_coords(
     return ISOPleasant, ISOEventful
 
 
-def calculate_polar_coords(results_df: pd.DataFrame, val_range: tuple = (5, 1)):
+def calculate_polar_coords(results_df: pd.DataFrame, val_range: tuple = (5, 1), scale_to_one: bool = True):
     """Calculates the polar coordinates
 
     If a value is missing, by default it is replaced with neutral (3).
@@ -280,13 +280,15 @@ def calculate_polar_coords(results_df: pd.DataFrame, val_range: tuple = (5, 1)):
         Dataframe containing ISD formatted data
     val_range : tuple, optional
         The range of values for the PAQs, by default (5, 1)
+    scale_to_one : bool, optional
+        Should the x, y coordinates be scaled to (-1, +1), by default True
 
     Returns
     -------
     tuple
         Polar coordinates
     """
-    isopl, isoev = calculate_paq_coords(results_df, val_range=val_range)
+    isopl, isoev = calculate_paq_coords(results_df, val_range=val_range, scale_to_one=scale_to_one)
     r, theta = _convert_to_polar_coords(isopl, isoev)
     return r, theta
 
@@ -309,6 +311,60 @@ def _convert_to_polar_coords(x, y):
     r = np.sqrt(x ** 2 + y ** 2)
     theta = np.rad2deg(np.arctan2(y, x))
     return r, theta
+
+def ssm_metrics(
+    df: pd.DataFrame,
+    paq_cols: list = PAQ_IDS,
+    val_range: tuple = (5, 1),
+    scale_to_one: bool = True,
+    projection: bool = True,
+    verbose: int = 0,
+):
+    """Calculate the SSM metrics for each PAQ
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing ISD formatted data
+    paq_cols : list, optional
+        List of PAQ columns, by default PAQ_IDS
+    val_range : tuple, optional
+        The range of values for the PAQs, by default (5, 1)
+    scale_to_one : bool, optional
+        Should the x, y coordinates be scaled to (-1, +1), by default True
+    projection : bool, optional
+        Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
+    verbose : int, optional
+        Verbosity level, by default 0
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe containing the SSM metrics
+    """
+    # Check that the PAQ columns are present
+    if not set(paq_cols).issubset(df.columns):
+        raise ValueError("PAQ columns are not present in the dataframe.")
+
+    # # Check that the PAQ values are within the range
+    # if not _check_paq_range(df, paq_cols, val_range, verbose):
+    #     raise ValueError("PAQ values are not within the specified range.")
+
+    # Calculate the coordinates
+    r, theta = calculate_polar_coords(df, val_range=val_range, scale_to_one=scale_to_one)
+
+    mean = np.mean(df[paq_cols], axis=1)
+    mean = mean / abs(max(val_range) - min(val_range)) if scale_to_one else mean
+
+
+    # Calculate the SSM metrics
+    df = janitor.add_columns(
+        df,
+        amp=r,
+        delta=theta,
+        elev=mean,
+    )
+    return df
 
 
 # %%
