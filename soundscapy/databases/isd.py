@@ -8,8 +8,7 @@ import pandas as pd
 from pandas.api.extensions import register_dataframe_accessor
 
 # Constants and Labels
-from soundscapy.databases.parameters import PAQ_NAMES
-from soundscapy.surveys import *
+from soundscapy.utils.surveys import *
 
 
 @register_dataframe_accessor("isd")

@@ -1,5 +1,19 @@
 """
 The module containing functions for dealing with soundscape survey data.
+
+Notes
+-----
+The functions in this module are designed to be fairly general and can be used with any dataset in a similar format to
+the ISD. The key to this is using a simple dataframe/sheet with the following columns:
+    Index columns: e.g. LocationID, RecordID, GroupID, SessionID
+    Perceptual attributes: PAQ1, PAQ2, ..., PAQ8
+    Independent variables: e.g. Laeq, N5, Sharpness, etc.
+
+The key functions of this module are designed to clean/validate datasets, calculate ISO coordinate values or SSM metrics,
+filter on index columns. Functions and operations which are specific to a particular dataset are located in their own
+modules under `soundscape.databases`.
+
+
 """
 
 # Add soundscapy to the Python path
@@ -12,7 +26,7 @@ import pandas as pd
 from scipy import optimize
 
 # Constants and Labels
-from soundscapy.databases.parameters import PAQ_IDS, PAQ_NAMES
+from soundscapy.utils.parameters import PAQ_IDS, PAQ_NAMES
 
 DEFAULT_CATS = [
     "indexing",
@@ -26,8 +40,6 @@ _flatten = lambda t: [item for sublist in t for item in sublist]
 
 
 ###########
-
-# %%
 def return_paqs(df, incl_ids=True, other_cols=None):
     """Return only the PAQ columns
 
@@ -70,7 +82,6 @@ def mean_responses(df: pd.DataFrame, group: str) -> pd.DataFrame:
     return df.groupby(group).mean()
 
 
-# %%
 def _circ_scale(range):
     diff = max(range) - min(range)
     return diff + diff * np.sqrt(2)
@@ -131,7 +142,39 @@ def validate_dataset(
     return df, excl_df
 
 
-def rename_paqs(df, paq_aliases=None, verbose=0):
+def rename_paqs(
+    df: pd.DataFrame, paq_aliases: Union[Tuple, Dict] = None, verbose: int = 0
+) -> pd.DataFrame:
+    """
+    The rename_paqs function renames the PAQ columns in a dataframe.
+
+    Soundscapy works with PAQ IDs (PAQ1, PAQ2, etc), so if you use labels such as pleasant, vibrant, etc. these will
+    need to be renamed.
+
+    It takes as input a pandas DataFrame and returns the same DataFrame with renamed columns.
+    If no arguments are passed, it will attempt to rename all of the PAQs based on their column names.
+
+    Parameters
+    ----------
+        df: pd.DataFrame
+            Specify the dataframe to be renamed
+        paq_aliases: tuple or dict, optional
+            Specify which paqs are to be renamed, by default None.
+
+            If None, will check if the column names are in our pre-defined options (i.e. pleasant, vibrant, etc).
+
+            If a tuple is passed, the order of the tuple must match the order of the PAQs in the dataframe.
+
+            Allow the function to be called with a dictionary of aliases if desired
+        verbose: int, optional
+            Print out a message if the paqs are already correctly named, by default 0
+
+    Returns
+    -------
+
+        A pandas dataframe with the paq_ids column names
+
+    """
     if paq_aliases is None:
         if any(i in b for i in PAQ_IDS for b in df.columns):
             if verbose > 0:
@@ -158,8 +201,43 @@ def rename_paqs(df, paq_aliases=None, verbose=0):
 
 
 def paq_data_quality(
-    df, verbose=0, allow_lockdown=True, allow_na=False, val_range=(5, 1)
-):
+    df: pd.DataFrame,
+    verbose: int = 0,
+    allow_lockdown: bool = True,
+    allow_na: bool = False,
+    val_range: tuple = (1, 5),
+) -> Union[List, None]:
+    """Basic check of PAQ data quality
+
+    The paq_data_quality function takes a DataFrame and returns a list of indices that
+    should be dropped from the DataFrame. The function checks for:
+
+    - Rows with all values equal to 1 (indicating no PAQ data)
+
+    - Rows with more than 4 NaN values (indicating missing PAQ data)
+
+    - Rows where any value is greater than 5 or less than 1 (indicating invalid PAQ data)
+
+    Parameters
+    ----------
+        df: pd.DataFrame
+            Specify the dataframe to be evaluated
+        verbose: int, optional
+            Determine whether or not the function should print out information about the data quality check, by default 0
+        allow_lockdown: bool, optional
+            Allow the user to decide whether they want to remove samples that have a lockdown value of 1, by default True
+        allow_na: bool
+            Ensure that rows with any missing values are dropped, by default False
+        val_range: tuple, optional
+            Set the range of values that are considered to be valid, by default (1, 5).
+
+    Returns
+    -------
+
+        A list of indices that need to be removed from the dataframe
+
+    """
+
     paqs = return_paqs(df, incl_ids=False)
     l = []
     for i in range(len(paqs)):
@@ -308,14 +386,15 @@ def _convert_to_polar_coords(x, y):
     tuple
         (r, theta) polar coordinates
     """
-    r = np.sqrt(x ** 2 + y ** 2)
+    r = np.sqrt(x**2 + y**2)
     theta = np.rad2deg(np.arctan2(y, x))
     return r, theta
+
 
 def ssm_metrics(
     df: pd.DataFrame,
     paq_cols: list = PAQ_IDS,
-    method: str = 'cosine',
+    method: str = "cosine",
     val_range: tuple = (5, 1),
     scale_to_one: bool = True,
     angles: Tuple = (0, 45, 90, 135, 180, 225, 270, 315),
@@ -347,8 +426,7 @@ def ssm_metrics(
     # if not _check_paq_range(df, paq_cols, val_range, verbose):
     #     raise ValueError("PAQ values are not within the specified range.")
 
-
-    if method == 'polar':
+    if method == "polar":
         # Calculate the coordinates
         vl, theta = calculate_polar_coords(df)
 
@@ -364,9 +442,11 @@ def ssm_metrics(
         )
         return df
 
-    elif method == 'cosine':
+    elif method == "cosine":
 
-        ssm_df = df[paq_cols].apply(lambda y: ssm_cosine_fit(y, angles=angles), axis=1, result_type='expand')
+        ssm_df = df[paq_cols].apply(
+            lambda y: ssm_cosine_fit(y, angles=angles), axis=1, result_type="expand"
+        )
 
         df = janitor.add_columns(
             df,
@@ -382,7 +462,11 @@ def ssm_metrics(
         raise ValueError("Method must be either 'polar' or 'cosine'.")
 
 
-def ssm_cosine_fit(y, angles=(0, 45, 90, 135, 180, 225, 270, 315), bounds=([0, 0, 0, -np.inf], [np.inf, 360, np.inf, np.inf])):
+def ssm_cosine_fit(
+    y,
+    angles=(0, 45, 90, 135, 180, 225, 270, 315),
+    bounds=([0, 0, 0, -np.inf], [np.inf, 360, np.inf, np.inf]),
+):
     """Fit a cosine model to the data
 
     Parameters
@@ -399,18 +483,20 @@ def ssm_cosine_fit(y, angles=(0, 45, 90, 135, 180, 225, 270, 315), bounds=([0, 0
     tuple
         (amp, delta, elev, dev)
     """
+
     def form(theta, amp, delta, elev, dev):
         return elev + amp * np.cos(np.radians(theta - delta)) + dev
 
     param, covariance = optimize.curve_fit(
         form,
-        xdata = angles,
-        ydata = y,
-        bounds = bounds,
+        xdata=angles,
+        ydata=y,
+        bounds=bounds,
     )
     r2 = _r2_score(y, form(angles, *param))
     amp, delta, elev, dev = param
     return amp, delta, elev, dev, r2
+
 
 def _r2_score(y, y_hat):
     """Calculates the R2 score
@@ -431,6 +517,7 @@ def _r2_score(y, y_hat):
     ss_tot = np.sum((y - y_bar) ** 2)
     ss_res = np.sum((y - y_hat) ** 2)
     return 1 - (ss_res / ss_tot)
+
 
 # %%
 if __name__ == "__main__":

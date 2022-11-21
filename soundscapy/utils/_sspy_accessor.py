@@ -18,8 +18,8 @@ import matplotlib
 
 import soundscapy.plotting.likert
 
-sys.path.append("..")
-import soundscapy.surveys as db
+sys.path.append("../..")
+import soundscapy.utils.surveys as db
 import soundscapy.plotting.circumplex as sspyplot
 
 # Define the names of the PAQ columns

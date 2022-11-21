@@ -5,7 +5,7 @@ from math import pi
 
 from matplotlib import pyplot as plt
 
-from soundscapy.databases.parameters import PAQ_NAMES
+from soundscapy.utils.parameters import PAQ_NAMES
 
 
 def paq_radar_plot(data, ax=None, index=None):

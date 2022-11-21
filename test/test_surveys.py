@@ -2,7 +2,7 @@ import pandas as pd
 from pytest import approx
 import pytest
 import soundscapy
-import soundscapy.surveys as db
+import soundscapy.utils.surveys as db
 from pytest import raises
 
 basic_test_df = pd.DataFrame(
@@ -94,17 +94,17 @@ def test_mean_responses():
 
 
 def test__circ_scale():
-    assert soundscapy.surveys._circ_scale((1, 5)) == approx(9.66, abs=0.1)
+    assert soundscapy.utils.surveys._circ_scale((1, 5)) == approx(9.66, abs=0.1)
 
 
 def test__convert_to_polar_coords():
     # example values taken from (Gurtman & Pincus, 2003)
-    r, theta = soundscapy.surveys._convert_to_polar_coords(0.022, 1.582)
+    r, theta = soundscapy.utils.surveys._convert_to_polar_coords(0.022, 1.582)
     assert r == approx(1.58, abs=0.05) and theta == approx(89, abs=0.5)
 
 
 def test_calculate_polar_coords():
-    coords = db.calculate_polar_coords(basic_test_df)
+    coords = db.calculate_polar_coords(basic_test_df, scaling='iso')
     assert coords[0][0] == approx(0.53, abs=0.05) and coords[0][1] == approx(
         0.83, abs=0.05
     )  # radius coords
