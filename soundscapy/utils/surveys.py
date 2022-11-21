@@ -346,7 +346,7 @@ def calculate_paq_coords(
     return ISOPleasant, ISOEventful
 
 
-def calculate_polar_coords(results_df: pd.DataFrame):
+def calculate_polar_coords(results_df: pd.DataFrame, scaling: str = 'iso'):
     """Calculates the polar coordinates
 
     Based on the calculation given in Gurtman and Pincus (2003), pg. 416.
@@ -358,15 +358,35 @@ def calculate_polar_coords(results_df: pd.DataFrame):
     ----------
     results_df : pd.DataFrame
         Dataframe containing ISD formatted data
+    scaling : str, optional
+        The scaling to use for the polar coordinates, by default 'iso'
+
+        Options are 'iso', 'gurtman', and 'none'
+
+        For 'iso', the cartesian coordinates are scaled to (-1, +1) according to the basic
+        method given in ISO12913.
+
+        For 'gurtman', the polar coordinates are scaled according to the method given in
+        Gurtman and Pincus (2003), pg. 416.
+
+        For 'none', no scaling is applied.
 
     Returns
     -------
     tuple
         Polar coordinates
     """
-    isopl, isoev = calculate_paq_coords(results_df, scale_to_one=False)
-    isopl = isopl * 0.25
-    isoev = isoev * 0.25
+    # raise error if scaling is not one of the options
+    if scaling not in ['iso', 'gurtman', 'none']:
+        raise ValueError(f"Scaling must be one of 'iso', 'gurtman', or 'none', not {scaling}")
+
+    scale_to_one = True if scaling == 'iso' else False
+    isopl, isoev = calculate_paq_coords(results_df, scale_to_one=scale_to_one)
+
+    if scaling == 'gurtman':
+        isopl = isopl * 0.25
+        isoev = isoev * 0.25
+
     r, theta = _convert_to_polar_coords(isopl, isoev)
     return r, theta
 
