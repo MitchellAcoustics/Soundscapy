@@ -1,6 +1,6 @@
 # %%
-from typing import Union
 import warnings
+from typing import Union
 
 import maad
 import numpy as np
@@ -28,7 +28,7 @@ DEFAULT_LABELS = {
 }
 
 
-#%%
+# %%
 # Metrics calculations
 def _stat_calcs(
     label: str, ts_array: np.ndarray, res: dict, statistics: Union[list, tuple]
@@ -69,7 +69,7 @@ def _stat_calcs(
     return res
 
 
-#%%
+# %%
 def mosqito_metric_1ch(
     s,
     metric: str,
@@ -196,7 +196,7 @@ def mosqito_metric_1ch(
         return pd.DataFrame(res, index=[0])
 
 
-#%%
+# %%
 def maad_metric_1ch(
     s, metric: str, as_df: bool = False, verbose: bool = False, func_args={}
 ):
@@ -252,8 +252,6 @@ def maad_metric_1ch(
 
 
 # %%
-
-#%%
 def pyacoustics_metric_1ch(
     s,
     metric: str,

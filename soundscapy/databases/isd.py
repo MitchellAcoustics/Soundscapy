@@ -1,8 +1,9 @@
 # Customized functions specifically for the International Soundscape Database
 
+from datetime import date
+
 # Add soundscapy to the Python path
 from pathlib import Path
-from datetime import date
 
 import pandas as pd
 from pandas.api.extensions import register_dataframe_accessor
@@ -13,6 +14,50 @@ from soundscapy.utils.surveys import *
 
 @register_dataframe_accessor("isd")
 class ISDAccessor:
+    """Custom accessor for the International Soundscape Database (ISD) dataset
+
+    Parameters
+    ----------
+    pandas_obj : pd.DataFrame
+        Dataframe containing ISD formatted data
+
+    Attributes
+    ----------
+    _obj : pd.DataFrame
+        Dataframe containing ISD formatted data
+    _analysis_data : str
+        Date of analysis
+    _metadata : dict
+        Dictionary of metadata
+
+    Methods
+    -------
+    validate_dataset
+        Validate the dataset to ensure it is in the correct format.
+    paq_data_quality
+        Return the data quality of the PAQs
+    filter_group_ids
+        Filter the dataframe by GroupID
+    filter_location_ids
+        Filter the dataframe by LocationID
+    filter_session_ids
+        Filter the dataframe by SessionID
+    filter_record_ids
+        Filter the dataframe by RecordID
+    filter_lockdown
+        Filter the dataframe by Lockdown
+    convert_group_ids_to_index
+        Convert the GroupID column to the index
+    return_paqs
+        Return the PAQs as a dataframe
+    soundscapy_describe
+        Return a summary of the data
+    mean_responses
+        Calculate the mean responses for each PAQ
+    convert_column_to_index
+        Reassign an existing column as the dataframe index.
+    """
+
     def __init__(self, pandas_obj):
         self._obj = pandas_obj
         self._analysis_data = date.today().isoformat()
@@ -26,6 +71,27 @@ class ISDAccessor:
         verbose=1,
         val_range=(1, 5),
     ):
+        """Validate the dataset to ensure it is in the correct format.
+
+        Parameters
+        ----------
+        paq_aliases : list, optional
+            List of aliases for the PAQ, by default PAQ_NAMES
+        allow_lockdown : bool, optional
+            Allow lockdown, by default False
+        allow_paq_na : bool, optional
+            Allow PAQ to be NA, by default False
+        verbose : int, optional
+            Print progress, by default 1
+        val_range : tuple, optional
+            Range of valid values, by default (1, 5)
+
+        Returns
+        -------
+        pandas.DataFrame
+            Validated dataframe
+        """
+
         return validate_dataset(
             self._obj,
             paq_aliases=paq_aliases,
@@ -36,21 +102,93 @@ class ISDAccessor:
         )
 
     def paq_data_quality(self, verbose=0):
+        """Return the data quality of the PAQs
+
+        Parameters
+        ----------
+        verbose : int, optional
+            Print progress, by default 0
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
         return paq_data_quality(self._obj, verbose=verbose)
 
     def filter_group_ids(self, group_ids):
+        """
+        Filter the dataframe by GroupID
+
+        Parameters
+        ----------
+        group_ids : list
+            List of GroupIDs to filter by
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered dataframe
+        """
         return self._obj.sspy.filter("GroupID", group_ids)
 
     def filter_location_ids(self, location_ids):
+        """Filter the dataframe by LocationID
+
+        Parameters
+        ----------
+        location_ids : list
+            List of LocationIDs to filter by
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered dataframe
+        """
         return self._obj.sspy.filter("LocationID", location_ids)
 
     def filter_session_ids(self, session_ids):
+        """Filter the dataframe by SessionID
+
+        Parameters
+        ----------
+        session_ids : list
+            List of SessionIDs to filter by
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered dataframe
+        """
         return self._obj.sspy.filter("SessionID", session_ids)
 
     def filter_record_ids(self, record_ids):
+        """Filter the dataframe by RecordID
+
+        Parameters
+        ----------
+        record_ids : list
+            List of RecordIDs to filter by
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered dataframe
+        """
         return self._obj.sspy.filter("RecordID", record_ids)
 
     def filter_lockdown(self, is_lockdown=False):
+        """Filter the dataframe by Lockdown
+
+        Parameters
+        ----------
+        is_lockdown : bool, optional
+            Filter by lockdown, by default False
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered dataframe
+        """
         return (
             self._obj.query("Lockdown == 1")
             if is_lockdown
@@ -58,14 +196,58 @@ class ISDAccessor:
         )
 
     def convert_group_ids_to_index(self, drop=False):
+        """Convert the GroupID column to the index
+
+        Parameters
+        ----------
+        drop : bool, optional
+            Drop the GroupID column, by default False
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with GroupID as index
+        """
         return convert_column_to_index(self._obj, "Group_ID", drop=drop)
 
     def return_paqs(self, incl_ids=True, other_cols=None):
+        """Return the PAQs as a dataframe
+
+        Parameters
+        ----------
+        incl_ids : bool, optional
+            Include the IDs, by default True
+        other_cols : list, optional
+            List of other columns to include, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe containing the PAQs
+        """
         return return_paqs(self._obj, incl_ids=incl_ids, other_cols=other_cols)
 
     def location_describe(
-                self, location, type="percent", pl_threshold=0, ev_threshold=0
-        ):
+        self, location, type="percent", pl_threshold=0, ev_threshold=0
+    ):
+        """Return a summary of the data
+
+        Parameters
+        ----------
+        location : str
+            Location to describe
+        type : str, optional
+            Type of summary, by default "percent"
+        pl_threshold : int, optional
+            PL threshold, by default 0
+        ev_threshold : int, optional
+            EV threshold, by default 0
+
+        Returns
+        -------
+        pd.DataFrame
+            Summary of the data
+        """
         loc_df = self.filter_location_ids(location_ids=[location])
         count = len(loc_df)
         pl_count = len(loc_df[loc_df["ISOPleasant"] > pl_threshold])
@@ -106,7 +288,21 @@ class ISDAccessor:
 
         return res
 
-    def soundscapy_describe(self, group_by = "LocationID", type="percent"):
+    def soundscapy_describe(self, group_by="LocationID", type="percent"):
+        """Return a summary of the data
+
+        Parameters
+        ----------
+        group_by : str, optional
+            Column to group by, by default "LocationID"
+        type : str, optional
+            Type of summary, by default "percent"
+
+        Returns
+        -------
+        pd.DataFrame
+            Summary of the data
+        """
         res = {
             location: self.location_describe(location, type=type)
             for location in self._obj[group_by].unique()
@@ -130,19 +326,30 @@ class ISDAccessor:
         """
         return mean_responses(self._obj, group=group)
 
-
     def convert_column_to_index(self, col="GroupID", drop=True):
-        """Reassign an existing column as the dataframe index."""
+        """Reassign an existing column as the dataframe index.
+
+        Parameters
+        ----------
+        col : str, optional
+            Column to convert to index, by default "GroupID"
+        drop : bool, optional
+            Drop the column, by default True
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with the column as the index
+        """
         return convert_column_to_index(self._obj, col=col, drop=drop)
 
-
     def validate_isd(
-            self,
-            paq_aliases=None,
-            allow_lockdown=False,
-            allow_paq_na=False,
-            verbose=1,
-            val_range=(1, 5),
+        self,
+        paq_aliases=None,
+        allow_lockdown=False,
+        allow_paq_na=False,
+        verbose=1,
+        val_range=(1, 5),
     ):
         """Validate the ISD dataset.
 
@@ -203,9 +410,6 @@ def load_isd_dataset(version="latest"):
         url = "https://zenodo.org/record/5914762/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
 
     return pd.read_excel(url, engine="openpyxl")
-
-
-
 
 
 # Dealing with Directories!

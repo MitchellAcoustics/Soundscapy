@@ -12,15 +12,13 @@ the ISD. The key to this is using a simple dataframe/sheet with the following co
 The key functions of this module are designed to clean/validate datasets, calculate ISO coordinate values or SSM metrics,
 filter on index columns. Functions and operations which are specific to a particular dataset are located in their own
 modules under `soundscape.databases`.
-
-
 """
 
-# Add soundscapy to the Python path
-import janitor
 from pathlib import Path
 from typing import Union, Tuple, List, Dict
 
+# Add soundscapy to the Python path
+import janitor
 import numpy as np
 import pandas as pd
 from scipy import optimize
@@ -50,6 +48,10 @@ def return_paqs(df, incl_ids=True, other_cols=None):
     other_cols : list, optional
         other columns to also include, by default None
 
+    Returns
+    -------
+    pd.DataFrame
+        dataframe containing only the PAQ columns
     """
     cols = PAQ_IDS
     if incl_ids:
@@ -346,7 +348,7 @@ def calculate_paq_coords(
     return ISOPleasant, ISOEventful
 
 
-def calculate_polar_coords(results_df: pd.DataFrame, scaling: str = 'iso'):
+def calculate_polar_coords(results_df: pd.DataFrame, scaling: str = "iso"):
     """Calculates the polar coordinates
 
     Based on the calculation given in Gurtman and Pincus (2003), pg. 416.
@@ -377,13 +379,15 @@ def calculate_polar_coords(results_df: pd.DataFrame, scaling: str = 'iso'):
         Polar coordinates
     """
     # raise error if scaling is not one of the options
-    if scaling not in ['iso', 'gurtman', 'none']:
-        raise ValueError(f"Scaling must be one of 'iso', 'gurtman', or 'none', not {scaling}")
+    if scaling not in ["iso", "gurtman", "none"]:
+        raise ValueError(
+            f"Scaling must be one of 'iso', 'gurtman', or 'none', not {scaling}"
+        )
 
-    scale_to_one = True if scaling == 'iso' else False
+    scale_to_one = True if scaling == "iso" else False
     isopl, isoev = calculate_paq_coords(results_df, scale_to_one=scale_to_one)
 
-    if scaling == 'gurtman':
+    if scaling == "gurtman":
         isopl = isopl * 0.25
         isoev = isoev * 0.25
 

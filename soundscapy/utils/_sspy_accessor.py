@@ -11,10 +11,10 @@ import sys
 from datetime import date
 from typing import Union, Tuple, List, Dict
 
+import matplotlib
 import numpy as np
 import pandas as pd
 from pandas.api.extensions import register_dataframe_accessor
-import matplotlib
 
 import soundscapy.plotting.likert
 
@@ -35,6 +35,15 @@ default_bw_adjust = 1.2
 
 @register_dataframe_accessor("sspy")
 class SSPYAccessor:
+    """Soundscapy Dataframe Accessor
+
+    This class is used to add methods to Pandas Dataframes.
+    This method is used to simplify the direct manipulation of soundscape survey-type data, allowing methods to be chained.
+    The accessor is added to the dataframe by importing the module, and is accessed by using the `sspy` attribute of the dataframe.
+    The sspy accessor is intended to be general to any soundscape survey data, functions for specific survey types are
+    contained in the `isd` and `araus` modules.
+    """
+
     def __init__(self, df):
         self._df = df
         self._analysis_date = date.today().isoformat()
@@ -42,11 +51,11 @@ class SSPYAccessor:
 
     def validate_dataset(
         self,
-        paq_aliases: Union[List, Dict]=None,
-        allow_lockdown: bool=True,
-        allow_na: bool=False,
-        verbose: int=1,
-        val_range: Tuple=(1, 5),
+        paq_aliases: Union[List, Dict] = None,
+        allow_lockdown: bool = True,
+        allow_na: bool = False,
+        verbose: int = 1,
+        val_range: Tuple = (1, 5),
     ):
         """Performs data quality checks and validates that the dataset fits the expected format
 
@@ -80,6 +89,23 @@ class SSPYAccessor:
         )
 
     def paq_data_quality(self, verbose=0):
+        """
+        Check the data quality of the PAQs in the dataframe
+
+        Parameters
+        ----------
+        verbose : int, optional
+            How much info to print, by default 0
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe of the data quality checks
+
+        See Also
+        --------
+        :func:`soundscapy.database.paq_data_quality`
+        """
         return db.paq_data_quality(self._df, verbose)
 
     def filter(self, filter_by, condition):
@@ -104,6 +130,24 @@ class SSPYAccessor:
     # TODO: add mean_responses method
 
     def convert_column_to_index(self, col, drop=False):
+        """Convert a column to the index of the dataframe
+
+        Parameters
+        ----------
+        col : str
+            Column to convert to index
+        drop : bool, optional
+            Drop the column after conversion, by default False
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with the column converted to the index
+
+        See Also
+        --------
+        :func:`soundscapy.database.convert_column_to_index`
+        """
         return db.convert_column_to_index(self._df, col, drop)
 
     def return_paqs(self, incl_ids=True, other_cols=None):
@@ -116,6 +160,14 @@ class SSPYAccessor:
         other_cols : list, optional
             other columns to also include, by default None
 
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with only the PAQ columns
+
+        See Also
+        --------
+        :func:`soundscapy.database.return_paqs`
         """
         return db.return_paqs(self._df, incl_ids, other_cols)
 
@@ -140,15 +192,40 @@ class SSPYAccessor:
             Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
         names : list, optional
             Names for new coordinate columns, by default ["ISOPleasant", "ISOEventful"]
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with new columns added
+
+        See Also
+        --------
+        :func:`soundscapy.database.calculate_paq_coords`
         """
         isopl, isoev = db.calculate_paq_coords(
             self._df, scale_to_one, val_range, projection
         )
         return self._df.add_column(names[0], isopl).add_column(names[1], isoev)
 
-
-
     def soundscapy_describe(self, group_by, type="percent"):
+        """Describe the dataframe by a column
+
+        Parameters
+        ----------
+        group_by : str
+            Column to group by
+        type : str, optional
+            Type of summary to return, by default "percent"
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe of summary stats
+
+        See Also
+        --------
+        :func:`soundscapy.database.soundscapy_describe`
+        """
         res = {
             location: self.location_describe(location, type=type)
             for location in self._df[group_by].unique()
@@ -158,6 +235,24 @@ class SSPYAccessor:
         return res
 
     def paq_radar(self, ax=None, index=None):
+        """Plot a radar chart of the PAQs
+
+        Parameters
+        ----------
+        ax : matplotlib.axes, optional
+            Axis to plot on, by default None
+        index : int, optional
+            Index of the row to plot, by default None
+
+        Returns
+        -------
+        matplotlib.axes
+            Axis with the plot
+
+        See Also
+        --------
+        :func:`soundscapy.database.paq_radar`
+        """
         return soundscapy.plotting.likert.paq_radar_plot(self._df, ax, index)
 
     def scatter(
@@ -190,17 +285,18 @@ class SSPYAccessor:
 
         Makes use of seaborn.scatterplot
 
+
+         - Soundscapy specific parameters -
+        We have made all of the `seaborn.scatterplot` arguments available, but have also added or changed some specific
+        options for circumplex plotting.
+
+
         Parameters
         ----------
         x : vector or key in `data`, optional
             column name for x variable, by default "ISOPleasant"
         y : vector or key in `data`, optional
             column name for y variable, by default "ISOEventful"
-
-         - Soundscapy specific parameters -
-        We have made all of the `seaborn.scatterplot` arguments available, but have also added or changed some specific
-        options for circumplex plotting.
-
         title : str, optional
             Title to add to circumplex plot, by default "Soundscape Scatter Plot"
         diagonal_lines : bool, optional
@@ -219,9 +315,6 @@ class SSPYAccessor:
             by default colorblind
         s : int, optional
             size of scatter points, by default 10
-
-         - `seaborn.scatterplot` parameters -
-
         hue : vector or key in data, optional
             Grouping variable that will produce points with different colors. Can be either categorical or numeric,
             although color mapping will behave differently in latter case, by default None
@@ -263,6 +356,12 @@ class SSPYAccessor:
         Returns
         -------
         matplotlib.axes.Axes
+
+        See Also
+        --------
+        :func:`soundscapy.plotting.circumplex.scatter`
+
+        `seaborn.kdeplot <https://seaborn.pydata.org/generated/seaborn.kdeplot.html>`_
         """
         return sspyplot.scatter(
             self._df,
@@ -340,6 +439,10 @@ class SSPYAccessor:
         Creates a wrapper around `seaborn.kdeplot` and adds functionality and styling to customise it for circumplex plots.
         The density plot is a combination of a kernel density estimate and a scatter plot.
 
+         - Soundscapy specific parameters -
+        We have made all of the `seaborn.scatterplot` arguments available, but have also added or changed some specific
+        options for circumplex plotting.
+
         Parameters
         ----------
         data : pd.DataFrame, np.ndarray, mapping or sequence
@@ -349,8 +452,6 @@ class SSPYAccessor:
             Column name for x variable, by default "ISOPleasant"
         y : vector or key in `data`, optional
             Column name for y variable, by default "ISOEventful"
-
-        - Soundscapy specific parameters -
         incl_scatter : bool, optional
             Whether to include a scatter plot of the data, by default True
         density_type : {"full", "simple"}, optional
@@ -371,9 +472,6 @@ class SSPYAccessor:
             Relative location of legend, by default "lower left"
         alpha : float, optional
             Proportional opacity of the heatmap fill, by default 0.75
-
-         - Seaborn kdeplot arguments -
-
         gridsize : int, optional
             Nuber of points on each dimension of the evaluation grid, by default 200
         kernel : str, optional
@@ -457,6 +555,13 @@ class SSPYAccessor:
         -------
         matplotlib.axes.Axes
             Axes object containing the plot.
+
+        See Also
+        --------
+        `seaborn.scatterplot <https://seaborn.pydata.org/generated/seaborn.scatterplot.html>`_
+
+        `seaborn.kdeplot <https://seaborn.pydata.org/generated/seaborn.kdeplot.html>`_
+
         """
 
         return sspyplot.density(
@@ -549,8 +654,6 @@ class SSPYAccessor:
             column name for x variable, by default "ISOPleasant"
         y : vector or key in `data`, optional
             column name for y variable, by default "ISOEventful"
-
-         - Soundscapy specific parameters -
         incl_scatter : bool, optional
             Whether to include a scatter plot of the data, by default True
         density_type : str, optional
@@ -563,6 +666,9 @@ class SSPYAccessor:
             plot coordinate scatter underneath density plot, by default False
         fill : bool, optional
             whether to fill the density plot, by default True
+        bw_adjust : number, optional
+            Factor that multiplicatively scales the value chosen using `bw_method`. Increasing will make the curve smoother.
+            by default None
         bw_adjust : [type], optional
             [description], by default default_bw_adjust
         alpha : float, optional
@@ -580,9 +686,6 @@ class SSPYAccessor:
             Arguments to pass to density or scatter joint plot, by default {}
         marginal_kws : dict, optional
             Arguments to pass to marginal distribution plots, by default {"fill": True}
-
-
-         - Seaborn arguments -
         hue : vector or key in `data`, optional
             Semantic variable that is mapped to determine the color of plot elements.
         palette : string, list, dict, or `matplotlib.colors.Colormap`, optional
@@ -622,6 +725,12 @@ class SSPYAccessor:
         Returns
         -------
         plt.Axes
+
+        See Also
+        --------
+        `seaborn.kdeplot <https://seaborn.pydata.org/generated/seaborn.kdeplot.html>`_
+
+        `seaborn.jointplot <https://seaborn.pydata.org/generated/seaborn.jointplot.html>`_
         """
 
         return sspyplot.jointplot(
