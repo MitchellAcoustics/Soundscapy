@@ -23,3 +23,19 @@ keywords:
 license: BSD-3-Clause
 version: 0.3.8
 date-released: '2022-11-01'
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Mitchell"
+    given-names: "Andrew"
+    orcid: "https://orcid.org/0000-0003-0978-5046"
+  - family-names: "Aletta"
+    given-names: "Francesco"
+    orcid: "https://orcid.org/0000-0003-0978-5046"
+  - family-names: "Kang"
+    given-names: "Jian"
+    orcid: "https://orcid.org/0000-0001-8995-5636"
+  doi: "10.1121/10.0009794"
+  journal: "JASA Express Letters"
+  title: "How to analyse and represent quantitative soundscape data"
+  year: 2022
