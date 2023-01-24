@@ -1,3 +1,6 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
 cff-version: 1.2.0
 title: Soundscapy
 message: >-
@@ -11,8 +14,12 @@ authors:
     affiliation: University College London
     orcid: 'https://orcid.org/0000-0003-0978-5046'
 repository-code: 'https://github.com/MitchellAcoustics/Soundscapy'
+url: 'https://soundscapy.readthedocs.io/en/latest/'
+repository: 'https://pypi.org/project/soundscapy/'
 keywords:
   - soundscape
   - acoustics
   - psychoacoustics
 license: BSD-3-Clause
+version: 0.3.8
+date-released: '2022-11-01'
