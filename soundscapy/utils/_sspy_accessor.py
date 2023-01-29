@@ -18,7 +18,6 @@ from pandas.api.extensions import register_dataframe_accessor
 
 import soundscapy.plotting.likert
 
-sys.path.append("../..")
 import soundscapy.utils.surveys as db
 import soundscapy.plotting.circumplex as sspyplot
 

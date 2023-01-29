@@ -1158,22 +1158,6 @@ files = [
 typing-extensions = {version = "*", markers = "python_version < \"3.8\""}
 
 [[package]]
-name = "lazy-loader"
-version = "0.1"
-description = "lazy_loader"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "lazy_loader-0.1-py3-none-any.whl", hash = "sha256:623bd4831a40ce659d74472af40a58d016f2a5a047685409affbc2ba5c044641"},
-    {file = "lazy_loader-0.1.tar.gz", hash = "sha256:77ce7f2737ebabf9c0ff73b4a99c947876d74d24c2f026544e32246ecca5feca"},
-]
-
-[package.extras]
-lint = ["pre-commit (>=2.20)"]
-test = ["codecov (>=2.1)", "pytest (>=7.1)", "pytest-cov (>=3.0)"]
-
-[[package]]
 name = "lazy-object-proxy"
 version = "1.9.0"
 description = "A fast and thorough lazy object proxy."
@@ -2229,18 +2213,17 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyjanitor"
-version = "0.24.0"
+version = "0.23.1"
 description = "Tools for cleaning pandas DataFrames"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "pyjanitor-0.24.0-py3-none-any.whl", hash = "sha256:d1b3d1cbb0dc5e84a72669ca7c5e53b2e32500f693c8ea6f5fd7246fbd98884a"},
-    {file = "pyjanitor-0.24.0.tar.gz", hash = "sha256:55f9ee72dd1627ad44abbd32c8c69b4e475fe13e47be6e07403c7964bdad99b8"},
+    {file = "pyjanitor-0.23.1-py3-none-any.whl", hash = "sha256:a801c34f78411d522f416d1743fa4449bd48fbe7742739db342ca5f367c36261"},
+    {file = "pyjanitor-0.23.1.tar.gz", hash = "sha256:b9a0677310615651122c5a4c161210a6ab73c10af2df757c3d2cfdd65cee9184"},
 ]
 
 [package.dependencies]
-lazy-loader = "*"
 multipledispatch = "*"
 natsort = "*"
 pandas-flavor = "*"
@@ -3463,4 +3446,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.12,<3.11"
-content-hash = "bb321e7514704b7daab39dab1991e7413057c3261b92617bf46b17752668b4e3"
+content-hash = "6e3e6ebe12e1f865acb682cd3a7df73462f31afc908c36b85e0bc6e0af3e587a"

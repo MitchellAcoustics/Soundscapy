@@ -17,7 +17,6 @@ modules under `soundscape.databases`.
 from pathlib import Path
 from typing import Union, Tuple, List, Dict
 
-# Add soundscapy to the Python path
 import janitor
 import numpy as np
 import pandas as pd
