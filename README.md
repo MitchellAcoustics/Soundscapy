@@ -2,7 +2,7 @@
 
 # Soundscapy
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MitchellAcoustics/Soundscapy/main?labpath=examples%2FHowToAnalyseAndRepresentSoundscapes.ipynb) 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MitchellAcoustics/Soundscapy/main?labpath=docs%2Ftutorials%2FHowToAnalyseAndRepresentSoundscapes.ipynb)
 
 A python library for analysing and visualising soundscape assessments. 
 
