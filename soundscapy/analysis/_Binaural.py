@@ -2,9 +2,9 @@ from pathlib import Path
 
 from acoustics import Signal
 
+from soundscapy import AnalysisSettings
 from soundscapy.analysis.binaural import *
 from soundscapy.analysis.metrics import *
-from soundscapy import AnalysisSettings
 
 
 class Binaural(Signal):
@@ -119,6 +119,18 @@ class Binaural(Signal):
         return cls(s, s.fs, recording=filename.stem)
 
     def _get_channel(self, channel):
+        """Get a single channel from the signal
+
+        Parameters
+        ----------
+        channel : int
+            Channel to get (0 or 1)
+
+        Returns
+        -------
+        Signal
+            Single channel signal
+        """
         if self.channels == 1:
             return self
         elif (
@@ -195,10 +207,10 @@ class Binaural(Signal):
 
         See Also
         --------
-        `sq_metrics.pyacoustics_metric`
-        `acoustics.standards_iso_tr_25417_2007.equivalent_sound_pressure_level` : Base method for Leq calculation
-        `acoustics.standards.iec_61672_1_2013.sound_exposure_level` : Base method for SEL calculation
-        `acoustics.standards.iec_61672_1_2013.time_weighted_sound_level` : Base method for Leq level time series calculation
+        metrics.pyacoustics_metric
+        acoustics.standards_iso_tr_25417_2007.equivalent_sound_pressure_level : Base method for Leq calculation
+        acoustics.standards.iec_61672_1_2013.sound_exposure_level : Base method for SEL calculation
+        acoustics.standards.iec_61672_1_2013.time_weighted_sound_level : Base method for Leq level time series calculation
         """
         if analysis_settings:
             (
@@ -328,7 +340,9 @@ class Binaural(Signal):
         s = self._get_channel(channel)
 
         if s.channels == 1:
-            return mosqito_metric_1ch(s, metric, statistics, label, as_df, return_time_series, func_args)
+            return mosqito_metric_1ch(
+                s, metric, statistics, label, as_df, return_time_series, func_args
+            )
         else:
             return mosqito_metric_2ch(
                 s,
@@ -429,4 +443,3 @@ class Binaural(Signal):
 
 
 __all__ = ["Binaural"]
-# %%

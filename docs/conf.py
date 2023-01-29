@@ -33,11 +33,14 @@ version = sspy_version.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',  # Core Sphinx library for auto html doc generation from docstrings
+    # 'sphinx.ext.autodoc',  # Core Sphinx library for auto html doc generation from docstrings
     'sphinx.ext.autosummary',  # Create neat summary tables for modules/classes/methods etc
+    'autoapi.extension',  # Auto-generate API documentation from code
+    'sphinx.ext.napoleon',  # Support for NumPy and Google style docstrings
+    'sphinx.ext.autodoc.typehints',  # Show type hints in the documentation
     'sphinx.ext.intersphinx',  # Link to other project's documentation (see mapping below)
     'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
-    'sphinx_autodoc_typehints',  # Automatically document param types (less noise in class signature)
+    # 'sphinx_autodoc_typehints',  # Automatically document param types (less noise in class signature)
     'nbsphinx',  # Integrate Jupyter Notebooks and Sphinx
     'IPython.sphinxext.ipython_console_highlighting'
 ]
@@ -45,15 +48,23 @@ extensions = [
 # Mappings for sphinx.ext.intersphinx. Projects have to have Sphinx-generated doc! (.inv file)
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
+    "acoustics": ("https://python-acoustics.github.io/python-acoustics/", None),
 }
 
-autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
-html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
+# Napoleon settings
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = False
+
+
+autoapi_dirs = ['../soundscapy']  # Where to look for source code to auto-generate API docs from
+autoapi_add_toctree_entry = False  # Don't add auto-generated API docs to the TOC tree
+# autosummary_generate = True  # Turn on sphinx.ext.autosummary
+# autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
+# html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
 autodoc_inherit_docstrings = True  # If no docstring, inherit from base class
-set_type_checking_flag = True  # Enable 'expensive' imports for sphinx_autodoc_typehints
+# set_type_checking_flag = True  # Enable 'expensive' imports for sphinx_autodoc_typehints
 nbsphinx_allow_errors = True  # Continue through Jupyter errors
-#autodoc_typehints = "description" # Sphinx-native method. Not as good as sphinx_autodoc_typehints
+autodoc_typehints = "description" # Sphinx-native method. Not as good as sphinx_autodoc_typehints
 add_module_names = False # Remove namespaces from class/method signatures
 
 # Add any paths that contain templates here, relative to this directory.

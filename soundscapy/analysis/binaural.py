@@ -1,8 +1,8 @@
+import multiprocessing as mp
+
 import pandas as pd
 
 from soundscapy.analysis.metrics import *
-import multiprocessing as mp
-
 
 DEFAULT_LABELS = {
     "LZeq": "LZeq",
@@ -139,6 +139,37 @@ def _parallel_mosqito_metric_2ch(
     return_time_series: bool = False,
     func_args={},
 ):
+    """Run a metric from the mosqito library on a Binaural object.
+
+    Parameters
+    ----------
+    b : Binaural
+        Binaural signal to calculate the metric for
+    metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
+        The metric to run
+    statistics : tuple or list, optional
+        List of level statistics to calculate (e.g. L_5, L_90, etc),
+            by default (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew")
+    label : str, optional
+        Label to use for the metric in the results dictionary, by default None
+        If None, will pull from default label for that metric given in DEFAULT_LABELS
+    channel_names : tuple or list, optional
+        Custom names for the channels, by default ("Left", "Right")
+    return_time_series : bool, optional
+        Whether to return the time series of the metric, by default False
+        Cannot return time series if as_df is True
+    func_args : dict, optional
+        Arguments to pass to the metric function, by default {}
+
+    Returns
+    -------
+    dict or pd.DataFrame
+        Dictionary of results if as_df is False, otherwise a pandas DataFrame
+
+    See Also
+    --------
+    sq_metrics.mosqito_metric_1ch
+    """
     pool = mp.Pool(mp.cpu_count())
     result_objects = pool.starmap(
         mosqito_metric_1ch,

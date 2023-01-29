@@ -1,12 +1,31 @@
-from soundscapy.analysis.binaural import *
-from soundscapy import Binaural
-from soundscapy import AnalysisSettings
-from pathlib import Path
 import json
 import time
+from pathlib import Path
+
+from soundscapy import AnalysisSettings
+from soundscapy import Binaural
+from soundscapy.analysis.binaural import *
 
 
 def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
+    """Load and analyse binaural file
+
+    Parameters
+    ----------
+    wav_file : str
+        Path to wav file
+    levels : list
+        List of levels to analyse
+    analysis_settings : AnalysisSettings
+        Analysis settings
+    verbose : bool, optional
+        Print progress, by default True
+
+    Returns
+    -------
+    results : dict
+        Dictionary with results
+    """
     print(f"Processing {wav_file.stem}")
     b = Binaural.from_wav(wav_file)
     decibel = (levels[b.recording]["Left"], levels[b.recording]["Right"])
@@ -15,6 +34,27 @@ def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
 
 
 def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=True):
+    """
+    Parallel processing of binaural files
+
+    Parameters
+    ----------
+    wav_files : list
+        List of wav files
+    results_df : pandas.DataFrame
+        Results dataframe
+    levels : dict
+        Dictionary with levels
+    analysis_settings : AnalysisSettings
+        Analysis settings
+    verbose : bool, optional
+        Print progress, by default True
+
+    Returns
+    -------
+    results_df : pandas.DataFrame
+        Results dataframe
+    """
     # Parallel processing with Pool.apply_async() without callback function
 
     pool = mp.Pool(mp.cpu_count() - 1)
@@ -57,6 +97,6 @@ if __name__ == "__main__":
     )
 
     end = time.perf_counter()
-    print(f"Time taken: {end-start:.2f} seconds")
+    print(f"Time taken: {end - start:.2f} seconds")
 
     df.to_excel(base_path.joinpath("test", f"ParallelTest_{datetime.today()}.xlsx"))

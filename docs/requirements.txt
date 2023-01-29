@@ -2,6 +2,7 @@ sphinx
 sphinx-rtd-theme
 pydata-sphinx-theme
 sphinx-autodoc-typehints
+sphinx-autoapi
 nbsphinx
 ipython
 jupytext

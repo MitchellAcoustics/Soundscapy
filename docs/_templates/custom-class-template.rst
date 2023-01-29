@@ -7,6 +7,7 @@
    :show-inheritance:
    :inherited-members:
    :special-members: __call__, __add__, __mul__
+   :private-members: _binaural, _AnalysisSettings, _sspy_accessor
 
    {% block methods %}
    {% if methods %}

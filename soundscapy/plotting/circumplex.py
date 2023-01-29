@@ -1,14 +1,14 @@
 """Plotting functions for visualising circumplex data."""
 
-import matplotlib.axes
-import pandas as pd
-from scipy.stats import pearsonr, spearmanr
+from typing import Union, Tuple, List
 
 import matplotlib as mpl
+import matplotlib.axes
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
-from typing import Union, Tuple, List
+import pandas as pd
+import seaborn as sns
+from scipy.stats import pearsonr, spearmanr
 
 diag_lines_zorder = 1
 diag_labels_zorder = 4
@@ -16,7 +16,6 @@ prim_lines_zorder = 2
 data_zorder = 3
 default_bw_adjust = 1.2
 default_figsize = (5, 5)
-
 
 simple_density = dict(thresh=0.5, levels=2, incl_outline=True, alpha=0.5)
 
@@ -687,12 +686,34 @@ def _circumplex_grid(
 
 
 def _set_circum_title(ax, prim_labels, title):
+    """Set the title for the circumplex plot
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        Existing axes object to adjust the legend on
+    prim_labels: bool, optional
+        flag for whether to include the custom primary labels ISOPleasant and ISOEventful, by default True
+        If using your own x and y names, you should set this to False.
+    title : str
+        Title to set
+    """
     title_pad = 30.0 if prim_labels is True else 6.0
     ax.set_title(title, pad=title_pad)
     return ax
 
 
 def _deal_w_default_labels(ax, prim_labels):
+    """Deal with the default labels for the circumplex plot
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        Existing axes object to adjust the legend on
+    prim_labels: bool, optional
+        flag for whether to include the custom primary labels ISOPleasant and ISOEventful, by default True
+        If using your own x and y names, you should set this to False.
+    """
     if prim_labels is True or prim_labels == "none":
         # hide axis labels
         ax.xaxis.label.set_visible(False)
