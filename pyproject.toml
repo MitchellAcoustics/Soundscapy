@@ -28,6 +28,8 @@ pyjanitor = "0.23.1"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
 black = "^22.12.0"
+pycircular = "^0.1.2"
+statsmodels = "^0.13.5"
 
 [tool.poetry.group.docs.dependencies]
 jupyter = "^1.0.0"
