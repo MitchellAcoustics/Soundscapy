@@ -2,6 +2,14 @@ from pathlib import Path
 from time import localtime, strftime
 from typing import Union
 import yaml
+import urllib.request
+
+
+def get_default_yaml(save_as="default_settings.yaml"):
+    settings = urllib.request.urlretrieve(
+        "https://github.com/MitchellAcoustics/Soundscapy/blob/main/soundscapy/analysis/default_settings.yaml",
+        save_as,
+    )
 
 
 class AnalysisSettings(dict):
@@ -9,7 +17,13 @@ class AnalysisSettings(dict):
     each of which has a dict of settings.
     """
 
-    def __init__(self, data, run_stats=True, force_run_all=False, filepath: Union[str, Path]=None):
+    def __init__(
+        self,
+        data,
+        run_stats=True,
+        force_run_all=False,
+        filepath: Union[str, Path] = None,
+    ):
         super().__init__(data)
         self.run_stats = run_stats
         self.force_run_all = force_run_all
@@ -41,7 +55,7 @@ class AnalysisSettings(dict):
             AnalysisSettings object
         """
         with open(filename, "r") as f:
-            return cls(yaml.safe_load(f), run_stats, force_run_all, filename)
+            return cls(yaml.load(f, Loader=yaml.Loader), run_stats, force_run_all, filename)
 
     @classmethod
     def default(cls, run_stats=True, force_run_all=False):
@@ -71,14 +85,26 @@ class AnalysisSettings(dict):
         root = Path(soundscapy.__path__[0])
         return cls(
             AnalysisSettings.from_yaml(
-                Path(root, "analysis", "default_settings.yaml"), run_stats, force_run_all
+                Path(root, "analysis", "default_settings.yaml"),
+                run_stats,
+                force_run_all,
             )
         )
 
     def reload(self):
-        """Reload the settings from the yaml file.
-        """
+        """Reload the settings from the yaml file."""
         return self.from_yaml(self.filepath, self.run_stats, self.force_run_all)
+
+    def to_yaml(self, filename: Union[Path, str]):
+        """Save settings to a yaml file.
+
+        Parameters
+        ----------
+        filename : Path object or str
+            filename of the yaml file
+        """
+        with open(filename, "w") as f:
+            yaml.dump(self, f)
 
     def parse_maad_all_alpha_indices(self, metric: str):
         """Generate relevant settings for the maad all_alpha_indices methods.
@@ -210,4 +236,4 @@ class AnalysisSettings(dict):
         return run, channel, statistics, label, func_args
 
 
-#%%
+# %%
