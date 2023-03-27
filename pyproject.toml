@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "soundscapy"
-version = "0.5.0"
+version = "0.4.1"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = ["Andrew Mitchell <andrew.mitchell.18@ucl.ac.uk>"]
 readme = "README.md"
