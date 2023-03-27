@@ -455,6 +455,16 @@ def process_all_metrics(
     idx = pd.MultiIndex.from_tuples(((b.recording, "Left"), (b.recording, "Right")))
     results_df = pd.DataFrame(index=idx)
     results_df.index.names = ["Recording", "Channel"]
+    
+    # Count number of metrics to run
+    metric_count = 0
+    for library in analysis_settings.keys():
+        if library not in ["PythonAcoustics", "scikit-maad", "MoSQITo"]:
+            pass
+        else:
+            for metric in analysis_settings[library].keys():
+                if analysis_settings[library][metric]["run"]:
+                    metric_count += 1
 
     # Loop through options in analysis_settings
     for library in analysis_settings.keys():

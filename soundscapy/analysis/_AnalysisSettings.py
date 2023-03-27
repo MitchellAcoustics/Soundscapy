@@ -6,8 +6,19 @@ import urllib.request
 
 
 def get_default_yaml(save_as="default_settings.yaml"):
-    settings = urllib.request.urlretrieve(
-        "https://github.com/MitchellAcoustics/Soundscapy/blob/main/soundscapy/analysis/default_settings.yaml",
+    """
+    Retrieves the default settings for analysis from the GitHub repository
+    and saves them to a file.
+
+    Parameters
+    ----------
+    save_as : str, optional
+        The name of the file to save the default settings to. Defaults to
+        "default_settings.yaml".
+    """
+    print("Downloading default settings from GitHub...")
+    urllib.request.urlretrieve(
+        "https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/main/soundscapy/analysis/default_settings.yaml",
         save_as,
     )
 

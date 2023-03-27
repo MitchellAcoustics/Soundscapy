@@ -1,6 +1,7 @@
 import json
 import time
 from pathlib import Path
+from tqdm.auto import tqdm
 
 from soundscapy import AnalysisSettings
 from soundscapy import Binaural
@@ -66,7 +67,12 @@ def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=T
         )
         for wav_file in wav_files
     ]
-    results = [r.get() for r in result_objects]
+    with tqdm(total = len(result_objects), desc="Processing files") as pbar:
+        for r in result_objects:
+            r.wait()
+            results.append(r.get())
+            pbar.update()
+    # results = [r.get() for r in result_objects]
 
     pool.close()
     pool.join()
