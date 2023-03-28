@@ -667,9 +667,9 @@ def _circumplex_grid(
     ax.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
     ax.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
 
-    ax.grid(b=True, which="major", color="grey", alpha=0.5)
+    ax.grid(visible=True, which="major", color="grey", alpha=0.5)
     ax.grid(
-        b=True,
+        visible=True,
         which="minor",
         color="grey",
         linestyle="dashed",
