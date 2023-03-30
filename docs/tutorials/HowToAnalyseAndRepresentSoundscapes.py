@@ -176,14 +176,9 @@ When visualised this way, it is possible to identify outliers and responses whic
 # %% pycharm={"name": "#%%\n"}
 location = "RegentsParkFields"
 fig, ax = plt.subplots(1,1, figsize=(7, 7))
-ssid.isd.filter_location_ids([location]).isd.density(
-    title="(b) Median perception contour and scatter plot of individual assessments\n\n",
-    ax=ax,
-    hue="LocationID",
-    legend=True,
-    density_type="simple",
-    palette="dark:gray",
-)
+ssid.isd.filter_location_ids([location]).isd.density(density_type="simple",
+                                                     title="(b) Median perception contour and scatter plot of individual assessments\n\n",
+                                                     legend=True, ax=ax, hue="LocationID", palette="dark:gray")
 
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
@@ -196,15 +191,8 @@ fig, ax = plt.subplots(1,1, figsize=(7,7))
 
 ssid.isd.filter_location_ids(
     ["CamdenTown", "RussellSq", "PancrasLock"]
-).isd.density(
-    title="(c) Comparison of the soundscapes of three urban spaces\n\n",
-    ax=ax,
-    hue="LocationID",
-    alpha=0.5,
-    palette="husl",
-    legend=True,
-    density_type="simple"
-)
+).isd.density(density_type="simple", title="(c) Comparison of the soundscapes of three urban spaces\n\n", alpha=0.5,
+              legend=True, ax=ax, hue="LocationID", palette="husl")
 
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
@@ -254,9 +242,7 @@ In addition to the visualisation demonstrations given above which were included 
 # %% pycharm={"name": "#%%\n"}
 fig, axes = plt.subplots(4, 4, figsize=(12, 12))
 for i, location in enumerate(ssid.LocationID.unique()):
-    ssid.isd.filter_location_ids(location_ids=[location]).isd.density(
-        ax=axes.flatten()[i], title=location
-    )
+    ssid.isd.filter_location_ids(location_ids=[location]).isd.density(title=location, ax=axes.flatten()[i])
 
 plt.tight_layout()
 
@@ -269,8 +255,15 @@ plt.tight_layout()
 # %% pycharm={"name": "#%%\n"}
 fig, ax = plt.subplots(1,1,figsize=(5,5))
 location='RegentsParkFields'
-ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue='SessionID', legend=True, lw=4, thresh=0.5, levels=2)
-ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='Comparison of two days in Regents Park', density_type="simple", fill=False, incl_outline=True, hue="SessionID", s=10)
+ssid.isd.filter_location_ids(location_ids=[location]).isd.density(density_type="simple",
+                                                                  title='Comparison of two days in Regents Park',
+                                                                  incl_outline=True, legend=True, ax=ax,
+                                                                  hue='SessionID', levels=2, thresh=0.5, fill=False,
+                                                                  lw=4)
+ssid.isd.filter_location_ids(location_ids=[location]).isd.density(density_type="simple",
+                                                                  title='Comparison of two days in Regents Park',
+                                                                  incl_outline=True, ax=ax, hue="SessionID", fill=False,
+                                                                  s=10)
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
 """
@@ -280,14 +273,8 @@ ssid.isd.filter_location_ids(location_ids=[location]).isd.density(ax=ax, title='
 # %% pycharm={"name": "#%%\n"}
 fig, axes = plt.subplots(4, 4, figsize=(16, 16))
 for i, location in enumerate(ssid["LocationID"].unique()):
-    ssid.isd.filter_location_ids(location).isd.density(
-        ax=axes.flatten()[i],
-        title=location,
-        fill=False,
-        hue="SessionID",
-        legend=True,
-        density_type="simple"
-    )
+    ssid.isd.filter_location_ids(location).isd.density(density_type="simple", title=location, legend=True,
+                                                       ax=axes.flatten()[i], hue="SessionID", fill=False)
     ssid.isd.filter_location_ids(location).isd.scatter(
         ax=axes.flatten()[i],
         title=location,

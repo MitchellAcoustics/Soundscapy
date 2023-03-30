@@ -266,13 +266,9 @@ This is done by digging into `seaborn` `kdeplot()` and using its parameters `thr
 """
 
 # %%
-df.isd.filter_location_ids(['RegentsParkJapan']).isd.density(
-    title="Median perception contour and scatter plot of individual assessments\n\n",
-    density_type="simple",
-    hue="LocationID",
-    legend=True,
-    palette="dark:gray",
-)
+df.isd.filter_location_ids(['RegentsParkJapan']).isd.density(density_type="simple",
+                                                             title="Median perception contour and scatter plot of individual assessments\n\n",
+                                                             legend=True, hue="LocationID", palette="dark:gray")
 
 # %% [markdown]
 """
@@ -282,13 +278,8 @@ As we said, this is particularly useful for comparing different soundscapes. So 
 # %%
 df.isd.filter_location_ids(
     ["CamdenTown", "RussellSq", "PancrasLock"]
-).isd.density(
-    title="Comparison of the soundscapes of three urban spaces\n\n",
-    hue="LocationID",
-    density_type="simple",
-    incl_scatter=False,
-    palette="husl",
-)
+).isd.density(incl_scatter=False, density_type="simple",
+              title="Comparison of the soundscapes of three urban spaces\n\n", hue="LocationID", palette="husl")
 
 # %% [markdown]
 """
