@@ -179,3 +179,4 @@ soundscapy/.DS_Store
 /docs/_autosummary/
 !/.pytest_cache/
 !/.vscode/
+.pdm-python
