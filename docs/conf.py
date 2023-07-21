@@ -50,6 +50,9 @@ extensions = [
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "acoustics": ("https://python-acoustics.github.io/python-acoustics/", None),
+    "maad": ("https://scikit-maad.github.io/genindex.html", None),
+    "seaborn": ("https://seaborn.pydata.org/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None)
 }
 
 # Napoleon settings

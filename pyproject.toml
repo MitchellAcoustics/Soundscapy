@@ -98,6 +98,7 @@ docs = [
 
 test = [
     "pytest>=7.3.2",
+    "setuptools>=68.0.0",
 ]
 dev = [
     "pytest>=7.3.2",

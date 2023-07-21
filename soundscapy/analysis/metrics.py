@@ -133,6 +133,11 @@ def mosqito_metric_1ch(
         "sharpness_din_perseg", "roughness_dw"}
     Warning
 
+    See Also
+    --------
+    mosqito.sq_metrics.loudness_zwtv : MoSQito Loudness calculation
+    mosqito.sq_metrics.roughness_dw : MoSQito Roughness calculation
+    mosqito.sq_metrics.sharpness_din_from_loudness : MoSQito Sharpness calculation
     """
     # Checks and warnings
     if s.channels != 1:
@@ -222,6 +227,11 @@ def maad_metric_1ch(
     -------
     dict or pd.DataFrame
         Dictionary of results if as_df is False, otherwise a pandas DataFrame
+
+    See Also
+    --------
+    maad.features.all_spectral_alpha_indices
+    maad.features.all_temporal_alpha_indices
     """
     # Checks and status
     if s.channels != 1:
@@ -309,6 +319,10 @@ def pyacoustics_metric_1ch(
     ------
     ValueError
         Metric must be one of {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
+
+    See Also
+    --------
+    acoustics
     """
     if s.channels != 1:
         raise ValueError("Signal must be single channel")
