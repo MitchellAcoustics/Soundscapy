@@ -11,8 +11,7 @@ build:
   jobs:
     post_install:
       - pip install --upgrade pdm
-      - VIRTUAL_ENV=$(dirname $(which python))) pdm install -dG docs
-
+      - VIRTUAL_ENV=$(dirname $(dirname $(which python))) pdm install -dG docs
 
 sphinx:
   configuration: docs/conf.py
