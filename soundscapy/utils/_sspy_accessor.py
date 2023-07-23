@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.extensions import register_dataframe_accessor
 
+import soundscapy.databases.isd
 import soundscapy.plotting.likert
 
 import soundscapy.utils.surveys as db
@@ -83,7 +84,7 @@ class SSPYAccessor:
         --------
         :func:`soundscapy.database.validate_dataset`
         """
-        return db.validate_dataset(
+        return soundscapy.databases.isd.validate_dataset(
             self._df, paq_aliases, allow_lockdown, allow_na, verbose, val_range
         )
 
@@ -103,9 +104,9 @@ class SSPYAccessor:
 
         See Also
         --------
-        :func:`soundscapy.database.paq_data_quality`
+        :func:`soundscapy.database.likert_data_quality`
         """
-        return db.paq_data_quality(self._df, verbose)
+        return db.likert_data_quality(self._df, verbose)
 
     def filter(self, filter_by, condition):
         """Filter the dataframe by a condition

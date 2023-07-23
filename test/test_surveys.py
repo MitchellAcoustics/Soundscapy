@@ -115,11 +115,11 @@ def test_calculate_polar_coords():
 
 def test_load_isd_dataset_wrong_version():
     with raises(ValueError):
-        df = soundscapy.isd.load_isd_dataset(version="v0.1.0")
+        df = soundscapy.isd.load_zenodo(version="v0.1.0")
 
 
 def test_load_isd_dataset():
-    df = soundscapy.isd.load_isd_dataset(version="v0.2.1")
+    df = soundscapy.isd.load_zenodo(version="v0.2.1")
     assert df.shape == (1909, 77)
 
 
@@ -216,7 +216,7 @@ def test_paq_data_quality():
         }
     )
     df = df.append(wrong_data)
-    l = db.paq_data_quality(df)
+    l = db.likert_data_quality(df)
     assert l == [2]
 
 

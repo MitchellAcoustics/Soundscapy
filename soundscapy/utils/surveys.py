@@ -97,52 +97,6 @@ def convert_column_to_index(df, col: str, drop=False):
     return df
 
 
-def validate_dataset(
-    df: pd.DataFrame,
-    paq_aliases: Union[List, Dict] = None,
-    allow_lockdown: bool = False,
-    allow_paq_na: bool = False,
-    verbose: int = 1,
-    val_range: Tuple = (1, 5),
-):
-    """Performs data quality checks and validates that the dataset fits the expected format
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        ISD style dataframe, incl PAQ data
-    paq_aliases : list or dict, optional
-        list of PAQ names (in order)
-        or dict of PAQ names with new names as values, by default None
-    allow_lockdown : bool, optional
-        if True will keep Lockdown data in the df, by default True
-    allow_paq_na : bool, optional
-        remove rows which have any missing PAQ values
-        otherwise will remove those with 50% missing, by default False    verbose : int, optional
-        how much info to print while running, by default 1
-    val_range : tuple, optional
-        min and max range of the PAQ response values, by default (5, 1)
-
-    Returns
-    -------
-    tuple
-        cleaned dataframe, dataframe of excluded samples
-    """
-    if verbose > 0:
-        print("Renaming PAQ columns.")
-    df = rename_paqs(df, paq_aliases)
-
-    if verbose > 0:
-        print("Checking PAQ data quality.")
-    l = paq_data_quality(df, verbose, allow_lockdown, allow_paq_na, val_range)
-    if l is None:
-        excl_df = None
-    else:
-        excl_df = df.iloc[l, :]
-        df = df.drop(df.index[l])
-    return df, excl_df
-
-
 def rename_paqs(
     df: pd.DataFrame, paq_aliases: Union[Tuple, Dict] = None, verbose: int = 0
 ) -> pd.DataFrame:
@@ -201,16 +155,10 @@ def rename_paqs(
         return df.rename(columns=paq_aliases)
 
 
-def paq_data_quality(
-    df: pd.DataFrame,
-    verbose: int = 0,
-    allow_lockdown: bool = True,
-    allow_na: bool = False,
-    val_range: tuple = (1, 5),
-) -> Union[List, None]:
+def likert_data_quality(df: pd.DataFrame, verbose: int = 0, allow_na: bool = False, val_range: tuple = (1, 5)) -> Union[List, None]:
     """Basic check of PAQ data quality
 
-    The paq_data_quality function takes a DataFrame and returns a list of indices that
+    The likert_data_quality function takes a DataFrame and returns a list of indices that
     should be dropped from the DataFrame. The function checks for:
 
     - Rows with all values equal to 1 (indicating no PAQ data)
@@ -225,8 +173,6 @@ def paq_data_quality(
             Specify the dataframe to be evaluated
         verbose: int, optional
             Determine whether or not the function should print out information about the data quality check, by default 0
-        allow_lockdown: bool, optional
-            Allow the user to decide whether they want to remove samples that have a lockdown value of 1, by default True
         allow_na: bool
             Ensure that rows with any missing values are dropped, by default False
         val_range: tuple, optional
@@ -243,9 +189,6 @@ def paq_data_quality(
     l = []
     for i in range(len(paqs)):
         row = paqs.iloc[i]
-        if "Lockdown" in df.columns:
-            if allow_lockdown and df.iloc[i]["Lockdown"] == 1:
-                continue
         if allow_na is False and row.isna().sum() > 0:
             l.append(i)
             continue
