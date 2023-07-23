@@ -1,18 +1,16 @@
 # Customized functions specifically for the International Soundscape Database
 
 from datetime import date
-
-# Add soundscapy to the Python path
-from pathlib import Path
+from importlib import resources
 
 import pandas as pd
 from pandas.api.extensions import register_dataframe_accessor
 
-from importlib import resources
-
 # Constants and Labels
 from soundscapy.utils.surveys import *
 from soundscapy.utils.surveys import rename_paqs, likert_data_quality
+
+# Add soundscapy to the Python path
 
 _PAQ_ALIASES = {
     "pleasant": "PAQ1",
@@ -22,9 +20,8 @@ _PAQ_ALIASES = {
     "annoying": "PAQ5",
     "monotonous": "PAQ6",
     "uneventful": "PAQ7",
-    "calm": "PAQ8"
+    "calm": "PAQ8",
 }
-
 
 
 def load():
@@ -74,8 +71,13 @@ def load_zenodo(version="latest"):
     return pd.read_excel(url, engine="openpyxl")
 
 
-def validate(df: pd.DataFrame, paq_aliases: Union[List, Dict] = _PAQ_ALIASES, allow_paq_na: bool = False,
-             verbose: int = 1, val_range: Tuple = (1, 5)):
+def validate(
+    df: pd.DataFrame,
+    paq_aliases: Union[List, Dict] = _PAQ_ALIASES,
+    allow_paq_na: bool = False,
+    verbose: int = 1,
+    val_range: Tuple = (1, 5),
+):
     """Performs data quality checks and validates that the dataset fits the expected format
 
     Parameters
@@ -225,9 +227,7 @@ def remove_lockdown(data):
     return data.query("Lockdown == 0")
 
 
-def describe_location(
-        data, location, type="percent", pl_threshold=0, ev_threshold=0
-):
+def describe_location(data, location, type="percent", pl_threshold=0, ev_threshold=0):
     """
     Return a summary of the data
 
@@ -287,7 +287,6 @@ def describe_location(
         res["calm"] = calm_count
 
     return res
-
 
 
 @register_dataframe_accessor("isd")
@@ -462,10 +461,7 @@ class ISDAccessor:
         pd.DataFrame
             Filtered dataframe
         """
-        raise DeprecationWarning(
-            "The ISD accessor has been deprecated."
-        )
-
+        raise DeprecationWarning("The ISD accessor has been deprecated.")
 
     def filter_lockdown(self, is_lockdown=False):
         """Filter the dataframe by Lockdown
@@ -480,10 +476,7 @@ class ISDAccessor:
         pd.DataFrame
             Filtered dataframe
         """
-        raise DeprecationWarning(
-            "The ISD accessor has been deprecated."
-        )
-
+        raise DeprecationWarning("The ISD accessor has been deprecated.")
 
     def convert_group_ids_to_index(self, drop=False):
         """Convert the GroupID column to the index
@@ -498,10 +491,7 @@ class ISDAccessor:
         pd.DataFrame
             Dataframe with GroupID as index
         """
-        raise DeprecationWarning(
-            "The ISD accessor has been deprecated."
-        )
-
+        raise DeprecationWarning("The ISD accessor has been deprecated.")
 
     def return_paqs(self, incl_ids=True, other_cols=None):
         """Return the PAQs as a dataframe
@@ -518,10 +508,7 @@ class ISDAccessor:
         pd.DataFrame
             Dataframe containing the PAQs
         """
-        raise DeprecationWarning(
-            "The ISD accessor has been deprecated."
-        )
-
+        raise DeprecationWarning("The ISD accessor has been deprecated.")
 
     def location_describe(
         self, location, type="percent", pl_threshold=0, ev_threshold=0
@@ -548,7 +535,6 @@ class ISDAccessor:
             "The ISD accessor has been deprecated. Please use `soundscapy.isd.describe_location()` instead."
         )
 
-
     def soundscapy_describe(self, group_by="LocationID", type="percent"):
         """Return a summary of the data
 
@@ -564,9 +550,7 @@ class ISDAccessor:
         pd.DataFrame
             Summary of the data
         """
-        raise PendingDeprecationWarning(
-            "The ISD accessor will be deprecated soon."
-        )
+        raise PendingDeprecationWarning("The ISD accessor will be deprecated soon.")
         res = {
             location: self.location_describe(location, type=type)
             for location in self._obj[group_by].unique()
@@ -588,10 +572,7 @@ class ISDAccessor:
         pd.Dataframe
             Dataframe containing the mean responses for each PAQ
         """
-        raise DeprecationWarning(
-            "The ISD accessor has been deprecated."
-        )
-
+        raise DeprecationWarning("The ISD accessor has been deprecated.")
 
     def validate_isd(
         self,
@@ -626,4 +607,3 @@ class ISDAccessor:
         raise DeprecationWarning(
             "The ISD accessor has been deprecated. Please use `soundscapy.isd.validate(data)` instead."
         )
-

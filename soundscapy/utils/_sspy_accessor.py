@@ -7,7 +7,6 @@ The sspy accessor is intended to be general to any soundscape survey data, funct
 """
 
 # Add soundscapy to the Python path
-import sys
 from datetime import date
 from typing import Union, Tuple, List, Dict
 
@@ -17,10 +16,9 @@ import pandas as pd
 from pandas.api.extensions import register_dataframe_accessor
 
 import soundscapy.databases.isd
-import soundscapy.plotting.likert
-
-import soundscapy.utils.surveys as db
 import soundscapy.plotting.circumplex as sspyplot
+import soundscapy.plotting.likert
+import soundscapy.utils.surveys as db
 
 # Define the names of the PAQ columns
 
@@ -84,9 +82,12 @@ class SSPYAccessor:
         --------
         :func:`soundscapy.database.validate_dataset`
         """
-        return soundscapy.databases.isd.validate_dataset(
-            self._df, paq_aliases, allow_lockdown, allow_na, verbose, val_range
+        raise DeprecationWarning(
+            "The SSPY Accessor is deprecated. Please refer to the `soundscapy.surveys` and `soundscapy.plotting` modules."
         )
+        # return soundscapy.databases.isd.validate_dataset(
+        #     self._df, paq_aliases, allow_lockdown, allow_na, verbose, val_range
+        # )
 
     def paq_data_quality(self, verbose=0):
         """
@@ -564,16 +565,49 @@ class SSPYAccessor:
 
         """
 
-        return sspyplot.density(data=self._df, x=x, y=y, incl_scatter=incl_scatter, density_type=density_type,
-                                title=title, diagonal_lines=diagonal_lines, xlim=xlim, ylim=ylim,
-                                scatter_kws=scatter_kws, incl_outline=incl_outline, figsize=figsize,
-                                legend_loc=legend_loc, alpha=alpha, gridsize=gridsize, kernel=kernel, cut=cut,
-                                clip=clip, legend=legend, cumulative=cumulative, cbar=cbar, cbar_ax=cbar_ax,
-                                cbar_kws=cbar_kws, ax=ax, weights=weights, hue=hue, palette=palette,
-                                hue_order=hue_order, hue_norm=hue_norm, multiple=multiple, common_norm=common_norm,
-                                common_grid=common_grid, levels=levels, thresh=thresh, bw_method=bw_method,
-                                bw_adjust=bw_adjust, log_scale=log_scale, color=color, fill=fill,
-                                warn_singular=warn_singular, **kwargs)
+        return sspyplot.density(
+            data=self._df,
+            x=x,
+            y=y,
+            incl_scatter=incl_scatter,
+            density_type=density_type,
+            title=title,
+            diagonal_lines=diagonal_lines,
+            xlim=xlim,
+            ylim=ylim,
+            scatter_kws=scatter_kws,
+            incl_outline=incl_outline,
+            figsize=figsize,
+            legend_loc=legend_loc,
+            alpha=alpha,
+            gridsize=gridsize,
+            kernel=kernel,
+            cut=cut,
+            clip=clip,
+            legend=legend,
+            cumulative=cumulative,
+            cbar=cbar,
+            cbar_ax=cbar_ax,
+            cbar_kws=cbar_kws,
+            ax=ax,
+            weights=weights,
+            hue=hue,
+            palette=palette,
+            hue_order=hue_order,
+            hue_norm=hue_norm,
+            multiple=multiple,
+            common_norm=common_norm,
+            common_grid=common_grid,
+            levels=levels,
+            thresh=thresh,
+            bw_method=bw_method,
+            bw_adjust=bw_adjust,
+            log_scale=log_scale,
+            color=color,
+            fill=fill,
+            warn_singular=warn_singular,
+            **kwargs,
+        )
 
     def jointplot(
         self,

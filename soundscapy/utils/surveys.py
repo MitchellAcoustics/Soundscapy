@@ -155,7 +155,12 @@ def rename_paqs(
         return df.rename(columns=paq_aliases)
 
 
-def likert_data_quality(df: pd.DataFrame, verbose: int = 0, allow_na: bool = False, val_range: tuple = (1, 5)) -> Union[List, None]:
+def likert_data_quality(
+        df: pd.DataFrame,
+        verbose: int = 0,
+        allow_na: bool = False,
+        val_range: tuple = (1, 5),
+) -> Union[List, None]:
     """Basic check of PAQ data quality
 
     The likert_data_quality function takes a DataFrame and returns a list of indices that
@@ -281,13 +286,67 @@ def calculate_paq_coords(
 
     # E =(e−u)+cos45°(ch−ca)+cos45°(v−m)
     complex_eventful = (
-        (results_df.PAQ3.fillna(3) - results_df.PAQ7.fillna(3))
-        + proj * (results_df.PAQ4.fillna(3) - results_df.PAQ8.fillna(3))
-        + proj * (results_df.PAQ2.fillna(3) - results_df.PAQ6.fillna(3))
+            (results_df.PAQ3.fillna(3) - results_df.PAQ7.fillna(3))
+            + proj * (results_df.PAQ4.fillna(3) - results_df.PAQ8.fillna(3))
+            + proj * (results_df.PAQ2.fillna(3) - results_df.PAQ6.fillna(3))
     )
     ISOEventful = complex_eventful / scale
 
     return ISOPleasant, ISOEventful
+
+
+def add_iso_coords(
+        data,
+        scale_to_one: bool = True,
+        val_range=(1, 5),
+        projection: bool = True,
+        names=("ISOPleasant", "ISOEventful"),
+        overwrite=False,
+):
+    """Calculate and add ISO coordinates as new columns in dataframe
+
+    Calls `calculate_paq_coords()`
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        ISD Dataframe
+    scale_to_one : bool, optional
+        Should the coordinates be scaled to (-1, +1), by default True
+    val_range: tuple, optional
+        (max, min) range of original PAQ responses, by default (5, 1)
+    projection : bool, optional
+        Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
+    names : list, optional
+        Names for new coordinate columns, by default ["ISOPleasant", "ISOEventful"]
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe with new columns added
+
+    See Also
+    --------
+    :func:`soundscapy.database.calculate_paq_coords`
+    """
+    if names[0] in data.columns:
+        if overwrite:
+            data = data.drop(names[0], axis=1)
+        else:
+            raise Warning(
+                f"{names[0]} already in dataframe. Use `overwrite` to replace it."
+            )
+    if names[1] in data.columns:
+        if overwrite:
+            data = data.drop(names[1], axis=1)
+        else:
+            raise Warning(
+                f"{names[1]} already in dataframe. Use `overwrite` to replace it."
+            )
+    data[names[0]], data[names[1]] = calculate_paq_coords(
+        data, scale_to_one, val_range, projection
+    )
+    return data
 
 
 def calculate_polar_coords(results_df: pd.DataFrame, scaling: str = "iso"):
@@ -409,7 +468,6 @@ def ssm_metrics(
         return df
 
     elif method == "cosine":
-
         ssm_df = df[paq_cols].apply(
             lambda y: ssm_cosine_fit(y, angles=angles), axis=1, result_type="expand"
         )
