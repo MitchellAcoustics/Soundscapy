@@ -8,6 +8,7 @@ build-backend = "pdm.backend"
 name = "soundscapy"
 version = "0.4.4"
 description = "A python library for analysing and visualising soundscape assessments."
+<<<<<<< HEAD
 authors = [
     {name = "Andrew Mitchell", email = "andrew.mitchell.18@ucl.ac.uk"},
 <<<<<<< HEAD
@@ -27,6 +28,9 @@ dependencies = [
     "matplotlib>=3.7.2",
 ]
 requires-python = ">=3.9,<4.0"
+=======
+authors = ["Andrew Mitchell <andrew.mitchell.18@ucl.ac.uk>"]
+>>>>>>> d8fc30d (Revert "Bring PDM fixes to branch")
 readme = "README.md"
 license = "BSD-3-Clause"
 classifiers = [
