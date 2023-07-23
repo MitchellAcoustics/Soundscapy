@@ -8,9 +8,41 @@ from pathlib import Path
 import pandas as pd
 from pandas.api.extensions import register_dataframe_accessor
 
+from importlib import resources
+
 # Constants and Labels
 from soundscapy.utils.surveys import *
 
+
+_PAQ_ALIASES = {
+    "PAQ1": "pleasant",
+    "PAQ2": "vibrant",
+    "PAQ3": "eventful",
+    "PAQ4": "chaotic",
+    "PAQ5": "annoying",
+    "PAQ6": "monotonous",
+    "PAQ7": "uneventful",
+    "PAQ8": "calm"
+}
+
+
+
+def load():
+    """Load example "ISD" [1]_ csv file to DataFrame
+
+    Returns
+    -------
+    pd.DataFrame
+        dataframe of ISD data
+
+    References
+    ----------
+    .. [1] Mitchell, Andrew, Oberman, Tin, Aletta, Francesco, Erfanian, Mercede, Kachlicka, Magdalena, Lionello, Matteo, & Kang, Jian. (2022). The International Soundscape Database: An integrated multimedia database of urban soundscape surveys -- questionnaires with acoustical and contextual information (0.2.4) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.6331810
+    """
+
+    with resources.path("soundscapy.data", "ISD-v0.2.2.csv") as f:
+        data = pd.read_csv(f)
+    return data
 
 @register_dataframe_accessor("isd")
 class ISDAccessor:
