@@ -28,6 +28,9 @@ In this notebook we will walk you through both using the code itself and interpr
 # %% pycharm={"name": "#%%\n"}
 # Add soundscapy to the Python path
 import sys
+
+import soundscapy.databases.isd
+
 sys.path.append('../..')
 # imports
 # %matplotlib inline
@@ -139,9 +142,9 @@ To begin, we can load the dataset directly from the ISD:
 """
 
 # %% pycharm={"name": "#%%\n"}
-ssid = isd.load_isd_dataset()
+ssid = isd.load_zenodo()
 ssid = ssid.isd.filter_lockdown()
-ssid, excl = ssid.isd.validate_dataset(allow_na=False)
+ssid, excl = soundscapy.databases.isd.validate_dataset(allow_na=False)
 ssid.head()
 
 

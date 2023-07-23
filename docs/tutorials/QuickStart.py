@@ -50,6 +50,7 @@ pip install git+git://github.com/MitchellAcoustics/Soundscapy@main
 
 ----
 """
+import soundscapy.databases.isd
 
 # %% [markdown]
 """
@@ -74,7 +75,7 @@ sys.path.append('../..')
 # Import Soundscapy
 from soundscapy import isd
 
-df = isd.load_isd_dataset()
+df = isd.load_zenodo()
 df
 
 # %% [markdown]
@@ -106,7 +107,7 @@ In order to validate that the dataset includes the data we would expect, and to 
 """
 
 # %%
-df, excl = df.isd.validate_dataset(allow_na=False)
+df, excl = soundscapy.databases.isd.validate_dataset(allow_na=False)
 df
 
 # %% [markdown]
@@ -161,7 +162,7 @@ sample_transform = {
     "calm": [40, 10],
 }
 sample_transform = pd.DataFrame().from_dict(sample_transform)
-sample_transform, excl = sample_transform.isd.validate_dataset(val_range=val_range)
+sample_transform, excl = soundscapy.databases.isd.validate_dataset(val_range=val_range)
 
 # %%
 sample_transform = sample_transform.isd.add_paq_coords(val_range=val_range)
