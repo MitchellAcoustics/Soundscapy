@@ -6,7 +6,7 @@ groups = ["default", "dev", "docs", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:eaf345a33c2b3bb90f5b1efe653526d794a89d9d9b242fcb090aae771aaa8723"
+content_hash = "sha256:6ace7cfd03a6e1dc6ffa453f8966ed9ab2d5716b26dad3cb2a16cb34e3fa2d0d"
 
 [[package]]
 name = "acoustics"
@@ -494,12 +494,12 @@ files = [
 
 [[package]]
 name = "docutils"
-version = "0.20.1"
-requires_python = ">=3.7"
+version = "0.18.1"
+requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 summary = "Docutils -- Python Documentation Utilities"
 files = [
-    {file = "docutils-0.20.1-py3-none-any.whl", hash = "sha256:96f387a2c5562db4476f09f13bbab2192e764cac08ebbf3a34a95d9b1e4a59d6"},
-    {file = "docutils-0.20.1.tar.gz", hash = "sha256:f08a4e276c3a1583a86dce3e34aba3fe04d02bba2dd51ed16106244e8a923e3b"},
+    {file = "docutils-0.18.1-py2.py3-none-any.whl", hash = "sha256:23010f129180089fbcd3bc08cfefccb3b890b0050e1ca00c867036e9d161b98c"},
+    {file = "docutils-0.18.1.tar.gz", hash = "sha256:679987caf361a7539d76e584cbeddc311e3aee937877c87346f31debc63e9d06"},
 ]
 
 [[package]]
@@ -2597,14 +2597,17 @@ files = [
 
 [[package]]
 name = "sphinx-rtd-theme"
-version = "0.5.1"
+version = "1.3.0rc1"
+requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
 summary = "Read the Docs theme for Sphinx"
 dependencies = [
-    "sphinx",
+    "docutils<0.19",
+    "sphinx<8,>=1.6",
+    "sphinxcontrib-jquery<5,>=4",
 ]
 files = [
-    {file = "sphinx_rtd_theme-0.5.1-py2.py3-none-any.whl", hash = "sha256:fa6bebd5ab9a73da8e102509a86f3fcc36dec04a0b52ea80e5a033b2aba00113"},
-    {file = "sphinx_rtd_theme-0.5.1.tar.gz", hash = "sha256:eda689eda0c7301a80cf122dad28b1861e5605cbf455558f3775e1e8200e83a5"},
+    {file = "sphinx_rtd_theme-1.3.0rc1-py2.py3-none-any.whl", hash = "sha256:ace3640f8951a93fd514fccd02071abac340c28fb0c907f180a7608c416e99a2"},
+    {file = "sphinx_rtd_theme-1.3.0rc1.tar.gz", hash = "sha256:3e321023694842feae0baed4f34004c4c925d812df9c93db49769c5887496d13"},
 ]
 
 [[package]]
@@ -2644,6 +2647,19 @@ dependencies = [
 files = [
     {file = "sphinxcontrib_htmlhelp-2.0.3-py3-none-any.whl", hash = "sha256:abee4e6c5471203ad2fc40dc6a16ed99884a5d6b15a6f79c9269a7e82cf04149"},
     {file = "sphinxcontrib_htmlhelp-2.0.3.tar.gz", hash = "sha256:14358d0f88ccf58447f2b54343cdcc0012f32de2f8d27cf934fdbc0b362f9597"},
+]
+
+[[package]]
+name = "sphinxcontrib-jquery"
+version = "4.1"
+requires_python = ">=2.7"
+summary = "Extension to include jQuery on newer Sphinx releases"
+dependencies = [
+    "Sphinx>=1.8",
+]
+files = [
+    {file = "sphinxcontrib-jquery-4.1.tar.gz", hash = "sha256:1620739f04e36a2c779f1a131a2dfd49b2fd07351bf1968ced074365933abc7a"},
+    {file = "sphinxcontrib_jquery-4.1-py2.py3-none-any.whl", hash = "sha256:f936030d7d0147dd026a4f2b5a57343d233f1fc7b363f68b3d4f1cb0993878ae"},
 ]
 
 [[package]]

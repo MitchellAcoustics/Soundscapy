@@ -13,16 +13,18 @@
 import os
 import sys
 from importlib.machinery import SourceFileLoader
-sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this file
+
+sys.path.insert(0, os.path.abspath(".."))  # Source code dir relative to this file
 
 # -- Project information -----------------------------------------------------
 
-project = 'soundscapy'
-author = 'Andrew Mitchell'
+project = "soundscapy"
+author = "Andrew Mitchell"
 
 # The full version, including alpha/beta/rc tags
-sspy_version = SourceFileLoader('soundscapy.version',
-                                '../soundscapy/version.py').load_module()
+sspy_version = SourceFileLoader(
+    "soundscapy.version", "../soundscapy/version.py"
+).load_module()
 
 release = sspy_version.__version__
 version = sspy_version.__version__
@@ -34,16 +36,16 @@ version = sspy_version.__version__
 # ones.
 extensions = [
     # 'sphinx.ext.autodoc',  # Core Sphinx library for auto html doc generation from docstrings
-    # 'sphinx.ext.autosummary',  # Create neat summary tables for modules/classes/methods etc
-    'sphinx.ext.duration',
-    'autoapi.extension',  # Auto-generate API documentation from code
-    'sphinx.ext.napoleon',  # Support for NumPy and Google style docstrings
+    # "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc
+    "sphinx.ext.duration",
+    "autoapi.extension",  # Auto-generate API documentation from code
+    "sphinx.ext.napoleon",  # Support for NumPy and Google style docstrings
     # 'sphinx.ext.autodoc.typehints',  # Show type hints in the documentation
-    'sphinx.ext.intersphinx',  # Link to other project's documentation (see mapping below)
-    'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
+    "sphinx.ext.intersphinx",  # Link to other project's documentation (see mapping below)
+    "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
     # 'sphinx_autodoc_typehints',  # Automatically document param types (less noise in class signature)
-    'nbsphinx',  # Integrate Jupyter Notebooks and Sphinx
-    'IPython.sphinxext.ipython_console_highlighting'
+    "nbsphinx",  # Integrate Jupyter Notebooks and Sphinx
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 # Mappings for sphinx.ext.intersphinx. Projects have to have Sphinx-generated doc! (.inv file)
@@ -52,7 +54,7 @@ intersphinx_mapping = {
     "acoustics": ("https://python-acoustics.github.io/python-acoustics/", None),
     "maad": ("https://scikit-maad.github.io/genindex.html", None),
     "seaborn": ("https://seaborn.pydata.org/", None),
-    "matplotlib": ("https://matplotlib.org/stable/", None)
+    "matplotlib": ("https://matplotlib.org/stable/", None),
 }
 
 # Napoleon settings
@@ -60,7 +62,9 @@ napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
 
 # AutoAPI Settings
-autoapi_dirs = ['../soundscapy']  # Where to look for source code to auto-generate API docs from
+autoapi_dirs = [
+    "../soundscapy"
+]  # Where to look for source code to auto-generate API docs from
 autoapi_add_toctree_entry = False  # Don't add auto-generated API docs to the TOC tree
 
 # autosummary_generate = True  # Turn on sphinx.ext.autosummary
@@ -69,20 +73,22 @@ autoapi_add_toctree_entry = False  # Don't add auto-generated API docs to the TO
 autodoc_inherit_docstrings = True  # If no docstring, inherit from base class
 # set_type_checking_flag = True  # Enable 'expensive' imports for sphinx_autodoc_typehints
 nbsphinx_allow_errors = True  # Continue through Jupyter errors
-autodoc_typehints = "description" # Sphinx-native method. Not as good as sphinx_autodoc_typehints
-add_module_names = False # Remove namespaces from class/method signatures
+autodoc_typehints = (
+    "description"  # Sphinx-native method. Not as good as sphinx_autodoc_typehints
+)
+add_module_names = False  # Remove namespaces from class/method signatures
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # Exclusions
 # To exclude a module, use autodoc_mock_imports. Note this may increase build time, a lot.
 # (Also, when installing on readthedocs.org, we omit installing Tensorflow and
 # Tensorflow Probability so mock them here instead.)
-#autodoc_mock_imports = [
+# autodoc_mock_imports = [
 # 'tensorflow',
 # 'tensorflow_probability',
-#]
+# ]
 # To exclude a class, function, method or attribute, use autodoc-skip-member. (Note this can also
 # be used in reverse, ie. to re-include a particular member that has been excluded.)
 # 'Private' and 'special' members (_ and __) are excluded using the Jinja2 templates; from the main
@@ -111,18 +117,19 @@ templates_path = ['_templates']
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 if not on_rtd:  # only import and set the theme if we're building docs locally
     import sphinx_rtd_theme
+
     html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_css_files = ["readthedocs-custom.css"] # Override some CSS settings
+html_css_files = ["readthedocs-custom.css"]  # Override some CSS settings
 html_logo = "logo/DarkLogo.png"
 
 # Pydata theme
-#html_theme = "pydata_sphinx_theme"
-#html_logo = "_static/logo-company.png"
-#html_theme_options = { "show_prev_next": False}
-#html_css_files = ['pydata-custom.css']
+# html_theme = "pydata_sphinx_theme"
+# html_logo = "_static/logo-company.png"
+# html_theme_options = { "show_prev_next": False}
+# html_css_files = ['pydata-custom.css']
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
