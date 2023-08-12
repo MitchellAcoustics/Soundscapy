@@ -156,10 +156,10 @@ def rename_paqs(
 
 
 def likert_data_quality(
-        df: pd.DataFrame,
-        verbose: int = 0,
-        allow_na: bool = False,
-        val_range: tuple = (1, 5),
+    df: pd.DataFrame,
+    verbose: int = 0,
+    allow_na: bool = False,
+    val_range: tuple = (1, 5),
 ) -> Union[List, None]:
     """Basic check of PAQ data quality
 
@@ -240,8 +240,8 @@ def simulation(n=3000, val_range=(1, 5), add_paq_coords=False, **coord_kwargs):
         columns=PAQ_IDS,
     )
     if add_paq_coords:
-        ISOPl, ISOEv = calculate_paq_coords(df, **coord_kwargs)
-        df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
+        isopl, isoev = calculate_paq_coords(df, **coord_kwargs)
+        df = df.assign(ISOPleasant=isopl, ISOEventful=isoev)
     return df
 
 
@@ -286,9 +286,9 @@ def calculate_paq_coords(
 
     # E =(e−u)+cos45°(ch−ca)+cos45°(v−m)
     complex_eventful = (
-            (results_df.PAQ3.fillna(3) - results_df.PAQ7.fillna(3))
-            + proj * (results_df.PAQ4.fillna(3) - results_df.PAQ8.fillna(3))
-            + proj * (results_df.PAQ2.fillna(3) - results_df.PAQ6.fillna(3))
+        (results_df.PAQ3.fillna(3) - results_df.PAQ7.fillna(3))
+        + proj * (results_df.PAQ4.fillna(3) - results_df.PAQ8.fillna(3))
+        + proj * (results_df.PAQ2.fillna(3) - results_df.PAQ6.fillna(3))
     )
     ISOEventful = complex_eventful / scale
 
@@ -296,12 +296,12 @@ def calculate_paq_coords(
 
 
 def add_iso_coords(
-        data,
-        scale_to_one: bool = True,
-        val_range=(1, 5),
-        projection: bool = True,
-        names=("ISOPleasant", "ISOEventful"),
-        overwrite=False,
+    data,
+    scale_to_one: bool = True,
+    val_range=(1, 5),
+    projection: bool = True,
+    names=("ISOPleasant", "ISOEventful"),
+    overwrite=False,
 ):
     """Calculate and add ISO coordinates as new columns in dataframe
 
@@ -343,9 +343,10 @@ def add_iso_coords(
             raise Warning(
                 f"{names[1]} already in dataframe. Use `overwrite` to replace it."
             )
-    data[names[0]], data[names[1]] = calculate_paq_coords(
-        data, scale_to_one, val_range, projection
+    isopl, isoev = calculate_paq_coords(
+        data, scale_to_one=scale_to_one, val_range=val_range, projection=projection
     )
+    data = data.assign(**{names[0]: isopl, names[1]: isoev})
     return data
 
 
@@ -459,8 +460,7 @@ def ssm_metrics(
         mean = mean / abs(max(val_range) - min(val_range)) if scale_to_one else mean
 
         # Calculate the SSM metrics
-        df = janitor.add_columns(
-            df,
+        df = df.assign(
             vl=vl,
             theta=theta,
             mean_level=mean,
@@ -472,8 +472,7 @@ def ssm_metrics(
             lambda y: ssm_cosine_fit(y, angles=angles), axis=1, result_type="expand"
         )
 
-        df = janitor.add_columns(
-            df,
+        df = df.assign(
             amp=ssm_df.iloc[:, 0],
             delta=ssm_df.iloc[:, 1],
             elev=ssm_df.iloc[:, 2],

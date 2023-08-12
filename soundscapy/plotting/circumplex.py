@@ -123,6 +123,10 @@ def scatter(
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
 
+    if hue is None:
+        # Removes the palette if no hue is specified
+        palette = None
+
     s = sns.scatterplot(
         data=data,
         x=x,
@@ -317,6 +321,10 @@ def density(
 
     if bw_adjust is None:
         bw_adjust = default_bw_adjust
+
+    if hue is None:
+        # Removes the palette if no hue is specified
+        palette = None
 
     if density_type == "simple":
         thresh = simple_density["thresh"]
@@ -630,8 +638,8 @@ def _move_legend(ax, new_loc, **kws):
     new_loc : str or pair of floats
         The location of the legend
     """
-    old_legend = ax.legend_
-    handles = old_legend.legendHandles
+    old_legend = ax.get_legend()
+    handles = old_legend.legend_handles
     labels = [t.get_text() for t in old_legend.get_texts()]
     title = old_legend.get_title().get_text()
     ax.legend(handles, labels, loc=new_loc, title=title, **kws)
