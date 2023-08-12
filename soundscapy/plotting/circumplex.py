@@ -153,18 +153,49 @@ def scatter(
 
 
 # TODO: Consider changing to displot
-def density(data: Union[pd.DataFrame, np.ndarray] = None, x: str = "ISOPleasant", y: str = "ISOEventful",
-            incl_scatter: bool = True, density_type: str = "full", title: Union[str, None] = "Soundscapy Density Plot",
-            diagonal_lines: bool = False, xlim: tuple = (-1, 1), ylim: tuple = (-1, 1),
-            scatter_kws: dict = dict(s=25, linewidth=0), incl_outline: bool = False, figsize: tuple = (5, 5),
-            legend_loc: str = "lower left", alpha: float = 0.75, gridsize: int = 200, kernel: str = None,
-            cut: Union[float, int] = 3, clip: Tuple[int] = None, legend: bool = False, cumulative: bool = False,
-            cbar: bool = False, cbar_ax: matplotlib.axes.Axes = None, cbar_kws: dict = None,
-            ax: matplotlib.axes.Axes = None, weights: str = None, hue: str = None, palette="colorblind",
-            hue_order: List[str] = None, hue_norm=None, multiple: str = "layer", common_norm: bool = False,
-            common_grid: bool = False, levels: int = 10, thresh: float = 0.05, bw_method="scott",
-            bw_adjust: Union[float, int] = None, log_scale: Union[bool, int, float] = None, color: str = "blue",
-            fill: bool = True, warn_singular: bool = True, **kwargs):
+def density(
+    data: Union[pd.DataFrame, np.ndarray] = None,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    incl_scatter: bool = True,
+    density_type: str = "full",
+    title: Union[str, None] = "Soundscapy Density Plot",
+    diagonal_lines: bool = False,
+    xlim: tuple = (-1, 1),
+    ylim: tuple = (-1, 1),
+    scatter_kws: dict = dict(s=25, linewidth=0),
+    incl_outline: bool = False,
+    figsize: tuple = (5, 5),
+    legend_loc: str = "lower left",
+    alpha: float = 0.75,
+    gridsize: int = 200,
+    kernel: str = None,
+    cut: Union[float, int] = 3,
+    clip: Tuple[int] = None,
+    legend: bool = False,
+    cumulative: bool = False,
+    cbar: bool = False,
+    cbar_ax: matplotlib.axes.Axes = None,
+    cbar_kws: dict = None,
+    ax: matplotlib.axes.Axes = None,
+    weights: str = None,
+    hue: str = None,
+    palette="colorblind",
+    hue_order: List[str] = None,
+    hue_norm=None,
+    multiple: str = "layer",
+    common_norm: bool = False,
+    common_grid: bool = False,
+    levels: int = 10,
+    thresh: float = 0.05,
+    bw_method="scott",
+    bw_adjust: Union[float, int] = None,
+    log_scale: Union[bool, int, float] = None,
+    color: str = "blue",
+    fill: bool = True,
+    warn_singular: bool = True,
+    **kwargs,
+):
     """Plot a density plot of ISOCoordinates.
 
     Creates a wrapper around `seaborn.kdeplot` and adds functionality and styling to customise it for circumplex plots.
@@ -511,11 +542,34 @@ def jointplot(
         incl_outline = simple_density["incl_outline"]
 
     g = sns.JointGrid()
-    density(data, x=x, y=y, incl_scatter=incl_scatter, density_type=density_type, title=None,
-            diagonal_lines=diagonal_lines, xlim=xlim, ylim=ylim, scatter_kws=scatter_kws, incl_outline=incl_outline,
-            legend_loc=legend_loc, alpha=alpha, legend=legend, ax=g.ax_joint, hue=hue, palette=palette,
-            hue_order=hue_order, hue_norm=hue_norm, common_norm=common_norm, levels=levels, thresh=thresh,
-            bw_adjust=bw_adjust, color=color, fill=fill, **joint_kws)
+    density(
+        data,
+        x=x,
+        y=y,
+        incl_scatter=incl_scatter,
+        density_type=density_type,
+        title=None,
+        diagonal_lines=diagonal_lines,
+        xlim=xlim,
+        ylim=ylim,
+        scatter_kws=scatter_kws,
+        incl_outline=incl_outline,
+        legend_loc=legend_loc,
+        alpha=alpha,
+        legend=legend,
+        ax=g.ax_joint,
+        hue=hue,
+        palette=palette,
+        hue_order=hue_order,
+        hue_norm=hue_norm,
+        common_norm=common_norm,
+        levels=levels,
+        thresh=thresh,
+        bw_adjust=bw_adjust,
+        color=color,
+        fill=fill,
+        **joint_kws,
+    )
     # if legend and hue:
     #     _move_legend(g.ax_joint, legend_loc)
 
