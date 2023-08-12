@@ -1,5 +1,8 @@
 """Soundscapy Dataframe Accessor
 
+.. deprecated:: 0.4.4
+    The SSPY Accessor is deprecated. Please refer to the `soundscapy.surveys` and `soundscapy.plotting` modules.
+
 This module contains the Soundscapy Dataframe Accessor, which is used to add methods to Pandas Dataframes.
 This method is used to simplify the direct manipulation of soundscape survey-type data, allowing methods to be chained.
 The accessor is added to the dataframe by importing the module, and is accessed by using the `sspy` attribute of the dataframe.
@@ -48,12 +51,12 @@ class SSPYAccessor:
         self._metadata = {}
 
     def validate_dataset(
-            self,
-            paq_aliases: Union[List, Dict] = None,
-            allow_lockdown: bool = True,
-            allow_na: bool = False,
-            verbose: int = 1,
-            val_range: Tuple = (1, 5),
+        self,
+        paq_aliases: Union[List, Dict] = None,
+        allow_lockdown: bool = True,
+        allow_na: bool = False,
+        verbose: int = 1,
+        val_range: Tuple = (1, 5),
     ):
         """Performs data quality checks and validates that the dataset fits the expected format
 
@@ -173,11 +176,11 @@ class SSPYAccessor:
         return db.return_paqs(self._df, incl_ids, other_cols)
 
     def add_paq_coords(
-            self,
-            scale_to_one: bool = True,
-            val_range=(5, 1),
-            projection: bool = True,
-            names=("ISOPleasant", "ISOEventful"),
+        self,
+        scale_to_one: bool = True,
+        val_range=(5, 1),
+        projection: bool = True,
+        names=("ISOPleasant", "ISOEventful"),
     ):
         """Calculate and add ISO coordinates as new columns in dataframe
 
@@ -204,7 +207,8 @@ class SSPYAccessor:
         :func:`soundscapy.database.calculate_paq_coords`
         """
         raise DeprecationWarning(
-            "The SSPY Accessor has been deprecated. Please use `soundscapy.surveys.add_iso_coords()` instead.")
+            "The SSPY Accessor has been deprecated. Please use `soundscapy.surveys.add_iso_coords()` instead."
+        )
 
     def soundscapy_describe(self, group_by, type="percent"):
         """Describe the dataframe by a column
@@ -255,30 +259,30 @@ class SSPYAccessor:
         return soundscapy.plotting.likert.paq_radar_plot(self._df, ax, index)
 
     def scatter(
-            self,
-            x="ISOPleasant",
-            y="ISOEventful",
-            title="Soundscape Scatter Plot",
-            diagonal_lines=False,
-            xlim=(-1, 1),
-            ylim=(-1, 1),
-            figsize=(5, 5),
-            legend_loc="lower left",
-            hue=None,
-            style=None,
-            s=10,
-            palette="colorblind",
-            hue_order=None,
-            hue_norm=None,
-            sizes=None,
-            size_order=None,
-            size_norm=None,
-            markers=True,
-            style_order=None,
-            alpha=None,
-            legend="auto",
-            ax=None,
-            **scatter_kwargs,
+        self,
+        x="ISOPleasant",
+        y="ISOEventful",
+        title="Soundscape Scatter Plot",
+        diagonal_lines=False,
+        xlim=(-1, 1),
+        ylim=(-1, 1),
+        figsize=(5, 5),
+        legend_loc="lower left",
+        hue=None,
+        style=None,
+        s=10,
+        palette="colorblind",
+        hue_order=None,
+        hue_norm=None,
+        sizes=None,
+        size_order=None,
+        size_norm=None,
+        markers=True,
+        style_order=None,
+        alpha=None,
+        legend="auto",
+        ax=None,
+        **scatter_kwargs,
     ):
         """Plot ISOcoordinates as scatter points on a soundscape circumplex grid
 
@@ -390,48 +394,48 @@ class SSPYAccessor:
         )
 
     def density(
-            self,
-            x: str = "ISOPleasant",
-            y: str = "ISOEventful",
-            incl_scatter: bool = True,
-            density_type: str = "full",
-            title: str = "Soundscapy Density Plot",
-            diagonal_lines: bool = False,
-            xlim: tuple = (-1, 1),
-            ylim: tuple = (-1, 1),
-            scatter_kws: dict = dict(s=20),
-            incl_outline: bool = False,
-            figsize: tuple = (5, 5),
-            legend_loc: str = "lower left",
-            alpha: float = 0.75,
-            gridsize: int = 200,
-            kernel: str = None,
-            cut: Union[float, int] = 3,
-            clip: Tuple[int] = None,
-            legend: bool = False,
-            cumulative: bool = False,
-            cbar: bool = False,
-            cbar_ax: matplotlib.axes.Axes = None,
-            cbar_kws: dict = None,
-            ax: matplotlib.axes.Axes = None,
-            weights: str = None,
-            hue: str = None,
-            palette="colorblind",
-            hue_order: List[str] = None,
-            hue_norm=None,
-            multiple: str = "layer",
-            common_norm: bool = False,
-            common_grid: bool = False,
-            levels: int = 10,
-            thresh: float = 0.05,
-            bw_method="scott",
-            bw_adjust: Union[float, int] = None,
-            log_scale: Union[bool, int, float] = None,
-            color: str = "blue",
-            fill: bool = True,
-            data2: Union[pd.DataFrame, np.ndarray] = None,
-            warn_singular: bool = True,
-            **kwargs,
+        self,
+        x: str = "ISOPleasant",
+        y: str = "ISOEventful",
+        incl_scatter: bool = True,
+        density_type: str = "full",
+        title: str = "Soundscapy Density Plot",
+        diagonal_lines: bool = False,
+        xlim: tuple = (-1, 1),
+        ylim: tuple = (-1, 1),
+        scatter_kws: dict = dict(s=20),
+        incl_outline: bool = False,
+        figsize: tuple = (5, 5),
+        legend_loc: str = "lower left",
+        alpha: float = 0.75,
+        gridsize: int = 200,
+        kernel: str = None,
+        cut: Union[float, int] = 3,
+        clip: Tuple[int] = None,
+        legend: bool = False,
+        cumulative: bool = False,
+        cbar: bool = False,
+        cbar_ax: matplotlib.axes.Axes = None,
+        cbar_kws: dict = None,
+        ax: matplotlib.axes.Axes = None,
+        weights: str = None,
+        hue: str = None,
+        palette="colorblind",
+        hue_order: List[str] = None,
+        hue_norm=None,
+        multiple: str = "layer",
+        common_norm: bool = False,
+        common_grid: bool = False,
+        levels: int = 10,
+        thresh: float = 0.05,
+        bw_method="scott",
+        bw_adjust: Union[float, int] = None,
+        log_scale: Union[bool, int, float] = None,
+        color: str = "blue",
+        fill: bool = True,
+        data2: Union[pd.DataFrame, np.ndarray] = None,
+        warn_singular: bool = True,
+        **kwargs,
     ):  # sourcery skip: default-mutable-arg
         """Plot a density plot of ISOCoordinates.
 
@@ -608,33 +612,33 @@ class SSPYAccessor:
         )
 
     def jointplot(
-            self,
-            x="ISOPleasant",
-            y="ISOEventful",
-            incl_scatter=True,
-            density_type="full",
-            title="Soundscape Joint Plot",
-            diagonal_lines=False,
-            xlim=(-1, 1),
-            ylim=(-1, 1),
-            scatter_kws=dict(s=25, linewidth=0),
-            incl_outline=False,
-            legend_loc="lower left",
-            alpha=0.75,
-            color=None,
-            joint_kws=dict(),
-            marginal_kws={"fill": True, "common_norm": False},
-            hue=None,
-            palette="colorblind",
-            hue_order=None,
-            hue_norm=None,
-            common_norm=False,
-            fill=True,
-            bw_adjust=None,
-            thresh=0.1,
-            levels=10,
-            legend=False,
-            marginal_kind="kde",
+        self,
+        x="ISOPleasant",
+        y="ISOEventful",
+        incl_scatter=True,
+        density_type="full",
+        title="Soundscape Joint Plot",
+        diagonal_lines=False,
+        xlim=(-1, 1),
+        ylim=(-1, 1),
+        scatter_kws=dict(s=25, linewidth=0),
+        incl_outline=False,
+        legend_loc="lower left",
+        alpha=0.75,
+        color=None,
+        joint_kws=dict(),
+        marginal_kws={"fill": True, "common_norm": False},
+        hue=None,
+        palette="colorblind",
+        hue_order=None,
+        hue_norm=None,
+        common_norm=False,
+        fill=True,
+        bw_adjust=None,
+        thresh=0.1,
+        levels=10,
+        legend=False,
+        marginal_kind="kde",
     ):  # sourcery skip: default-mutable-arg
         """Create a jointplot with distribution or scatter in the center and distributions on the margins.
 
@@ -760,5 +764,6 @@ class SSPYAccessor:
             legend=legend,
             marginal_kind=marginal_kind,
         )
+
 
 # %%
