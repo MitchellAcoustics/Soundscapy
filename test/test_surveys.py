@@ -75,16 +75,16 @@ def test_return_paqs():
     assert surv.return_paqs(
         df, incl_ids=False, other_cols=["add1"]
     ).columns.tolist() == [
-               "PAQ1",
-               "PAQ2",
-               "PAQ3",
-               "PAQ4",
-               "PAQ5",
-               "PAQ6",
-               "PAQ7",
-               "PAQ8",
-               "add1",
-           ]
+        "PAQ1",
+        "PAQ2",
+        "PAQ3",
+        "PAQ4",
+        "PAQ5",
+        "PAQ6",
+        "PAQ7",
+        "PAQ8",
+        "add1",
+    ]
 
 
 def test_add_iso_coords(data):
@@ -236,7 +236,7 @@ def test_paq_data_quality():
             "PAQ8": [4],
         }
     )
-    df = df.append(wrong_data)
+    df = pd.concat([df, wrong_data], ignore_index=True)
     l = surv.likert_data_quality(df)
     assert l == [2]
 
