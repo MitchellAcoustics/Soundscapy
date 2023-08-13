@@ -6,7 +6,7 @@ groups = ["default", "dev", "docs", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:b1f553ad5507941a97059d2cb897535df1be0e5bf7b3f2383608ef6748cc669d"
+content_hash = "sha256:675a495cdfd1018b0ad8bf87c0c2c9f829283118154077368bfee137e43fa617"
 
 [[package]]
 name = "acoustics"
@@ -552,6 +552,16 @@ summary = "Backport of PEP 654 (exception groups)"
 files = [
     {file = "exceptiongroup-1.1.2-py3-none-any.whl", hash = "sha256:e346e69d186172ca7cf029c8c1d16235aa0e04035e5750b4b95039e65204328f"},
     {file = "exceptiongroup-1.1.2.tar.gz", hash = "sha256:12c3e887d6485d16943a309616de20ae5582633e0a2eda17f4e10fd61c1e8af5"},
+]
+
+[[package]]
+name = "execnet"
+version = "2.0.2"
+requires_python = ">=3.7"
+summary = "execnet: rapid multi-Python deployment"
+files = [
+    {file = "execnet-2.0.2-py3-none-any.whl", hash = "sha256:88256416ae766bc9e8895c76a87928c0012183da3cc4fc18016e6f050e025f41"},
+    {file = "execnet-2.0.2.tar.gz", hash = "sha256:cc59bc4423742fd71ad227122eb0dd44db51efb3dc4095b45ac9a08c770096af"},
 ]
 
 [[package]]
@@ -1412,18 +1422,18 @@ files = [
 
 [[package]]
 name = "nbclient"
-version = "0.8.0"
-requires_python = ">=3.8.0"
+version = "0.6.8"
+requires_python = ">=3.7.0"
 summary = "A client library for executing notebooks. Formerly nbconvert's ExecutePreprocessor."
 dependencies = [
-    "jupyter-client>=6.1.12",
-    "jupyter-core!=5.0.*,>=4.12",
-    "nbformat>=5.1",
-    "traitlets>=5.4",
+    "jupyter-client>=6.1.5",
+    "nbformat>=5.0",
+    "nest-asyncio",
+    "traitlets>=5.2.2",
 ]
 files = [
-    {file = "nbclient-0.8.0-py3-none-any.whl", hash = "sha256:25e861299e5303a0477568557c4045eccc7a34c17fc08e7959558707b9ebe548"},
-    {file = "nbclient-0.8.0.tar.gz", hash = "sha256:f9b179cd4b2d7bca965f900a2ebf0db4a12ebff2f36a711cb66861e4ae158e55"},
+    {file = "nbclient-0.6.8-py3-none-any.whl", hash = "sha256:7cce8b415888539180535953f80ea2385cdbb444944cdeb73ffac1556fdbc228"},
+    {file = "nbclient-0.6.8.tar.gz", hash = "sha256:268fde3457cafe1539e32eb1c6d796bbedb90b9e92bacd3e43d83413734bb0e8"},
 ]
 
 [[package]]
@@ -1468,6 +1478,24 @@ dependencies = [
 files = [
     {file = "nbformat-5.9.2-py3-none-any.whl", hash = "sha256:1c5172d786a41b82bcfd0c23f9e6b6f072e8fb49c39250219e4acfff1efe89e9"},
     {file = "nbformat-5.9.2.tar.gz", hash = "sha256:5f98b5ba1997dff175e77e0c17d5c10a96eaed2cbd1de3533d1fc35d5e111192"},
+]
+
+[[package]]
+name = "nbmake"
+version = "1.4.1"
+requires_python = ">=3.7.0,<4.0.0"
+summary = "Pytest plugin for testing notebooks"
+dependencies = [
+    "Pygments<3.0.0,>=2.7.3",
+    "ipykernel>=5.4.0",
+    "nbclient<0.7.0,>=0.6.6",
+    "nbformat<6.0.0,>=5.0.8",
+    "pydantic<2.0.0,>=1.7.2",
+    "pytest>=6.1.0",
+]
+files = [
+    {file = "nbmake-1.4.1-py3-none-any.whl", hash = "sha256:1c1619fc54a2fb64bfd84acbdf13b2ffba0e4a03bfea1684f4648f28ca850ada"},
+    {file = "nbmake-1.4.1.tar.gz", hash = "sha256:7f602ba5195e80e4f2527944bb06d3b4df0d1520e73ba66126b51132b1f646ea"},
 ]
 
 [[package]]
@@ -1990,6 +2018,40 @@ files = [
 ]
 
 [[package]]
+name = "pydantic"
+version = "1.10.12"
+requires_python = ">=3.7"
+summary = "Data validation and settings management using python type hints"
+dependencies = [
+    "typing-extensions>=4.2.0",
+]
+files = [
+    {file = "pydantic-1.10.12-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:a1fcb59f2f355ec350073af41d927bf83a63b50e640f4dbaa01053a28b7a7718"},
+    {file = "pydantic-1.10.12-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:b7ccf02d7eb340b216ec33e53a3a629856afe1c6e0ef91d84a4e6f2fb2ca70fe"},
+    {file = "pydantic-1.10.12-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8fb2aa3ab3728d950bcc885a2e9eff6c8fc40bc0b7bb434e555c215491bcf48b"},
+    {file = "pydantic-1.10.12-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:771735dc43cf8383959dc9b90aa281f0b6092321ca98677c5fb6125a6f56d58d"},
+    {file = "pydantic-1.10.12-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:ca48477862372ac3770969b9d75f1bf66131d386dba79506c46d75e6b48c1e09"},
+    {file = "pydantic-1.10.12-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:a5e7add47a5b5a40c49b3036d464e3c7802f8ae0d1e66035ea16aa5b7a3923ed"},
+    {file = "pydantic-1.10.12-cp310-cp310-win_amd64.whl", hash = "sha256:e4129b528c6baa99a429f97ce733fff478ec955513630e61b49804b6cf9b224a"},
+    {file = "pydantic-1.10.12-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:b0d191db0f92dfcb1dec210ca244fdae5cbe918c6050b342d619c09d31eea0cc"},
+    {file = "pydantic-1.10.12-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:795e34e6cc065f8f498c89b894a3c6da294a936ee71e644e4bd44de048af1405"},
+    {file = "pydantic-1.10.12-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:69328e15cfda2c392da4e713443c7dbffa1505bc9d566e71e55abe14c97ddc62"},
+    {file = "pydantic-1.10.12-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2031de0967c279df0d8a1c72b4ffc411ecd06bac607a212892757db7462fc494"},
+    {file = "pydantic-1.10.12-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:ba5b2e6fe6ca2b7e013398bc7d7b170e21cce322d266ffcd57cca313e54fb246"},
+    {file = "pydantic-1.10.12-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:2a7bac939fa326db1ab741c9d7f44c565a1d1e80908b3797f7f81a4f86bc8d33"},
+    {file = "pydantic-1.10.12-cp311-cp311-win_amd64.whl", hash = "sha256:87afda5539d5140cb8ba9e8b8c8865cb5b1463924d38490d73d3ccfd80896b3f"},
+    {file = "pydantic-1.10.12-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:ef6c96b2baa2100ec91a4b428f80d8f28a3c9e53568219b6c298c1125572ebc6"},
+    {file = "pydantic-1.10.12-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:6c076be61cd0177a8433c0adcb03475baf4ee91edf5a4e550161ad57fc90f523"},
+    {file = "pydantic-1.10.12-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2d5a58feb9a39f481eda4d5ca220aa8b9d4f21a41274760b9bc66bfd72595b86"},
+    {file = "pydantic-1.10.12-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e5f805d2d5d0a41633651a73fa4ecdd0b3d7a49de4ec3fadf062fe16501ddbf1"},
+    {file = "pydantic-1.10.12-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:1289c180abd4bd4555bb927c42ee42abc3aee02b0fb2d1223fb7c6e5bef87dbe"},
+    {file = "pydantic-1.10.12-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:5d1197e462e0364906cbc19681605cb7c036f2475c899b6f296104ad42b9f5fb"},
+    {file = "pydantic-1.10.12-cp39-cp39-win_amd64.whl", hash = "sha256:fdbdd1d630195689f325c9ef1a12900524dceb503b00a987663ff4f58669b93d"},
+    {file = "pydantic-1.10.12-py3-none-any.whl", hash = "sha256:b749a43aa51e32839c9d71dc67eb1e4221bb04af1033a32e3923d46f9effa942"},
+    {file = "pydantic-1.10.12.tar.gz", hash = "sha256:0fe8a415cea8f340e7a9af9c54fc71a649b43e8ca3cc732986116b3cb135d303"},
+]
+
+[[package]]
 name = "pygments"
 version = "2.16.1"
 requires_python = ">=3.7"
@@ -2025,6 +2087,20 @@ dependencies = [
 files = [
     {file = "pytest-7.4.0-py3-none-any.whl", hash = "sha256:78bf16451a2eb8c7a2ea98e32dc119fd2aa758f1d5d66dbf0a59d69a3969df32"},
     {file = "pytest-7.4.0.tar.gz", hash = "sha256:b4bf8c45bd59934ed84001ad51e11b4ee40d40a1229d2c79f9c592b0a3f6bd8a"},
+]
+
+[[package]]
+name = "pytest-xdist"
+version = "3.3.1"
+requires_python = ">=3.7"
+summary = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
+dependencies = [
+    "execnet>=1.1",
+    "pytest>=6.2.0",
+]
+files = [
+    {file = "pytest-xdist-3.3.1.tar.gz", hash = "sha256:d5ee0520eb1b7bcca50a60a518ab7a7707992812c578198f8b44fdfac78e8c93"},
+    {file = "pytest_xdist-3.3.1-py3-none-any.whl", hash = "sha256:ff9daa7793569e6a68544850fd3927cd257cc03a7ef76c95e86915355e82b5f2"},
 ]
 
 [[package]]
