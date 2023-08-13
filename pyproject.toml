@@ -56,7 +56,6 @@ test = [
     "setuptools>=68.0.0",
 ]
 dev = [
-    "pytest>=7.4.0",
     "black>=23.7.0",
     "pycircular>=0.1.2",
     "statsmodels>=0.14.0",

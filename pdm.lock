@@ -6,7 +6,7 @@ groups = ["default", "dev", "docs", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:51079f7877638bf28f392f83d2a0bff2a793f438e7c523a607454894fedc68ea"
+content_hash = "sha256:48f801c9106b56bd3b500fcdacd69979bbf5909909a37138f84d3d7a0ae6d0cc"
 
 [[package]]
 name = "acoustics"
