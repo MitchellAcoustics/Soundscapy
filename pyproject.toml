@@ -55,9 +55,6 @@ test = [
     "setuptools>=68.0.0",
     "nbmake>=1.4.1",
     "pytest-xdist>=3.3.1",
-    "pytest-md>=0.2.0",
-    "pytest-emoji>=0.2.0",
-    "flake8>=6.1.0",
 ]
 dev = [
     "black>=23.7.0",
