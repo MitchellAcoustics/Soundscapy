@@ -6,7 +6,7 @@ groups = ["default", "dev", "docs", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:675a495cdfd1018b0ad8bf87c0c2c9f829283118154077368bfee137e43fa617"
+content_hash = "sha256:743553f8970cb534ee71fa72bd54476386636f5e3a7094ffdebed17ee6215e46"
 
 [[package]]
 name = "acoustics"
@@ -580,6 +580,21 @@ summary = "Fastest Python implementation of JSON schema"
 files = [
     {file = "fastjsonschema-2.18.0-py3-none-any.whl", hash = "sha256:128039912a11a807068a7c87d0da36660afbfd7202780db26c4aa7153cfdc799"},
     {file = "fastjsonschema-2.18.0.tar.gz", hash = "sha256:e820349dd16f806e4bd1467a138dced9def4bc7d6213a34295272a6cac95b5bd"},
+]
+
+[[package]]
+name = "flake8"
+version = "6.1.0"
+requires_python = ">=3.8.1"
+summary = "the modular source code checker: pep8 pyflakes and co"
+dependencies = [
+    "mccabe<0.8.0,>=0.7.0",
+    "pycodestyle<2.12.0,>=2.11.0",
+    "pyflakes<3.2.0,>=3.1.0",
+]
+files = [
+    {file = "flake8-6.1.0-py2.py3-none-any.whl", hash = "sha256:ffdfce58ea94c6580c77888a86506937f9a1a227dfcd15f245d694ae20a6b6e5"},
+    {file = "flake8-6.1.0.tar.gz", hash = "sha256:d5b3857f07c030bdb5bf41c7f53799571d75c4491748a3adcd47de929e34cd23"},
 ]
 
 [[package]]
@@ -1365,6 +1380,16 @@ files = [
 ]
 
 [[package]]
+name = "mccabe"
+version = "0.7.0"
+requires_python = ">=3.6"
+summary = "McCabe checker, plugin for flake8"
+files = [
+    {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
+    {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
+]
+
+[[package]]
 name = "mdit-py-plugins"
 version = "0.4.0"
 requires_python = ">=3.8"
@@ -2008,6 +2033,16 @@ files = [
 ]
 
 [[package]]
+name = "pycodestyle"
+version = "2.11.0"
+requires_python = ">=3.8"
+summary = "Python style guide checker"
+files = [
+    {file = "pycodestyle-2.11.0-py2.py3-none-any.whl", hash = "sha256:5d1013ba8dc7895b548be5afb05740ca82454fd899971563d2ef625d090326f8"},
+    {file = "pycodestyle-2.11.0.tar.gz", hash = "sha256:259bcc17857d8a8b3b4a2327324b79e5f020a13c16074670f9c8c8f872ea76d0"},
+]
+
+[[package]]
 name = "pycparser"
 version = "2.21"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -2052,6 +2087,16 @@ files = [
 ]
 
 [[package]]
+name = "pyflakes"
+version = "3.1.0"
+requires_python = ">=3.8"
+summary = "passive checker of Python programs"
+files = [
+    {file = "pyflakes-3.1.0-py2.py3-none-any.whl", hash = "sha256:4132f6d49cb4dae6819e5379898f2b8cce3c5f23994194c24b77d5da2e36f774"},
+    {file = "pyflakes-3.1.0.tar.gz", hash = "sha256:a0aae034c444db0071aa077972ba4768d40c830d9539fd45bf4cd3f8f6992efc"},
+]
+
+[[package]]
 name = "pygments"
 version = "2.16.1"
 requires_python = ">=3.7"
@@ -2087,6 +2132,32 @@ dependencies = [
 files = [
     {file = "pytest-7.4.0-py3-none-any.whl", hash = "sha256:78bf16451a2eb8c7a2ea98e32dc119fd2aa758f1d5d66dbf0a59d69a3969df32"},
     {file = "pytest-7.4.0.tar.gz", hash = "sha256:b4bf8c45bd59934ed84001ad51e11b4ee40d40a1229d2c79f9c592b0a3f6bd8a"},
+]
+
+[[package]]
+name = "pytest-emoji"
+version = "0.2.0"
+requires_python = ">=3.4"
+summary = "A pytest plugin that adds emojis to your test result report"
+dependencies = [
+    "pytest>=4.2.1",
+]
+files = [
+    {file = "pytest-emoji-0.2.0.tar.gz", hash = "sha256:e1bd4790d87649c2d09c272c88bdfc4d37c1cc7c7a46583087d7c510944571e8"},
+    {file = "pytest_emoji-0.2.0-py3-none-any.whl", hash = "sha256:6e34ed21970fa4b80a56ad11417456bd873eb066c02315fe9df0fafe6d4d4436"},
+]
+
+[[package]]
+name = "pytest-md"
+version = "0.2.0"
+requires_python = ">=3.6"
+summary = "Plugin for generating Markdown reports for pytest results"
+dependencies = [
+    "pytest>=4.2.1",
+]
+files = [
+    {file = "pytest-md-0.2.0.tar.gz", hash = "sha256:3b248d5b360ea5198e05b4f49c7442234812809a63137ec6cdd3643a40cf0112"},
+    {file = "pytest_md-0.2.0-py3-none-any.whl", hash = "sha256:4c4cd16fea6d1485e87ee254558712c804a96d2aa9674b780e7eb8fb6526e1d1"},
 ]
 
 [[package]]
