@@ -18,8 +18,7 @@ authors = [
 ]
 
 dependencies = [
-    "pandas>=2.0.3",
-    "openpyxl>=3.1.2",
+    "pandas[excel,performance]>=2.0.3",
     "seaborn>=0.12.2",
     "acoustics>=0.2.6",
     "mosqito>=1.0.8",
