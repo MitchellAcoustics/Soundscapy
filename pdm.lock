@@ -1000,7 +1000,7 @@ files = [
 
 [[package]]
 name = "jupyterlab"
-version = "4.0.4"
+version = "4.0.5"
 requires_python = ">=3.8"
 summary = "JupyterLab computational environment"
 dependencies = [
@@ -1019,8 +1019,8 @@ dependencies = [
     "traitlets",
 ]
 files = [
-    {file = "jupyterlab-4.0.4-py3-none-any.whl", hash = "sha256:23eef35d22be8f2ad9b873ec41ceb2e8c3b0dc8ae740c0f973e2de09e587530f"},
-    {file = "jupyterlab-4.0.4.tar.gz", hash = "sha256:049449a56d93202ed204e0e86f96f5a3447a08cfc09fb012fd239e178651cb34"},
+    {file = "jupyterlab-4.0.5-py3-none-any.whl", hash = "sha256:13b3a326e7b95d72746fe20dbe80ee1e71165d6905e01ceaf1320eb809cb1b47"},
+    {file = "jupyterlab-4.0.5.tar.gz", hash = "sha256:de49deb75f9b9aec478ed04754cbefe9c5d22fd796a5783cdc65e212983d3611"},
 ]
 
 [[package]]
@@ -2795,15 +2795,15 @@ files = [
 
 [[package]]
 name = "tifffile"
-version = "2023.7.18"
+version = "2023.8.12"
 requires_python = ">=3.9"
 summary = "Read and write TIFF files"
 dependencies = [
     "numpy",
 ]
 files = [
-    {file = "tifffile-2023.7.18-py3-none-any.whl", hash = "sha256:a9449ab688b82b69f3ddf80e4e0b4de7b5b02549974a56e112061b816b3c5585"},
-    {file = "tifffile-2023.7.18.tar.gz", hash = "sha256:5a5a624b2f7ab7f37e9ec4174ae2df1805b9658f89013f9b4b5550672f65f2a1"},
+    {file = "tifffile-2023.8.12-py3-none-any.whl", hash = "sha256:d1ef06461a947a6800ba6121b330b54a57fb9cbf7e5bc0adab8307081297d66b"},
+    {file = "tifffile-2023.8.12.tar.gz", hash = "sha256:824956b6d974b9d346aae59932bea862a2ad18fcc2b1a820b6941b7f6ddb2bca"},
 ]
 
 [[package]]

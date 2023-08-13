@@ -1,12 +1,17 @@
 [tool.pdm.build]
 includes = []
+
+[[tool.pdm.autoexport]]
+filename = "requirements.txt"
+groups = ["default"]
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [project]
 name = "soundscapy"
-version = "0.4.4"
+version = "0.5.0"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     {name = "Andrew Mitchell", email = "andrew.mitchell.18@ucl.ac.uk"},

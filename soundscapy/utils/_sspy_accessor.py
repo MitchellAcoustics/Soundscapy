@@ -1,6 +1,6 @@
 """Soundscapy Dataframe Accessor
 
-.. deprecated:: 0.4.4
+.. deprecated:: 0.5.0
     The SSPY Accessor is deprecated. Please refer to the `soundscapy.surveys` and `soundscapy.plotting` modules.
 
 This module contains the Soundscapy Dataframe Accessor, which is used to add methods to Pandas Dataframes.
