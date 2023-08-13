@@ -252,16 +252,24 @@ def describe_location(data, location, type="percent", pl_threshold=0, ev_thresho
     pl_count = len(loc_df[loc_df["ISOPleasant"] > pl_threshold])
     ev_count = len(loc_df[loc_df["ISOEventful"] > ev_threshold])
     vibrant_count = len(
-        loc_df.query("ISOPleasant > @pl_threshold & ISOEventful > @ev_threshold")
+        loc_df.query(
+            "ISOPleasant > @pl_threshold & ISOEventful > @ev_threshold", engine="python"
+        )
     )
     chaotic_count = len(
-        loc_df.query("ISOPleasant < @pl_threshold & ISOEventful > @ev_threshold")
+        loc_df.query(
+            "ISOPleasant < @pl_threshold & ISOEventful > @ev_threshold", engine="python"
+        )
     )
     mono_count = len(
-        loc_df.query("ISOPleasant < @pl_threshold & ISOEventful < @ev_threshold")
+        loc_df.query(
+            "ISOPleasant < @pl_threshold & ISOEventful < @ev_threshold", engine="python"
+        )
     )
     calm_count = len(
-        loc_df.query("ISOPleasant > @pl_threshold & ISOEventful < @ev_threshold")
+        loc_df.query(
+            "ISOPleasant > @pl_threshold & ISOEventful < @ev_threshold", engine="python"
+        )
     )
 
     res = {
