@@ -60,8 +60,8 @@ Bibtex:
 
 As noted, this package is in heavy development to make it more useable, more stable, and to add features and improvements. At this stage it is mostly limited to doing basic quality checks of soundscape survey data and creating the soundscape distribution plots. Some planned improvements are:
 
- - [ ] Simplify the plotting options
- - [ ] Possibly improve how the plots and data are handled - a more OOP approach would be good.
+ - [x] Simplify the plotting options
+ - [x] Possibly improve how the plots and data are handled - a more OOP approach would be good.
  - [ ] Add appropriate tests and documentation.
  - [ ] Bug fixes, ~~particularly around setting color palettes.~~
 

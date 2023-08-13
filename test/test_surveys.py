@@ -1,9 +1,10 @@
 import pandas as pd
-from pytest import approx
 import pytest
-import soundscapy
-import soundscapy.utils.surveys as db
+from pytest import approx
 from pytest import raises
+
+import soundscapy
+import soundscapy.utils.surveys as surv
 
 basic_test_df = pd.DataFrame(
     {
@@ -49,12 +50,17 @@ grouped_test_df = pd.DataFrame(
 )
 
 
+@pytest.fixture()
+def data():
+    return soundscapy.isd.load()
+
+
 def test_return_paqs():
     df = basic_test_df
     df["add1"] = df["PAQ1"] + df["PAQ2"]  # Just add some random columns to test
     df["add2"] = df["PAQ3"] + df["PAQ4"]
 
-    assert db.return_paqs(df).columns.tolist() == [
+    assert surv.return_paqs(df).columns.tolist() == [
         "RecordID",
         "PAQ1",
         "PAQ2",
@@ -66,7 +72,9 @@ def test_return_paqs():
         "PAQ8",
     ]
 
-    assert db.return_paqs(df, incl_ids=False, other_cols=["add1"]).columns.tolist() == [
+    assert surv.return_paqs(
+        df, incl_ids=False, other_cols=["add1"]
+    ).columns.tolist() == [
         "PAQ1",
         "PAQ2",
         "PAQ3",
@@ -79,12 +87,25 @@ def test_return_paqs():
     ]
 
 
+def test_add_iso_coords(data):
+    df = soundscapy.surveys.add_iso_coords(basic_test_df)
+    assert "ISOPleasant" in df.columns and "ISOEventful" in df.columns
+
+    data = soundscapy.isd.rename_paqs(data)
+    data = soundscapy.surveys.add_iso_coords(data, names=("pl_test", "ev_test"))
+    assert "pl_test" in data.columns and "ev_test" in data.columns
+
+    data = soundscapy.isd.rename_paqs(data)
+    data = soundscapy.surveys.add_iso_coords(data, overwrite=True)
+    assert "ISOPleasant" in df.columns and "ISOEventful" in df.columns
+
+
 def test_mean_responses():
     """
     Test that the mean_responses function returns the correct values
     """
     df = grouped_test_df.copy()
-    mean = db.mean_responses(df, group="GroupID")
+    mean = surv.mean_responses(df, group="GroupID")
     assert mean.loc["A", "PAQ1"] == approx(3, abs=0.05) and mean.loc[
         "A", "PAQ5"
     ] == approx(3, abs=0.05)
@@ -104,7 +125,7 @@ def test__convert_to_polar_coords():
 
 
 def test_calculate_polar_coords():
-    coords = db.calculate_polar_coords(basic_test_df, scaling='iso')
+    coords = surv.calculate_polar_coords(basic_test_df, scaling="iso")
     assert coords[0][0] == approx(0.53, abs=0.05) and coords[0][1] == approx(
         0.83, abs=0.05
     )  # radius coords
@@ -115,16 +136,16 @@ def test_calculate_polar_coords():
 
 def test_load_isd_dataset_wrong_version():
     with raises(ValueError):
-        df = soundscapy.isd.load_isd_dataset(version="v0.1.0")
+        df = soundscapy.isd.load_zenodo(version="v0.1.0")
 
 
 def test_load_isd_dataset():
-    df = soundscapy.isd.load_isd_dataset(version="v0.2.1")
+    df = soundscapy.isd.load_zenodo(version="v0.2.1")
     assert df.shape == (1909, 77)
 
 
 def test_rename_descriptors():
-    df = db.rename_paqs(name_test_df)
+    df = surv.rename_paqs(name_test_df)
     assert df.columns.tolist() == [
         "RecordID",
         "PAQ1",
@@ -152,7 +173,7 @@ def test_rename_paqs():
         "m": [4, 1],
     }
     df = pd.DataFrame(vals)
-    df = db.rename_paqs(
+    df = surv.rename_paqs(
         df,
         paq_aliases={
             "pl": "PAQ1",
@@ -179,7 +200,7 @@ def test_rename_paqs():
 
 
 def test_calculate_paq_coords():
-    coords = db.calculate_paq_coords(basic_test_df)
+    coords = surv.calculate_paq_coords(basic_test_df)
     assert coords[0][0] == approx(0.53, abs=0.05) and coords[0][1] == approx(
         -0.75, abs=0.05
     )  # ISOPleasant coords
@@ -191,7 +212,7 @@ def test_calculate_paq_coords():
 def test_calculate_paq_coords_val_range():
     df = basic_test_df.copy()
     df = df * 10
-    coords = db.calculate_paq_coords(df, val_range=(0, 100))
+    coords = surv.calculate_paq_coords(df, val_range=(0, 100))
     assert coords[0][0] == approx(0.21, abs=0.05) and coords[0][1] == approx(
         -0.30, abs=0.05
     )  # ISOPleasant coords
@@ -215,8 +236,8 @@ def test_paq_data_quality():
             "PAQ8": [4],
         }
     )
-    df = df.append(wrong_data)
-    l = db.paq_data_quality(df)
+    df = pd.concat([df, wrong_data], ignore_index=True)
+    l = surv.likert_data_quality(df)
     assert l == [2]
 
 
@@ -234,8 +255,8 @@ def test_calculate_paq_coords_min_max():
         "calm": [5, 1, 1, 5],
     }
     df = pd.DataFrame(vals)
-    df = db.rename_paqs(df)
-    ISOPl, ISOEv = db.calculate_paq_coords(df)
+    df = surv.rename_paqs(df)
+    ISOPl, ISOEv = surv.calculate_paq_coords(df)
     assert ISOPl[0] == approx(1, abs=0.01) and ISOPl[2] == approx(
         -1, abs=0.01
     )  # ISOPleasant coords
@@ -258,8 +279,8 @@ def test_calculate_paq_coords_val_range_min_max():
         "calm": [50, -50, -50, 50],
     }
     df = pd.DataFrame(vals)
-    df = db.rename_paqs(df)
-    ISOPl, ISOEv = db.calculate_paq_coords(df, val_range=(-50, 50))
+    df = surv.rename_paqs(df)
+    ISOPl, ISOEv = surv.calculate_paq_coords(df, val_range=(-50, 50))
     assert ISOPl[0] == approx(1, abs=0.01) and ISOPl[2] == approx(
         -1, abs=0.01
     )  # ISOPleasant coords
@@ -269,13 +290,13 @@ def test_calculate_paq_coords_val_range_min_max():
 
 
 def test_simulation():
-    df = db.simulation(n=200)
+    df = surv.simulation(n=200)
     assert df.shape == (200, 8)
 
-    df = db.simulation(n=200, add_paq_coords=True)
+    df = surv.simulation(n=200, add_paq_coords=True)
     assert df.shape == (200, 10)
 
-    df = db.simulation(n=200, add_paq_coords=True)
+    df = surv.simulation(n=200, add_paq_coords=True)
     assert df.columns.tolist() == [
         "PAQ1",
         "PAQ2",

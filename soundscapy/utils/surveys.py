@@ -17,7 +17,6 @@ modules under `soundscape.databases`.
 from pathlib import Path
 from typing import Union, Tuple, List, Dict
 
-import janitor
 import numpy as np
 import pandas as pd
 from scipy import optimize
@@ -97,52 +96,6 @@ def convert_column_to_index(df, col: str, drop=False):
     return df
 
 
-def validate_dataset(
-    df: pd.DataFrame,
-    paq_aliases: Union[List, Dict] = None,
-    allow_lockdown: bool = False,
-    allow_paq_na: bool = False,
-    verbose: int = 1,
-    val_range: Tuple = (1, 5),
-):
-    """Performs data quality checks and validates that the dataset fits the expected format
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        ISD style dataframe, incl PAQ data
-    paq_aliases : list or dict, optional
-        list of PAQ names (in order)
-        or dict of PAQ names with new names as values, by default None
-    allow_lockdown : bool, optional
-        if True will keep Lockdown data in the df, by default True
-    allow_paq_na : bool, optional
-        remove rows which have any missing PAQ values
-        otherwise will remove those with 50% missing, by default False    verbose : int, optional
-        how much info to print while running, by default 1
-    val_range : tuple, optional
-        min and max range of the PAQ response values, by default (5, 1)
-
-    Returns
-    -------
-    tuple
-        cleaned dataframe, dataframe of excluded samples
-    """
-    if verbose > 0:
-        print("Renaming PAQ columns.")
-    df = rename_paqs(df, paq_aliases)
-
-    if verbose > 0:
-        print("Checking PAQ data quality.")
-    l = paq_data_quality(df, verbose, allow_lockdown, allow_paq_na, val_range)
-    if l is None:
-        excl_df = None
-    else:
-        excl_df = df.iloc[l, :]
-        df = df.drop(df.index[l])
-    return df, excl_df
-
-
 def rename_paqs(
     df: pd.DataFrame, paq_aliases: Union[Tuple, Dict] = None, verbose: int = 0
 ) -> pd.DataFrame:
@@ -201,16 +154,15 @@ def rename_paqs(
         return df.rename(columns=paq_aliases)
 
 
-def paq_data_quality(
+def likert_data_quality(
     df: pd.DataFrame,
     verbose: int = 0,
-    allow_lockdown: bool = True,
     allow_na: bool = False,
     val_range: tuple = (1, 5),
 ) -> Union[List, None]:
     """Basic check of PAQ data quality
 
-    The paq_data_quality function takes a DataFrame and returns a list of indices that
+    The likert_data_quality function takes a DataFrame and returns a list of indices that
     should be dropped from the DataFrame. The function checks for:
 
     - Rows with all values equal to 1 (indicating no PAQ data)
@@ -225,8 +177,6 @@ def paq_data_quality(
             Specify the dataframe to be evaluated
         verbose: int, optional
             Determine whether or not the function should print out information about the data quality check, by default 0
-        allow_lockdown: bool, optional
-            Allow the user to decide whether they want to remove samples that have a lockdown value of 1, by default True
         allow_na: bool
             Ensure that rows with any missing values are dropped, by default False
         val_range: tuple, optional
@@ -243,9 +193,6 @@ def paq_data_quality(
     l = []
     for i in range(len(paqs)):
         row = paqs.iloc[i]
-        if "Lockdown" in df.columns:
-            if allow_lockdown and df.iloc[i]["Lockdown"] == 1:
-                continue
         if allow_na is False and row.isna().sum() > 0:
             l.append(i)
             continue
@@ -292,8 +239,8 @@ def simulation(n=3000, val_range=(1, 5), add_paq_coords=False, **coord_kwargs):
         columns=PAQ_IDS,
     )
     if add_paq_coords:
-        ISOPl, ISOEv = calculate_paq_coords(df, **coord_kwargs)
-        df = janitor.add_columns(df, ISOPleasant=ISOPl, ISOEventful=ISOEv)
+        isopl, isoev = calculate_paq_coords(df, **coord_kwargs)
+        df = df.assign(ISOPleasant=isopl, ISOEventful=isoev)
     return df
 
 
@@ -345,6 +292,61 @@ def calculate_paq_coords(
     ISOEventful = complex_eventful / scale
 
     return ISOPleasant, ISOEventful
+
+
+def add_iso_coords(
+    data,
+    scale_to_one: bool = True,
+    val_range=(1, 5),
+    projection: bool = True,
+    names=("ISOPleasant", "ISOEventful"),
+    overwrite=False,
+):
+    """Calculate and add ISO coordinates as new columns in dataframe
+
+    Calls `calculate_paq_coords()`
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        ISD Dataframe
+    scale_to_one : bool, optional
+        Should the coordinates be scaled to (-1, +1), by default True
+    val_range: tuple, optional
+        (max, min) range of original PAQ responses, by default (5, 1)
+    projection : bool, optional
+        Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
+    names : list, optional
+        Names for new coordinate columns, by default ["ISOPleasant", "ISOEventful"]
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe with new columns added
+
+    See Also
+    --------
+    :func:`soundscapy.database.calculate_paq_coords`
+    """
+    if names[0] in data.columns:
+        if overwrite:
+            data = data.drop(names[0], axis=1)
+        else:
+            raise Warning(
+                f"{names[0]} already in dataframe. Use `overwrite` to replace it."
+            )
+    if names[1] in data.columns:
+        if overwrite:
+            data = data.drop(names[1], axis=1)
+        else:
+            raise Warning(
+                f"{names[1]} already in dataframe. Use `overwrite` to replace it."
+            )
+    isopl, isoev = calculate_paq_coords(
+        data, scale_to_one=scale_to_one, val_range=val_range, projection=projection
+    )
+    data = data.assign(**{names[0]: isopl, names[1]: isoev})
+    return data
 
 
 def calculate_polar_coords(results_df: pd.DataFrame, scaling: str = "iso"):
@@ -457,8 +459,7 @@ def ssm_metrics(
         mean = mean / abs(max(val_range) - min(val_range)) if scale_to_one else mean
 
         # Calculate the SSM metrics
-        df = janitor.add_columns(
-            df,
+        df = df.assign(
             vl=vl,
             theta=theta,
             mean_level=mean,
@@ -466,13 +467,11 @@ def ssm_metrics(
         return df
 
     elif method == "cosine":
-
         ssm_df = df[paq_cols].apply(
             lambda y: ssm_cosine_fit(y, angles=angles), axis=1, result_type="expand"
         )
 
-        df = janitor.add_columns(
-            df,
+        df = df.assign(
             amp=ssm_df.iloc[:, 0],
             delta=ssm_df.iloc[:, 1],
             elev=ssm_df.iloc[:, 2],

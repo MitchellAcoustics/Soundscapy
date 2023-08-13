@@ -2,7 +2,8 @@
 import warnings
 from typing import Union
 
-import maad
+from maad.sound import spectrogram
+from maad.features import all_spectral_alpha_indices, all_temporal_alpha_indices
 import numpy as np
 import pandas as pd
 from mosqito.sq_metrics import (
@@ -240,15 +241,13 @@ def maad_metric_1ch(
         print(f" - Calculating scikit-maad {metric}")
     # Start the calc
     if metric == "all_spectral_alpha_indices":
-        Sxx, tn, fn, ext = maad.sound.spectrogram(
+        Sxx, tn, fn, ext = spectrogram(
             s, s.fs, **func_args
         )  # spectral requires the spectrogram
-        res = maad.features.all_spectral_alpha_indices(
-            Sxx, tn, fn, extent=ext, **func_args
-        )[0]
+        res = all_spectral_alpha_indices(Sxx, tn, fn, extent=ext, **func_args)[0]
 
     elif metric == "all_temporal_alpha_indices":
-        res = maad.features.all_temporal_alpha_indices(s, s.fs, **func_args)
+        res = all_temporal_alpha_indices(s, s.fs, **func_args)
     else:
         raise ValueError(f"Metric {metric} not recognized.")
     if not as_df:
