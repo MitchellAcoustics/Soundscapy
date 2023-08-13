@@ -25,7 +25,6 @@ dependencies = [
     "mosqito>=1.0.8",
     "PyYAML>=6.0.1",
     "scikit-maad>=1.4.0",
-    "pyjanitor>=0.25.0",
     "tqdm>=4.66.1",
     "matplotlib>=3.7.2",
 ]

@@ -17,7 +17,6 @@ modules under `soundscape.databases`.
 from pathlib import Path
 from typing import Union, Tuple, List, Dict
 
-import janitor
 import numpy as np
 import pandas as pd
 from scipy import optimize

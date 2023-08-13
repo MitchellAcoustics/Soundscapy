@@ -6,7 +6,7 @@ groups = ["default", "dev", "docs", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:6ace7cfd03a6e1dc6ffa453f8966ed9ab2d5716b26dad3cb2a16cb34e3fa2d0d"
+content_hash = "sha256:51079f7877638bf28f392f83d2a0bff2a793f438e7c523a607454894fedc68ea"
 
 [[package]]
 name = "acoustics"
@@ -1369,15 +1369,6 @@ files = [
 ]
 
 [[package]]
-name = "multipledispatch"
-version = "1.0.0"
-summary = "Multiple dispatch"
-files = [
-    {file = "multipledispatch-1.0.0-py3-none-any.whl", hash = "sha256:0c53cd8b077546da4e48869f49b13164bebafd0c2a5afceb6bb6a316e7fb46e4"},
-    {file = "multipledispatch-1.0.0.tar.gz", hash = "sha256:5c839915465c68206c3e9c473357908216c28383b425361e5d144594bf85a7e0"},
-]
-
-[[package]]
 name = "mypy-extensions"
 version = "1.0.0"
 requires_python = ">=3.5"
@@ -1385,16 +1376,6 @@ summary = "Type system extensions for programs checked with the mypy type checke
 files = [
     {file = "mypy_extensions-1.0.0-py3-none-any.whl", hash = "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d"},
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
-]
-
-[[package]]
-name = "natsort"
-version = "8.4.0"
-requires_python = ">=3.7"
-summary = "Simple yet flexible natural sorting in Python."
-files = [
-    {file = "natsort-8.4.0-py3-none-any.whl", hash = "sha256:4732914fb471f56b5cce04d7bae6f164a592c7712e1c85f9ef585e197299521c"},
-    {file = "natsort-8.4.0.tar.gz", hash = "sha256:45312c4a0e5507593da193dedd04abb1469253b601ecaf63445ad80f0a1ea581"},
 ]
 
 [[package]]
@@ -1668,19 +1649,6 @@ files = [
 ]
 
 [[package]]
-name = "pandas-flavor"
-version = "0.6.0"
-summary = "The easy way to write your own Pandas flavor."
-dependencies = [
-    "pandas>=0.23",
-    "xarray",
-]
-files = [
-    {file = "pandas_flavor-0.6.0-py3-none-any.whl", hash = "sha256:a32c9e2e0da702579320cf2bd0078cee91807713bc9c65ff522f6b0289899893"},
-    {file = "pandas_flavor-0.6.0.tar.gz", hash = "sha256:9fb8735102dcb65dae7ee5cda12b393ca134a909ebcfc0262c5cdc1d79ba007f"},
-]
-
-[[package]]
 name = "pandocfilters"
 version = "1.5.0"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -1917,22 +1885,6 @@ summary = "Pygments is a syntax highlighting package written in Python."
 files = [
     {file = "Pygments-2.16.1-py3-none-any.whl", hash = "sha256:13fc09fa63bc8d8671a6d247e1eb303c4b343eaee81d861f3404db2935653692"},
     {file = "Pygments-2.16.1.tar.gz", hash = "sha256:1daff0494820c69bc8941e407aa20f577374ee88364ee10a98fdbe0aece96e29"},
-]
-
-[[package]]
-name = "pyjanitor"
-version = "0.25.0"
-requires_python = ">=3.6"
-summary = "Tools for cleaning pandas DataFrames"
-dependencies = [
-    "multipledispatch",
-    "natsort",
-    "pandas-flavor",
-    "scipy",
-]
-files = [
-    {file = "pyjanitor-0.25.0-py3-none-any.whl", hash = "sha256:77f8ebe47e26a62ab58b0d46b7448093c3d5824aa29c9b6bbc69662b685f98d8"},
-    {file = "pyjanitor-0.25.0.tar.gz", hash = "sha256:c051976896aed3bd2ac7c5d0eb7f3607a45af923266eeb95edd6824610bd4b74"},
 ]
 
 [[package]]
@@ -3007,21 +2959,6 @@ files = [
     {file = "wrapt-1.15.0-cp39-cp39-win_amd64.whl", hash = "sha256:eef4d64c650f33347c1f9266fa5ae001440b232ad9b98f1f43dfe7a79435c0a6"},
     {file = "wrapt-1.15.0-py3-none-any.whl", hash = "sha256:64b1df0f83706b4ef4cfb4fb0e4c2669100fd7ecacfb59e091fad300d4e04640"},
     {file = "wrapt-1.15.0.tar.gz", hash = "sha256:d06730c6aed78cee4126234cf2d071e01b44b915e725a6cb439a879ec9754a3a"},
-]
-
-[[package]]
-name = "xarray"
-version = "2023.7.0"
-requires_python = ">=3.9"
-summary = "N-D labeled arrays and datasets in Python"
-dependencies = [
-    "numpy>=1.21",
-    "packaging>=21.3",
-    "pandas>=1.4",
-]
-files = [
-    {file = "xarray-2023.7.0-py3-none-any.whl", hash = "sha256:af8b55bf78b792b8ad9326eb9d89980602f1a51e93d8465b445aeea3accca27e"},
-    {file = "xarray-2023.7.0.tar.gz", hash = "sha256:dace2fdbf1b7ff185d9c1226a24bf83c2ae52f3253dbfe80e17d1162600d055c"},
 ]
 
 [[package]]
