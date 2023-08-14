@@ -120,5 +120,17 @@ def test_to_yaml(example_settings):
         assert saved_data == example_settings
 
 
+def test_parse_maad_all_alpha_indices():
+    settings = AnalysisSettings.default()
+    maad_settings = settings.parse_maad_all_alpha_indices("all_temporal_alpha_indices")
+    assert len(maad_settings) == 2
+    with pytest.raises(AssertionError) as excinfo:
+        obj = settings.parse_maad_all_alpha_indices("missing_key")
+    assert (
+        "metric must be all_temporal_alpha_indices or all_spectral_alpha_indices."
+        in str(excinfo.value)
+    )
+
+
 if __name__ == "__main__":
     pytest.main()

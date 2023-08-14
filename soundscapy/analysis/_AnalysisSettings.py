@@ -66,7 +66,9 @@ class AnalysisSettings(dict):
             AnalysisSettings object
         """
         with open(filename, "r") as f:
-            return cls(yaml.load(f, Loader=yaml.Loader), run_stats, force_run_all, filename)
+            return cls(
+                yaml.load(f, Loader=yaml.Loader), run_stats, force_run_all, filename
+            )
 
     @classmethod
     def default(cls, run_stats=True, force_run_all=False):
@@ -132,6 +134,11 @@ class AnalysisSettings(dict):
         channel: tuple or list of str, or str
             channel(s) to run the metric on
         """
+        assert metric in [
+            "all_temporal_alpha_indices",
+            "all_spectral_alpha_indices",
+        ], "metric must be all_temporal_alpha_indices or all_spectral_alpha_indices."
+
         lib_settings = self["scikit-maad"].copy()
         run = lib_settings[metric]["run"] or self.force_run_all
         channel = lib_settings[metric]["channel"].copy()
