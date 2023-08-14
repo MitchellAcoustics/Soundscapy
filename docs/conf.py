@@ -22,12 +22,10 @@ project = "soundscapy"
 author = "Andrew Mitchell"
 
 # The full version, including alpha/beta/rc tags
-sspy_version = SourceFileLoader(
-    "soundscapy.version", "../soundscapy/version.py"
-).load_module()
+from soundscapy import __version__ as sspy_version
 
-release = sspy_version.__version__
-version = sspy_version.__version__
+release = sspy_version
+version = sspy_version
 
 # -- General configuration ---------------------------------------------------
 

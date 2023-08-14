@@ -3,20 +3,23 @@ includes = []
 
 [[tool.pdm.autoexport]]
 filename = "requirements.txt"
-groups = ["default"]
+groups = [
+    "default",
+]
 
 [build-system]
-requires = ["pdm-backend"]
+requires = [
+    "pdm-backend",
+]
 build-backend = "pdm.backend"
 
 [project]
 name = "soundscapy"
-version = "0.5.0"
+version = "0.5.1a1"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
-    {name = "Andrew Mitchell", email = "andrew.mitchell.18@ucl.ac.uk"},
+    { name = "Andrew Mitchell", email = "andrew.mitchell.18@ucl.ac.uk" },
 ]
-
 dependencies = [
     "pandas[excel,performance]>=2.0.3",
     "seaborn>=0.12.2",
@@ -29,9 +32,20 @@ dependencies = [
 ]
 requires-python = ">=3.9,<4.0"
 readme = "README.md"
-license = {text = "BSD-3-Clause"}
-classifiers = ["Programming Language :: Python :: 3", "Operating System :: OS Independent", "License :: OSI Approved :: BSD License"]
-keywords = ["soundscape", "psychoacoustics", "acoustics", "audio analysis"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: BSD License",
+]
+keywords = [
+    "soundscape",
+    "psychoacoustics",
+    "acoustics",
+    "audio analysis",
+]
+
+[project.license]
+text = "BSD-3-Clause"
 
 [project.urls]
 repository = "https://github.com/MitchellAcoustics/Soundscapy"
@@ -49,7 +63,6 @@ docs = [
     "sphinx-rtd-theme>1.2.2",
     "Sphinx>=7.1.2",
 ]
-
 test = [
     "pytest>=7.4.0",
     "setuptools>=68.0.0",
