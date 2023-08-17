@@ -132,5 +132,28 @@ def test_parse_maad_all_alpha_indices():
     )
 
 
-if __name__ == "__main__":
-    pytest.main()
+def test_parse_mosqito():
+    settings = AnalysisSettings.default()
+    mosqito_settings = settings.parse_mosqito("loudness_zwtv")
+    assert len(mosqito_settings) == 6
+    with pytest.raises(AssertionError) as excinfo:
+        obj = settings.parse_mosqito("missing_key")
+    assert "Metric missing_key not found." in str(excinfo.value)
+
+    settings["MoSQITo"]["loudness_zwtv"] = {
+        "run": False,
+        "main": 5,
+        "channel": ["Left", "Right"],
+        "statistics": [0, 50, 90],
+        "label": "N5",
+    }
+    run, channel, statistics, label, parallel, func_args = settings.parse_mosqito(
+        "loudness_zwtv"
+    )
+    assert parallel == False
+
+
+def test_parse_pyacoustics():
+    settings = AnalysisSettings.default()
+    pyacoustics_settings = settings.parse_pyacoustics("LAeq")
+    assert len(pyacoustics_settings) == 5

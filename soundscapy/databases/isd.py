@@ -134,12 +134,12 @@ def _isd_select(data, select_by, condition):
     pd.DataFrame
         Filtered dataframe
     """
-    if isinstance(condition, str):
-        return data.query(f"{select_by} == @condition")
+    if isinstance(condition, (str, int)):
+        return data.query(f"{select_by} == @condition", engine="python")
     elif isinstance(condition, (list, tuple)):
         return data.query(f"{select_by} in @condition")
     else:
-        raise TypeError("Should be either a str, list, or tuple.")
+        raise TypeError("Should be either a str, int, list, or tuple.")
 
 
 def select_record_ids(data, record_ids):
@@ -295,6 +295,30 @@ def describe_location(data, location, type="percent", pl_threshold=0, ev_thresho
         res["calm"] = calm_count
 
     return res
+
+
+def soundscapy_describe(
+    df: pd.DataFrame, group_by="LocationID", type="percent"
+) -> pd.DataFrame:
+    """Return a summary of the data
+
+    Parameters
+    ----------
+    group_by : str, optional
+        Column to group by, by default "LocationID"
+    type : str, optional
+        Type of summary, by default "percent"
+
+    Returns
+    -------
+    pd.DataFrame
+        Summary of the data
+    """
+    res = {
+        location: describe_location(df, location) for location in df[group_by].unique()
+    }
+
+    return pd.DataFrame.from_dict(res, orient="index")
 
 
 @register_dataframe_accessor("isd")
@@ -558,14 +582,9 @@ class ISDAccessor:
         pd.DataFrame
             Summary of the data
         """
-        raise PendingDeprecationWarning("The ISD accessor will be deprecated soon.")
-        res = {
-            location: self.location_describe(location, type=type)
-            for location in self._obj[group_by].unique()
-        }
-
-        res = pd.DataFrame.from_dict(res, orient="index")
-        return res
+        raise DeprecationWarning(
+            "The ISD accessor has been deprecated. Please use `soundscapy.isd.soundscapy_describe()` instead."
+        )
 
     def mean_responses(self, group="LocationID") -> pd.DataFrame:
         """Calculate the mean responses for each PAQ

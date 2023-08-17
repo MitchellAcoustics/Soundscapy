@@ -190,6 +190,13 @@ class AnalysisSettings(dict):
         func_args: dict
             arguments to pass to the underlying metric function from MoSQITo
         """
+        assert metric in [
+            "loudness_zwtv",
+            "sharpness_din_from_loudness",
+            "sharpness_din_perseg",
+            "sharpness_din_tv",
+            "roughness_dw",
+        ], f"Metric {metric} not found."
         run, channel, statistics, label, func_args = self._parse_method(
             "MoSQITo", metric
         )

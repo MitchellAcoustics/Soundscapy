@@ -413,6 +413,9 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
     pd.DataFrame
         Index includes "Recording" and "Channel" with a column for each index.
     """
+    # TODO: Add check for whether all of the recordings have rows in the dataframe
+    # If not, add new rows first
+
     if not set(metric_results.columns).issubset(set(results_df.columns)):
         # Check if results_df already has the columns in results
         results_df = results_df.join(metric_results)
@@ -455,7 +458,7 @@ def process_all_metrics(
     idx = pd.MultiIndex.from_tuples(((b.recording, "Left"), (b.recording, "Right")))
     results_df = pd.DataFrame(index=idx)
     results_df.index.names = ["Recording", "Channel"]
-    
+
     # Count number of metrics to run
     metric_count = 0
     for library in analysis_settings.keys():
