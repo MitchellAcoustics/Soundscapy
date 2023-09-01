@@ -65,6 +65,8 @@ def _stat_calcs(
             res[f"{label}_{stat}"] = stats.kurtosis(ts_array)
         elif stat == "skew":
             res[f"{label}_{stat}"] = stats.skew(ts_array)
+        elif stat == "std":
+            res[f"{label}_{stat}"] = np.std(ts_array)
         else:
             res[f"{label}_{stat}"] = np.percentile(ts_array, 100 - stat)
     return res
