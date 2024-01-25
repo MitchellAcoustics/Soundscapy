@@ -10,3 +10,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Changed the name of the `calculate_paq_coords` to `calculate_iso_coords` to better reflect the function's purpose.
+- Updated the formula for `calculate_iso_coords` to the more generalised form given in Aletta et. al. (2024).

@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
-from pytest import approx
-from pytest import raises
+from pytest import approx, raises
 
 import soundscapy
 import soundscapy.utils.surveys as surv
+from soundscapy.utils.parameters import EQUAL_ANGLES, LANGUAGE_ANGLES
 
 basic_test_df = pd.DataFrame(
     {
@@ -199,25 +199,55 @@ def test_rename_paqs():
     ]
 
 
-def test_calculate_paq_coords():
-    coords = surv.calculate_paq_coords(basic_test_df)
+def test_calculate_iso_coords():
+    coords = surv.calculate_iso_coords(basic_test_df)
     assert coords[0][0] == approx(0.53, abs=0.05) and coords[0][1] == approx(
-        -0.75, abs=0.05
+        -0.75, abs=0.01
     )  # ISOPleasant coords
     assert coords[1][0] == approx(0.03, abs=0.05) and coords[1][1] == approx(
-        0.35, abs=0.05
+        0.35, abs=0.01
     )  # ISOEventful coords
 
 
-def test_calculate_paq_coords_val_range():
+def test_adj_iso_pl():
+    df = basic_test_df.copy()
+    assert surv.adj_iso_pl(df.iloc[0, 1:], EQUAL_ANGLES, scale=4) == approx(
+        0.53, abs=0.01
+    )
+    # Test with english corrected angles
+    assert surv.adj_iso_pl(df.iloc[0, 1:], LANGUAGE_ANGLES["eng"], scale=4) == approx(
+        0.66, abs=0.01
+    )
+    # Test with mandarin corrected angles
+    assert surv.adj_iso_pl(df.iloc[0, 1:], LANGUAGE_ANGLES["cmn"], scale=4) == approx(
+        0.41, abs=0.01
+    )
+
+
+def test_adj_iso_ev():
+    df = basic_test_df.copy()
+    assert surv.adj_iso_ev(df.iloc[0, 1:], EQUAL_ANGLES, scale=4) == approx(
+        0.03, abs=0.01
+    )
+    # Test with english corrected angles
+    assert surv.adj_iso_ev(df.iloc[0, 1:], LANGUAGE_ANGLES["eng"], scale=4) == approx(
+        0.14, abs=0.01
+    )
+    # Test with mandarin corrected angles
+    assert surv.adj_iso_ev(df.iloc[0, 1:], LANGUAGE_ANGLES["cmn"], scale=4) == approx(
+        -0.09, abs=0.01
+    )
+
+
+def test_calculate_iso_coords_val_range():
     df = basic_test_df.copy()
     df = df * 10
-    coords = surv.calculate_paq_coords(df, val_range=(0, 100))
-    assert coords[0][0] == approx(0.21, abs=0.05) and coords[0][1] == approx(
-        -0.30, abs=0.05
+    coords = surv.calculate_iso_coords(df, val_range=(0, 100))
+    assert coords[0][0] == approx(0.21, abs=0.01) and coords[0][1] == approx(
+        -0.30, abs=0.01
     )  # ISOPleasant coords
-    assert coords[1][0] == approx(0.01, abs=0.05) and coords[1][1] == approx(
-        0.14, abs=0.05
+    assert coords[1][0] == approx(0.01, abs=0.01) and coords[1][1] == approx(
+        0.14, abs=0.01
     )  # ISOEventful coords
 
 
@@ -241,7 +271,7 @@ def test_paq_data_quality():
     assert l == [2]
 
 
-def test_calculate_paq_coords_min_max():
+def test_calculate_iso_coords_min_max():
     # first is max pleasant, second is max eventful, third is min pleasant, fourth is min eventful
     vals = {
         "RecordID": ["maxpl", "maxev", "minpl", "minev"],
@@ -256,7 +286,7 @@ def test_calculate_paq_coords_min_max():
     }
     df = pd.DataFrame(vals)
     df = surv.rename_paqs(df)
-    ISOPl, ISOEv = surv.calculate_paq_coords(df)
+    ISOPl, ISOEv = surv.calculate_iso_coords(df)
     assert ISOPl[0] == approx(1, abs=0.01) and ISOPl[2] == approx(
         -1, abs=0.01
     )  # ISOPleasant coords
@@ -265,7 +295,7 @@ def test_calculate_paq_coords_min_max():
     )  # ISOEventful coords
 
 
-def test_calculate_paq_coords_val_range_min_max():
+def test_calculate_iso_coords_val_range_min_max():
     # first is max pleasant, second is max eventful, third is min pleasant, fourth is min eventful
     vals = {
         "RecordID": ["maxpl", "maxev", "minpl", "minev"],
@@ -280,7 +310,7 @@ def test_calculate_paq_coords_val_range_min_max():
     }
     df = pd.DataFrame(vals)
     df = surv.rename_paqs(df)
-    ISOPl, ISOEv = surv.calculate_paq_coords(df, val_range=(-50, 50))
+    ISOPl, ISOEv = surv.calculate_iso_coords(df, val_range=(-50, 50))
     assert ISOPl[0] == approx(1, abs=0.01) and ISOPl[2] == approx(
         -1, abs=0.01
     )  # ISOPleasant coords
@@ -293,10 +323,10 @@ def test_simulation():
     df = surv.simulation(n=200)
     assert df.shape == (200, 8)
 
-    df = surv.simulation(n=200, add_paq_coords=True)
+    df = surv.simulation(n=200, add_iso_coords=True)
     assert df.shape == (200, 10)
 
-    df = surv.simulation(n=200, add_paq_coords=True)
+    df = surv.simulation(n=200, add_iso_coords=True)
     assert df.columns.tolist() == [
         "PAQ1",
         "PAQ2",
@@ -313,5 +343,6 @@ def test_simulation():
 
 if __name__ == "__main__":
     pytest.main()
+
 
 # %%

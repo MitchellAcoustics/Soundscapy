@@ -15,7 +15,7 @@ modules under `soundscape.databases`.
 """
 
 from pathlib import Path
-from typing import Union, Tuple, List, Dict
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -215,7 +215,7 @@ def likert_data_quality(
     return None
 
 
-def simulation(n=3000, val_range=(1, 5), add_paq_coords=False, **coord_kwargs):
+def simulation(n=3000, val_range=(1, 5), add_iso_coords=False, **coord_kwargs):
     """Generate random PAQ responses
 
     The PAQ responses will follow a uniform random distribution
@@ -225,7 +225,7 @@ def simulation(n=3000, val_range=(1, 5), add_paq_coords=False, **coord_kwargs):
     ----------
     n : int, optional
         number of samples to simulate, by default 3000
-    add_paq_coords : bool, optional
+    add_iso_coords : bool, optional
         should we also calculate the ISO coordinates, by default False
 
     Returns
@@ -238,17 +238,16 @@ def simulation(n=3000, val_range=(1, 5), add_paq_coords=False, **coord_kwargs):
         np.random.randint(min(val_range), max(val_range) + 1, size=(n, 8)),
         columns=PAQ_IDS,
     )
-    if add_paq_coords:
-        isopl, isoev = calculate_paq_coords(df, **coord_kwargs)
+    if add_iso_coords:
+        isopl, isoev = calculate_iso_coords(df, **coord_kwargs)
         df = df.assign(ISOPleasant=isopl, ISOEventful=isoev)
     return df
 
 
-def calculate_paq_coords(
+def calculate_iso_coords(
     results_df: pd.DataFrame,
-    scale_to_one: bool = True,
     val_range: tuple = (5, 1),
-    projection: bool = True,
+    angles=(0, 45, 90, 135, 180, 225, 270, 315),
 ):
     """Calculates the projected ISOPleasant and ISOEventful coordinates
 
@@ -258,49 +257,93 @@ def calculate_paq_coords(
 
     Parameters
     ----------
+    angles
     results_df : pd.DataFrame
         Dataframe containing ISD formatted data
-    scale_to_one : bool, optional
-        Should the coordinates be scaled to (-1, +1), by default True
-    projection : bool, optional
-        Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
 
     Returns
     -------
     tuple
         ISOPleasant and ISOEventful coordinate values
     """
-
-    proj = np.cos(np.deg2rad(45)) if projection else 1
-    scale = _circ_scale(val_range) if scale_to_one else 1
-
     # TODO: Add if statements for too much missing data
-    # P =(p−a)+cos45°(ca−ch)+cos45°(v−m)
-    complex_pleasant = (
-        (results_df.PAQ1.fillna(3) - results_df.PAQ5.fillna(3))
-        + proj * (results_df.PAQ8.fillna(3) - results_df.PAQ4.fillna(3))
-        + proj * (results_df.PAQ2.fillna(3) - results_df.PAQ6.fillna(3))
-    )
-    ISOPleasant = complex_pleasant / scale
+    scale = max(val_range) - min(val_range)
 
-    # E =(e−u)+cos45°(ch−ca)+cos45°(v−m)
-    complex_eventful = (
-        (results_df.PAQ3.fillna(3) - results_df.PAQ7.fillna(3))
-        + proj * (results_df.PAQ4.fillna(3) - results_df.PAQ8.fillna(3))
-        + proj * (results_df.PAQ2.fillna(3) - results_df.PAQ6.fillna(3))
+    ISOPleasant = return_paqs(results_df, incl_ids=False).apply(
+        lambda row: adj_iso_pl(row, angles, scale), axis=1
     )
-    ISOEventful = complex_eventful / scale
+    ISOEventful = return_paqs(results_df, incl_ids=False).apply(
+        lambda row: adj_iso_ev(row, angles, scale), axis=1
+    )
 
     return ISOPleasant, ISOEventful
 
 
+def adj_iso_pl(values: tuple, angles: tuple, scale=None) -> float:
+    """
+    Calculate the adjusted ISOPleasant value
+
+    This calculation is based on the formulae given in Aletta et. al. (2024), adapted from ISO12913-3.
+    These formulae were developed to enable the use of adjusted angles and are as follows:
+
+    .. math::
+        ISOPleasant = \\frac{1}{\\lambda_{pl}} \\sum_{i=1}^{8} \\cos(\\theta_i) \\cdot \\sigma_i
+
+    .. math::
+        ISOEventful = \\frac{1}{\\lambda_{ev}} \\sum_{i=1}^{8} \\sin(\\theta_i) \\cdot \\sigma_i
+
+    where i indexes each circumplex scale, :math:`\theta_i` is the adjusted angle for the circumplex scale for the
+    appropriate language, and :math:`\\sigma_i` is the response value for the circumplex scale.
+    The :math:`\\frac{1}{\\lambda}` provides a scaling factor (equivalent to the :math:`\\frac{1}{(4 + \\sqrt{32})}`
+    from ISO 12913-3) to bring the range of ISOPleasant, ISOEventful to (-1, +1):
+
+    .. math::
+        \\lambda_{pl} = \\frac{\\rho}{2} \\sum_{i=1}^{8} \\left| \\cos(\\theta_i) \\right|
+
+    where :math:`\\rho` is the range of the PAQ values (i.e. 5 - 1 = 4). :math:`\\lambda_{ev}` is calculated in the same
+    but using :math:`\\sin(\\theta_i)` as before.
+
+    Parameters
+    ----------
+    values: tuple or np.array
+    angles: tuple
+    scale: float, optional
+    The scale to use for the adjusted ISOPleasant value, by default None
+
+    Returns
+    -------
+    float
+
+    """
+    iso_pl = np.sum(
+        [np.cos(np.deg2rad(angle)) * values[i] for i, angle in enumerate(angles)]
+    )
+    if scale:
+        iso_pl = iso_pl / (
+            scale / 2 * np.sum(np.abs([np.cos(np.deg2rad(angle)) for angle in angles]))
+        )
+
+    return iso_pl
+
+
+def adj_iso_ev(values, angles, scale=None):
+    iso_ev = np.sum(
+        [np.sin(np.deg2rad(angle)) * values[i] for i, angle in enumerate(angles)]
+    )
+    if scale:
+        iso_ev = iso_ev / (
+            scale / 2 * np.sum(np.abs([np.sin(np.deg2rad(angle)) for angle in angles]))
+        )
+
+    return iso_ev
+
+
 def add_iso_coords(
     data,
-    scale_to_one: bool = True,
     val_range=(1, 5),
-    projection: bool = True,
     names=("ISOPleasant", "ISOEventful"),
     overwrite=False,
+    angles=(0, 45, 90, 135, 180, 225, 270, 315),
 ):
     """Calculate and add ISO coordinates as new columns in dataframe
 
@@ -308,14 +351,11 @@ def add_iso_coords(
 
     Parameters
     ----------
+    angles
     data : pd.DataFrame
         ISD Dataframe
-    scale_to_one : bool, optional
-        Should the coordinates be scaled to (-1, +1), by default True
     val_range: tuple, optional
         (max, min) range of original PAQ responses, by default (5, 1)
-    projection : bool, optional
-        Use the trigonometric projection (cos(45)) term for diagonal PAQs, by default True
     names : list, optional
         Names for new coordinate columns, by default ["ISOPleasant", "ISOEventful"]
 
@@ -342,9 +382,7 @@ def add_iso_coords(
             raise Warning(
                 f"{names[1]} already in dataframe. Use `overwrite` to replace it."
             )
-    isopl, isoev = calculate_paq_coords(
-        data, scale_to_one=scale_to_one, val_range=val_range, projection=projection
-    )
+    isopl, isoev = calculate_iso_coords(data, val_range=val_range, angles=angles)
     data = data.assign(**{names[0]: isopl, names[1]: isoev})
     return data
 
@@ -386,7 +424,7 @@ def calculate_polar_coords(results_df: pd.DataFrame, scaling: str = "iso"):
         )
 
     scale_to_one = True if scaling == "iso" else False
-    isopl, isoev = calculate_paq_coords(results_df, scale_to_one=scale_to_one)
+    isopl, isoev = calculate_iso_coords(results_df)
 
     if scaling == "gurtman":
         isopl = isopl * 0.25
