@@ -6,7 +6,7 @@ import importlib.metadata
 
 from soundscapy.analysis._AnalysisSettings import AnalysisSettings, get_default_yaml
 from soundscapy.analysis._Binaural import Binaural
-from soundscapy.utils import _sspy_accessor, surveys, ssid
+from soundscapy.utils import _sspy_accessor, surveys
 from soundscapy.databases import isd, araus, satp
 from soundscapy import plotting
 
