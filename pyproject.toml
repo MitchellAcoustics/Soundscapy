@@ -15,7 +15,7 @@ build-backend = "pdm.backend"
 
 [project]
 name = "soundscapy"
-version = "0.5.3"
+version = "0.6.0"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     { name = "Andrew Mitchell", email = "andrew.mitchell.18@ucl.ac.uk" },
@@ -74,4 +74,6 @@ dev = [
     "black>=23.7.0",
     "pycircular>=0.1.2",
     "statsmodels>=0.14.0",
+    "ndtest @ git+https://github.com/syrte/ndtest",
+    "librosa>=0.10.1",
 ]
