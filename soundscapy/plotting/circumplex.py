@@ -100,6 +100,7 @@ def scatter(
         ax=ax,
         zorder=data_zorder,
         s=s,
+        legend=legend,
         **kwargs,
     )
     ax = _deal_w_default_labels(ax, False)
