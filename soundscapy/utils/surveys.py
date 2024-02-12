@@ -287,10 +287,10 @@ def adj_iso_pl(values: tuple, angles: tuple, scale=None) -> float:
     These formulae were developed to enable the use of adjusted angles and are as follows:
 
     .. math::
-        ISOPleasant = \\frac{1}{\\lambda_{pl}} \\sum_{i=1}^{8} \\cos(\\theta_i) \\cdot \\sigma_i
+        P_{ISO} = \\frac{1}{\\lambda_{pl}} \\sum_{i=1}^{8} \\cos(\\theta_i) \\cdot \\sigma_i
 
     .. math::
-        ISOEventful = \\frac{1}{\\lambda_{ev}} \\sum_{i=1}^{8} \\sin(\\theta_i) \\cdot \\sigma_i
+        E_{ISO} = \\frac{1}{\\lambda_{ev}} \\sum_{i=1}^{8} \\sin(\\theta_i) \\cdot \\sigma_i
 
     where i indexes each circumplex scale, :math:`\theta_i` is the adjusted angle for the circumplex scale for the
     appropriate language, and :math:`\\sigma_i` is the response value for the circumplex scale.
