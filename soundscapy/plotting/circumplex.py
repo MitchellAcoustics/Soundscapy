@@ -131,9 +131,9 @@ def density(
     hue: str = None,
     palette="colorblind",
     fill: bool = True,
-    levels: int = (10,)
-    thresh: float = (0.05,)
-    bw_adjust = (None,)
+    levels: int = 10,
+    thresh: float = 0.05,
+    bw_adjust=None,
     **kwargs,
 ):
     """Plot a density plot of ISOCoordinates.
