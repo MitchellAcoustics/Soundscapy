@@ -1,6 +1,6 @@
 """Plotting functions for visualising circumplex data."""
 
-from typing import Union, Tuple, List
+from typing import List, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.axes
@@ -21,44 +21,32 @@ simple_density = dict(thresh=0.5, levels=2, incl_outline=True, alpha=0.5)
 
 
 def scatter(
-    data=None,
-    x="ISOPleasant",
-    y="ISOEventful",
-    title="Soundscape Scatter Plot",
-    diagonal_lines=False,
-    xlim=(-1, 1),
-    ylim=(-1, 1),
-    figsize=(5, 5),
-    legend_loc="lower left",
-    hue=None,
-    style=None,
-    s=20,
-    palette="colorblind",
-    hue_order=None,
-    hue_norm=None,
-    sizes=None,
-    size_order=None,
-    size_norm=None,
-    markers=True,
-    style_order=None,
-    alpha=None,
-    legend="auto",
-    ax=None,
-    **scatter_kws,
+    data: pd.DataFrame,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    title: str = "Soundscape Scatter Plot",
+    diagonal_lines: bool = False,
+    xlim: Tuple[int] = (-1, 1),
+    ylim: Tuple[int] = (-1, 1),
+    figsize: Tuple[int] = (5, 5),
+    legend_loc: str = "lower left",
+    hue: str = None,
+    s: int = 20,
+    palette: str = "colorblind",
+    legend: str = "auto",
+    ax: mpl.axes.Axes = None,
+    **kwargs,
 ):
     """Plot ISOcoordinates as scatter points on a soundscape circumplex grid
 
-    Makes use of seaborn.scatterplot. We have made all of the `seaborn.scatterplot` arguments available, but have also added or changed some specific
-    options for circumplex plotting.
-
     Parameters
     ----------
-    data : pd.DataFrame, np.ndarray, mapping or sequence
+    data : pd.DataFrame
         Input data structure. Either a long-form collection of vectors that can be assigned to
         named variables or a wide-form dataset that will be internally reshaped.
-    x : vector or key in `data`, optional
+    x : str, optional
         column name for x variable, by default "ISOPleasant"
-    y : vector or key in `data`, optional
+    y : str, optional
         column name for y variable, by default "ISOEventful"
     title : str, optional
         Title to add to circumplex plot, by default "Soundscape Scatter Plot"
@@ -71,42 +59,16 @@ def scatter(
         Size of the figure to return if `ax` is None, by default (5, 5)
     legend_loc : str, optional
         relative location of legend, by default "lower left"
+    hue : str, optional
+        Grouping variable that will produce points with different colors. Can be either categorical or numeric,
+        although color mapping will behave differently in latter case, by default None
+    s : int, optional
+        size of scatter points, by default 20
     palette : string, list, dict or matplotlib.colors.Colormap, optional
         Method for choosing the colors to use when mapping the hue semantic. String values are passed to
         seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping.
         by default colorblind
-    s : int, optional
-        size of scatter points, by default 10
-    hue : vector or key in data, optional
-        Grouping variable that will produce points with different colors. Can be either categorical or numeric,
-        although color mapping will behave differently in latter case, by default None
-    style : vector or key in data
-        Grouping variable that will produce points with different markers. Can have a numeric dtype but will always
-        be treated as categorical.
-    hue_order : vector of strings
-        Specify the order of processing and plotting for categorical levels of the `hue` semantic
-    hue_norm : tuple or matplotlib.colors.Normalize
-        Either a pair of values that set the normalization range in data units or an object that will map from data
-        units into a [0, 1] interval. Usage implies numeric mapping.
-    sizes : list, dict, or tuple
-        An object that determines how sizes are chosen when `size` is used. It can always be a list of size values or
-        a dict mapping levels of the `size` variable to sizes. When `size` is numeric, it can also be a tuple
-        specifying the minimum and maximum size to use such that other values are normalized within this range.
-    size_order : list
-        Specified order for appearance of the `size` variable levels, otherwise they are determined from the data. Not
-        relevant when the `size` variable is numeric.
-    size_norm : tuple or Normalization object
-        Normalization in data units for scaling plot objects when the `size` variable is numeric.
-    markers : boolean, list, or dictionary
-        Object determining how to draw the markers for different levels of the `style` variable. Setting to `True` will
-        use default markers, or you can pass a list of markers or a dictionary mapping levels of the `style` variable
-        to markers. Setting to `False` will draw marker-less lines. Markers are specified as in matplotlib.
-    style_order : list
-        Specified order for appearance of the `style` variable levels otherwise they are determined from the data. Not
-        relevant when the `style` variable is numeric.
-    alpha : float
-        Proportional opacity of the points.
     legend : {"auto", "brief", "full" or False}, optional
         How to draw the legend. If “brief”, numeric hue and size variables will be represented with a sample of evenly
         spaced values. If “full”, every group will get an entry in the legend. If “auto”, choose between brief or full
@@ -119,7 +81,9 @@ def scatter(
     Returns
     -------
     matplotlib.axes.Axes
+    Axes object containing the plot.
     """
+
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -132,21 +96,11 @@ def scatter(
         x=x,
         y=y,
         hue=hue,
-        style=style,
-        s=s,
         palette=palette,
-        hue_order=hue_order,
-        hue_norm=hue_norm,
-        sizes=sizes,
-        size_order=size_order,
-        size_norm=size_norm,
-        markers=markers,
-        style_order=style_order,
-        alpha=alpha,
-        legend=legend,
         ax=ax,
         zorder=data_zorder,
-        **scatter_kws,
+        s=s,
+        **kwargs,
     )
     ax = _deal_w_default_labels(ax, False)
     _circumplex_grid(ax, False, diagonal_lines, xlim, ylim)
@@ -156,7 +110,6 @@ def scatter(
     return s
 
 
-# TODO: Consider changing to displot
 def density(
     data: Union[pd.DataFrame, np.ndarray] = None,
     x: str = "ISOPleasant",
@@ -425,6 +378,7 @@ def density(
     return d
 
 
+# TODO: Consider changing to displot
 def jointplot(
     data=None,
     x="ISOPleasant",
