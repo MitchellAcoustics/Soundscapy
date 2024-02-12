@@ -1,6 +1,6 @@
 """Plotting functions for visualising circumplex data."""
 
-from typing import List, Tuple, Union
+from typing import Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.axes
@@ -126,32 +126,14 @@ def density(
     figsize: tuple = (5, 5),
     legend_loc: str = "lower left",
     alpha: float = 0.75,
-    gridsize: int = 200,
-    kernel: str = None,
-    cut: Union[float, int] = 3,
-    clip: Tuple[int] = None,
     legend: bool = False,
-    cumulative: bool = False,
-    cbar: bool = False,
-    cbar_ax: matplotlib.axes.Axes = None,
-    cbar_kws: dict = None,
     ax: matplotlib.axes.Axes = None,
-    weights: str = None,
     hue: str = None,
     palette="colorblind",
-    hue_order: List[str] = None,
-    hue_norm=None,
-    multiple: str = "layer",
-    common_norm: bool = False,
-    common_grid: bool = False,
-    levels: int = 10,
-    thresh: float = 0.05,
-    bw_method="scott",
-    bw_adjust: Union[float, int] = None,
-    log_scale: Union[bool, int, float] = None,
-    color: str = "blue",
     fill: bool = True,
-    warn_singular: bool = True,
+    levels: int = (10,)
+    thresh: float = (0.05,)
+    bw_adjust = (None,)
     **kwargs,
 ):
     """Plot a density plot of ISOCoordinates.
@@ -161,6 +143,7 @@ def density(
 
     Parameters
     ----------
+    bw_adjust
     data : pd.DataFrame, np.ndarray, mapping or sequence
         Input data structure. Either a long-form collection of vectors that can be assigned to
         named variables or a wide-form dataset that will be internally reshaped.
@@ -188,30 +171,10 @@ def density(
         Relative location of legend, by default "lower left"
     alpha : float, optional
         Proportional opacity of the heatmap fill, by default 0.75
-    gridsize : int, optional
-        Nuber of points on each dimension of the evaluation grid, by default 200
-    kernel : str, optional
-        Function that defines the kernel, by default None
-    cut : Union[float, int], optional
-        Factor, multiplied by the smoothing bandwidth, that determines how far the evaluation grid extends past the
-        extreme datapoints. When set to 0, truncate the curve at the data limits, by default 3
-    clip : tuple[int], optional
-        Do not evaluate the density outside of these limits, by default None
     legend : bool, optional
         If False, suppress the legend for semantic variables, by default True
-    cumulative : bool, optional
-        If True, estimate a cumulative distribution function, by default False
-    cbar : bool, optional
-        If True, add a colorbar to annotate the color mapping in a bivariate plot. Note: does not currently support
-        plots with a `hue` variable well, by default False
-    cbar_ax : matplotlib.axes.Axes, optional
-        Pre-existing axes for the colorbar, by default None
-    cbar_kws : dict, optional
-        Keyword arguments for the colorbar, by default None
     ax : matplotlib.axes.Axes, optional
         Pre-existing axes object to use for the plot, by default None
-    weights : vector or key in `data`, optional
-        If provided, weight the kernel density estimation using these values, by default None
     hue : vector or key in `data`, optional
         Semantic variable that is mapped to determine the color of plot elements, by default None
     palette : Union[str, list, dict, matplotlib.colors.Colormap], optional
@@ -219,45 +182,20 @@ def density(
         seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping.
         by default colorblind
-    hue_order : list[str], optional
-        Specify the order of processing and plotting for categorical levels of the `hue` semantic, by default None
-    hue_norm : Union[tuple, matplotlib.colors.Normalize], optional
-        Either a pair of values that set the normalization range in data units or an object , by default None
-    multiple : {"layer", "stack", "fill"}, optional
-        Whether to plot multiple elements when semantic mapping creates subsets. Only relevant with univariate data,
-        by default 'layer'
-    common_norm : bool, optional
-        If True, scale each conditional density by the number of observations such that the total area under all
-        densities sums to 1. Otherwise, normalize each density independently, by default False
-    common_grid : bool, optional
-        If True, use the same evaluation grid for each kernel density estimate. Only relevant with univariate data.
-        by default, False
-    levels : int or vector, optional
-        Number of contour levels or values to draw contours at. A vector argument must have increasing values in [0, 1].
-         Levels correspond to iso-proportions of the density: e.g., 20% of the probability mass will lie below the
-         contour drawn for 0.2. Only relevant with bivariate data.
-         by default, 10
-    thresh : number in [0, 1]
-        Lowest iso-proportion level at which to draw a contour line. Ignored with `levels` is a vector. Only relevant
-        with bivariate data.
-    bw_method : string, scalar, or callable, optional
-        Method for determining the smoothing bandwidth to use; passed to `scipy.stats.gaussian_kde`.
-    bw_adjust : number, optional
-        Factor that multiplicatively scales the value chosen using `bw_method`. Increasing will make the curve smoother.
-        See Notes.
-    log_scale : bool or number, or pair of bools or numbers, optional
-        Set axis scale(s) to log. A single value sets the data axis for univariate distributions and both axes for
-        bivariate distributions. A pair of values sets each axis independently. Numeric values are interpreted as the
-        desired base (default 10). If False, defer to the existing Axes scale.
-        by default None
-    color : matplotlib color
-        Single color specification for when hue mapping is not used. Otherwise the plot will try to hook into the
-        matplotlib property cycle, by default "blue"
     fill : bool, optional
         If True, fill in the area under univariate density curves or between bivariate contours. If None, the default
         depends on `multiple`. by default True.
-    warn_singular : bool, optional
-        If True, issue a warning when trying to estimate the density of data with zero variance, by default True
+    levels : int or vector, optional
+        Number of contour levels or values to draw contours at. A vector argument must have increasing values in [0, 1].
+        Levels correspond to iso-proportionas of the density: e.g. 20% of the probability mass will lie below the
+        contour drawn for 0.2. Only relevant with bivariate data.
+        by default 10
+    thresh : number in [0, 1], optional
+        Lowest iso-proportional level at which to draw a contour line. Ignored when `levels` is a vector. Only relevant
+        with bivariate plots.
+        by default 0.05
+    bw_adjust : number, optional
+        Factor that multiplicatively scales the value chosen using `bw_method`. Increasing will make the curve smoother.
     **kwargs : dict, optional#
         Other keyword arguments are passed to one of the following matplotlib functions:
         - `matplotlib.axes.Axes.plot()` (univariate, `fill=False`),
@@ -304,31 +242,13 @@ def density(
             x=x,
             y=y,
             alpha=1,
-            gridsize=gridsize,
-            kernel=kernel,
-            cut=cut,
-            clip=clip,
-            cumulative=cumulative,
-            cbar=cbar,
-            cbar_ax=cbar_ax,
-            cbar_kws=cbar_kws,
             ax=ax,
-            weights=weights,
             hue=hue,
             palette=palette,
-            hue_order=hue_order,
-            hue_norm=hue_norm,
-            multiple=multiple,
-            common_norm=common_norm,
-            common_grid=common_grid,
             levels=levels,
             thresh=thresh,
-            bw_method=bw_method,
             bw_adjust=bw_adjust,
-            log_scale=log_scale,
-            color=color,
             fill=False,
-            warn_singular=warn_singular,
             zorder=data_zorder,
             **kwargs,
         )
@@ -338,32 +258,14 @@ def density(
         x=x,
         y=y,
         alpha=alpha,
-        gridsize=gridsize,
-        kernel=kernel,
-        cut=cut,
-        clip=clip,
         legend=legend,
-        cumulative=cumulative,
-        cbar=cbar,
-        cbar_ax=cbar_ax,
-        cbar_kws=cbar_kws,
         ax=ax,
-        weights=weights,
         hue=hue,
         palette=palette,
-        hue_order=hue_order,
-        hue_norm=hue_norm,
-        multiple=multiple,
-        common_norm=common_norm,
-        common_grid=common_grid,
         levels=levels,
         thresh=thresh,
-        bw_method=bw_method,
         bw_adjust=bw_adjust,
-        log_scale=log_scale,
-        color=color,
         fill=fill,
-        warn_singular=warn_singular,
         zorder=data_zorder,
         **kwargs,
     )
@@ -523,13 +425,6 @@ def jointplot(
         ax=g.ax_joint,
         hue=hue,
         palette=palette,
-        hue_order=hue_order,
-        hue_norm=hue_norm,
-        common_norm=common_norm,
-        levels=levels,
-        thresh=thresh,
-        bw_adjust=bw_adjust,
-        color=color,
         fill=fill,
         **joint_kws,
     )
