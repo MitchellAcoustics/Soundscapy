@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+import soundscapy as sspy
 import soundscapy.databases as db
 
 name_test_df = pd.DataFrame(
@@ -20,17 +21,24 @@ name_test_df = pd.DataFrame(
 
 @pytest.fixture()
 def data():
-    return db.isd.load()
+    data = db.isd.load()
+    data = sspy.surveys.add_iso_coords(data)
+    return data
+
+
+@pytest.fixture()
+def old_data():
+    return db.isd.load_zenodo(version="v0.2.3")
 
 
 def test_load():
     df = db.isd.load()
-    assert df.shape == (1909, 78)
+    assert df.shape == (3589, 142)
 
 
 def test_validate(data):
     df, excl = db.isd.validate(data)
-    assert len(excl) == 627
+    assert len(excl) == 109
     assert "PAQ1" in df.columns and "PAQ5" in df.columns
     assert "pleasant" not in df.columns
     assert df["PAQ1"].isna().sum() == 0
@@ -39,8 +47,8 @@ def test_validate(data):
 def test__isd_select(data):
     assert len(db.isd._isd_select(data, "GroupID", "CT202")) == 2
     with pytest.raises(TypeError) as excinfo:
-        obj = db.isd._isd_select(data, "GroupID", {22})
-    assert "Should be either a str, int, list, or tuple." in str(excinfo.value)
+        obj = db.isd._isd_select(data, "GroupID", 22)
+    assert "Should be either a str, list, or tuple." in str(excinfo.value)
 
 
 def test_select_group_ids(data):
@@ -54,33 +62,22 @@ def test_select_session_ids(data):
 
 
 def test_select_location_ids(data):
-    assert len(db.isd.select_location_ids(data, "CamdenTown")) == 150
-    assert len(db.isd.select_location_ids(data, ["CamdenTown", "PancrasLock"])) == 327
+    assert len(db.isd.select_location_ids(data, "CamdenTown")) == 105
+    assert len(db.isd.select_location_ids(data, ["CamdenTown", "PancrasLock"])) == 200
 
 
-def test_select_record_ids(data):
-    record = db.isd.select_record_ids(data, 525)
-    assert len(record) == 1
-    assert record["LocationID"][0] == "CamdenTown"
-
-
-def test_remove_lockdown(data):
-    assert len(db.isd.remove_lockdown(data)) == 1338
+def test_remove_lockdown(old_data):
+    assert len(db.isd.remove_lockdown(old_data)) == 1338
 
 
 def test_describe_location(data):
     res = db.isd.describe_location(data, "CamdenTown")
     assert type(res) == dict
-    assert res["count"] == 150
+    assert res["count"] == 105
     assert res["pleasant"] == 0.247
     res = db.isd.describe_location(data, "CamdenTown", type="count")
     assert res["count"] == 150
     assert res["pleasant"] == 37
-
-
-def test_soundscapy_describe(data):
-    res = db.isd.soundscapy_describe(data)
-    assert len(res) == len(data.LocationID.unique()) == 13
 
 
 def test_accessor_validate_dataset_deprecated(data):

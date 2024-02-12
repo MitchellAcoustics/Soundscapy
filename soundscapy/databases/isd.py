@@ -1,5 +1,5 @@
 # Customized functions specifically for the International Soundscape Database
-
+import warnings
 from datetime import date
 from importlib import resources
 
@@ -8,7 +8,7 @@ from pandas.api.extensions import register_dataframe_accessor
 
 # Constants and Labels
 from soundscapy.utils.surveys import *
-from soundscapy.utils.surveys import rename_paqs, likert_data_quality
+from soundscapy.utils.surveys import likert_data_quality, rename_paqs
 
 # Add soundscapy to the Python path
 
@@ -37,8 +37,10 @@ def load():
     .. [1] Mitchell, Andrew, Oberman, Tin, Aletta, Francesco, Erfanian, Mercede, Kachlicka, Magdalena, Lionello, Matteo, & Kang, Jian. (2022). The International Soundscape Database: An integrated multimedia database of urban soundscape surveys -- questionnaires with acoustical and contextual information (0.2.4) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.6331810
     """
 
-    with resources.path("soundscapy.data", "ISD-v0.2.2.csv") as f:
+    with resources.path("soundscapy.data", "ISD v1.0 Data.csv") as f:
         data = pd.read_csv(f)
+    data = rename_paqs(data, _PAQ_ALIASES)
+
     return data
 
 
@@ -55,20 +57,37 @@ def load_zenodo(version="latest"):
     pd.Dataframe
         ISD data
     """
-    if version.lower() not in ["latest", "v0.2.3", "v0.2.2", "v0.2.1", "v0.2.0"]:
+    version = version.lower()
+
+    version = "v1.0.1" if version == "latest" else version
+    if version in ["v0.2.0", "v0.2.1"]:
+        url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
+        file_type = "excel"
+
+    elif version in ["v0.2.2"]:
+        url = "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
+        file_type = "excel"
+
+    elif version in ["v0.2.3"]:
+        url = "https://zenodo.org/record/5914762/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
+        file_type = "excel"
+
+    elif version in ["v1.0.0", "v1.0.1"]:
+        url = "https://zenodo.org/records/10639661/files/ISD%20v1.0%20Data.csv"
+        file_type = "csv"
+
+    else:
         raise ValueError(f"Version {version} not recognised.")
 
-    version = "v0.2.3" if version == "latest" else version
-    if version in ["V0.2.0", "v0.2.0", "V0.2.1", "v0.2.1"]:
-        url = "https://zenodo.org/record/5578573/files/SSID%20Lockdown%20Database%20VL0.2.1.xlsx"
+    data = (
+        pd.read_csv(url)
+        if file_type == "csv"
+        else pd.read_excel(url, engine="openpyxl")
+    )
 
-    elif version in ["V0.2.2", "v0.2.2"]:
-        url = "https://zenodo.org/record/5705908/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
+    data = rename_paqs(data, _PAQ_ALIASES)
 
-    elif version in ["v0.2.3", "V0.2.3"]:
-        url = "https://zenodo.org/record/5914762/files/SSID%20Lockdown%20Database%20VL0.2.2.xlsx"
-
-    return pd.read_excel(url, engine="openpyxl")
+    return data
 
 
 def validate(
@@ -224,6 +243,11 @@ def remove_lockdown(data):
     pd.DataFrame
         Filtered dataframe with Lockdown data removed.
     """
+    warnings.warn(
+        "Lockdown data no longer included in ISD past v1.0. This function will be deprecated in sspy v1.0",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
     return data.query("Lockdown == 0")
 
 
