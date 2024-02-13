@@ -286,22 +286,24 @@ def adj_iso_pl(values: tuple, angles: tuple, scale=None) -> float:
     This calculation is based on the formulae given in Aletta et. al. (2024), adapted from ISO12913-3.
     These formulae were developed to enable the use of adjusted angles and are as follows:
 
-    .. math::
-        P_{ISO} = \\frac{1}{\\lambda_{pl}} \\sum_{i=1}^{8} \\cos(\\theta_i) \\cdot \\sigma_i
+    $$
+    P_{ISO} = \\frac{1}{\\lambda_{pl}} \\sum_{i=1}^{8} \\cos(\\theta_i) \\cdot \\sigma_i
+    $$
 
-    .. math::
-        E_{ISO} = \\frac{1}{\\lambda_{ev}} \\sum_{i=1}^{8} \\sin(\\theta_i) \\cdot \\sigma_i
-
-    where i indexes each circumplex scale, :math:`\theta_i` is the adjusted angle for the circumplex scale for the
-    appropriate language, and :math:`\\sigma_i` is the response value for the circumplex scale.
-    The :math:`\\frac{1}{\\lambda}` provides a scaling factor (equivalent to the :math:`\\frac{1}{(4 + \\sqrt{32})}`
+    $$
+    E_{ISO} = \\frac{1}{\\lambda_{ev}} \\sum_{i=1}^{8} \\sin(\\theta_i) \\cdot \\sigma_i
+    $$
+    where i indexes each circumplex scale, $\theta_i$ is the adjusted angle for the circumplex scale for the
+    appropriate language, and $\\sigma_i$ is the response value for the circumplex scale.
+    The $\\frac{1}{\\lambda}$ provides a scaling factor (equivalent to the $\\frac{1}{(4 + \\sqrt{32})}$
     from ISO 12913-3) to bring the range of ISOPleasant, ISOEventful to (-1, +1):
 
-    .. math::
-        \\lambda_{pl} = \\frac{\\rho}{2} \\sum_{i=1}^{8} \\left| \\cos(\\theta_i) \\right|
+    $$
+    \\lambda_{pl} = \\frac{\\rho}{2} \\sum_{i=1}^{8} \\left| \\cos(\\theta_i) \\right|
+    $$
 
-    where :math:`\\rho` is the range of the PAQ values (i.e. 5 - 1 = 4). :math:`\\lambda_{ev}` is calculated in the same
-    but using :math:`\\sin(\\theta_i)` as before.
+    where $\\rho$ is the range of the PAQ values (i.e. 5 - 1 = 4). $\\lambda_{ev}$ is calculated in the same
+    but using $\\sin(\\theta_i)$ as before.
 
     Parameters
     ----------
@@ -327,6 +329,43 @@ def adj_iso_pl(values: tuple, angles: tuple, scale=None) -> float:
 
 
 def adj_iso_ev(values, angles, scale=None):
+    """
+    Calculate the adjusted ISOEventful value
+
+    This calculation is based on the formulae given in Aletta et. al. (2024), adapted from ISO12913-3.
+    These formulae were developed to enable the use of adjusted angles and are as follows:
+
+    $$
+    P_{ISO} = \\frac{1}{\\lambda_{pl}} \\sum_{i=1}^{8} \\cos(\\theta_i) \\cdot \\sigma_i
+    $$
+
+    $$
+    E_{ISO} = \\frac{1}{\\lambda_{ev}} \\sum_{i=1}^{8} \\sin(\\theta_i) \\cdot \\sigma_i
+    $$
+    where i indexes each circumplex scale, $\theta_i$ is the adjusted angle for the circumplex scale for the
+    appropriate language, and $\\sigma_i$ is the response value for the circumplex scale.
+    The $\\frac{1}{\\lambda}$ provides a scaling factor (equivalent to the $\\frac{1}{(4 + \\sqrt{32})}$
+    from ISO 12913-3) to bring the range of ISOPleasant, ISOEventful to (-1, +1):
+
+    $$
+    \\lambda_{pl} = \\frac{\\rho}{2} \\sum_{i=1}^{8} \\left| \\cos(\\theta_i) \\right|
+    $$
+
+    where $\\rho$ is the range of the PAQ values (i.e. 5 - 1 = 4). $\\lambda_{ev}$ is calculated in the same
+    but using $\\sin(\\theta_i)$ as before.
+
+    Parameters
+    ----------
+    values: tuple or np.array
+    angles: tuple
+    scale: float, optional
+    The scale to use for the adjusted ISOPleasant value, by default None
+
+    Returns
+    -------
+    float
+
+    """
     iso_ev = np.sum(
         [np.sin(np.deg2rad(angle)) * values[i] for i, angle in enumerate(angles)]
     )

@@ -5,6 +5,7 @@ includes = []
 filename = "requirements.txt"
 groups = [
     "default",
+    "docs"
 ]
 
 [build-system]

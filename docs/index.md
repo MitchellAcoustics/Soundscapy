@@ -1,11 +1,11 @@
-![Image title](img/LightLogo.png#only-light)
-![Image title](img/DarkLogo.png#only-dark)
+![Image title](img/LightLogoSmall.png#only-light)
+![Image title](img/DarkLogoSmall.png#only-dark)
 
 # Welcome to Soundscapy
 
 [![PyPI version](https://badge.fury.io/py/soundscapy.svg)](https://badge.fury.io/py/soundscapy)
 [![Documentation Status](https://readthedocs.org/projects/soundscapy/badge/?version=latest)](https://soundscapy.readthedocs.io/en/latest/?badge=latest)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 _Soundscapy_ is a Python library for analysing and visualising soundscape assessments. This package was designed to (1) load and process soundscape assessment data, (2) visualise the data, and (3) enable psychoacoustic analysis of soundscape recordings.
 

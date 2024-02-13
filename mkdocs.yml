@@ -19,7 +19,9 @@ nav:
         - 'Plotting': reference/plotting.md
         - 'Binaural Analysis': reference/analysis.md
         - 'Databases': reference/databases.md
-    - 'News': news.md
+    - 'News':
+      - news.md
+      - 'Changelog': CHANGELOG.md
 theme:
   name: material
 #  logo: img/DarkLogo.png
@@ -44,6 +46,7 @@ theme:
         name: Switch to light mode
 extra_css:
   - stylesheets/extra.css
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.css
 
 plugins:
     - search
@@ -60,7 +63,6 @@ plugins:
               merge_init_into_class: true
               show_symbol_type_heading: true # waiting for general release
               show_symbol_type_toc: true
-
     - mkdocs-jupyter:
         include_source: true
         theme: default
@@ -68,3 +70,10 @@ plugins:
 
 markdown_extensions:
   - admonition
+  - pymdownx.arithmatex:
+        generic: true
+
+extra_javascript:
+  - javascripts/katex.js
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/contrib/auto-render.min.js
