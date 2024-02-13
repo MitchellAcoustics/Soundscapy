@@ -39,6 +39,8 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run pytest
       uses: pavelzw/pytest-action@v2.2.0
+      env:
+         CI: false
       with:
         verbose: true
         emoji: true
