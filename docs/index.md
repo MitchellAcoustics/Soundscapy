@@ -22,15 +22,22 @@ pip install soundscapy
 
 ## Documentation
 
-This documentation is designed to help you understand and use _circumplex_ effectively. It's divided into several sections:
+This documentation is designed to help you understand and use _Soundscapy_ effectively. It's divided into several sections:
 
 - **Tutorials**: Practical examples showing how to use our project in real-world scenarios.
 - **API Reference**: Detailed information about our project's API.
-- **Contribute**: Information on how you can contribute to our project.
+- **News**: Change log and updates.
 
 ## Contributing
 
 We welcome contributions from the community. If you're interested in contributing, please get in touch or submit an issue on Github.
+
+## Citing Soundscapy
+
+!!! note
+    If you use _Soundscapy_ in your research, please include a citation to our accompanying paper:
+    
+    Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and represent quantitative soundscape data. _JASA Express Letters, 2_, 37201. [https://doi.org/10.1121/10.0009794](https://doi.org/10.1121/10.0009794)
 
 ## License
 
