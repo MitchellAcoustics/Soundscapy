@@ -15,15 +15,14 @@ nav:
         - 'How To Analyse and Represent Soundscape Perception': tutorials/HowToAnalyseAndRepresentSoundscapes.ipynb
         - 'Using Soundscapy for Binaural Recording Analysis': tutorials/BinauralAnalysis.ipynb
     - 'API reference':
-        - 'Core functions': reference/api.md
-#        - 'Dealing with results': reference/classes.md
-#        - 'Survey Instruments': reference/instruments.md
-#        - 'Utils': reference/utils.md
+        - 'Survey Analysis': reference/surveys.md
+        - 'Plotting': reference/plotting.md
+        - 'Binaural Analysis': reference/analysis.md
+        - 'Databases': reference/databases.md
     - 'News': news.md
 theme:
   name: material
-  logo: img/small-logo.png
-  favicon: img/favicon.ico
+#  logo: img/DarkLogo.png
   features:
     - navigation.tabs
     - navigation.expand
@@ -52,10 +51,10 @@ plugins:
         default_handler: python
         handlers:
           python:
-            paths: [src.circumplex]
+            paths: [.]
             options:
               docstring_section_style: spacy
-              docstring_style: "google"
+              docstring_style: "numpy"
               separate_signature: true
               show_if_no_docstring: false
               merge_init_into_class: true

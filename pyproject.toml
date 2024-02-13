@@ -65,8 +65,10 @@ docs = [
     "Sphinx>=7.1.2",
     "mkdocs>=1.5.3",
     "mkdocs-material>=9.5.9",
-    "mkdocstrings>=0.24.0",
     "mkdocs-jupyter>=0.24.6",
+    "mkdocstrings[python]>=0.24.0",
+    "markdown>=3.5.2",
+    "pymdown-extensions>=10.7",
 ]
 test = [
     "pytest>=7.4.0",
