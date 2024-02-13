@@ -1,0 +1,71 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+site_name: "Soundscapy"
+site_url: https://soundscapy.readthedocs.io/en/latest/
+site_dir: site
+repo_name: "MitchellAcoustics/Soundscapy"
+repo_url: https://github.com/MitchellAcoustics/Soundscapy
+copyright: Copyright &copy; 2024 Andrew Mitchell
+nav:
+    - Home: index.md
+    - About:
+        - 'License': license.md
+    - Tutorials:
+        - tutorials/index.md
+        - '`Soundscapy` - Quick Start': tutorials/QuickStart.ipynb
+        - 'How To Analyse and Represent Soundscape Perception': tutorials/HowToAnalyseAndRepresentSoundscapes.ipynb
+        - 'Using Soundscapy for Binaural Recording Analysis': tutorials/BinauralAnalysis.ipynb
+    - 'API reference':
+        - 'Core functions': reference/api.md
+#        - 'Dealing with results': reference/classes.md
+#        - 'Survey Instruments': reference/instruments.md
+#        - 'Utils': reference/utils.md
+    - 'News': news.md
+theme:
+  name: material
+  logo: img/small-logo.png
+  favicon: img/favicon.ico
+  features:
+    - navigation.tabs
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+    - search
+    - mkdocstrings:
+        default_handler: python
+        handlers:
+          python:
+            paths: [src.circumplex]
+            options:
+              docstring_section_style: spacy
+              docstring_style: "google"
+              separate_signature: true
+              show_if_no_docstring: false
+              merge_init_into_class: true
+              show_symbol_type_heading: true # waiting for general release
+              show_symbol_type_toc: true
+
+    - mkdocs-jupyter:
+        include_source: true
+        theme: default
+#        execute: true
+
+markdown_extensions:
+  - admonition

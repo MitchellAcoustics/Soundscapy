@@ -63,6 +63,10 @@ docs = [
     "sphinx-autoapi>=2.1.1",
     "sphinx-rtd-theme>1.2.2",
     "Sphinx>=7.1.2",
+    "mkdocs>=1.5.3",
+    "mkdocs-material>=9.5.9",
+    "mkdocstrings>=0.24.0",
+    "mkdocs-jupyter>=0.24.6",
 ]
 test = [
     "pytest>=7.4.0",
