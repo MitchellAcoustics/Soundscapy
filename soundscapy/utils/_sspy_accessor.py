@@ -11,7 +11,7 @@ The sspy accessor is intended to be general to any soundscape survey data, funct
 
 # Add soundscapy to the Python path
 from datetime import date
-from typing import Union, Tuple, List, Dict
+from typing import Dict, List, Tuple, Union
 
 import matplotlib
 import numpy as np
@@ -582,32 +582,11 @@ class SSPYAccessor:
             figsize=figsize,
             legend_loc=legend_loc,
             alpha=alpha,
-            gridsize=gridsize,
-            kernel=kernel,
-            cut=cut,
-            clip=clip,
             legend=legend,
-            cumulative=cumulative,
-            cbar=cbar,
-            cbar_ax=cbar_ax,
-            cbar_kws=cbar_kws,
             ax=ax,
-            weights=weights,
             hue=hue,
             palette=palette,
-            hue_order=hue_order,
-            hue_norm=hue_norm,
-            multiple=multiple,
-            common_norm=common_norm,
-            common_grid=common_grid,
-            levels=levels,
-            thresh=thresh,
-            bw_method=bw_method,
-            bw_adjust=bw_adjust,
-            log_scale=log_scale,
-            color=color,
             fill=fill,
-            warn_singular=warn_singular,
             **kwargs,
         )
 

@@ -1,0 +1,28 @@
+/* Dark mode */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #010e20;
+  --md-accent-color: #71e5e9;
+}
+
+
+/* This will only apply if the user has chosen a light color scheme */
+@media (prefers-color-scheme: light) {
+  .only-dark {
+    display: none;
+  }
+  .only-light {
+    display: block;
+    margin: auto;
+  }
+}
+
+/* This will only apply if the user has chosen a dark color scheme */
+@media (prefers-color-scheme: dark) {
+  .only-light {
+    display: none;
+  }
+  .only-dark {
+    display: block;
+    margin: auto;
+  }
+}

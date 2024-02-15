@@ -13,9 +13,9 @@ build:
       - pip install --upgrade pdm
       - VIRTUAL_ENV=$(dirname $(dirname $(which python))) pdm install -dG docs
 
-sphinx:
-  configuration: docs/conf.py
+mkdocs:
+   configuration: mkdocs.yml
 
 # Optionally build your docs in additional formats such as PDF
-formats:
-  - pdf
+#formats:
+#  - pdf
