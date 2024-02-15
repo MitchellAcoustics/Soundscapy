@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import pearsonr, spearmanr
 
 diag_lines_zorder = 1
 diag_labels_zorder = 4
@@ -143,7 +142,6 @@ def density(
 
     Parameters
     ----------
-    bw_adjust
     data : pd.DataFrame, np.ndarray, mapping or sequence
         Input data structure. Either a long-form collection of vectors that can be assigned to
         named variables or a wide-form dataset that will be internally reshaped.
@@ -697,148 +695,6 @@ def _diagonal_lines_and_labels(ax, line_weights):
         zorder=diag_labels_zorder,
     )
     return ax
-
-
-# Unsupported right now.
-
-
-def single_lmplot(
-    sf,
-    x,
-    y,
-    groups=None,
-    group_order=None,
-    ylim=None,
-    xlim=None,
-    order=1,
-    fit_reg=True,
-    corr="pearson",
-    **kwargs,
-):
-    """Unfinished and unsupported"""
-    if y in ["ISOPleasant", "ISOEventful"] and ylim is None:
-        ylim = (-1, 1)
-    if corr:
-        df = sf[[y, x]].dropna()
-        if corr == "pearson":
-            r, p = pearsonr(df[y], df[x])
-        elif corr == "spearman":
-            r, p == spearmanr(df[y], df[x])
-
-        if p < 0.01:
-            symb = "**"
-        elif p < 0.05:
-            symb = "*"
-        else:
-            symb = ""
-        text = f"{round(r, 2)}{symb}"
-    else:
-        text = None
-
-    if groups is None:
-        g = sns.lmplot(
-            x=x,
-            y=y,
-            data=sf,
-            height=8,
-            aspect=1,
-            order=order,
-            fit_reg=fit_reg,
-            **kwargs,
-        )
-    else:
-        g = sns.lmplot(
-            x=x,
-            y=y,
-            data=sf,
-            height=8,
-            aspect=1,
-            order=order,
-            hue=groups,
-            hue_order=group_order,
-            fit_reg=fit_reg,
-            **kwargs,
-        )
-
-    g.set(ylim=ylim)
-    g.set(xlim=xlim)
-
-    ax = g.axes.ravel()[0]
-    ax.text(
-        np.mean(ax.get_xlim()),
-        min(ax.get_ylim()) * 0.75,
-        text,
-        ha="center",
-        fontweight=750,
-    )
-
-    return g
-
-
-def grouped_lmplot(
-    sf,
-    x,
-    y,
-    groups,
-    group_order=None,
-    ylim=None,
-    xlim=None,
-    order=1,
-    fit_reg=True,
-    corr="pearson",
-    col_wrap=4,
-    scatter_kws=None,
-    line_kws=None,
-    facet_kws={"sharex": False},
-    **kwargs,
-):
-    """Unfinished and unsupported"""
-    if y in ["ISOPleasant", "ISOEventful"] and ylim is None:
-        ylim = (-1, 1)
-    grid = sns.lmplot(
-        x=x,
-        y=y,
-        col=groups,
-        order=order,
-        col_wrap=col_wrap,
-        data=sf,
-        fit_reg=fit_reg,
-        height=4,
-        facet_kws=facet_kws,
-        scatter_kws=scatter_kws,
-        line_kws=line_kws,
-        **kwargs,
-    )
-    grid.set(ylim=ylim)
-    grid.set(xlim=xlim)
-    if group_order is None:
-        group_order = sf[groups].unique()
-
-    if corr:
-        for location, ax in zip(group_order, grid.axes.ravel()):
-            df = sf.loc[sf[groups] == location, [y, x]].dropna()
-            if corr == "pearson":
-                r, p = pearsonr(df[y], df[x])
-            elif corr == "spearman":
-                r, p = spearmanr(df[y], df[x])
-            if p < 0.01:
-                symb = "**"
-            elif p < 0.05:
-                symb = "*"
-            else:
-                symb = ""
-            fontweight = 750 if p < 0.05 else None
-
-            text = f"{round(r, 2)}{symb}"
-            ax.text(
-                np.mean(ax.get_xlim()),
-                min(ax.get_ylim()) * 0.75,
-                text,
-                ha="center",
-                fontweight=fontweight,
-            )
-    grid.set_titles("{col_name}")
-    return grid
 
 
 def iso_annotation(
