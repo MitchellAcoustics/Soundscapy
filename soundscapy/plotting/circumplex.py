@@ -1,6 +1,6 @@
 """Plotting functions for visualising circumplex data."""
 
-from typing import Union, Tuple, List
+from typing import Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.axes
@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import pearsonr, spearmanr
 
 diag_lines_zorder = 1
 diag_labels_zorder = 4
@@ -21,44 +20,32 @@ simple_density = dict(thresh=0.5, levels=2, incl_outline=True, alpha=0.5)
 
 
 def scatter(
-    data=None,
-    x="ISOPleasant",
-    y="ISOEventful",
-    title="Soundscape Scatter Plot",
-    diagonal_lines=False,
-    xlim=(-1, 1),
-    ylim=(-1, 1),
-    figsize=(5, 5),
-    legend_loc="lower left",
-    hue=None,
-    style=None,
-    s=20,
-    palette="colorblind",
-    hue_order=None,
-    hue_norm=None,
-    sizes=None,
-    size_order=None,
-    size_norm=None,
-    markers=True,
-    style_order=None,
-    alpha=None,
-    legend="auto",
-    ax=None,
-    **scatter_kws,
+    data: pd.DataFrame,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    title: str = "Soundscape Scatter Plot",
+    diagonal_lines: bool = False,
+    xlim: Tuple[int] = (-1, 1),
+    ylim: Tuple[int] = (-1, 1),
+    figsize: Tuple[int] = (5, 5),
+    legend_loc: str = "lower left",
+    hue: str = None,
+    s: int = 20,
+    palette: str = "colorblind",
+    legend: str = "auto",
+    ax: mpl.axes.Axes = None,
+    **kwargs,
 ):
     """Plot ISOcoordinates as scatter points on a soundscape circumplex grid
 
-    Makes use of seaborn.scatterplot. We have made all of the `seaborn.scatterplot` arguments available, but have also added or changed some specific
-    options for circumplex plotting.
-
     Parameters
     ----------
-    data : pd.DataFrame, np.ndarray, mapping or sequence
+    data : pd.DataFrame
         Input data structure. Either a long-form collection of vectors that can be assigned to
         named variables or a wide-form dataset that will be internally reshaped.
-    x : vector or key in `data`, optional
+    x : str, optional
         column name for x variable, by default "ISOPleasant"
-    y : vector or key in `data`, optional
+    y : str, optional
         column name for y variable, by default "ISOEventful"
     title : str, optional
         Title to add to circumplex plot, by default "Soundscape Scatter Plot"
@@ -71,42 +58,16 @@ def scatter(
         Size of the figure to return if `ax` is None, by default (5, 5)
     legend_loc : str, optional
         relative location of legend, by default "lower left"
+    hue : str, optional
+        Grouping variable that will produce points with different colors. Can be either categorical or numeric,
+        although color mapping will behave differently in latter case, by default None
+    s : int, optional
+        size of scatter points, by default 20
     palette : string, list, dict or matplotlib.colors.Colormap, optional
         Method for choosing the colors to use when mapping the hue semantic. String values are passed to
         seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping.
         by default colorblind
-    s : int, optional
-        size of scatter points, by default 10
-    hue : vector or key in data, optional
-        Grouping variable that will produce points with different colors. Can be either categorical or numeric,
-        although color mapping will behave differently in latter case, by default None
-    style : vector or key in data
-        Grouping variable that will produce points with different markers. Can have a numeric dtype but will always
-        be treated as categorical.
-    hue_order : vector of strings
-        Specify the order of processing and plotting for categorical levels of the `hue` semantic
-    hue_norm : tuple or matplotlib.colors.Normalize
-        Either a pair of values that set the normalization range in data units or an object that will map from data
-        units into a [0, 1] interval. Usage implies numeric mapping.
-    sizes : list, dict, or tuple
-        An object that determines how sizes are chosen when `size` is used. It can always be a list of size values or
-        a dict mapping levels of the `size` variable to sizes. When `size` is numeric, it can also be a tuple
-        specifying the minimum and maximum size to use such that other values are normalized within this range.
-    size_order : list
-        Specified order for appearance of the `size` variable levels, otherwise they are determined from the data. Not
-        relevant when the `size` variable is numeric.
-    size_norm : tuple or Normalization object
-        Normalization in data units for scaling plot objects when the `size` variable is numeric.
-    markers : boolean, list, or dictionary
-        Object determining how to draw the markers for different levels of the `style` variable. Setting to `True` will
-        use default markers, or you can pass a list of markers or a dictionary mapping levels of the `style` variable
-        to markers. Setting to `False` will draw marker-less lines. Markers are specified as in matplotlib.
-    style_order : list
-        Specified order for appearance of the `style` variable levels otherwise they are determined from the data. Not
-        relevant when the `style` variable is numeric.
-    alpha : float
-        Proportional opacity of the points.
     legend : {"auto", "brief", "full" or False}, optional
         How to draw the legend. If “brief”, numeric hue and size variables will be represented with a sample of evenly
         spaced values. If “full”, every group will get an entry in the legend. If “auto”, choose between brief or full
@@ -119,7 +80,9 @@ def scatter(
     Returns
     -------
     matplotlib.axes.Axes
+    Axes object containing the plot.
     """
+
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -132,21 +95,12 @@ def scatter(
         x=x,
         y=y,
         hue=hue,
-        style=style,
-        s=s,
         palette=palette,
-        hue_order=hue_order,
-        hue_norm=hue_norm,
-        sizes=sizes,
-        size_order=size_order,
-        size_norm=size_norm,
-        markers=markers,
-        style_order=style_order,
-        alpha=alpha,
-        legend=legend,
         ax=ax,
         zorder=data_zorder,
-        **scatter_kws,
+        s=s,
+        legend=legend,
+        **kwargs,
     )
     ax = _deal_w_default_labels(ax, False)
     _circumplex_grid(ax, False, diagonal_lines, xlim, ylim)
@@ -156,7 +110,6 @@ def scatter(
     return s
 
 
-# TODO: Consider changing to displot
 def density(
     data: Union[pd.DataFrame, np.ndarray] = None,
     x: str = "ISOPleasant",
@@ -172,32 +125,15 @@ def density(
     figsize: tuple = (5, 5),
     legend_loc: str = "lower left",
     alpha: float = 0.75,
-    gridsize: int = 200,
-    kernel: str = None,
-    cut: Union[float, int] = 3,
-    clip: Tuple[int] = None,
     legend: bool = False,
-    cumulative: bool = False,
-    cbar: bool = False,
-    cbar_ax: matplotlib.axes.Axes = None,
-    cbar_kws: dict = None,
     ax: matplotlib.axes.Axes = None,
-    weights: str = None,
     hue: str = None,
     palette="colorblind",
-    hue_order: List[str] = None,
-    hue_norm=None,
-    multiple: str = "layer",
-    common_norm: bool = False,
-    common_grid: bool = False,
+    color=None,
+    fill: bool = True,
     levels: int = 10,
     thresh: float = 0.05,
-    bw_method="scott",
-    bw_adjust: Union[float, int] = None,
-    log_scale: Union[bool, int, float] = None,
-    color: str = "blue",
-    fill: bool = True,
-    warn_singular: bool = True,
+    bw_adjust=None,
     **kwargs,
 ):
     """Plot a density plot of ISOCoordinates.
@@ -207,6 +143,7 @@ def density(
 
     Parameters
     ----------
+    color
     data : pd.DataFrame, np.ndarray, mapping or sequence
         Input data structure. Either a long-form collection of vectors that can be assigned to
         named variables or a wide-form dataset that will be internally reshaped.
@@ -234,30 +171,10 @@ def density(
         Relative location of legend, by default "lower left"
     alpha : float, optional
         Proportional opacity of the heatmap fill, by default 0.75
-    gridsize : int, optional
-        Nuber of points on each dimension of the evaluation grid, by default 200
-    kernel : str, optional
-        Function that defines the kernel, by default None
-    cut : Union[float, int], optional
-        Factor, multiplied by the smoothing bandwidth, that determines how far the evaluation grid extends past the
-        extreme datapoints. When set to 0, truncate the curve at the data limits, by default 3
-    clip : tuple[int], optional
-        Do not evaluate the density outside of these limits, by default None
     legend : bool, optional
         If False, suppress the legend for semantic variables, by default True
-    cumulative : bool, optional
-        If True, estimate a cumulative distribution function, by default False
-    cbar : bool, optional
-        If True, add a colorbar to annotate the color mapping in a bivariate plot. Note: does not currently support
-        plots with a `hue` variable well, by default False
-    cbar_ax : matplotlib.axes.Axes, optional
-        Pre-existing axes for the colorbar, by default None
-    cbar_kws : dict, optional
-        Keyword arguments for the colorbar, by default None
     ax : matplotlib.axes.Axes, optional
         Pre-existing axes object to use for the plot, by default None
-    weights : vector or key in `data`, optional
-        If provided, weight the kernel density estimation using these values, by default None
     hue : vector or key in `data`, optional
         Semantic variable that is mapped to determine the color of plot elements, by default None
     palette : Union[str, list, dict, matplotlib.colors.Colormap], optional
@@ -265,45 +182,20 @@ def density(
         seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping.
         by default colorblind
-    hue_order : list[str], optional
-        Specify the order of processing and plotting for categorical levels of the `hue` semantic, by default None
-    hue_norm : Union[tuple, matplotlib.colors.Normalize], optional
-        Either a pair of values that set the normalization range in data units or an object , by default None
-    multiple : {"layer", "stack", "fill"}, optional
-        Whether to plot multiple elements when semantic mapping creates subsets. Only relevant with univariate data,
-        by default 'layer'
-    common_norm : bool, optional
-        If True, scale each conditional density by the number of observations such that the total area under all
-        densities sums to 1. Otherwise, normalize each density independently, by default False
-    common_grid : bool, optional
-        If True, use the same evaluation grid for each kernel density estimate. Only relevant with univariate data.
-        by default, False
-    levels : int or vector, optional
-        Number of contour levels or values to draw contours at. A vector argument must have increasing values in [0, 1].
-         Levels correspond to iso-proportions of the density: e.g., 20% of the probability mass will lie below the
-         contour drawn for 0.2. Only relevant with bivariate data.
-         by default, 10
-    thresh : number in [0, 1]
-        Lowest iso-proportion level at which to draw a contour line. Ignored with `levels` is a vector. Only relevant
-        with bivariate data.
-    bw_method : string, scalar, or callable, optional
-        Method for determining the smoothing bandwidth to use; passed to `scipy.stats.gaussian_kde`.
-    bw_adjust : number, optional
-        Factor that multiplicatively scales the value chosen using `bw_method`. Increasing will make the curve smoother.
-        See Notes.
-    log_scale : bool or number, or pair of bools or numbers, optional
-        Set axis scale(s) to log. A single value sets the data axis for univariate distributions and both axes for
-        bivariate distributions. A pair of values sets each axis independently. Numeric values are interpreted as the
-        desired base (default 10). If False, defer to the existing Axes scale.
-        by default None
-    color : matplotlib color
-        Single color specification for when hue mapping is not used. Otherwise the plot will try to hook into the
-        matplotlib property cycle, by default "blue"
     fill : bool, optional
         If True, fill in the area under univariate density curves or between bivariate contours. If None, the default
         depends on `multiple`. by default True.
-    warn_singular : bool, optional
-        If True, issue a warning when trying to estimate the density of data with zero variance, by default True
+    levels : int or vector, optional
+        Number of contour levels or values to draw contours at. A vector argument must have increasing values in [0, 1].
+        Levels correspond to iso-proportionas of the density: e.g. 20% of the probability mass will lie below the
+        contour drawn for 0.2. Only relevant with bivariate data.
+        by default 10
+    thresh : number in [0, 1], optional
+        Lowest iso-proportional level at which to draw a contour line. Ignored when `levels` is a vector. Only relevant
+        with bivariate plots.
+        by default 0.05
+    bw_adjust : number, optional
+        Factor that multiplicatively scales the value chosen using `bw_method`. Increasing will make the curve smoother.
     **kwargs : dict, optional#
         Other keyword arguments are passed to one of the following matplotlib functions:
         - `matplotlib.axes.Axes.plot()` (univariate, `fill=False`),
@@ -325,6 +217,7 @@ def density(
     if hue is None:
         # Removes the palette if no hue is specified
         palette = None
+        color = sns.color_palette("colorblind", 1)[0] if color is None else color
 
     if density_type == "simple":
         thresh = simple_density["thresh"]
@@ -350,32 +243,15 @@ def density(
             x=x,
             y=y,
             alpha=1,
-            gridsize=gridsize,
-            kernel=kernel,
-            cut=cut,
-            clip=clip,
-            cumulative=cumulative,
-            cbar=cbar,
-            cbar_ax=cbar_ax,
-            cbar_kws=cbar_kws,
             ax=ax,
-            weights=weights,
             hue=hue,
             palette=palette,
-            hue_order=hue_order,
-            hue_norm=hue_norm,
-            multiple=multiple,
-            common_norm=common_norm,
-            common_grid=common_grid,
             levels=levels,
             thresh=thresh,
-            bw_method=bw_method,
             bw_adjust=bw_adjust,
-            log_scale=log_scale,
-            color=color,
             fill=False,
-            warn_singular=warn_singular,
             zorder=data_zorder,
+            color=color,
             **kwargs,
         )
 
@@ -384,33 +260,16 @@ def density(
         x=x,
         y=y,
         alpha=alpha,
-        gridsize=gridsize,
-        kernel=kernel,
-        cut=cut,
-        clip=clip,
         legend=legend,
-        cumulative=cumulative,
-        cbar=cbar,
-        cbar_ax=cbar_ax,
-        cbar_kws=cbar_kws,
         ax=ax,
-        weights=weights,
         hue=hue,
         palette=palette,
-        hue_order=hue_order,
-        hue_norm=hue_norm,
-        multiple=multiple,
-        common_norm=common_norm,
-        common_grid=common_grid,
         levels=levels,
         thresh=thresh,
-        bw_method=bw_method,
         bw_adjust=bw_adjust,
-        log_scale=log_scale,
-        color=color,
         fill=fill,
-        warn_singular=warn_singular,
         zorder=data_zorder,
+        color=color,
         **kwargs,
     )
 
@@ -425,6 +284,7 @@ def density(
     return d
 
 
+# TODO: Consider changing to displot
 def jointplot(
     data=None,
     x="ISOPleasant",
@@ -439,14 +299,11 @@ def jointplot(
     incl_outline=False,
     legend_loc="lower left",
     alpha=0.75,
-    color=None,
     joint_kws={},
     marginal_kws={"fill": True, "common_norm": False},
     hue=None,
+    color=None,
     palette="colorblind",
-    hue_order=None,
-    hue_norm=None,
-    common_norm=False,
     fill=True,
     bw_adjust=None,
     thresh=0.1,
@@ -463,6 +320,7 @@ def jointplot(
 
     Parameters
     ----------
+    color
     data : pd.DataFrame, np.ndarray, mapping, or sequence
         Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a
         wide-form dataset that will be internally reshaped.
@@ -506,14 +364,6 @@ def jointplot(
         `color_palette()`. List or dict values imply categorical mapping, while a colormap object implies numeric
         mapping.
         by default, `"colorblind"`
-    hue_order : vector of strings, optional.
-        Specify the order of processing and plotting for categorical levels of the `hue` semantic.
-    hue_norm : tuple or matplotlib.colors.Normalize, optional
-        Either a pair of values that set the normalization range in data units or an object that will map from data
-        units into a [0, 1] interval. Usage implies numeric mapping.
-    common_norm : bool, optional
-        If True, scale each conditional density by the number of observations such that the total area under all
-        densities sums to 1. Otherwise, normalize each density independently, by default False.
     fill : bool, optional
         If True, fill in the area under univariate density curves or between bivariate contours. If None, the default
         depends on `multiple`. by default True
@@ -549,6 +399,11 @@ def jointplot(
         alpha = simple_density["alpha"]
         incl_outline = simple_density["incl_outline"]
 
+    if hue is None:
+        # Removes the palette if no hue is specified
+        palette = None
+        color = sns.color_palette("colorblind", 1)[0] if color is None else color
+
     g = sns.JointGrid()
     density(
         data,
@@ -568,14 +423,10 @@ def jointplot(
         ax=g.ax_joint,
         hue=hue,
         palette=palette,
-        hue_order=hue_order,
-        hue_norm=hue_norm,
-        common_norm=common_norm,
+        fill=fill,
         levels=levels,
         thresh=thresh,
         bw_adjust=bw_adjust,
-        color=color,
-        fill=fill,
         **joint_kws,
     )
     # if legend and hue:
@@ -847,148 +698,6 @@ def _diagonal_lines_and_labels(ax, line_weights):
         zorder=diag_labels_zorder,
     )
     return ax
-
-
-# Unsupported right now.
-
-
-def single_lmplot(
-    sf,
-    x,
-    y,
-    groups=None,
-    group_order=None,
-    ylim=None,
-    xlim=None,
-    order=1,
-    fit_reg=True,
-    corr="pearson",
-    **kwargs,
-):
-    """Unfinished and unsupported"""
-    if y in ["ISOPleasant", "ISOEventful"] and ylim is None:
-        ylim = (-1, 1)
-    if corr:
-        df = sf[[y, x]].dropna()
-        if corr == "pearson":
-            r, p = pearsonr(df[y], df[x])
-        elif corr == "spearman":
-            r, p == spearmanr(df[y], df[x])
-
-        if p < 0.01:
-            symb = "**"
-        elif p < 0.05:
-            symb = "*"
-        else:
-            symb = ""
-        text = f"{round(r, 2)}{symb}"
-    else:
-        text = None
-
-    if groups is None:
-        g = sns.lmplot(
-            x=x,
-            y=y,
-            data=sf,
-            height=8,
-            aspect=1,
-            order=order,
-            fit_reg=fit_reg,
-            **kwargs,
-        )
-    else:
-        g = sns.lmplot(
-            x=x,
-            y=y,
-            data=sf,
-            height=8,
-            aspect=1,
-            order=order,
-            hue=groups,
-            hue_order=group_order,
-            fit_reg=fit_reg,
-            **kwargs,
-        )
-
-    g.set(ylim=ylim)
-    g.set(xlim=xlim)
-
-    ax = g.axes.ravel()[0]
-    ax.text(
-        np.mean(ax.get_xlim()),
-        min(ax.get_ylim()) * 0.75,
-        text,
-        ha="center",
-        fontweight=750,
-    )
-
-    return g
-
-
-def grouped_lmplot(
-    sf,
-    x,
-    y,
-    groups,
-    group_order=None,
-    ylim=None,
-    xlim=None,
-    order=1,
-    fit_reg=True,
-    corr="pearson",
-    col_wrap=4,
-    scatter_kws=None,
-    line_kws=None,
-    facet_kws={"sharex": False},
-    **kwargs,
-):
-    """Unfinished and unsupported"""
-    if y in ["ISOPleasant", "ISOEventful"] and ylim is None:
-        ylim = (-1, 1)
-    grid = sns.lmplot(
-        x=x,
-        y=y,
-        col=groups,
-        order=order,
-        col_wrap=col_wrap,
-        data=sf,
-        fit_reg=fit_reg,
-        height=4,
-        facet_kws=facet_kws,
-        scatter_kws=scatter_kws,
-        line_kws=line_kws,
-        **kwargs,
-    )
-    grid.set(ylim=ylim)
-    grid.set(xlim=xlim)
-    if group_order is None:
-        group_order = sf[groups].unique()
-
-    if corr:
-        for location, ax in zip(group_order, grid.axes.ravel()):
-            df = sf.loc[sf[groups] == location, [y, x]].dropna()
-            if corr == "pearson":
-                r, p = pearsonr(df[y], df[x])
-            elif corr == "spearman":
-                r, p = spearmanr(df[y], df[x])
-            if p < 0.01:
-                symb = "**"
-            elif p < 0.05:
-                symb = "*"
-            else:
-                symb = ""
-            fontweight = 750 if p < 0.05 else None
-
-            text = f"{round(r, 2)}{symb}"
-            ax.text(
-                np.mean(ax.get_xlim()),
-                min(ax.get_ylim()) * 0.75,
-                text,
-                ha="center",
-                fontweight=fontweight,
-            )
-    grid.set_titles("{col_name}")
-    return grid
 
 
 def iso_annotation(

@@ -91,13 +91,17 @@ def test_add_iso_coords(data):
     df = soundscapy.surveys.add_iso_coords(basic_test_df)
     assert "ISOPleasant" in df.columns and "ISOEventful" in df.columns
 
+    with raises(Warning):
+        df = soundscapy.surveys.add_iso_coords(df, overwrite=False)
+    data = soundscapy.surveys.add_iso_coords(df, overwrite=True)
+    assert (
+        df.ISOPleasant.sum() == data.ISOPleasant.sum()
+        and df.ISOEventful.sum() == data.ISOEventful.sum()
+    )
+
     data = soundscapy.isd.rename_paqs(data)
     data = soundscapy.surveys.add_iso_coords(data, names=("pl_test", "ev_test"))
     assert "pl_test" in data.columns and "ev_test" in data.columns
-
-    data = soundscapy.isd.rename_paqs(data)
-    data = soundscapy.surveys.add_iso_coords(data, overwrite=True)
-    assert "ISOPleasant" in df.columns and "ISOEventful" in df.columns
 
 
 def test_mean_responses():

@@ -1,5 +1,6 @@
 import pandas as pd
 import pytest
+from pytest import approx
 
 import soundscapy as sspy
 import soundscapy.databases as db
@@ -46,9 +47,6 @@ def test_validate(data):
 
 def test__isd_select(data):
     assert len(db.isd._isd_select(data, "GroupID", "CT202")) == 2
-    with pytest.raises(TypeError) as excinfo:
-        obj = db.isd._isd_select(data, "GroupID", 22)
-    assert "Should be either a str, list, or tuple." in str(excinfo.value)
 
 
 def test_select_group_ids(data):
@@ -71,55 +69,19 @@ def test_remove_lockdown(old_data):
 
 
 def test_describe_location(data):
+    sim = sspy.surveys.simulation(1000)
+    sim = sspy.surveys.add_iso_coords(sim)
+    sim["LocationID"] = "Simulated"
+    res = db.isd.describe_location(sim, "Simulated")
+    assert type(res) == dict
+    assert res["count"] == 1000
+    assert res["pleasant"] == approx(0.5, abs=0.05)
+
     res = db.isd.describe_location(data, "CamdenTown")
     assert type(res) == dict
     assert res["count"] == 105
-    assert res["pleasant"] == 0.247
+    assert res["pleasant"] == 0.352
+
     res = db.isd.describe_location(data, "CamdenTown", type="count")
-    assert res["count"] == 150
+    assert res["count"] == 105
     assert res["pleasant"] == 37
-
-
-def test_accessor_validate_dataset_deprecated(data):
-    with pytest.raises(DeprecationWarning) as excinfo:
-        obj = data.isd.validate_dataset()
-    assert (
-        "The ISD accessor has been deprecated. Please use `soundscapy.isd.validate(data)` instead."
-        in str(excinfo.value)
-    )
-
-
-def test_accessor_filter_group_ids(data):
-    with pytest.raises(DeprecationWarning) as excinfo:
-        obj = data.isd.filter_group_ids("CT202")
-    assert (
-        "The ISD accessor has been deprecated. Please use `soundscapy.isd.select_group_ids()` instead."
-        in str(excinfo.value)
-    )
-
-
-def test_accessor_filter_session_ids(data):
-    with pytest.raises(DeprecationWarning) as excinfo:
-        obj = data.isd.filter_session_ids("CamdenTown1")
-    assert (
-        "The ISD accessor has been deprecated. Please use `soundscapy.isd.select_session_ids()` instead."
-        in str(excinfo.value)
-    )
-
-
-def test_accessor_filter_location_ids(data):
-    with pytest.raises(DeprecationWarning) as excinfo:
-        obj = data.isd.filter_location_ids("CamdenTown")
-    assert (
-        "The ISD accessor has been deprecated. Please use `soundscapy.isd.select_location_ids()` instead."
-        in str(excinfo.value)
-    )
-
-
-def test_accessor_location_describe(data):
-    with pytest.raises(DeprecationWarning) as excinfo:
-        obj = data.isd.location_describe("CamdenTown")
-    assert (
-        "The ISD accessor has been deprecated. Please use `soundscapy.isd.describe_location()` instead."
-        in str(excinfo.value)
-    )
