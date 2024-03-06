@@ -73,6 +73,5 @@ dev = [
     "black>=23.7.0",
     "pycircular>=0.1.2",
     "statsmodels>=0.14.0",
-    "ndtest @ git+https://github.com/syrte/ndtest",
     "librosa>=0.10.1",
 ]
