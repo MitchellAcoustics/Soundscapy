@@ -129,6 +129,7 @@ def density(
     ax: matplotlib.axes.Axes = None,
     hue: str = None,
     palette="colorblind",
+    color=None,
     fill: bool = True,
     levels: int = 10,
     thresh: float = 0.05,
@@ -142,6 +143,7 @@ def density(
 
     Parameters
     ----------
+    color
     data : pd.DataFrame, np.ndarray, mapping or sequence
         Input data structure. Either a long-form collection of vectors that can be assigned to
         named variables or a wide-form dataset that will be internally reshaped.
@@ -215,6 +217,7 @@ def density(
     if hue is None:
         # Removes the palette if no hue is specified
         palette = None
+        color = sns.color_palette("colorblind", 1)[0] if color is None else color
 
     if density_type == "simple":
         thresh = simple_density["thresh"]
@@ -248,6 +251,7 @@ def density(
             bw_adjust=bw_adjust,
             fill=False,
             zorder=data_zorder,
+            color=color,
             **kwargs,
         )
 
@@ -265,6 +269,7 @@ def density(
         bw_adjust=bw_adjust,
         fill=fill,
         zorder=data_zorder,
+        color=color,
         **kwargs,
     )
 
@@ -294,14 +299,11 @@ def jointplot(
     incl_outline=False,
     legend_loc="lower left",
     alpha=0.75,
-    color=None,
     joint_kws={},
     marginal_kws={"fill": True, "common_norm": False},
     hue=None,
+    color=None,
     palette="colorblind",
-    hue_order=None,
-    hue_norm=None,
-    common_norm=False,
     fill=True,
     bw_adjust=None,
     thresh=0.1,
@@ -318,6 +320,7 @@ def jointplot(
 
     Parameters
     ----------
+    color
     data : pd.DataFrame, np.ndarray, mapping, or sequence
         Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a
         wide-form dataset that will be internally reshaped.
@@ -361,14 +364,6 @@ def jointplot(
         `color_palette()`. List or dict values imply categorical mapping, while a colormap object implies numeric
         mapping.
         by default, `"colorblind"`
-    hue_order : vector of strings, optional.
-        Specify the order of processing and plotting for categorical levels of the `hue` semantic.
-    hue_norm : tuple or matplotlib.colors.Normalize, optional
-        Either a pair of values that set the normalization range in data units or an object that will map from data
-        units into a [0, 1] interval. Usage implies numeric mapping.
-    common_norm : bool, optional
-        If True, scale each conditional density by the number of observations such that the total area under all
-        densities sums to 1. Otherwise, normalize each density independently, by default False.
     fill : bool, optional
         If True, fill in the area under univariate density curves or between bivariate contours. If None, the default
         depends on `multiple`. by default True
@@ -404,6 +399,11 @@ def jointplot(
         alpha = simple_density["alpha"]
         incl_outline = simple_density["incl_outline"]
 
+    if hue is None:
+        # Removes the palette if no hue is specified
+        palette = None
+        color = sns.color_palette("colorblind", 1)[0] if color is None else color
+
     g = sns.JointGrid()
     density(
         data,
@@ -424,6 +424,9 @@ def jointplot(
         hue=hue,
         palette=palette,
         fill=fill,
+        levels=levels,
+        thresh=thresh,
+        bw_adjust=bw_adjust,
         **joint_kws,
     )
     # if legend and hue:
