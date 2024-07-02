@@ -31,6 +31,7 @@ dependencies = [
     "tqdm>=4.66.1",
     "matplotlib>=3.7.2",
     "setuptools>=68.0.0",
+    "pathos>=0.3.2",
 ]
 requires-python = ">=3.9,<4.0"
 readme = "README.md"
