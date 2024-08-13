@@ -1,293 +1,388 @@
 """
-soundscapy.audio._AnalysisSettings
+soundscapy.audio.analysis_settings
 ==================================
 
-This module provides the AnalysisSettings class, which is used to manage
-and parse settings for various audio analysis methods.
-
-The AnalysisSettings class is a dictionary-like object that stores settings
-for different audio analysis libraries and metrics. It provides methods to
-load settings from YAML files, parse settings for specific metrics, and
-manage the execution of analysis tasks.
+This module provides the AnalysisSettings class for managing and parsing
+settings for various audio analysis methods, with a focus on reproducibility
+and shareability in scientific analysis.
 
 Classes:
-    AnalysisSettings: Manages settings for audio analysis methods.
+    MetricSettings: Dataclass for individual metric settings.
+    AnalysisSettings: Main class for loading, validating, and accessing analysis settings.
 
 Functions:
     get_default_yaml: Retrieves default settings from the GitHub repository.
 """
 
+from __future__ import annotations
+
+import dataclasses
+import os
 import urllib.request
+from dataclasses import dataclass, field
 from pathlib import Path
-from time import localtime, strftime
-from typing import Union
+from typing import Any, Dict, List
 
 import yaml
+from schema import And, Optional, Or, Schema, Use
 
 
-def get_default_yaml(save_as="default_settings.yaml"):
+@dataclass
+class MetricSettings:
     """
-    Retrieves the default settings for analysis from the GitHub repository
-    and saves them to a file.
+    Dataclass representing settings for an individual metric.
 
-    Parameters
-    ----------
-    save_as : str, optional
-        The name of the file to save the default settings to. Defaults to
-        "default_settings.yaml".
+    Attributes:
+        run (bool): Whether to run this metric.
+        main (str | int): The main statistic to calculate.
+        statistics (List[str]): List of statistics to calculate.
+        channel (List[str]): List of channels to analyze.
+        label (str): Label for the metric.
+        parallel (bool): Whether to run the metric in parallel.
+        func_args (Dict[str, Any]): Additional arguments for the metric function.
     """
-    print("Downloading default settings from GitHub...")
-    urllib.request.urlretrieve(
-        "https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/main/soundscapy/analysis/default_settings.yaml",
-        save_as,
-    )
+
+    run: bool
+    main: str | int = None
+    statistics: List[str] = None
+    channel: List[str] = field(default_factory=lambda: ["Left", "Right"])
+    label: str = "label"
+    parallel: bool = False
+    func_args: Dict[str, Any] = field(default_factory=dict)
 
 
-class AnalysisSettings(dict):
+class AnalysisSettings:
     """
-    A dictionary-like class for managing settings for audio analysis methods.
+    A class for managing settings for audio analysis methods.
 
-    Each library has a dict of metrics, each of which has a dict of settings.
-    This class provides methods to load settings from YAML files, parse settings
-    for specific metrics, and manage the execution of analysis tasks.
+    This class handles loading, validating, and accessing configuration
+    settings for audio analysis, with a focus on reproducibility in
+    scientific analysis.
 
     Attributes:
         run_stats (bool): Whether to include all stats or just the main metric.
         force_run_all (bool): Whether to force all metrics to run regardless of their settings.
-        filepath (Union[str, Path]): Path to the YAML file containing the settings.
-
-    Methods:
-        from_yaml: Create an AnalysisSettings object from a YAML file.
-        default: Create a default AnalysisSettings object.
-        reload: Reload settings from the YAML file.
-        to_yaml: Save settings to a YAML file.
-        parse_maad_all_alpha_indices: Parse settings for MAAD alpha indices.
-        parse_pyacoustics: Parse settings for pyacoustics metrics.
-        parse_mosqito: Parse settings for MoSQITo metrics.
+        filepath (Path): Path to the YAML file containing the settings.
+        settings (Dict[str, Dict[str, MetricSettings]]): The loaded and validated settings.
     """
+
+    CONFIG_SCHEMA = Schema(
+        {
+            Optional("version"): str,
+            Optional("PythonAcoustics"): {
+                str: {
+                    "run": bool,
+                    Optional("main"): Or(str, int),
+                    Optional("statistics"): [
+                        Or(
+                            int,
+                            And(
+                                str,
+                                Use(str.lower),
+                                lambda s: s
+                                in ["avg", "mean", "max", "min", "kurt", "skew"]
+                                or s.isdigit(),
+                            ),
+                        )
+                    ],
+                    Optional("channel"): [str],
+                    Optional("label"): str,
+                    Optional("func_args"): dict,
+                }
+            },
+            Optional("MoSQITo"): {
+                str: {
+                    "run": bool,
+                    Optional("main"): Or(str, int),
+                    Optional("statistics"): [
+                        Or(
+                            int,
+                            And(
+                                str,
+                                Use(str.lower),
+                                lambda s: s
+                                in ["avg", "mean", "max", "min", "kurt", "skew"]
+                                or s.isdigit(),
+                            ),
+                        )
+                    ],
+                    Optional("channel"): [str],
+                    Optional("label"): str,
+                    Optional("parallel"): bool,
+                    Optional("func_args"): dict,
+                }
+            },
+            Optional("scikit-maad"): {str: {"run": bool, Optional("channel"): [str]}},
+        }
+    )
 
     def __init__(
         self,
-        data,
-        run_stats=True,
-        force_run_all=False,
-        filepath: Union[str, Path] = None,
+        config: Dict[str, Any] | Path | str,
+        run_stats: bool = True,
+        force_run_all: bool = False,
     ):
-        super().__init__(data)
+        """
+        Initialize the AnalysisSettings object.
+
+        Args:
+            config (Dict[str, Any] | Path | str): Either a dictionary containing the configuration,
+                                                  or a path to the YAML configuration file.
+            run_stats (bool, optional): Whether to include all stats or just the main metric. Defaults to True.
+            force_run_all (bool, optional): Whether to force all metrics to run. Defaults to False.
+
+        Raises:
+            FileNotFoundError: If a file path is provided and the file doesn't exist.
+            ValueError: If the configuration is invalid.
+        """
         self.run_stats = run_stats
         self.force_run_all = force_run_all
-        self.filepath = filepath
-        runtime = strftime("%Y-%m-%d %H:%M:%S", localtime())
-        super().__setitem__("runtime", runtime)
+        self.settings: Dict[str, Dict[str, MetricSettings]] = {}
 
-    @classmethod
-    def from_yaml(cls, filename: Union[Path, str], run_stats=True, force_run_all=False):
+        if isinstance(config, (str, Path)):
+            self.filepath = Path(config)
+            if not self.filepath.exists():
+                raise FileNotFoundError(
+                    f"Configuration file not found: {self.filepath}"
+                )
+            with open(self.filepath, "r") as f:
+                config_dict = yaml.safe_load(f)
+        else:
+            self.filepath = None
+            config_dict = config
+
+        self._load_and_validate_settings(config_dict)
+
+    def _load_and_validate_settings(self, config: Dict[str, Any]) -> None:
         """
-        Generate a settings object from a YAML file.
+        Validate the configuration and load it into the settings attribute.
 
         Args:
-            filename (Union[Path, str]): Filename of the YAML file.
-            run_stats (bool, optional): Whether to include all stats listed or just return the main metric.
-                Defaults to True.
-            force_run_all (bool, optional): Whether to force all metrics to run regardless of their settings.
-                Defaults to False.
+            config (Dict[str, Any]): The configuration dictionary to validate and load.
+
+        Raises:
+            ValueError: If the configuration is invalid.
+        """
+        try:
+            validated_config = self.CONFIG_SCHEMA.validate(config)
+        except Exception as e:
+            raise ValueError(f"Invalid configuration: {str(e)}")
+
+        self.settings = {
+            library: {
+                metric: MetricSettings(**settings)
+                for metric, settings in metrics.items()
+            }
+            for library, metrics in validated_config.items()
+            if library != "version"
+        }
+
+    def get_enabled_metrics(self):
+        enabled_metrics = {}
+        for library, metrics in self.settings.items():
+            enabled_metrics[library] = {
+                metric: settings for metric, settings in metrics.items() if settings.run
+            }
+        return enabled_metrics
+
+    def get_metric_settings(self, library: str, metric: str) -> MetricSettings:
+        """
+        Get the settings for a specific metric.
+
+        Args:
+            library (str): The name of the library (e.g., 'PythonAcoustics', 'MoSQITo').
+            metric (str): The name of the metric.
 
         Returns:
-            AnalysisSettings: An AnalysisSettings object.
+            MetricSettings: The settings for the specified metric.
 
-        Note:
-            If both mosqito:loudness_zwtv and mosqito:sharpness_din_from_loudness are present
-            in the settings file, forcing all metrics to run will result in the loudness
-            calculation being run twice.
+        Raises:
+            KeyError: If the specified library or metric is not found in the settings.
         """
-        with open(filename, "r") as f:
-            return cls(
-                yaml.load(f, Loader=yaml.Loader), run_stats, force_run_all, filename
+        try:
+            metric_settings = self.settings[library][metric]
+            run = metric_settings.run or self.force_run_all
+            statistics = (
+                metric_settings.statistics if self.run_stats else [metric_settings.main]
             )
+            return MetricSettings(
+                run=run,
+                main=metric_settings.main,
+                statistics=statistics,
+                channel=metric_settings.channel,
+                label=metric_settings.label,
+                parallel=getattr(metric_settings, "parallel", False),
+                func_args=metric_settings.func_args,
+            )
+        except KeyError:
+            raise KeyError(f"Metric '{metric}' not found in library '{library}'")
 
-    @classmethod
-    def default(cls, run_stats=True, force_run_all=False):
+    def parse_pyacoustics(self, metric: str) -> MetricSettings:
         """
-        Generate a default settings object.
+        Parse settings for a Python Acoustics metric.
 
         Args:
-            run_stats (bool, optional): Whether to include all stats listed or just return the main metric.
-                Defaults to True.
-            force_run_all (bool, optional): Whether to force all metrics to run regardless of their settings.
-                Defaults to False.
+            metric (str): The name of the metric.
 
         Returns:
-            AnalysisSettings: A default AnalysisSettings object.
+            MetricSettings: The settings for the specified metric.
+        """
+        return self.get_metric_settings("PythonAcoustics", metric)
+
+    def parse_mosqito(self, metric: str) -> MetricSettings:
+        """
+        Parse settings for a MoSQITo metric.
+
+        Args:
+            metric (str): The name of the metric.
+
+        Returns:
+            MetricSettings: The settings for the specified metric.
 
         Note:
-            If both mosqito:loudness_zwtv and mosqito:sharpness_din_from_loudness are present
-            in the settings file, forcing all metrics to run will result in the loudness
-            calculation being run twice.
+            This method includes special handling for the 'loudness_zwtv' metric
+            when 'sharpness_din_from_loudness' is also present.
+        """
+        settings = self.get_metric_settings("MoSQITo", metric)
+        if (
+            metric == "loudness_zwtv"
+            and "sharpness_din_from_loudness" in self.settings["MoSQITo"]
+            and self.settings["MoSQITo"]["sharpness_din_from_loudness"].run
+            and not self.force_run_all
+        ):
+            settings.run = False
+        return settings
+
+    def parse_maad_all_alpha_indices(self, metric: str) -> MetricSettings:
+        """
+        Parse settings for MAAD alpha indices.
+
+        Args:
+            metric (str): The name of the metric.
+
+        Returns:
+            MetricSettings: The settings for the specified metric.
+
+        Raises:
+            ValueError: If the metric is not a valid MAAD alpha index.
+        """
+        if metric not in ["all_temporal_alpha_indices", "all_spectral_alpha_indices"]:
+            raise ValueError(f"Invalid MAAD metric: {metric}")
+        return self.get_metric_settings("scikit-maad", metric)
+
+    @classmethod
+    def from_dict(
+        cls, config: Dict[str, Any], run_stats: bool = True, force_run_all: bool = False
+    ) -> AnalysisSettings:
+        """
+        Create an AnalysisSettings object from a dictionary.
+
+        Args:
+            config (Dict[str, Any]): Dictionary containing the configuration.
+            run_stats (bool, optional): Whether to include all stats or just the main metric. Defaults to True.
+            force_run_all (bool, optional): Whether to force all metrics to run. Defaults to False.
+
+        Returns:
+            AnalysisSettings: An instance of AnalysisSettings.
+        """
+        return cls(config, run_stats, force_run_all)
+
+    @classmethod
+    def from_yaml(
+        cls, filename: Path | str, run_stats: bool = True, force_run_all: bool = False
+    ) -> AnalysisSettings:
+        """
+        Create an AnalysisSettings object from a YAML file.
+
+        Args:
+            filename (Path | str): Path to the YAML configuration file.
+            run_stats (bool, optional): Whether to include all stats or just the main metric. Defaults to True.
+            force_run_all (bool, optional): Whether to force all metrics to run. Defaults to False.
+
+        Returns:
+            AnalysisSettings: An instance of AnalysisSettings.
+        """
+        return cls(filename, run_stats, force_run_all)
+
+    @classmethod
+    def default(
+        cls, run_stats: bool = True, force_run_all: bool = False
+    ) -> AnalysisSettings:
+        """
+        Create a default AnalysisSettings object.
+
+        This method uses the default settings file located in the soundscapy package.
+
+        Args:
+            run_stats (bool, optional): Whether to include all stats or just the main metric. Defaults to True.
+            force_run_all (bool, optional): Whether to force all metrics to run. Defaults to False.
+
+        Returns:
+            AnalysisSettings: An instance of AnalysisSettings with default settings.
         """
         import soundscapy
 
         root = Path(soundscapy.__path__[0])
-        return cls(
-            AnalysisSettings.from_yaml(
-                Path(root, "audio", "default_settings.yaml"),
-                run_stats,
-                force_run_all,
-            )
+        return cls.from_yaml(
+            root / "audio" / "default_settings.yaml", run_stats, force_run_all
         )
 
-    def reload(self):
-        """Reload the settings from the yaml file."""
-        return self.from_yaml(self.filepath, self.run_stats, self.force_run_all)
-
-    def to_yaml(self, filename: Union[Path, str]):
-        """Save settings to a yaml file.
-
-        Parameters
-        ----------
-        filename : Path object or str
-            filename of the yaml file
+    def to_yaml(self, filename: Path | str) -> None:
         """
-        with open(filename, "w") as f:
-            yaml.dump(self, f)
-
-    def parse_maad_all_alpha_indices(self, metric: str):
-        """
-        Generate relevant settings for the MAAD all_alpha_indices methods.
+        Save the current settings to a YAML file.
 
         Args:
-            metric (str): Metric to prepare for. Must be either "all_temporal_alpha_indices"
-                          or "all_spectral_alpha_indices".
-
-        Returns:
-            Tuple[bool, Union[Tuple[str, ...], List[str], str]]: A tuple containing:
-                - run (bool): Whether to run the metric.
-                - channel (Union[Tuple[str, ...], List[str], str]): Channel(s) to run the metric on.
-
-        Raises:
-            AssertionError: If the metric is not one of the supported alpha indices.
+            filename (Path | str): Path to save the YAML file.
         """
-        assert metric in [
-            "all_temporal_alpha_indices",
-            "all_spectral_alpha_indices",
-        ], "metric must be all_temporal_alpha_indices or all_spectral_alpha_indices."
+        config = {
+            library: {
+                metric: dataclasses.asdict(settings)
+                for metric, settings in metrics.items()
+            }
+            for library, metrics in self.settings.items()
+        }
+        config["version"] = self.settings.get(
+            "version", "1.0"
+        )  # Add version if it exists, else use default
 
-        lib_settings = self["scikit-maad"].copy()
-        run = lib_settings[metric]["run"] or self.force_run_all
-        channel = lib_settings[metric]["channel"].copy()
-        return run, channel
+        with open(filename, "w") as f:
+            yaml.dump(config, f)
 
-    def parse_pyacoustics(self, metric: str):
-        """Generate relevant settings for a pyacoustics metric.
 
-        Parameters
-        ----------
-        metric : str
-            metric to prepare for
+def get_default_yaml(save_as: str = "default_settings.yaml") -> None:
+    """
+    Retrieve the default settings from GitHub and save them to a file.
 
-        Returns
-        -------
-        run: bool
-            Whether to run the metric
-        channel: tuple or list of str, or str
-            channel(s) to run the metric on
-        statistics: tuple or list of str, or str
-            statistics to run the metric on.
-            If run_stats is False, will only return the main statistic
-        label: str
-            label to use for the metric
-        func_args: dict
-            arguments to pass to the underlying metric function from python acoustics
-        """
-        return self._parse_method("PythonAcoustics", metric)
+    Args:
+        save_as (str, optional): Filename to save the default settings. Defaults to "default_settings.yaml".
+    """
+    print("Downloading default settings from GitHub...")
+    url = os.getenv(
+        "SOUNDSCAPY_DEFAULT_SETTINGS_URL",
+        "https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/main/soundscapy/analysis/default_settings.yaml",
+    )
+    urllib.request.urlretrieve(url, save_as)
 
-    def parse_mosqito(self, metric: str):
-        """Generate relevant settings for a mosqito metric.
 
-        Parameters
-        ----------
-        metric : str
-            metric to prepare for
+if __name__ == "__main__":
+    # Example usage
+    # From YAML file
+    settings_from_yaml = AnalysisSettings.from_yaml("path/to/your/settings.yaml")
 
-        Returns
-        -------
-        run: bool
-            Whether to run the metric
-        channel: tuple or list of str, or str
-            channel(s) to run the metric on
-        statistics: tuple or list of str, or str
-            statistics to run the metric on.
-            If run_stats is False, will only return the main statistic
-        label: str
-            label to use for the metric
-        func_args: dict
-            arguments to pass to the underlying metric function from MoSQITo
-        """
-        assert metric in [
-            "loudness_zwtv",
-            "sharpness_din_from_loudness",
-            "sharpness_din_perseg",
-            "sharpness_din_tv",
-            "roughness_dw",
-        ], f"Metric {metric} not found."
-        run, channel, statistics, label, func_args = self._parse_method(
-            "MoSQITo", metric
-        )
-        try:
-            parallel = self["MoSQITo"][metric]["parallel"]
-        except KeyError:
-            parallel = False
-        # Check for sub metric
-        # if sub metric is present, don't run this metric
-        if (
-            metric == "loudness_zwtv"
-            and "sharpness_din_from_loudness" in self["MoSQITo"].keys()
-            and self["MoSQITo"]["sharpness_din_from_loudness"]["run"]
-            and self.force_run_all is False
-        ):
-            run = False
-        return run, channel, statistics, label, parallel, func_args
+    # From dictionary
+    config_dict = {
+        "version": "1.0",
+        "PythonAcoustics": {
+            "LAeq": {
+                "run": True,
+                "main": "avg",
+                "statistics": ["5", "95", "avg"],
+                "channel": ["Left", "Right"],
+                "label": "LAeq",
+            }
+        },
+    }
+    settings_from_dict = AnalysisSettings.from_dict(config_dict)
 
-    def _parse_method(self, library: str, metric: str):
-        """Helper function to return relevant settings for a library
-
-        Parameters
-        ----------
-        library : str
-            Library containing the metric
-        metric : str
-            metric to prepare for
-
-        Returns
-        -------
-        run: bool
-            Whether to run the metric
-        channel: tuple or list of str, or str
-            channel(s) to run the metric on
-        statistics: tuple or list of str, or str
-            statistics to run the metric on.
-            If run_stats is False, will only return the main statistic
-        label: str
-            label to use for the metric
-        func_args: dict
-            arguments to pass to the underlying metric function from the library
-        """
-        lib_settings = self[library].copy()
-        channel = lib_settings[metric]["channel"].copy()
-        statistics = lib_settings[metric]["statistics"].copy() if self.run_stats else []
-        label = lib_settings[metric]["label"]
-        func_args = (
-            lib_settings[metric]["func_args"]
-            if "func_args" in lib_settings[metric].keys()
-            else {}
-        )
-
-        main_stat = lib_settings[metric]["main"]
-        statistics = (
-            (list(statistics) + [main_stat])
-            if main_stat not in statistics
-            else tuple(statistics)
-        )
-
-        # Override metric run settings if force_run_all is True
-        run = lib_settings[metric]["run"] or self.force_run_all
-        return run, channel, statistics, label, func_args
+    print(settings_from_yaml.parse_pyacoustics("LAeq"))
+    print(settings_from_dict.parse_pyacoustics("LAeq"))

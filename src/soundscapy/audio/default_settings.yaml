@@ -1,6 +1,7 @@
 # Settings file for batch acoustic analysis.
 # Split up according to which library performs which analysis.
 
+version: "1.0"
 
 # Python Acoustics
 # Supported metrics: LAeq, LZeq, LCeq, SEL
@@ -38,8 +39,8 @@ PythonAcoustics:
 
     SEL:
         run: true
-        main: []
-        statistics: []
+#        main: []
+#        statistics: []
         channel: ["Left", "Right"]
         label: 'SEL'
 

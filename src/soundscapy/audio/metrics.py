@@ -758,7 +758,7 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
 
 def process_all_metrics(
     b,
-    analysis_settings,
+    analysis_settings: "AnalysisSettings",
     parallel: bool = True,
     verbose: bool = False,
 ) -> pd.DataFrame:
@@ -797,56 +797,46 @@ def process_all_metrics(
     results_df = pd.DataFrame(index=idx)
     results_df.index.names = ["Recording", "Channel"]
 
-    # Count number of metrics to run
-    metric_count = 0
-    for library in analysis_settings.keys():
-        if library not in ["PythonAcoustics", "scikit-maad", "MoSQITo"]:
-            pass
-        else:
-            for metric in analysis_settings[library].keys():
-                if analysis_settings[library][metric]["run"]:
-                    metric_count += 1
-
-    # Loop through options in analysis_settings
-    for library in analysis_settings.keys():
-        # Python Acoustics metrics
-        if library == "PythonAcoustics":
-            for metric in analysis_settings[library].keys():
-                results_df = pd.concat(
-                    (
-                        results_df,
-                        b.pyacoustics_metric(
-                            metric, verbose=verbose, analysis_settings=analysis_settings
-                        ),
-                    ),
-                    axis=1,
-                )
-        # MoSQITO metrics
-        elif library == "MoSQITo":
-            for metric in analysis_settings[library].keys():
-                results_df = pd.concat(
-                    (
-                        results_df,
-                        b.mosqito_metric(
-                            metric,
-                            parallel=parallel,
-                            verbose=verbose,
-                            analysis_settings=analysis_settings,
-                        ),
-                    ),
-                    axis=1,
-                )
-        # scikit-maad metrics
-        elif library == "scikit-maad":
-            for metric in analysis_settings[library].keys():
-                results_df = pd.concat(
-                    (
-                        results_df,
-                        b.maad_metric(
-                            metric, verbose=verbose, analysis_settings=analysis_settings
-                        ),
-                    ),
-                    axis=1,
-                )
+    for library in ["PythonAcoustics", "MoSQITo", "scikit-maad"]:
+        if library in analysis_settings.settings:
+            for metric, metric_settings in analysis_settings.settings[library].items():
+                if metric_settings.run:
+                    if library == "PythonAcoustics":
+                        results_df = pd.concat(
+                            (
+                                results_df,
+                                b.pyacoustics_metric(
+                                    metric,
+                                    verbose=verbose,
+                                    analysis_settings=analysis_settings,
+                                ),
+                            ),
+                            axis=1,
+                        )
+                    elif library == "MoSQITo":
+                        results_df = pd.concat(
+                            (
+                                results_df,
+                                b.mosqito_metric(
+                                    metric,
+                                    parallel=parallel,
+                                    verbose=verbose,
+                                    analysis_settings=analysis_settings,
+                                ),
+                            ),
+                            axis=1,
+                        )
+                    elif library == "scikit-maad":
+                        results_df = pd.concat(
+                            (
+                                results_df,
+                                b.maad_metric(
+                                    metric,
+                                    verbose=verbose,
+                                    analysis_settings=analysis_settings,
+                                ),
+                            ),
+                            axis=1,
+                        )
 
     return results_df
