@@ -1,8 +1,27 @@
+"""
+soundscapy.audio.parallel_processing
+====================================
+
+This module provides functions for parallel processing of binaural audio files.
+
+It includes functions to load and analyze binaural files, as well as to process
+multiple files in parallel using multiprocessing.
+
+Functions:
+    load_analyse_binaural: Load and analyze a single binaural file.
+    parallel_process: Process multiple binaural files in parallel.
+
+Note:
+    This module requires the tqdm library for progress bars.
+"""
+
 import json
 import multiprocessing as mp
 import time
 from pathlib import Path
+from typing import Dict, List
 
+import pandas as pd
 from tqdm.auto import tqdm
 
 from soundscapy import AnalysisSettings, Binaural
@@ -13,24 +32,23 @@ from soundscapy.audio.metrics import (
 )
 
 
-def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
-    """Load and analyse binaural file
+def load_analyse_binaural(
+    wav_file: Path,
+    levels: Dict,
+    analysis_settings: AnalysisSettings,
+    verbose: bool = True,
+) -> pd.DataFrame:
+    """
+    Load and analyze a binaural audio file.
 
-    Parameters
-    ----------
-    wav_file : str
-        Path to wav file
-    levels : list
-        List of levels to analyse
-    analysis_settings : AnalysisSettings
-        Analysis settings
-    verbose : bool, optional
-        Print progress, by default True
+    Args:
+        wav_file (Path): Path to the WAV file.
+        levels (Dict): Dictionary with calibration levels for each channel.
+        analysis_settings (AnalysisSettings): Analysis settings object.
+        verbose (bool, optional): Print progress information. Defaults to True.
 
-    Returns
-    -------
-    results : dict
-        Dictionary with results
+    Returns:
+        pd.DataFrame: DataFrame with analysis results.
     """
     print(f"Processing {wav_file.stem}")
     b = Binaural.from_wav(wav_file)
@@ -39,27 +57,25 @@ def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
     return process_all_metrics(b, analysis_settings, parallel=False, verbose=verbose)
 
 
-def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=True):
+def parallel_process(
+    wav_files: List[Path],
+    results_df: pd.DataFrame,
+    levels: Dict,
+    analysis_settings: AnalysisSettings,
+    verbose: bool = True,
+) -> pd.DataFrame:
     """
-    Parallel processing of binaural files
+    Process multiple binaural files in parallel.
 
-    Parameters
-    ----------
-    wav_files : list
-        List of wav files
-    results_df : pandas.DataFrame
-        Results dataframe
-    levels : dict
-        Dictionary with levels
-    analysis_settings : AnalysisSettings
-        Analysis settings
-    verbose : bool, optional
-        Print progress, by default True
+    Args:
+        wav_files (List[Path]): List of WAV files to process.
+        results_df (pd.DataFrame): Initial results DataFrame to update.
+        levels (Dict): Dictionary with calibration levels for each file.
+        analysis_settings (AnalysisSettings): Analysis settings object.
+        verbose (bool, optional): Print progress information. Defaults to True.
 
-    Returns
-    -------
-    results_df : pandas.DataFrame
-        Results dataframe
+    Returns:
+        pd.DataFrame: Updated results DataFrame with analysis results for all files.
     """
     # Parallel processing with Pool.apply_async() without callback function
 

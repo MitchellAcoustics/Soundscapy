@@ -1,3 +1,22 @@
+"""
+soundscapy.audio._AnalysisSettings
+==================================
+
+This module provides the AnalysisSettings class, which is used to manage
+and parse settings for various audio analysis methods.
+
+The AnalysisSettings class is a dictionary-like object that stores settings
+for different audio analysis libraries and metrics. It provides methods to
+load settings from YAML files, parse settings for specific metrics, and
+manage the execution of analysis tasks.
+
+Classes:
+    AnalysisSettings: Manages settings for audio analysis methods.
+
+Functions:
+    get_default_yaml: Retrieves default settings from the GitHub repository.
+"""
+
 import urllib.request
 from pathlib import Path
 from time import localtime, strftime
@@ -25,8 +44,26 @@ def get_default_yaml(save_as="default_settings.yaml"):
 
 
 class AnalysisSettings(dict):
-    """Dict of settings for analysis methods. Each library has a dict of metrics,
-    each of which has a dict of settings.
+    """
+    A dictionary-like class for managing settings for audio analysis methods.
+
+    Each library has a dict of metrics, each of which has a dict of settings.
+    This class provides methods to load settings from YAML files, parse settings
+    for specific metrics, and manage the execution of analysis tasks.
+
+    Attributes:
+        run_stats (bool): Whether to include all stats or just the main metric.
+        force_run_all (bool): Whether to force all metrics to run regardless of their settings.
+        filepath (Union[str, Path]): Path to the YAML file containing the settings.
+
+    Methods:
+        from_yaml: Create an AnalysisSettings object from a YAML file.
+        default: Create a default AnalysisSettings object.
+        reload: Reload settings from the YAML file.
+        to_yaml: Save settings to a YAML file.
+        parse_maad_all_alpha_indices: Parse settings for MAAD alpha indices.
+        parse_pyacoustics: Parse settings for pyacoustics metrics.
+        parse_mosqito: Parse settings for MoSQITo metrics.
     """
 
     def __init__(
@@ -45,26 +82,23 @@ class AnalysisSettings(dict):
 
     @classmethod
     def from_yaml(cls, filename: Union[Path, str], run_stats=True, force_run_all=False):
-        """Generate a settings object from a yaml file.
+        """
+        Generate a settings object from a YAML file.
 
-        Parameters
-        ----------
-        filename : Path object or str
-            filename of the yaml file
-        run_stats : bool, optional
-            whether to include all stats listed or just return the main metric, by default True
+        Args:
+            filename (Union[Path, str]): Filename of the YAML file.
+            run_stats (bool, optional): Whether to include all stats listed or just return the main metric.
+                Defaults to True.
+            force_run_all (bool, optional): Whether to force all metrics to run regardless of their settings.
+                Defaults to False.
 
-            This can simplify the results dataframe if you only want the main metric.
-            For example, rather than including L_5, L_50, etc. will only include LEq
-        force_run_all : bool, optional
-            whether to force all metrics to run regardless of what is set in their options, by default False
+        Returns:
+            AnalysisSettings: An AnalysisSettings object.
 
-            Use Cautiously. This can be useful if you want to run all metrics, but don't want to change the yaml file.
-            Warning: If both mosqito:loudness_zwtv and mosqitsharpness_din_from_loudness are present in the settings file, this will result in the loudness calc being run twice.
-        Returns
-        -------
-        AnalysisSettings
-            AnalysisSettings object
+        Note:
+            If both mosqito:loudness_zwtv and mosqito:sharpness_din_from_loudness are present
+            in the settings file, forcing all metrics to run will result in the loudness
+            calculation being run twice.
         """
         with open(filename, "r") as f:
             return cls(
@@ -73,26 +107,22 @@ class AnalysisSettings(dict):
 
     @classmethod
     def default(cls, run_stats=True, force_run_all=False):
-        """Generate a default settings object.
+        """
+        Generate a default settings object.
 
-        Parameters
-        ----------
-        run_stats : bool, optional
-            whether to include all stats listed or just return the main metric, by default True
+        Args:
+            run_stats (bool, optional): Whether to include all stats listed or just return the main metric.
+                Defaults to True.
+            force_run_all (bool, optional): Whether to force all metrics to run regardless of their settings.
+                Defaults to False.
 
-            This can simplify the results dataframe if you only want the main metric.
-            For example, rather than including L_5, L_50, etc. will only include LEq
-        force_run_all : bool, optional
-            whether to force all metrics to run regardless of what is set in their options, by default False
+        Returns:
+            AnalysisSettings: A default AnalysisSettings object.
 
-            Use Cautiously. This can be useful if you want to run all metrics, but don't want to change the yaml file.
-            Warning: If both mosqito:loudness_zwtv and mosqito:sharpness_din_from_loudness are present in the settings
-            file, this will result in the loudness calc being run twice.
-
-        Returns
-        -------
-        AnalysisSettings
-            AnalysisSettings object
+        Note:
+            If both mosqito:loudness_zwtv and mosqito:sharpness_din_from_loudness are present
+            in the settings file, forcing all metrics to run will result in the loudness
+            calculation being run twice.
         """
         import soundscapy
 
@@ -121,19 +151,20 @@ class AnalysisSettings(dict):
             yaml.dump(self, f)
 
     def parse_maad_all_alpha_indices(self, metric: str):
-        """Generate relevant settings for the maad all_alpha_indices methods.
+        """
+        Generate relevant settings for the MAAD all_alpha_indices methods.
 
-        Parameters
-        ----------
-        metric : str
-            metric to prepare for
+        Args:
+            metric (str): Metric to prepare for. Must be either "all_temporal_alpha_indices"
+                          or "all_spectral_alpha_indices".
 
-        Returns
-        -------
-        run: bool
-            Whether to run the metric
-        channel: tuple or list of str, or str
-            channel(s) to run the metric on
+        Returns:
+            Tuple[bool, Union[Tuple[str, ...], List[str], str]]: A tuple containing:
+                - run (bool): Whether to run the metric.
+                - channel (Union[Tuple[str, ...], List[str], str]): Channel(s) to run the metric on.
+
+        Raises:
+            AssertionError: If the metric is not one of the supported alpha indices.
         """
         assert metric in [
             "all_temporal_alpha_indices",
@@ -260,6 +291,3 @@ class AnalysisSettings(dict):
         # Override metric run settings if force_run_all is True
         run = lib_settings[metric]["run"] or self.force_run_all
         return run, channel, statistics, label, func_args
-
-
-# %%
