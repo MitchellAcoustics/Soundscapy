@@ -166,14 +166,14 @@ dmypy.json
 /.idea
 .vscode/settings.json
 Cultural-comparison-analysis.ipynb
-soundscapy/archive
+soundscapy_old/archive
 /notebooks/
 .idea/.name
 .idea/misc.xml
 .idea/Soundscapy.iml
 .idea/vcs.xml
 .idea/workspace.xml
-soundscapy/.DS_Store
+soundscapy_old/.DS_Store
 .DS_Store
 /pyproject-poetry.toml
 /docs/_autosummary/

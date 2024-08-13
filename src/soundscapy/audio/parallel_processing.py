@@ -1,11 +1,16 @@
 import json
+import multiprocessing as mp
 import time
 from pathlib import Path
+
 from tqdm.auto import tqdm
 
-from soundscapy import AnalysisSettings
-from soundscapy import Binaural
-from soundscapy.analysis.binaural import *
+from soundscapy import AnalysisSettings, Binaural
+from soundscapy.audio.metrics import (
+    add_results,
+    prep_multiindex_df,
+    process_all_metrics,
+)
 
 
 def load_analyse_binaural(wav_file, levels, analysis_settings, verbose=True):
@@ -67,7 +72,7 @@ def parallel_process(wav_files, results_df, levels, analysis_settings, verbose=T
         )
         for wav_file in wav_files
     ]
-    with tqdm(total = len(result_objects), desc="Processing files") as pbar:
+    with tqdm(total=len(result_objects), desc="Processing files") as pbar:
         for r in result_objects:
             r.wait()
             results.append(r.get())

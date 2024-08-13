@@ -1,10 +1,8 @@
 # Customized functions specifically for the International Soundscape Database
 import warnings
-from datetime import date
 from importlib import resources
 
 import pandas as pd
-from pandas.api.extensions import register_dataframe_accessor
 
 # Constants and Labels
 from soundscapy.utils.surveys import *

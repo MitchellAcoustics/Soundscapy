@@ -1,25 +1,39 @@
+import warnings
 from pathlib import Path
+from typing import List, Tuple
 
+import numpy as np
+import pandas as pd
 from acoustics import Signal
 
-from soundscapy import AnalysisSettings
-from soundscapy.analysis.binaural import *
-from soundscapy.analysis.metrics import *
+from soundscapy.audio.metrics import (
+    maad_metric_1ch,
+    maad_metric_2ch,
+    mosqito_metric_1ch,
+    mosqito_metric_2ch,
+    process_all_metrics,
+    pyacoustics_metric_1ch,
+    pyacoustics_metric_2ch,
+)
 
 
 class Binaural(Signal):
-    """Binaural signal class for analysis of binaural signals.
-    A signal consisting of 2D samples (array) and a sampling frequency (fs).
+    """
+    A class for processing and analyzing binaural audio signals.
 
-    Subclasses the Signal class from python acoustics.
-    Also adds attributes for the recording name.
-    Adds the ability to do binaural analysis using the acoustics, scikit-maad and mosqito libraries.
-    Optimised for batch processing with analysis settings predefined in a yaml file and passed to the class
-    via the AnalysisSettings class.
+    This class extends the Signal class from the acoustics library to provide
+    specialized functionality for binaural recordings. It supports various
+    psychoacoustic metrics and analysis techniques using libraries such as
+    mosqito, maad, and python-acoustics.
 
-    See Also
-    --------
-    acoustics.Signal : Base class for binaural signal
+    Attributes:
+        fs (float): Sampling frequency of the signal.
+        recording (str): Name or identifier of the recording.
+
+    Inherits all attributes and methods from acoustics.Signal.
+
+    Note:
+        This class only supports 2-channel (stereo) audio signals.
     """
 
     def __new__(cls, data, fs, recording="Rec"):
@@ -35,31 +49,31 @@ class Binaural(Signal):
         self.fs = getattr(obj, "fs", None)
         self.recording = getattr(obj, "recording", None)
 
-    def calibrate_to(self, decibel: Union[float, list, tuple], inplace: bool = False):
-        """Calibrate two channel signal to predefined Leq/dB levels.
+    def calibrate_to(
+        self, decibel: float | List[float] | Tuple[float, float], inplace: bool = False
+    ) -> "Binaural":
+        """
+        Calibrate the binaural signal to predefined Leq/dB levels.
 
-        Parameters
-        ----------
-        decibel : float, list or tuple of float
-            Value(s) to calibrate to in dB (Leq)
-            Can also handle np.ndarray and pd.Series of length 2.
-            If only one value is passed, will calibrate both channels to the same value.
-        inplace : bool, optional
-            Whether to perform inplace or not, by default False
+        This method allows calibration of both channels either to the same level
+        or to different levels for each channel.
 
-        Returns
-        -------
-        Binaural
-            Calibrated Binaural signal
+        Args:
+            decibel (float | List[float] | Tuple[float, float]): Target calibration value(s) in dB (Leq).
+                If a single value is provided, both channels will be calibrated to this level.
+                If two values are provided, they will be applied to the left and right channels respectively.
+            inplace (bool, optional): If True, modify the signal in place. If False, return a new calibrated signal.
+                Defaults to False.
 
-        Raises
-        ------
-        ValueError
-            If decibel is not a (float, int) or a list or tuple of length 2.
+        Returns:
+            Binaural: Calibrated Binaural signal. If inplace is True, returns self.
 
-        See Also
-        --------
-        acoustics.Signal.calibrate_to : Base method for calibration. Cannot handle 2ch calibration
+        Raises:
+            ValueError: If decibel is not a float, or a list/tuple of two floats.
+
+        Example:
+            >>> signal = Binaural.from_wav("audio.wav")
+            >>> calibrated_signal = signal.calibrate_to([60, 62])  # Calibrate left channel to 60 dB and right to 62 dB
         """
         if isinstance(decibel, (np.ndarray, pd.Series)):  # Force into tuple
             decibel = tuple(decibel)
@@ -84,8 +98,8 @@ class Binaural(Signal):
     @classmethod
     def from_wav(
         cls,
-        filename: Union[Path, str],
-        calibrate_to: Union[float, list, tuple] = None,
+        filename: Path | str,
+        calibrate_to: float | List | Tuple = None,
         normalize: bool = False,
     ):
         """Load a wav file and return a Binaural object
@@ -152,7 +166,7 @@ class Binaural(Signal):
     def pyacoustics_metric(
         self,
         metric: str,
-        statistics: Union[tuple, list] = (
+        statistics: Tuple | List = (
             5,
             10,
             50,
@@ -165,11 +179,11 @@ class Binaural(Signal):
             "skew",
         ),
         label: str = None,
-        channel: Union[str, int, list, tuple] = ("Left", "Right"),
+        channel: str | int | List | Tuple = ("Left", "Right"),
         as_df: bool = True,
         return_time_series: bool = False,
         verbose: bool = False,
-        analysis_settings: AnalysisSettings = None,
+        analysis_settings: "AnalysisSettings" = None,
         func_args={},
     ):
         """Run a metric from the python acoustics library
@@ -255,7 +269,7 @@ class Binaural(Signal):
     def mosqito_metric(
         self,
         metric: str,
-        statistics: Union[tuple, list] = (
+        statistics: Tuple | List = (
             5,
             10,
             50,
@@ -268,12 +282,12 @@ class Binaural(Signal):
             "skew",
         ),
         label: str = None,
-        channel: Union[int, tuple, list, str] = ("Left", "Right"),
+        channel: int | Tuple | List | str = ("Left", "Right"),
         as_df: bool = True,
         return_time_series: bool = False,
         parallel: bool = True,
         verbose: bool = False,
-        analysis_settings: AnalysisSettings = None,
+        analysis_settings: "AnalysisSettings" = None,
         func_args={},
     ):
         """Run a metric from the mosqito library
@@ -361,10 +375,10 @@ class Binaural(Signal):
     def maad_metric(
         self,
         metric: str,
-        channel: Union[int, tuple, list, str] = ("Left", "Right"),
+        channel: int | Tuple | List | str = ("Left", "Right"),
         as_df: bool = True,
         verbose: bool = False,
-        analysis_settings: AnalysisSettings = None,
+        analysis_settings: "AnalysisSettings" = None,
         func_args={},
     ):
         """Run a metric from the scikit-maad library
@@ -414,30 +428,32 @@ class Binaural(Signal):
 
     def process_all_metrics(
         self,
-        analysis_settings: AnalysisSettings,
+        analysis_settings: "AnalysisSettings",
         parallel: bool = True,
         verbose: bool = False,
-    ):
-        """Run all metrics specified in the AnalysisSettings object
+    ) -> pd.DataFrame:
+        """
+        Process all metrics specified in the analysis settings.
 
-        Parameters
-        ----------
-        analysis_settings : AnalysisSettings
-            Analysis settings object
-        parallel : bool, optional
-            Whether to run the channels in parallel for `binaural.mosqito_metric_2ch`, by default True
-            If False, will run each channel sequentially.
-            If being run as part of a larger parallel analysis (e.g. processing many recordings at once), this will
-            automatically be set to False.
-            Applies only to `binaural.mosqito_metric_2ch`. The other metrics are considered fast enough not to bother.
-        verbose : bool, optional
-            Whether to print status updates, by default False
+        This method runs all enabled metrics from the provided AnalysisSettings object
+        and compiles the results into a single DataFrame.
 
-        Returns
-        -------
-        pd.DataFrame
-            MultiIndex Dataframe of results.
-            Index includes "Recording" and "Channel" with a column for each metric.
+        Args:
+            analysis_settings (AnalysisSettings): Configuration object specifying which metrics to run and their parameters.
+            parallel (bool, optional): Whether to run calculations in parallel where possible. Defaults to True.
+            verbose (bool, optional): If True, print progress information. Defaults to False.
+
+        Returns:
+            pd.DataFrame: A MultiIndex DataFrame containing the results of all processed metrics.
+                          The index includes "Recording" and "Channel" levels.
+
+        Note:
+            The parallel option primarily affects the MoSQITo metrics. Other metrics may not benefit from parallelization.
+
+        Example:
+            >>> signal = Binaural.from_wav("audio.wav")
+            >>> settings = AnalysisSettings.from_yaml("settings.yaml")
+            >>> results = signal.process_all_metrics(settings, verbose=True)
         """
         return process_all_metrics(self, analysis_settings, parallel, verbose)
 

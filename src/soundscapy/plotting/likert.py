@@ -1,8 +1,8 @@
 """
 Plotting functions for visualising Likert scale data.
 """
-from math import pi
 
+from math import pi
 from matplotlib import pyplot as plt
 
 from soundscapy.utils.parameters import PAQ_NAMES

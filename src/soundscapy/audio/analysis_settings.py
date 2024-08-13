@@ -1,8 +1,9 @@
+import urllib.request
 from pathlib import Path
 from time import localtime, strftime
 from typing import Union
+
 import yaml
-import urllib.request
 
 
 def get_default_yaml(save_as="default_settings.yaml"):
@@ -98,7 +99,7 @@ class AnalysisSettings(dict):
         root = Path(soundscapy.__path__[0])
         return cls(
             AnalysisSettings.from_yaml(
-                Path(root, "analysis", "default_settings.yaml"),
+                Path(root, "audio", "default_settings.yaml"),
                 run_stats,
                 force_run_all,
             )

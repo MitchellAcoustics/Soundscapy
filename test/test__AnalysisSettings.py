@@ -1,9 +1,11 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
 import pytest
-from tempfile import TemporaryDirectory, TemporaryFile
+import yaml
+
 import soundscapy
 from soundscapy import AnalysisSettings, get_default_yaml
-from pathlib import Path
-import yaml
 
 
 @pytest.fixture()
