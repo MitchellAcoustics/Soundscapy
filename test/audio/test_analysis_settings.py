@@ -66,7 +66,7 @@ def test_analysis_settings_initialization(analysis_settings, sample_config):
 def test_get_metric_settings(analysis_settings):
     laeq_settings = analysis_settings.get_metric_settings("PythonAcoustics", "LAeq")
     assert isinstance(laeq_settings, MetricSettings)
-    assert laeq_settings.run == True
+    assert laeq_settings.run is True
     assert laeq_settings.main == "avg"
 
 
@@ -79,7 +79,7 @@ def test_parse_pyacoustics(analysis_settings):
 def test_parse_mosqito(analysis_settings):
     loudness_settings = analysis_settings.parse_mosqito("loudness_zwtv")
     assert isinstance(loudness_settings, MetricSettings)
-    assert loudness_settings.parallel == True
+    assert loudness_settings.parallel is True
 
 
 def test_parse_maad_all_alpha_indices(analysis_settings):
@@ -87,7 +87,7 @@ def test_parse_maad_all_alpha_indices(analysis_settings):
         "all_temporal_alpha_indices"
     )
     assert isinstance(maad_settings, MetricSettings)
-    assert maad_settings.run == True
+    assert maad_settings.run is True
 
 
 def test_from_yaml(sample_config):
