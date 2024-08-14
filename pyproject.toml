@@ -16,6 +16,7 @@ dependencies = [
     "acoustics>=0.2.6",
     "pyyaml>=6.0.2",
     "schema>=0.7.7",
+    "loguru>=0.7.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -37,11 +38,12 @@ repository = "https://github.com/MitchellAcoustics/Soundscapy"
 documentation = "https://soundscapy.readthedocs.io/en/latest/"
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=short"
-testpaths = ["tests"]
+addopts = "-v --tb=short --durations=5 --doctest-modules"
+testpaths = ["test"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+console_output_style = "count"
 
 [project.optional-dependencies]
 test = [

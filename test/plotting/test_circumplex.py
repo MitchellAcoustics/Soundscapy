@@ -15,8 +15,8 @@ def data():
 
 @pytest.fixture()
 def simulated_data():
-    data = sspy.surveys.simulation(1000)
-    data = sspy.surveys.add_iso_coords(data)
+    data = sspy.surveys.processing.simulation(1000)
+    data = sspy.surveys.processing.add_iso_coords(data)
     return data
 
 

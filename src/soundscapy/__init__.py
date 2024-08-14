@@ -8,7 +8,7 @@ from soundscapy import plotting
 from soundscapy.audio import AnalysisSettings, get_default_yaml
 from soundscapy.audio.binaural import Binaural
 from soundscapy.databases import araus, isd, satp
-from soundscapy.utils import surveys
+from soundscapy.surveys import processing
 
 __version__ = importlib.metadata.version("soundscapy")
 
@@ -19,6 +19,6 @@ __all__ = [
     "araus",
     "isd",
     "satp",
-    "surveys",
+    "processing",
     "get_default_yaml",
 ]

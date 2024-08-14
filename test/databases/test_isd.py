@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from pytest import raises
+from soundscapy.utils import surveys
 
 import soundscapy.databases.isd as isd
-from soundscapy.utils import surveys
 
 
 @pytest.fixture
@@ -25,6 +25,7 @@ class TestISDLoading:
         assert df.shape == (3589, 142)  # Adjust these numbers if they change
         assert all(col in df.columns for col in isd._PAQ_ALIASES.values())
 
+    @pytest.mark.slow
     def test_load_zenodo(self):
         with raises(ValueError, match="Version .* not recognised"):
             isd.load_zenodo(version="invalid_version")
@@ -107,6 +108,7 @@ class TestISDDescription:
         result_count = isd.describe_location(isd_data_with_iso, location, type="count")
         assert isinstance(result_count["pleasant"], int)
 
+    @pytest.mark.slow
     def test_soundscapy_describe(self, isd_data_with_iso):
         result = isd.soundscapy_describe(isd_data_with_iso)
         assert isinstance(result, pd.DataFrame)

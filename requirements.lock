@@ -179,6 +179,8 @@ lazy-loader==0.4
     # via scikit-image
 llvmlite==0.43.0
     # via numba
+loguru==0.7.2
+    # via soundscapy
 markdown==3.6
     # via mkdocs
     # via mkdocs-autorefs
