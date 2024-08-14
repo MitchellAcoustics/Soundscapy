@@ -77,7 +77,8 @@ def load() -> pd.DataFrame:
     >>> set(PAQ_IDS).issubset(df.columns)
     True
     """
-    with resources.path("soundscapy.data", "ISD v1.0 Data.csv") as f:
+    isd_resource = resources.files("soundscapy.data").joinpath("ISD v1.0 Data.csv")
+    with resources.as_file(isd_resource) as f:
         data = pd.read_csv(f)
     data = rename_paqs(data, _PAQ_ALIASES)
     logger.info("Loaded ISD data from Soundscapy's included CSV file.")
