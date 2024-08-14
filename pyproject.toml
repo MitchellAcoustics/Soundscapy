@@ -38,12 +38,22 @@ repository = "https://github.com/MitchellAcoustics/Soundscapy"
 documentation = "https://soundscapy.readthedocs.io/en/latest/"
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=short --durations=5 --doctest-modules"
-testpaths = ["test"]
+addopts = "-v --tb=short --durations=5 --xdoctest"
+testpaths = ["test", "src/soundscapy"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 console_output_style = "count"
+
+[tool.pytest.plugins]
+doctest_optionflags = "NUMBER NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL"
+markers = [
+    "slow: mark test as slow",
+    "skip: mark test as skipped",
+    "skipif: mark test as skipped if condition is met",
+    "xfail: mark test as expected to fail",
+    "parametrize: mark test as parametrized"
+]
 
 [project.optional-dependencies]
 test = [
@@ -51,6 +61,7 @@ test = [
     "setuptools>=72.1.0",
     "nbmake>=1.5.4",
     "pytest-xdist>=3.6.1",
+    "xdoctest[all]>=1.1.6",
 ]
 docs = [
     "jupyter>=1.0.0",

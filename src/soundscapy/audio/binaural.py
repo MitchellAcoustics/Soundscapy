@@ -72,6 +72,7 @@ class Binaural(Signal):
             ValueError: If decibel is not a float, or a list/tuple of two floats.
 
         Example:
+            >>> # xdoctest: +SKIP
             >>> signal = Binaural.from_wav("audio.wav")
             >>> calibrated_signal = signal.calibrate_to([60, 62])  # Calibrate left channel to 60 dB and right to 62 dB
         """
@@ -451,6 +452,7 @@ class Binaural(Signal):
             The parallel option primarily affects the MoSQITo metrics. Other metrics may not benefit from parallelization.
 
         Example:
+            >>> # xdoctest: +SKIP
             >>> signal = Binaural.from_wav("audio.wav")
             >>> settings = AnalysisSettings.from_yaml("settings.yaml")
             >>> results = signal.process_all_metrics(settings, verbose=True)

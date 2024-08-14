@@ -3,9 +3,10 @@ Plotting functions for visualising Likert scale data.
 """
 
 from math import pi
+
 from matplotlib import pyplot as plt
 
-from soundscapy.utils.parameters import PAQ_NAMES
+from soundscapy.surveys.survey_utils import PAQ_LABELS
 
 
 def paq_radar_plot(data, ax=None, index=None):
@@ -28,7 +29,7 @@ def paq_radar_plot(data, ax=None, index=None):
     # TODO WARNING: Likely broken now
     if index:
         data = data.isd.convert_column_to_index(col=index)
-    data = data[PAQ_NAMES]
+    data = data[PAQ_LABELS]
     if ax is None:
         ax = plt.axes(polar=True)
     # ---------- Part 1: create background

@@ -12,9 +12,10 @@ The module integrates with external libraries such as mosqito, maad, and python-
 to provide a comprehensive suite of audio analysis tools.
 
 Example:
-    >>> from soundscapy.audio import Binaural
-    >>> signal = Binaural.from_wav("audio.wav")
-    >>> results = signal.process_all_metrics(analysis_settings)
+    >>> # xdoctest: +SKIP
+    >>> from soundscapy.audio import Binaural  # doctest: +SKIP
+    >>> signal = Binaural.from_wav("audio.wav")  # doctest: +SKIP
+    >>> results = signal.process_all_metrics(analysis_settings)  # doctest: +SKIP
 
 See Also:
     soundscapy.audio.binaural: For detailed Binaural class documentation.

@@ -742,13 +742,6 @@ def iso_annotation(
         by default "small"
     arrowprops : dict, optional
         dict of properties to send to plt.annotate, by default dict(arrowstyle="-", ec="black")
-
-    Example
-    -------
-    >>> fig, axes = plt.subplots(1,1, figsize=(5,5))
-    >>> df_mean.isd.scatter(xlim=(-.5, .5),ylim=(-.5, .5),ax=axes)
-    >>> for location in df_mean.LocationID:
-    >>>     plotting.iso_annotation(axes, df_mean, location)
     """
     ax.annotate(
         text=data["LocationID"][location],

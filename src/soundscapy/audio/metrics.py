@@ -119,6 +119,7 @@ def mosqito_metric_1ch(
         ValueError: If the input signal is not single-channel or if an unrecognized metric is specified.
 
     Example:
+        >>> # xdoctest: +SKIP
         >>> from soundscapy.audio import Binaural
         >>> signal = Binaural.from_wav("audio.wav")
         >>> results = mosqito_metric_1ch(signal[0], "loudness_zwtv", as_df=True)
@@ -784,6 +785,7 @@ def process_all_metrics(
         benefit from parallelization.
 
     Example:
+        >>> # xdoctest: +SKIP
         >>> from soundscapy.audio import Binaural
         >>> from soundscapy import AnalysisSettings
         >>> signal = Binaural.from_wav("audio.wav")
