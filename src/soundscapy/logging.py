@@ -12,26 +12,21 @@ from pathlib import Path
 
 from loguru import logger
 
+# Global variable for log level
+GLOBAL_LOG_LEVEL = "WARNING"
+
 
 def setup_logger():
-    """
-    Set up the logger for soundscapy.
-
-    This function configures the logger based on environment variables:
-    - SOUNDSCAPY_LOG_LEVEL: Set the logging level (default: INFO)
-    - SOUNDSCAPY_LOG_FILE: Set a file to log to (optional)
-
-    The function removes the default handler and adds new handlers based on
-    the configuration.
-    """
-    # Remove the default handler
+    global GLOBAL_LOG_LEVEL
+    # Remove all existing handlers
     logger.remove()
 
-    # Get log level from environment variable, default to WARNING
-    log_level = os.getenv("SOUNDSCAPY_LOG_LEVEL", "WARNING").upper()
+    # Get log level from environment variable or use global variable
+    log_level = os.getenv("SOUNDSCAPY_LOG_LEVEL", GLOBAL_LOG_LEVEL).upper()
+    GLOBAL_LOG_LEVEL = log_level
 
-    # Add a handler for stderr
-    logger.add(sys.stderr, level=log_level)
+    # Add a handler for stderr with the specified log level
+    logger.add(sys.stderr, level=log_level, format="{time} {level} {message}")
 
     # If a log file is specified, add a handler for it
     log_file = os.getenv("SOUNDSCAPY_LOG_FILE")
@@ -45,13 +40,15 @@ def setup_logger():
 
 
 def get_logger():
-    """
-    Get the configured logger.
-
-    Returns:
-        logger: The configured loguru logger instance.
-    """
     return logger
+
+
+def set_log_level(level: str):
+    global GLOBAL_LOG_LEVEL
+    GLOBAL_LOG_LEVEL = level.upper()
+    logger.remove()
+    logger.add(sys.stderr, level=GLOBAL_LOG_LEVEL)
+    logger.info(f"Log level set to {GLOBAL_LOG_LEVEL}")
 
 
 # Set up the logger when this module is imported

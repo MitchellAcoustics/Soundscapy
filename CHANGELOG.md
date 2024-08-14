@@ -18,9 +18,12 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
   - Added support for environment variables to configure logging:
     - `SOUNDSCAPY_LOG_LEVEL` for setting log level
     - `SOUNDSCAPY_LOG_FILE` for specifying a log file
-  - Implemented `setup_logger` function for initializing the logger with custom options
-  - Set default logger to WARNING level with console output
-  - Created `get_logger` function to retrieve the configured logger
+  - Implemented checks for Jupyter notebook environment in logging configuration
+  - Added `set_log_level` function to allow dynamic adjustment of log level at runtime
+  - Introduced global variable `GLOBAL_LOG_LEVEL` to manage log level across different environments
+    - Implemented `setup_logger` function for initializing the logger with custom options
+    - Set default logger to WARNING level with console output
+    - Created `get_logger` function to retrieve the configured logger
 - New processing module `soundscapy/surveys/processing.py` with enhanced functionality
   - Implemented `ISOCoordinates` and `SSMMetrics` dataclasses
   - Added `calculate_iso_coords` function for ISO coordinate calculations
@@ -32,6 +35,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - New test cases in `test_isd.py` to cover refactored functionality
 
 ### Changed
+- Modified default logging level to WARNING for better control over log output
 - Refactored `isd.py` to use new processing and survey utility functions
   - Updated `load`, `load_zenodo`, and `validate` functions
   - Refactored selection functions (`select_record_ids`, `select_group_ids`, etc.)
@@ -63,6 +67,8 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 ### Fixed
 - Resolved issues with inconsistent PAQ naming conventions
 - Fixed bugs in ISO coordinate calculations and SSM metric computations
+- Resolved issue where Jupyter notebooks were overriding the default log level
+
 
 ### Security
 - Implemented input validation to prevent potential security vulnerabilities
