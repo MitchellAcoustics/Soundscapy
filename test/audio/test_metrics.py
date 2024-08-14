@@ -41,15 +41,14 @@ class TestMetricsUnit(unittest.TestCase):
             updated_res, expected_res, "Multiple statistics calculation is incorrect"
         )
 
-
-def test_stat_calcs_empty_ts(self):
-    ts = np.array([])
-    res = {}
-    updated_res = _stat_calcs("metric", ts, res, ["avg"])
-    self.assertTrue(
-        np.isnan(updated_res.get("metric_avg")),
-        "Average for empty array should be np.nan",
-    )
+    def test_stat_calcs_empty_ts(self):
+        ts = np.array([])
+        res = {}
+        updated_res = _stat_calcs("metric", ts, res, ["avg"])
+        self.assertTrue(
+            np.isnan(updated_res.get("metric_avg")),
+            "Average for empty array should be np.nan",
+        )
 
 
 if __name__ == "__main__":

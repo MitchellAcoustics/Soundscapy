@@ -28,5 +28,5 @@ def test__circumplex_grid():
 
 
 def test_scatter(simulated_data):
-    s = sspy.plotting.scatter(simulated_data, "ISOPleasant", "ISOEventful")
+    s = sspy.plotting.circumplex.scatter(simulated_data, "ISOPleasant", "ISOEventful")
     assert type(s) is plt.Subplot
