@@ -97,7 +97,7 @@ def convert_column_to_index(df, col: str, drop=False):
 
 
 def rename_paqs(
-    df: pd.DataFrame, paq_aliases: Union[Tuple, Dict] = None, verbose: int = 0
+    df: pd.DataFrame, paq_aliases: Tuple | Dict = None, verbose: int = 0
 ) -> pd.DataFrame:
     """
     The rename_paqs function renames the PAQ columns in a dataframe.
@@ -137,21 +137,12 @@ def rename_paqs(
         if any(i in b for i in PAQ_NAMES for b in df.columns):
             paq_aliases = PAQ_NAMES
 
-    if type(paq_aliases) == list:
-        return df.rename(
-            columns={
-                paq_aliases[0]: PAQ_IDS[0],
-                paq_aliases[1]: PAQ_IDS[1],
-                paq_aliases[2]: PAQ_IDS[2],
-                paq_aliases[3]: PAQ_IDS[3],
-                paq_aliases[4]: PAQ_IDS[4],
-                paq_aliases[5]: PAQ_IDS[5],
-                paq_aliases[6]: PAQ_IDS[6],
-                paq_aliases[7]: PAQ_IDS[7],
-            }
-        )
+    if isinstance(paq_aliases, (list, tuple)):
+        return df.rename(columns=dict(zip(paq_aliases, PAQ_IDS)))
     elif type(paq_aliases) == dict:
         return df.rename(columns=paq_aliases)
+    else:
+        raise ValueError("paq_aliases must be a tuple, list, or dictionary.")
 
 
 def likert_data_quality(
