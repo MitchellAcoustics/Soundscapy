@@ -337,7 +337,8 @@ def soundscapy_describe(
         Summary of the data
     """
     res = {
-        location: describe_location(df, location) for location in df[group_by].unique()
+        location: describe_location(df, location, type=type)
+        for location in df[group_by].unique()
     }
 
     return pd.DataFrame.from_dict(res, orient="index")
