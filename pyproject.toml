@@ -11,8 +11,6 @@ dependencies = [
     "mosqito>=1.2.1",
     "scikit-maad>=1.4.3",
     "tqdm>=4.66.5",
-    "matplotlib>=3.9.2",
-    "numpy>=2.0.1",
     "acoustics>=0.2.6",
     "pyyaml>=6.0.2",
     "schema>=0.7.7",
@@ -68,6 +66,9 @@ docs = [
     "mkdocs-jupyter>=0.24.8",
     "mkdocstrings[python]>=0.25.2",
     "pymdown-extensions>=10.9",
+]
+plotly = [
+    "plotly>=5.23.0",
 ]
 
 [build-system]
