@@ -211,6 +211,12 @@ class PlotlyBackend(PlotBackend):
     Backend for creating plots using Plotly.
     """
 
+    def __init__(self):
+        raise UserWarning(
+            "PlotlyBackend is very experimental and not fully implemented."
+        )
+        pass
+
     def create_scatter(self, data, params):
         """
         Create a scatter plot using Plotly.
