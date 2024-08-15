@@ -430,7 +430,7 @@ def jointplot(
         **joint_kws,
     )
     # if legend and hue:
-    #     _move_legend(g.ax_joint, legend_loc)
+    #     move_legend(g.ax_joint, legend_loc)
 
     if marginal_kind == "hist":
         sns.histplot(

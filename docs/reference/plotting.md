@@ -1,5 +1,7 @@
 # Plotting
 
+::: soundscapy.plotting.circumplex_plot
+
 ## Circumplex Plotting
 
 ::: soundscapy.plotting.circumplex
