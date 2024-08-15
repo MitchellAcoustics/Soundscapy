@@ -103,6 +103,7 @@ def density_plot(
     palette: str = "colorblind",
     fill: bool = True,
     incl_outline: bool = False,
+    incl_scatter: bool = False,
     diagonal_lines: bool = False,
     show_labels: bool = True,
     legend_location: str = "best",
@@ -176,6 +177,10 @@ def density_plot(
     )
 
     plot = CircumplexPlot(data, params, backend, style_options)
+
+    if incl_scatter:
+        plot.scatter(apply_styling=True, ax=ax)
+        ax = plot.get_axes()
     if simple_density:
         plot.simple_density(apply_styling=apply_styling, ax=ax)
     else:

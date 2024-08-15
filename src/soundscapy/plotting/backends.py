@@ -121,6 +121,7 @@ class SeabornBackend(PlotBackend):
             ax=ax,
             bw_adjust=self.style_options.bw_adjust,
             zorder=self.style_options.data_zorder,
+            common_norm=False,
             **params.extra_params,
         )
         if params.incl_outline:
@@ -135,6 +136,7 @@ class SeabornBackend(PlotBackend):
                 ax=ax,
                 bw_adjust=self.style_options.bw_adjust,
                 zorder=self.style_options.data_zorder,
+                common_norm=False,
                 **params.extra_params,
             )
         return fig, ax
@@ -157,6 +159,7 @@ class SeabornBackend(PlotBackend):
             levels=self.style_options.simple_density["levels"],
             alpha=self.style_options.simple_density["alpha"],
             zorder=self.style_options.data_zorder,
+            common_norm=False,
             **params.extra_params,
         )
         if params.incl_outline:
@@ -172,6 +175,7 @@ class SeabornBackend(PlotBackend):
                 levels=self.style_options.simple_density["levels"],
                 zorder=self.style_options.data_zorder,
                 alpha=1,
+                common_norm=False,
                 **params.extra_params,
             )
         return fig, ax
@@ -199,7 +203,7 @@ class SeabornBackend(PlotBackend):
             fig: The figure to display.
         """
         fig, _ = plot_obj
-        plt.show(fig)
+        plt.show()
 
 
 class PlotlyBackend(PlotBackend):
