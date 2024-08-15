@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
 
+from soundscapy.logging import logger
 from soundscapy.plotting.stylers import SeabornStyler, StyleOptions
 
 
@@ -212,9 +213,7 @@ class PlotlyBackend(PlotBackend):
     """
 
     def __init__(self):
-        raise UserWarning(
-            "PlotlyBackend is very experimental and not fully implemented."
-        )
+        logger.warning("PlotlyBackend is very experimental and not fully implemented.")
         pass
 
     def create_scatter(self, data, params):
