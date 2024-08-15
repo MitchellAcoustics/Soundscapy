@@ -57,6 +57,7 @@ def test_binaural_initialization(mock_binaural_signal):
     assert mock_binaural_signal.recording == "test_recording"
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_binaural_calibration(mock_binaural_signal):
     """Test calibration of Binaural signal."""
     calibrated = mock_binaural_signal.calibrate_to(70)

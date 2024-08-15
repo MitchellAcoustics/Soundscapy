@@ -58,6 +58,7 @@ test = [
     "nbmake>=1.5.4",
     "pytest-xdist>=3.6.1",
     "xdoctest[all]>=1.1.6",
+    "pytest-mpl>=0.17.0",
 ]
 docs = [
     "jupyter>=1.0.0",

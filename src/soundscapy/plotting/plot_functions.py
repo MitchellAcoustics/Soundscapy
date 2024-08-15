@@ -193,8 +193,8 @@ def create_circumplex_subplots(
     incl_scatter: bool = True,
     subtitles: Optional[List[str]] = None,
     title: str = "Circumplex Subplots",
-    nrows: int = 1,
-    ncols: int = 1,
+    nrows: int = None,
+    ncols: int = None,
     figsize: Tuple[int, int] = (10, 10),
     **kwargs: Any,
 ) -> plt.Figure:
@@ -227,6 +227,14 @@ def create_circumplex_subplots(
     """
     if isinstance(plot_type, str):
         plot_type = PlotType[plot_type.upper()]
+
+    if nrows is None and ncols is None:
+        nrows = 2
+        ncols = len(data_list) // nrows
+    elif nrows is None:
+        nrows = len(data_list) // ncols
+    elif ncols is None:
+        ncols = len(data_list) // nrows
 
     if subtitles is None:
         subtitles = [f"({i + 1})" for i in range(len(data_list))]

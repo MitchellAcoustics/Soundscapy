@@ -130,6 +130,7 @@ jinja2==3.1.4
     # via mkdocs-material
     # via mkdocstrings
     # via nbconvert
+    # via pytest-mpl
     # via xdoctest
 json5==0.9.25
     # via jupyterlab-server
@@ -210,6 +211,7 @@ markupsafe==2.1.5
     # via nbconvert
 matplotlib==3.9.2
     # via acoustics
+    # via pytest-mpl
     # via scikit-maad
     # via seaborn
 matplotlib-inline==0.1.7
@@ -314,6 +316,7 @@ packaging==24.1
     # via nbconvert
     # via plotly
     # via pytest
+    # via pytest-mpl
     # via qtconsole
     # via qtpy
     # via scikit-image
@@ -335,6 +338,7 @@ pexpect==4.9.0
 pillow==10.4.0
     # via imageio
     # via matplotlib
+    # via pytest-mpl
     # via scikit-image
 platformdirs==4.2.2
     # via jupyter-core
@@ -378,11 +382,14 @@ pyparsing==3.1.2
 pytest==8.3.2
     # via nbmake
     # via pytest-cov
+    # via pytest-mpl
     # via pytest-xdist
     # via soundscapy
     # via xdoctest
 pytest-cov==5.0.0
     # via xdoctest
+pytest-mpl==0.17.0
+    # via soundscapy
 pytest-xdist==3.6.1
     # via soundscapy
 python-calamine==0.2.3
