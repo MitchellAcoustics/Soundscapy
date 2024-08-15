@@ -3,6 +3,7 @@
 import unittest
 
 import numpy as np
+import pytest
 
 from soundscapy.audio.metrics import _stat_calcs
 
@@ -41,6 +42,8 @@ class TestMetricsUnit(unittest.TestCase):
             updated_res, expected_res, "Multiple statistics calculation is incorrect"
         )
 
+    @pytest.mark.filterwarnings("ignore:Mean of empty slice")
+    @pytest.mark.filterwarnings("ignore:invalid value encountered in scalar divide")
     def test_stat_calcs_empty_ts(self):
         ts = np.array([])
         res = {}
