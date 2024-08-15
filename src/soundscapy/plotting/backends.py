@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
@@ -5,7 +6,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
 
-from soundscapy.logging import logger
 from soundscapy.plotting.stylers import SeabornStyler, StyleOptions
 
 
@@ -107,6 +107,12 @@ class SeabornBackend(PlotBackend):
         Returns:
             tuple: A tuple containing the figure and axes objects.
         """
+        if len(data) < 30:
+            warnings.warn(
+                "Density plots are not recommended for small datasets (<30 samples).",
+                UserWarning,
+            )
+
         if ax is None:
             fig, ax = plt.subplots(figsize=self.style_options.figsize)
         else:
@@ -213,7 +219,9 @@ class PlotlyBackend(PlotBackend):
     """
 
     def __init__(self):
-        logger.warning("PlotlyBackend is very experimental and not fully implemented.")
+        warnings.warn(
+            "PlotlyBackend is very experimental and not fully implemented.", UserWarning
+        )
         pass
 
     def create_scatter(self, data, params):
@@ -256,6 +264,12 @@ class PlotlyBackend(PlotBackend):
         Returns:
             go.Figure: A Plotly figure object.
         """
+        if len(data) < 30:
+            warnings.warn(
+                "Density plots are not recommended for small datasets (<30 samples). Consider using a scatter plot instead.",
+                UserWarning,
+            )
+
         fig = px.density_heatmap(
             data,
             x=params.x,
