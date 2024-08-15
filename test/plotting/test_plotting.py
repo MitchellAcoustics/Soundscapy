@@ -55,6 +55,7 @@ def test_scatter_plot_seaborn(sample_data):
     assert ax.get_title() == "Soundscape Scatter Plot"
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_scatter_plot_plotly(sample_data):
     """Test scatter plot with Plotly backend."""
     fig = scatter_plot(sample_data, backend=Backend.PLOTLY)
@@ -72,6 +73,7 @@ def test_density_plot_seaborn(sample_data):
     assert ax.get_title() == "Soundscape Density Plot"
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_density_plot_plotly(sample_data):
     """Test density plot with Plotly backend."""
     # Update when density plots are implemented for Plotly
@@ -106,6 +108,7 @@ def test_circumplex_plot_seaborn(sample_data):
     assert isinstance(plot.get_axes(), plt.Axes)
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_circumplex_plot_plotly(sample_data):
     """Test CircumplexPlot with Plotly backend."""
     plot = CircumplexPlot(sample_data, backend=Backend.PLOTLY)
