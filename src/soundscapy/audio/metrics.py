@@ -1,6 +1,6 @@
 import multiprocessing as mp
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -78,7 +78,7 @@ def _stat_calcs(
 def mosqito_metric_1ch(
     s,
     metric: str,
-    statistics: Tuple[Union[int, str, ...]] = (
+    statistics: Tuple[int | str] = (
         5,
         10,
         50,
