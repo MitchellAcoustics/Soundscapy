@@ -1,0 +1,21 @@
+# General settings
+max_workers: 4
+result_storage_type: "json"
+result_storage_path: "results.json"
+
+# Audio processing settings
+segment_length: 10  # in seconds, set to null for no segmentation
+overlap: 1  # in seconds
+
+# Metric configurations
+metrics:
+  zwicker_time_varying_loudness:
+    enabled: true
+    field_type: "free"
+    statistics:
+      - mean
+      - max
+      - min
+
+# Processing settings
+sample_rate: 48000  # Hz
