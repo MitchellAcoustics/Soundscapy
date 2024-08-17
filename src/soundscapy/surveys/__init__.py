@@ -4,7 +4,6 @@ from soundscapy.surveys.survey_utils import (
     PAQ_IDS,
     PAQ_LABELS,
     rename_paqs,
-    return_paqs,
 )
 
 __all__ = [
