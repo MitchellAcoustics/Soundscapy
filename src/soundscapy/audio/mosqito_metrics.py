@@ -1,12 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Union
 
 import h5py
 import numpy as np
 import pandas as pd
 from loguru import logger
 from mosqito.sq_metrics import loudness_zwtv
-
 from soundscapy.audio.binaural_signal import BinauralSignal
 from soundscapy.audio.metric_registry import Metric, stat_calcs
 from soundscapy.audio.result_storage import AnalysisResult
@@ -48,19 +47,40 @@ class LoudnessZWTVResult(AnalysisResult):
         stats = stat_calcs()
         return stats["N_5"]
 
-    def save(self, group: h5py.Group):
+    def save(self, location: Union[str, h5py.Group]):
+        if isinstance(location, str):
+            with h5py.File(location, "w") as f:
+                self._save_to_group(f)
+        elif isinstance(location, h5py.Group):
+            self._save_to_group(location)
+        else:
+            raise ValueError("Invalid save location. Must be a file path or h5py.Group")
+
+    def load(self, location: Union[str, h5py.Group]):
+        if isinstance(location, str):
+            with h5py.File(location, "r") as f:
+                self._load_from_group(f)
+        elif isinstance(location, h5py.Group):
+            self._load_from_group(location)
+        else:
+            raise ValueError("Invalid load location. Must be a file path or h5py.Group")
+
+    def _save_to_group(self, group: h5py.Group):
         group.create_dataset("N", data=self.N)
         group.create_dataset("N_specific", data=self.N_specific)
         group.create_dataset("bark_axis", data=self.bark_axis)
         group.create_dataset("time_axis", data=self.time_axis)
         group.attrs["channel"] = self.channel
 
-    def load(self, group: h5py.Group):
+    def _load_from_group(self, group: h5py.Group):
         self.N = group["N"][:]
         self.N_specific = group["N_specific"][:]
         self.bark_axis = group["bark_axis"][:]
         self.time_axis = group["time_axis"][:]
         self.channel = group.attrs["channel"]
+
+    def __repr__(self):
+        return f"LoudnessZWTVResult(channel={self.channel}, N.shape={self.N.shape}, N_specific.shape={self.N_specific.shape})"
 
 
 class LoudnessZWTV(Metric):

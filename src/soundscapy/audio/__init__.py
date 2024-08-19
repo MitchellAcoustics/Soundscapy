@@ -25,12 +25,12 @@ See Also:
 from soundscapy.audio.analysis_settings import AnalysisSettings, get_default_yaml
 from soundscapy.audio.binaural_signal import BinauralSignal
 from soundscapy.audio.metric_registry import MetricRegistry
-from soundscapy.audio.mosqito_metrics import LoudnessZWTV
+from soundscapy.audio.mosqito_metrics import LoudnessZWTV, LoudnessZWTVResult
 
 # Global instance
 metric_registry = MetricRegistry()
 
 # Register the Zwicker Time Varying Loudness metric
-metric_registry.register("loudness_zwtv", LoudnessZWTV)
+metric_registry.register("loudness_zwtv", LoudnessZWTV, LoudnessZWTVResult)
 
 __all__ = ["BinauralSignal", "AnalysisSettings", "get_default_yaml", "metric_registry"]

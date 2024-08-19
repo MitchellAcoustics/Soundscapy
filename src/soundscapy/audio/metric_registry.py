@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Type
 
 import numpy as np
 from loguru import logger
 from scipy import stats
-
 from soundscapy.audio.result_storage import AnalysisResult
 
 
 class Metric(ABC):
+    result_class: Type[AnalysisResult] = None
+
     def __init__(self):
         self.settings = {}
         self.time_series_results = {}
@@ -28,11 +29,16 @@ class MetricRegistry:
         self._metrics = {}
 
     def register(
-        self, name: str, metric_class: type, default_settings: Dict[str, Any] = None
+        self,
+        name: str,
+        metric_class: Type[Metric],
+        result_class: Type[AnalysisResult],
+        default_settings: Dict[str, Any] = None,
     ):
         if name in self._metrics:
             logger.warning(f"Overwriting existing metric: {name}")
         metric = metric_class()
+        metric.result_class = result_class
         if default_settings:
             metric.configure(default_settings)
         self._metrics[name] = metric
@@ -51,6 +57,10 @@ class MetricRegistry:
             raise KeyError(f"Metric not found: {name}")
         return self._metrics[name]
 
+    def get_result_class(self, name: str) -> Type[AnalysisResult]:
+        metric = self.get_metric(name)
+        return metric.result_class
+
     def configure_metric(self, name: str, settings: Dict[str, Any]):
         if name in self._metrics:
             self._metrics[name].configure(settings)
@@ -65,6 +75,9 @@ class MetricRegistry:
     def configure_all(self, config: Dict[str, Dict[str, Any]]):
         for name, settings in config.items():
             self.configure_metric(name, settings)
+
+    def list_metrics(self) -> List[str]:
+        return list(self._metrics.keys())
 
 
 def stat_calcs(label: str, ts_array: np.ndarray, statistics: List[int | str]) -> dict:

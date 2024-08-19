@@ -8,10 +8,15 @@ from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
-from .backends import PlotlyBackend, SeabornBackend
-from .plotting_utils import Backend, DEFAULT_XLIM, DEFAULT_YLIM, ExtraParams, PlotType
-from .stylers import StyleOptions
+from soundscapy.plotting.backends import PlotlyBackend, SeabornBackend
+from soundscapy.plotting.plotting_utils import (
+    Backend,
+    DEFAULT_XLIM,
+    DEFAULT_YLIM,
+    ExtraParams,
+    PlotType,
+)
+from soundscapy.plotting.stylers import StyleOptions
 
 
 @dataclass

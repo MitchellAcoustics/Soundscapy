@@ -1,12 +1,11 @@
 # %%
-
+from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Generic, List, Type, TypeVar
+from typing import Dict, Generic, List, Type, TypeVar, Union
 
 import h5py
 import numpy as np
 import pandas as pd
-from loguru import logger
 
 
 # Abstract base class for handling analysis results
@@ -18,15 +17,17 @@ class AnalysisResult:
     def get_summary_statistics(self) -> Dict[str, float]:
         raise NotImplementedError
 
-    def save(self, file_path: str, channel: str | int):
-        raise NotImplementedError
+    @abstractmethod
+    def save(self, location: Union[str, h5py.Group]):
+        pass
 
-    def load(self, file_path: str, channel: str | int):
-        raise NotImplementedError
+    @abstractmethod
+    def load(self, location: Union[str, h5py.Group]):
+        pass
 
 
 # Type variable for the generic single-channel result
-T = TypeVar("T")
+T = TypeVar("T", bound=AnalysisResult)
 
 
 @dataclass
@@ -50,23 +51,45 @@ class MultiChannelResult(Generic[T]):
             for channel, result in self.channels.items()
         }
 
-    def save(self, group: h5py.Group):
+    def save(self, location: Union[str, h5py.Group]):
+        if isinstance(location, str):
+            with h5py.File(location, "w") as f:
+                self._save_to_group(f)
+        elif isinstance(location, h5py.Group):
+            self._save_to_group(location)
+        else:
+            raise ValueError("Invalid save location. Must be a file path or h5py.Group")
+
+    def load(self, location: Union[str, h5py.Group], result_class: Type[T]):
+        if isinstance(location, str):
+            with h5py.File(location, "r") as f:
+                self._load_from_group(f, result_class)
+        elif isinstance(location, h5py.Group):
+            self._load_from_group(location, result_class)
+        else:
+            raise ValueError("Invalid load location. Must be a file path or h5py.Group")
+
+    def _save_to_group(self, group: h5py.Group):
         for channel, result in self.channels.items():
             channel_group = group.create_group(channel)
             result.save(channel_group)
 
-    def load(self, group: h5py.Group, result_class: Type[T]):
+    def _load_from_group(self, group: h5py.Group, result_class: Type[T]):
         for channel in group.keys():
             result = result_class()
             channel_group = group[channel]
             result.load(channel_group)
             self.channels[channel] = result
 
+    def __repr__(self):
+        return f"MultiChannelResult(channels={list(self.channels.keys())})"
+
 
 @dataclass
 class FileAnalysisResults:
     file_path: str
     metrics: Dict[str, MultiChannelResult] = field(default_factory=dict)
+    errors: List[str] = field(default_factory=list)
 
     def list_metrics(self) -> List[str]:
         return list(self.metrics.keys())
@@ -88,27 +111,54 @@ class FileAnalysisResults:
             for metric, result in self.metrics.items()
         }
 
-    def save(self, file_path: str):
-        logger.info(f"Saving FileAnalysisResults to {file_path}")
-        with h5py.File(file_path, "w") as hf:
-            for metric_name, result in self.metrics.items():
-                metric_group = hf.create_group(metric_name)
-                result.save(metric_group)
+    def add_error(self, error_message: str):
+        self.errors.append(error_message)
 
-    def load(self, file_path: str):
-        logger.info(f"Loading FileAnalysisResults from {file_path}")
-        with h5py.File(file_path, "r") as hf:
-            for metric_name, metric_group in hf.items():
-                result_class = self._get_result_class(metric_name)
-                multi_channel_result = MultiChannelResult()
-                multi_channel_result.load(metric_group, result_class)
-                self.add_metric_result(metric_name, multi_channel_result)
+    def has_errors(self) -> bool:
+        return len(self.errors) > 0
 
-    @staticmethod
-    def _get_result_class(metric_name: str) -> Type[AnalysisResult]:
+    def save(self, location: Union[str, h5py.Group]):
+        if isinstance(location, str):
+            with h5py.File(location, "w") as f:
+                self._save_to_group(f)
+        elif isinstance(location, h5py.Group):
+            self._save_to_group(location)
+        else:
+            raise ValueError("Invalid save location. Must be a file path or h5py.Group")
+
+    def load(self, location: Union[str, h5py.Group]):
+        if isinstance(location, str):
+            with h5py.File(location, "r") as f:
+                self._load_from_group(f)
+        elif isinstance(location, h5py.Group):
+            self._load_from_group(location)
+        else:
+            raise ValueError("Invalid load location. Must be a file path or h5py.Group")
+
+    def _save_to_group(self, group: h5py.Group):
+        group.attrs["file_path"] = self.file_path
+        for metric_name, result in self.metrics.items():
+            metric_group = group.create_group(metric_name)
+            result.save(metric_group)
+        if self.errors:
+            group.create_dataset("errors", data=self.errors)
+
+    def _load_from_group(self, group: h5py.Group):
         from soundscapy.audio import metric_registry
 
-        return metric_registry.get_metric(metric_name)
+        self.file_path = group.attrs["file_path"]
+        for metric_name in group.keys():
+            if metric_name != "errors":
+                metric_group = group[metric_name]
+                result_class = metric_registry.get_result_class(metric_name)
+                multi_channel_result = MultiChannelResult()
+                multi_channel_result.load(metric_group, result_class)
+                self.metrics[metric_name] = multi_channel_result
+        if "errors" in group:
+            self.errors = list(group["errors"])
+
+    def __repr__(self):
+        return f"FileAnalysisResults(file_path={self.file_path}, metrics={list(self.metrics.keys())}, errors={len(self.errors)})"
 
 
 @dataclass
@@ -127,37 +177,37 @@ class DirectoryAnalysisResults:
     def get_all_file_results(self) -> Dict[str, FileAnalysisResults]:
         return self.file_results
 
-    def save(self, file_path: str):
-        logger.info(f"Saving DirectoryAnalysisResults to {file_path}")
-        with h5py.File(file_path, "w") as hf:
-            for file_path, file_result in self.file_results.items():
-                file_group = hf.create_group(file_path)
-                for (
-                    metric_name,
-                    multi_channel_result,
-                ) in file_result.get_all_metric_results().items():
-                    metric_group = file_group.create_group(metric_name)
-                    for (
-                        channel,
-                        channel_result,
-                    ) in multi_channel_result.channels.items():
-                        channel_group = metric_group.create_group(channel)
-                        channel_result.save(channel_group)
+    def save(self, location: Union[str, h5py.Group]):
+        if isinstance(location, str):
+            with h5py.File(location, "w") as f:
+                self._save_to_group(f)
+        elif isinstance(location, h5py.Group):
+            self._save_to_group(location)
+        else:
+            raise ValueError("Invalid save location. Must be a file path or h5py.Group")
 
-    def load(self, file_path: str):
-        logger.info(f"Loading DirectoryAnalysisResults from {file_path}")
-        with h5py.File(file_path, "r") as hf:
-            for file_path, file_group in hf.items():
-                file_result = FileAnalysisResults(file_path)
-                for metric_name, metric_group in file_group.items():
-                    multi_channel_result = MultiChannelResult()
-                    for channel, channel_group in metric_group.items():
-                        channel_result = self._load_channel_result(
-                            channel_group, metric_name
-                        )
-                        multi_channel_result.add_channel_result(channel, channel_result)
-                    file_result.add_metric_result(metric_name, multi_channel_result)
-                self.add_file_result(file_path, file_result)
+    def load(self, location: Union[str, h5py.Group]):
+        if isinstance(location, str):
+            with h5py.File(location, "r") as f:
+                self._load_from_group(f)
+        elif isinstance(location, h5py.Group):
+            self._load_from_group(location)
+        else:
+            raise ValueError("Invalid load location. Must be a file path or h5py.Group")
+
+    def _save_to_group(self, group: h5py.Group):
+        group.attrs["directory_path"] = self.directory_path
+        for file_path, file_result in self.file_results.items():
+            file_group = group.create_group(file_path)
+            file_result.save(file_group)
+
+    def _load_from_group(self, group: h5py.Group):
+        self.directory_path = group.attrs["directory_path"]
+        for file_path in group.keys():
+            file_group = group[file_path]
+            file_result = FileAnalysisResults(file_path)
+            file_result.load(file_group)
+            self.file_results[file_path] = file_result
 
     @staticmethod
     def _load_channel_result(channel_group, metric_name: str):

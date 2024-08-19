@@ -1,9 +1,8 @@
 import os
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from typing import Any, Dict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Dict, List
 
 from loguru import logger
-
 from soundscapy.audio import metric_registry
 from soundscapy.audio.binaural_signal import BinauralSignal
 from soundscapy.audio.metric_registry import Metric
@@ -25,8 +24,24 @@ class PsychoacousticProcessor:
         self.result_detail = config.get("result_detail", "all")
         self.force_reprocess = config.get("force_reprocess", False)
 
+    def segment_signal(self, audio_data: BinauralSignal) -> List[BinauralSignal]:
+        """
+        Placeholder method for signal segmentation.
+        Currently returns the entire signal as a single segment.
+        """
+        logger.debug("Signal segmentation not implemented. Processing entire signal.")
+        return [audio_data]
+
+    def analyze_segment(self, segment: BinauralSignal, metric: Metric) -> Any:
+        """
+        Placeholder method for analyzing a single segment.
+        Currently just calls the metric's calculate method on the entire segment.
+        """
+        logger.debug("Segment analysis not implemented. Processing entire segment.")
+        return metric.calculate(segment)
+
     def process(
-        self, audio_data: "BinauralSignal", parallel: bool = False
+        self, audio_data: BinauralSignal, parallel: bool = False
     ) -> FileAnalysisResults:
         file_results = FileAnalysisResults(file_path=audio_data.file_path)
 
@@ -55,7 +70,7 @@ class PsychoacousticProcessor:
                             )
                     else:
                         for i in range(audio_data.channels):
-                            channel_name = f"channel_{i+1}"
+                            channel_name = f"channel_{i + 1}"
                             channel_result = self._process_channel(
                                 metric, audio_data[i], channel_name
                             )
@@ -73,21 +88,19 @@ class PsychoacousticProcessor:
             return file_results
 
     def _process_channel(
-        self, metric: Metric, channel_data: "BinauralSignal", channel_name: str
-    ) -> Any:  # Return type depends on the specific metric result class
-        logger.debug(f"Processing {channel_name} as a single segment")
-        result = metric.calculate(channel_data)
+        self, metric: Metric, channel_data: BinauralSignal, channel_name: str
+    ) -> Any:
+        logger.debug(f"Processing {channel_name}")
+        segments = self.segment_signal(channel_data)
+        results = []
+        for segment in segments:
+            result = self.analyze_segment(segment, metric)
+            results.append(result)
 
-        # Assuming the result is already an instance of the appropriate result class (e.g., LoudnessZWTVResult)
+        # For now, just return the result of the first (and only) segment
+        result = results[0]
         result.channel = channel_name
-
         return result
-
-
-# Example usage
-# config = {'metrics': {'loudness': {'enabled': True}, 'sharpness': {'enabled': True}}}
-# processor = PsychoacousticProcessor(config)
-# result = processor.process('audio1.wav')
 
 
 class ProcessingEngine:
@@ -109,11 +122,12 @@ class ProcessingEngine:
         try:
             audio_data = BinauralSignal.from_wav(file_path)
             result = processor.process(audio_data, parallel=parallel_channels)
-            state_manager.mark_processed(file_path)
             return result
         except Exception as e:
             logger.error(f"Failed to process file {file_path}. Error: {str(e)}")
-            return FileAnalysisResults(file_path)
+            error_result = FileAnalysisResults(file_path)
+            error_result.add_error(str(e))
+            return error_result
 
     def process_directory(
         self, directory_path: str, state_manager: StateManager
@@ -126,7 +140,7 @@ class ProcessingEngine:
         progress_tracker = ProgressTracker(len(file_paths), "Processing files")
 
         directory_results = DirectoryAnalysisResults(directory_path)
-        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_file = {
                 executor.submit(
                     self._process_file, file_path, self.processor, state_manager, False
@@ -138,10 +152,14 @@ class ProcessingEngine:
                 try:
                     result = future.result()
                     directory_results.add_file_result(file_path, result)
+                    state_manager.mark_processed(file_path)
                 except Exception as e:
                     logger.error(
                         f"Exception occurred while processing {file_path}. Error: {str(e)}"
                     )
+                    error_result = FileAnalysisResults(file_path)
+                    error_result.add_error(str(e))
+                    directory_results.add_file_result(file_path, error_result)
                 finally:
                     progress_tracker.update()
 
