@@ -13,7 +13,7 @@ to provide a comprehensive suite of audio analysis tools.
 
 Example:
     >>> # xdoctest: +SKIP
-    >>> from soundscapy.audio import Binaural  # doctest: +SKIP
+    >>> from soundscapy.audio import BinauralSignal  # doctest: +SKIP
     >>> signal = Binaural.from_wav("audio.wav")  # doctest: +SKIP
     >>> results = signal.process_all_metrics(analysis_settings)  # doctest: +SKIP
 
@@ -23,6 +23,14 @@ See Also:
 """
 
 from soundscapy.audio.analysis_settings import AnalysisSettings, get_default_yaml
-from soundscapy.audio.binaural import Binaural
+from soundscapy.audio.binaural_signal import BinauralSignal
+from soundscapy.audio.metric_registry import MetricRegistry
+from soundscapy.audio.mosqito_metrics import LoudnessZWTV
 
-__all__ = ["Binaural", "AnalysisSettings", "get_default_yaml"]
+# Global instance
+metric_registry = MetricRegistry()
+
+# Register the Zwicker Time Varying Loudness metric
+metric_registry.register("loudness_zwtv", LoudnessZWTV)
+
+__all__ = ["BinauralSignal", "AnalysisSettings", "get_default_yaml", "metric_registry"]

@@ -1,84 +1,87 @@
 import os
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from loguru import logger
 
-from binaural_signal import BinauralSignal
-from metric_registry import metric_registry
-from progress_tracking import ProgressTracker
-from state_manager import StateManager
+from soundscapy.audio import metric_registry
+from soundscapy.audio.binaural_signal import BinauralSignal
+from soundscapy.audio.metric_registry import Metric
+from soundscapy.audio.progress_tracking import ProgressTracker
+from soundscapy.audio.result_storage import (
+    DirectoryAnalysisResults,
+    FileAnalysisResults,
+    MultiChannelResult,
+)
+from soundscapy.audio.state_manager import StateManager
 
 
+# Psychoacoustic Processor
 class PsychoacousticProcessor:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.segment_length = config.get("segment_length", None)  # in seconds
         self.overlap = config.get("overlap", 0)  # in seconds
+        self.result_detail = config.get("result_detail", "all")
+        self.force_reprocess = config.get("force_reprocess", False)
 
     def process(
-        self, audio_data: BinauralSignal, parallel: bool = False
-    ) -> Dict[str, Any]:
+        self, audio_data: "BinauralSignal", parallel: bool = False
+    ) -> FileAnalysisResults:
+        file_results = FileAnalysisResults(file_path=audio_data.file_path)
+
         try:
-            results = {}
             for metric_name, metric_config in self.config.get("metrics", {}).items():
                 if metric_config.get("enabled", True):
                     metric = metric_registry.get_metric(metric_name)
                     metric.configure(metric_config)
 
+                    multi_channel_result = MultiChannelResult()
+
                     if parallel and audio_data.channels == 2:
+                        logger.debug("Setting up parallel processing for stereo audio")
                         with ThreadPoolExecutor(max_workers=2) as executor:
                             future_left = executor.submit(
-                                self._process_channel, metric, audio_data.left
+                                self._process_channel, metric, audio_data.left, "left"
                             )
                             future_right = executor.submit(
-                                self._process_channel, metric, audio_data.right
+                                self._process_channel, metric, audio_data.right, "right"
                             )
-                            channel_results = [
-                                future_left.result(),
-                                future_right.result(),
-                            ]
+                            multi_channel_result.add_channel_result(
+                                "left", future_left.result()
+                            )
+                            multi_channel_result.add_channel_result(
+                                "right", future_right.result()
+                            )
                     else:
-                        channel_results = [
-                            self._process_channel(metric, audio_data.channel(i))
-                            for i in range(audio_data.channels)
-                        ]
+                        for i in range(audio_data.channels):
+                            channel_name = f"channel_{i+1}"
+                            channel_result = self._process_channel(
+                                metric, audio_data[i], channel_name
+                            )
+                            multi_channel_result.add_channel_result(
+                                channel_name, channel_result
+                            )
 
-                    results[metric_name] = self._combine_channel_results(
-                        channel_results
-                    )
+                    logger.debug(f"Adding {metric_name} results to file results")
+                    file_results.add_metric_result(metric_name, multi_channel_result)
 
-            return results
+            return file_results
+
         except Exception as e:
             logger.error(f"Error processing audio data. Error: {str(e)}")
-            return {"error": str(e)}
+            return file_results
 
     def _process_channel(
-        self, metric, channel_data: BinauralSignal
-    ) -> List[Dict[str, Any]]:
-        if self.segment_length is None:
-            return [metric.calculate(channel_data)]
-        else:
-            segment_samples = int(self.segment_length * channel_data.fs)
-            overlap_samples = int(self.overlap * channel_data.fs)
-            hop_size = segment_samples - overlap_samples
+        self, metric: Metric, channel_data: "BinauralSignal", channel_name: str
+    ) -> Any:  # Return type depends on the specific metric result class
+        logger.debug(f"Processing {channel_name} as a single segment")
+        result = metric.calculate(channel_data)
 
-            segments = []
-            for start in range(0, len(channel_data), hop_size):
-                end = start + segment_samples
-                segment = channel_data[start:end]
-                if len(segment) == segment_samples:  # only process full segments
-                    segments.append(metric.calculate(segment))
+        # Assuming the result is already an instance of the appropriate result class (e.g., LoudnessZWTVResult)
+        result.channel = channel_name
 
-            return segments
-
-    def _combine_channel_results(
-        self, channel_results: List[List[Dict[str, Any]]]
-    ) -> Dict[str, Any]:
-        combined = {}
-        for i, channel in enumerate(channel_results):
-            combined[f"channel_{i + 1}"] = channel
-        return combined
+        return result
 
 
 # Example usage
@@ -88,32 +91,33 @@ class PsychoacousticProcessor:
 
 
 class ProcessingEngine:
-    def __init__(self, processor: PsychoacousticProcessor, max_workers: int = 4):
+    def __init__(self, processor, max_workers: int = 4):
         self.processor = processor
         self.max_workers = max_workers
 
-    def process_file(
-        self,
+    @staticmethod
+    def _process_file(
         file_path: str,
+        processor,
         state_manager: StateManager,
         parallel_channels: bool = False,
-    ) -> Dict[str, Any]:
-        if state_manager.is_processed(file_path):
+    ) -> FileAnalysisResults:
+        if state_manager.is_processed(file_path) and not processor.force_reprocess:
             logger.info(f"Skipping already processed file: {file_path}")
-            return {}
+            return FileAnalysisResults(file_path)
 
         try:
             audio_data = BinauralSignal.from_wav(file_path)
-            result = self.processor.process(audio_data, parallel=parallel_channels)
+            result = processor.process(audio_data, parallel=parallel_channels)
             state_manager.mark_processed(file_path)
-            return {file_path: result}
+            return result
         except Exception as e:
             logger.error(f"Failed to process file {file_path}. Error: {str(e)}")
-            return {file_path: {"error": str(e)}}
+            return FileAnalysisResults(file_path)
 
     def process_directory(
         self, directory_path: str, state_manager: StateManager
-    ) -> List[Dict[str, Any]]:
+    ) -> DirectoryAnalysisResults:
         file_paths = [
             os.path.join(directory_path, f)
             for f in os.listdir(directory_path)
@@ -121,18 +125,19 @@ class ProcessingEngine:
         ]
         progress_tracker = ProgressTracker(len(file_paths), "Processing files")
 
-        results = []
+        directory_results = DirectoryAnalysisResults(directory_path)
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_file = {
-                executor.submit(self.process_file, file_path, state_manager): file_path
+                executor.submit(
+                    self._process_file, file_path, self.processor, state_manager, False
+                ): file_path
                 for file_path in file_paths
             }
             for future in as_completed(future_to_file):
                 file_path = future_to_file[future]
                 try:
                     result = future.result()
-                    if result:
-                        results.append(result)
+                    directory_results.add_file_result(file_path, result)
                 except Exception as e:
                     logger.error(
                         f"Exception occurred while processing {file_path}. Error: {str(e)}"
@@ -140,7 +145,7 @@ class ProcessingEngine:
                 finally:
                     progress_tracker.update()
 
-        return results
+        return directory_results
 
 
 # Example usage

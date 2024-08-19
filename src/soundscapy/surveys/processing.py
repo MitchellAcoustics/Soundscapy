@@ -519,8 +519,6 @@ def _r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return 1 - (ss_residual / ss_total)
 
 
-logger.info("Survey processing module loaded.")
-
 if __name__ == "__main__":
     import doctest
 

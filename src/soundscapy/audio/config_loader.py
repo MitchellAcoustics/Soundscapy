@@ -11,6 +11,9 @@ class ConfigLoader:
             self.load_from_yaml(config_path)
         self.apply_overrides(overrides)
 
+        if self.get("force_reprocess"):
+            logger.info("Force reprocess is enabled. All files will be reprocessed.")
+
     def load_from_yaml(self, config_path: str):
         try:
             with open(config_path, "r") as f:

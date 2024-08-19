@@ -8,7 +8,7 @@ __version__ = importlib.metadata.version("soundscapy")
 
 from soundscapy import plotting
 from soundscapy.audio import AnalysisSettings, get_default_yaml
-from soundscapy.audio.binaural import Binaural
+from soundscapy.audio.binaural_signal import BinauralSignal
 from soundscapy.databases import araus, isd, satp
 from soundscapy.surveys import processing
 from soundscapy.logging import get_logger
@@ -18,7 +18,7 @@ logger = get_logger()
 
 __all__ = [
     "AnalysisSettings",
-    "Binaural",
+    "BinauralSignal",
     "plotting",
     "araus",
     "isd",

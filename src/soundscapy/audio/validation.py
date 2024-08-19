@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from error_handling import error_handler
+from loguru import logger
 
 
 class ValidationError(Exception):
@@ -13,7 +13,7 @@ class ValidationLayer:
         # Placeholder for audio file validation
         # This would typically check file format, sample rate, etc.
         if not file_path.endswith((".wav", ".flac")):
-            error_handler.error(
+            logger.error(
                 f"Unsupported audio file format: {file_path}", "INVALID_AUDIO_FORMAT"
             )
             raise ValidationError(f"Unsupported audio file format: {file_path}")
@@ -23,7 +23,7 @@ class ValidationLayer:
         required_keys = ["segment_length", "overlap", "max_workers"]
         for key in required_keys:
             if key not in config:
-                error_handler.error(
+                logger.error(
                     f"Missing required configuration key: {key}", "INVALID_CONFIG"
                 )
                 raise ValidationError(f"Missing required configuration key: {key}")
@@ -33,7 +33,7 @@ class ValidationLayer:
         # Placeholder for metric input validation
         # This would typically check the shape, dtype, etc. of the audio data
         if not isinstance(audio_data, (list, tuple)):
-            error_handler.error("Invalid audio data format", "INVALID_METRIC_INPUT")
+            logger.error("Invalid audio data format", "INVALID_METRIC_INPUT")
             raise ValidationError("Invalid audio data format")
 
     @staticmethod
@@ -41,5 +41,5 @@ class ValidationLayer:
         # Placeholder for metric output validation
         # This would typically check the structure and values of the metric result
         if not isinstance(metric_result, dict):
-            error_handler.error("Invalid metric result format", "INVALID_METRIC_OUTPUT")
+            logger.error("Invalid metric result format", "INVALID_METRIC_OUTPUT")
             raise ValidationError("Invalid metric result format")

@@ -103,6 +103,8 @@ griffe==0.48.0
     # via mkdocstrings-python
 h11==0.14.0
     # via httpcore
+h5py==3.11.0
+    # via soundscapy
 httpcore==1.0.5
     # via httpx
 httpx==0.27.0
@@ -314,6 +316,7 @@ numpy==2.0.1
     # via acoustics
     # via bottleneck
     # via contourpy
+    # via h5py
     # via imageio
     # via matplotlib
     # via mosqito

@@ -1,140 +1,218 @@
-import csv
-import json
-import sqlite3
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+# %%
 
+from dataclasses import dataclass, field
+from typing import Dict, Generic, List, Type, TypeVar
+
+import h5py
+import numpy as np
+import pandas as pd
 from loguru import logger
 
 
-class ResultStorage(ABC):
-    @abstractmethod
-    def store(self, results: List[Dict[str, Any]]):
-        pass
+# Abstract base class for handling analysis results
+@dataclass
+class AnalysisResult:
+    def get_time_series(self) -> pd.DataFrame:
+        raise NotImplementedError
 
-    @abstractmethod
-    def retrieve(self) -> List[Dict[str, Any]]:
-        pass
+    def get_summary_statistics(self) -> Dict[str, float]:
+        raise NotImplementedError
+
+    def save(self, file_path: str, channel: str | int):
+        raise NotImplementedError
+
+    def load(self, file_path: str, channel: str | int):
+        raise NotImplementedError
 
 
-class JSONResultStorage(ResultStorage):
-    def __init__(self, file_path: str):
-        self.file_path = file_path
+# Type variable for the generic single-channel result
+T = TypeVar("T")
 
-    def store(self, results: List[Dict[str, Any]]):
-        try:
-            with open(self.file_path, "w") as f:
-                json.dump(results, f, indent=2)
-        except IOError as e:
-            logger.error(
-                f"Failed to write JSON results to {self.file_path}. Error: {str(e)}"
+
+@dataclass
+class MultiChannelResult(Generic[T]):
+    channels: Dict[str, T] = field(default_factory=dict)
+
+    def add_channel_result(self, channel: str, result: T):
+        self.channels[channel] = result
+
+    def get_channel_result(self, channel: str) -> T:
+        if channel not in self.channels:
+            raise ValueError(f"Channel '{channel}' not found.")
+        return self.channels[channel]
+
+    def get_all_channel_results(self) -> Dict[str, T]:
+        return self.channels
+
+    def get_all_channel_stats(self) -> Dict[str, Dict[str, float]]:
+        return {
+            channel: result.get_summary_statistics()
+            for channel, result in self.channels.items()
+        }
+
+    def save(self, group: h5py.Group):
+        for channel, result in self.channels.items():
+            channel_group = group.create_group(channel)
+            result.save(channel_group)
+
+    def load(self, group: h5py.Group, result_class: Type[T]):
+        for channel in group.keys():
+            result = result_class()
+            channel_group = group[channel]
+            result.load(channel_group)
+            self.channels[channel] = result
+
+
+@dataclass
+class FileAnalysisResults:
+    file_path: str
+    metrics: Dict[str, MultiChannelResult] = field(default_factory=dict)
+
+    def list_metrics(self) -> List[str]:
+        return list(self.metrics.keys())
+
+    def add_metric_result(self, metric_name: str, result: MultiChannelResult):
+        self.metrics[metric_name] = result
+
+    def get_metric_result(self, metric_name: str) -> MultiChannelResult:
+        if metric_name not in self.metrics:
+            raise ValueError(f"Metric '{metric_name}' not found.")
+        return self.metrics[metric_name]
+
+    def get_all_metric_results(self) -> Dict[str, MultiChannelResult]:
+        return self.metrics
+
+    def get_stats(self) -> Dict[str, Dict[str, Dict[str, float]]]:
+        return {
+            metric: result.get_all_channel_stats()
+            for metric, result in self.metrics.items()
+        }
+
+    def save(self, file_path: str):
+        logger.info(f"Saving FileAnalysisResults to {file_path}")
+        with h5py.File(file_path, "w") as hf:
+            for metric_name, result in self.metrics.items():
+                metric_group = hf.create_group(metric_name)
+                result.save(metric_group)
+
+    def load(self, file_path: str):
+        logger.info(f"Loading FileAnalysisResults from {file_path}")
+        with h5py.File(file_path, "r") as hf:
+            for metric_name, metric_group in hf.items():
+                result_class = self._get_result_class(metric_name)
+                multi_channel_result = MultiChannelResult()
+                multi_channel_result.load(metric_group, result_class)
+                self.add_metric_result(metric_name, multi_channel_result)
+
+    @staticmethod
+    def _get_result_class(metric_name: str) -> Type[AnalysisResult]:
+        from soundscapy.audio import metric_registry
+
+        return metric_registry.get_metric(metric_name)
+
+
+@dataclass
+class DirectoryAnalysisResults:
+    directory_path: str
+    file_results: Dict[str, FileAnalysisResults] = field(default_factory=dict)
+
+    def add_file_result(self, file_path: str, result: FileAnalysisResults):
+        self.file_results[file_path] = result
+
+    def get_file_result(self, file_path: str) -> FileAnalysisResults:
+        if file_path not in self.file_results:
+            raise ValueError(f"Results for file '{file_path}' not found.")
+        return self.file_results[file_path]
+
+    def get_all_file_results(self) -> Dict[str, FileAnalysisResults]:
+        return self.file_results
+
+    def save(self, file_path: str):
+        logger.info(f"Saving DirectoryAnalysisResults to {file_path}")
+        with h5py.File(file_path, "w") as hf:
+            for file_path, file_result in self.file_results.items():
+                file_group = hf.create_group(file_path)
+                for (
+                    metric_name,
+                    multi_channel_result,
+                ) in file_result.get_all_metric_results().items():
+                    metric_group = file_group.create_group(metric_name)
+                    for (
+                        channel,
+                        channel_result,
+                    ) in multi_channel_result.channels.items():
+                        channel_group = metric_group.create_group(channel)
+                        channel_result.save(channel_group)
+
+    def load(self, file_path: str):
+        logger.info(f"Loading DirectoryAnalysisResults from {file_path}")
+        with h5py.File(file_path, "r") as hf:
+            for file_path, file_group in hf.items():
+                file_result = FileAnalysisResults(file_path)
+                for metric_name, metric_group in file_group.items():
+                    multi_channel_result = MultiChannelResult()
+                    for channel, channel_group in metric_group.items():
+                        channel_result = self._load_channel_result(
+                            channel_group, metric_name
+                        )
+                        multi_channel_result.add_channel_result(channel, channel_result)
+                    file_result.add_metric_result(metric_name, multi_channel_result)
+                self.add_file_result(file_path, file_result)
+
+    @staticmethod
+    def _load_channel_result(channel_group, metric_name: str):
+        from soundscapy.audio.mosqito_metrics import LoudnessZWTVResult
+
+        # This method should be the same as in FileAnalysisResults
+        if metric_name == "loudness_zwtv":
+            result = LoudnessZWTVResult(
+                channel=channel_group.name.split("/")[-1],
+                N=channel_group["N"][:],
+                N_specific=channel_group["N_specific"][:],
+                bark_axis=channel_group["bark_axis"][:],
+                time_axis=channel_group["time_axis"][:],
             )
-
-    def retrieve(self) -> List[Dict[str, Any]]:
-        try:
-            with open(self.file_path, "r") as f:
-                return json.load(f)
-        except (IOError, json.JSONDecodeError) as e:
-            logger.error(
-                f"Failed to read JSON results from {self.file_path}. Error: {str(e)}"
-            )
-            return []
+        else:
+            raise ValueError(f"Unknown metric type: {metric_name}")
+        return result
 
 
-class CSVResultStorage(ResultStorage):
-    def __init__(self, file_path: str):
-        self.file_path = file_path
+# %%
 
-    def store(self, results: List[Dict[str, Any]]):
-        if not results:
-            logger.warning("No results to store in CSV")
-            return
+if __name__ == "__main__":
+    # %%
+    from soundscapy.audio.metric_registry import LoudnessZWTVResult
 
-        try:
-            with open(self.file_path, "w", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=results[0].keys())
-                writer.writeheader()
-                writer.writerows(results)
-        except IOError as e:
-            logger.error(
-                f"Failed to write CSV results to {self.file_path}. Error: {str(e)}"
-            )
+    # Create some sample data
+    loudness_result = LoudnessZWTVResult(
+        channel="left",
+        N=np.random.rand(100),
+        N_specific=np.random.rand(24, 100),
+        bark_axis=np.arange(24),
+        time_axis=np.linspace(0, 1, 100),
+    )
 
-    def retrieve(self) -> List[Dict[str, Any]]:
-        try:
-            with open(self.file_path, "r", newline="") as f:
-                reader = csv.DictReader(f)
-                return list(reader)
-        except IOError as e:
-            logger.error(
-                f"Failed to read CSV results from {self.file_path}. Error: {str(e)}"
-            )
-            return []
+    # Create a FileAnalysisResults object
+    file_result = FileAnalysisResults("test_file.wav")
+    multi_channel_result = MultiChannelResult()
+    multi_channel_result.add_channel_result("left", loudness_result)
+    file_result.add_metric_result("loudness_zwtv", multi_channel_result)
 
+    # Save the results
+    file_result.save("test_results.h5")
 
-class SQLiteResultStorage(ResultStorage):
-    def __init__(self, db_path: str):
-        self.db_path = db_path
-        self.table_name = "results"
+    # Load the results
+    loaded_result = FileAnalysisResults("test_file.wav")
+    loaded_result.load("test_results.h5")
 
-    def store(self, results: List[Dict[str, Any]]):
-        if not results:
-            logger.warning("No results to store in SQLite database")
-            return
+    # Verify the loaded data
+    loaded_loudness = loaded_result.get_metric_result(
+        "loudness_zwtv"
+    ).get_channel_result("left")
+    assert np.allclose(loudness_result.N, loaded_loudness.N)
+    assert np.allclose(loudness_result.N_specific, loaded_loudness.N_specific)
+    assert np.allclose(loudness_result.bark_axis, loaded_loudness.bark_axis)
+    assert np.allclose(loudness_result.time_axis, loaded_loudness.time_axis)
+    assert loudness_result.channel == loaded_loudness.channel
 
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-
-            # Create table if it doesn't exist
-            columns = ", ".join([f"{key} TEXT" for key in results[0].keys()])
-            cursor.execute(f"CREATE TABLE IF NOT EXISTS {self.table_name} ({columns})")
-
-            # Insert results
-            placeholders = ", ".join(["?" for _ in results[0]])
-            cursor.executemany(
-                f"INSERT INTO {self.table_name} VALUES ({placeholders})",
-                [tuple(result.values()) for result in results],
-            )
-
-            conn.commit()
-            conn.close()
-        except sqlite3.Error as e:
-            logger.error(f"Failed to store results in SQLite database. Error: {str(e)}")
-
-    def retrieve(self) -> List[Dict[str, Any]]:
-        try:
-            conn = sqlite3.connect(self.db_path)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-
-            cursor.execute(f"SELECT * FROM {self.table_name}")
-            rows = cursor.fetchall()
-
-            conn.close()
-
-            return [dict(row) for row in rows]
-        except sqlite3.Error as e:
-            logger.error(
-                f"Failed to retrieve results from SQLite database. Error: {str(e)}"
-            )
-            return []
-
-
-def create_result_storage(storage_type: str, file_path: str) -> ResultStorage:
-    if storage_type == "json":
-        return JSONResultStorage(file_path)
-    elif storage_type == "csv":
-        return CSVResultStorage(file_path)
-    elif storage_type == "sqlite":
-        return SQLiteResultStorage(file_path)
-    else:
-        logger.error(f"Unknown storage type: {storage_type}", "INVALID_STORAGE_TYPE")
-        raise ValueError(f"Unknown storage type: {storage_type}")
-
-
-# Example usage
-# storage = create_result_storage('json', 'results.json')
-# results = [{'metric1': 0.5, 'metric2': 0.7}, {'metric1': 0.6, 'metric2': 0.8}]
-# storage.store(results)
-# retrieved_results = storage.retrieve()
+    print("Test passed successfully!")

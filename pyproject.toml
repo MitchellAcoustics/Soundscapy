@@ -15,6 +15,7 @@ dependencies = [
     "pyyaml>=6.0.2",
     "schema>=0.7.7",
     "loguru>=0.7.2",
+    "h5py>=3.11.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"

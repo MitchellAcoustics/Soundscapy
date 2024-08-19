@@ -1,10 +1,12 @@
 # General settings
 max_workers: 4
-result_storage_type: "json"
-result_storage_path: "results.json"
+result_storage_type: "hdf5"
+result_storage_path: "results.h5"
+result_detail: "all"  # Options: "all", "stats_only", "time_series_only"
+force_reprocess: true
 
 # Audio processing settings
-segment_length: 10  # in seconds, set to null for no segmentation
+#segment_length: null  # in seconds, set to null for no segmentation
 overlap: 1  # in seconds
 
 # Metric configurations

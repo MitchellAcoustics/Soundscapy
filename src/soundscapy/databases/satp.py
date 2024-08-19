@@ -107,8 +107,6 @@ def load_participants(version: str = "latest") -> pd.DataFrame:
     return df
 
 
-logger.info("SATP module loaded")
-
 if __name__ == "__main__":
     import xdoctest
 

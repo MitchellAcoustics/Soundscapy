@@ -3,15 +3,17 @@ from typing import Any, Dict, List
 
 import numpy as np
 from loguru import logger
-from mosqito.sq_metrics import loudness_zwtv
 from scipy import stats
 
-from binaural_signal import BinauralSignal
+from soundscapy.audio.result_storage import AnalysisResult
 
 
 class Metric(ABC):
     def __init__(self):
         self.settings = {}
+        self.time_series_results = {}
+        self.stats_results = {}
+        self.results = AnalysisResult()
 
     @abstractmethod
     def calculate(self, audio_data: Any) -> Dict[str, Any]:
@@ -65,39 +67,7 @@ class MetricRegistry:
             self.configure_metric(name, settings)
 
 
-class ZwickerTimeVaryingLoudness(Metric):
-    def __init__(self):
-        super().__init__()
-        self.settings = {"field_type": "free", "statistics": ["mean", "max", "min"]}
-
-    def calculate(self, audio_data: BinauralSignal) -> Dict[str, Any]:
-        try:
-            N, N_spec, bark_axis, time_axis = loudness_zwtv(
-                audio_data, audio_data.fs, field_type=self.settings["field_type"]
-            )
-
-            results = {
-                "time_varying": N.tolist(),
-                "specific": N_spec.tolist(),
-                "bark_axis": bark_axis.tolist(),
-                "time_axis": time_axis.tolist(),
-                "stats": _stat_calcs(
-                    "N",
-                    N,
-                    {},
-                    self.settings["statistics"],
-                ),
-            }
-
-            return results
-        except Exception as e:
-            logger.error(f"Error calculating Zwicker Time Varying Loudness: {str(e)}")
-            return {}
-
-
-def _stat_calcs(
-    label: str, ts_array: np.ndarray, res: dict, statistics: List[int | str]
-) -> dict:
+def stat_calcs(label: str, ts_array: np.ndarray, statistics: List[int | str]) -> dict:
     """
     Calculate various statistics for a time series array and add them to a results dictionary.
 
@@ -117,31 +87,25 @@ def _stat_calcs(
     Example:
         >>> ts = np.array([1, 2, 3, 4, 5])
         >>> res = {}
-        >>> updated_res = _stat_calcs("metric", ts, res, [50, "avg", "max"])
+        >>> updated_res = stat_calcs("metric", ts, res, [50, "avg", "max"])
         >>> print(updated_res)
         {'metric_50': 3.0, 'metric_avg': 3.0, 'metric_max': 5}
     """
+    res = {}
 
     for stat in statistics:
         if stat in ("avg", "mean"):
-            res[f"{label}_{stat}"] = ts_array.mean()
+            res[f"{label}_{stat}"] = np.mean(ts_array)
         elif stat == "max":
-            res[f"{label}_{stat}"] = ts_array.max()
+            res[f"{label}_{stat}"] = np.max(ts_array)
         elif stat == "min":
-            res[f"{label}_{stat}"] = ts_array.min()
+            res[f"{label}_{stat}"] = np.min(ts_array)
         elif stat == "kurt":
             res[f"{label}_{stat}"] = stats.kurtosis(ts_array)
         elif stat == "skew":
             res[f"{label}_{stat}"] = stats.skew(ts_array)
         elif stat == "std":
-            res[f"{label}_{stat}"] = np.std(ts_array)
+            res[f"{label}_{stat}"] = np.std(ts_array, axis=0)
         else:
             res[f"{label}_{stat}"] = np.percentile(ts_array, 100 - stat)
     return res
-
-
-# Global instance
-metric_registry = MetricRegistry()
-
-# Register the Zwicker Time Varying Loudness metric
-metric_registry.register("zwicker_time_varying_loudness", ZwickerTimeVaryingLoudness)
