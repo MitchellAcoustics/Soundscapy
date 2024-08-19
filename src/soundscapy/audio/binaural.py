@@ -325,19 +325,17 @@ class Binaural(Signal):
         acoustics.standards.iec_61672_1_2013.sound_exposure_level : Base method for SEL calculation.
         acoustics.standards.iec_61672_1_2013.time_weighted_sound_level : Base method for Leq level time series calculation.
         """
-        logger.info(f"Running pyacoustics metric: {metric}")
         if analysis_settings:
             logger.debug("Using provided analysis settings")
-            (
-                run,
-                channel,
-                statistics,
-                label,
-                func_args,
-            ) = analysis_settings.parse_pyacoustics(metric)
-            if run is False:
+            metric_settings = analysis_settings.parse_pyacoustics(metric)
+            if not metric_settings.run:
                 logger.info(f"Metric {metric} is disabled in analysis settings")
                 return None
+
+            channel = metric_settings.channel
+            statistics = metric_settings.statistics
+            label = metric_settings.label
+            func_args = metric_settings.func_args
 
         channel = ("Left", "Right") if channel is None else channel
         s = self._get_channel(channel)
@@ -436,17 +434,16 @@ class Binaural(Signal):
         logger.info(f"Running mosqito metric: {metric}")
         if analysis_settings:
             logger.debug("Using provided analysis settings")
-            (
-                run,
-                channel,
-                statistics,
-                label,
-                parallel,
-                func_args,
-            ) = analysis_settings.parse_mosqito(metric)
-            if run is False:
+            metric_settings = analysis_settings.parse_mosqito(metric)
+            if not metric_settings.run:
                 logger.info(f"Metric {metric} is disabled in analysis settings")
                 return None
+
+            channel = metric_settings.channel
+            statistics = metric_settings.statistics
+            label = metric_settings.label
+            parallel = metric_settings.parallel
+            func_args = metric_settings.func_args
 
         channel = ("Left", "Right") if channel is None else channel
         s = self._get_channel(channel)
@@ -520,13 +517,16 @@ class Binaural(Signal):
         if analysis_settings:
             logger.debug("Using provided analysis settings")
             if metric in {"all_temporal_alpha_indices", "all_spectral_alpha_indices"}:
-                run, channel = analysis_settings.parse_maad_all_alpha_indices(metric)
+                metric_settings = analysis_settings.parse_maad_all_alpha_indices(metric)
             else:
                 logger.error(f"Invalid maad metric: {metric}")
                 raise ValueError(f"Metric {metric} not recognised")
-            if run is False:
+
+            if not metric_settings.run:
                 logger.info(f"Metric {metric} is disabled in analysis settings")
                 return None
+
+            channel = metric_settings.channel
         channel = ("Left", "Right") if channel is None else channel
         s = self._get_channel(channel)
         if s.channels == 1:

@@ -67,7 +67,6 @@ MoSQITo:
         parallel: true
         func_args:
             weighting: "din"
-            skip: 0.5
             field_type: "free"
 
     sharpness_din_perseg:
