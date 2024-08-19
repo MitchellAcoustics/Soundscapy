@@ -540,6 +540,3 @@ def soundscapy_describe(
         for location in df[group_by].unique()
     }
     return pd.DataFrame.from_dict(res, orient="index")
-
-
-logger.info("ISD module loaded")

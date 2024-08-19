@@ -177,5 +177,3 @@ def rename_paqs(
 
 
 # Add other utility functions here as needed
-
-logger.info("Core survey utilities module loaded.")
