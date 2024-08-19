@@ -26,7 +26,6 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from loguru import logger
-
 from soundscapy.surveys.processing import (
     calculate_iso_coords,
     likert_data_quality,
