@@ -23,6 +23,7 @@ This module requires the following external libraries:
 
 Example
 -------
+>>> # xdoctest: +SKIP
 >>> from soundscapy.audio import Binaural
 >>> signal = Binaural.from_wav("audio.wav")
 >>> results = signal.process_all_metrics(analysis_settings)
@@ -153,6 +154,7 @@ class Binaural(Signal):
 
         Examples
         --------
+        >>> # xdoctest: +SKIP
         >>> signal = Binaural.from_wav("audio.wav")
         >>> calibrated_signal = signal.calibrate_to([60, 62])  # Calibrate left channel to 60 dB and right to 62 dB
         """
