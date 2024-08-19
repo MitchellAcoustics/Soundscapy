@@ -3,7 +3,6 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
-
 from soundscapy.audio import AnalysisSettings
 from soundscapy.audio.binaural import Binaural
 
@@ -55,6 +54,20 @@ def test_binaural_initialization(mock_binaural_signal):
     assert mock_binaural_signal.fs == 44100
     assert mock_binaural_signal.channels == 2
     assert mock_binaural_signal.recording == "test_recording"
+
+
+def test_binaural_from_wav(tmp_path):
+    # Create a temporary WAV file
+    from scipy.io import wavfile
+
+    wav_path = tmp_path / "test.wav"
+    wavfile.write(wav_path, 44100, np.random.rand(44100, 2).astype(np.float32))
+
+    b = Binaural.from_wav(wav_path)
+    assert isinstance(b, Binaural)
+    assert b.channels == 2
+    assert b.fs == 44100
+    assert b.recording == "test"
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
