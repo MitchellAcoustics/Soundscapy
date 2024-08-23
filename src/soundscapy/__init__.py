@@ -7,7 +7,7 @@ import importlib.metadata
 __version__ = importlib.metadata.version("soundscapy")
 
 from soundscapy import plotting
-from soundscapy.audio import AnalysisSettings, get_default_yaml
+from soundscapy.audio import AnalysisSettings, ConfigManager, AudioAnalysis
 from soundscapy.audio.binaural import Binaural
 from soundscapy.databases import araus, isd, satp
 from soundscapy.surveys import processing
@@ -17,6 +17,7 @@ from soundscapy.logging import get_logger
 logger = get_logger()
 
 __all__ = [
+    "AudioAnalysis",
     "AnalysisSettings",
     "Binaural",
     "plotting",
@@ -24,7 +25,7 @@ __all__ = [
     "isd",
     "satp",
     "processing",
-    "get_default_yaml",
+    "ConfigManager",
 ]
 
 # Set up the logger when this module is imported

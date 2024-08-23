@@ -42,6 +42,7 @@ from mosqito.sq_metrics import (
     sharpness_din_tv,
 )
 from scipy import stats
+
 from soundscapy.logging import get_logger
 
 logger = get_logger()
@@ -174,7 +175,7 @@ def mosqito_metric_1ch(
     >>> signal = Binaural.from_wav("audio.wav")
     >>> results = mosqito_metric_1ch(signal[0], "loudness_zwtv", as_df=True)
     """
-    logger.info(f"Calculating MoSQITo metric: {metric}")
+    logger.debug(f"Calculating MoSQITo metric: {metric}")
 
     # Checks and warnings
     if s.channels != 1:
@@ -282,7 +283,7 @@ def maad_metric_1ch(
     maad.features.all_spectral_alpha_indices
     maad.features.all_temporal_alpha_indices
     """
-    logger.info(f"Calculating MAAD metric: {metric}")
+    logger.debug(f"Calculating MAAD metric: {metric}")
 
     # Checks and status
     if s.channels != 1:
@@ -375,7 +376,7 @@ def pyacoustics_metric_1ch(
     --------
     acoustics
     """
-    logger.info(f"Calculating pyacoustics metric: {metric}")
+    logger.debug(f"Calculating pyacoustics metric: {metric}")
 
     if s.channels != 1:
         logger.error("Signal must be single channel")
@@ -496,7 +497,7 @@ def pyacoustics_metric_2ch(
     --------
     pyacoustics_metric_1ch
     """
-    logger.info(f"Calculating pyacoustics metric for 2 channels: {metric}")
+    logger.debug(f"Calculating pyacoustics metric for 2 channels: {metric}")
 
     if b.channels != 2:
         logger.error("Must be 2 channel signal. Use `pyacoustics_metric_1ch` instead.")
@@ -596,7 +597,7 @@ def _parallel_mosqito_metric_2ch(
     --------
     mosqito_metric_1ch
     """
-    logger.info(f"Calculating MoSQITo metric in parallel: {metric}")
+    logger.debug(f"Calculating MoSQITo metric in parallel: {metric}")
 
     pool = mp.Pool(mp.cpu_count())
     try:
@@ -690,7 +691,7 @@ def mosqito_metric_2ch(
     ValueError
         If the input signal is not 2-channel.
     """
-    logger.info(f"Calculating MoSQITo metric for 2 channels: {metric}")
+    logger.debug(f"Calculating MoSQITo metric for 2 channels: {metric}")
 
     if b.channels != 2:
         logger.error("Must be 2 channel signal. Use `mosqito_metric_1ch` instead.")
@@ -813,7 +814,7 @@ def maad_metric_2ch(
     scikit-maad library
     maad_metric_1ch
     """
-    logger.info(f"Calculating MAAD metric for 2 channels: {metric}")
+    logger.debug(f"Calculating MAAD metric for 2 channels: {metric}")
 
     if b.channels != 2:
         logger.error("Must be 2 channel signal. Use `maad_metric_1ch` instead.")
@@ -981,47 +982,49 @@ def process_all_metrics(
     results_df.index.names = ["Recording", "Channel"]
 
     try:
-        for library in ["PythonAcoustics", "MoSQITo", "scikit-maad"]:
-            if library in analysis_settings.settings:
-                for metric in analysis_settings.settings[library]:
-                    logger.debug(f"Processing {library} metric: {metric}")
-                    if library == "PythonAcoustics":
-                        results_df = pd.concat(
-                            (
-                                results_df,
-                                b.pyacoustics_metric(
-                                    metric,
-                                    verbose=verbose,
-                                    analysis_settings=analysis_settings,
-                                ),
+        for (
+            library,
+            metrics_settings,
+        ) in analysis_settings.get_enabled_metrics().items():
+            for metric in metrics_settings.keys():
+                logger.debug(f"Processing {library} metric: {metric}")
+                if library == "PythonAcoustics":
+                    results_df = pd.concat(
+                        (
+                            results_df,
+                            b.pyacoustics_metric(
+                                metric,
+                                verbose=verbose,
+                                metric_settings=metrics_settings[metric],
                             ),
-                            axis=1,
-                        )
-                    elif library == "MoSQITo":
-                        results_df = pd.concat(
-                            (
-                                results_df,
-                                b.mosqito_metric(
-                                    metric,
-                                    parallel=parallel,
-                                    verbose=verbose,
-                                    analysis_settings=analysis_settings,
-                                ),
+                        ),
+                        axis=1,
+                    )
+                elif library == "MoSQITo":
+                    results_df = pd.concat(
+                        (
+                            results_df,
+                            b.mosqito_metric(
+                                metric,
+                                parallel=parallel,
+                                verbose=verbose,
+                                metric_settings=metrics_settings[metric],
                             ),
-                            axis=1,
-                        )
-                    elif library == "scikit-maad":
-                        results_df = pd.concat(
-                            (
-                                results_df,
-                                b.maad_metric(
-                                    metric,
-                                    verbose=verbose,
-                                    analysis_settings=analysis_settings,
-                                ),
+                        ),
+                        axis=1,
+                    )
+                elif library == "scikit-maad" or library == "scikit_maad":
+                    results_df = pd.concat(
+                        (
+                            results_df,
+                            b.maad_metric(
+                                metric,
+                                verbose=verbose,
+                                metric_settings=metrics_settings[metric],
                             ),
-                            axis=1,
-                        )
+                        ),
+                        axis=1,
+                    )
         logger.info("All metrics processed successfully")
         return results_df
     except Exception as e:

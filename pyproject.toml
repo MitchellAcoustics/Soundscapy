@@ -15,6 +15,7 @@ dependencies = [
     "pyyaml>=6.0.2",
     "schema>=0.7.7",
     "loguru>=0.7.2",
+    "pydantic>=2.8.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -88,3 +89,13 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/soundscapy"]
+exclude = [
+    "tests/data",
+    "tests/test_audio_files",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "tests/test_audio_files",
+    "tests/data",
+]

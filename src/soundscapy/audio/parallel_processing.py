@@ -21,14 +21,16 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import pandas as pd
-from soundscapy import AnalysisSettings, Binaural
+from tqdm.auto import tqdm
+
+from soundscapy.audio.analysis_settings import AnalysisSettings
+from soundscapy.audio.binaural import Binaural
 from soundscapy.audio.metrics import (
     add_results,
     prep_multiindex_df,
     process_all_metrics,
 )
 from soundscapy.logging import get_logger
-from tqdm.auto import tqdm
 
 logger = get_logger()
 
@@ -44,7 +46,7 @@ def tqdm_write_sink(message):
 
 def load_analyse_binaural(
     wav_file: Path,
-    levels: Dict,
+    levels: Dict | List[float],
     analysis_settings: AnalysisSettings,
     verbose: bool = True,
     parallel_mosqito: bool = True,
@@ -70,16 +72,25 @@ def load_analyse_binaural(
     pd.DataFrame
         DataFrame with analysis results.
     """
-    logger.info(f"Processing {wav_file.stem}")
+    logger.info(f"Processing {wav_file}")
     try:
         b = Binaural.from_wav(wav_file)
-        decibel = (levels[b.recording]["Left"], levels[b.recording]["Right"])
-        b.calibrate_to(decibel, inplace=True)
+        if levels is not None:
+            if isinstance(levels, dict) and b.recording in levels:
+                decibel = (levels[b.recording]["Left"], levels[b.recording]["Right"])
+                b.calibrate_to(decibel, inplace=True)
+            elif isinstance(levels, list | tuple):
+                logger.debug(f"Calibrating {wav_file} to {levels} dB")
+                b.calibrate_to(levels, inplace=True)
+            else:
+                logger.warning(f"No calibration levels found for {wav_file}")
+        else:
+            logger.warning(f"No calibration levels found for {wav_file}")
         return process_all_metrics(
             b, analysis_settings, parallel=parallel_mosqito, verbose=verbose
         )
     except Exception as e:
-        logger.error(f"Error processing {wav_file.stem}: {str(e)}")
+        logger.error(f"Error processing {wav_file}: {str(e)}")
         raise
 
 

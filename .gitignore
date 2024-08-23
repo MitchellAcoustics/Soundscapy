@@ -180,3 +180,6 @@ soundscapy_old/.DS_Store
 !/.pytest_cache/
 !/.vscode/
 .pdm-python
+# Ignore everything in tests/test_audio_files except .wav files
+tests/test_audio_files/*
+!tests/test_audio_files/*.wav

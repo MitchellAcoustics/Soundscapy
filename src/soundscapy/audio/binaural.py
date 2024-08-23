@@ -36,6 +36,8 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from acoustics import Signal
+
+from soundscapy.audio.analysis_settings import AnalysisSettings, MetricSettings
 from soundscapy.audio.metrics import (
     maad_metric_1ch,
     maad_metric_2ch,
@@ -119,7 +121,6 @@ class Binaural(Signal):
             return
         self.fs = getattr(obj, "fs", None)
         self.recording = getattr(obj, "recording", None)
-        logger.debug(f"Finalized Binaural object: {self.recording}, fs={self.fs}")
 
     def calibrate_to(
         self,
@@ -284,7 +285,7 @@ class Binaural(Signal):
         as_df: bool = True,
         return_time_series: bool = False,
         verbose: bool = False,
-        analysis_settings: Optional["AnalysisSettings"] = None,
+        metric_settings: Optional[MetricSettings] = None,
         func_args: Dict = {},
     ) -> Union[Dict, pd.DataFrame]:
         """
@@ -309,8 +310,8 @@ class Binaural(Signal):
             Cannot return time series if as_df is True.
         verbose : bool, optional
             Whether to print status updates. Default is False.
-        analysis_settings : AnalysisSettings, optional
-            Settings for analysis. Default is None.
+        metric_settings : MetricSettings, optional
+            Settings for metric analysis. Default is None.
         func_args : dict, optional
             Any settings given here will override those in the other options.
             Can pass any *args or **kwargs to the underlying python acoustics method.
@@ -327,9 +328,8 @@ class Binaural(Signal):
         acoustics.standards.iec_61672_1_2013.sound_exposure_level : Base method for SEL calculation.
         acoustics.standards.iec_61672_1_2013.time_weighted_sound_level : Base method for Leq level time series calculation.
         """
-        if analysis_settings:
+        if metric_settings:
             logger.debug("Using provided analysis settings")
-            metric_settings = analysis_settings.parse_pyacoustics(metric)
             if not metric_settings.run:
                 logger.info(f"Metric {metric} is disabled in analysis settings")
                 return None
@@ -389,7 +389,7 @@ class Binaural(Signal):
         return_time_series: bool = False,
         parallel: bool = True,
         verbose: bool = False,
-        analysis_settings: Optional["AnalysisSettings"] = None,
+        metric_settings: Optional[MetricSettings] = None,
         func_args: Dict = {},
     ) -> Union[Dict, pd.DataFrame]:
         """
@@ -417,8 +417,8 @@ class Binaural(Signal):
             If False, will run each channel sequentially.
         verbose : bool, optional
             Whether to print status updates. Default is False.
-        analysis_settings : AnalysisSettings, optional
-            Settings for analysis. Default is None.
+        metric_settings : MetricSettings, optional
+            Settings for metric analysis. Default is None.
         func_args : dict, optional
             Any settings given here will override those in the other options.
             Can pass any *args or **kwargs to the underlying python acoustics method.
@@ -434,9 +434,8 @@ class Binaural(Signal):
         binaural.mosqito_metric_1ch : Method for running metrics on 1 channel.
         """
         logger.info(f"Running mosqito metric: {metric}")
-        if analysis_settings:
+        if metric_settings:
             logger.debug("Using provided analysis settings")
-            metric_settings = analysis_settings.parse_mosqito(metric)
             if not metric_settings.run:
                 logger.info(f"Metric {metric} is disabled in analysis settings")
                 return None
@@ -476,7 +475,7 @@ class Binaural(Signal):
         channel: Union[int, Tuple, List, str] = ("Left", "Right"),
         as_df: bool = True,
         verbose: bool = False,
-        analysis_settings: Optional["AnalysisSettings"] = None,
+        metric_settings: Optional[MetricSettings] = None,
         func_args: Dict = {},
     ) -> Union[Dict, pd.DataFrame]:
         """
@@ -495,8 +494,8 @@ class Binaural(Signal):
             If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
         verbose : bool, optional
             Whether to print status updates. Default is False.
-        analysis_settings : AnalysisSettings, optional
-            Settings for analysis. Default is None.
+        metric_settings : MetricSettings, optional
+            Settings for metric analysis. Default is None.
         func_args : dict, optional
             Additional arguments to pass to the underlying scikit-maad method.
 
@@ -516,11 +515,12 @@ class Binaural(Signal):
         metrics.maad_metric_2ch
         """
         logger.info(f"Running maad metric: {metric}")
-        if analysis_settings:
+        if metric_settings:
             logger.debug("Using provided analysis settings")
-            if metric in {"all_temporal_alpha_indices", "all_spectral_alpha_indices"}:
-                metric_settings = analysis_settings.parse_maad_all_alpha_indices(metric)
-            else:
+            if metric not in {
+                "all_temporal_alpha_indices",
+                "all_spectral_alpha_indices",
+            }:
                 logger.error(f"Invalid maad metric: {metric}")
                 raise ValueError(f"Metric {metric} not recognised")
 
@@ -540,7 +540,7 @@ class Binaural(Signal):
 
     def process_all_metrics(
         self,
-        analysis_settings: "AnalysisSettings",
+        analysis_settings: AnalysisSettings,
         parallel: bool = True,
         verbose: bool = False,
     ) -> pd.DataFrame:

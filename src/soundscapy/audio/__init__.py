@@ -22,7 +22,23 @@ See Also:
     soundscapy.audio.metrics: For individual metric calculation functions.
 """
 
-from soundscapy.audio.analysis_settings import AnalysisSettings, get_default_yaml
+from soundscapy.audio.analysis_settings import AnalysisSettings, ConfigManager
+from soundscapy.audio.audio_analysis import AudioAnalysis
 from soundscapy.audio.binaural import Binaural
+from soundscapy.audio.metrics import (
+    add_results,
+    prep_multiindex_df,
+    process_all_metrics,
+)
+from soundscapy.audio.parallel_processing import parallel_process
 
-__all__ = ["Binaural", "AnalysisSettings", "get_default_yaml"]
+__all__ = [
+    "AudioAnalysis",
+    "Binaural",
+    "AnalysisSettings",
+    "ConfigManager",
+    "process_all_metrics",
+    "prep_multiindex_df",
+    "add_results",
+    "parallel_process",
+]

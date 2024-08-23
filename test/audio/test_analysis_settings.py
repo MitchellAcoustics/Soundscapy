@@ -1,13 +1,12 @@
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from soundscapy.audio.analysis_settings import (
     AnalysisSettings,
+    ConfigManager,
+    LibrarySettings,
     MetricSettings,
-    get_default_yaml,
 )
 
 
@@ -19,7 +18,7 @@ def sample_config():
             "LAeq": {
                 "run": True,
                 "main": "avg",
-                "statistics": ["5", "95", "avg", "max", "min"],
+                "statistics": [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"],
                 "channel": ["Left", "Right"],
                 "label": "LAeq",
                 "func_args": {"time": 0.125, "method": "average"},
@@ -29,7 +28,7 @@ def sample_config():
             "loudness_zwtv": {
                 "run": True,
                 "main": 5,
-                "statistics": ["10", "50", "90", "95", "min", "max", "avg"],
+                "statistics": [10, 50, 90, 95, "min", "max", "kurt", "skew", "avg"],
                 "channel": ["Left", "Right"],
                 "label": "N",
                 "parallel": True,
@@ -43,372 +42,140 @@ def sample_config():
 
 
 @pytest.fixture
-def analysis_settings(sample_config):
-    with TemporaryDirectory() as tempdir:
-        config_path = Path(tempdir) / "config.yaml"
-        with open(config_path, "w") as f:
-            yaml.dump(sample_config, f)
-        return AnalysisSettings(config_path)
+def temp_config_file(tmp_path, sample_config):
+    config_file = tmp_path / "test_config.yaml"
+    with open(config_file, "w") as f:
+        yaml.dump(sample_config, f)
+    return config_file
 
 
-def test_analysis_settings_initialization(analysis_settings, sample_config):
-    assert isinstance(analysis_settings, AnalysisSettings)
-    assert (
-        analysis_settings.settings["PythonAcoustics"]["LAeq"].run
-        == sample_config["PythonAcoustics"]["LAeq"]["run"]
-    )
-    assert (
-        analysis_settings.settings["MoSQITo"]["loudness_zwtv"].main
-        == sample_config["MoSQITo"]["loudness_zwtv"]["main"]
-    )
+class TestMetricSettings:
+    def test_valid_metric_settings(self):
+        settings = MetricSettings(
+            run=True,
+            main="avg",
+            statistics=[5, 10, 50, 90, 95, "min", "max", "kurt", "skew"],
+            channel=["Left", "Right"],
+            label="LAeq",
+            func_args={"time": 0.125, "method": "average"},
+        )
+        assert settings.run == True
+        assert settings.main == "avg"
+        assert "Left" in settings.channel and "Right" in settings.channel
+
+    def test_invalid_metric_settings(self):
+        with pytest.raises(ValidationError):
+            MetricSettings(run="not_a_boolean")
 
 
-def test_get_metric_settings(analysis_settings):
-    laeq_settings = analysis_settings.get_metric_settings("PythonAcoustics", "LAeq")
-    assert isinstance(laeq_settings, MetricSettings)
-    assert laeq_settings.run is True
-    assert laeq_settings.main == "avg"
+class TestLibrarySettings:
+    def test_valid_library_settings(self):
+        settings = LibrarySettings(
+            root={"LAeq": MetricSettings(run=True, main="avg", label="LAeq")}
+        )
+        assert "LAeq" in settings.root
+        assert settings.root["LAeq"].run == True
+
+    def test_invalid_library_settings(self):
+        with pytest.raises(ValidationError):
+            LibrarySettings(root={"InvalidMetric": "Not a MetricSettings object"})
 
 
-def test_parse_pyacoustics(analysis_settings):
-    laeq_settings = analysis_settings.parse_pyacoustics("LAeq")
-    assert isinstance(laeq_settings, MetricSettings)
-    assert laeq_settings.label == "LAeq"
+class TestAnalysisSettings:
+    def test_from_yaml(self, temp_config_file):
+        settings = AnalysisSettings.from_yaml(temp_config_file)
+        assert settings.version == "1.0"
+        assert "LAeq" in settings.PythonAcoustics.root
+        assert "loudness_zwtv" in settings.MoSQITo.root
+        assert "all_temporal_alpha_indices" in settings.scikit_maad.root
 
+    def test_to_yaml(self, tmp_path, sample_config):
+        settings = AnalysisSettings(**sample_config)
+        output_file = tmp_path / "output_config.yaml"
+        settings.to_yaml(output_file)
+        assert output_file.exists()
 
-def test_parse_mosqito(analysis_settings):
-    loudness_settings = analysis_settings.parse_mosqito("loudness_zwtv")
-    assert isinstance(loudness_settings, MetricSettings)
-    assert loudness_settings.parallel is True
-
-
-def test_parse_maad_all_alpha_indices(analysis_settings):
-    maad_settings = analysis_settings.parse_maad_all_alpha_indices(
-        "all_temporal_alpha_indices"
-    )
-    assert isinstance(maad_settings, MetricSettings)
-    assert maad_settings.run is True
-
-
-def test_from_yaml(sample_config):
-    with TemporaryDirectory() as tempdir:
-        config_path = Path(tempdir) / "config.yaml"
-        with open(config_path, "w") as f:
-            yaml.dump(sample_config, f)
-        settings = AnalysisSettings.from_yaml(config_path)
-    assert isinstance(settings, AnalysisSettings)
-    assert (
-        settings.settings["PythonAcoustics"]["LAeq"].run
-        == sample_config["PythonAcoustics"]["LAeq"]["run"]
-    )
-
-
-def test_to_yaml(analysis_settings):
-    with TemporaryDirectory() as tempdir:
-        output_path = Path(tempdir) / "output_config.yaml"
-        analysis_settings.to_yaml(output_path)
-        assert output_path.exists()
-        with open(output_path, "r") as f:
+        # Read back and verify
+        with open(output_file, "r") as f:
             loaded_config = yaml.safe_load(f)
-    assert (
-        loaded_config["PythonAcoustics"]["LAeq"]["run"]
-        == analysis_settings.settings["PythonAcoustics"]["LAeq"].run
-    )
+        assert loaded_config["version"] == "1.0"
+        assert "LAeq" in loaded_config["PythonAcoustics"]
+
+    def test_get_metric_settings(self, sample_config):
+        settings = AnalysisSettings(**sample_config)
+        laeq_settings = settings.get_metric_settings("PythonAcoustics", "LAeq")
+        assert isinstance(laeq_settings, MetricSettings)
+        assert laeq_settings.run == True
+        assert laeq_settings.main == "avg"
+
+    def test_get_metric_settings_invalid(self, sample_config):
+        settings = AnalysisSettings(**sample_config)
+        with pytest.raises(AttributeError):
+            settings.get_metric_settings("InvalidLibrary", "InvalidMetric")
+
+    def test_get_enabled_metrics(self, sample_config):
+        settings = AnalysisSettings(**sample_config)
+        enabled = settings.get_enabled_metrics()
+        assert "LAeq" in enabled["PythonAcoustics"]
+        assert "loudness_zwtv" in enabled["MoSQITo"]
+        assert "all_temporal_alpha_indices" in enabled["scikit_maad"]
 
 
-def test_default():
-    settings = AnalysisSettings.default()
-    assert isinstance(settings, AnalysisSettings)
-    assert "PythonAcoustics" in settings.settings
-    assert "MoSQITo" in settings.settings
-    assert "scikit-maad" in settings.settings
+class TestConfigManager:
+    @pytest.fixture
+    def config_manager(self, temp_config_file):
+        return ConfigManager(temp_config_file)
+
+    def test_load_config(self, config_manager):
+        config = config_manager.load_config()
+        assert isinstance(config, AnalysisSettings)
+        assert config.version == "1.0"
+
+    def test_save_config(self, config_manager, tmp_path):
+        config_manager.load_config()
+        new_file = tmp_path / "new_config.yaml"
+        config_manager.save_config(new_file)
+        assert new_file.exists()
+
+    def test_merge_configs(self, config_manager):
+        config_manager.load_config()
+        override = {"PythonAcoustics": {"LAeq": {"run": False}}}
+        merged = config_manager.merge_configs(override)
+        assert merged.PythonAcoustics.root["LAeq"].run == False
+
+    def test_generate_minimal_config(self, config_manager):
+        config_manager.load_config()
+        minimal = config_manager.generate_minimal_config()
+        assert "version" not in minimal  # Assuming version is the same as default
+        assert "MoSQITo" in minimal
+
+    def test_load_default_config(self):
+        manager = ConfigManager()
+        config = manager.load_config()
+        assert isinstance(config, AnalysisSettings)
+        # Add more assertions based on your default config structure
 
 
-def test_get_default_yaml():
-    with TemporaryDirectory() as tempdir:
-        output_path = Path(tempdir) / "default_settings.yaml"
-        get_default_yaml(str(output_path))
-        assert output_path.exists()
+def test_end_to_end(temp_config_file, tmp_path):
+    # Load configuration
+    manager = ConfigManager(temp_config_file)
+    config = manager.load_config()
+    assert config.PythonAcoustics.root["LAeq"].run == True
 
+    # Modify configuration
+    override = {"PythonAcoustics": {"LAeq": {"run": False}}}
+    merged_config = manager.merge_configs(override)
+    assert merged_config.PythonAcoustics.root["LAeq"].run == False
+    assert manager.current_config.PythonAcoustics.root["LAeq"].run == False
 
-def test_invalid_configuration():
-    invalid_config = {
-        "version": "1.0",
-        "InvalidLibrary": {"InvalidMetric": {"run": "NotABoolean"}},
-    }
-    with TemporaryDirectory() as tempdir:
-        config_path = Path(tempdir) / "invalid_config.yaml"
-        with open(config_path, "w") as f:
-            yaml.dump(invalid_config, f)
-        with pytest.raises(ValueError):
-            AnalysisSettings(config_path)
+    # Save modified configuration
+    new_file = tmp_path / "modified_config.yaml"
+    manager.save_config(new_file)
 
-
-def test_raises_file_not_found_error():
-    with pytest.raises(FileNotFoundError, match="Configuration file not found:"):
-        AnalysisSettings("non_existent_file.yaml")
-
-
-def test_raises_value_error_for_invalid_config():
-    invalid_config = {"invalid_key": "invalid_value"}
-    with pytest.raises(ValueError, match="Invalid configuration:"):
-        AnalysisSettings(invalid_config)
-
-
-def test_loads_valid_config_from_dict():
-    valid_config = {
-        "version": "1.0",
-        "PythonAcoustics": {
-            "LAeq": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["5", "95", "avg"],
-                "channel": ["Left", "Right"],
-                "label": "LAeq",
-            }
-        },
-    }
-    settings = AnalysisSettings(valid_config)
-    assert settings.settings["PythonAcoustics"]["LAeq"].run is True
-
-
-def test_loads_valid_config_from_yaml(tmp_path):
-    config_content = """
-    version: "1.0"
-    PythonAcoustics:
-      LAeq:
-        run: true
-        main: avg
-        statistics: ["5", "95", "avg"]
-        channel: ["Left", "Right"]
-        label: LAeq
-    """
-    config_file = tmp_path / "valid_config.yaml"
-    config_file.write_text(config_content)
-    settings = AnalysisSettings(config_file)
-    assert settings.settings["PythonAcoustics"]["LAeq"].run is True
-
-
-def test_raises_key_error_for_missing_metric():
-    config = {
-        "version": "1.0",
-        "PythonAcoustics": {
-            "LAeq": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["5", "95", "avg"],
-                "channel": ["Left", "Right"],
-                "label": "LAeq",
-            }
-        },
-    }
-    settings = AnalysisSettings(config)
-    with pytest.raises(
-        KeyError,
-        match="Metric 'NonExistentMetric' not found in library 'PythonAcoustics'",
-    ):
-        settings.get_metric_settings("PythonAcoustics", "NonExistentMetric")
-
-
-def test_raises_key_error_for_missing_library():
-    config = {
-        "version": "1.0",
-        "PythonAcoustics": {
-            "LAeq": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["5", "95", "avg"],
-                "channel": ["Left", "Right"],
-                "label": "LAeq",
-            }
-        },
-    }
-    settings = AnalysisSettings(config)
-    with pytest.raises(
-        KeyError, match="Metric 'LAeq' not found in library 'NonExistentLibrary'"
-    ):
-        settings.get_metric_settings("NonExistentLibrary", "LAeq")
-
-
-def test_does_not_run_loudness_zwtv_if_sharpness_din_from_loudness_is_present():
-    config = {
-        "version": "1.0",
-        "MoSQITo": {
-            "loudness_zwtv": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["avg"],
-                "channel": ["Left", "Right"],
-                "label": "loudness_zwtv",
-                "parallel": False,
-            },
-            "sharpness_din_from_loudness": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["avg"],
-                "channel": ["Left", "Right"],
-                "label": "sharpness_din_from_loudness",
-                "parallel": False,
-            },
-        },
-    }
-    settings = AnalysisSettings(config)
-    metric_settings = settings.parse_mosqito("loudness_zwtv")
-    assert metric_settings.run is False
-
-
-def test_runs_loudness_zwtv_if_sharpness_din_from_loudness_is_not_present():
-    config = {
-        "version": "1.0",
-        "MoSQITo": {
-            "loudness_zwtv": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["avg"],
-                "channel": ["Left", "Right"],
-                "label": "loudness_zwtv",
-                "parallel": False,
-            },
-        },
-    }
-    settings = AnalysisSettings(config)
-    metric_settings = settings.parse_mosqito("loudness_zwtv")
-    assert metric_settings.run is True
-
-
-def test_runs_loudness_zwtv_if_force_run_all_is_true():
-    config = {
-        "version": "1.0",
-        "MoSQITo": {
-            "loudness_zwtv": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["avg"],
-                "channel": ["Left", "Right"],
-                "label": "loudness_zwtv",
-                "parallel": False,
-            },
-            "sharpness_din_from_loudness": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["avg"],
-                "channel": ["Left", "Right"],
-                "label": "sharpness_din_from_loudness",
-                "parallel": False,
-            },
-        },
-    }
-    settings = AnalysisSettings(config, force_run_all=True)
-    metric_settings = settings.parse_mosqito("loudness_zwtv")
-    assert metric_settings.run is True
-
-
-def test_raises_value_error_for_invalid_maad_metric():
-    config = {
-        "version": "1.0",
-        "scikit-maad": {
-            "invalid_metric": {
-                "run": True,
-                "channel": ["Left", "Right"],
-            }
-        },
-    }
-    settings = AnalysisSettings(config)
-    with pytest.raises(ValueError, match="Invalid MAAD metric: invalid_metric"):
-        settings.parse_maad_all_alpha_indices("invalid_metric")
-
-
-def test_parses_valid_maad_metric_all_temporal_alpha_indices():
-    config = {
-        "version": "1.0",
-        "scikit-maad": {
-            "all_temporal_alpha_indices": {
-                "run": True,
-                "channel": ["Left", "Right"],
-            }
-        },
-    }
-    settings = AnalysisSettings(config)
-    metric_settings = settings.parse_maad_all_alpha_indices(
-        "all_temporal_alpha_indices"
-    )
-    assert metric_settings.run is True
-    assert metric_settings.channel == ["Left", "Right"]
-
-
-def test_parses_valid_maad_metric_all_spectral_alpha_indices():
-    config = {
-        "version": "1.0",
-        "scikit-maad": {
-            "all_spectral_alpha_indices": {
-                "run": True,
-                "channel": ["Left", "Right"],
-            }
-        },
-    }
-    settings = AnalysisSettings(config)
-    metric_settings = settings.parse_maad_all_alpha_indices(
-        "all_spectral_alpha_indices"
-    )
-    assert metric_settings.run is True
-    assert metric_settings.channel == ["Left", "Right"]
-
-
-def test_creates_analysis_settings_from_valid_dict():
-    config = {
-        "version": "1.0",
-        "PythonAcoustics": {
-            "LAeq": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["5", "95", "avg"],
-                "channel": ["Left", "Right"],
-                "label": "LAeq",
-            }
-        },
-    }
-    settings = AnalysisSettings.from_dict(config)
-    assert settings.settings["PythonAcoustics"]["LAeq"].run is True
-
-
-def test_raises_value_error_for_invalid_dict():
-    invalid_config = {"invalid_key": "invalid_value"}
-    with pytest.raises(ValueError, match="Invalid configuration:"):
-        AnalysisSettings.from_dict(invalid_config)
-
-
-def test_creates_analysis_settings_with_run_stats_false():
-    config = {
-        "version": "1.0",
-        "PythonAcoustics": {
-            "LAeq": {
-                "run": True,
-                "main": "avg",
-                "statistics": ["5", "95", "avg"],
-                "channel": ["Left", "Right"],
-                "label": "LAeq",
-            }
-        },
-    }
-    settings = AnalysisSettings.from_dict(config, run_stats=False)
-    assert settings.run_stats is False
-
-
-def test_creates_analysis_settings_with_force_run_all_true():
-    config = {
-        "version": "1.0",
-        "PythonAcoustics": {
-            "LAeq": {
-                "run": False,
-                "main": "avg",
-                "statistics": ["5", "95", "avg"],
-                "channel": ["Left", "Right"],
-                "label": "LAeq",
-            }
-        },
-    }
-    settings = AnalysisSettings.from_dict(config, force_run_all=True)
-    assert settings.force_run_all is True
+    # Load the saved configuration and verify changes
+    new_manager = ConfigManager(new_file)
+    new_config = new_manager.load_config()
+    assert new_config.PythonAcoustics.root["LAeq"].run == False
 
 
 if __name__ == "__main__":
