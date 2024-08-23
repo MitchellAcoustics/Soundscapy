@@ -6,7 +6,14 @@ from typing import Any, Dict
 
 import yaml
 from loguru import logger
-from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    field_validator,
+    model_validator,
+)
 
 
 class MetricSettings(BaseModel):
@@ -39,11 +46,46 @@ class MetricSettings(BaseModel):
     parallel: bool = False
     func_args: dict[str, Any] = Field(default_factory=dict)
 
+    @model_validator(mode="before")
+    @classmethod
+    def check_main_in_statistics(cls, values):
+        """Check that the main statistic is in the statistics list."""
+        main = values.get("main")
+        statistics = values.get("statistics", [])
+        if main and main not in statistics:
+            statistics.append(main)
+            values["statistics"] = statistics
+        return values
+
 
 class LibrarySettings(RootModel):
     """Settings for a library of metrics."""
 
     root: dict[str, MetricSettings]
+
+    def get_metric_settings(self, metric: str) -> MetricSettings:
+        """
+        Get the settings for a specific metric.
+
+        Parameters
+        ----------
+        metric : str
+            The name of the metric.
+
+        Returns
+        -------
+        MetricSettings
+            The settings for the specified metric.
+
+        Raises
+        ------
+        KeyError
+            If the specified metric is not found.
+        """
+        if metric in self.root:
+            return self.root[metric]
+        logger.error(f"Metric '{metric}' not found in library")
+        raise KeyError(f"Metric '{metric}' not found in library")
 
 
 class AnalysisSettings(BaseModel):
@@ -143,6 +185,36 @@ class AnalysisSettings(BaseModel):
         logger.info(f"Saving configuration to {filepath}")
         with open(filepath, "w") as f:
             yaml.dump(self.model_dump(by_alias=True), f)
+
+    def update_setting(self, library: str, metric: str, **kwargs) -> None:
+        """
+        Update the settings for a specific metric.
+
+        Parameters
+        ----------
+        library : str
+            The name of the library.
+        metric : str
+            The name of the metric.
+        **kwargs
+            Keyword arguments to update the metric settings.
+
+        Raises
+        ------
+        KeyError
+            If the specified library or metric is not found.
+        """
+        library_settings = getattr(self, library)
+        if library_settings and metric in library_settings.root:
+            metric_settings = library_settings.root[metric]
+            for key, value in kwargs.items():
+                if hasattr(metric_settings, key):
+                    setattr(metric_settings, key, value)
+                else:
+                    logger.error(f"Invalid setting '{key}' for metric '{metric}'")
+        else:
+            logger.error(f"Metric '{metric}' not found in library '{library}'")
+            raise KeyError(f"Metric '{metric}' not found in library '{library}'")
 
     def get_metric_settings(self, library: str, metric: str) -> MetricSettings:
         """

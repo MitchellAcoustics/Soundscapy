@@ -11,7 +11,7 @@ PythonAcoustics:
     LAeq:
         run: true  # Set to false to skip this metric
         main: 'avg'  # Main statistic to calculate
-        statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']  # List of statistics to calculate
+        statistics: [5, 10, 50, 90, 95, 'avg', 'min', 'max', 'kurt', 'skew']  # List of statistics to calculate
         channel: ["Left", "Right"]  # Channels to analyze
         label: 'LAeq'  # Label for the metric in output
         func_args:  # Additional arguments for the metric function

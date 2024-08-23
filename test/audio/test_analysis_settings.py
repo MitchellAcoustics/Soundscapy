@@ -80,6 +80,17 @@ class TestLibrarySettings:
         with pytest.raises(ValidationError):
             LibrarySettings(root={"InvalidMetric": "Not a MetricSettings object"})
 
+    def test_get_existing_metric_settings(self, sample_config):
+        settings = AnalysisSettings(**sample_config)
+        library_settings = settings.PythonAcoustics
+        result = library_settings.get_metric_settings("LAeq")
+        assert result == library_settings.root["LAeq"]
+
+    def test_get_non_existing_metric_settings(self):
+        library_settings = LibrarySettings(root={})
+        with pytest.raises(KeyError):
+            library_settings.get_metric_settings("metric2")
+
 
 class TestAnalysisSettings:
     def test_from_yaml(self, temp_config_file):
@@ -119,6 +130,22 @@ class TestAnalysisSettings:
         assert "LAeq" in enabled["PythonAcoustics"]
         assert "loudness_zwtv" in enabled["MoSQITo"]
         assert "all_temporal_alpha_indices" in enabled["scikit_maad"]
+
+    def test_update_existing_metric_setting(self, sample_config):
+        settings = AnalysisSettings(**sample_config)
+        settings.update_setting("PythonAcoustics", "LAeq", run=False)
+        updated_metric = settings.get_metric_settings("PythonAcoustics", "LAeq")
+        assert updated_metric.run is False
+
+    def test_update_non_existing_metric_setting(self, sample_config):
+        settings = AnalysisSettings(**sample_config)
+        with pytest.raises(KeyError):
+            settings.update_setting("PythonAcoustics", "metric2", run=False)
+
+    def test_update_metric_with_invalid_setting(self, sample_config):
+        settings = AnalysisSettings(**sample_config)
+        with pytest.raises(KeyError):
+            settings.update_setting("PythonAcoustics", "metric1", invalid_setting=True)
 
 
 class TestConfigManager:
