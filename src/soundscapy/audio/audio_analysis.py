@@ -1,3 +1,4 @@
+import json
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -154,7 +155,6 @@ class AudioAnalysis:
 
 # Example usage
 if __name__ == "__main__":
-    import json
     from soundscapy.logging import set_log_level
 
     set_log_level("INFO")
