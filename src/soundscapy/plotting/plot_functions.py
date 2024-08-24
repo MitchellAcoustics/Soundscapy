@@ -109,7 +109,7 @@ def density_plot(
     palette: str = "colorblind",
     fill: bool = True,
     incl_outline: bool = False,
-    incl_scatter: bool = False,
+    incl_scatter: bool = True,
     diagonal_lines: bool = False,
     show_labels: bool = True,
     legend=True,
