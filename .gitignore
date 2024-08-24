@@ -183,3 +183,4 @@ soundscapy_old/.DS_Store
 # Ignore everything in tests/test_audio_files except .wav files
 tests/test_audio_files/*
 !tests/test_audio_files/*.wav
+/docs/tutorials/updated_config.yaml

@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Rye
+      run: |
+        pip install rye
+        rye self update
+
+    - name: Install dependencies
+      run: rye sync
+
+    - name: Lint and format check
+      run: |
+        rye run ruff check .
+        rye run ruff format --check .
+
+    - name: Run tests
+      run: |
+        rye run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb
