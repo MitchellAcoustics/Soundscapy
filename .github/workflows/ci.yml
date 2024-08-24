@@ -28,8 +28,8 @@ jobs:
 
     - name: Lint and format check
       run: |
-        rye run ruff check .
-        rye run ruff format --check .
+        rye lint 
+        rye fmt --check
 
     - name: Run tests
       run: |
