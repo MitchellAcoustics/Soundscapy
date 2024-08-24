@@ -24,7 +24,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: rye sync
+      run: rye sync --features test
 
     - name: Lint and format check
       run: |
