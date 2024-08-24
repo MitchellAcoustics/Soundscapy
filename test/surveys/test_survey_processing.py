@@ -198,40 +198,44 @@ class TestSSMMetrics:
         )
 
     def test_ssm_metrics_cosine(self, ssm_test_df):
-        result = ssm_metrics(ssm_test_df, method="cosine")
-        assert isinstance(result, pd.DataFrame)
-        assert list(result.columns) == [
-            "amplitude",
-            "angle",
-            "elevation",
-            "displacement",
-            "r_squared",
-        ]
-        assert len(result) == len(ssm_test_df)
-        assert (result["r_squared"] >= 0).all() and (result["r_squared"] <= 1).all()
+        with pytest.warns(PendingDeprecationWarning):
+            result = ssm_metrics(ssm_test_df, method="cosine")
+            assert isinstance(result, pd.DataFrame)
+            assert list(result.columns) == [
+                "amplitude",
+                "angle",
+                "elevation",
+                "displacement",
+                "r_squared",
+            ]
+            assert len(result) == len(ssm_test_df)
+            assert (result["r_squared"] >= 0).all() and (result["r_squared"] <= 1).all()
 
     def test_ssm_metrics_polar(self, ssm_test_df):
-        result = ssm_metrics(ssm_test_df, method="polar")
-        assert isinstance(result, pd.DataFrame)
-        assert list(result.columns) == [
-            "amplitude",
-            "angle",
-            "elevation",
-            "displacement",
-            "r_squared",
-        ]
-        assert len(result) == len(ssm_test_df)
-        assert (result["displacement"] == 0).all()
-        assert (result["r_squared"] == 1).all()
+        with pytest.warns(PendingDeprecationWarning):
+            result = ssm_metrics(ssm_test_df, method="polar")
+            assert isinstance(result, pd.DataFrame)
+            assert list(result.columns) == [
+                "amplitude",
+                "angle",
+                "elevation",
+                "displacement",
+                "r_squared",
+            ]
+            assert len(result) == len(ssm_test_df)
+            assert (result["displacement"] == 0).all()
+            assert (result["r_squared"] == 1).all()
 
     def test_ssm_metrics_invalid_method(self, ssm_test_df):
-        with pytest.raises(ValueError):
-            ssm_metrics(ssm_test_df, method="invalid")
+        with pytest.warns(PendingDeprecationWarning):
+            with pytest.raises(ValueError):
+                ssm_metrics(ssm_test_df, method="invalid")
 
     def test_ssm_metrics_missing_columns(self):
-        invalid_df = pd.DataFrame({"PAQ1": [1, 2, 3], "PAQ2": [4, 5, 6]})
-        with pytest.raises(ValueError):
-            ssm_metrics(invalid_df)
+        with pytest.warns(PendingDeprecationWarning):
+            invalid_df = pd.DataFrame({"PAQ1": [1, 2, 3], "PAQ2": [4, 5, 6]})
+            with pytest.raises(ValueError):
+                ssm_metrics(invalid_df)
 
 
 class TestIntegration:

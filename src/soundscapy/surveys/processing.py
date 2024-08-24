@@ -17,6 +17,7 @@ filter on index columns. Functions and operations which are specific to a partic
 modules under `soundscape.databases`.
 """
 
+import warnings
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -24,6 +25,7 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 from scipy import optimize
+
 from soundscapy.surveys.survey_utils import EQUAL_ANGLES, PAQ_IDS, return_paqs
 
 np.set_printoptions(legacy="1.25")
@@ -364,6 +366,7 @@ def ssm_metrics(
 
     Examples
     --------
+    >>> # xdoctest: +SKIP
     >>> import pandas as pd
     >>> df = pd.DataFrame({
     ...     'PAQ1': [4, 2], 'PAQ2': [3, 5], 'PAQ3': [2, 4], 'PAQ4': [1, 3],
@@ -375,6 +378,11 @@ def ssm_metrics(
     1       1.21   20.63       0.01          3.11       0.39
     """
     # TODO: Replace with a call to circumplex package
+    warnings.warn(
+        "This function is not yet fully implemented. See https://github.com/MitchellAcoustics/circumplex for a more complete implementation.",
+        PendingDeprecationWarning,
+    )
+
     if not set(paq_cols).issubset(df.columns):
         raise ValueError("PAQ columns are not present in the DataFrame")
 
@@ -432,12 +440,17 @@ def ssm_cosine_fit(
 
     Examples
     --------
+    >>> # xdoctest: +SKIP
     >>> import pandas as pd
     >>> y = pd.Series([4, 3, 2, 1, 5, 3, 4, 2])
     >>> metrics = ssm_cosine_fit(y)
     >>> [round(v, 2) if isinstance(v, float) else v for v in metrics.table()]
     [0.68, 263.82, 10.57, -7.57, 0.15]
     """
+    warnings.warn(
+        "This function is not yet fully implemented. See https://github.com/MitchellAcoustics/circumplex for a more complete implementation.",
+        PendingDeprecationWarning,
+    )
 
     def cosine_model(theta, amp, delta, elev, dev):
         return elev + amp * np.cos(np.radians(theta - delta)) + dev
