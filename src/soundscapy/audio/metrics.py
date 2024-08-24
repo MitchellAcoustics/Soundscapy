@@ -43,6 +43,7 @@ from mosqito.sq_metrics import (
 )
 from scipy import stats
 
+from soundscapy.audio.analysis_settings import AnalysisSettings
 from soundscapy.logging import get_logger
 
 logger = get_logger()
@@ -928,7 +929,7 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
 
 def process_all_metrics(
     b,
-    analysis_settings: "AnalysisSettings",
+    analysis_settings: AnalysisSettings,
     parallel: bool = True,
     verbose: bool = False,
 ) -> pd.DataFrame:
