@@ -2,9 +2,12 @@
 
 # Soundscapy
 
-[![Python package](https://github.com/MitchellAcoustics/Soundscapy/actions/workflows/python-package.yml/badge.svg)](https://github.com/MitchellAcoustics/Soundscapy/actions/workflows/python-package.yml)  [![PyPI version](https://badge.fury.io/py/soundscapy.svg)](https://badge.fury.io/py/soundscapy)  [![Documentation Status](https://readthedocs.org/projects/soundscapy/badge/?version=latest)](https://soundscapy.readthedocs.io/en/latest/?badge=latest)
-
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MitchellAcoustics/Soundscapy/main?labpath=docs%2Ftutorials%2FHowToAnalyseAndRepresentSoundscapes.ipynb)
+[![PyPI version](https://badge.fury.io/py/soundscapy.svg)](https://badge.fury.io/py/soundscapy)  
+![Tests](https://github.com/MitchellAcoustics/Soundscapy/actions/workflows/ci.yml/badge.svg)
+![Test Release](https://github.com/MitchellAcoustics/Soundscapy/actions/workflows/test-release.yml/badge.svg)
+![Release](https://github.com/MitchellAcoustics/Soundscapy/actions/workflows/release.yml/badge.svg)
+[![Documentation Status](https://readthedocs.org/projects/soundscapy/badge/?version=latest)](https://soundscapy.readthedocs.io/en/latest/?badge=latest)
+![License](https://img.shields.io/github/license/MitchellAcoustics/Soundscapy)
 
 A python library for analysing and visualising soundscape assessments. 
 
