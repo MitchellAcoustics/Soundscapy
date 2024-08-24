@@ -174,7 +174,7 @@ soundscapy_old/archive
 .idea/vcs.xml
 .idea/workspace.xml
 soundscapy_old/.DS_Store
-.DS_Store
+*.DS_Store
 /pyproject-poetry.toml
 /docs/_autosummary/
 !/.pytest_cache/
