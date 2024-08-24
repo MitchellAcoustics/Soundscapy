@@ -38,7 +38,7 @@ class MetricSettings(BaseModel):
         Additional arguments for the metric function.
     """
 
-    run: bool
+    run: bool = True
     main: str | int | None = None
     statistics: list[str | int] | None = None
     channel: list[str] = Field(default_factory=lambda: ["Left", "Right"])
