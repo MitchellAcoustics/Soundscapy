@@ -21,7 +21,11 @@ jobs:
       uses: eifinger/setup-rye@v4.2.3
       with:
         enable-cache: true
-        python-version: ${{ matrix.python-version }}
+
+    - name: Fetch and Pin Python
+      run: |
+        rye fetch ${{ matrix.python-version }}
+        rye pin ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: rye sync --features test
