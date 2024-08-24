@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -145,6 +146,38 @@ def test_mosqito_metric_parallel_false(test_binaural_signal):
         "trimmed_CT101",
     ]
     assert result.index.get_level_values(1).tolist() == ["Left", "Right"]
+
+
+def test_fs_resample_to_different_frequency():
+    original_data = np.random.rand(2, 1000)
+    original_fs = 44100
+    new_fs = 48000
+    binaural_signal = Binaural(original_data, original_fs)
+    resampled_signal = binaural_signal.fs_resample(new_fs)
+    assert resampled_signal.fs == new_fs
+    assert resampled_signal.shape[0] == int(new_fs * len(original_data) / original_fs)
+    assert isinstance(resampled_signal, Binaural)
+    assert resampled_signal.duration == pytest.approx(
+        binaural_signal.duration, abs=1e-2, rel=1e-1
+    )
+
+
+def test_fs_resample_to_same_frequency():
+    original_data = np.random.rand(2, 1000)
+    original_fs = 44100
+    binaural_signal = Binaural(original_data, original_fs)
+    resampled_signal = binaural_signal.fs_resample(original_fs)
+    assert resampled_signal.fs == original_fs
+    assert np.array_equal(resampled_signal, binaural_signal)
+    assert isinstance(resampled_signal, Binaural)
+
+
+def test_fs_resample_with_invalid_frequency():
+    original_data = np.random.rand(2, 1000)
+    original_fs = 44100
+    binaural_signal = Binaural(original_data, original_fs)
+    with pytest.raises(ValueError):
+        binaural_signal.fs_resample(-1000)
 
 
 if __name__ == "__main__":

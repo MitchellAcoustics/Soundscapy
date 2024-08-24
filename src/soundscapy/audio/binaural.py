@@ -35,6 +35,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import scipy.signal
 from acoustics import Signal
 
 from soundscapy.audio.analysis_settings import AnalysisSettings, MetricSettings
@@ -193,6 +194,7 @@ class Binaural(Signal):
         filename: Union[Path, str],
         calibrate_to: Optional[Union[float, List, Tuple]] = None,
         normalize: bool = False,
+        resample: Optional[int] = None,
     ) -> "Binaural":
         """
         Load a wav file and return a Binaural object.
@@ -210,6 +212,8 @@ class Binaural(Signal):
             If only one value is passed, will calibrate both channels to the same value.
         normalize : bool, optional
             Whether to normalize the signal. Default is False.
+        resample : int, optional
+            New sampling frequency to resample the signal to. Default is None
 
         Returns
         -------
@@ -222,10 +226,43 @@ class Binaural(Signal):
         """
         logger.info(f"Loading WAV file: {filename}")
         s = super().from_wav(filename, normalize)
+        b = cls(s, s.fs, recording=Path(filename).stem)
         if calibrate_to is not None:
             logger.info(f"Calibrating loaded signal to {calibrate_to} dB")
-            s.calibrate_to(calibrate_to, inplace=True)
-        return cls(s, s.fs, recording=Path(filename).stem)
+            b.calibrate_to(calibrate_to, inplace=True)
+        if resample is not None:
+            logger.debug(f"Resampling loaded signal to {resample} Hz")
+            b = b.fs_resample(resample)
+        return b
+
+    def fs_resample(
+        self,
+        fs: float,
+    ) -> "Binaural":
+        """
+        Resample the signal to a new sampling frequency.
+
+        Parameters
+        ----------
+        fs : float
+            New sampling frequency.
+
+
+        Returns
+        -------
+        Binaural
+            Resampled Binaural signal. If inplace is True, returns self.
+
+        See Also
+        --------
+        acoustics.Signal.resample : Base method for resampling signals.
+        """
+        if fs == self.fs:
+            logger.info(f"Signal already at {fs} Hz. No resampling needed.")
+            return self
+        logger.info(f"Resampling signal to {fs} Hz")
+        resampled_data = scipy.signal.resample(self, int(fs * len(self) / self.fs))
+        return Binaural(resampled_data, fs, recording=self.recording)
 
     def _get_channel(self, channel):
         """
