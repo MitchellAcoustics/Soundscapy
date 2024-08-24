@@ -184,3 +184,4 @@ soundscapy_old/.DS_Store
 tests/test_audio_files/*
 !tests/test_audio_files/*.wav
 /docs/tutorials/updated_config.yaml
+docs/tutorials/acoustic_analysis_results.xlsx

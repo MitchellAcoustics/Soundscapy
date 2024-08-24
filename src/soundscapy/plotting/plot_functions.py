@@ -190,9 +190,15 @@ def density_plot(
 
     plot = CircumplexPlot(data, params, backend, style_options)
 
-    if incl_scatter:
+    if incl_scatter and backend == Backend.SEABORN:
         plot.scatter(apply_styling=True, ax=ax)
         ax = plot.get_axes()
+    elif incl_scatter and backend == Backend.PLOTLY:
+        # TODO: Implement overlaying scatter on density plot for Plotly backend
+        raise NotImplementedError(
+            "Overlaying a scatter on a density plot is not yet supported for Plotly backend. "
+            "Please change to Seaborn backend or use `incl_scatter=False`."
+        )
 
     if simple_density:
         plot.simple_density(apply_styling=apply_styling, ax=ax)
