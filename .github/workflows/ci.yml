@@ -36,4 +36,4 @@ jobs:
 
     - name: Run tests
       run: |
-        rye run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb
+        rye run pytest --nbmake -n=auto docs --nbmake-timeout=200
