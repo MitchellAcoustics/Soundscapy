@@ -28,6 +28,5 @@ jobs:
 
     - name: Publish to PyPI
       env:
-        PYPI_USERNAME: __token__
-        PYPI_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: rye publish
+        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: rye publish --token $PYPI_TOKEN --yes
