@@ -1,6 +1,6 @@
 [project]
 name = "soundscapy"
-version = "0.7.0dev4"
+version = "0.7.0dev5"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
@@ -16,6 +16,7 @@ dependencies = [
     "schema>=0.7.7",
     "loguru>=0.7.2",
     "pydantic>=2.8.2",
+    "plotly>=5.23.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -71,9 +72,6 @@ docs = [
     "pymdown-extensions>=10.9",
     "ipywidgets>=8.1.3",
     "jupyter-dash>=0.4.2",
-]
-plotly = [
-    "plotly>=5.23.0",
 ]
 
 [build-system]
