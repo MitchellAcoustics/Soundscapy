@@ -57,11 +57,13 @@ class SeabornStyler:
         """
         Apply styling to the plot.
 
-        Args:
+        Parameters
+        ----------
             fig (mpl.figure.Figure): The figure object.
             ax (mpl.axes.Axes): The axes object.
 
-        Returns:
+        Returns
+        -------
             Tuple[mpl.figure.Figure, mpl.axes.Axes]: The styled figure and axes.
         """
         self.set_style()

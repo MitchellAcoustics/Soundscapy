@@ -21,8 +21,8 @@ This module requires the following external libraries:
 - maad
 - python-acoustics
 
-Example
--------
+Examples
+--------
 >>> # xdoctest: +SKIP
 >>> from soundscapy.audio import Binaural
 >>> signal = Binaural.from_wav("audio.wav")

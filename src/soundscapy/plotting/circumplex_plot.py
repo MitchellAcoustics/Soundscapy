@@ -53,10 +53,11 @@ class CircumplexPlot:
     based on the circumplex model of soundscape perception. It supports multiple
     backends (currently Seaborn and Plotly) and offers various customization options.
 
-    TODO: Implement jointplot method for Seaborn backend.
-    TODO: Implement density plots for Plotly backend.
-    TODO: Improve Plotly backend to support more customization options.
     """
+
+    # TODO: Implement jointplot method for Seaborn backend.
+    # TODO: Implement density plots for Plotly backend.
+    # TODO: Improve Plotly backend to support more customization options.
 
     def __init__(
         self,

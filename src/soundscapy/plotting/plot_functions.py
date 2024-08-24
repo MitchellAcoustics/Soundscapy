@@ -219,7 +219,8 @@ def create_circumplex_subplots(
     """
     Create a figure with subplots containing circumplex plots.
 
-    Args:
+    Parameters
+    ----------
         data_list (List[pd.DataFrame]): List of DataFrames to plot.
         plot_type (PlotType): Type of plot to create.
         incl_scatter (bool): Whether to include scatter points on density plots.
@@ -228,10 +229,12 @@ def create_circumplex_subplots(
         figsize (tuple): Figure size (width, height) in inches.
         **kwargs: Additional keyword arguments to pass to scatter_plot or density_plot.
 
-    Returns:
+    Returns
+    -------
         matplotlib.figure.Figure: A figure containing the subplots.
 
-    Example:
+    Example
+    -------
         >>> import pandas as pd
         >>> import numpy as np
         >>> np.random.seed(42)

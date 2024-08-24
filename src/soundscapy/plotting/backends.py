@@ -22,11 +22,13 @@ class PlotBackend(ABC):
         """
         Create a scatter plot.
 
-        Args:
+        Parameters
+        ----------
             data (pd.DataFrame): The data to plot.
             params (CircumplexPlotParams): The parameters for the plot.
 
-        Returns:
+        Returns
+        -------
             The created plot object.
         """
         pass
@@ -36,11 +38,13 @@ class PlotBackend(ABC):
         """
         Create a density plot.
 
-        Args:
+        Parameters
+        ----------
             data (pd.DataFrame): The data to plot.
             params (CircumplexPlotParams): The parameters for the plot.
 
-        Returns:
+        Returns
+        -------
             The created plot object.
         """
         pass
@@ -50,11 +54,13 @@ class PlotBackend(ABC):
         """
         Apply styling to the plot.
 
-        Args:
+        Parameters
+        ----------
             plot_obj: The plot object to style.
             params (CircumplexPlotParams): The parameters for styling.
 
-        Returns:
+        Returns
+        -------
             The styled plot object.
         """
         pass
@@ -72,11 +78,13 @@ class SeabornBackend(PlotBackend):
         """
         Create a scatter plot using Seaborn.
 
-        Args:
+        Parameters
+        ----------
             data (pd.DataFrame): The data to plot.
             params (CircumplexPlotParams): The parameters for the plot.
 
-        Returns:
+        Returns
+        -------
             tuple: A tuple containing the figure and axes objects.
         """
         if ax is None:
@@ -107,11 +115,13 @@ class SeabornBackend(PlotBackend):
         """
         Create a density plot using Seaborn.
 
-        Args:
+        Parameters
+        ----------
             data (pd.DataFrame): The data to plot.
             params (CircumplexPlotParams): The parameters for the plot.
 
-        Returns:
+        Returns
+        -------
             tuple: A tuple containing the figure and axes objects.
         """
         if len(data) < 30:
@@ -202,11 +212,13 @@ class SeabornBackend(PlotBackend):
         """
         Apply styling to the Seaborn plot.
 
-        Args:
+        Parameters
+        ----------
             plot_obj (tuple): A tuple containing the figure and axes objects.
             params (CircumplexPlotParams): The parameters for styling.
 
-        Returns:
+        Returns
+        -------
             tuple: The styled figure and axes objects.
         """
         fig, ax = plot_obj
@@ -217,7 +229,8 @@ class SeabornBackend(PlotBackend):
         """
         Display the Matplotlib figure.
 
-        Args:
+        Parameters
+        ----------
             fig: The figure to display.
         """
         fig, _ = plot_obj
@@ -239,11 +252,13 @@ class PlotlyBackend(PlotBackend):
         """
         Create a scatter plot using Plotly.
 
-        Args:
+        Parameters
+        ----------
             data (pd.DataFrame): The data to plot.
             params (CircumplexPlotParams): The parameters for the plot.
 
-        Returns:
+        Returns
+        -------
             go.Figure: A Plotly figure object.
         """
         fig = px.scatter(
@@ -268,11 +283,13 @@ class PlotlyBackend(PlotBackend):
         """
         Create a density plot using Plotly.
 
-        Args:
+        Parameters
+        ----------
             data (pd.DataFrame): The data to plot.
             params (CircumplexPlotParams): The parameters for the plot.
 
-        Returns:
+        Returns
+        -------
             go.Figure: A Plotly figure object.
         """
         if len(data) < 30:
@@ -306,11 +323,13 @@ class PlotlyBackend(PlotBackend):
         """
         Apply styling to the Plotly plot.
 
-        Args:
+        Parameters
+        ----------
             plot_obj (go.Figure): A Plotly figure object.
             params (CircumplexPlotParams): The parameters for styling.
 
-        Returns:
+        Returns
+        -------
             go.Figure: The styled Plotly figure object.
         """
         fig = plot_obj
@@ -339,7 +358,8 @@ class PlotlyBackend(PlotBackend):
         """
         Display the Plotly figure.
 
-        Args:
+        Parameters
+        ----------
             fig (go.Figure): The Plotly figure to display.
         """
         fig.show()
