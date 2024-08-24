@@ -48,7 +48,6 @@ def load_analyse_binaural(
     wav_file: Path,
     levels: Dict | List[float],
     analysis_settings: AnalysisSettings,
-    verbose: bool = True,
     parallel_mosqito: bool = True,
 ) -> pd.DataFrame:
     """
@@ -62,8 +61,6 @@ def load_analyse_binaural(
         Dictionary with calibration levels for each channel.
     analysis_settings : AnalysisSettings
         Analysis settings object.
-    verbose : bool, optional
-        Print progress information. Defaults to True.
     parallel_mosqito : bool, optional
         Whether to process MoSQITo metrics in parallel. Defaults to True.
 
@@ -86,9 +83,7 @@ def load_analyse_binaural(
                 logger.warning(f"No calibration levels found for {wav_file}")
         else:
             logger.warning(f"No calibration levels found for {wav_file}")
-        return process_all_metrics(
-            b, analysis_settings, parallel=parallel_mosqito, verbose=verbose
-        )
+        return process_all_metrics(b, analysis_settings, parallel=parallel_mosqito)
     except Exception as e:
         logger.error(f"Error processing {wav_file}: {str(e)}")
         raise
@@ -99,7 +94,6 @@ def parallel_process(
     results_df: pd.DataFrame,
     levels: Dict,
     analysis_settings: AnalysisSettings,
-    verbose: bool = True,
     max_workers: Optional[int] = None,
     parallel_mosqito: bool = True,
 ) -> pd.DataFrame:
@@ -116,8 +110,6 @@ def parallel_process(
         Dictionary with calibration levels for each file.
     analysis_settings : AnalysisSettings
         Analysis settings object.
-    verbose : bool, optional
-        Print progress information. Defaults to True.
     max_workers : int, optional
         Maximum number of worker processes. If None, it will default to the number of processors on the machine.
     parallel_mosqito : bool, optional
@@ -141,14 +133,11 @@ def parallel_process(
                 wav_file,
                 levels,
                 analysis_settings,
-                verbose,
                 parallel_mosqito,
             )
             futures.append(future)
 
-        with tqdm(
-            total=len(futures), desc="Processing files", disable=not verbose
-        ) as pbar:
+        with tqdm(total=len(futures), desc="Processing files") as pbar:
             for future in concurrent.futures.as_completed(futures):
                 try:
                     result = future.result()
@@ -190,7 +179,7 @@ if __name__ == "__main__":
 
     wav_files = list(wav_folder.glob("*.wav"))
 
-    df = parallel_process(wav_files[:4], df, levels, analysis_settings, verbose=True)
+    df = parallel_process(wav_files[:4], df, levels, analysis_settings)
 
     output_file = base_path.joinpath(
         "test", f"ParallelTest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"

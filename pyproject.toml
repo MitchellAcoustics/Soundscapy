@@ -1,6 +1,6 @@
 [project]
 name = "soundscapy"
-version = "0.7.1"
+version = "0.7.2"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
@@ -92,12 +92,16 @@ exclude = [
     "test/data",
     "test/test_audio_files",
     "*.wav",
-    "test/baseline"
+    "test/baseline",
+    "docs/tutorials",
+    "docs/img"
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
     "test/test_audio_files",
     "test/data",
-    "*.wav"
+    "*.wav",
+    "docs/tutorials",
+    "docs/img"
 ]

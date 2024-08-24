@@ -321,7 +321,6 @@ class Binaural(Signal):
         channel: Union[str, int, List, Tuple] = ("Left", "Right"),
         as_df: bool = True,
         return_time_series: bool = False,
-        verbose: bool = False,
         metric_settings: Optional[MetricSettings] = None,
         func_args: Dict = {},
     ) -> Union[Dict, pd.DataFrame]:
@@ -345,8 +344,6 @@ class Binaural(Signal):
         return_time_series : bool, optional
             Whether to return the time series of the metric. Default is False.
             Cannot return time series if as_df is True.
-        verbose : bool, optional
-            Whether to print status updates. Default is False.
         metric_settings : MetricSettings, optional
             Settings for metric analysis. Default is None.
         func_args : dict, optional
@@ -382,14 +379,7 @@ class Binaural(Signal):
         if s.channels == 1:
             logger.debug("Processing single channel")
             return pyacoustics_metric_1ch(
-                s,
-                metric,
-                statistics,
-                label,
-                as_df,
-                return_time_series,
-                verbose,
-                func_args,
+                s, metric, statistics, label, as_df, return_time_series, func_args
             )
         else:
             logger.debug("Processing both channels")
@@ -401,7 +391,6 @@ class Binaural(Signal):
                 channel,
                 as_df,
                 return_time_series,
-                verbose,
                 func_args,
             )
 
@@ -425,7 +414,6 @@ class Binaural(Signal):
         as_df: bool = True,
         return_time_series: bool = False,
         parallel: bool = True,
-        verbose: bool = False,
         metric_settings: Optional[MetricSettings] = None,
         func_args: Dict = {},
     ) -> Union[Dict, pd.DataFrame]:
@@ -452,8 +440,6 @@ class Binaural(Signal):
         parallel : bool, optional
             Whether to run the channels in parallel. Default is True.
             If False, will run each channel sequentially.
-        verbose : bool, optional
-            Whether to print status updates. Default is False.
         metric_settings : MetricSettings, optional
             Settings for metric analysis. Default is None.
         func_args : dict, optional
@@ -502,7 +488,6 @@ class Binaural(Signal):
                 as_df,
                 return_time_series,
                 parallel,
-                verbose,
                 func_args,
             )
 
@@ -511,7 +496,6 @@ class Binaural(Signal):
         metric: str,
         channel: Union[int, Tuple, List, str] = ("Left", "Right"),
         as_df: bool = True,
-        verbose: bool = False,
         metric_settings: Optional[MetricSettings] = None,
         func_args: Dict = {},
     ) -> Union[Dict, pd.DataFrame]:
@@ -529,8 +513,6 @@ class Binaural(Signal):
         as_df : bool, optional
             Whether to return a dataframe or not. Default is True.
             If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-        verbose : bool, optional
-            Whether to print status updates. Default is False.
         metric_settings : MetricSettings, optional
             Settings for metric analysis. Default is None.
         func_args : dict, optional
@@ -570,16 +552,13 @@ class Binaural(Signal):
         s = self._get_channel(channel)
         if s.channels == 1:
             logger.debug("Processing single channel")
-            return maad_metric_1ch(s, metric, as_df, verbose, func_args)
+            return maad_metric_1ch(s, metric, as_df)
         else:
             logger.debug("Processing both channels")
-            return maad_metric_2ch(s, metric, channel, as_df, verbose, func_args)
+            return maad_metric_2ch(s, metric, channel, as_df, func_args)
 
     def process_all_metrics(
-        self,
-        analysis_settings: AnalysisSettings,
-        parallel: bool = True,
-        verbose: bool = False,
+        self, analysis_settings: AnalysisSettings, parallel: bool = True
     ) -> pd.DataFrame:
         """
         Process all metrics specified in the analysis settings.
@@ -593,8 +572,6 @@ class Binaural(Signal):
             Configuration object specifying which metrics to run and their parameters.
         parallel : bool, optional
             Whether to run calculations in parallel where possible. Default is True.
-        verbose : bool, optional
-            If True, print progress information. Default is False.
 
         Returns
         -------
@@ -611,11 +588,11 @@ class Binaural(Signal):
         >>> # xdoctest: +SKIP
         >>> signal = Binaural.from_wav("audio.wav")
         >>> settings = AnalysisSettings.from_yaml("settings.yaml")
-        >>> results = signal.process_all_metrics(settings, verbose=True)
+        >>> results = signal.process_all_metrics(settings)
         """
         logger.info(f"Processing all metrics for {self.recording}")
-        logger.debug(f"Parallel processing: {parallel}, Verbose: {verbose}")
-        return process_all_metrics(self, analysis_settings, parallel, verbose)
+        logger.debug(f"Parallel processing: {parallel}")
+        return process_all_metrics(self, analysis_settings, parallel)
 
 
 __all__ = ["Binaural"]

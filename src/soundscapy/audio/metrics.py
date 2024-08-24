@@ -247,9 +247,7 @@ def mosqito_metric_1ch(
         return pd.DataFrame(res, index=[0])
 
 
-def maad_metric_1ch(
-    s, metric: str, as_df: bool = False, verbose: bool = False, func_args={}
-):
+def maad_metric_1ch(s, metric: str, as_df: bool = False, func_args={}):
     """
     Run a metric from the scikit-maad library (or suite of indices) on a single channel signal.
 
@@ -264,8 +262,6 @@ def maad_metric_1ch(
     as_df : bool, optional
         Whether to return a pandas DataFrame, by default False.
         If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-    verbose : bool, optional
-        Whether to print status updates, by default False.
     func_args : dict, optional
         Additional keyword arguments to pass to the metric function, by default {}.
 
@@ -290,8 +286,8 @@ def maad_metric_1ch(
     if s.channels != 1:
         logger.error("Signal must be single channel")
         raise ValueError("Signal must be single channel")
-    if verbose:
-        logger.debug(f"Calculating scikit-maad {metric}")
+
+    logger.debug(f"Calculating scikit-maad {metric}")
 
     # Start the calc
     try:
@@ -335,7 +331,6 @@ def pyacoustics_metric_1ch(
     label: str = None,
     as_df: bool = False,
     return_time_series: bool = False,
-    verbose: bool = False,
     func_args={},
 ):
     """
@@ -358,8 +353,6 @@ def pyacoustics_metric_1ch(
     return_time_series : bool, optional
         Whether to return the time series of the metric, by default False.
         Cannot return time series if as_df is True.
-    verbose : bool, optional
-        Whether to print status updates, by default False.
     func_args : dict, optional
         Additional keyword arguments to pass to the metric function, by default {}.
 
@@ -454,7 +447,6 @@ def pyacoustics_metric_2ch(
     channel_names: Tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
     return_time_series: bool = False,
-    verbose: bool = False,
     func_args={},
 ):
     """
@@ -479,8 +471,6 @@ def pyacoustics_metric_2ch(
     return_time_series : bool, optional
         Whether to return the time series of the metric, by default False.
         Cannot return time series if as_df is True.
-    verbose : bool, optional
-        Whether to print status updates, by default False.
     func_args : dict, optional
         Arguments to pass to the metric function, by default {}.
 
@@ -506,8 +496,7 @@ def pyacoustics_metric_2ch(
             "Must be 2 channel signal. Use `pyacoustics_metric_1ch instead`."
         )
 
-    if verbose:
-        logger.debug(f"Calculating Python Acoustics metrics: {metric}")
+    logger.debug(f"Calculating Python Acoustics metrics: {metric}")
 
     try:
         res_l = pyacoustics_metric_1ch(
@@ -648,7 +637,6 @@ def mosqito_metric_2ch(
     as_df: bool = False,
     return_time_series: bool = False,
     parallel: bool = True,
-    verbose: bool = False,
     func_args={},
 ):
     """
@@ -677,8 +665,6 @@ def mosqito_metric_2ch(
         Cannot be returned in a dataframe.
     parallel : bool, optional
         Whether to process channels in parallel, by default True.
-    verbose : bool, optional
-        Whether to print status updates, by default False.
     func_args : dict, optional
         Additional arguments to pass to the metric function, by default {}.
 
@@ -698,13 +684,12 @@ def mosqito_metric_2ch(
         logger.error("Must be 2 channel signal. Use `mosqito_metric_1ch` instead.")
         raise ValueError("Must be 2 channel signal. Use `mosqito_metric_1ch` instead.")
 
-    if verbose:
-        if metric == "sharpness_din_from_loudness":
-            logger.debug(
-                "Calculating MoSQITo metrics: `sharpness_din` from `loudness_zwtv`"
-            )
-        else:
-            logger.debug(f"Calculating MoSQITo metric: {metric}")
+    if metric == "sharpness_din_from_loudness":
+        logger.debug(
+            "Calculating MoSQITo metrics: `sharpness_din` from `loudness_zwtv`"
+        )
+    else:
+        logger.debug(f"Calculating MoSQITo metric: {metric}")
 
     try:
         if parallel:
@@ -776,7 +761,6 @@ def maad_metric_2ch(
     metric: str,
     channel_names: Tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
-    verbose: bool = False,
     func_args={},
 ):
     """
@@ -795,8 +779,6 @@ def maad_metric_2ch(
     as_df : bool, optional
         Whether to return a pandas DataFrame, by default False.
         If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-    verbose : bool, optional
-        Whether to print status updates, by default False.
     func_args : dict, optional
         Additional arguments to pass to the metric function, by default {}.
 
@@ -821,8 +803,7 @@ def maad_metric_2ch(
         logger.error("Must be 2 channel signal. Use `maad_metric_1ch` instead.")
         raise ValueError("Must be 2 channel signal. Use `maad_metric_1ch` instead.")
 
-    if verbose:
-        logger.debug(f"Calculating scikit-maad {metric}")
+    logger.debug(f"Calculating scikit-maad {metric}")
 
     try:
         res_l = maad_metric_1ch(b[0], metric, as_df=False)
@@ -928,10 +909,7 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
 
 
 def process_all_metrics(
-    b,
-    analysis_settings: AnalysisSettings,
-    parallel: bool = True,
-    verbose: bool = False,
+    b, analysis_settings: AnalysisSettings, parallel: bool = True
 ) -> pd.DataFrame:
     """
     Process all metrics specified in the analysis settings for a binaural signal.
@@ -947,8 +925,6 @@ def process_all_metrics(
         Configuration object specifying which metrics to run and their parameters.
     parallel : bool, optional
         If True, run applicable calculations in parallel. Defaults to True.
-    verbose : bool, optional
-        If True, print progress information. Defaults to False.
 
     Returns
     -------
@@ -973,10 +949,10 @@ def process_all_metrics(
     >>> from soundscapy import AnalysisSettings
     >>> signal = Binaural.from_wav("audio.wav")
     >>> settings = AnalysisSettings.from_yaml("settings.yaml")
-    >>> results = process_all_metrics(signal, settings, verbose=True)
+    >>> results = process_all_metrics(signal,settings)
     """
     logger.info(f"Processing all metrics for {b.recording}")
-    logger.debug(f"Parallel processing: {parallel}, Verbose: {verbose}")
+    logger.debug(f"Parallel processing: {parallel}")
 
     idx = pd.MultiIndex.from_tuples(((b.recording, "Left"), (b.recording, "Right")))
     results_df = pd.DataFrame(index=idx)
@@ -994,9 +970,7 @@ def process_all_metrics(
                         (
                             results_df,
                             b.pyacoustics_metric(
-                                metric,
-                                verbose=verbose,
-                                metric_settings=metrics_settings[metric],
+                                metric, metric_settings=metrics_settings[metric]
                             ),
                         ),
                         axis=1,
@@ -1008,7 +982,6 @@ def process_all_metrics(
                             b.mosqito_metric(
                                 metric,
                                 parallel=parallel,
-                                verbose=verbose,
                                 metric_settings=metrics_settings[metric],
                             ),
                         ),
@@ -1019,9 +992,7 @@ def process_all_metrics(
                         (
                             results_df,
                             b.maad_metric(
-                                metric,
-                                verbose=verbose,
-                                metric_settings=metrics_settings[metric],
+                                metric, metric_settings=metrics_settings[metric]
                             ),
                         ),
                         axis=1,
