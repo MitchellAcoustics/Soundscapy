@@ -89,14 +89,15 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["src/soundscapy"]
 exclude = [
-    "tests/data",
-    "tests/test_audio_files",
-    "*.wav"
+    "test/data",
+    "test/test_audio_files",
+    "*.wav",
+    "test/baseline"
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-    "tests/test_audio_files",
-    "tests/data",
+    "test/test_audio_files",
+    "test/data",
     "*.wav"
 ]
