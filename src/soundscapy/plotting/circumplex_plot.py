@@ -8,6 +8,7 @@ from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
+
 from soundscapy.plotting.backends import PlotlyBackend, SeabornBackend
 from soundscapy.plotting.plotting_utils import (
     Backend,
@@ -35,6 +36,7 @@ class CircumplexPlotParams:
     incl_outline: bool = False  # Fixed from (False,)
     diagonal_lines: bool = False
     show_labels: bool = True
+    legend: bool = "auto"
     legend_location: str = "best"
     extra_params: ExtraParams = field(default_factory=dict)
 

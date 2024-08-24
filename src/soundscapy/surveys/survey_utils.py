@@ -176,4 +176,25 @@ def rename_paqs(
     return df.rename(columns=rename_dict)
 
 
+def mean_responses(df: pd.DataFrame, group: str) -> pd.DataFrame:
+    """
+    Calculate the mean responses for each PAQ group.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame containing PAQ data.
+    group : str
+        Column name to group by.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with mean responses for each PAQ group.
+
+    """
+    df = return_paqs(df, incl_ids=False, other_cols=[group])
+    return df.groupby(group).mean().reset_index()
+
+
 # Add other utility functions here as needed

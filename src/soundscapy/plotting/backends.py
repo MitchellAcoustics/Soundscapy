@@ -83,6 +83,12 @@ class SeabornBackend(PlotBackend):
             fig, ax = plt.subplots(figsize=self.style_options.figsize)
         else:
             fig = ax.get_figure()
+        if "incl_scatter" in params.extra_params:
+            params.extra_params.pop("incl_scatter")
+        if "density_type" in params.extra_params:
+            params.extra_params.pop("density_type")
+        if "fill" in params.extra_params:
+            params.extra_params.pop("fill")
         sns.scatterplot(
             data=data,
             x=params.x,
@@ -92,6 +98,7 @@ class SeabornBackend(PlotBackend):
             alpha=params.alpha,
             ax=ax,
             zorder=self.style_options.data_zorder,
+            legend=params.legend,
             **params.extra_params,
         )
         return fig, ax
@@ -129,6 +136,7 @@ class SeabornBackend(PlotBackend):
             bw_adjust=self.style_options.bw_adjust,
             zorder=self.style_options.data_zorder,
             common_norm=False,
+            legend=params.legend,
             **params.extra_params,
         )
         if params.incl_outline:
@@ -144,6 +152,7 @@ class SeabornBackend(PlotBackend):
                 bw_adjust=self.style_options.bw_adjust,
                 zorder=self.style_options.data_zorder,
                 common_norm=False,
+                legend=False,
                 **params.extra_params,
             )
         return fig, ax
@@ -167,6 +176,7 @@ class SeabornBackend(PlotBackend):
             alpha=self.style_options.simple_density["alpha"],
             zorder=self.style_options.data_zorder,
             common_norm=False,
+            legend=params.legend,
             **params.extra_params,
         )
         if params.incl_outline:
@@ -183,6 +193,7 @@ class SeabornBackend(PlotBackend):
                 zorder=self.style_options.data_zorder,
                 alpha=1,
                 common_norm=False,
+                legend=False,
                 **params.extra_params,
             )
         return fig, ax

@@ -6,7 +6,7 @@ from math import pi
 
 from matplotlib import pyplot as plt
 
-from soundscapy.surveys.survey_utils import PAQ_LABELS
+from soundscapy.surveys import PAQ_LABELS
 
 
 def paq_radar_plot(data, ax=None, index=None):
@@ -28,7 +28,7 @@ def paq_radar_plot(data, ax=None, index=None):
     # TODO: Resize the plot
     # TODO WARNING: Likely broken now
     if index:
-        data = data.isd.convert_column_to_index(col=index)
+        data = data.set_index(index)
     data = data[PAQ_LABELS]
     if ax is None:
         ax = plt.axes(polar=True)

@@ -34,6 +34,7 @@ def scatter_plot(
     palette: str = "colorblind",
     diagonal_lines: bool = False,
     show_labels: bool = True,
+    legend=True,
     legend_location: str = "best",
     backend: Backend = Backend.SEABORN,
     apply_styling: bool = True,
@@ -45,7 +46,8 @@ def scatter_plot(
     """
     Create a scatter plot using the CircumplexPlot class.
 
-    Args:
+    Parameters
+    ----------
         data (pd.DataFrame): The data to plot.
         x (str): Column name for x-axis data.
         y (str): Column name for y-axis data.
@@ -56,6 +58,7 @@ def scatter_plot(
         palette (str): Color palette to use.
         diagonal_lines (bool): Whether to draw diagonal lines.
         show_labels (bool): Whether to show axis labels.
+        legend (bool): Whether to show the legend.
         legend_location (str): Location of the legend.
         backend (Backend): The plotting backend to use.
         apply_styling (bool): Whether to apply circumplex-specific styling.
@@ -64,8 +67,10 @@ def scatter_plot(
         extra_params (ExtraParams): Additional parameters for backend-specific functions.
         **kwargs: Additional keyword arguments to pass to the backend.
 
-    Returns:
+    Returns
+    -------
         plt.Axes | go.Figure: The resulting plot object.
+
     """
     params = CircumplexPlotParams(
         x=x,
@@ -77,6 +82,7 @@ def scatter_plot(
         palette=palette if hue else None,
         diagonal_lines=diagonal_lines,
         show_labels=show_labels,
+        legend=legend,
         legend_location=legend_location,
         extra_params={**extra_params, **kwargs},
     )
@@ -106,6 +112,7 @@ def density_plot(
     incl_scatter: bool = False,
     diagonal_lines: bool = False,
     show_labels: bool = True,
+    legend=True,
     legend_location: str = "best",
     backend: Backend = Backend.SEABORN,
     apply_styling: bool = True,
@@ -121,7 +128,8 @@ def density_plot(
     """
     Create a density plot using the CircumplexPlot class.
 
-    Args:
+    Parameters
+    ----------
         data (pd.DataFrame): The data to plot.
         x (str): Column name for x-axis data.
         y (str): Column name for y-axis data.
@@ -134,6 +142,7 @@ def density_plot(
         incl_outline (bool): Whether to include an outline for the density contours.
         diagonal_lines (bool): Whether to draw diagonal lines.
         show_labels (bool): Whether to show axis labels.
+        legend (bool): Whether to show the legend.
         legend_location (str): Location of the legend.
         backend (Backend): The plotting backend to use.
         apply_styling (bool): Whether to apply circumplex-specific styling.
@@ -146,8 +155,10 @@ def density_plot(
         extra_params (ExtraParams): Additional parameters for backend-specific functions.
         **kwargs: Additional keyword arguments to pass to the backend.
 
-    Returns:
+    Returns
+    -------
         plt.Axes | go.Figure: The resulting plot object.
+
     """
     params = CircumplexPlotParams(
         x=x,
@@ -161,6 +172,7 @@ def density_plot(
         incl_outline=incl_outline,
         diagonal_lines=diagonal_lines,
         show_labels=show_labels,
+        legend=legend,
         legend_location=legend_location,
         extra_params={**extra_params, **kwargs},
     )
@@ -181,6 +193,7 @@ def density_plot(
     if incl_scatter:
         plot.scatter(apply_styling=True, ax=ax)
         ax = plot.get_axes()
+
     if simple_density:
         plot.simple_density(apply_styling=apply_styling, ax=ax)
     else:
@@ -253,12 +266,12 @@ def create_circumplex_subplots(
 
     for data, ax, subtitle in zip(data_list, axes, subtitles):
         if plot_type == PlotType.SCATTER or incl_scatter:
-            scatter_plot(data, ax=ax, color=color, title=subtitle, **kwargs)
+            scatter_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
         if plot_type == PlotType.DENSITY:
-            density_plot(data, ax=ax, color=color, title=subtitle, **kwargs)
+            density_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
         elif plot_type == PlotType.SIMPLE_DENSITY:
             density_plot(
-                data, ax=ax, color=color, simple_density=True, title=subtitle, **kwargs
+                data, title=subtitle, simple_density=True, ax=ax, color=color, **kwargs
             )
 
     plt.suptitle(title)

@@ -68,7 +68,7 @@ class SeabornStyler:
         self.circumplex_grid(ax)
         self.set_circum_title(ax)
         self.deal_w_default_labels(ax)
-        if self.params.hue:
+        if self.params.hue and self.params.legend is not False:
             self.move_legend(ax)
         return fig, ax
 

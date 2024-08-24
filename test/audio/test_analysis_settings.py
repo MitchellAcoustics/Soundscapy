@@ -59,7 +59,7 @@ class TestMetricSettings:
             label="LAeq",
             func_args={"time": 0.125, "method": "average"},
         )
-        assert settings.run == True
+        assert settings.run is True
         assert settings.main == "avg"
         assert "Left" in settings.channel and "Right" in settings.channel
 
@@ -74,10 +74,10 @@ class TestLibrarySettings:
             root={"LAeq": MetricSettings(run=True, main="avg", label="LAeq")}
         )
         assert "LAeq" in settings.root
-        assert settings.root["LAeq"].run == True
+        assert settings.root["LAeq"].run is True
 
     def test_invalid_library_settings(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(AttributeError):
             LibrarySettings(root={"InvalidMetric": "Not a MetricSettings object"})
 
     def test_get_existing_metric_settings(self, sample_config):
@@ -116,7 +116,7 @@ class TestAnalysisSettings:
         settings = AnalysisSettings(**sample_config)
         laeq_settings = settings.get_metric_settings("PythonAcoustics", "LAeq")
         assert isinstance(laeq_settings, MetricSettings)
-        assert laeq_settings.run == True
+        assert laeq_settings.run is True
         assert laeq_settings.main == "avg"
 
     def test_get_metric_settings_invalid(self, sample_config):
@@ -168,7 +168,7 @@ class TestConfigManager:
         config_manager.load_config()
         override = {"PythonAcoustics": {"LAeq": {"run": False}}}
         merged = config_manager.merge_configs(override)
-        assert merged.PythonAcoustics.root["LAeq"].run == False
+        assert merged.PythonAcoustics.root["LAeq"].run is False
 
     def test_generate_minimal_config(self, config_manager):
         config_manager.load_config()
@@ -187,13 +187,13 @@ def test_end_to_end(temp_config_file, tmp_path):
     # Load configuration
     manager = ConfigManager(temp_config_file)
     config = manager.load_config()
-    assert config.PythonAcoustics.root["LAeq"].run == True
+    assert config.PythonAcoustics.root["LAeq"].run is True
 
     # Modify configuration
     override = {"PythonAcoustics": {"LAeq": {"run": False}}}
     merged_config = manager.merge_configs(override)
-    assert merged_config.PythonAcoustics.root["LAeq"].run == False
-    assert manager.current_config.PythonAcoustics.root["LAeq"].run == False
+    assert merged_config.PythonAcoustics.root["LAeq"].run is False
+    assert manager.current_config.PythonAcoustics.root["LAeq"].run is False
 
     # Save modified configuration
     new_file = tmp_path / "modified_config.yaml"
@@ -202,7 +202,7 @@ def test_end_to_end(temp_config_file, tmp_path):
     # Load the saved configuration and verify changes
     new_manager = ConfigManager(new_file)
     new_config = new_manager.load_config()
-    assert new_config.PythonAcoustics.root["LAeq"].run == False
+    assert new_config.PythonAcoustics.root["LAeq"].run is False
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ Example usage:
     density_plot(data, x='ISOPleasant', y='ISOEventful', backend=Backend.PLOTLY)
 """
 
+from . import likert
 from .circumplex_plot import CircumplexPlot, CircumplexPlotParams
 from .plot_functions import create_circumplex_subplots, density_plot, scatter_plot
 from .plotting_utils import Backend, PlotType
@@ -36,4 +37,5 @@ __all__ = [
     "Backend",
     "PlotType",
     "StyleOptions",
+    "likert",
 ]
