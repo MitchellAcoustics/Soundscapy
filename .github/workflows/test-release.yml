@@ -34,7 +34,7 @@ jobs:
         PYPI_USERNAME: __token__
         PYPI_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
         PYPI_REPOSITORY_URL: https://test.pypi.org/legacy/
-      run: rye publish --repository-url $PYPI_REPOSITORY_URL
+      run: rye publish --repository testpypi --repository-url $PYPI_REPOSITORY_URL
 
     - name: Install from TestPyPI
       run: |
