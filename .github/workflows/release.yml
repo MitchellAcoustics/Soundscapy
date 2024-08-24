@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Rye
+      uses: eifinger/setup-rye@v4.2.3
+      with:
+        enable-cache: true
+
+    - name: Install dependencies
+      run: rye sync --features test
+
+    - name: Run tests
+      run: rye test
+
+    - name: Build package
+      run: rye build
+
+    - name: Publish to PyPI
+      env:
+        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: rye publish --token $PYPI_TOKEN --yes

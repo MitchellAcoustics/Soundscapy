@@ -166,17 +166,21 @@ dmypy.json
 /.idea
 .vscode/settings.json
 Cultural-comparison-analysis.ipynb
-soundscapy/archive
+soundscapy_old/archive
 /notebooks/
 .idea/.name
 .idea/misc.xml
 .idea/Soundscapy.iml
 .idea/vcs.xml
 .idea/workspace.xml
-soundscapy/.DS_Store
-.DS_Store
+soundscapy_old/.DS_Store
+*.DS_Store
 /pyproject-poetry.toml
 /docs/_autosummary/
 !/.pytest_cache/
 !/.vscode/
 .pdm-python
+# Ignore everything in tests/test_audio_files except .wav files
+tests/test_audio_files/*
+!tests/test_audio_files/*.wav
+/docs/tutorials/updated_config.yaml

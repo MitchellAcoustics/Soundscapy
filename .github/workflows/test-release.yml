@@ -1,0 +1,53 @@
+name: Test Release
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Rye
+      uses: eifinger/setup-rye@v4.2.3
+      with:
+        enable-cache: true
+
+    - name: Install dependencies
+      run: rye sync --features test
+
+    - name: Run tests
+      run: rye test
+
+    - name: Build package
+      run: rye build
+
+    - name: Publish to TestPyPI
+      env:
+        PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        PYPI_REPOSITORY_URL: https://test.pypi.org/legacy/
+      run: rye publish --token $PYPI_TOKEN --yes --repository testpypi --repository-url $PYPI_REPOSITORY_URL
+
+    - name: Get package version
+      id: get_version
+      run: echo "VERSION=$(rye version)" >> $GITHUB_OUTPUT
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+          python-version: '3.10'
+
+    - name: Install from TestPyPI
+      run: |
+        python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple "soundscapy==${{ steps.get_version.outputs.VERSION }}"
+
+    - name: Test installed package
+      run: |
+        python -c "import soundscapy; print(soundscapy.__version__)"

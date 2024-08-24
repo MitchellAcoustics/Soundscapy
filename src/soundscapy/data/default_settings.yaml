@@ -1,17 +1,17 @@
 # Settings file for batch acoustic analysis.
-# Split up according to which library performs which analysis.
+# This file configures which metrics are calculated and how they are processed.
 
 version: "1.0"
 
-# Python Acoustics
+# Python Acoustics Library Settings
 # Supported metrics: LAeq, LZeq, LCeq, SEL
-# Supported stats: avg/mean, max, min, kurt, skew, any integer from 1-99
+# Supported statistics: avg/mean, max, min, kurt, skew, any integer from 1-99
 PythonAcoustics:
     # A-weighted equivalent continuous sound level
     LAeq:
         run: true  # Set to false to skip this metric
         main: 'avg'  # Main statistic to calculate
-        statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']  # List of statistics to calculate
+        statistics: [5, 10, 50, 90, 95, 'avg', 'min', 'max', 'kurt', 'skew']  # List of statistics to calculate
         channel: ["Left", "Right"]  # Channels to analyze
         label: 'LAeq'  # Label for the metric in output
         func_args:  # Additional arguments for the metric function
@@ -64,7 +64,7 @@ MoSQITo:
 
     # Sharpness (DIN 45692) calculated from Zwicker Loudness
     sharpness_din_from_loudness:
-        run: false
+        run: true
         main: "avg"
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
@@ -76,7 +76,7 @@ MoSQITo:
 
     # Sharpness (DIN 45692) calculated per segment
     sharpness_din_perseg:
-        run: false
+        run: true
         main: "avg"
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]
@@ -103,7 +103,7 @@ MoSQITo:
 
     # Roughness (Daniel & Weber method)
     roughness_dw:
-        run: false
+        run: true
         main: "avg"
         statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
         channel: ["Left", "Right"]

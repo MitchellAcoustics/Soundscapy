@@ -17,7 +17,7 @@ nav:
     - 'API reference':
         - 'Survey Analysis': reference/surveys.md
         - 'Plotting': reference/plotting.md
-        - 'Binaural Analysis': reference/analysis.md
+        - 'Binaural Analysis': reference/audio.md
         - 'Databases': reference/databases.md
     - 'News':
       - news.md

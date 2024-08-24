@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Rye
+      uses: eifinger/setup-rye@v4.2.3
+      with:
+        enable-cache: true
+
+    - name: Fetch and Pin Python
+      run: |
+        rye fetch ${{ matrix.python-version }}
+        rye pin ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: rye sync --features test
+
+    - name: Lint and format check
+      run: |
+        rye lint 
+        rye fmt --check
+
+    - name: Run tests
+      run: |
+        rye test
