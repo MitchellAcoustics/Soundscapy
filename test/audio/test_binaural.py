@@ -53,6 +53,15 @@ def test_binaural_from_wav():
     assert b.recording == "trimmed_CT101"
 
 
+def test_binaural_from_wav_resample():
+    test_file = TEST_AUDIO_DIR / "trimmed_CT101.wav"
+    b = Binaural.from_wav(test_file, resample=44100)
+    assert isinstance(b, Binaural)
+    assert b.channels == 2
+    assert b.fs == 44100
+    assert b.recording == "trimmed_CT101"
+
+
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_binaural_calibration(test_binaural_signal):
     """Test calibration of Binaural signal."""

@@ -23,12 +23,14 @@ class AudioAnalysis:
         self,
         file_path: str | Path,
         calibration_levels: Optional[Dict[str, float] | List[float]] = None,
+        resample: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Analyze a single audio file using the current configuration.
 
         Parameters
         ----------
+        resample
         file_path : str or Path
             Path to the audio file to analyze.
         calibration_levels : dict, optional
@@ -42,7 +44,12 @@ class AudioAnalysis:
         if isinstance(file_path, str):
             file_path = Path(file_path)
         logger.info(f"Analyzing file: {file_path}")
-        return load_analyse_binaural(file_path, calibration_levels, self.settings)
+        return load_analyse_binaural(
+            file_path,
+            calibration_levels,
+            self.settings,
+            resample=resample,
+        )
 
     @logger.catch
     def analyze_folder(
@@ -50,12 +57,14 @@ class AudioAnalysis:
         folder_path: str | Path,
         calibration_file: Optional[str | Path] = None,
         max_workers: Optional[int] = None,
+        resample: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Analyze all audio files in a folder using parallel processing.
 
         Parameters
         ----------
+        resample
         folder_path : str or Path
             Path to the folder containing audio files.
         calibration_file : str or Path, optional
@@ -89,7 +98,12 @@ class AudioAnalysis:
             futures = []
             for file in audio_files:
                 future = executor.submit(
-                    load_analyse_binaural, file, calibration_levels, self.settings
+                    load_analyse_binaural,
+                    file,
+                    calibration_levels,
+                    self.settings,
+                    False,
+                    resample,
                 )
                 futures.append(future)
 

@@ -49,12 +49,14 @@ def load_analyse_binaural(
     levels: Dict | List[float],
     analysis_settings: AnalysisSettings,
     parallel_mosqito: bool = True,
+    resample: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Load and analyze a single binaural audio file.
 
     Parameters
     ----------
+    resample
     wav_file : Path
         Path to the WAV file.
     levels : Dict
@@ -71,7 +73,7 @@ def load_analyse_binaural(
     """
     logger.info(f"Processing {wav_file}")
     try:
-        b = Binaural.from_wav(wav_file)
+        b = Binaural.from_wav(wav_file, resample=resample)
         if levels is not None:
             if isinstance(levels, dict) and b.recording in levels:
                 decibel = (levels[b.recording]["Left"], levels[b.recording]["Right"])
@@ -96,12 +98,14 @@ def parallel_process(
     analysis_settings: AnalysisSettings,
     max_workers: Optional[int] = None,
     parallel_mosqito: bool = True,
+    resample: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Process multiple binaural files in parallel.
 
     Parameters
     ----------
+    resample
     wav_files : List[Path]
         List of WAV files to process.
     results_df : pd.DataFrame
@@ -134,6 +138,7 @@ def parallel_process(
                 levels,
                 analysis_settings,
                 parallel_mosqito,
+                resample,
             )
             futures.append(future)
 

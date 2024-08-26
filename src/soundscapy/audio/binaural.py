@@ -261,8 +261,13 @@ class Binaural(Signal):
             logger.info(f"Signal already at {fs} Hz. No resampling needed.")
             return self
         logger.info(f"Resampling signal to {fs} Hz")
-        resampled_data = scipy.signal.resample(self, int(fs * len(self) / self.fs))
-        return Binaural(resampled_data, fs, recording=self.recording)
+        resampled_channels = [
+            scipy.signal.resample(channel, int(fs * len(channel) / self.fs))
+            for channel in self
+        ]
+        resampled_channels = np.stack(resampled_channels)
+        resampled_b = Binaural(resampled_channels, fs, recording=self.recording)
+        return resampled_b
 
     def _get_channel(self, channel):
         """

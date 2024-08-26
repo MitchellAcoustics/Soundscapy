@@ -155,7 +155,7 @@ class TestAudioAnalysis:
         audio_analysis.update_config(mosqito_config)
 
         test_file = TEST_AUDIO_DIR / "trimmed_CT101.wav"
-        result = audio_analysis.analyze_file(test_file)
+        result = audio_analysis.analyze_file(test_file, resample=48000)
 
         assert isinstance(result, pd.DataFrame)
         assert "N_5" in result.columns

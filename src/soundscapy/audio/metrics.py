@@ -173,7 +173,7 @@ def mosqito_metric_1ch(
     --------
     >>> # xdoctest: +SKIP
     >>> from soundscapy.audio import Binaural
-    >>> signal = Binaural.from_wav("audio.wav")
+    >>> signal = Binaural.from_wav("audio.wav", resample=480000)
     >>> results = mosqito_metric_1ch(signal[0], "loudness_zwtv", as_df=True)
     """
     logger.debug(f"Calculating MoSQITo metric: {metric}")
@@ -947,7 +947,7 @@ def process_all_metrics(
     >>> # xdoctest: +SKIP
     >>> from soundscapy.audio import Binaural
     >>> from soundscapy import AnalysisSettings
-    >>> signal = Binaural.from_wav("audio.wav")
+    >>> signal = Binaural.from_wav("audio.wav", resample=480000)
     >>> settings = AnalysisSettings.from_yaml("settings.yaml")
     >>> results = process_all_metrics(signal,settings)
     """

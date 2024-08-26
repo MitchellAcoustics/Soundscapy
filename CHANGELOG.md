@@ -5,6 +5,12 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3]
+
+### Improved
+
+- Allowed the user to request files to be resampled upon loading. This is necessary for Mosqito metrics, which requires (and will itself resample) the audio files to be 48 kHz. The user can specify the desired sample rate in `Binaural.from_wav()` and higher level functions like `AudioAnalysis.analyse_file`, `AudioAnalysis.analyse_folder`.
+
 ## [0.7.0]
 
 Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surveys`, `databases`, `audio`, `plotting`), and improving the overall structure and functionality of the package. Also added more comprehensive documentation and test coverage.
