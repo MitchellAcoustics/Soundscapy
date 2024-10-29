@@ -12,6 +12,7 @@ class PlotType(Enum):
     SCATTER = "scatter"
     DENSITY = "density"
     SIMPLE_DENSITY = "simple_density"
+    JOINT = "joint"
 
 
 class Backend(Enum):

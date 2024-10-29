@@ -106,6 +106,8 @@ def test_circumplex_plot_seaborn(sample_data):
     assert isinstance(plot.get_axes(), plt.Axes)
     plot.density()
     assert isinstance(plot.get_axes(), plt.Axes)
+    plot.jointplot()
+    assert isinstance(plot.get_axes(), plt.Axes)
 
 
 @pytest.mark.filterwarnings("ignore::UserWarning")
