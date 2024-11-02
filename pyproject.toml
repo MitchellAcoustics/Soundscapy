@@ -1,6 +1,6 @@
 [project]
 name = "soundscapy"
-version = "0.7.5"
+version = "0.7.6-dev1"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
@@ -79,10 +79,12 @@ docs = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
-universal = true
 dev-dependencies = []
+
+[tool.uv.pip]
+universal = true
 
 [tool.hatch.metadata]
 allow-direct-references = true
