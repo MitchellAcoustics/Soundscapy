@@ -36,8 +36,10 @@ class StyleOptions:
         default_factory=lambda: {
             "thresh": 0.5,
             "levels": 2,
-            "incl_outline": True,
             "alpha": 0.5,
+            "incl_outline": True,  # Default to including outline
+            "outline_alpha": 1.0,  # Full opacity for outline
+            "outline_linewidth": 1,  # Default line width
         }
     )
 
