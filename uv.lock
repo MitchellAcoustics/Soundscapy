@@ -3054,20 +3054,22 @@ name = "soundscapy"
 version = "0.7.6.dev1"
 source = { editable = "." }
 dependencies = [
-    { name = "acoustics" },
     { name = "loguru" },
-    { name = "mosqito" },
     { name = "pandas", extra = ["excel", "performance"] },
     { name = "plotly" },
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "schema" },
-    { name = "scikit-maad" },
     { name = "seaborn" },
-    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
+audio = [
+    { name = "acoustics" },
+    { name = "mosqito" },
+    { name = "scikit-maad" },
+    { name = "tqdm" },
+]
 docs = [
     { name = "ipywidgets" },
     { name = "jupyter" },
@@ -3091,7 +3093,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "acoustics", specifier = ">=0.2.5" },
+    { name = "acoustics", marker = "extra == 'audio'", specifier = ">=0.2.5" },
     { name = "ipywidgets", marker = "extra == 'docs'", specifier = ">=8.1.3" },
     { name = "jupyter", marker = "extra == 'docs'", specifier = ">=1.0.0" },
     { name = "jupyter-dash", marker = "extra == 'docs'", specifier = ">=0.4.2" },
@@ -3100,7 +3102,7 @@ requires-dist = [
     { name = "mkdocs-jupyter", marker = "extra == 'docs'", specifier = ">=0.24.8" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5.31" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.25.2" },
-    { name = "mosqito", specifier = ">=1.2.1" },
+    { name = "mosqito", marker = "extra == 'audio'", specifier = ">=1.2.1" },
     { name = "nbmake", marker = "extra == 'test'", specifier = ">=1.5.4" },
     { name = "pandas", extras = ["excel", "performance"], specifier = ">=2.2.2" },
     { name = "plotly", specifier = ">=5.23.0" },
@@ -3112,11 +3114,11 @@ requires-dist = [
     { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.6.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "schema", specifier = ">=0.7.7" },
-    { name = "scikit-maad", specifier = ">=1.4.3" },
+    { name = "scikit-maad", marker = "extra == 'audio'", specifier = ">=1.4.3" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=72.1.0" },
     { name = "tomli", marker = "extra == 'test'", specifier = ">=2.0.1" },
-    { name = "tqdm", specifier = ">=4.66.5" },
+    { name = "tqdm", marker = "extra == 'audio'", specifier = ">=4.66.5" },
     { name = "xdoctest", extras = ["all"], marker = "extra == 'test'", specifier = ">=1.1.6" },
 ]
 

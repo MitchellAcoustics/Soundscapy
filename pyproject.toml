@@ -8,15 +8,11 @@ authors = [
 dependencies = [
     "pandas[excel,performance]>=2.2.2",
     "seaborn>=0.13.2",
-    "mosqito>=1.2.1",
-    "scikit-maad>=1.4.3",
-    "tqdm>=4.66.5",
     "pyyaml>=6.0.2",
     "schema>=0.7.7",
     "loguru>=0.7.2",
     "pydantic>=2.8.2",
     "plotly>=5.23.0",
-    "acoustics>=0.2.5",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -73,6 +69,12 @@ docs = [
     "pymdown-extensions>=10.9",
     "ipywidgets>=8.1.3",
     "jupyter-dash>=0.4.2",
+]
+audio = [
+    "mosqito>=1.2.1",
+    "scikit-maad>=1.4.3",
+    "tqdm>=4.66.5",
+    "acoustics>=0.2.5",
 ]
 
 [build-system]
