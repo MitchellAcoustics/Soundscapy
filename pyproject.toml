@@ -38,7 +38,7 @@ repository = "https://github.com/MitchellAcoustics/Soundscapy"
 documentation = "https://soundscapy.readthedocs.io/en/latest/"
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=short --durations=5 --xdoctest"
+addopts = "-v --tb=short --durations=5 --xdoctest -n 6"
 testpaths = ["test", "src/soundscapy"]
 python_files = "test_*.py"
 python_classes = "Test*"
@@ -62,6 +62,7 @@ test = [
     "xdoctest[all]>=1.1.6",
     "pytest-mpl>=0.17.0",
     "tomli>=2.0.1",
+    "pytest-cov>=6.0.0",
 ]
 docs = [
     "jupyter>=1.0.0",
