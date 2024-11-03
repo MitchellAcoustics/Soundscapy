@@ -32,6 +32,7 @@ Examples
 import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
+from loguru import logger
 
 import numpy as np
 import pandas as pd
@@ -48,9 +49,6 @@ from soundscapy.audio.metrics import (
     pyacoustics_metric_1ch,
     pyacoustics_metric_2ch,
 )
-from soundscapy.logging import get_logger
-
-logger = get_logger()
 
 
 class Binaural(Signal):
