@@ -3060,6 +3060,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "schema" },
+    { name = "scipy" },
     { name = "seaborn" },
 ]
 
@@ -3115,6 +3116,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "schema", specifier = ">=0.7.7" },
     { name = "scikit-maad", marker = "extra == 'audio'", specifier = ">=1.4.3" },
+    { name = "scipy", specifier = ">=1.14.1" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=72.1.0" },
     { name = "tomli", marker = "extra == 'test'", specifier = ">=2.0.1" },
