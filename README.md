@@ -23,23 +23,27 @@ pip install soundscapy
 
 ### Optional Dependencies
 
-Soundscapy splits its functionality into optional modules to reduce the number of dependencies required for basic functionality. To install all optional dependencies, use the following command:
+Soundscapy splits its functionality into optional modules to reduce the number of dependencies required for basic functionality. By default, Soundscapy includes the survey data processing and plotting functionality.
 
-```bash
-pip install soundscapy[all]
-```
-
-To install a specific optional dependency group, use `soundscapy[<group>]`. Currently this only includes the `audio` group for psychoacoustic and acoustic analysis of audio files:
+If you would like to use the binaural audio processing and psychoacoustics functionality, you will need to install the optional `audio` dependency:
 
 ```bash
 pip install soundscapy[audio]
 ```
 
+To install all optional dependencies, use the following command:
+
+```bash
+pip install soundscapy[all]
+```
+
+
+
 ## Examples
 
 We are currently working on writing more comprehensive examples and documentation, please bear with us in the meantime.
 
-An example notebook which reproduces the figures used in our recent paper "How to analyse and represent quantitative soundscape data" is provided in the `examples` folder.
+Tutorials for using Soundscapy can be found in the [documentation](https://soundscapy.readthedocs.io/en/latest/).
 
 ## Acknowledgements
 
