@@ -1,8 +1,10 @@
 """
 Soundscapy is a Python library for soundscape analysis and visualisation.
 """
+
 # ruff: noqa: E402
-from loguru import logger 
+from loguru import logger
+
 # https://loguru.readthedocs.io/en/latest/resources/recipes.html#configuring-loguru-to-be-used-by-a-library-or-an-application
 logger.disable("soundscapy")
 

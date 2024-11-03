@@ -3,8 +3,9 @@ from loguru import logger
 from _pytest.logging import LogCaptureFixture
 from soundscapy.logging import setup_logging
 
-logger.enable("soundscapy") # TODO: Need to check if this is best practice for testing.
+logger.enable("soundscapy")  # TODO: Need to check if this is best practice for testing.
 setup_logging("DEBUG")
+
 
 # See: https://loguru.readthedocs.io/en/stable/resources/migration.html#replacing-caplog-fixture-from-pytest-library
 @pytest.fixture
