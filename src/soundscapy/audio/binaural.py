@@ -563,7 +563,9 @@ class Binaural(Signal):
             return maad_metric_2ch(s, metric, channel, as_df, func_args)
 
     def process_all_metrics(
-        self, analysis_settings: AnalysisSettings, parallel: bool = True
+        self,
+        analysis_settings: AnalysisSettings = AnalysisSettings.default(),
+        parallel: bool = True,
     ) -> pd.DataFrame:
         """
         Process all metrics specified in the analysis settings.
@@ -587,6 +589,8 @@ class Binaural(Signal):
         Notes
         -----
         The parallel option primarily affects the MoSQITo metrics. Other metrics may not benefit from parallelization.
+
+        TODO: Provide default settings to analysis_settings to make it optional.
 
         Examples
         --------
