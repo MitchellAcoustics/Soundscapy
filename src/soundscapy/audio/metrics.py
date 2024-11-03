@@ -29,6 +29,7 @@ Ensure these dependencies are installed before using this module.
 import concurrent.futures
 import multiprocessing as mp
 from typing import Dict, List, Optional, Tuple, Union
+from loguru import logger
 
 import numpy as np
 import pandas as pd
@@ -44,9 +45,6 @@ from mosqito.sq_metrics import (
 from scipy import stats
 
 from soundscapy.audio.analysis_settings import AnalysisSettings
-from soundscapy.logging import get_logger
-
-logger = get_logger()
 
 DEFAULT_LABELS = {
     "LZeq": "LZeq",

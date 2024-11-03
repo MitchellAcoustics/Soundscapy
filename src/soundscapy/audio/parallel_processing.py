@@ -19,6 +19,7 @@ Note:
 import concurrent.futures
 from pathlib import Path
 from typing import Dict, List, Optional
+from loguru import logger
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -30,9 +31,6 @@ from soundscapy.audio.metrics import (
     prep_multiindex_df,
     process_all_metrics,
 )
-from soundscapy.logging import get_logger
-
-logger = get_logger()
 
 
 def tqdm_write_sink(message):
