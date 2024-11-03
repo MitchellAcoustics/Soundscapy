@@ -191,7 +191,10 @@ class SeabornBackend(PlotBackend):
         sns.kdeplot(data, x=params.x, ax=g.ax_marg_x, fill=True, alpha=params.alpha)
         sns.kdeplot(data, y=params.y, ax=g.ax_marg_y, fill=True, alpha=params.alpha)
 
-        return g.fig, g.ax_joint # TODO: Should return the whole JointGrid object - repeat throughout plotting methods
+        return (
+            g.fig,
+            g.ax_joint,
+        )  # TODO: Should return the whole JointGrid object - repeat throughout plotting methods
 
     def create_simple_density(self, data, params, ax=None):
         if ax is None:
