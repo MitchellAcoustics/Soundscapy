@@ -1,10 +1,12 @@
 # tests/test_logging.py
 from loguru import logger
-from soundscapy.logging import setup_logging, is_notebook, LogFormatter
+from soundscapy.logging import setup_logging, is_notebook
+
 
 def test_setup_logging_basic():
     setup_logging("INFO")
     assert logger.level("INFO").name == "INFO"
+
 
 def test_setup_logging_with_file(tmp_path):
     log_file = tmp_path / "test.log"
