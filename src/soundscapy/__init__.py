@@ -1,8 +1,10 @@
 """
 Soundscapy is a Python library for soundscape analysis and visualisation.
 """
+# ruff: noqa: E402
+from loguru import logger # https://loguru.readthedocs.io/en/latest/resources/recipes.html#configuring-loguru-to-be-used-by-a-library-or-an-application
+logger.disable("soundscapy")
 
-from loguru import logger
 import importlib.metadata
 
 __version__ = importlib.metadata.version("soundscapy")
@@ -13,7 +15,7 @@ from soundscapy.audio.binaural import Binaural
 from soundscapy.databases import araus, isd, satp
 from soundscapy.surveys import processing
 from soundscapy.plotting import scatter_plot, density_plot
-
+from soundscapy.logging import setup_logging
 
 __all__ = [
     "AudioAnalysis",
@@ -27,7 +29,5 @@ __all__ = [
     "ConfigManager",
     "scatter_plot",
     "density_plot",
+    "setup_logging",
 ]
-
-# Set up the logger when this module is imported
-logger.info("Soundscapy v%s loaded", __version__)

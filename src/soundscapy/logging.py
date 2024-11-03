@@ -3,18 +3,10 @@ Logging configuration using loguru.
 Provides functions to configure the logger based on environment variables.
 """
 
-import os
 import sys
-from functools import wraps
 
 from loguru import logger
 
-# Constants from environment
-DEFAULT_LOG_LEVEL = "WARNING"
-
-def get_log_level() -> str:
-    """Get current log level from environment or default."""
-    return os.getenv("SOUNDSCAPY_LOG_LEVEL", DEFAULT_LOG_LEVEL)
 
 def set_log_level(level: str) -> None:
     """Set log level by reconfiguring handlers."""
@@ -22,17 +14,15 @@ def set_log_level(level: str) -> None:
         # Validate level
         if level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
             raise ValueError(f"Invalid log level: {level}")
-            
-        # Update environment variable
-        os.environ["SOUNDSCAPY_LOG_LEVEL"] = level
-        
+
         # Reconfigure logging
         setup_logging(console_level=level)
         logger.info(f"Log level changed to {level}")
-        
+
     except Exception as e:
         logger.error(f"Failed to set log level: {e}")
         raise
+
 
 class LogFormatter:
     """Unified formatter for both console and file output."""
@@ -40,6 +30,7 @@ class LogFormatter:
     CONSOLE_FORMAT = (
         "<green>{time:HH:mm:ss}</green> | "
         "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
         "{extra[padding]}<level>{message}</level>\n"
         "{exception}"
     )
@@ -60,27 +51,38 @@ class LogFormatter:
         if self.fmt_type == "console":
             if "padding" not in record["extra"]:
                 record["extra"]["padding"] = ""
-            return self.CONSOLE_FORMAT.format(**record)
+            return self.CONSOLE_FORMAT
         else:
             metadata_length = len(
                 f"{record['name']}:{record['function']}:{record['line']}"
             )
             self.padding = max(self.padding, metadata_length)
             record["extra"]["padding"] = " " * (self.padding - metadata_length)
-            return self.FILE_FORMAT.format(**record)
+            return self.FILE_FORMAT
 
 
 def setup_logging(console_level: str = "WARNING", log_file: str | None = None) -> None:
     """Configure logging with optional file output.
-    
+
     Args:
         console_level: Logging level for console output
         log_file: Optional path to log file
     """
     try:
+        logger.enable("soundscapy")
+        import warnings
+
+        showwarning_ = warnings.showwarning
+
+        def showwarning(message, *args, **kwargs):
+            logger.warning(message)
+            showwarning_(message, *args, **kwargs)
+
+        warnings.showwarning = showwarning
+
         # Remove all existing handlers
         logger.remove()
-        
+
         # Configure console handler with custom formatter
         console_formatter = LogFormatter("console")
         logger.add(
@@ -90,21 +92,29 @@ def setup_logging(console_level: str = "WARNING", log_file: str | None = None) -
             colorize=True,
             enqueue=True,
             catch=True,
-            backtrace=True
+            backtrace=True,
+            diagnose=True,
+        )
+
+        logger.add(
+            warnings.warn,
+            format=console_formatter.format,
+            level=console_level,
+            filter=lambda record: record["level"].name == "WARNING",
         )
 
         # Add file handler if specified
         if log_file:
-            file_formatter = LogFormatter("file") 
+            file_formatter = LogFormatter("file")
             logger.add(
                 log_file,
                 format=file_formatter.format,
                 level="DEBUG",
-                rotation="1 MB", 
+                rotation="1 MB",
                 compression="zip",
                 enqueue=True,
                 catch=True,
-                backtrace=True
+                backtrace=True,
             )
 
         logger.debug(f"Logging configured - console:{console_level}, file:{log_file}")
@@ -117,9 +127,9 @@ def is_notebook() -> bool:
     """Check if code is running in Jupyter notebook."""
     try:
         shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':  # Jupyter notebook/lab
+        if shell == "ZMQInteractiveShell":  # Jupyter notebook/lab
             return True
-        elif shell == 'TerminalInteractiveShell':  # IPython
+        elif shell == "TerminalInteractiveShell":  # IPython
             return False
         else:
             return False
