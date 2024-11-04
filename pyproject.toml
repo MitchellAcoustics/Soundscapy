@@ -85,7 +85,9 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 managed = true
-dev-dependencies = []
+dev-dependencies = [
+    "ruff>=0.7.2",
+]
 
 [tool.uv.pip]
 universal = true
