@@ -79,14 +79,15 @@ Each group contains:
     description (str): Human-readable feature description
 """
 
+
 def format_import_error(group: str) -> str:
     """Create a helpful error message for missing dependencies
-    
+
     Parameters
     ----------
     group : str
         Name of the dependency group
-    
+
     Returns
     -------
     str
@@ -98,12 +99,13 @@ def format_import_error(group: str) -> str:
         f" Install with: pip install {info['install']}"
     )
 
+
 def require_dependencies(group: str) -> Dict[str, Any]:
     """Import and return all packages required for a dependency group.
 
     Parameters
     ----------
-    group : str 
+    group : str
         The name ofthe dependency group to import
 
     Returns
@@ -120,7 +122,7 @@ def require_dependencies(group: str) -> Dict[str, Any]:
     """
     if group not in OPTIONAL_DEPENDENCIES:
         raise KeyError(f"Unknown dependency group: {group}")
-    
+
     packages = {}
     try:
         for package in OPTIONAL_DEPENDENCIES[group]["packages"]:
@@ -128,4 +130,3 @@ def require_dependencies(group: str) -> Dict[str, Any]:
         return packages
     except ImportError as e:
         raise ImportError(format_import_error(group)) from e
-

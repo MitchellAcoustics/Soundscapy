@@ -48,6 +48,7 @@ def temp_config_file(tmp_path, sample_config):
         yaml.dump(sample_config, f)
     return config_file
 
+
 class TestMetricSettings:
     def test_valid_metric_settings(self):
         settings = MetricSettings(
@@ -65,6 +66,7 @@ class TestMetricSettings:
     def test_invalid_metric_settings(self):
         with pytest.raises(ValidationError):
             MetricSettings(run="not_a_boolean")
+
 
 class TestLibrarySettings:
     def test_valid_library_settings(self):
@@ -88,6 +90,7 @@ class TestLibrarySettings:
         library_settings = LibrarySettings(root={})
         with pytest.raises(KeyError):
             library_settings.get_metric_settings("metric2")
+
 
 class TestAnalysisSettings:
     def test_from_yaml(self, temp_config_file):
@@ -144,6 +147,7 @@ class TestAnalysisSettings:
         with pytest.raises(KeyError):
             settings.update_setting("PythonAcoustics", "metric1", invalid_setting=True)
 
+
 class TestConfigManager:
     @pytest.fixture
     def config_manager(self, temp_config_file):
@@ -177,6 +181,7 @@ class TestConfigManager:
         config = manager.load_config()
         assert isinstance(config, AnalysisSettings)
         # Add more assertions based on your default config structure
+
 
 def test_end_to_end(temp_config_file, tmp_path):
     # Load configuration
