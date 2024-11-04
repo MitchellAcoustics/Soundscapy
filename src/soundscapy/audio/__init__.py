@@ -21,6 +21,8 @@ See Also:
     soundscapy.audio.binaural: For detailed Binaural class documentation.
     soundscapy.audio.metrics: For individual metric calculation functions.
 """
+# ruff: noqa: E402
+# ignore module level import order because we need to run require_dependencies first
 
 from soundscapy._optionals import require_dependencies
 

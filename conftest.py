@@ -1,16 +1,18 @@
 """Configure pytest for soundscapy testing."""
+
 import pytest
 import os
 from loguru import logger
 from _pytest.logging import LogCaptureFixture
 from soundscapy.logging import setup_logging
-from soundscapy._optionals import require_dependencies, OPTIONAL_DEPENDENCIES
+from soundscapy._optionals import require_dependencies
 
 logger.enable("soundscapy")
 setup_logging("DEBUG")
 
 # Cache the dependency check result
 _has_audio = None
+
 
 def _check_audio_deps():
     """Check for audio dependencies, caching the result."""
@@ -26,14 +28,15 @@ def _check_audio_deps():
         logger.debug(f"Setting AUDIO_DEPS={_has_audio}")
     return _has_audio
 
+
 def pytest_ignore_collect(collection_path):
     """Control test collection for optional dependency modules.
-    
+
     Parameters
     ----------
     collection_path : Path
         Path to the file being considered for collection
-    
+
     Returns
     -------
     bool
@@ -46,25 +49,26 @@ def pytest_ignore_collect(collection_path):
         should_ignore = not _check_audio_deps()
         logger.debug(f"Collection check for {path_str}: ignore={should_ignore}")
         return should_ignore
-    
+
     return False
+
 
 def pytest_configure(config):
     """Register markers and configure test environment."""
     # Register only necessary markers
     config.addinivalue_line(
-        "markers",
-        "optional_deps(group): mark tests requiring optional dependencies"
+        "markers", "optional_deps(group): mark tests requiring optional dependencies"
     )
-    
+
     # Set environment variable for xdoctest
-    os.environ['AUDIO_DEPS'] = '1' if _check_audio_deps() else '0'
-    
+    os.environ["AUDIO_DEPS"] = "1" if _check_audio_deps() else "0"
+
     # Configure xdoctest namespace
     config.option.xdoctest_namespace = """
     import os
     from soundscapy._optionals import require_dependencies
     """
+
 
 @pytest.fixture
 def caplog(caplog: LogCaptureFixture):
@@ -78,6 +82,7 @@ def caplog(caplog: LogCaptureFixture):
     )
     yield caplog
     logger.remove(handler_id)
+
 
 def pytest_runtest_setup(item):
     """Skip tests marked as requiring optional dependencies."""

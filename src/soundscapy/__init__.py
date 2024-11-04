@@ -31,6 +31,7 @@ __all__ = [
 
 try:
     from soundscapy import audio
-    __all__.append("audio")
+
+    __all__.extend(audio.__all__)
 except ImportError:
     logger.debug("Audio module not available")

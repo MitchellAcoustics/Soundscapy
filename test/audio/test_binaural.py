@@ -43,6 +43,7 @@ def test_binaural_initialization(test_binaural_signal):
     assert test_binaural_signal.channels == 2
     assert test_binaural_signal.recording == "trimmed_CT101"
 
+
 def test_binaural_from_wav():
     test_file = TEST_AUDIO_DIR / "trimmed_CT101.wav"
     b = Binaural.from_wav(test_file)
@@ -51,6 +52,7 @@ def test_binaural_from_wav():
     assert b.fs == 48000
     assert b.recording == "trimmed_CT101"
 
+
 def test_binaural_from_wav_resample():
     test_file = TEST_AUDIO_DIR / "trimmed_CT101.wav"
     b = Binaural.from_wav(test_file, resample=44100)
@@ -58,6 +60,7 @@ def test_binaural_from_wav_resample():
     assert b.channels == 2
     assert b.fs == 44100
     assert b.recording == "trimmed_CT101"
+
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_binaural_calibration(test_binaural_signal):
@@ -73,6 +76,7 @@ def test_binaural_calibration(test_binaural_signal):
     with pytest.raises(ValueError):
         test_binaural_signal.calibrate_to([60, 62, 64])
 
+
 def test_pyacoustics_metric(test_binaural_signal):
     """Test pyacoustics metric calculation."""
     result = test_binaural_signal.pyacoustics_metric("LAeq")
@@ -83,6 +87,7 @@ def test_pyacoustics_metric(test_binaural_signal):
         "trimmed_CT101",
     ]
     assert result.index.get_level_values(1).tolist() == ["Left", "Right"]
+
 
 def test_maad_metric(test_binaural_signal):
     """Test MAAD metric calculation."""
@@ -111,6 +116,7 @@ def test_maad_metric(test_binaural_signal):
         "trimmed_CT101",
     ]
     assert result.index.get_level_values(1).tolist() == ["Left", "Right"]
+
 
 def test_process_all_metrics(test_binaural_signal, analysis_settings):
     """Test processing of all metrics."""
@@ -150,6 +156,7 @@ def test_mosqito_metric_parallel_false(test_binaural_signal):
     ]
     assert result.index.get_level_values(1).tolist() == ["Left", "Right"]
 
+
 def test_fs_resample_to_different_frequency():
     original_data = np.random.rand(2, 1000)
     original_fs = 44100
@@ -163,6 +170,7 @@ def test_fs_resample_to_different_frequency():
         binaural_signal.duration, abs=1e-2, rel=1e-1
     )
 
+
 def test_fs_resample_to_same_frequency():
     original_data = np.random.rand(2, 1000)
     original_fs = 44100
@@ -171,6 +179,7 @@ def test_fs_resample_to_same_frequency():
     assert resampled_signal.fs == original_fs
     assert np.array_equal(resampled_signal, binaural_signal)
     assert isinstance(resampled_signal, Binaural)
+
 
 def test_fs_resample_with_invalid_frequency():
     original_data = np.random.rand(2, 1000)
