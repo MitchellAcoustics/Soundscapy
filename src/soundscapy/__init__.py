@@ -12,25 +12,25 @@ import importlib.metadata
 
 __version__ = importlib.metadata.version("soundscapy")
 
+from soundscapy.logging import setup_logging
 from soundscapy import plotting
-from soundscapy.audio import AnalysisSettings, ConfigManager, AudioAnalysis
-from soundscapy.audio.binaural import Binaural
 from soundscapy.databases import araus, isd, satp
 from soundscapy.surveys import processing
 from soundscapy.plotting import scatter_plot, density_plot
-from soundscapy.logging import setup_logging
 
 __all__ = [
-    "AudioAnalysis",
-    "AnalysisSettings",
-    "Binaural",
     "plotting",
     "araus",
     "isd",
     "satp",
     "processing",
-    "ConfigManager",
     "scatter_plot",
     "density_plot",
     "setup_logging",
 ]
+
+try:
+    from soundscapy import audio
+    __all__.append("audio")
+except ImportError:
+    logger.debug("Audio module not available")

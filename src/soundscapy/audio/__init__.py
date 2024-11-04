@@ -22,29 +22,29 @@ See Also:
     soundscapy.audio.metrics: For individual metric calculation functions.
 """
 
-from soundscapy._optionals import OptionalDependencyManager
+from soundscapy._optionals import require_dependencies
 
-manager = OptionalDependencyManager.get_instance()
-if manager.check_module_group("audio"):
-    from .binaural import Binaural
-    from .analysis_settings import AnalysisSettings, ConfigManager
-    from soundscapy.audio.audio_analysis import AudioAnalysis
-    from soundscapy.audio.metrics import (
-        add_results,
-        prep_multiindex_df,
-        process_all_metrics,
-    )
-    from soundscapy.audio.parallel_processing import parallel_process
+# This will raise an ImportError if the required dependencies are not installed
+required = require_dependencies("audio")
 
-    __all__ = [
-        "AudioAnalysis",
-        "Binaural",
-        "AnalysisSettings",
-        "ConfigManager",
-        "process_all_metrics",
-        "prep_multiindex_df",
-        "add_results",
-        "parallel_process",
-    ]
-else:
-    __all__ = []  # Empty if deps not available
+# Now we can import our modules that depend on the optional packages
+from .binaural import Binaural
+from .analysis_settings import AnalysisSettings, ConfigManager
+from soundscapy.audio.audio_analysis import AudioAnalysis
+from soundscapy.audio.metrics import (
+    add_results,
+    prep_multiindex_df,
+    process_all_metrics,
+)
+from soundscapy.audio.parallel_processing import parallel_process
+
+__all__ = [
+    "AudioAnalysis",
+    "Binaural",
+    "AnalysisSettings",
+    "ConfigManager",
+    "process_all_metrics",
+    "prep_multiindex_df",
+    "add_results",
+    "parallel_process",
+]
