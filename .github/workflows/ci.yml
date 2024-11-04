@@ -46,9 +46,9 @@ jobs:
       run: uv run pytest
 
     - name: Run tests for tutorial notebooks
-      run: uv run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb --no-cov
+      run: uv run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb --no-cov # BinauralAnalysis is too slow
     
     - name: Lint and format check
       run: |
-        ruff check . 
-        ruff format --check
+        uv run ruff check . 
+        uv run ruff format --check
