@@ -30,7 +30,10 @@ def test_format_import_error():
     with pytest.raises(KeyError):
         format_import_error("nonexistent_group")
 
-@pytest.mark.optional_deps("audio")
+@pytest.mark.skipif(
+    os.environ.get('AUDIO_DEPS') == '1',
+    reason="Test requires audio dependencies to be missing"
+)
 def test_require_dependencies_missing():
     """Test behavior when dependencies are missing."""
     from soundscapy._optionals import require_dependencies
