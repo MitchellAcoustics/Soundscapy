@@ -7,9 +7,6 @@ from _pytest.logging import LogCaptureFixture
 from soundscapy.logging import setup_logging
 from soundscapy._optionals import require_dependencies
 
-logger.enable("soundscapy")
-setup_logging("DEBUG")
-
 # Cache the dependency check result
 _has_audio = None
 
