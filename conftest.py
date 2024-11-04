@@ -4,7 +4,6 @@ import pytest
 import os
 from loguru import logger
 from _pytest.logging import LogCaptureFixture
-from soundscapy.logging import setup_logging
 from soundscapy._optionals import require_dependencies
 
 # Cache the dependency check result
