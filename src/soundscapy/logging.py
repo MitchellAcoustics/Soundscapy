@@ -108,7 +108,9 @@ def setup_logging(console_level: str = "WARNING", log_file: str | None = None) -
 
 def is_notebook() -> bool:
     """Check if code is running in Jupyter notebook."""
+
     try:
+        from IPython import get_ipython
         shell = get_ipython().__class__.__name__
         if shell == "ZMQInteractiveShell":  # Jupyter notebook/lab
             return True
