@@ -52,7 +52,3 @@ class TestMetricsUnit(unittest.TestCase):
             np.isnan(updated_res.get("metric_avg")),
             "Average for empty array should be np.nan",
         )
-
-
-if __name__ == "__main__":
-    unittest.main()  # This line would be used to run the tests if this script were standalone

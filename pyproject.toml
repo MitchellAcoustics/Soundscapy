@@ -1,6 +1,6 @@
 [project]
 name = "soundscapy"
-version = "0.7.5"
+version = "0.7.6-dev1"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
@@ -8,15 +8,12 @@ authors = [
 dependencies = [
     "pandas[excel,performance]>=2.2.2",
     "seaborn>=0.13.2",
-    "mosqito>=1.2.1",
-    "scikit-maad>=1.4.3",
-    "tqdm>=4.66.5",
     "pyyaml>=6.0.2",
     "schema>=0.7.7",
     "loguru>=0.7.2",
     "pydantic>=2.8.2",
     "plotly>=5.23.0",
-    "acoustics>=0.2.5",
+    "scipy>=1.14.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -38,7 +35,7 @@ repository = "https://github.com/MitchellAcoustics/Soundscapy"
 documentation = "https://soundscapy.readthedocs.io/en/latest/"
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=short --durations=5 --xdoctest -n 6"
+addopts = "-v --tb=short --durations=5 --xdoctest -n 6 --cov=src/soundscapy --cov-report=term --log-level=DEBUG"
 testpaths = ["test", "src/soundscapy"]
 python_files = "test_*.py"
 python_classes = "Test*"
@@ -46,6 +43,7 @@ python_functions = "test_*"
 console_output_style = "count"
 doctest_optionflags = "NUMBER NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL"
 markers = [
+    "optional_deps(group): mark tests that depend on optional dependencies. group can be 'audio', etc.",
     "slow: mark test as slow",
     "skip: mark test as skipped",
     "skipif: mark test as skipped if condition is met",
@@ -74,15 +72,23 @@ docs = [
     "ipywidgets>=8.1.3",
     "jupyter-dash>=0.4.2",
 ]
+audio = [
+    "mosqito>=1.2.1",
+    "scikit-maad>=1.4.3",
+    "tqdm>=4.66.5",
+    "acoustics>=0.2.5",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
-universal = true
 dev-dependencies = []
+
+[tool.uv.pip]
+universal = true
 
 [tool.hatch.metadata]
 allow-direct-references = true
