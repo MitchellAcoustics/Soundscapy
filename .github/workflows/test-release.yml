@@ -90,7 +90,7 @@ jobs:
         
     - name: Fetch previous version from TestPyPI
       run: |
-        response=$(curl -s https://test.pypi.org/pypi/${{ env.PACKAGE_NAME }}/json | echo "{}")
+        response=$(curl -s https://test.pypi.org/pypi/soundscapy/json | echo "{}")
         latest_previous_version=$(echo $response | grep -oP '"releases":\{"\K[^"]+' | sort -rV | head -n 1)
         if [ -z "$latest_previous_version" ]; then
           echo "Package not found on TestPyPI"
