@@ -86,6 +86,7 @@ def _stat_calcs(
 
     Examples
     --------
+    >>> # xdoctest: +REQUIRES(env:AUDIO_DEPS=1)
     >>> ts = np.array([1, 2, 3, 4, 5])
     >>> res = {}
     >>> updated_res = _stat_calcs("metric", ts, res, [50, "avg", "max"])

@@ -13,9 +13,9 @@ to provide a comprehensive suite of audio analysis tools.
 
 Example:
     >>> # xdoctest: +SKIP
-    >>> from soundscapy.audio import Binaural  # doctest: +SKIP
-    >>> signal = Binaural.from_wav("audio.wav")  # doctest: +SKIP
-    >>> results = signal.process_all_metrics(analysis_settings)  # doctest: +SKIP
+    >>> from soundscapy.audio import Binaural
+    >>> signal = Binaural.from_wav("audio.wav")
+    >>> results = signal.process_all_metrics(analysis_settings)
 
 See Also:
     soundscapy.audio.binaural: For detailed Binaural class documentation.

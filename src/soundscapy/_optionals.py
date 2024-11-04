@@ -5,39 +5,58 @@ This module provides utilities for managing optional dependencies across the pac
 It allows graceful handling of missing dependencies and provides helpful feedback
 about which dependencies are missing and how to install them.
 
-Example
--------
->>> from soundscapy._optionals import OptionalDependencyManager
->>> manager = OptionalDependencyManager.get_instance()
->>> has_audio = manager.check_module_group("audio")
->>> if has_audio:
-...     from soundscapy.audio import Binaural
+Examples
+--------
+Basic usage - importing optional dependencies:
+
+>>> from soundscapy._optionals import require_dependencies
+>>> # xdoctest: +SKIP
+>>> required = require_dependencies("audio")  # Returns dict of imported modules
+>>> mosqito = required["mosqito"]  # Access specific module
+
+Error handling for missing dependencies:
+
+>>> # xdoctest: +REQUIRES(env:AUDIO_DEPS=0)
+>>> from soundscapy._optionals import require_dependencies
+>>> try:
+...     required = require_dependencies("audio")
+... except ImportError as e:
+...     print(str(e))  # doctest: +ELLIPSIS
+audio analysis functionality requires additional dependencies. Install with: pip install soundscapy[audio]
+
+Successful dependency loading:
+
+>>> # xdoctest: +REQUIRES(env:AUDIO_DEPS==1)
+>>> from soundscapy._optionals import require_dependencies
+>>> required = require_dependencies("audio")
+>>> isinstance(required, dict)
+True
+>>> 'mosqito' in required
+True
+
+Typical usage in a module:
+
+>>> # xdoctest: +SKIP
+>>> from soundscapy._optionals import require_dependencies
+>>> # This will raise ImportError with helpful message if dependencies missing
+>>> required = require_dependencies("audio")
+>>> # Now import feature code that depends on the optional packages
+>>> from .binaural import Binaural
+>>> from .analysis_settings import AnalysisSettings
 
 Notes
 -----
-This module is intended for internal use only.
+The `require_dependencies()` function is the main interface for managing optional
+dependencies. It performs these key functions:
 
-The `module_exists` method attempts to import a specified module and handles the outcome in three
-different ways based on the error parameter:
+1. Checks if all required packages for a feature group are available
+2. Returns a dictionary of imported modules if successful
+3. Raises an ImportError with installation instructions if dependencies are missing
 
- * "ignore": Silently returns `None` if the module isn't found
- * "warn": Logs a warning message if the module is missing
- * "raise": Raises an `ImportError` if the module cannot be imported
-
-The manager uses a dictionary called `MODULE_GROUPS` to organize related dependencies into logical groups.
-For example, the "audio" group includes dependencies like "mosqito", "maad", "tqdm", and "acoustics".
-Each group specifies the required modules, installation instructions, and a human-readable description.
-
-The `check_module_group` method verifies if all modules in a specified group are available.
-It returns a boolean indicating success or failure and can provide helpful feedback about missing dependencies,
-including the exact pip command needed to install them.
-
-The test file `test__optionals.py` contains comprehensive tests for both methods.
-
-For end users, this system provides a clean way to handle optional features, as shown in the example
-where audio functionality is only accessed if the required dependencies are present.
-This prevents crashes due to missing dependencies and instead provides helpful feedback about
-what's missing and how to install it.
+The module uses OPTIONAL_DEPENDENCIES to define feature groups and their requirements:
+    - packages: Tuple of required package names
+    - install: pip install command/target
+    - description: Human-readable feature description
 """
 
 from typing import Dict, Any
