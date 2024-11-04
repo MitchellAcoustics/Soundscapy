@@ -17,10 +17,13 @@ def _check_audio_deps():
     global _has_audio
     if _has_audio is None:
         try:
-            require_dependencies("audio")
+            required = require_dependencies("audio")
+            logger.debug(f"Audio dependencies found: {list(required.keys())}")
             _has_audio = True
-        except ImportError:
+        except ImportError as e:
+            logger.debug(f"Missing audio dependencies: {e}")
             _has_audio = False
+        logger.debug(f"Setting AUDIO_DEPS={_has_audio}")
     return _has_audio
 
 def pytest_ignore_collect(collection_path):
@@ -36,10 +39,13 @@ def pytest_ignore_collect(collection_path):
     bool
         True if the file should be ignored, False otherwise
     """
+    path_str = str(collection_path)
     # Check if path is in the audio module
-    if "audio/" in str(collection_path):
+    if "audio/" in path_str:
         # Skip collection if audio dependencies are missing
-        return not _check_audio_deps()
+        should_ignore = not _check_audio_deps()
+        logger.debug(f"Collection check for {path_str}: ignore={should_ignore}")
+        return should_ignore
     
     return False
 
