@@ -33,6 +33,11 @@ jobs:
     - name: Setup Python ${{ matrix.python-version }}
       run: uv python install ${{ matrix.python-version }}
 
+    - name: Lint and format check # Run linting before wasting time on testing
+      run: |
+        uvx ruff check . 
+        uvx ruff format --check
+
     - name: Install core dependencies
       run: uv sync --extra test
 
@@ -47,8 +52,4 @@ jobs:
 
     - name: Run tests for tutorial notebooks
       run: uv run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb --no-cov # BinauralAnalysis is too slow
-    
-    - name: Lint and format check
-      run: |
-        uv run ruff check . 
-        uv run ruff format --check
+  
