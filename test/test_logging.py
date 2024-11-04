@@ -8,6 +8,5 @@ def test_setup_logging_basic():
     assert logger.level("INFO").name == "INFO"
 
 
-
 def test_is_notebook():
     assert not is_notebook()  # When running pytest
