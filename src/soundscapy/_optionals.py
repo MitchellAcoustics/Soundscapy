@@ -17,10 +17,6 @@ Notes
 -----
 This module is intended for internal use only.
 
-The `OptionalDependencyManager` class serves as the core component for handling optional package dependencies.
-It maintains a cache of checked modules to avoid repeated import attempts and provides two main methods:
-`module_exists` and `check_module_group`.
-
 The `module_exists` method attempts to import a specified module and handles the outcome in three
 different ways based on the error parameter:
 
@@ -44,15 +40,13 @@ This prevents crashes due to missing dependencies and instead provides helpful f
 what's missing and how to install it.
 """
 
-from typing import Optional
+from typing import Dict, Any
 import importlib
-import types
-from loguru import logger
 
 # Map module groups to their pip install targets
-MODULE_GROUPS = {
+OPTIONAL_DEPENDENCIES = {
     "audio": {
-        "modules": ("mosqito", "maad", "tqdm", "acoustics"),
+        "packages": ("mosqito", "maad", "tqdm", "acoustics"),
         "install": "soundscapy[audio]",
         "description": "audio analysis functionality",
     },
@@ -66,115 +60,53 @@ Each group contains:
     description (str): Human-readable feature description
 """
 
-
-class OptionalDependencyManager:
-    """Singleton manager for optional dependencies.
-
-    Uses singleton pattern to ensure consistent caching across the application,
-    preventing redundant import attempts and maintaining a single source of truth
-    for dependency availability.
+def format_import_error(group: str) -> str:
+    """Create a helpful error message for missing dependencies
+    
+    Parameters
+    ----------
+    group : str
+        Name of the dependency group
+    
+    Returns
+    -------
+    str
+        Formatted error message with installation instructions
     """
+    info = OPTIONAL_DEPENDENCIES[group]
+    return (
+        f"{info['description'].capitalize()} requires additional dependencies."
+        f" Install with: pip install {info['install']}"
+    )
 
-    _instance = None
+def require_dependencies(group: str) -> Dict[str, Any]:
+    """Import and return all packages required for a dependency group.
 
-    def __new__(cls):
-        # Singleton ensures consistent caching across all package modules
-        if cls._instance is None:
-            logger.debug("Initializing new OptionalDependencyManager singleton")
-            cls._instance = super().__new__(cls)
-            # Initialize empty cache - stores both successful and failed imports
-            # to avoid repeated import attempts during runtime
-            cls._instance._checked_modules = {}
-        else:
-            logger.debug("Reusing existing OptionalDependencyManager instance")
-        return cls._instance
+    Parameters
+    ----------
+    group : str 
+        The name ofthe dependency group to import
 
-    @classmethod
-    def get_instance(cls):
-        # Factory method pattern provides cleaner API than direct instantiation
-        return cls() if cls._instance is None else cls._instance
+    Returns
+    -------
+    Dict[str, Any]
+        Dictionary mapping package names to imported modules
 
-    def module_exists(
-        self, name: str, error: str = "ignore"
-    ) -> Optional[types.ModuleType]:
-        """Try to import an optional dependency.
+    Raises
+    ------
+    ImportError
+        If any required package is not available
+    KeyError
+        If the group name is not recognized
+    """
+    if group not in OPTIONAL_DEPENDENCIES:
+        raise KeyError(f"Unknown dependency group: {group}")
+    
+    packages = {}
+    try:
+        for package in OPTIONAL_DEPENDENCIES[group]["packages"]:
+            packages[package] = importlib.import_module(package)
+        return packages
+    except ImportError as e:
+        raise ImportError(format_import_error(group)) from e
 
-        Uses caching to avoid repeated import attempts, which is especially
-        important for missing modules as import attempts are expensive.
-        The three error modes support different use cases:
-        - ignore: For quiet runtime checks (e.g. feature detection)
-        - warn: For informing users about missing optional features
-        - raise: For hard dependencies within optional feature groups
-        """
-        assert error in {"raise", "warn", "ignore"}
-        logger.debug(f"Checking for module {name} (error={error})")
-
-        # Check cache first to avoid repeated import attempts
-        if name in self._checked_modules:
-            logger.debug(f"Using cached result for {name}")
-            module = self._checked_modules[name]
-            if module is None:
-                # Handle cached negative result according to error mode
-                logger.debug(f"Cache indicates {name} was not available")
-                if error == "raise":
-                    raise ImportError(f"Required dependency {name} not found")
-                elif error == "warn":
-                    logger.warning(f"Missing optional dependency: {name}")
-            return module
-
-        try:
-            # First-time import attempt
-            logger.debug(f"Attempting first-time import of {name}")
-            module = importlib.import_module(name)
-            # Cache successful import
-            self._checked_modules[name] = module
-            logger.debug(f"Successfully imported and cached {name}")
-            return module
-        except ImportError:
-            # Cache failed import to avoid future attempts
-            logger.debug(f"Import failed for {name}, caching negative result")
-            self._checked_modules[name] = None
-            if error == "warn":
-                logger.warning(f"Missing optional dependency: {name}")
-            elif error == "raise":
-                logger.error(f"Required dependency {name} not found")
-                raise ImportError(f"Required dependency {name} not found")
-            return None
-
-    def check_module_group(self, group: str, error: str = "warn") -> bool:
-        """Check if all modules in a group are available.
-
-        Groups dependencies logically to support feature-based dependency checking.
-        Uses 'ignore' for individual checks to accumulate all missing dependencies
-        before reporting, providing better UX than failing on first missing dep.
-        """
-        logger.debug(f"Checking module group '{group}' with error mode '{error}'")
-
-        # Validate group exists before attempting any imports
-        if group not in MODULE_GROUPS:
-            logger.error(f"Attempted to check invalid module group: {group}")
-            raise ValueError(f"Unknown module group: {group}")
-
-        # Track missing modules to report all missing deps at once
-        missing = []
-        for name in MODULE_GROUPS[group]["modules"]:
-            logger.debug(f"Checking dependency {name} for group {group}")
-            if self.module_exists(name, error="ignore") is None:
-                missing.append(name)
-                logger.debug(f"Module {name} is missing from group {group}")
-
-        if missing:
-            # Construct helpful message with installation instructions
-            msg = (
-                f"Missing optional dependencies for {MODULE_GROUPS[group]['description']}: "
-                f"{', '.join(missing)}. Install with: pip install {MODULE_GROUPS[group]['install']}"
-            )
-            if error == "warn":
-                logger.warning(msg)
-            elif error == "raise":
-                logger.error(msg)
-                raise ImportError(msg)
-        else:
-            logger.debug(f"All dependencies present for group {group}")
-
-        return len(missing) == 0

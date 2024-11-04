@@ -70,16 +70,6 @@ def setup_logging(console_level: str = "WARNING", log_file: str | None = None) -
     """
     try:
         logger.enable("soundscapy")
-        import warnings
-
-        showwarning_ = warnings.showwarning
-
-        def showwarning(message, *args, **kwargs):
-            logger.warning(message)
-            showwarning_(message, *args, **kwargs)
-
-        warnings.showwarning = showwarning
-
         # Remove all existing handlers
         logger.remove()
 
@@ -94,13 +84,6 @@ def setup_logging(console_level: str = "WARNING", log_file: str | None = None) -
             catch=True,
             backtrace=True,
             diagnose=True,
-        )
-
-        logger.add(
-            warnings.warn,
-            format=console_formatter.format,
-            level=console_level,
-            filter=lambda record: record["level"].name == "WARNING",
         )
 
         # Add file handler if specified
