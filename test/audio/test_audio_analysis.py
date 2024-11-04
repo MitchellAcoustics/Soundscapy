@@ -42,7 +42,6 @@ def temp_config_file(tmp_path, sample_config):
 def audio_analysis(temp_config_file):
     return AudioAnalysis(temp_config_file)
 
-
 class TestAudioAnalysis:
     def test_initialization(self, audio_analysis, temp_config_file):
         assert isinstance(
