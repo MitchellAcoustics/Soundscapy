@@ -61,34 +61,9 @@ jobs:
             exit 1
             fi
 
-#   check_pypi:
-#     needs: details
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Fetch information from PyPI
-#         run: |
-#           response=$(curl -s https://pypi.org/pypi/soundscapy/json || echo "{}")
-#           latest_previous_version=$(echo $response | grep -oP '"releases":\{"\K[^"]+' | sort -rV | head -n 1)
-#           if [ -z "$latest_previous_version" ]; then
-#             echo "Package not found on PyPI."
-#             latest_previous_version="0.0.0"
-#           fi
-#           echo "Latest version on PyPI: $latest_previous_version"
-#           echo "latest_previous_version=$latest_previous_version" >> $GITHUB_ENV
-
-#       - name: Compare versions and exit if not newer
-#         run: |
-#           NEW_VERSION=${{ needs.details.outputs.new_version }}
-#           LATEST_VERSION=$latest_previous_version
-#           if [ "$(printf '%s\n' "$LATEST_VERSION" "$NEW_VERSION" | sort -rV | head -n 1)" != "$NEW_VERSION" ] || [ "$NEW_VERSION" == "$LATEST_VERSION" ]; then
-#             echo "The new version $NEW_VERSION is not greater than the latest version $LATEST_VERSION on PyPI."
-#             exit 1
-#           else
-#             echo "The new version $NEW_VERSION is greater than the latest version $LATEST_VERSION on PyPI."
-#           fi
-
   setup_and_build:
-    needs: [details]
+    needs: 
+      - details
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -114,9 +89,17 @@ jobs:
           name: dist
           path: dist/
 
+  tests-pass:
+    needs: [setup_and_build, details]
+    uses: ./.github/workflows/test.yml
+  
+  tutorial-tests-pass:
+    needs: [setup_and_build, details]
+    uses: ./.github/workflows/test-tutorials.yml  
+
   pypi_publish:
     name: Upload release to PyPI
-    needs: [setup_and_build, details]
+    needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -129,13 +112,10 @@ jobs:
 
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-
 
   github_release:
     name: Create GitHub Release
-    needs: [setup_and_build, details]
+    needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
     runs-on: ubuntu-latest
     permissions:
       contents: write

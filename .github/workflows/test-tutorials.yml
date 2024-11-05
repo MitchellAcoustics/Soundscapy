@@ -1,11 +1,11 @@
-name: CI
+name: Test Tutorial Notebooks
 
 on:
   workflow_call:
     outputs:
-      tests-pass:
-        description: "Indicates if all tests passed"
-        value: ${{ github.event.inputs.tests-pass }}
+      tutorial-tests-pass:
+        description: "Indicates if all tutorial tests passed"
+        value: ${{ github.event.inputs.tutorial-tests-pass }}
   push:
     branches: [ main, dev ]
   pull_request:
@@ -13,6 +13,7 @@ on:
 
 jobs:
   test:
+    name: Run tests on Tutorial notebooks
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -33,22 +34,8 @@ jobs:
     - name: Setup Python ${{ matrix.python-version }}
       run: uv python install ${{ matrix.python-version }}
 
-    - name: Lint and format check # Run linting before wasting time on testing
-      run: |
-        uvx ruff check . 
-        uvx ruff format --check
-
-    - name: Install core dependencies
-      run: uv sync --extra test
-
-    - name: Run tests for core deps only
-      run: uv run pytest
-
     - name: Install optional dependencies
       run: uv sync --all-extras
-
-    - name: Run tests for all dependencies
-      run: uv run pytest
 
     - name: Run tests for tutorial notebooks
       run: uv run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb --no-cov # BinauralAnalysis is too slow
