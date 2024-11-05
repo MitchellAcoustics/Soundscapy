@@ -110,5 +110,5 @@ def require_dependencies(group: str) -> Dict[str, Any]:
         return packages
     except ImportError as e:
         raise ImportError(
-            f"Missing optional dependency for {e.name_from}. Install with: pip install {OPTIONAL_DEPENDENCIES[group]['install']}"
+            f"Missing optional dependency for {e.name}. Install with: pip install {OPTIONAL_DEPENDENCIES[group]['install']}"
         )
