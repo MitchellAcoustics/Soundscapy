@@ -3,6 +3,8 @@ name: Tagged Release
 
 on:
   push:
+    branches:
+        - dev
     tags:
         - 'v?\d+\.\d+\.\d+'
         - 'v?\d+\.\d+\.\d+(?:-?a\d+)?'
