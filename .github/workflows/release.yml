@@ -1,33 +1,166 @@
-name: Release
+name: Publish to PyPI
 
 on:
-  release:
-    types: [created, published]
   workflow_dispatch:
+    inputs:
+      bump_rule:
+        description: 'Version bump rule (major/minor/patch/dev)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - patch
+          - minor
+          - major
+        default: 'patch'
 
 jobs:
-  deploy:
+  ci-test:
+    uses: ./.github/workflows/ci.yml
+
+  details:
+    needs: ci-test
     runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      tag_name: ${{ steps.bump.outputs.tag_name }}
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }} # needed for push after bump2version
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set commit configs (for bump2version)
+        run: |
+          # configure user
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with: 
+          # install a specific version of uv
+          version: "0.4.29"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+  
+      - name: Install build dependencies
+        run: |
+          uv tool install bump2version
+  
+      - name: Generate development version
+        id: version
+        run: |
+          # Handle different trigger types
+          # TODO: If triggered from publish, use rc instead of dev
+          BUMP_RULE="${{ inputs.bump_rule || 'dev' }}"
+  
+          if [ $BUMP_RULE == 'none' ]; then
+            echo "Skipping version bump"
+            # Get the current version
+            grep 'current_version = ' .bumpversion.cfg | sed 's/current_version = //'
+            echo "new_version=$(grep 'current_version = ' .bumpversion.cfg | sed 's/current_version = //')" >> $GITHUB_OUTPUT
+          else
+            echo "Bumping version with rule: $BUMP_RULE"
+            # Bump the version
+            bump2version --allow-dirty --verbose --no-tag $BUMP_RULE
+            # git push # Need to push the new version change to the repo
+            
+            # Store version for later use
+            echo "new_version=$(grep 'current_version = ' .bumpversion.cfg | sed 's/current_version = //')" >> $GITHUB_OUTPUT
+          fi
+
+  test_pypi:
+    needs: [ci-test, details]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    outputs:
+      version: ${{ steps.version.outputs.new_version}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }} # needed for push after bump2version
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with: 
+          # install a specific version of uv
+          version: "0.4.29"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+  
+      - name: Setup Python
+        run: uv python install 3.12
+
+      - name: Build package
+        run: uv build
+      
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+
+  pypi_publish:
+    name: Upload release to PyPI
+    needs: [ci-test, details, test_pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist/
 
-    - name: Setup Rye
-      uses: eifinger/setup-rye@v4.2.3
-      with:
-        enable-cache: true
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 
-    - name: Install dependencies
-      run: rye sync --features test
+  github_release:
+    name: Create GitHub Release
+    needs: [ci-test, details, test_pypi, pypi_publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-    - name: Run tests
-      run: rye test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Push version update
+        run: |
+          git push
+          git push --tags
 
-    - name: Build package
-      run: rye build
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist/
 
-    - name: Publish to PyPI
-      env:
-        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-      run: rye publish --token $PYPI_TOKEN --yes
+      - name: Create GitHub Release
+        id: create_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ needs.details.outputs.new_version }}" \
+            --title "Release v${{ needs.details.outputs.new_version }}" \
+            --generate-notes
