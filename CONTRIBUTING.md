@@ -1,13 +1,79 @@
 # Contributing to Soundscapy
 
+## General Principles
+
+- Use the `uv` tool for managing dependencies and other project tasks. `uv add` and `uv remove` should be used to add or remove dependencies. `uv add --optional <group>` should be used to add an optional dependency. `uv sync # add --all-extras, etc as needed` should be used to install dependencies and sync with lock file. `uv build` should be used to build the package.
+- Try to keep all necessary configurations to `pyproject.toml` where possible. This includes versioning, optional dependencies, tool settings (e.g. `bumpver`) and other project settings.
+- Wherever possible, centralise operations and metadata. For instance, version is defined in `pyproject.toml` and automatically brought into `soundscapy` metadata in `__init__.py`; optional dependency groups are defined in `_optionals.py` and checked once at the `<module>.__init__.py` level, rather than for each individual function or at the `soundscapy.__init__.py` level.
+
+## Linting and Formatting
+
+Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting. This will be checked in the CI pipeline, so make sure to run it before committing.
+
+## Releases and Versioning
+
+Soundscapy uses [Semantic Versioning](https://semver.org/). The version number is stored in `soundscapy/pyproject.toml` and updated for each release.
+
+Releases are instantiated by pushing a tag to `dev` or `main`. The tag should be in the format `vX.Y.Z` for stable releases and `vX.Y.ZrcN` for release candidates. Pre-release tags should be used for testing and development purposes only.
+
+Developers should use [`bumpver`](https://github.com/mbarkhau/bumpver) to update the version number. This tool automatically increments the version number where needed and can also apply git tags and push release tags. Pre-releases should be incremented with:
+
+```bash
+bumpver update --tag-num
+```
+
+For stable releases, use:
+
+```bash
+bumpver update --patch # or --minor or --major
+```
+
+I recommend testing this with `--dry` first to see what changes will be made. Additional options are available for refraining from committing, pushing, or tagging.
+
+The settings for `bumpver` are stored in `pyproject.toml`.
+
+1. **Major Version**:
+
+   - Incremented for incompatible API changes
+   - Currently on zero version pre-stable release. Therefore, breaking changes should be expected and noted using a minor version bump.
+
+2. **Minor Version**:
+
+    - Incremented for new features or significant changes
+    - Reset to 0 for major versions
+
+3. **Patch Version**:
+
+    - Incremented for bug fixes or minor changes
+    - Reset to 0 for new minor versions
+
+4. **Pre-release Versions**:
+
+    - Use `rc` for release candidates
+    - Use `dev` for development versions
+
+### Commit messages
+
+Try to use the [Angular commit message format](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines) for commit messages. Mostly this means starting the commit message with a type, followed by a colon and a short description. For example:
+
+``` txt
+feat: add new feature
+fix: correct bug in feature
+docs: update documentation
+```
+
+The avilable types are:
+
+- feat: A new feature
+- fix: A bug fix
+- docs: Documentation only changes
+- style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- refactor: A code change that neither fixes a bug nor adds a feature
+- perf: A code change that improves performance
+- test: Adding missing or correcting existing tests
+- chore: Changes to the build process or auxiliary tools and libraries such as documentation generation
+
 ## Optional Dependencies System
-
-Soundscapy uses a simple but robust system for handling optional features and their dependencies. The system is designed to:
-
-- Provide clear error messages when dependencies are missing
-- Allow testing with and without optional dependencies
-- Support easy addition of new optional features
-- Handle doctest examples appropriately
 
 ### Core Components
 
@@ -43,9 +109,9 @@ Soundscapy uses a simple but robust system for handling optional features and th
    - Environment variables for doctests
    - Test markers for optional dependencies
 
-## Adding Optional Features
+### Adding Optional Features
 
-### 1. Add New Dependencies
+#### 1. Add New Dependencies
 
 Add new packages to an existing group or create a new group:
 
@@ -57,7 +123,7 @@ uv add new-package --optional audio
 uv add package1 package2 --optional new_group
 ```
 
-### 2. Update Dependency Definitions
+#### 2. Update Dependency Definitions
 
 In `_optionals.py`:
 
@@ -76,7 +142,7 @@ OPTIONAL_DEPENDENCIES = {
 }
 ```
 
-### 3. Update Test Collection
+#### 3. Update Test Collection
 
 If adding a new dependency group that requires its own module (like audio/), update the collection check in conftest.py:
 
@@ -94,7 +160,7 @@ def pytest_ignore_collect(collection_path):
     return False
 ```
 
-### 4. Implement Feature Code
+#### 4. Implement Feature Code
 
 In your module's docstrings, you only need to skip examples that would fail even with dependencies (like missing files or settings):
 
@@ -140,7 +206,7 @@ def test_feature():
 # Tests within the optional module don't need markers - they're handled by collection
 ```
 
-### Where to Use xdoctest REQUIRES Directives
+#### Where to Use xdoctest REQUIRES Directives
 
 The `xdoctest: +REQUIRES(env:AUDIO_DEPS=='1')` directive is only needed in specific cases:
 
@@ -186,7 +252,7 @@ This is because:
 - Files outside optional modules are always collected, so they need explicit control over which examples run
 - Error handling examples specifically need to run when dependencies are missing
 
-## How Testing Works
+### How Testing Works
 
 The testing system uses several mechanisms to handle optional dependencies:
 
@@ -205,19 +271,15 @@ The testing system uses several mechanisms to handle optional dependencies:
    - Allow granular control over which tests run
    - Helpful for integration tests
 
-## Running Tests
+### Running Tests
 
-- Run all tests: `pytest`
-- Run specific group: `pytest -m "optional_deps('audio')"`
-- Skip optional tests: `pytest -m "not optional_deps"`
-
-The test system will automatically:
+The test system **should** automatically:
 
 - Skip collecting modules with missing dependencies
 - Run appropriate doctests based on available dependencies
 - Skip marked tests when dependencies are missing
 
-## Best Practices
+### Best Practices
 
 1. **Dependency Management**:
    - Keep dependencies minimal and logical
@@ -243,9 +305,21 @@ The test system will automatically:
    - Handle dependencies at module boundaries
    - Follow existing code style (Ruff formatter)
 
-## Additional Development Guidelines
+### Additional Development Guidelines
 
 - Run tests with dependencies installed and without
 - Update docstrings when changing dependencies
 - Follow existing code style
 - Keep the dependency system documentation updated
+
+## Github Actions
+
+Soundscapy has three primary workflows: `test.yml`, `test-tutorials.yml` and `tag-release.yml`. `test.yml` runs the test suite on all pushes and pull requests. `tag-release.yml` is triggered by a tag push to `main` or `dev` and creates a release on Github and publishes to PyPI.
+
+In all cases, python and dependencies are managed and installed with `uv`.
+
+`test.yml` will test on multiple python versions, defined by the `python-version` matrix. First, it will install the core dependencies with `uv sync`, then run the test suite (which **should** ignore the tests requiring optional dependencies). Then, it will install all optional dependencies `uv sync --all-extras` and run the tests again. This ensures that the tests run with and without optional dependencies.
+
+`test-tutorials.yml` uses `--nbmake` to convert the notebooks to python files and run them. This is useful for testing the tutorials and ensuring they are up to date. It does not test the veracity of the outputs, just whether the notebooks run without errors.
+
+When `tag-release.yml` runs, it will also run the tests by `uses` and `needs` calling the test workflows. This ensures that the release is only created if the tests pass. Then, it will use `uv build` to build the package, the PyPI publish action to publish to PyPI, and the Github release action to create a release on Github. The release is created with the tag name and the release notes are taken from the tag message.
