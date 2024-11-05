@@ -24,18 +24,18 @@ on:
     branches: [main]
 
 jobs:
-  # tests-pass:
-  #   uses: ./.github/workflows/ci.yml
+  tests-pass:
+    uses: ./.github/workflows/ci.yml
 
   test-release:
-    # needs: tests-pass
+    needs: tests-pass
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
-      # test-release-pass: ${{ github.event.inputs.test-release-pass }}
+      test-release-pass: ${{ github.event.inputs.test-release-pass }}
 
     steps:
     - name: Checkout repository
