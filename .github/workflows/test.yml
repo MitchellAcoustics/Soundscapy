@@ -18,7 +18,6 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
-        uv-extras: ['--extra test', '--all-extras'] # Will test with core dependencies only and all dependencies
 
     steps:
     - name: Checkout repository
@@ -40,8 +39,14 @@ jobs:
         uvx ruff check . 
         uvx ruff format --check
 
-    - name: Install dependencies ${{ matrix.uv-extras }}
-      run: uv sync ${{ matrix.uv-extras }} --link-mode=copy
+    - name: Install core dependencies
+      run: uv sync --extra test
 
-    - name: Run tests
+    - name: Run tests for core deps only
+      run: uv run pytest
+
+    - name: Install optional dependencies
+      run: uv sync --all-extras
+
+    - name: Run tests for all dependencies
       run: uv run pytest
