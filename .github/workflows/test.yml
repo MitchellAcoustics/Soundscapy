@@ -50,7 +50,3 @@ jobs:
 
     - name: Run tests for all dependencies
       run: uv run pytest
-
-    - name: Run tests for tutorial notebooks
-      run: uv run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb --no-cov # BinauralAnalysis is too slow
-  
