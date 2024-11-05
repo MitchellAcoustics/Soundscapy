@@ -4,11 +4,7 @@ name: Tagged Release
 on:
   push:
     tags:
-        - 'v?\d+\.\d+\.\d+'
-        - 'v?\d+\.\d+\.\d+(?:-?a\d+)?'
-        - 'v?\d+\.\d+\.\d+(?:-?b\d+)?'
-        - 'v?\d+\.\d+\.\d+(?:-?rc\d+)?'
-        - 'v?\d+\.\d+\.\d+(?:-?dev\d+)?'
+        - v*
 
 jobs:
   details:
