@@ -80,26 +80,6 @@ Each group contains:
 """
 
 
-def format_import_error(group: str) -> str:
-    """Create a helpful error message for missing dependencies
-
-    Parameters
-    ----------
-    group : str
-        Name of the dependency group
-
-    Returns
-    -------
-    str
-        Formatted error message with installation instructions
-    """
-    info = OPTIONAL_DEPENDENCIES[group]
-    return (
-        f"{info['description'].capitalize()} requires additional dependencies.\n"
-        f" If desired, install with: pip install {info['install']}"
-    )
-
-
 def require_dependencies(group: str) -> Dict[str, Any]:
     """Import and return all packages required for a dependency group.
 
@@ -129,4 +109,6 @@ def require_dependencies(group: str) -> Dict[str, Any]:
             packages[package] = importlib.import_module(package)
         return packages
     except ImportError as e:
-        raise ImportError(format_import_error(group)) from e
+        raise ImportError(
+            f"Missing optional dependency for {e.name_from}. Install with: pip install {OPTIONAL_DEPENDENCIES[group]['install']}"
+        )

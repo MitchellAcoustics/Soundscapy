@@ -34,9 +34,6 @@ try:
 
     __all__.extend(["audio"])
     __all__.extend(audio.__all__)
-except ImportError:
-    import warnings
-    from ._optionals import format_import_error
 
-    # Should raise formatted error message (see ._optionals.require_dependencies)
-    warnings.warn(format_import_error("audio"), ImportWarning)
+except ImportError:
+    logger.debug("Audio module not available")

@@ -21,18 +21,6 @@ def test_optional_dependency_groups_defined():
     assert isinstance(group["description"], str)
 
 
-def test_format_import_error():
-    """Test error message formatting."""
-    from soundscapy._optionals import format_import_error
-
-    msg = format_import_error("audio")
-    assert "requires additional dependencies" in msg
-    assert "pip install soundscapy[audio]" in msg
-
-    with pytest.raises(KeyError):
-        format_import_error("nonexistent_group")
-
-
 @pytest.mark.skipif(
     os.environ.get("AUDIO_DEPS") == "1",
     reason="Test requires audio dependencies to be missing",
@@ -44,7 +32,7 @@ def test_require_dependencies_missing():
     with pytest.raises(ImportError) as exc_info:
         require_dependencies("audio")
 
-    assert "requires additional dependencies" in str(exc_info.value)
+    assert "Missing optional dependency" in str(exc_info.value)
     assert "pip install soundscapy[audio]" in str(exc_info.value)
 
 
