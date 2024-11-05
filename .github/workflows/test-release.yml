@@ -81,7 +81,7 @@ jobs:
         else
           echo "Bumping version with rule: $BUMP_RULE"
           # Bump the version
-          bump2version --allow-dirty --verbose --no-tag $BUMP_RULE --no-commit
+          bump2version --allow-dirty --verbose --no-tag $BUMP_RULE
           # git push # Need to push the new version change to the repo
           
           # Store version for later use
