@@ -1,6 +1,6 @@
 [project]
 name = "soundscapy"
-version = "0.7.5-dev0"
+version = "0.7.5-a0"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
