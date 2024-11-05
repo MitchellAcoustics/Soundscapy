@@ -3110,7 +3110,7 @@ wheels = [
 
 [[package]]
 name = "soundscapy"
-version = "0.7.5rc4"
+version = "0.7.5rc5"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
