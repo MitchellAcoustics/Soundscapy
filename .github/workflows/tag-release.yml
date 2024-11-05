@@ -1,16 +1,14 @@
-name: release
+name: Tagged Release
 # based on: https://github.com/ArjanCodes/examples/blob/0b8c8ab74908be5ed9239fcdaed875548d3f595c/2024/publish_pypi/release.yaml
 
 on:
   push:
-    branches:
-      - main
-      - dev
     tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+a[0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+b[0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
+        - 'v?\d+\.\d+\.\d+'
+        - 'v?\d+\.\d+\.\d+(?:-?a\d+)?'
+        - 'v?\d+\.\d+\.\d+(?:-?b\d+)?'
+        - 'v?\d+\.\d+\.\d+(?:-?rc\d+)?'
+        - 'v?\d+\.\d+\.\d+(?:-?dev\d+)?'
 
 jobs:
   details:
@@ -21,6 +19,8 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Extract tag and Details
         id: release
