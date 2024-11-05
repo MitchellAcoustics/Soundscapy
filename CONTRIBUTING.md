@@ -14,7 +14,7 @@ Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and lin
 
 Soundscapy uses [Semantic Versioning](https://semver.org/). The version number is stored in `soundscapy/pyproject.toml` and updated for each release.
 
-Releases are instantiated by pushing a tag to `dev` or `main`. The tag should be in the format `vX.Y.Z` for stable releases and `vX.Y.ZrcN` for release candidates. Pre-release tags should be used for testing and development purposes only.
+Releases are instantiated by pushing a tag to `dev` or `main`. The tag should be in the format `vX.Y.Z` for stable releases and `vX.Y.ZrcN` for release candidates. Pre-release tags should be used for testing and development purposes only. `dev` tags will trigger a workflow that builds the package and publishes it to the test PyPI server. `rc` or no pre-release tags will trigger a workflow that builds the package and publishes it to PyPI.
 
 Developers should use [`bumpver`](https://github.com/mbarkhau/bumpver) to update the version number. This tool automatically increments the version number where needed and can also apply git tags and push release tags. Pre-releases should be incremented with:
 

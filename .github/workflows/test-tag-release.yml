@@ -1,18 +1,19 @@
-name: Tagged Release
-# based on: https://github.com/ArjanCodes/examples/blob/0b8c8ab74908be5ed9239fcdaed875548d3f595c/2024/publish_pypi/release.yaml
+name: Test Release
 
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"                   # v1.2.3
-      - "v[0-9]+.[0-9]+.[0-9]+rc[0-9]+"           # v1.2.3rc1
-      - "v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+"          # v1.2.3-rc1
+      - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+"         # v1.2.3-dev1
+      - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+"          # v1.2.3dev1
+
 
 jobs:
+  # Reuse the details job with no changes
   details:
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.release.outputs.new_version }}
+      version_str: ${{ steps.release.outputs.version_str }}
       suffix: ${{ steps.release.outputs.suffix }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
@@ -25,11 +26,8 @@ jobs:
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG_NAME=${GITHUB_REF#refs/tags/}
-            # Strip 'v' prefix if present
             VERSION_STR=${TAG_NAME#v}
-            # Split on hyphen to separate version and suffix
             NEW_VERSION=$(echo $VERSION_STR | cut -d'-' -f1)
-            # Get suffix if exists (everything after the hyphen)
             SUFFIX=$(echo "$VERSION_STR" | grep -o '[rd][ec][v1][0-9]*' | tr -d '\n')
 
             echo "version_str=$VERSION_STR" >> "$GITHUB_OUTPUT"
@@ -45,7 +43,6 @@ jobs:
             exit 1
           fi
 
-
       - name: Verify version matches pyproject.toml
         run: |    
             VERSION_STR=${{ steps.release.outputs.version_str }}
@@ -56,34 +53,25 @@ jobs:
             exit 1
             fi
 
+  # Reuse setup_and_build job with no changes
   setup_and_build:
-    needs: 
-      - details
+    needs: [details]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
         with:
           version: "0.4.29"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
-      - name: Setup Python
-        run: uv python install 3.12
-
-      - name: Build source and wheel distribution
-        run: |
-          uv build
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - run: uv python install 3.12
+      - run: uv build
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
 
+  # Reuse existing test workflows
   tests-pass:
     needs: [details]
     uses: ./.github/workflows/test.yml
@@ -92,47 +80,27 @@ jobs:
     needs: [details]
     uses: ./.github/workflows/test-tutorials.yml  
 
-  pypi_publish:
-    name: Upload release to PyPI
+  # Modified to publish to TestPyPI
+  testpypi_publish:
+    name: Upload release to TestPyPI
     needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
 
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-
-  github_release:
-    name: Create GitHub Release
-    needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
+  testpypi_install:
+    name: Install from TestPyPI
+    needs: [testpypi_publish,details]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Create GitHub Release
-        id: create_release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ ! -z "${{ needs.details.outputs.suffix }}" ]; then
-            gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes --prerelease
-          else
-            gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes
-          fi
+      - run: uv python install 3.12
+      - run: uv pip install "soundscapy==${{ needs.details.outputs.version_str }}" --extra-index-url https://test.pypi.org/simple/ --prerelease allow --index-strategy unsafe-best-match
+      - run: uv python -c "import soundscapy; print(soundscapy.__version__)"
