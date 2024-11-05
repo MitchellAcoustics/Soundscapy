@@ -41,7 +41,7 @@ jobs:
             echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
             echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
           
-            echo "Version is $NEW_VERSION"
+            echo "Version is $VERSION_STR"
             echo "Suffix is $SUFFIX"
             echo "Tag name is $TAG_NAME"
           else
@@ -54,8 +54,8 @@ jobs:
         run: |    
             TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
         
-            if [ "$VERSION_STR" != "${TOML_VERSION}" ]; then
-            echo "Error: Tag version ($VERSION_STR) does not match pyproject.toml version (${TOML_VERSION})"
+            if [ "${VERSION_STR}" != "${TOML_VERSION}" ]; then
+            echo "Error: Tag version (${VERSION_STR}) does not match pyproject.toml version (${TOML_VERSION})"
             exit 1
             fi
 
