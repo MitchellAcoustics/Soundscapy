@@ -165,9 +165,9 @@ if __name__ == "__main__":
 
     warnings.filterwarnings("ignore")
 
-    from soundscapy.logging import set_log_level
+    from soundscapy.logging import setup_logging
 
-    set_log_level("DEBUG")
+    setup_logging("DEBUG")
 
     base_path = Path().absolute().parent.parent.parent
     wav_folder = base_path.joinpath("test", "data")

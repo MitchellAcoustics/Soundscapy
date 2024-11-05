@@ -8,22 +8,6 @@ import sys
 from loguru import logger
 
 
-def set_log_level(level: str) -> None:
-    """Set log level by reconfiguring handlers."""
-    try:
-        # Validate level
-        if level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
-            raise ValueError(f"Invalid log level: {level}")
-
-        # Reconfigure logging
-        setup_logging(console_level=level)
-        logger.info(f"Log level changed to {level}")
-
-    except Exception as e:
-        logger.error(f"Failed to set log level: {e}")
-        raise
-
-
 class LogFormatter:
     """Unified formatter for both console and file output."""
 

@@ -169,9 +169,9 @@ class AudioAnalysis:
 
 # Example usage
 if __name__ == "__main__":
-    from soundscapy.logging import set_log_level
+    from soundscapy.logging import setup_logging
 
-    set_log_level("INFO")
+    setup_logging("INFO")
 
     # Initialize the analysis with default settings
     analysis = AudioAnalysis()
