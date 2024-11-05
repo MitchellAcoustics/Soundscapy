@@ -37,6 +37,7 @@ jobs:
             # Get suffix if exists (everything after the hyphen)
             SUFFIX=$(echo $VERSION_STR | cut -d'-' -f2- -s || echo "")
 
+            echo "version_str=$VERSION_STR" >> "$GITHUB_OUTPUT"
             echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
             echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
             echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
@@ -52,6 +53,7 @@ jobs:
 
       - name: Verify version matches pyproject.toml
         run: |    
+            VERSION_STR=${{ steps.release.outputs.version_str }}
             TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
         
             if [ "${VERSION_STR}" != "${TOML_VERSION}" ]; then
