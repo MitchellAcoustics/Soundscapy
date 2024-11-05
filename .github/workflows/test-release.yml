@@ -97,6 +97,8 @@ jobs:
         repository-url: https://test.pypi.org/legacy
         attestations: false
         verbose: true
+        skip-existing: true
+        verify-metadata: true
 
 
     # Works locally, but for some reason fails in the workflow
