@@ -84,17 +84,17 @@ jobs:
           uv build
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
 
   tests-pass:
-    needs: [setup_and_build, details]
+    needs: [details]
     uses: ./.github/workflows/test.yml
   
   tutorial-tests-pass:
-    needs: [setup_and_build, details]
+    needs: [details]
     uses: ./.github/workflows/test-tutorials.yml  
 
   pypi_publish:
@@ -105,7 +105,7 @@ jobs:
       id-token: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
@@ -121,12 +121,12 @@ jobs:
       contents: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
