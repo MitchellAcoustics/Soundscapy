@@ -2,9 +2,16 @@ name: Tagged Release
 # based on: https://github.com/ArjanCodes/examples/blob/0b8c8ab74908be5ed9239fcdaed875548d3f595c/2024/publish_pypi/release.yaml
 
 on:
-  push:
-    tags:
-        - v*
+    push:
+      tags:
+        - "v[0-9]+.[0-9]+.[0-9]+"                   # v1.2.3
+        - "v[0-9]+.[0-9]+.[0-9]+a[0-9]+"            # v1.2.3a1
+        - "v[0-9]+.[0-9]+.[0-9]+b[0-9]+"            # v1.2.3b1
+        - "v[0-9]+.[0-9]+.[0-9]+rc[0-9]+"           # v1.2.3rc1
+        - "v[0-9]+.[0-9]+.[0-9]+-a[0-9]+"           # v1.2.3-a1
+        - "v[0-9]+.[0-9]+.[0-9]+-b[0-9]+"           # v1.2.3-b1
+        - "v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+"          # v1.2.3-rc1
+        - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+"         # v1.2.3-dev1
 
 jobs:
   details:
@@ -23,11 +30,17 @@ jobs:
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG_NAME=${GITHUB_REF#refs/tags/}
-            NEW_VERSION=$(echo $TAG_NAME | awk -F'-' '{print $1}')
-            SUFFIX=$(echo $TAG_NAME | grep -oP '[a-z]+[0-9]+' || echo "")
+            # Strip 'v' prefix if present
+            VERSION_STR=${TAG_NAME#v}
+            # Split on hyphen to separate version and suffix
+            NEW_VERSION=$(echo $VERSION_STR | cut -d'-' -f1)
+            # Get suffix if exists (everything after the hyphen)
+            SUFFIX=$(echo $VERSION_STR | cut -d'-' -f2- -s || echo "")
+
             echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
             echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
             echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          
             echo "Version is $NEW_VERSION"
             echo "Suffix is $SUFFIX"
             echo "Tag name is $TAG_NAME"
@@ -36,31 +49,41 @@ jobs:
             exit 1
           fi
 
-  check_pypi:
-    needs: details
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch information from PyPI
-        run: |
-          response=$(curl -s https://pypi.org/pypi/soundscapy/json || echo "{}")
-          latest_previous_version=$(echo $response | grep -oP '"releases":\{"\K[^"]+' | sort -rV | head -n 1)
-          if [ -z "$latest_previous_version" ]; then
-            echo "Package not found on PyPI."
-            latest_previous_version="0.0.0"
-          fi
-          echo "Latest version on PyPI: $latest_previous_version"
-          echo "latest_previous_version=$latest_previous_version" >> $GITHUB_ENV
 
-      - name: Compare versions and exit if not newer
-        run: |
-          NEW_VERSION=${{ needs.details.outputs.new_version }}
-          LATEST_VERSION=$latest_previous_version
-          if [ "$(printf '%s\n' "$LATEST_VERSION" "$NEW_VERSION" | sort -rV | head -n 1)" != "$NEW_VERSION" ] || [ "$NEW_VERSION" == "$LATEST_VERSION" ]; then
-            echo "The new version $NEW_VERSION is not greater than the latest version $LATEST_VERSION on PyPI."
+      - name: Verify version matches pyproject.toml
+        run: |    
+            TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
+        
+            if [ "$VERSION_STR" != "${TOML_VERSION}" ]; then
+            echo "Error: Tag version ($VERSION_STR) does not match pyproject.toml version (${TOML_VERSION})"
             exit 1
-          else
-            echo "The new version $NEW_VERSION is greater than the latest version $LATEST_VERSION on PyPI."
-          fi
+            fi
+
+#   check_pypi:
+#     needs: details
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Fetch information from PyPI
+#         run: |
+#           response=$(curl -s https://pypi.org/pypi/soundscapy/json || echo "{}")
+#           latest_previous_version=$(echo $response | grep -oP '"releases":\{"\K[^"]+' | sort -rV | head -n 1)
+#           if [ -z "$latest_previous_version" ]; then
+#             echo "Package not found on PyPI."
+#             latest_previous_version="0.0.0"
+#           fi
+#           echo "Latest version on PyPI: $latest_previous_version"
+#           echo "latest_previous_version=$latest_previous_version" >> $GITHUB_ENV
+
+#       - name: Compare versions and exit if not newer
+#         run: |
+#           NEW_VERSION=${{ needs.details.outputs.new_version }}
+#           LATEST_VERSION=$latest_previous_version
+#           if [ "$(printf '%s\n' "$LATEST_VERSION" "$NEW_VERSION" | sort -rV | head -n 1)" != "$NEW_VERSION" ] || [ "$NEW_VERSION" == "$LATEST_VERSION" ]; then
+#             echo "The new version $NEW_VERSION is not greater than the latest version $LATEST_VERSION on PyPI."
+#             exit 1
+#           else
+#             echo "The new version $NEW_VERSION is greater than the latest version $LATEST_VERSION on PyPI."
+#           fi
 
   setup_and_build:
     needs: [details]
@@ -104,6 +127,9 @@ jobs:
 
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
 
   github_release:
     name: Create GitHub Release
@@ -128,4 +154,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes
+          if [ ! -z "${{ needs.details.outputs.suffix }}" ]; then
+            gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes --prerelease
+          else
+            gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes
+          fi
