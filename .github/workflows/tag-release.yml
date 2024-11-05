@@ -3,6 +3,9 @@ name: release
 
 on:
   push:
+    branches:
+      - main
+      - dev
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
       - "[0-9]+.[0-9]+.[0-9]+a[0-9]+"
@@ -62,7 +65,7 @@ jobs:
           else
             echo "The new version $NEW_VERSION is greater than the latest version $LATEST_VERSION on PyPI."
           fi
-          
+
   setup_and_build:
     needs: [details]
     runs-on: ubuntu-latest
