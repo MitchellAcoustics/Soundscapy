@@ -95,8 +95,8 @@ def format_import_error(group: str) -> str:
     """
     info = OPTIONAL_DEPENDENCIES[group]
     return (
-        f"{info['description'].capitalize()} requires additional dependencies."
-        f" Install with: pip install {info['install']}"
+        f"{info['description'].capitalize()} requires additional dependencies.\n"
+        f" If desired, install with: pip install {info['install']}"
     )
 
 
