@@ -12,6 +12,10 @@ import importlib.metadata
 
 __version__ = importlib.metadata.version("soundscapy")
 
+from soundscapy import surveys
+from soundscapy import databases
+from soundscapy import plotting
+
 from soundscapy.logging import setup_logging
 from soundscapy import plotting
 from soundscapy.databases import araus, isd, satp
@@ -19,6 +23,8 @@ from soundscapy.surveys import processing
 from soundscapy.plotting import scatter_plot, density_plot
 
 __all__ = [
+    "surveys",
+    "databases",
     "plotting",
     "araus",
     "isd",
