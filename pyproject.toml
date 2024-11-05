@@ -116,7 +116,7 @@ exclude = [
 ]
 
 [tool.bumpver]
-current_version = "v0.7.5rc1"
+current_version = "v0.7.5rc2"
 version_pattern = "vMAJOR.MINOR.PATCH[[-]PYTAGNUM]"
 commit_message = "bump version {old_version} -> {new_version}"
 tag_message = "{new_version}"
@@ -126,5 +126,6 @@ push = true
 
 [tool.bumpver.file_patterns]
 "pyproject.toml" = [
+    '^current_version = "{version}"',
     '^version = "{pep440_version}"',
 ]
