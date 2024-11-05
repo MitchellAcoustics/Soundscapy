@@ -4,11 +4,7 @@ import pytest
 import os
 from loguru import logger
 from _pytest.logging import LogCaptureFixture
-from soundscapy.logging import setup_logging
 from soundscapy._optionals import require_dependencies
-
-logger.enable("soundscapy")
-setup_logging("DEBUG")
 
 # Cache the dependency check result
 _has_audio = None
@@ -50,7 +46,7 @@ def pytest_ignore_collect(collection_path):
         logger.debug(f"Collection check for {path_str}: ignore={should_ignore}")
         return should_ignore
 
-    return False
+    return None
 
 
 def pytest_configure(config):
