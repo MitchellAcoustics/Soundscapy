@@ -42,14 +42,14 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        # ref: ${{ github.event.pull_request.head.ref }} # needed for push after bump2version
-        # token: ${{ secrets.GITHUB_TOKEN }}
+        ref: ${{ github.event.pull_request.head.ref }} # needed for push after bump2version
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-    # - name: Set commit configs (for bump2version)
-    #   run: |
-    #     # configure user
-    #     git config user.name "${{ github.actor }}"
-    #     git config user.email "${{ github.actor }}@users.noreply.github.com"
+    - name: Set commit configs (for bump2version)
+      run: |
+        # configure user
+        git config user.name "${{ github.actor }}"
+        git config user.email "${{ github.actor }}@users.noreply.github.com"
   
     - name: Install uv
       uses: astral-sh/setup-uv@v3
@@ -95,6 +95,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://test.pypi.org/legacy
+        attestations: false
 
 
     # Works locally, but for some reason fails in the workflow
