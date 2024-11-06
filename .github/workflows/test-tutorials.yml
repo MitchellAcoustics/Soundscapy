@@ -7,9 +7,9 @@ on:
         description: "Indicates if all tutorial tests passed"
         value: ${{ github.event.inputs.tutorial-tests-pass }}
   push:
-    branches: [ main, dev ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main ]
 
 jobs:
   test:
