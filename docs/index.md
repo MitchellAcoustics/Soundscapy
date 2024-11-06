@@ -20,6 +20,14 @@ To get started with _Soundscapy_, you'll need to install it first. You can do th
 pip install soundscapy
 ```
 
+### Optional Dependencies
+
+_Soundscapy_ splits its functionality into optional modules to reduce the number of dependencies required for basic functionality. By default, _Soundscapy_ includes the survey data processing and plotting functionality. If you would like to use the binaural audio processing and psychoacoustics functionality, you will need to install the optional `audio` dependency:
+
+```bash
+pip install soundscapy[audio]
+```
+
 ## Documentation
 
 This documentation is designed to help you understand and use _Soundscapy_ effectively. It's divided into several sections:
