@@ -1,6 +1,6 @@
 [project]
 name = "soundscapy"
-version = "0.7.5dev1"
+version = "0.7.5dev2"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
@@ -116,7 +116,7 @@ exclude = [
 ]
 
 [tool.bumpver]
-current_version = "v0.7.5dev1"
+current_version = "v0.7.5dev2"
 version_pattern = "vMAJOR.MINOR.PATCH[[-]PYTAGNUM]"
 commit_message = "bump version {old_version} -> {new_version}"
 tag_message = "{new_version}"
