@@ -2957,15 +2957,6 @@ wheels = [
 ]
 
 [[package]]
-name = "schema"
-version = "0.7.7"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d4/01/0ea2e66bad2f13271e93b729c653747614784d3ebde219679e41ccdceecd/schema-0.7.7.tar.gz", hash = "sha256:7da553abd2958a19dc2547c388cde53398b39196175a9be59ea1caf5ab0a1807", size = 44245 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/1b/81855a88c6db2b114d5b2e9f96339190d5ee4d1b981d217fa32127bb00e0/schema-0.7.7-py2.py3-none-any.whl", hash = "sha256:5d976a5b50f36e74e2157b47097b60002bd4d42e65425fcc9c9befadb4255dde", size = 18632 },
-]
-
-[[package]]
 name = "scikit-image"
 version = "0.24.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3110,7 +3101,7 @@ wheels = [
 
 [[package]]
 name = "soundscapy"
-version = "0.7.5rc5"
+version = "0.7.5"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
@@ -3118,7 +3109,6 @@ dependencies = [
     { name = "plotly" },
     { name = "pydantic" },
     { name = "pyyaml" },
-    { name = "schema" },
     { name = "scipy" },
     { name = "seaborn" },
 ]
@@ -3178,7 +3168,6 @@ requires-dist = [
     { name = "pytest-mpl", marker = "extra == 'test'", specifier = ">=0.17.0" },
     { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.6.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "schema", specifier = ">=0.7.7" },
     { name = "scikit-maad", marker = "extra == 'audio'", specifier = ">=1.4.3" },
     { name = "scipy", specifier = ">=1.14.1" },
     { name = "seaborn", specifier = ">=0.13.2" },
