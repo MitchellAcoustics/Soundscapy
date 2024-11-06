@@ -40,7 +40,7 @@ def pytest_ignore_collect(collection_path):
             logger.debug(f"Collection check for {path_str}: ignore={should_ignore}")
             return should_ignore
 
-    return False
+    return None
 
 
 def pytest_configure(config):
