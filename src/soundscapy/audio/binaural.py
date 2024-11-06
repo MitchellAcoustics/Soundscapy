@@ -39,8 +39,8 @@ import pandas as pd
 import scipy.signal
 from acoustics import Signal
 
-from soundscapy.audio.analysis_settings import AnalysisSettings, MetricSettings
-from soundscapy.audio.metrics import (
+from .analysis_settings import AnalysisSettings, MetricSettings
+from .metrics import (
     maad_metric_1ch,
     maad_metric_2ch,
     mosqito_metric_1ch,

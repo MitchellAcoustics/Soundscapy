@@ -24,9 +24,9 @@ from loguru import logger
 import pandas as pd
 from tqdm.auto import tqdm
 
-from soundscapy.audio.analysis_settings import AnalysisSettings
-from soundscapy.audio.binaural import Binaural
-from soundscapy.audio.metrics import (
+from .analysis_settings import AnalysisSettings
+from .binaural import Binaural
+from .metrics import (
     add_results,
     prep_multiindex_df,
     process_all_metrics,
