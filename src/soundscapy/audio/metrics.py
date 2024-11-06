@@ -44,7 +44,7 @@ from mosqito.sq_metrics import (
 )
 from scipy import stats
 
-from soundscapy.audio.analysis_settings import AnalysisSettings
+from .analysis_settings import AnalysisSettings
 
 DEFAULT_LABELS = {
     "LZeq": "LZeq",
