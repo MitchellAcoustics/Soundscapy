@@ -32,7 +32,7 @@ def test_require_dependencies_missing():
     with pytest.raises(ImportError) as exc_info:
         require_dependencies("audio")
 
-    assert "Missing optional dependency" in str(exc_info.value)
+    assert "Install with:" in str(exc_info.value)
     assert "pip install soundscapy[audio]" in str(exc_info.value)
 
 

@@ -211,6 +211,66 @@ Benefits:
 - Centralized dependency configuration
 - No runtime overhead for unused optional features
 
+### Testing Optional Dependencies
+
+Soundscapy uses a flexible system for testing optional dependencies that allows both local development testing and full integration testing in CI.
+
+#### Test Structure
+
+Optional dependency tests exist at three levels:
+
+1. **Optional Module Tests**: Tests within optional modules (e.g., `audio/`)
+   - Only collected when dependencies are available
+   - Test actual functionality
+   - No need for special markers or mocking
+
+2. **Integration Tests**: Tests that use optional features from other modules
+   - Use `@pytest.mark.optional_deps('group')` marker
+   - Skip when dependencies unavailable
+   - Test actual integration between components
+
+
+#### When to Use Each Testing Approach
+
+1. **Use `@pytest.mark.optional_deps` when**:
+   - Testing actual functionality that requires dependencies
+   - Writing integration tests
+   - Testing with real package interactions
+
+2. **No special handling needed when**:
+   - Writing tests within an optional module
+   - Testing core functionality that doesn't use optional features
+
+### Adding Tests for New Optional Features
+
+When adding new optional features:
+
+1. **Inside Optional Module**:
+   - Put tests in the module's test directory
+   - No special handling needed
+   - Tests will only run when dependencies are available
+
+   ```python
+   # soundscapy/new_group/tests/test_feature.py
+   def test_new_feature():
+       """Regular test, no special handling needed."""
+       from soundscapy.new_group import NewFeature
+       assert NewFeature.method() == expected
+   ```
+
+2. **Integration Tests**:
+   - Use the optional_deps marker
+   - Put in main test directory
+
+   ```python
+   # test/test_integration.py
+   @pytest.mark.optional_deps('new_group')
+   def test_new_feature_integration():
+       """Will skip if dependencies missing."""
+       from soundscapy import NewFeature
+       assert NewFeature.integrate() == expected
+   ```
+
 ## Github Actions
 
 Soundscapy has three primary workflows: `test.yml`, `test-tutorials.yml` and `tag-release.yml`. `test.yml` runs the test suite on all pushes and pull requests. `tag-release.yml` is triggered by a tag push to `main` or `dev` and creates a release on Github and publishes to PyPI.
