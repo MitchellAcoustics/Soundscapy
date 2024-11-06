@@ -26,13 +26,13 @@ Soundscapy splits its functionality into optional modules to reduce the number o
 If you would like to use the binaural audio processing and psychoacoustics functionality, you will need to install the optional `audio` dependency:
 
 ```bash
-pip install soundscapy[audio]
+pip install "soundscapy[audio]"
 ```
 
 To install all optional dependencies, use the following command:
 
 ```bash
-pip install soundscapy[all]
+pip install "soundscapy[all]"
 ```
 
 
