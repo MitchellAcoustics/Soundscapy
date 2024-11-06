@@ -104,7 +104,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12' 
-      - name: Install package from TestPyPI
+      - name: Install soundscapy from TestPyPI
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 5
@@ -112,3 +112,21 @@ jobs:
           retry_wait_seconds: 30
           command: python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "soundscapy==${{ needs.details.outputs.version_str }}"
       - run: python -c "import soundscapy; print(soundscapy.__version__)"
+
+      - name: Install soundscapy[audio] from TestPyPI
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "soundscapy[audio]==${{ needs.details.outputs.version_str }}"
+      - run: python -c "import soundscapy; print(soundscapy.__version__); from soundscapy import Binaural"
+
+      - name: Install soundscapy[all] from TestPyPI
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "soundscapy[all]==${{ needs.details.outputs.version_str }}"
+      - run: python -c "import soundscapy; print(soundscapy.__version__); from soundscapy import Binaural"

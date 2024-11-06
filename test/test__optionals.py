@@ -32,7 +32,7 @@ def test_require_dependencies_missing():
     with pytest.raises(ImportError) as exc_info:
         require_dependencies("audio")
 
-    assert "Missing optional dependency" in str(exc_info.value)
+    assert "Install with:" in str(exc_info.value)
     assert "pip install soundscapy[audio]" in str(exc_info.value)
 
 
@@ -47,26 +47,41 @@ def test_require_dependencies_present():
     assert all(packages[pkg] is not None for pkg in packages)
 
 
-def test_audio_module_import_behavior():
-    """Test top-level audio module import behavior."""
+def test_optional_import_behavior():
+    """Test top-level optional component import behavior."""
     import importlib
     import soundscapy
+    from soundscapy._optionals import OPTIONAL_IMPORTS
 
-    # Check if audio module is in __all__
-    has_audio = "audio" in soundscapy.__all__
+    # Test that optional components are listed in __all__
+    for name in OPTIONAL_IMPORTS:
+        assert name in soundscapy.__all__
 
-    # Should match whether dependencies are available
-    try:
-        # Attempt to import dependencies
-        importlib.import_module("mosqito")
-        importlib.import_module("maad")
-        importlib.import_module("acoustics")
+    # Test import behavior
+    def has_audio_deps():
+        """Check if audio dependencies are available."""
+        try:
+            importlib.import_module("mosqito")
+            importlib.import_module("maad")
+            importlib.import_module("acoustics")
+            return True
+        except ImportError:
+            return False
 
-        # If all imports succeed, audio module should be present
-        assert has_audio is True
-    except ImportError:
-        # If any import fails, audio module should not be present
-        assert has_audio is False
+    # Try importing Binaural as an example component
+    if has_audio_deps():
+        # Should succeed when dependencies are available
+        from soundscapy import Binaural
+
+        assert hasattr(Binaural, "__module__")
+    else:
+        # Should raise helpful ImportError when dependencies missing
+        import pytest
+
+        with pytest.raises(ImportError) as exc_info:
+            from soundscapy import Binaural
+        assert "audio analysis functionality" in str(exc_info.value)
+        assert "pip install soundscapy[audio]" in str(exc_info.value)
 
 
 def test_invalid_group():
