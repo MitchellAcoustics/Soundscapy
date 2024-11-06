@@ -6,6 +6,8 @@
 - Try to keep all necessary configurations to `pyproject.toml` where possible. This includes versioning, optional dependencies, tool settings (e.g. `bumpver`) and other project settings.
 - Wherever possible, centralise operations and metadata. For instance, version is defined in `pyproject.toml` and automatically brought into `soundscapy` metadata in `__init__.py`; optional dependency groups are defined in `_optionals.py` and checked once at the `<module>.__init__.py` level, rather than for each individual function or at the `soundscapy.__init__.py` level.
 
+Changes should be made in a feature branch and submitted to `dev` via a pull request. The pull request should be reviewed by at least one other developer before being merged. The `main` branch should only contain stable releases. Docs can be updated directly on `dev` or `main` as needed.
+
 ## Linting and Formatting
 
 Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting. This will be checked in the CI pipeline, so make sure to run it before committing.
