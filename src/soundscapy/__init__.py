@@ -17,7 +17,6 @@ from soundscapy import databases
 from soundscapy import plotting
 
 from soundscapy.logging import setup_logging
-from soundscapy import plotting
 from soundscapy.databases import araus, isd, satp
 from soundscapy.surveys import processing
 from soundscapy.plotting import scatter_plot, density_plot

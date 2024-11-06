@@ -9,6 +9,7 @@ from soundscapy._optionals import require_dependencies
 # Cache the dependency check result
 _has_audio = None
 
+
 def _check_audio_deps():
     """Check for audio dependencies, caching the result."""
     global _has_audio
