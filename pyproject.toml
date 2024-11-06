@@ -6,7 +6,7 @@ authors = [
     { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
 ]
 dependencies = [
-    "pandas[excel,performance]>=2.2.2",
+    "pandas[excel]>=2.2.2",
     "seaborn>=0.13.2",
     "pyyaml>=6.0.2",
     "loguru>=0.7.2",
