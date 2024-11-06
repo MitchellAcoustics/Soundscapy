@@ -109,6 +109,13 @@ class CircumplexPlot:
                 raise NotImplementedError(
                     "Simple density plots are only available for the Seaborn backend."
                 )
+        elif plot_type == PlotType.JOINT:
+            if isinstance(self._backend, SeabornBackend):
+                self._plot = self._backend.create_jointplot(self.data, self.params)
+            else:
+                raise NotImplementedError(
+                    "Joint plots are only available for the Seaborn backend."
+                )
         else:
             raise ValueError(f"Unsupported plot type: {plot_type}")
 
@@ -127,6 +134,10 @@ class CircumplexPlot:
     ) -> "CircumplexPlot":
         """Create a density plot."""
         return self._create_plot(PlotType.DENSITY, apply_styling, ax)
+
+    def jointplot(self, apply_styling: bool = True) -> "CircumplexPlot":
+        """Create a joint plot."""
+        return self._create_plot(PlotType.JOINT, apply_styling)
 
     def simple_density(
         self, apply_styling: bool = True, ax: Optional[plt.Axes] = None

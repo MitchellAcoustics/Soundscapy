@@ -167,6 +167,35 @@ class SeabornBackend(PlotBackend):
             )
         return fig, ax
 
+    def create_jointplot(self, data, params):
+        """
+
+        Examples
+        --------
+        >>> import soundscapy as sspy
+        >>> from soundscapy.plotting import Backend, CircumplexPlot, StyleOptions, CircumplexPlotParams
+        >>> data = sspy.isd.load()
+        >>> data = sspy.surveys.add_iso_coords(data, overwrite=True)
+        >>> sample_data = sspy.isd.select_location_ids(data, ['CamdenTown'])
+        >>> plot = CircumplexPlot(data=sample_data, backend=Backend.SEABORN)
+        >>> g = plot.jointplot()
+        >>> g.show() # doctest: +SKIP
+        """
+        g = sns.JointGrid(xlim=params.xlim, ylim=params.ylim)
+        joint_params = params
+        joint_params.title = ""
+        SeabornBackend.create_density(self, data, joint_params, ax=g.ax_joint)
+
+        margin_params = params
+        margin_params.title = ""
+        sns.kdeplot(data, x=params.x, ax=g.ax_marg_x, fill=True, alpha=params.alpha)
+        sns.kdeplot(data, y=params.y, ax=g.ax_marg_y, fill=True, alpha=params.alpha)
+
+        return (
+            g.fig,
+            g.ax_joint,
+        )  # TODO: Should return the whole JointGrid object - repeat throughout plotting methods
+
     def create_simple_density(self, data, params, ax=None):
         if ax is None:
             fig, ax = plt.subplots(figsize=self.style_options.figsize)

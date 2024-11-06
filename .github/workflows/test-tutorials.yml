@@ -1,0 +1,42 @@
+name: Test Tutorial Notebooks
+
+on:
+  workflow_call:
+    outputs:
+      tutorial-tests-pass:
+        description: "Indicates if all tutorial tests passed"
+        value: ${{ github.event.inputs.tutorial-tests-pass }}
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    name: Run tests on Tutorial notebooks
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with: 
+        # install a specific version of uv
+        version: "0.4.29"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Setup Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Install optional dependencies
+      run: uv sync --all-extras
+
+    - name: Run tests for tutorial notebooks
+      run: uv run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb --no-cov # BinauralAnalysis is too slow
+  

@@ -1,0 +1,114 @@
+name: Test Tagged Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+"         # v1.2.3-dev1
+      - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+"          # v1.2.3dev1
+
+
+jobs:
+  # Reuse the details job with no changes
+  details:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.release.outputs.new_version }}
+      version_str: ${{ steps.release.outputs.version_str }}
+      suffix: ${{ steps.release.outputs.suffix }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract tag and Details
+        id: release
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            VERSION_STR=${TAG_NAME#v}
+            NEW_VERSION=$(echo $VERSION_STR | cut -d'-' -f1)
+            SUFFIX=$(echo "$VERSION_STR" | grep -o '[rd][ec][v1][0-9]*' | tr -d '\n')
+
+            echo "version_str=$VERSION_STR" >> "$GITHUB_OUTPUT"
+            echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+            echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+            echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          
+            echo "Version is $VERSION_STR"
+            echo "Suffix is $SUFFIX"
+            echo "Tag name is $TAG_NAME"
+          else
+            echo "No tag found"
+            exit 1
+          fi
+
+      - name: Verify version matches pyproject.toml
+        run: |    
+            VERSION_STR=${{ steps.release.outputs.version_str }}
+            TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
+        
+            if [ "${VERSION_STR}" != "${TOML_VERSION}" ]; then
+            echo "Error: Tag version (${VERSION_STR}) does not match pyproject.toml version (${TOML_VERSION})"
+            exit 1
+            fi
+
+  # Reuse setup_and_build job with no changes
+  setup_and_build:
+    needs: [details]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.29"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv python install 3.12
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # Reuse existing test workflows
+  tests-pass:
+    needs: [details]
+    uses: ./.github/workflows/test.yml
+  
+  tutorial-tests-pass:
+    needs: [details]
+    uses: ./.github/workflows/test-tutorials.yml  
+
+  # Modified to publish to TestPyPI
+  testpypi_publish:
+    name: Upload release to TestPyPI
+    needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  testpypi_install:
+    name: Install from TestPyPI
+    needs: [testpypi_publish, details]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' 
+      - name: Install package from TestPyPI
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "soundscapy==${{ needs.details.outputs.version_str }}"
+      - run: python -c "import soundscapy; print(soundscapy.__version__)"

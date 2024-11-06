@@ -19,6 +19,7 @@ Note:
 import concurrent.futures
 from pathlib import Path
 from typing import Dict, List, Optional
+from loguru import logger
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -30,9 +31,6 @@ from soundscapy.audio.metrics import (
     prep_multiindex_df,
     process_all_metrics,
 )
-from soundscapy.logging import get_logger
-
-logger = get_logger()
 
 
 def tqdm_write_sink(message):
@@ -167,9 +165,9 @@ if __name__ == "__main__":
 
     warnings.filterwarnings("ignore")
 
-    from soundscapy.logging import set_log_level
+    from soundscapy.logging import setup_logging
 
-    set_log_level("DEBUG")
+    setup_logging("DEBUG")
 
     base_path = Path().absolute().parent.parent.parent
     wav_folder = base_path.joinpath("test", "data")

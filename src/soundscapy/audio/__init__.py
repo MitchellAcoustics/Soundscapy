@@ -13,18 +13,26 @@ to provide a comprehensive suite of audio analysis tools.
 
 Example:
     >>> # xdoctest: +SKIP
-    >>> from soundscapy.audio import Binaural  # doctest: +SKIP
-    >>> signal = Binaural.from_wav("audio.wav")  # doctest: +SKIP
-    >>> results = signal.process_all_metrics(analysis_settings)  # doctest: +SKIP
+    >>> from soundscapy.audio import Binaural
+    >>> signal = Binaural.from_wav("audio.wav")
+    >>> results = signal.process_all_metrics(analysis_settings)
 
 See Also:
     soundscapy.audio.binaural: For detailed Binaural class documentation.
     soundscapy.audio.metrics: For individual metric calculation functions.
 """
+# ruff: noqa: E402
+# ignore module level import order because we need to run require_dependencies first
 
-from soundscapy.audio.analysis_settings import AnalysisSettings, ConfigManager
+from soundscapy._optionals import require_dependencies
+
+# This will raise an ImportError if the required dependencies are not installed
+required = require_dependencies("audio")
+
+# Now we can import our modules that depend on the optional packages
+from .binaural import Binaural
+from .analysis_settings import AnalysisSettings, ConfigManager
 from soundscapy.audio.audio_analysis import AudioAnalysis
-from soundscapy.audio.binaural import Binaural
 from soundscapy.audio.metrics import (
     add_results,
     prep_multiindex_df,

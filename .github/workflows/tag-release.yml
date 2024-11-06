@@ -1,0 +1,138 @@
+name: Tagged Release
+# based on: https://github.com/ArjanCodes/examples/blob/0b8c8ab74908be5ed9239fcdaed875548d3f595c/2024/publish_pypi/release.yaml
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"                   # v1.2.3
+      - "v[0-9]+.[0-9]+.[0-9]+rc[0-9]+"           # v1.2.3rc1
+      - "v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+"          # v1.2.3-rc1
+
+jobs:
+  details:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.release.outputs.new_version }}
+      suffix: ${{ steps.release.outputs.suffix }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract tag and Details
+        id: release
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            # Strip 'v' prefix if present
+            VERSION_STR=${TAG_NAME#v}
+            # Split on hyphen to separate version and suffix
+            NEW_VERSION=$(echo $VERSION_STR | cut -d'-' -f1)
+            # Get suffix if exists (everything after the hyphen)
+            SUFFIX=$(echo "$VERSION_STR" | grep -o '[rd][ec][v1][0-9]*' | tr -d '\n')
+
+            echo "version_str=$VERSION_STR" >> "$GITHUB_OUTPUT"
+            echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+            echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+            echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          
+            echo "Version is $VERSION_STR"
+            echo "Suffix is $SUFFIX"
+            echo "Tag name is $TAG_NAME"
+          else
+            echo "No tag found"
+            exit 1
+          fi
+
+
+      - name: Verify version matches pyproject.toml
+        run: |    
+            VERSION_STR=${{ steps.release.outputs.version_str }}
+            TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
+        
+            if [ "${VERSION_STR}" != "${TOML_VERSION}" ]; then
+            echo "Error: Tag version (${VERSION_STR}) does not match pyproject.toml version (${TOML_VERSION})"
+            exit 1
+            fi
+
+  setup_and_build:
+    needs: 
+      - details
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.29"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Setup Python
+        run: uv python install 3.12
+
+      - name: Build source and wheel distribution
+        run: |
+          uv build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  tests-pass:
+    needs: [details]
+    uses: ./.github/workflows/test.yml
+  
+  tutorial-tests-pass:
+    needs: [details]
+    uses: ./.github/workflows/test-tutorials.yml  
+
+  pypi_publish:
+    name: Upload release to PyPI
+    needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github_release:
+    name: Create GitHub Release
+    needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create GitHub Release
+        id: create_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -z "${{ needs.details.outputs.suffix }}" ]; then
+            gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes --prerelease
+          else
+            gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes
+          fi

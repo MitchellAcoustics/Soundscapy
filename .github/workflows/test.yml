@@ -1,0 +1,52 @@
+name: Test
+
+on:
+  workflow_call:
+    outputs:
+      tests-pass:
+        description: "Indicates if all tests passed"
+        value: ${{ github.event.inputs.tests-pass }}
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with: 
+        # install a specific version of uv
+        version: "0.4.29"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Setup Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Lint and format check # Run linting before wasting time on testing
+      run: |
+        uvx ruff check . 
+        uvx ruff format --check
+
+    - name: Install core dependencies
+      run: uv sync --extra test
+
+    - name: Run tests for core deps only
+      run: uv run pytest
+
+    - name: Install optional dependencies
+      run: uv sync --all-extras
+
+    - name: Run tests for all dependencies
+      run: uv run pytest
