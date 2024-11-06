@@ -16,7 +16,7 @@ build:
     # golang: "1.19"
   jobs:
     post_install:
-      - pip install dependency-groups
+      - pip install dependency-groups .
       - pip-install-dependency-groups docs
 
 # Build documentation in the "docs/" directory with Sphinx
