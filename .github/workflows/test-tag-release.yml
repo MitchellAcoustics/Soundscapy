@@ -98,9 +98,15 @@ jobs:
 
   testpypi_install:
     name: Install from TestPyPI
-    needs: [testpypi_publish,details]
+    needs: [testpypi_publish, details]
     runs-on: ubuntu-latest
     steps:
       - run: uv python install 3.12
-      - run: uv pip install "soundscapy==${{ needs.details.outputs.version_str }}" --extra-index-url https://test.pypi.org/simple/ --prerelease allow --index-strategy unsafe-best-match
+      - name: Install package from TestPyPI
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: uv pip install "soundscapy==${{ needs.details.outputs.version_str }}" --extra-index-url https://test.pypi.org/simple/ --prerelease allow --index-strategy unsafe-best-match
       - run: uv python -c "import soundscapy; print(soundscapy.__version__)"
