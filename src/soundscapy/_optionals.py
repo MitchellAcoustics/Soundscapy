@@ -4,59 +4,6 @@ Optional dependency handling for soundscapy.
 This module provides utilities for managing optional dependencies across the package.
 It allows graceful handling of missing dependencies and provides helpful feedback
 about which dependencies are missing and how to install them.
-
-Examples
---------
-Basic usage - importing optional dependencies:
-
->>> from soundscapy._optionals import require_dependencies
->>> # xdoctest: +SKIP
->>> required = require_dependencies("audio")  # Returns dict of imported modules
->>> mosqito = required["mosqito"]  # Access specific module
-
-Error handling for missing dependencies:
-
->>> # xdoctest: +REQUIRES(env:AUDIO_DEPS=0)
->>> from soundscapy._optionals import require_dependencies
->>> try:
-...     required = require_dependencies("audio")
-... except ImportError as e:
-...     print(str(e))  # doctest: +ELLIPSIS
-audio analysis functionality requires additional dependencies. Install with: pip install soundscapy[audio]
-
-Successful dependency loading:
-
->>> # xdoctest: +REQUIRES(env:AUDIO_DEPS==1)
->>> from soundscapy._optionals import require_dependencies
->>> required = require_dependencies("audio")
->>> isinstance(required, dict)
-True
->>> 'mosqito' in required
-True
-
-Typical usage in a module:
-
->>> # xdoctest: +SKIP
->>> from soundscapy._optionals import require_dependencies
->>> # This will raise ImportError with helpful message if dependencies missing
->>> required = require_dependencies("audio")
->>> # Now import feature code that depends on the optional packages
->>> from .binaural import Binaural
->>> from .analysis_settings import AnalysisSettings
-
-Notes
------
-The `require_dependencies()` function is the main interface for managing optional
-dependencies. It performs these key functions:
-
-1. Checks if all required packages for a feature group are available
-2. Returns a dictionary of imported modules if successful
-3. Raises an ImportError with installation instructions if dependencies are missing
-
-The module uses OPTIONAL_DEPENDENCIES to define feature groups and their requirements:
-    - packages: Tuple of required package names
-    - install: pip install command/target
-    - description: Human-readable feature description
 """
 
 from typing import Dict, Any
@@ -78,6 +25,17 @@ Each group contains:
     install (str): pip install command/target
     description (str): Human-readable feature description
 """
+
+OPTIONAL_IMPORTS = {
+    "Binaural": ("soundscapy.audio", "Binaural"),
+    "AudioAnalysis": ("soundscapy.audio", "AudioAnalysis"),
+    "AnalysisSettings": ("soundscapy.audio", "AnalysisSettings"),
+    "ConfigManager": ("soundscapy.audio", "ConfigManager"),
+    "process_all_metrics": ("soundscapy.audio", "process_all_metrics"),
+    "prep_multiindex_df": ("soundscapy.audio", "prep_multiindex_df"),
+    "add_results": ("soundscapy.audio", "add_results"),
+    "parallel_process": ("soundscapy.audio", "parallel_process"),
+}
 
 
 def require_dependencies(group: str) -> Dict[str, Any]:
@@ -110,5 +68,23 @@ def require_dependencies(group: str) -> Dict[str, Any]:
         return packages
     except ImportError as e:
         raise ImportError(
-            f"Missing optional dependency for {e.name}. Install with: pip install {OPTIONAL_DEPENDENCIES[group]['install']}"
-        )
+            f"{OPTIONAL_DEPENDENCIES[group]['description']} requires additional dependencies. "
+            f"Install with: pip install {OPTIONAL_DEPENDENCIES[group]['install']}"
+        ) from e
+
+
+def import_optional(name: str) -> Any:
+    """Import an optional component by name."""
+    if name not in OPTIONAL_IMPORTS:
+        raise AttributeError(f"module 'soundscapy' has no attribute '{name}'")
+
+    module_name, attr_name = OPTIONAL_IMPORTS[name]
+    try:
+        module = importlib.import_module(module_name)
+        return getattr(module, attr_name)
+    except ImportError as e:
+        group = "audio"  # Can be made dynamic if we add more groups
+        raise ImportError(
+            f"The {name} component requires {OPTIONAL_DEPENDENCIES[group]['description']}. "
+            f"Install with: pip install {OPTIONAL_DEPENDENCIES[group]['install']}"
+        ) from e
