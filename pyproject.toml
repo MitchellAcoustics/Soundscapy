@@ -13,6 +13,7 @@ dependencies = [
     "pyyaml>=6.0.2",
     "pydantic>=2.8.2",
     "loguru>=0.7.2",
+    "numpy!=1.26",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"

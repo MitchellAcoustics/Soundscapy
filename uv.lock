@@ -3025,10 +3025,11 @@ wheels = [
 
 [[package]]
 name = "soundscapy"
-version = "0.7.6.dev0"
+version = "0.7.6"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
+    { name = "numpy" },
     { name = "pandas", extra = ["excel"] },
     { name = "plotly" },
     { name = "pydantic" },
@@ -3084,6 +3085,7 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "mosqito", marker = "extra == 'audio'", specifier = ">=1.2.1" },
     { name = "numba", marker = "extra == 'audio'", specifier = ">=0.59" },
+    { name = "numpy", specifier = "!=1.26" },
     { name = "pandas", extras = ["excel"], specifier = ">=2.2.2" },
     { name = "plotly", specifier = ">=5.23.0" },
     { name = "pydantic", specifier = ">=2.8.2" },
