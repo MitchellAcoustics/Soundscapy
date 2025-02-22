@@ -7,6 +7,7 @@ from typing import Any, Dict
 import yaml
 from loguru import logger
 from pydantic import (
+    AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
@@ -96,8 +97,8 @@ class AnalysisSettings(BaseModel):
     ----------
     version : str
         Version of the configuration.
-    PythonAcoustics : LibrarySettings | None
-        Settings for PythonAcoustics metrics.
+    AcousticToolbox : LibrarySettings | None
+        Settings for AcousticToolbox metrics.
     MoSQITo : LibrarySettings | None
         Settings for MoSQITo metrics.
     scikit_maad : LibrarySettings | None
@@ -105,7 +106,9 @@ class AnalysisSettings(BaseModel):
     """
 
     version: str = "1.0"
-    PythonAcoustics: LibrarySettings | None = None
+    AcousticToolbox: LibrarySettings | None = Field(
+        None, validation_alias=AliasChoices("AcousticToolbox", "PythonAcoustics")
+    )
     MoSQITo: LibrarySettings | None = None
     scikit_maad: LibrarySettings | None = Field(None, alias="scikit-maad")
 
@@ -253,7 +256,7 @@ class AnalysisSettings(BaseModel):
             A dictionary of enabled metrics grouped by library.
         """
         enabled_metrics = {}
-        for library in ["PythonAcoustics", "MoSQITo", "scikit_maad"]:
+        for library in ["AcousticToolbox", "MoSQITo", "scikit_maad"]:
             library_settings = getattr(self, library)
             if library_settings:
                 enabled_metrics[library] = {
@@ -416,7 +419,7 @@ if __name__ == "__main__":
     logger.info(f"Loaded configuration: {config.model_dump()}")
 
     # Modify some settings
-    override_config = {"PythonAcoustics": {"LAeq": {"run": False}}}
+    override_config = {"AcousticToolbox": {"LAeq": {"run": False}}}
 
     # Merge the configurations
     merged_config = config_manager.merge_configs(override_config)
@@ -432,7 +435,7 @@ if __name__ == "__main__":
     logger.info("Configuration management example completed")
 
     # Create a new config:
-    # Create MetricSettings for PythonAcoustics
+    # Create MetricSettings for AcousticToolbox
     laeq_settings = MetricSettings(
         run=True,
         main="avg",
@@ -451,8 +454,8 @@ if __name__ == "__main__":
         func_args={"time": 0.125, "method": "average"},
     )
 
-    # Create LibrarySettings for PythonAcoustics
-    python_acoustics_settings = LibrarySettings(
+    # Create LibrarySettings for AcousticToolbox
+    acoustic_toolbox_settings = LibrarySettings(
         root={"LAeq": laeq_settings, "LZeq": lzeq_settings}
     )
 
@@ -481,7 +484,7 @@ if __name__ == "__main__":
     # Create the AnalysisSettings object
     analysis_settings = AnalysisSettings(
         version="1.0",
-        PythonAcoustics=python_acoustics_settings,
+        AcousticToolbox=acoustic_toolbox_settings,
         MoSQITo=mosqito_settings,
         scikit_maad=scikit_maad_settings,
     )

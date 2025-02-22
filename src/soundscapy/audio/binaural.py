@@ -4,10 +4,10 @@ soundscapy.audio.binaural
 
 This module provides tools for working with binaural audio signals.
 
-The main class, Binaural, extends the Signal class from the acoustics library
+The main class, Binaural, extends the Signal class from the Acoustic Toolbox library
 to provide specialized functionality for binaural recordings. It supports
 various psychoacoustic metrics and analysis techniques using libraries such
-as mosqito, maad, and python-acoustics.
+as mosqito, maad, and acoustic_toolbox.
 
 Classes
 -------
@@ -19,7 +19,7 @@ This module requires the following external libraries:
 - acoustics
 - mosqito
 - maad
-- python-acoustics
+- acoustic_toolbox
 
 Examples
 --------
@@ -32,22 +32,22 @@ Examples
 import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-from loguru import logger
 
 import numpy as np
 import pandas as pd
 import scipy.signal
-from acoustics import Signal
+from acoustic_toolbox import Signal
+from loguru import logger
 
 from .analysis_settings import AnalysisSettings, MetricSettings
 from .metrics import (
+    acoustics_metric_1ch,
+    acoustics_metric_2ch,
     maad_metric_1ch,
     maad_metric_2ch,
     mosqito_metric_1ch,
     mosqito_metric_2ch,
     process_all_metrics,
-    pyacoustics_metric_1ch,
-    pyacoustics_metric_2ch,
 )
 
 
@@ -55,10 +55,10 @@ class Binaural(Signal):
     """
     A class for processing and analyzing binaural audio signals.
 
-    This class extends the Signal class from the acoustics library to provide
+    This class extends the Signal class from the acoustic_toolbox library to provide
     specialized functionality for binaural recordings. It supports various
     psychoacoustic metrics and analysis techniques using libraries such as
-    mosqito, maad, and python-acoustics.
+    mosqito, maad, and acoustic_toolbox.
 
     Attributes
     ----------
@@ -220,7 +220,7 @@ class Binaural(Signal):
 
         See Also
         --------
-        acoustics.Signal.from_wav : Base method for loading wav files.
+        acoustic_toolbox.Signal.from_wav : Base method for loading wav files.
         """
         logger.info(f"Loading WAV file: {filename}")
         s = super().from_wav(filename, normalize)
@@ -253,7 +253,7 @@ class Binaural(Signal):
 
         See Also
         --------
-        acoustics.Signal.resample : Base method for resampling signals.
+        acoustic_toolbox.Signal.resample : Base method for resampling signals.
         """
         if fs == self.fs:
             logger.info(f"Signal already at {fs} Hz. No resampling needed.")
@@ -327,8 +327,45 @@ class Binaural(Signal):
         metric_settings: Optional[MetricSettings] = None,
         func_args: Dict = {},
     ) -> Union[Dict, pd.DataFrame]:
+        warnings.warn(
+            "pyacoustics has been deprecated. Use acoustics_metric instead.",
+            DeprecationWarning,
+        )
+        return self.acoustics_metric(
+            metric,
+            statistics,
+            label,
+            channel,
+            as_df,
+            return_time_series,
+            metric_settings,
+            func_args,
+        )
+
+    def acoustics_metric(
+        self,
+        metric: str,
+        statistics: Union[Tuple, List] = (
+            5,
+            10,
+            50,
+            90,
+            95,
+            "avg",
+            "max",
+            "min",
+            "kurt",
+            "skew",
+        ),
+        label: Optional[str] = None,
+        channel: Union[str, int, List, Tuple] = ("Left", "Right"),
+        as_df: bool = True,
+        return_time_series: bool = False,
+        metric_settings: Optional[MetricSettings] = None,
+        func_args: Dict = {},
+    ) -> Union[Dict, pd.DataFrame]:
         """
-        Run a metric from the python acoustics library.
+        Run a metric from the acoustic_toolbox library.
 
         Parameters
         ----------
@@ -351,7 +388,7 @@ class Binaural(Signal):
             Settings for metric analysis. Default is None.
         func_args : dict, optional
             Any settings given here will override those in the other options.
-            Can pass any *args or **kwargs to the underlying python acoustics method.
+            Can pass any *args or **kwargs to the underlying acoustic_toolbox method.
 
         Returns
         -------
@@ -360,10 +397,10 @@ class Binaural(Signal):
 
         See Also
         --------
-        metrics.pyacoustics_metric
-        acoustics.standards_iso_tr_25417_2007.equivalent_sound_pressure_level : Base method for Leq calculation.
-        acoustics.standards.iec_61672_1_2013.sound_exposure_level : Base method for SEL calculation.
-        acoustics.standards.iec_61672_1_2013.time_weighted_sound_level : Base method for Leq level time series calculation.
+        metrics.acoustics_metric
+        acoustic_toolbox.standards_iso_tr_25417_2007.equivalent_sound_pressure_level : Base method for Leq calculation.
+        acoustic_toolbox.standards.iec_61672_1_2013.sound_exposure_level : Base method for SEL calculation.
+        acoustic_toolbox.standards.iec_61672_1_2013.time_weighted_sound_level : Base method for Leq level time series calculation.
         """
         if metric_settings:
             logger.debug("Using provided analysis settings")
@@ -381,12 +418,12 @@ class Binaural(Signal):
 
         if s.channels == 1:
             logger.debug("Processing single channel")
-            return pyacoustics_metric_1ch(
+            return acoustics_metric_1ch(
                 s, metric, statistics, label, as_df, return_time_series, func_args
             )
         else:
             logger.debug("Processing both channels")
-            return pyacoustics_metric_2ch(
+            return acoustics_metric_2ch(
                 s,
                 metric,
                 statistics,
@@ -447,7 +484,7 @@ class Binaural(Signal):
             Settings for metric analysis. Default is None.
         func_args : dict, optional
             Any settings given here will override those in the other options.
-            Can pass any *args or **kwargs to the underlying python acoustics method.
+            Can pass any *args or **kwargs to the underlying acoustic_toolbox method.
 
         Returns
         -------

@@ -42,12 +42,12 @@ audio = [
     "mosqito>=1.2.1",
     "scikit-maad>=1.4.3",
     "tqdm>=4.66.5",
-    "acoustics>=0.2.5",
-    "numba>=0.59", # subdep of mosqito, pinned to avoid numba python version issues
+    "numba>=0.59",
+    "acoustic-toolbox>=0.1.2",
 ]
 
 [tool.uv]
-default-groups = ["dev", "test"]
+default-groups = ["dev", "test", "docs"]
 
 [dependency-groups]
 dev = [

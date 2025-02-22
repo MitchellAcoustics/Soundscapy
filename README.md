@@ -47,7 +47,7 @@ Tutorials for using Soundscapy can be found in the [documentation](https://sound
 
 The newly added Binaural analysis functionality relies directly on three acoustic analysis libraries:
 
-* [python-acoustics](https://github.com/python-acoustics/python-acoustics) for the standard environmental and building acoustics metrics,
+* [Acoustic Toolbox](https://github.com/Universite-Gustave-Eiffel/acoustic-toolbox) for the standard environmental and building acoustics metrics,
 * [scikit-maad](https://github.com/scikit-maad/scikit-maad) for the bioacoustics and ecological soundscape metrics, and
 * [MoSQITo](https://github.com/Eomys/MoSQITo) for the psychoacoustics metrics. We thank each of these packages for their great work in making advanced acoustic analysis more accessible.
 
