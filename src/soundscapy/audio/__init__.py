@@ -8,7 +8,7 @@ Key Components:
 - Binaural: A class for processing and analyzing binaural audio signals.
 - Various metric calculation functions for audio analysis.
 
-The module integrates with external libraries such as mosqito, maad, and python-acoustics
+The module integrates with external libraries such as mosqito, maad, and acoustic_toolbox
 to provide a comprehensive suite of audio analysis tools.
 
 Example:

@@ -85,7 +85,7 @@ The avilable types are:
    # Package dependencies
    OPTIONAL_DEPENDENCIES = {
        "audio": {
-           "packages": ("mosqito", "maad", "acoustics"),
+           "packages": ("mosqito", "maad", "acoustic_toolbox"),
            "install": "soundscapy[audio]",
            "description": "audio analysis functionality",
        },
@@ -106,7 +106,7 @@ The avilable types are:
    audio = [
        "mosqito>=1.2.1",
        "scikit-maad>=1.4.3",
-       "acoustics>=0.2.5",
+       "acoustic-toolbox>=0.1.2",
    ]
    ```
 
@@ -143,7 +143,7 @@ In `_optionals.py`, update both dependency mappings:
 ```python
 OPTIONAL_DEPENDENCIES = {
     "audio": {
-        "packages": ("mosqito", "maad", "acoustics", "new-package"),  # Add to existing
+        "packages": ("mosqito", "maad", "acoustic_toolbox", "new_package"),  # Add to existing
         "install": "soundscapy[audio]",
         "description": "audio analysis functionality",
     },

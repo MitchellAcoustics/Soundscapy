@@ -1,30 +1,30 @@
 # Settings file for batch acoustic analysis.
 # This file configures which metrics are calculated and how they are processed.
 
-version: "1.0"
+version: "1.1"
 
-# Python Acoustics Library Settings
+# Acoustic Toolbox Library Settings
 # Supported metrics: LAeq, LZeq, LCeq, SEL
 # Supported statistics: avg/mean, max, min, kurt, skew, any integer from 1-99
-PythonAcoustics:
+AcousticToolbox:
     # A-weighted equivalent continuous sound level
     LAeq:
-        run: true  # Set to false to skip this metric
-        main: 'avg'  # Main statistic to calculate
-        statistics: [5, 10, 50, 90, 95, 'avg', 'min', 'max', 'kurt', 'skew']  # List of statistics to calculate
-        channel: ["Left", "Right"]  # Channels to analyze
-        label: 'LAeq'  # Label for the metric in output
-        func_args:  # Additional arguments for the metric function
-            time: 0.125  # Time interval for calculation (seconds)
-            method: "average"  # Method for calculating Leq
+        run: true # Set to false to skip this metric
+        main: "avg" # Main statistic to calculate
+        statistics: [5, 10, 50, 90, 95, "avg", "min", "max", "kurt", "skew"] # List of statistics to calculate
+        channel: ["Left", "Right"] # Channels to analyze
+        label: "LAeq" # Label for the metric in output
+        func_args: # Additional arguments for the metric function
+            time: 0.125 # Time interval for calculation (seconds)
+            method: "average" # Method for calculating Leq
 
     # Z-weighted (unweighted) equivalent continuous sound level
     LZeq:
         run: true
-        main: 'avg'
-        statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
+        main: "avg"
+        statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
         channel: ["Left", "Right"]
-        label: 'LZeq'
+        label: "LZeq"
         func_args:
             time: 0.125
             method: "average"
@@ -32,10 +32,10 @@ PythonAcoustics:
     # C-weighted equivalent continuous sound level
     LCeq:
         run: true
-        main: 'avg'
-        statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
+        main: "avg"
+        statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
         channel: ["Left", "Right"]
-        label: 'LCeq'
+        label: "LCeq"
         func_args:
             time: 0.125
             method: "average"
@@ -44,7 +44,7 @@ PythonAcoustics:
     SEL:
         run: true
         channel: ["Left", "Right"]
-        label: 'SEL'
+        label: "SEL"
         # Note: SEL doesn't use main or statistics as it's a single value metric
 
 # MoSQITo Library Settings
@@ -53,38 +53,38 @@ PythonAcoustics:
 MoSQITo:
     # Zwicker Time-Varying Loudness
     loudness_zwtv:
-        run: false  # Disabled by default as it's used in sharpness calculation
-        main: 5  # N5 (loudness exceeded 5% of the time)
-        statistics: [10, 50, 90, 95, 'min', 'max', 'kurt', 'skew', 'avg']
+        run: false # Disabled by default as it's used in sharpness calculation
+        main: 5 # N5 (loudness exceeded 5% of the time)
+        statistics: [10, 50, 90, 95, "min", "max", "kurt", "skew", "avg"]
         channel: ["Left", "Right"]
         label: "N"
-        parallel: true  # Enable parallel processing
+        parallel: true # Enable parallel processing
         func_args:
-            field_type: "free"  # Free field condition
+            field_type: "free" # Free field condition
 
     # Sharpness (DIN 45692) calculated from Zwicker Loudness
     sharpness_din_from_loudness:
         run: true
         main: "avg"
-        statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
+        statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
         channel: ["Left", "Right"]
         label: "S_L"
         parallel: true
         func_args:
-            weighting: "din"  # DIN 45692 weighting
+            weighting: "din" # DIN 45692 weighting
             field_type: "free"
 
     # Sharpness (DIN 45692) calculated per segment
     sharpness_din_perseg:
         run: true
         main: "avg"
-        statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
+        statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
         channel: ["Left", "Right"]
         label: "S_perseg"
-        parallel: false  # Parallel processing not necessary for this method
+        parallel: false # Parallel processing not necessary for this method
         func_args:
             weighting: "din"
-            nperseg: 4096  # Number of samples per segment
+            nperseg: 4096 # Number of samples per segment
             field_type: "free"
 
     # Sharpness (DIN 45692) time-varying
@@ -92,20 +92,20 @@ MoSQITo:
     sharpness_din_tv:
         run: false
         main: "avg"
-        statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
+        statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
         channel: ["Left", "Right"]
         label: "S_din_tv"
         parallel: true
         func_args:
             weighting: "din"
             field_type: "free"
-            skip: 0.5  # Skip time at the beginning (seconds)
+            skip: 0.5 # Skip time at the beginning (seconds)
 
     # Roughness (Daniel & Weber method)
     roughness_dw:
         run: true
         main: "avg"
-        statistics: [5, 10, 50, 90, 95, 'min', 'max', 'kurt', 'skew']
+        statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
         channel: ["Left", "Right"]
         label: "R"
         parallel: true

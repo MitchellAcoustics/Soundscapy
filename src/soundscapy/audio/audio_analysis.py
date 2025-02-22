@@ -191,7 +191,7 @@ if __name__ == "__main__":
     analysis.save_results(folder_results, "folder_results.xlsx")
 
     # Update configuration
-    new_config = {"PythonAcoustics": {"LAeq": {"run": False}}}
+    new_config = {"AcousticToolbox": {"LAeq": {"run": False}}}
     analysis.update_config(new_config)
 
     # Save updated configuration

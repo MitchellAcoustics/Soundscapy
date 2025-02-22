@@ -6,13 +6,13 @@ It allows graceful handling of missing dependencies and provides helpful feedbac
 about which dependencies are missing and how to install them.
 """
 
-from typing import Dict, Any
 import importlib
+from typing import Any, Dict
 
 # Map module groups to their pip install targets
 OPTIONAL_DEPENDENCIES = {
     "audio": {
-        "packages": ("mosqito", "maad", "tqdm", "acoustics"),
+        "packages": ("mosqito", "maad", "tqdm", "acoustic_toolbox"),
         "install": "soundscapy[audio]",
         "description": "audio analysis functionality",
     },

@@ -14,7 +14,7 @@ TEST_AUDIO_DIR = Path(__file__).parent.parent / "test_audio_files"
 def sample_config():
     return {
         "version": "1.0",
-        "PythonAcoustics": {
+        "AcousticToolbox": {
             "LAeq": {
                 "run": True,
                 "main": "avg",
@@ -70,15 +70,15 @@ class TestAudioAnalysis:
 
         # Check if the number of rows in the result matches the number of WAV files
         analyzed_files = set(result.index.get_level_values(0))
-        assert (
-            len(analyzed_files) == expected_file_count
-        ), f"Expected {expected_file_count} files to be analyzed, but got {len(analyzed_files)}"
+        assert len(analyzed_files) == expected_file_count, (
+            f"Expected {expected_file_count} files to be analyzed, but got {len(analyzed_files)}"
+        )
 
         # Check if all expected files were analyzed
         expected_files = {f.stem for f in TEST_AUDIO_DIR.glob("*.wav")}
-        assert (
-            analyzed_files == expected_files
-        ), f"Mismatch in analyzed files. Expected: {expected_files}, Got: {analyzed_files}"
+        assert analyzed_files == expected_files, (
+            f"Mismatch in analyzed files. Expected: {expected_files}, Got: {analyzed_files}"
+        )
 
     @pytest.mark.slow
     def test_analyze_folder_multi_worker(self, audio_analysis):
@@ -93,15 +93,15 @@ class TestAudioAnalysis:
 
         # Check if the number of rows in the result matches the number of WAV files
         analyzed_files = set(result.index.get_level_values(0))
-        assert (
-            len(analyzed_files) == expected_file_count
-        ), f"Expected {expected_file_count} files to be analyzed, but got {len(analyzed_files)}"
+        assert len(analyzed_files) == expected_file_count, (
+            f"Expected {expected_file_count} files to be analyzed, but got {len(analyzed_files)}"
+        )
 
         # Check if all expected files were analyzed
         expected_files = {f.stem for f in TEST_AUDIO_DIR.glob("*.wav")}
-        assert (
-            analyzed_files == expected_files
-        ), f"Mismatch in analyzed files. Expected: {expected_files}, Got: {analyzed_files}"
+        assert analyzed_files == expected_files, (
+            f"Mismatch in analyzed files. Expected: {expected_files}, Got: {analyzed_files}"
+        )
 
     def test_save_results(self, audio_analysis, tmp_path):
         df = pd.DataFrame({"test": [1, 2]})
@@ -117,9 +117,9 @@ class TestAudioAnalysis:
             audio_analysis.save_results(df, tmp_path / "results.txt")
 
     def test_update_config(self, audio_analysis):
-        new_config = {"PythonAcoustics": {"LAeq": {"run": False}}}
+        new_config = {"AcousticToolbox": {"LAeq": {"run": False}}}
         audio_analysis.update_config(new_config)
-        assert not audio_analysis.settings.PythonAcoustics.root["LAeq"].run
+        assert not audio_analysis.settings.AcousticToolbox.root["LAeq"].run
 
     def test_save_config(self, audio_analysis, tmp_path):
         config_path = tmp_path / "new_config.yaml"
