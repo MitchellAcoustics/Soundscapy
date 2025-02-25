@@ -1,10 +1,8 @@
 [project]
 name = "soundscapy"
-version = "0.7.8rc1"
+version = "0.7.8"
 description = "A python library for analysing and visualising soundscape assessments."
-authors = [
-    { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
-]
+authors = [{ name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }]
 dependencies = [
     "pandas[excel]>=2.2.2",
     "seaborn>=0.13.2",
@@ -18,12 +16,7 @@ dependencies = [
 readme = "README.md"
 requires-python = ">= 3.10"
 license = { text = "BSD-3-Clause" }
-keywords = [
-    "soundscape",
-    "psychoacoustics",
-    "acoustics",
-    "audio analysis",
-]
+keywords = ["soundscape", "psychoacoustics", "acoustics", "audio analysis"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -35,9 +28,7 @@ repository = "https://github.com/MitchellAcoustics/Soundscapy"
 documentation = "https://soundscapy.readthedocs.io/en/latest/"
 
 [project.optional-dependencies]
-all = [
-    "soundscapy[audio]",
-]
+all = ["soundscapy[audio]"]
 audio = [
     "mosqito>=1.2.1",
     "scikit-maad>=1.4.3",
@@ -50,10 +41,7 @@ audio = [
 default-groups = ["dev", "test", "docs"]
 
 [dependency-groups]
-dev = [
-    "bumpver>=2023.1129",
-    "ruff>=0.7.2",
-]
+dev = ["bumpver>=2024.1130", "ruff>=0.7.2"]
 test = [
     "pytest>=8.3.3",
     "setuptools>=72.1.0",
@@ -91,7 +79,7 @@ markers = [
     "skip: mark test as skipped",
     "skipif: mark test as skipped if condition is met",
     "xfail: mark test as expected to fail",
-    "parametrize: mark test as parametrized"
+    "parametrize: mark test as parametrized",
 ]
 
 [build-system]
@@ -109,7 +97,7 @@ exclude = [
     "*.wav",
     "test/baseline",
     "docs/tutorials",
-    "docs/img"
+    "docs/img",
 ]
 
 [tool.hatch.build.targets.sdist]
@@ -118,7 +106,7 @@ exclude = [
     "test/data",
     "*.wav",
     "docs/tutorials",
-    "docs/img"
+    "docs/img",
 ]
 
 [tool.bumpver]
