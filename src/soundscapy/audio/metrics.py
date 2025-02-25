@@ -4,7 +4,7 @@ soundscapy.audio.metrics
 
 This module provides functions for calculating various acoustic and psychoacoustic metrics
 for audio signals. It includes implementations for single-channel and two-channel signals,
-as well as wrapper functions for different libraries such as python-acoustics, MoSQITo,
+as well as wrapper functions for different libraries such as Acoustic Toolbox, MoSQITo,
 and scikit-maad.
 
 Functions
@@ -12,8 +12,10 @@ Functions
 _stat_calcs : Calculate various statistics for a time series array.
 mosqito_metric_1ch : Calculate a MoSQITo psychoacoustic metric for a single channel signal.
 maad_metric_1ch : Run a metric from the scikit-maad library on a single channel signal.
-pyacoustics_metric_1ch : Run a metric from the pyacoustics library on a single channel object.
-pyacoustics_metric_2ch : Run a metric from the python acoustics library on a Binaural object.
+acoustics_metric_1ch : Run a metric from the Acoustic Toolbox on a single channel object.
+acoustics_metric_2ch : Run a metric from the Acoustic Toolbox on a Binaural object.
+pyacoustics_metric_1ch: Deprecated function for running a metric from the PyAcoustics library (replaced with `acoustics_metric_1ch`).
+pyacoustics_metric_2ch: Deprecated function for running a metric from the PyAcoustics library (replaced with `acoustics_metric_2ch`).
 mosqito_metric_2ch : Calculate metrics from MoSQITo for a two-channel signal.
 maad_metric_2ch : Run a metric from the scikit-maad library on a binaural signal.
 prep_multiindex_df : Prepare a MultiIndex dataframe from a dictionary of results.
@@ -28,11 +30,12 @@ Ensure these dependencies are installed before using this module.
 
 import concurrent.futures
 import multiprocessing as mp
+import warnings
 from typing import Dict, List, Optional, Tuple, Union
-from loguru import logger
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 from maad.features import all_spectral_alpha_indices, all_temporal_alpha_indices
 from maad.sound import spectrogram
 from mosqito.sq_metrics import (
@@ -327,13 +330,48 @@ def pyacoustics_metric_1ch(
         "kurt",
         "skew",
     ),
-    label: str = None,
+    label: str | None = None,
+    as_df: bool = False,
+    return_time_series: bool = False,
+    func_args={},
+):
+    warnings.warn(
+        "pyacoustics is deprecated. Use acoustics_metric_1ch instead.",
+        DeprecationWarning,
+    )
+    return acoustics_metric_1ch(
+        s,
+        metric,
+        statistics,
+        label,
+        as_df,
+        return_time_series,
+        func_args,
+    )
+
+
+def acoustics_metric_1ch(
+    s,
+    metric: str,
+    statistics: List[Union[int, str]] = (
+        5,
+        10,
+        50,
+        90,
+        95,
+        "avg",
+        "max",
+        "min",
+        "kurt",
+        "skew",
+    ),
+    label: str | None = None,
     as_df: bool = False,
     return_time_series: bool = False,
     func_args={},
 ):
     """
-    Run a metric from the pyacoustics library on a single channel object.
+    Run a metric from the acoustic_toolbox library on a single channel object.
 
     Parameters
     ----------
@@ -367,9 +405,9 @@ def pyacoustics_metric_1ch(
 
     See Also
     --------
-    acoustics
+    acoustic_toolbox
     """
-    logger.debug(f"Calculating pyacoustics metric: {metric}")
+    logger.debug(f"Calculating acoustics metric: {metric}")
 
     if s.channels != 1:
         logger.error("Signal must be single channel")
@@ -386,7 +424,7 @@ def pyacoustics_metric_1ch(
 
         return_time_series = False
 
-    logger.debug(f"Calculating Python Acoustics: {metric} {statistics}")
+    logger.debug(f"Calculating Acoustic Toolbox: {metric} {statistics}")
 
     res = {}
     try:
@@ -448,8 +486,45 @@ def pyacoustics_metric_2ch(
     return_time_series: bool = False,
     func_args={},
 ):
+    warnings.warn(
+        "pyacoustics is deprecated. Use acoustics_metric_2ch instead.",
+        DeprecationWarning,
+    )
+    return acoustics_metric_2ch(
+        b,
+        metric,
+        statistics,
+        label,
+        channel_names,
+        as_df,
+        return_time_series,
+        func_args,
+    )
+
+
+def acoustics_metric_2ch(
+    b,
+    metric: str,
+    statistics: Union[Tuple, List] = (
+        5,
+        10,
+        50,
+        90,
+        95,
+        "avg",
+        "max",
+        "min",
+        "kurt",
+        "skew",
+    ),
+    label: str | None = None,
+    channel_names: Tuple[str, str] = ("Left", "Right"),
+    as_df: bool = False,
+    return_time_series: bool = False,
+    func_args={},
+):
     """
-    Run a metric from the python acoustics library on a Binaural object.
+    Run a metric from the Acoustic Toolbox library on a Binaural object.
 
     Parameters
     ----------
@@ -485,20 +560,20 @@ def pyacoustics_metric_2ch(
 
     See Also
     --------
-    pyacoustics_metric_1ch
+    acoustics_metric_1ch
     """
-    logger.debug(f"Calculating pyacoustics metric for 2 channels: {metric}")
+    logger.debug(f"Calculating acoustics metric for 2 channels: {metric}")
 
     if b.channels != 2:
-        logger.error("Must be 2 channel signal. Use `pyacoustics_metric_1ch` instead.")
+        logger.error("Must be 2 channel signal. Use `acoustics_metric_1ch` instead.")
         raise ValueError(
-            "Must be 2 channel signal. Use `pyacoustics_metric_1ch instead`."
+            "Must be 2 channel signal. Use `acoustics_metric_1ch instead`."
         )
 
-    logger.debug(f"Calculating Python Acoustics metrics: {metric}")
+    logger.debug(f"Calculating Acoustic Toolbox metrics: {metric}")
 
     try:
-        res_l = pyacoustics_metric_1ch(
+        res_l = acoustics_metric_1ch(
             b[0],
             metric,
             statistics,
@@ -508,7 +583,7 @@ def pyacoustics_metric_2ch(
             func_args=func_args,
         )
 
-        res_r = pyacoustics_metric_1ch(
+        res_r = acoustics_metric_1ch(
             b[1],
             metric,
             statistics,
@@ -551,7 +626,7 @@ def _parallel_mosqito_metric_2ch(
         "kurt",
         "skew",
     ),
-    label: str = None,
+    label: str | None = None,
     channel_names: Tuple[str, str] = ("Left", "Right"),
     return_time_series: bool = False,
     func_args={},
@@ -964,11 +1039,11 @@ def process_all_metrics(
         ) in analysis_settings.get_enabled_metrics().items():
             for metric in metrics_settings.keys():
                 logger.debug(f"Processing {library} metric: {metric}")
-                if library == "PythonAcoustics":
+                if library == "AcousticToolbox":
                     results_df = pd.concat(
                         (
                             results_df,
-                            b.pyacoustics_metric(
+                            b.acoustics_metric(
                                 metric, metric_settings=metrics_settings[metric]
                             ),
                         ),

@@ -21,7 +21,7 @@ def test_binaural_signal():
 def analysis_settings():
     """Create a simple AnalysisSettings object for testing."""
     settings = {
-        "PythonAcoustics": {
+        "AcousticToolbox": {
             "LAeq": {
                 "run": True,
                 "main": "avg",
@@ -77,9 +77,9 @@ def test_binaural_calibration(test_binaural_signal):
         test_binaural_signal.calibrate_to([60, 62, 64])
 
 
-def test_pyacoustics_metric(test_binaural_signal):
-    """Test pyacoustics metric calculation."""
-    result = test_binaural_signal.pyacoustics_metric("LAeq")
+def test_acoustics_metric(test_binaural_signal):
+    """Test acoustics metric calculation."""
+    result = test_binaural_signal.acoustics_metric("LAeq")
     assert isinstance(result, pd.DataFrame)
     assert "LAeq" in result.columns
     assert result.index.get_level_values(0).tolist() == [

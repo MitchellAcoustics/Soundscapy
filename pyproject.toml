@@ -1,6 +1,6 @@
 [project]
 name = "soundscapy"
-version = "0.7.6"
+version = "0.7.8rc1"
 description = "A python library for analysing and visualising soundscape assessments."
 authors = [
     { name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }
@@ -13,6 +13,7 @@ dependencies = [
     "pyyaml>=6.0.2",
     "pydantic>=2.8.2",
     "loguru>=0.7.2",
+    "numpy!=1.26",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -41,12 +42,12 @@ audio = [
     "mosqito>=1.2.1",
     "scikit-maad>=1.4.3",
     "tqdm>=4.66.5",
-    "acoustics>=0.2.5",
-    "numba>=0.59", # subdep of mosqito, pinned to avoid numba python version issues
+    "numba>=0.59",
+    "acoustic-toolbox>=0.1.2",
 ]
 
 [tool.uv]
-default-groups = ["dev", "test"]
+default-groups = ["dev", "test", "docs"]
 
 [dependency-groups]
 dev = [
@@ -121,7 +122,7 @@ exclude = [
 ]
 
 [tool.bumpver]
-current_version = "v0.7.6"
+current_version = "v0.7.8rc1"
 version_pattern = "vMAJOR.MINOR.PATCH[[-]PYTAGNUM]"
 commit_message = "bump version {old_version} -> {new_version}"
 tag_message = "{new_version}"

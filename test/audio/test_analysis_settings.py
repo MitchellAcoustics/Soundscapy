@@ -13,8 +13,8 @@ from soundscapy.audio.analysis_settings import (
 @pytest.fixture
 def sample_config():
     return {
-        "version": "1.0",
-        "PythonAcoustics": {
+        "version": "1.1",
+        "AcousticToolbox": {
             "LAeq": {
                 "run": True,
                 "main": "avg",
@@ -82,7 +82,7 @@ class TestLibrarySettings:
 
     def test_get_existing_metric_settings(self, sample_config):
         settings = AnalysisSettings(**sample_config)
-        library_settings = settings.PythonAcoustics
+        library_settings = settings.AcousticToolbox
         result = library_settings.get_metric_settings("LAeq")
         assert result == library_settings.root["LAeq"]
 
@@ -95,8 +95,8 @@ class TestLibrarySettings:
 class TestAnalysisSettings:
     def test_from_yaml(self, temp_config_file):
         settings = AnalysisSettings.from_yaml(temp_config_file)
-        assert settings.version == "1.0"
-        assert "LAeq" in settings.PythonAcoustics.root
+        assert settings.version == "1.1"
+        assert "LAeq" in settings.AcousticToolbox.root
         assert "loudness_zwtv" in settings.MoSQITo.root
         assert "all_temporal_alpha_indices" in settings.scikit_maad.root
 
@@ -109,12 +109,12 @@ class TestAnalysisSettings:
         # Read back and verify
         with open(output_file, "r") as f:
             loaded_config = yaml.safe_load(f)
-        assert loaded_config["version"] == "1.0"
-        assert "LAeq" in loaded_config["PythonAcoustics"]
+        assert loaded_config["version"] == "1.1"
+        assert "LAeq" in loaded_config["AcousticToolbox"]
 
     def test_get_metric_settings(self, sample_config):
         settings = AnalysisSettings(**sample_config)
-        laeq_settings = settings.get_metric_settings("PythonAcoustics", "LAeq")
+        laeq_settings = settings.get_metric_settings("AcousticToolbox", "LAeq")
         assert isinstance(laeq_settings, MetricSettings)
         assert laeq_settings.run is True
         assert laeq_settings.main == "avg"
@@ -127,25 +127,25 @@ class TestAnalysisSettings:
     def test_get_enabled_metrics(self, sample_config):
         settings = AnalysisSettings(**sample_config)
         enabled = settings.get_enabled_metrics()
-        assert "LAeq" in enabled["PythonAcoustics"]
+        assert "LAeq" in enabled["AcousticToolbox"]
         assert "loudness_zwtv" in enabled["MoSQITo"]
         assert "all_temporal_alpha_indices" in enabled["scikit_maad"]
 
     def test_update_existing_metric_setting(self, sample_config):
         settings = AnalysisSettings(**sample_config)
-        settings.update_setting("PythonAcoustics", "LAeq", run=False)
-        updated_metric = settings.get_metric_settings("PythonAcoustics", "LAeq")
+        settings.update_setting("AcousticToolbox", "LAeq", run=False)
+        updated_metric = settings.get_metric_settings("AcousticToolbox", "LAeq")
         assert updated_metric.run is False
 
     def test_update_non_existing_metric_setting(self, sample_config):
         settings = AnalysisSettings(**sample_config)
         with pytest.raises(KeyError):
-            settings.update_setting("PythonAcoustics", "metric2", run=False)
+            settings.update_setting("AcousticToolbox", "metric2", run=False)
 
     def test_update_metric_with_invalid_setting(self, sample_config):
         settings = AnalysisSettings(**sample_config)
         with pytest.raises(KeyError):
-            settings.update_setting("PythonAcoustics", "metric1", invalid_setting=True)
+            settings.update_setting("AcousticToolbox", "metric1", invalid_setting=True)
 
 
 class TestConfigManager:
@@ -156,7 +156,7 @@ class TestConfigManager:
     def test_load_config(self, config_manager):
         config = config_manager.load_config()
         assert isinstance(config, AnalysisSettings)
-        assert config.version == "1.0"
+        assert config.version == "1.1"
 
     def test_save_config(self, config_manager, tmp_path):
         config_manager.load_config()
@@ -166,9 +166,9 @@ class TestConfigManager:
 
     def test_merge_configs(self, config_manager):
         config_manager.load_config()
-        override = {"PythonAcoustics": {"LAeq": {"run": False}}}
+        override = {"AcousticToolbox": {"LAeq": {"run": False}}}
         merged = config_manager.merge_configs(override)
-        assert merged.PythonAcoustics.root["LAeq"].run is False
+        assert merged.AcousticToolbox.root["LAeq"].run is False
 
     def test_generate_minimal_config(self, config_manager):
         config_manager.load_config()
@@ -187,13 +187,13 @@ def test_end_to_end(temp_config_file, tmp_path):
     # Load configuration
     manager = ConfigManager(temp_config_file)
     config = manager.load_config()
-    assert config.PythonAcoustics.root["LAeq"].run is True
+    assert config.AcousticToolbox.root["LAeq"].run is True
 
     # Modify configuration
-    override = {"PythonAcoustics": {"LAeq": {"run": False}}}
+    override = {"AcousticToolbox": {"LAeq": {"run": False}}}
     merged_config = manager.merge_configs(override)
-    assert merged_config.PythonAcoustics.root["LAeq"].run is False
-    assert manager.current_config.PythonAcoustics.root["LAeq"].run is False
+    assert merged_config.AcousticToolbox.root["LAeq"].run is False
+    assert manager.current_config.AcousticToolbox.root["LAeq"].run is False
 
     # Save modified configuration
     new_file = tmp_path / "modified_config.yaml"
@@ -202,7 +202,7 @@ def test_end_to_end(temp_config_file, tmp_path):
     # Load the saved configuration and verify changes
     new_manager = ConfigManager(new_file)
     new_config = new_manager.load_config()
-    assert new_config.PythonAcoustics.root["LAeq"].run is False
+    assert new_config.AcousticToolbox.root["LAeq"].run is False
 
 
 if __name__ == "__main__":

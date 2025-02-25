@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 
 
 def test_optional_dependency_groups_defined():
@@ -43,7 +44,7 @@ def test_require_dependencies_present():
 
     packages = require_dependencies("audio")
     assert isinstance(packages, dict)
-    assert all(pkg in packages for pkg in ["mosqito", "maad", "acoustics"])
+    assert all(pkg in packages for pkg in ["mosqito", "maad", "acoustic_toolbox"])
     assert all(packages[pkg] is not None for pkg in packages)
 
 
@@ -63,7 +64,7 @@ def test_optional_import_behavior():
         try:
             importlib.import_module("mosqito")
             importlib.import_module("maad")
-            importlib.import_module("acoustics")
+            importlib.import_module("acoustic_toolbox")
             return True
         except ImportError:
             return False
