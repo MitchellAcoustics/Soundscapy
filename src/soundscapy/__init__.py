@@ -19,7 +19,12 @@ from soundscapy._optionals import import_optional
 from soundscapy import surveys
 from soundscapy import databases
 from soundscapy import plotting
-from soundscapy.logging import setup_logging
+from soundscapy.logging import (
+    setup_logging,
+    enable_debug,
+    disable_logging,
+    get_logger,
+)
 from soundscapy.databases import araus, isd, satp
 from soundscapy.surveys import processing
 from soundscapy.plotting import scatter_plot, density_plot
@@ -35,7 +40,11 @@ __all__ = [
     "processing",
     "scatter_plot",
     "density_plot",
+    # Logging functions
     "setup_logging",
+    "enable_debug",
+    "disable_logging",
+    "get_logger",
     # Optional modules listed explicitly for IDE/typing support
     "Binaural",
     "AudioAnalysis",

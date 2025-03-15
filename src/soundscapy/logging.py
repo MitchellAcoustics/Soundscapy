@@ -1,100 +1,160 @@
 """
-Logging configuration using loguru.
-Provides functions to configure the logger based on environment variables.
+Logging configuration for Soundscapy.
+
+This module provides simple functions to configure logging for both users and developers.
+By default, Soundscapy logging is disabled to avoid unwanted output.
+Users can enable logging with the setup_logging function.
 """
 
 import sys
+from typing import Optional, Union, TextIO
+from pathlib import Path
 
 from loguru import logger
 
 
-class LogFormatter:
-    """Unified formatter for both console and file output."""
-
-    CONSOLE_FORMAT = (
-        "<green>{time:HH:mm:ss}</green> | "
-        "<level>{level: <8}</level> | "
-        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
-        "{extra[padding]}<level>{message}</level>\n"
-        "{exception}"
-    )
-
-    FILE_FORMAT = (
-        "{time:YYYY-MM-DD HH:mm:ss} | "
-        "{level: <8} | "
-        "{name}:{function}:{line}{extra[padding]} | "
-        "{message}\n"
-        "{exception}"
-    )
-
-    def __init__(self, fmt_type: str = "console"):
-        self.padding = 0
-        self.fmt_type = fmt_type
-
-    def format(self, record):
-        if self.fmt_type == "console":
-            if "padding" not in record["extra"]:
-                record["extra"]["padding"] = ""
-            return self.CONSOLE_FORMAT
-        else:
-            metadata_length = len(
-                f"{record['name']}:{record['function']}:{record['line']}"
-            )
-            self.padding = max(self.padding, metadata_length)
-            record["extra"]["padding"] = " " * (self.padding - metadata_length)
-            return self.FILE_FORMAT
-
-
-def setup_logging(console_level: str = "WARNING", log_file: str | None = None) -> None:
-    """Configure logging with optional file output.
-
-    Args:
-        console_level: Logging level for console output
-        log_file: Optional path to log file
+def setup_logging(
+    level: str = "INFO",
+    log_file: Optional[Union[str, Path]] = None,
+    format_level: str = "basic",
+) -> None:
     """
-    try:
-        logger.enable("soundscapy")
-        # Remove all existing handlers
-        logger.remove()
+    Set up logging for Soundscapy with sensible defaults.
 
-        # Configure console handler with custom formatter
-        console_formatter = LogFormatter("console")
+    Parameters
+    ----------
+    level : str, default="INFO"
+        Logging level for console output.
+        Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+    log_file : str or Path, optional
+        Path to a log file. If provided, all messages (including DEBUG) will be logged to this file.
+    format_level : str, default="basic"
+        Format complexity level. Options:
+        - "basic": Simple format with timestamp, level, and message
+        - "detailed": Adds module, function and line information
+        - "developer": Adds exception details and diagnostics
+
+    Examples
+    --------
+    >>> from soundscapy import setup_logging
+    >>> # Basic usage - show INFO level and above in console
+    >>> setup_logging()
+    >>>
+    >>> # Enable DEBUG level and log to file
+    >>> setup_logging(level="DEBUG", log_file="soundscapy.log")
+    >>>
+    >>> # Use detailed format for debugging
+    >>> setup_logging(level="DEBUG", format_level="detailed")
+    """
+    # Enable soundscapy logging (disabled by default in __init__.py)
+    logger.enable("soundscapy")
+
+    # Remove default handlers
+    logger.remove()
+
+    # Format configurations
+    formats = {
+        "basic": "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
+        "detailed": "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
+        "developer": "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}\n{exception}",
+    }
+
+    # Use the appropriate format
+    if format_level not in formats:
+        print(f"Warning: Unknown format_level '{format_level}'. Using 'basic' instead.")
+        format_level = "basic"
+
+    log_format = formats[format_level]
+
+    # Configure console handler
+    logger.add(
+        sys.stderr,
+        format=log_format,
+        level=level,
+        colorize=True,
+        enqueue=True,
+    )
+
+    # Add file handler if specified
+    if log_file:
         logger.add(
-            sys.stderr,
-            format=console_formatter.format,
-            level=console_level,
-            colorize=True,
+            log_file,
+            format=log_format,
+            level="DEBUG",  # Always log everything to file
+            rotation="1 MB",
+            compression="zip",
             enqueue=True,
-            catch=True,
-            backtrace=True,
-            diagnose=True,
         )
 
-        # Add file handler if specified
-        if log_file:
-            file_formatter = LogFormatter("file")
-            logger.add(
-                log_file,
-                format=file_formatter.format,
-                level="DEBUG",
-                rotation="1 MB",
-                compression="zip",
-                enqueue=True,
-                catch=True,
-                backtrace=True,
-            )
+    logger.debug(f"Soundscapy logging configured - console:{level}, file:{log_file}")
 
-        logger.debug(f"Logging configured - console:{console_level}, file:{log_file}")
-    except Exception as e:
-        print(f"Failed to setup logging: {e}")
-        raise
+
+def enable_debug() -> None:
+    """
+    Quickly enable DEBUG level logging to console.
+
+    This is a convenience function for debugging during interactive sessions.
+
+    Examples
+    --------
+    >>> from soundscapy import enable_debug
+    >>> enable_debug()
+    >>> # Now all debug messages will be shown
+    """
+    setup_logging(level="DEBUG", format_level="detailed")
+    logger.info("Debug logging enabled")
+
+
+def disable_logging() -> None:
+    """
+    Disable all Soundscapy logging.
+
+    Examples
+    --------
+    >>> from soundscapy import disable_logging
+    >>> disable_logging()
+    >>> # No more logging messages will be shown
+    """
+    # First remove all handlers to ensure no output
+    logger.remove()
+    # Then disable the soundscapy namespace
+    logger.disable("soundscapy")
+    # Add a handler with an impossibly high level to ensure nothing is logged
+    logger.add(sys.stderr, level=100)  # Level 100 is higher than any standard level
+
+
+def get_logger():
+    """
+    Get the Soundscapy logger instance.
+
+    Returns the loguru logger configured for Soundscapy. This is mainly for
+    advanced users who want to configure logging themselves.
+
+    Returns
+    -------
+    logger : loguru.logger
+        The loguru logger instance
+
+    Examples
+    --------
+    >>> from soundscapy import get_logger
+    >>> logger = get_logger()
+    >>> logger.debug("Custom debug message")
+    """
+    return logger
 
 
 def is_notebook() -> bool:
-    """Check if code is running in Jupyter notebook."""
+    """
+    Check if code is running in Jupyter notebook.
 
+    Returns
+    -------
+    bool
+        True if running in a Jupyter notebook, False otherwise
+    """
     try:
-        from IPython import get_ipython
+        from IPython.core.getipython import get_ipython
 
         shell = get_ipython().__class__.__name__
         if shell == "ZMQInteractiveShell":  # Jupyter notebook/lab
@@ -103,5 +163,5 @@ def is_notebook() -> bool:
             return False
         else:
             return False
-    except NameError:
+    except (NameError, ImportError):
         return False
