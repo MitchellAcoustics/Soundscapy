@@ -16,8 +16,11 @@ def _check_dependencies(group: str) -> bool:
             if group == "audio":
                 # Try importing audio-related modules using importlib.util for availability check
                 import importlib.util
+
                 deps = ["mosqito", "maad", "tqdm", "acoustic_toolbox"]
-                all_available = all(importlib.util.find_spec(dep) is not None for dep in deps)
+                all_available = all(
+                    importlib.util.find_spec(dep) is not None for dep in deps
+                )
                 _dependency_cache[group] = all_available
                 if all_available:
                     logger.debug(f"{group} dependencies found")
@@ -26,6 +29,7 @@ def _check_dependencies(group: str) -> bool:
             elif group == "spi":
                 # Check SPI dependencies
                 import importlib.util
+
                 spi_available = importlib.util.find_spec("rpy2") is not None
                 _dependency_cache[group] = spi_available
                 if spi_available:

@@ -27,10 +27,10 @@ See Also:
 # Check for required dependencies directly
 # This will raise ImportError if any dependency is missing
 try:
-    import mosqito
-    import maad
-    import tqdm
-    import acoustic_toolbox
+    import mosqito  # noqa: F401
+    import maad  # noqa: F401
+    import tqdm  # noqa: F401
+    import acoustic_toolbox  # noqa: F401
 except ImportError as e:
     raise ImportError(
         "Audio analysis functionality requires additional dependencies. "

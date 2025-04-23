@@ -3,7 +3,6 @@ Soundscapy is a Python library for soundscape analysis and visualisation.
 """
 
 # ruff: noqa: E402
-from typing import Any
 from loguru import logger
 
 # https://loguru.readthedocs.io/en/latest/resources/recipes.html#configuring-loguru-to-be-used-by-a-library-or-an-application
@@ -47,30 +46,54 @@ __all__ = [
 
 # Try to import optional audio module
 try:
-    from soundscapy import audio
+    from soundscapy import audio  # noqa: F401
     from soundscapy.audio import (
-        Binaural, AudioAnalysis, AnalysisSettings, ConfigManager,
-        process_all_metrics, prep_multiindex_df, add_results, parallel_process,
+        Binaural,  # noqa: F401
+        AudioAnalysis,  # noqa: F401
+        AnalysisSettings,  # noqa: F401
+        ConfigManager,  # noqa: F401
+        process_all_metrics,  # noqa: F401
+        prep_multiindex_df,  # noqa: F401
+        add_results,  # noqa: F401
+        parallel_process,  # noqa: F401
     )
-    __all__.extend([
-        "audio", "Binaural", "AudioAnalysis", "AnalysisSettings", 
-        "ConfigManager", "process_all_metrics", "prep_multiindex_df",
-        "add_results", "parallel_process",
-    ])
+
+    __all__.extend(
+        [
+            "audio",
+            "Binaural",
+            "AudioAnalysis",
+            "AnalysisSettings",
+            "ConfigManager",
+            "process_all_metrics",
+            "prep_multiindex_df",
+            "add_results",
+            "parallel_process",
+        ]
+    )
 except ImportError:
     # Audio module not available - this is expected if dependencies aren't installed
     pass
 
 # Try to import optional SPI module
 try:
-    from soundscapy import spi
+    from soundscapy import spi  # noqa: F401
     from soundscapy.spi import (
-        SkewNormalDistribution, fit_skew_normal, calculate_spi, calculate_spi_from_data,
+        SkewNormalDistribution,  # noqa: F401
+        fit_skew_normal,  # noqa: F401
+        calculate_spi,  # noqa: F401
+        calculate_spi_from_data,  # noqa: F401
     )
-    __all__.extend([
-        "spi", "SkewNormalDistribution", "fit_skew_normal", 
-        "calculate_spi", "calculate_spi_from_data",
-    ])
+
+    __all__.extend(
+        [
+            "spi",
+            "SkewNormalDistribution",
+            "fit_skew_normal",
+            "calculate_spi",
+            "calculate_spi_from_data",
+        ]
+    )
 except ImportError:
     # SPI module not available
     pass

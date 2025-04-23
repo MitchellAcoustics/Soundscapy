@@ -37,8 +37,8 @@ except ImportError as e:
 # Check for R dependencies
 try:
     # Code to check R and sn package availability
-    r_version = robjects.r('R.version.string')[0]
-    robjects.r('library(sn)')
+    r_version = robjects.r("R.version.string")[0]
+    robjects.r("library(sn)")
 except Exception as e:
     raise ImportError(
         f"Error with R dependencies: {str(e)}. "

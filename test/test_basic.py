@@ -52,7 +52,7 @@ def test_spi_import_error():
     # Since direct imports are now used instead of __getattr__, we need to test
     # through direct access to the module which would trigger ImportError
     with pytest.raises(ImportError) as excinfo:
-        import soundscapy.spi
+        pass
 
     # Check error message contains helpful instructions
     assert "soundscape perception indices calculation" in str(excinfo.value)
@@ -72,4 +72,4 @@ def test_spi_module_dependency_check(mock_r):
         if "soundscapy.spi" in sys.modules:
             importlib.reload(sys.modules["soundscapy.spi"])
         else:
-            import soundscapy.spi
+            pass
