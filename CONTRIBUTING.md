@@ -204,7 +204,7 @@ Soundscapy uses a flexible system for testing optional dependencies that allows 
 
 #### Test Structure
 
-Optional dependency tests exist at two levels:
+Optional dependency tests exist at several levels:
 
 1. **Optional Module Tests**: Tests within optional modules (e.g., `audio/`)
    - Only collected when dependencies are available using pytest_ignore_collect
@@ -216,6 +216,46 @@ Optional dependency tests exist at two levels:
    - Expected to fail when dependencies are unavailable
    - Test actual integration between components
 
+3. **In-Development Module Tests**: For modules under active development (e.g., `spi/`)
+   - Use module-level `pytestmark = pytest.mark.skip(reason="...")` to skip all tests
+   - Prevent pytest collection errors by using `--ignore=src/soundscapy/module/` flag
+   - Simplifies testing during development when module imports might fail
+
+#### Testing with Tox
+
+Soundscapy's tox configuration provides separate environments for different dependency groups:
+
+```
+# Run core tests (no optional dependencies)
+tox -e py310-core
+
+# Run with audio dependencies
+tox -e py310-audio
+
+# Run with SPI dependencies
+tox -e py310-spi
+
+# Run with all dependencies
+tox -e py310-all
+```
+
+Each environment is configured to run the appropriate tests:
+- Core: Run only tests with no optional dependency requirements
+- Audio: Run core tests and audio-specific tests, skipping SPI tests
+- SPI: Run core tests and SPI-specific tests
+- All: Run all tests
+
+Test selection is implemented using pytest's keyword-based filtering to precisely target the right tests:
+```python
+# Core tests only
+pytest -k "not optional_deps"
+
+# Core + audio tests
+pytest -k "not optional_deps or optional_deps and audio"
+
+# Core + SPI tests
+pytest -k "not optional_deps or optional_deps and spi"
+```
 
 #### When to Use Each Testing Approach
 
@@ -227,6 +267,11 @@ Optional dependency tests exist at two levels:
 2. **No special handling needed when**:
    - Writing tests within an optional module directory
    - Testing core functionality that doesn't use optional features
+
+3. **Use module-level skip markers when**:
+   - Working on a module that is not yet ready for testing
+   - Dependencies might cause import errors during collection
+   - You want to include tests in the codebase but skip their execution
 
 ### Adding Tests for New Optional Features
 
@@ -264,7 +309,16 @@ Soundscapy has three primary workflows: `test.yml`, `test-tutorials.yml` and `ta
 
 In all cases, python and dependencies are managed and installed with `uv`.
 
-`test.yml` will test on multiple python versions, defined by the `python-version` matrix. First, it will install the core dependencies with `uv sync`, then run the test suite (which **should** ignore the tests requiring optional dependencies). Then, it will install all optional dependencies `uv sync --all-extras` and run the tests again. This ensures that the tests run with and without optional dependencies.
+`test.yml` uses tox to test across multiple Python versions and dependency combinations. The workflow has a two-stage approach:
+
+1. **Linting**: First, it runs ruff checks for code quality and formatting.
+
+2. **Testing**: Then, it runs tox with different environments:
+   - **Core**: Tests with just core dependencies using `py{310,311,312}-core`
+   - **Audio**: Tests with audio dependencies using `py{310,311,312}-audio`
+   - **All**: Tests with all dependencies using `py{310,311,312}-all`
+
+This approach ensures consistent testing between local development (using tox locally) and CI environments, while verifying that the package works correctly with different Python versions and dependency combinations.
 
 `test-tutorials.yml` uses `--nbmake` to convert the notebooks to python files and run them. This is useful for testing the tutorials and ensuring they are up to date. It does not test the veracity of the outputs, just whether the notebooks run without errors.
 
