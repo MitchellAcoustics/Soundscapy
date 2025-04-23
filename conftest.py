@@ -31,6 +31,7 @@ def pytest_ignore_collect(collection_path):
     # Map module paths to their dependency groups
     module_deps = {
         "audio/": "audio",
+        "spi/": "spi",
         # Add new optional module paths here
     }
 

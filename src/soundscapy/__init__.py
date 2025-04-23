@@ -46,6 +46,7 @@ __all__ = [
     "disable_logging",
     "get_logger",
     # Optional modules listed explicitly for IDE/typing support
+    # Audio module
     "Binaural",
     "AudioAnalysis",
     "AnalysisSettings",
@@ -54,6 +55,11 @@ __all__ = [
     "prep_multiindex_df",
     "add_results",
     "parallel_process",
+    # SPI module
+    "SkewNormalDistribution",
+    "fit_skew_normal",
+    "calculate_spi",
+    "calculate_spi_from_data",
 ]
 
 

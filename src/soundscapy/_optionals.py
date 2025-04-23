@@ -16,6 +16,11 @@ OPTIONAL_DEPENDENCIES = {
         "install": "soundscapy[audio]",
         "description": "audio analysis functionality",
     },
+    "spi": {
+        "packages": ("rpy2",),
+        "install": "soundscapy[spi]",
+        "description": "soundscape perception indices calculation",
+    },
     # Add other groups as needed
 }
 """Dict[str, Dict]: Mapping of feature groups to their required dependencies.
@@ -27,6 +32,7 @@ Each group contains:
 """
 
 OPTIONAL_IMPORTS = {
+    # Audio module
     "Binaural": ("soundscapy.audio", "Binaural"),
     "AudioAnalysis": ("soundscapy.audio", "AudioAnalysis"),
     "AnalysisSettings": ("soundscapy.audio", "AnalysisSettings"),
@@ -35,6 +41,12 @@ OPTIONAL_IMPORTS = {
     "prep_multiindex_df": ("soundscapy.audio", "prep_multiindex_df"),
     "add_results": ("soundscapy.audio", "add_results"),
     "parallel_process": ("soundscapy.audio", "parallel_process"),
+    
+    # SPI module
+    "SkewNormalDistribution": ("soundscapy.spi", "SkewNormalDistribution"),
+    "fit_skew_normal": ("soundscapy.spi", "fit_skew_normal"),
+    "calculate_spi": ("soundscapy.spi", "calculate_spi"),
+    "calculate_spi_from_data": ("soundscapy.spi", "calculate_spi_from_data"),
 }
 
 
@@ -83,7 +95,16 @@ def import_optional(name: str) -> Any:
         module = importlib.import_module(module_name)
         return getattr(module, attr_name)
     except ImportError as e:
-        group = "audio"  # Can be made dynamic if we add more groups
+        # Determine group based on module_name
+        group = None
+        for dep_group, info in OPTIONAL_DEPENDENCIES.items():
+            if dep_group in module_name:
+                group = dep_group
+                break
+        
+        # Fall back to "audio" if we can't determine the group
+        group = group or "audio"
+        
         raise ImportError(
             f"The {name} component requires {OPTIONAL_DEPENDENCIES[group]['description']}. "
             f"Install with: pip install {OPTIONAL_DEPENDENCIES[group]['install']}"

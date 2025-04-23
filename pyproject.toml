@@ -37,6 +37,7 @@ documentation = "https://soundscapy.readthedocs.io/en/latest/"
 [project.optional-dependencies]
 all = [
     "soundscapy[audio]",
+    "soundscapy[spi]",
 ]
 audio = [
     "mosqito>=1.2.1",
@@ -44,6 +45,9 @@ audio = [
     "tqdm>=4.66.5",
     "numba>=0.59",
     "acoustic-toolbox>=0.1.2",
+]
+spi = [
+    "rpy2>=3.5.0",
 ]
 
 [tool.uv]
@@ -78,7 +82,7 @@ docs = [
 universal = true
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=short --durations=5 --xdoctest -n 6 --cov=src/soundscapy --cov-report=term"
+addopts = "-v --tb=short --durations=5 --xdoctest"
 testpaths = ["test", "src/soundscapy"]
 python_files = "test_*.py"
 python_classes = "Test*"
