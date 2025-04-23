@@ -13,8 +13,6 @@ import importlib.metadata
 
 __version__ = importlib.metadata.version("soundscapy")
 
-from soundscapy._optionals import import_optional
-
 # Always available core modules
 from soundscapy import surveys
 from soundscapy import databases
@@ -45,24 +43,34 @@ __all__ = [
     "enable_debug",
     "disable_logging",
     "get_logger",
-    # Optional modules listed explicitly for IDE/typing support
-    # Audio module
-    "Binaural",
-    "AudioAnalysis",
-    "AnalysisSettings",
-    "ConfigManager",
-    "process_all_metrics",
-    "prep_multiindex_df",
-    "add_results",
-    "parallel_process",
-    # SPI module
-    "SkewNormalDistribution",
-    "fit_skew_normal",
-    "calculate_spi",
-    "calculate_spi_from_data",
 ]
 
+# Try to import optional audio module
+try:
+    from soundscapy import audio
+    from soundscapy.audio import (
+        Binaural, AudioAnalysis, AnalysisSettings, ConfigManager,
+        process_all_metrics, prep_multiindex_df, add_results, parallel_process,
+    )
+    __all__.extend([
+        "audio", "Binaural", "AudioAnalysis", "AnalysisSettings", 
+        "ConfigManager", "process_all_metrics", "prep_multiindex_df",
+        "add_results", "parallel_process",
+    ])
+except ImportError:
+    # Audio module not available - this is expected if dependencies aren't installed
+    pass
 
-def __getattr__(name: str) -> Any:
-    """Lazy import handling for optional components."""
-    return import_optional(name)
+# Try to import optional SPI module
+try:
+    from soundscapy import spi
+    from soundscapy.spi import (
+        SkewNormalDistribution, fit_skew_normal, calculate_spi, calculate_spi_from_data,
+    )
+    __all__.extend([
+        "spi", "SkewNormalDistribution", "fit_skew_normal", 
+        "calculate_spi", "calculate_spi_from_data",
+    ])
+except ImportError:
+    # SPI module not available
+    pass

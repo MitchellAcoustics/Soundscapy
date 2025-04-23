@@ -19,17 +19,33 @@ Example:
     >>> spi_score = calculate_spi(distribution, target_distribution)
 """
 # ruff: noqa: E402
-# ignore module level import order because we need to run require_dependencies first
+# ignore module level import order because we need to check dependencies first
 
-from soundscapy._optionals import require_dependencies
 from soundscapy.logging import get_logger
 
 logger = get_logger()
 
-# First, check the Python packages (rpy2) using the standard mechanism
-required = require_dependencies("spi")
+# Check for Python dependencies directly
+try:
+    import rpy2.robjects as robjects
+except ImportError as e:
+    raise ImportError(
+        "Soundscape perception indices calculation requires additional dependencies. "
+        "Install with: pip install soundscapy[spi]"
+    ) from e
 
-# Then, check for R and R package dependencies
+# Check for R dependencies
+try:
+    # Code to check R and sn package availability
+    r_version = robjects.r('R.version.string')[0]
+    robjects.r('library(sn)')
+except Exception as e:
+    raise ImportError(
+        f"Error with R dependencies: {str(e)}. "
+        "Please ensure R and the 'sn' package are installed."
+    ) from e
+
+# Use existing R wrapper to verify R dependencies
 try:
     from ._r_wrapper import check_dependencies
 
@@ -37,12 +53,11 @@ try:
     dependencies = check_dependencies()
     logger.debug(f"R dependencies verified: {dependencies}")
 except ImportError as e:
-    # Add information to the original error about required Python packages
-    full_error = (
-        f"{str(e)}\n\n"
-        f"Python dependency rpy2 should be installed with: pip install soundscapy[spi]"
-    )
-    raise ImportError(full_error) from e
+    raise ImportError(
+        f"Error with R dependencies: {str(e)}. "
+        "Please ensure R and the 'sn' package are installed. "
+        "Python dependency rpy2 should be installed with: pip install soundscapy[spi]"
+    ) from e
 
 # Module structure will be implemented in subsequent phases
 # For now, raise NotImplementedError for the public API functions

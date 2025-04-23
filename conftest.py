@@ -13,11 +13,28 @@ def _check_dependencies(group: str) -> bool:
     """Check for dependencies of a group, caching the result."""
     if group not in _dependency_cache:
         try:
-            from soundscapy._optionals import require_dependencies
-
-            required = require_dependencies(group)
-            logger.debug(f"{group} dependencies found: {list(required.keys())}")
-            _dependency_cache[group] = True
+            if group == "audio":
+                # Try importing audio-related modules using importlib.util for availability check
+                import importlib.util
+                deps = ["mosqito", "maad", "tqdm", "acoustic_toolbox"]
+                all_available = all(importlib.util.find_spec(dep) is not None for dep in deps)
+                _dependency_cache[group] = all_available
+                if all_available:
+                    logger.debug(f"{group} dependencies found")
+                else:
+                    logger.debug(f"{group} dependencies missing")
+            elif group == "spi":
+                # Check SPI dependencies
+                import importlib.util
+                spi_available = importlib.util.find_spec("rpy2") is not None
+                _dependency_cache[group] = spi_available
+                if spi_available:
+                    logger.debug(f"{group} dependencies found")
+                else:
+                    logger.debug(f"{group} dependencies missing")
+            else:
+                logger.debug(f"Unknown dependency group: {group}")
+                _dependency_cache[group] = False
         except ImportError as e:
             logger.debug(f"Missing {group} dependencies: {e}")
             _dependency_cache[group] = False
@@ -50,18 +67,17 @@ def pytest_configure(config):
         "markers", "optional_deps(group): mark tests requiring optional dependencies"
     )
 
-    # Set environment variables for each dependency group
-    from soundscapy._optionals import OPTIONAL_DEPENDENCIES
-
-    for group in OPTIONAL_DEPENDENCIES:
+    # Define known dependency groups
+    dependency_groups = ["audio", "spi"]
+    for group in dependency_groups:
         env_var = f"{group.upper()}_DEPS"
         os.environ[env_var] = "1" if _check_dependencies(group) else "0"
         logger.debug(f"Set {env_var}={os.environ[env_var]}")
 
-    # Configure xdoctest namespace with all dependency groups
+    # Configure xdoctest namespace
     namespace_setup = """
     import os
-    from soundscapy._optionals import require_dependencies
+    import importlib
     """
     config.option.xdoctest_namespace = namespace_setup
 
@@ -81,10 +97,10 @@ def caplog(caplog: LogCaptureFixture):
 
 
 def pytest_runtest_setup(item):
-    """Skip tests marked as requiring optional dependencies."""
+    """Mark tests requiring optional dependencies as xfail if deps are missing."""
     for marker in item.iter_markers(name="optional_deps"):
         group = marker.args[0] if marker.args else marker.kwargs.get("group")
         if not group:
             pytest.fail("No dependency group specified for optional_deps marker")
         if not _check_dependencies(group):
-            pytest.skip(f"Missing optional dependencies for {group}")
+            pytest.xfail(f"Missing optional dependencies for {group}")
