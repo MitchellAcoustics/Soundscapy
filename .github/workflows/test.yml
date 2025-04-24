@@ -11,6 +11,10 @@ on:
   pull_request:
     branches: [ main, dev, spi-feature ]
 
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint and format check
@@ -35,18 +39,41 @@ jobs:
         uvx ruff format --check
 
   test:
-    name: Run tests with tox
+    name: Test with ${{ matrix.factor }} on Python ${{ matrix.env }}
     needs: lint
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        environment: [core, audio, all]
+        env: ["3.10", "3.11", "3.12"]
+        factor: [core, audio, all]
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Run Tox
-      uses: tox-dev/gh-actions-tox@v1
       with:
-        tox-env: py{310,311,312}-${{ matrix.environment }}
+        fetch-depth: 0
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Install tox
+      run: uv tool install tox --with tox-uv --with tox-gh
+
+    - name: Install Python
+      run: uv python install ${{ matrix.env }}
+
+    - name: Setup test suite
+      run: tox --notest
+      env:
+        TOX_FACTORS: ${{ matrix.factor }}
+        TOX_GH_MAJOR_MINOR: ${{ matrix.env }}
+
+    - name: Run test suite
+      run: tox --skip-pkg-install
+      env: 
+        TOX_FACTORS: ${{ matrix.factor }}
+        TOX_GH_MAJOR_MINOR: ${{ matrix.env }}
