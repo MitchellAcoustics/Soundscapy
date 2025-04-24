@@ -13,8 +13,8 @@ It is not intended to be used directly by end users.
 from typing import Dict, Any, Tuple
 import sys
 import contextlib
-
-# numpy will be used in Phase 1D for data conversion
+# These are used in the docstring examples but not in the code
+# They will be used by code that imports and uses this module
 from soundscapy.logging import get_logger
 
 logger = get_logger()
@@ -347,4 +347,118 @@ def r_session_context():
         raise
 
 
-# Data conversion functions will be added in Phase 1D
+# === DATA CONVERSION ===
+
+def extract_r_list_element(r_list: Any, name: str) -> Any:
+    """
+    Extract a named element from an R list or environment.
+    
+    This is a minimal helper function to simplify extracting elements from R lists
+    when working with the skew-normal distribution functions that return complex
+    result objects.
+    
+    Args:
+        r_list: An R list or environment
+        name: The name of the element to extract
+        
+    Returns:
+        The extracted element, still as an R object
+        
+    Raises:
+        KeyError: If the named element doesn't exist
+        TypeError: If the object is not an R list or environment
+    """
+    r_session, _, _ = get_r_session()
+    
+    # Check if it's a list or environment
+    is_list = r_session.r("is.list")(r_list)[0]
+    is_env = r_session.r("is.environment")(r_list)[0]
+    
+    if not (is_list or is_env):
+        raise TypeError(
+            "Input must be an R list or environment, got "
+            f"{r_session.r('class')(r_list)[0]}"
+        )
+    
+    # Check if element exists
+    names = list(r_session.r("names")(r_list))
+    if name not in names:
+        raise KeyError(f"Element '{name}' not found in R object. Available names: {names}")
+    
+    # Extract the element using the r_list.rx2() extraction method
+    element = r_list.rx2(name)
+    return element
+
+
+# === CONVERSION PATTERNS ===
+
+"""
+Direct Conversion Patterns for R/Python Data Exchange
+----------------------------------------------------
+
+This module uses rpy2's built-in conversion mechanism rather than implementing
+custom converters. Below are the recommended patterns to follow when working
+with R/Python data conversion in the SPI module:
+
+1. Basic automatic conversion:
+   - Use the context manager pattern to enable automatic conversion within a scope:
+   
+   ```python
+   from rpy2.robjects import numpy2ri, pandas2ri, default_converter
+   
+   # Create a converter with support for both numpy and pandas
+   converter = default_converter + numpy2ri.converter + pandas2ri.converter
+   
+   # Use the converter within a context (preferred over global activation)
+   with converter.context():
+       # Python → R conversion
+       r_matrix = r_session.r.matrix(numpy_array, nrow=rows, ncol=cols)
+       
+       # R → Python conversion 
+       numpy_array = np.array(r_matrix)
+       pandas_df = pd.DataFrame(r_dataframe)
+   ```
+   
+2. Explicit conversion with get_conversion():
+   ```python
+   # Current recommended approach (as of rpy2 3.5+)
+   from rpy2.robjects.conversion import get_conversion
+   
+   with converter.context():
+       conversion = get_conversion()
+       r_obj = conversion.py2rpy(py_obj)  # Python to R
+       py_obj = conversion.rpy2py(r_obj)  # R to Python
+   ```
+   
+   Note: The older approach using direct `py2rpy` and `rpy2py` functions is deprecated:
+   ```python
+   # Deprecated approach (still works but generates warnings)
+   from rpy2.robjects.conversion import py2rpy, rpy2py
+   
+   with converter.context():
+       r_obj = py2rpy(py_obj)  # Python to R
+       py_obj = rpy2py(r_obj)  # R to Python
+   ```
+
+3. Working with R lists and extracting components:
+   ```python
+   # Extract a component from an R list result
+   dp_result = r_sn.msn_mle(...)  # Returns a complex R list
+   
+   # Extract the 'dp' element:
+   dp = dp_result.rx2('dp')
+   
+   # Or use the helper function:
+   dp = extract_r_list_element(dp_result, 'dp')
+   ```
+
+4. Setting matrix column names:
+   ```python
+   with converter.context():
+       r_matrix = r_session.r.matrix(data_array, nrow=rows, ncol=cols)
+       # Using R code directly with string formatting
+       r_session.r('colnames({}) <- c({})'.format(
+           r_session.rinterface.deparse_str(r_matrix),
+           ', '.join([f'"{name}"' for name in colnames])))
+   ```
+"""
