@@ -62,10 +62,10 @@ jobs:
       run: uv python install ${{ matrix.python-version }}
 
     - name: Install tox
-      run: uv pip install tox tox-uv
+      run: uv tool install tox --with tox-uv
 
     # Convert Python version (e.g., 3.10) to format needed for tox (e.g., py310)
     - name: Run tox environment
       run: |
         py_version="py$(echo '${{ matrix.python-version }}' | tr -d '.')"
-        uv run tox -e ${py_version}-${{ matrix.factor }}
+        tox r -e ${py_version}-${{ matrix.factor }}
