@@ -39,20 +39,18 @@ jobs:
         uvx ruff format --check
 
   test:
-    name: Test with ${{ matrix.factor }} on Python ${{ matrix.env }}
+    name: Test with ${{ matrix.factor }} on Python ${{ matrix.python-version }}
     needs: lint
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        env: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
         factor: [core, audio, all]
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
@@ -60,20 +58,14 @@ jobs:
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
+    - name: Setup Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
     - name: Install tox
-      run: uv tool install tox --with tox-uv --with tox-gh
+      run: uv pip install tox tox-uv
 
-    - name: Install Python
-      run: uv python install ${{ matrix.env }}
-
-    - name: Setup test suite
-      run: tox --notest
-      env:
-        TOX_FACTORS: ${{ matrix.factor }}
-        TOX_GH_MAJOR_MINOR: ${{ matrix.env }}
-
-    - name: Run test suite
-      run: tox --skip-pkg-install
-      env: 
-        TOX_FACTORS: ${{ matrix.factor }}
-        TOX_GH_MAJOR_MINOR: ${{ matrix.env }}
+    # Convert Python version (e.g., 3.10) to format needed for tox (e.g., py310)
+    - name: Run tox environment
+      run: |
+        py_version="py$(echo '${{ matrix.python-version }}' | tr -d '.')"
+        uv run tox -e ${py_version}-${{ matrix.factor }}
