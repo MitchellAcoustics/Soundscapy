@@ -4,7 +4,7 @@
 
 - Use the `uv` tool for managing dependencies and other project tasks. `uv add` and `uv remove` should be used to add or remove dependencies. `uv add --optional <group>` should be used to add an optional dependency. `uv sync # add --all-extras, etc as needed` should be used to install dependencies and sync with lock file. `uv build` should be used to build the package.
 - Try to keep all necessary configurations to `pyproject.toml` where possible. This includes versioning, optional dependencies, tool settings (e.g. `bumpver`) and other project settings.
-- Wherever possible, centralise operations and metadata. For instance, version is defined in `pyproject.toml` and automatically brought into `soundscapy` metadata in `__init__.py`; optional dependency groups are defined in `_optionals.py` and checked once at the `<module>.__init__.py` level, rather than for each individual function or at the `soundscapy.__init__.py` level.
+- Wherever possible, centralise operations and metadata. For instance, version is defined in `pyproject.toml` and automatically brought into `soundscapy` metadata in `__init__.py`; optional dependency checks are performed at the `<module>.__init__.py` level, rather than for each individual function.
 
 Changes should be made in a feature branch and submitted to `dev` via a pull request. The pull request should be reviewed by at least one other developer before being merged. The `main` branch should only contain stable releases. Docs can be updated directly on `dev` or `main` as needed.
 
@@ -77,29 +77,11 @@ The avilable types are:
 
 ## Optional Dependencies System
 
+Soundscapy uses a simple and standard approach to handle optional dependencies.
+
 ### Core Components
 
-1. **Dependency Definitions** (`_optionals.py`):
-
-   ```python
-   # Package dependencies
-   OPTIONAL_DEPENDENCIES = {
-       "audio": {
-           "packages": ("mosqito", "maad", "acoustic_toolbox"),
-           "install": "soundscapy[audio]",
-           "description": "audio analysis functionality",
-       },
-   }
-
-   # Top-level imports available when dependencies are installed
-   OPTIONAL_IMPORTS = {
-       'Binaural': ('soundscapy.audio', 'Binaural'),
-       'AudioAnalysis': ('soundscapy.audio', 'AudioAnalysis'),
-       # ... other optional components
-   }
-   ```
-
-2. **Package Configuration** (`pyproject.toml`):
+1. **Package Configuration** (`pyproject.toml`):
 
    ```toml
    [project.optional-dependencies]
@@ -110,16 +92,43 @@ The avilable types are:
    ]
    ```
 
-3. **Module-Level Dependency Check** (`audio/__init__.py`):
+2. **Module-Level Dependency Check** (`audio/__init__.py`):
 
    ```python
-   from soundscapy._optionals import require_dependencies
-
-   # This will raise an ImportError if dependencies are missing
-   required = require_dependencies("audio")
+   # Check for required dependencies directly
+   try:
+       import mosqito
+       import maad
+       import tqdm
+       import acoustic_toolbox
+   except ImportError as e:
+       raise ImportError(
+           "Audio analysis functionality requires additional dependencies. "
+           "Install with: pip install soundscapy[audio]"
+       ) from e
 
    # Now import module components
    from .binaural import Binaural
+   ```
+
+3. **Top-Level Imports** (`soundscapy/__init__.py`):
+
+   ```python
+   # Try to import optional audio module
+   try:
+       from soundscapy import audio
+       from soundscapy.audio import (
+           Binaural, AudioAnalysis, AnalysisSettings, ConfigManager,
+           process_all_metrics, prep_multiindex_df, add_results, parallel_process,
+       )
+       __all__.extend([
+           "audio", "Binaural", "AudioAnalysis", "AnalysisSettings", 
+           "ConfigManager", "process_all_metrics", "prep_multiindex_df",
+           "add_results", "parallel_process",
+       ])
+   except ImportError:
+       # Audio module not available - this is expected if dependencies aren't installed
+       pass
    ```
 
 ### Adding New Optional Features
@@ -136,40 +145,21 @@ uv add new-package --optional audio
 uv add package1 package2 --optional new_group
 ```
 
-#### 2. Update Dependency Definitions
-
-In `_optionals.py`, update both dependency mappings:
-
-```python
-OPTIONAL_DEPENDENCIES = {
-    "audio": {
-        "packages": ("mosqito", "maad", "acoustic_toolbox", "new_package"),  # Add to existing
-        "install": "soundscapy[audio]",
-        "description": "audio analysis functionality",
-    },
-    "new_group": {  # Or create new group
-        "packages": ("package1", "package2"),
-        "install": "soundscapy[new_group]",
-        "description": "description of functionality",
-    },
-}
-
-OPTIONAL_IMPORTS = {
-    # Existing imports...
-    'NewFeature': ('soundscapy.new_group', 'NewFeature'),  # Add new top-level imports
-}
-```
-
-#### 3. Implement Feature Code
+#### 2. Implement Feature Code
 
 Create a new module directory if needed (e.g., `new_group/`) with an `__init__.py`:
 
 ```python
 """Module docstring describing the new functionality."""
-from soundscapy._optionals import require_dependencies
-
-# This will raise an ImportError if dependencies are missing
-required = require_dependencies("new_group")
+# Check dependencies directly
+try:
+    import package1
+    import package2
+except ImportError as e:
+    raise ImportError(
+        "This functionality requires additional dependencies. "
+        "Install with: pip install soundscapy[new_group]"
+    ) from e
 
 # Now import your feature code
 from .feature import NewFeature
@@ -177,39 +167,36 @@ from .feature import NewFeature
 __all__ = ["NewFeature"]
 ```
 
-#### 4. Add to Top-Level Exports
+#### 3. Add to Top-Level Exports
 
-If you want the new feature to be available at the top level, add it to `__all__` in `soundscapy/__init__.py`:
+Update the main `__init__.py` to import and expose the new module:
 
 ```python
-__all__ = [
-    # Core modules...
-    # Optional modules
-    "NewFeature",  # Add new feature here
-]
+# Try to import optional new_group module
+try:
+    from soundscapy import new_group
+    from soundscapy.new_group import NewFeature
+    __all__.extend(["new_group", "NewFeature"])
+except ImportError:
+    # new_group module not available - expected if dependencies aren't installed
+    pass
 ```
 
 ### How It Works
 
-The system provides three levels of dependency handling:
+The system uses standard Python try/except patterns at two levels:
 
-1. **Module Level**: The `require_dependencies()` check in the optional module's `__init__.py` ensures dependencies are available before the module is imported.
+1. **Module Level**: Each optional module checks for its dependencies on import and raises a helpful error if they're missing.
 
-2. **Top Level Imports**: `__getattr__` in the main `__init__.py` enables importing optional components directly from `soundscapy` with proper error handling:
-
-   ```python
-   from soundscapy import Binaural  # Works with deps, helpful error without
-   ```
-
-3. **IDE Support**: The explicit `__all__` list in `__init__.py` provides IDE autocompletion while maintaining proper runtime behavior.
+2. **Top Level**: The main package tries to import optional modules and their components, extending __all__ only when available.
 
 Benefits:
 
 - Clear error messages when dependencies are missing
-- Optional components available at both module and package level
+- Standard Python import patterns that are easy to understand
 - Good IDE support through explicit exports
-- Centralized dependency configuration
 - No runtime overhead for unused optional features
+- Simpler to maintain and extend
 
 ### Testing Optional Dependencies
 
@@ -217,18 +204,58 @@ Soundscapy uses a flexible system for testing optional dependencies that allows 
 
 #### Test Structure
 
-Optional dependency tests exist at three levels:
+Optional dependency tests exist at several levels:
 
 1. **Optional Module Tests**: Tests within optional modules (e.g., `audio/`)
-   - Only collected when dependencies are available
+   - Only collected when dependencies are available using pytest_ignore_collect
    - Test actual functionality
-   - No need for special markers or mocking
+   - No need for special markers
 
 2. **Integration Tests**: Tests that use optional features from other modules
    - Use `@pytest.mark.optional_deps('group')` marker
-   - Skip when dependencies unavailable
+   - Expected to fail when dependencies are unavailable
    - Test actual integration between components
 
+3. **In-Development Module Tests**: For modules under active development (e.g., `spi/`)
+   - Use module-level `pytestmark = pytest.mark.skip(reason="...")` to skip all tests
+   - Prevent pytest collection errors by using `--ignore=src/soundscapy/module/` flag
+   - Simplifies testing during development when module imports might fail
+
+#### Testing with Tox
+
+Soundscapy's tox configuration provides separate environments for different dependency groups:
+
+```
+# Run core tests (no optional dependencies)
+tox -e py310-core
+
+# Run with audio dependencies
+tox -e py310-audio
+
+# Run with SPI dependencies
+tox -e py310-spi
+
+# Run with all dependencies
+tox -e py310-all
+```
+
+Each environment is configured to run the appropriate tests:
+- Core: Run only tests with no optional dependency requirements
+- Audio: Run core tests and audio-specific tests, skipping SPI tests
+- SPI: Run core tests and SPI-specific tests
+- All: Run all tests
+
+Test selection is implemented using pytest's keyword-based filtering to precisely target the right tests:
+```python
+# Core tests only
+pytest -k "not optional_deps"
+
+# Core + audio tests
+pytest -k "not optional_deps or optional_deps and audio"
+
+# Core + SPI tests
+pytest -k "not optional_deps or optional_deps and spi"
+```
 
 #### When to Use Each Testing Approach
 
@@ -238,20 +265,25 @@ Optional dependency tests exist at three levels:
    - Testing with real package interactions
 
 2. **No special handling needed when**:
-   - Writing tests within an optional module
+   - Writing tests within an optional module directory
    - Testing core functionality that doesn't use optional features
+
+3. **Use module-level skip markers when**:
+   - Working on a module that is not yet ready for testing
+   - Dependencies might cause import errors during collection
+   - You want to include tests in the codebase but skip their execution
 
 ### Adding Tests for New Optional Features
 
 When adding new optional features:
 
 1. **Inside Optional Module**:
-   - Put tests in the module's test directory
-   - No special handling needed
-   - Tests will only run when dependencies are available
+   - Put tests in the module's test directory (e.g., `test/new_group/`)
+   - Tests will only be collected when dependencies are available
+   - No markers needed for tests within the module's directory
 
    ```python
-   # soundscapy/new_group/tests/test_feature.py
+   # test/new_group/test_feature.py
    def test_new_feature():
        """Regular test, no special handling needed."""
        from soundscapy.new_group import NewFeature
@@ -266,7 +298,7 @@ When adding new optional features:
    # test/test_integration.py
    @pytest.mark.optional_deps('new_group')
    def test_new_feature_integration():
-       """Will skip if dependencies missing."""
+       """Will be marked as expected to fail if dependencies missing."""
        from soundscapy import NewFeature
        assert NewFeature.integrate() == expected
    ```
@@ -277,7 +309,16 @@ Soundscapy has three primary workflows: `test.yml`, `test-tutorials.yml` and `ta
 
 In all cases, python and dependencies are managed and installed with `uv`.
 
-`test.yml` will test on multiple python versions, defined by the `python-version` matrix. First, it will install the core dependencies with `uv sync`, then run the test suite (which **should** ignore the tests requiring optional dependencies). Then, it will install all optional dependencies `uv sync --all-extras` and run the tests again. This ensures that the tests run with and without optional dependencies.
+`test.yml` uses tox to test across multiple Python versions and dependency combinations. The workflow has a two-stage approach:
+
+1. **Linting**: First, it runs ruff checks for code quality and formatting.
+
+2. **Testing**: Then, it runs tox with different environments:
+   - **Core**: Tests with just core dependencies using `py{310,311,312}-core`
+   - **Audio**: Tests with audio dependencies using `py{310,311,312}-audio`
+   - **All**: Tests with all dependencies using `py{310,311,312}-all`
+
+This approach ensures consistent testing between local development (using tox locally) and CI environments, while verifying that the package works correctly with different Python versions and dependency combinations.
 
 `test-tutorials.yml` uses `--nbmake` to convert the notebooks to python files and run them. This is useful for testing the tutorials and ensuring they are up to date. It does not test the veracity of the outputs, just whether the notebooks run without errors.
 

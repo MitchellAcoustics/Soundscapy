@@ -7,7 +7,7 @@ Users can enable logging with the setup_logging function.
 """
 
 import sys
-from typing import Optional, Union, TextIO
+from typing import Optional, Union
 from pathlib import Path
 
 from loguru import logger

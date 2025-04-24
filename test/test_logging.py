@@ -2,7 +2,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
 from loguru import logger
 
 from soundscapy.logging import (
@@ -53,34 +52,34 @@ def test_enable_debug():
 def test_disable_logging():
     """Test disabling logging."""
     import io
-    
+
     # Create a test output buffer
     test_output = io.StringIO()
-    
+
     # Set up logging with our test output
     logger.remove()
     logger.enable("soundscapy")
-    handler_id = logger.add(test_output, level="CRITICAL")
-    
+    logger.add(test_output, level="CRITICAL")
+
     # Try with logging enabled
     logger.critical("This should be logged")
     logger.complete()
     assert "This should be logged" in test_output.getvalue()
-    
+
     # Now disable logging
     disable_logging()
-    
+
     # Clear the output buffer
     test_output.seek(0)
     test_output.truncate(0)
-    
+
     # Try to log at CRITICAL level again
     logger.critical("This should NOT be logged")
     logger.complete()
-    
+
     # Verify nothing was logged after disabling
     assert test_output.getvalue() == ""
-    
+
     # Reset for other tests
     setup_logging("INFO")
 
