@@ -20,7 +20,7 @@ For each component, we will follow this process:
 
 ## Aligning with Soundscapy's Optional Dependency System
 
-Based on the guidelines in CONTRIBUTING.md, we will follow Soundscapy's established approach:
+Based on the updated guidelines in CONTRIBUTING.md, we will follow Soundscapy's simplified approach:
 
 1. **Define the optional dependency group** in `pyproject.toml`:
 
@@ -31,39 +31,52 @@ Based on the guidelines in CONTRIBUTING.md, we will follow Soundscapy's establis
    ]
    ```
 
-2. **Update dependency definitions** in `_optionals.py`:
+2. **Implement direct dependency checks** in `spi/__init__.py`:
 
    ```python
-   OPTIONAL_DEPENDENCIES = {
-       # Existing groups...
-       "spi": {
-           "packages": ("rpy2",),
-           "install": "soundscapy[spi]",
-           "description": "soundscape perception indices calculation",
-       },
-   }
-   
-   OPTIONAL_IMPORTS = {
-       # Existing imports...
-       'SkewNormalDistribution': ('soundscapy.spi', 'SkewNormalDistribution'),
-       'fit_skew_normal': ('soundscapy.spi', 'fit_skew_normal'),
-       'calculate_spi': ('soundscapy.spi', 'calculate_spi'),
-   }
-   ```
+   # Check for Python dependencies directly
+   try:
+       import rpy2.robjects as robjects
+   except ImportError as e:
+       raise ImportError(
+           "Soundscape perception indices calculation requires additional dependencies. "
+           "Install with: pip install soundscapy[spi]"
+       ) from e
 
-3. **Implement module-level dependency check** in `spi/__init__.py`:
-
-   ```python
-   from soundscapy._optionals import require_dependencies
-
-   # This will raise an ImportError if dependencies are missing
-   required = require_dependencies("spi")
+   # Check for R dependencies
+   try:
+       # Code to check R and sn package availability
+       r_version = robjects.r("R.version.string")[0]
+       robjects.r("library(sn)")
+   except Exception as e:
+       raise ImportError(
+           f"Error with R dependencies: {str(e)}. "
+           "Please ensure R and the 'sn' package are installed."
+       ) from e
 
    # Now import module components
    from .distributions import SkewNormalDistribution, fit_skew_normal
    from .metrics import calculate_spi
    
    __all__ = ["SkewNormalDistribution", "fit_skew_normal", "calculate_spi"]
+   ```
+
+3. **Add to top-level exports** in `soundscapy/__init__.py`:
+
+   ```python
+   # Try to import optional SPI module
+   try:
+       from soundscapy import spi
+       from soundscapy.spi import (
+           SkewNormalDistribution, fit_skew_normal, calculate_spi, calculate_spi_from_data,
+       )
+       __all__.extend([
+           "spi", "SkewNormalDistribution", "fit_skew_normal", 
+           "calculate_spi", "calculate_spi_from_data",
+       ])
+   except ImportError:
+       # SPI module not available
+       pass
    ```
 
 4. **Testing strategy** will use the established markers:
@@ -122,9 +135,9 @@ Add tests to verify:
 
 #### 2.3 Implement R Dependency Checks
 
-Extend the dependency check in `spi/__init__.py` to:
+Implement direct dependency checks in `spi/__init__.py`:
 
-- First check for rpy2 via the standard mechanism
+- First directly import rpy2 with try/except
 - Then verify R is available through rpy2
 - Finally check if R sn package is available
 - Provide clear error messages with installation instructions
@@ -229,30 +242,33 @@ These tests will verify the API design without implementation.
 
 ## Test Structure and Integration with Existing Tests
 
-Following Soundscapy's testing approach:
+Following Soundscapy's updated testing approach:
 
 ```bash
 test/
-├── test_spi_import.py         # Core dependency tests (in main test dir)
 ├── spi/
     ├── __init__.py            # Empty package file
-    ├── conftest.py            # Test fixtures
+    ├── conftest.py            # Test fixtures (if needed)
+    ├── test_api_stubs.py      # API stub tests
+    ├── test_r_dependencies.py # R dependency tests
     ├── test_r_wrapper.py      # R integration tests
 ```
 
-Testing strategy will use three approaches as defined in CONTRIBUTING.md:
+Testing strategy will use these approaches as defined in the updated CONTRIBUTING.md:
 
-1. **Regular tests inside optional module**
-   - No special handling needed
-   - Only run when dependencies are available
+1. **Optional Module Tests**
+   - Tests inside the module's test directory
+   - Only collected when dependencies are available (using `pytest_ignore_collect`)
+   - No special markers needed for tests within the module directory
 
-2. **Integration tests with markers**
+2. **Integration Tests with Markers**
    - Use `@pytest.mark.optional_deps('spi')`
-   - Will be skipped when dependencies are missing
+   - Will be marked as xfail when dependencies are missing
 
-3. **Fixture-based testing**
-   - Skip tests when dependencies unavailable
-   - Provide clean setup/teardown for R resources
+3. **In-Development Module Tests**
+   - Use module-level `pytestmark = pytest.mark.skip(reason="...")` to skip all tests
+   - Prevent collection errors during early development
+   - All SPI tests will use this approach initially while the feature is under development
 
 ## Development Sequence
 
@@ -261,13 +277,14 @@ Following strict TDD, development will proceed in this sequence:
 ### Phase 1A: Package Configuration
 
 1. Write tests for package import behavior
-2. Implement minimal package structure
-3. Update `pyproject.toml` and `_optionals.py`
+2. Implement minimal package structure 
+3. Update `pyproject.toml` with SPI optional dependency
+4. Create test directory structure with appropriate skip markers
 
 ### Phase 1B: R Dependency Checks
 
 1. Write tests for R dependency checking
-2. Implement R dependency validation
+2. Implement direct dependency checks in module `__init__.py`
 3. Add clear error messages with installation instructions
 
 ### Phase 1C: R Session Management
