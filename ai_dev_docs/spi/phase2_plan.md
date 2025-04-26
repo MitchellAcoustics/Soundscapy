@@ -1,285 +1,159 @@
-# SPI Feature - Phase 2: Multivariate Skew-Normal Distribution (TDD Approach)
+# SPI Feature - Phase 2: Multivariate Skew-Normal Distribution (Checklist)
 
-This document outlines the test-driven development (TDD) plan for Phase 2 of the SPI feature, focusing on implementing the multivariate skew-normal distribution functionality using the R integration established in Phase 1.
+This document provides a checklist for implementing the multivariate skew-normal distribution functionality using the R integration established in Phase 1. For detailed analysis of R functions to be used, see [phase2_msn_details.md](phase2_msn_details.md).
 
 ## TDD Process Overview
 
-For each component, we will follow this process:
-1. Study the R sn package implementation for the functionality we need
-2. Write failing tests that define expected behavior
-3. Implement minimal code to make tests pass
-4. Refactor while maintaining passing tests
+Each component will follow this process:
+- [ ] Study the R sn package implementation for the functionality we need
+- [ ] Write failing tests that define expected behavior
+- [ ] Implement minimal code to make tests pass
+- [ ] Refactor while maintaining passing tests
 
-## Objectives
+## Core Objectives
 
-1. Implement R wrappers for multivariate skew-normal functions
-2. Create the SkewNormalDistribution class with a clean API
-3. Implement distribution fitting and sampling capabilities
-4. Create factory functions for convenient distribution creation
-5. Ensure mathematical correctness against reference implementations
+- [ ] Implement R wrappers for multivariate skew-normal functions
+- [ ] Create the SkewNormalDistribution class with a clean API
+- [ ] Implement distribution fitting and sampling capabilities
+- [ ] Create factory functions for convenient distribution creation
+- [ ] Ensure mathematical correctness against reference implementations
 
-## TDD Implementation Plan
+## 1. R Function Wrappers Implementation
 
-### 1. R Function Wrappers - TDD Cycle
+### 1.1 Study R sn Functions
+- [x] Review R sn package documentation for key functions (documented in phase2_msn_details.md)
+- [x] Analyze `msn.mle()` - Maximum likelihood estimation
+- [x] Analyze `rmsn()` - Random sampling from multivariate skew-normal
+- [x] Analyze `dmsn()` - Multivariate skew-normal density function
+- [x] Document function signatures, parameters, and return values
 
-#### 1.1 Study R sn Functions
-Study the R sn package documentation and implementation:
-- `msn.mle()` - Maximum likelihood estimation
-- `rmsn()` - Random sampling from multivariate skew-normal
-- `dmsn()` - Multivariate skew-normal density function
+### 1.2 Develop R Wrapper Tests
+- [x] Create test file: `test/spi/test_r_msn.py`
+- [x] Write tests for R wrapper initialization and session management
+- [x] Write tests for `msn.mle()` wrapper with realistic data
+- [x] Write tests for `rmsn()` wrapper with various parameters
+- [x] Write tests for `dmsn()` wrapper with sample points
+- [x] Write tests for error handling with invalid parameters
+- [x] Write tests for edge cases (high dimensions, degenerate cases)
 
-Document the function signatures, parameters, return values, and behavior.
+### 1.3 Implement R Function Wrappers
+- [x] Implement R session context management for MSN functions
+- [x] Implement function to call R's `msn.mle()`
+- [x] Implement function to call R's `rmsn()`
+- [x] Implement function to call R's `dmsn()`
+- [x] Implement parameter validation and type conversion
+- [x] Add error handling with informative messages
 
-#### 1.2 Write R Wrapper Tests
-Create tests in `test/spi/test_r_msn.py`:
+### 1.4 Refactor R Wrappers
+- [ ] Improve error messages and context information
+- [ ] Optimize data conversion between R and Python
+- [ ] Add comprehensive docstrings with examples
+- [ ] Ensure consistent return types and structures
 
-Test cases:
-- Test wrapping `msn.mle()` with realistic data
-- Test wrapping `rmsn()` with various parameters
-- Test wrapping `dmsn()` with sample points
-- Test error handling for invalid parameters
-- Test edge cases (e.g., high dimensions, degenerate cases)
+## 2. SkewNormalDistribution Class Implementation
 
-#### 1.3 Implement R Function Wrappers
-Add minimal implementations in `_r_wrapper.py`:
-- Function to call R's `msn.mle()`
-- Function to call R's `rmsn()`
-- Function to call R's `dmsn()`
-- Parameter validation and error handling
+### 2.1 Design SkewNormalDistribution API
+- [ ] Define class structure and initialization parameters
+- [ ] Define property getters for distribution parameters
+- [ ] Define methods for sampling and density calculation
+- [ ] Define string representation and formatting
 
-#### 1.4 Refactor
-- Improve error messages
-- Optimize data conversion
-- Add comprehensive docstrings
+### 2.2 Develop SkewNormalDistribution Tests
+- [ ] Create test file: `test/spi/test_distributions.py`
+- [ ] Write tests for creating a distribution with valid parameters
+- [ ] Write tests for parameter validation (types, shapes, constraints)
+- [ ] Write tests for property getters
+- [ ] Write tests for sampling method with various sample sizes
+- [ ] Write tests for PDF calculation with various points
+- [ ] Write tests for string representation and formatting
+- [ ] Write tests for handling invalid parameters
 
-### 2. SkewNormalDistribution Class - TDD Cycle
+### 2.3 Implement SkewNormalDistribution Class
+- [ ] Implement constructor with parameter validation
+- [ ] Implement properties to access distribution parameters
+- [ ] Implement sampling method using R wrapper
+- [ ] Implement PDF calculation method using R wrapper
+- [ ] Implement string representation and formatting
+- [ ] Add validation for parameter constraints (e.g., positive definite matrix)
 
-#### 2.1 Design SkewNormalDistribution API
-Define the public API for the SkewNormalDistribution class:
-- Constructor
-- Properties for parameters (location, scale, shape)
-- Methods for sampling and density calculation
-- String representation
+### 2.4 Refactor SkewNormalDistribution
+- [ ] Improve parameter validation with detailed error messages
+- [ ] Optimize internal data structures for efficiency
+- [ ] Add comprehensive docstrings with mathematical background
+- [ ] Add examples demonstrating common use cases
 
-#### 2.2 Write SkewNormalDistribution Tests
-Create tests in `test/spi/test_distributions.py`:
+## 3. Factory Function Implementation
 
-Test cases:
-- Test creating a distribution with valid parameters
-- Test parameter validation (types, shapes, constraints)
-- Test property getters
-- Test sampling method
-- Test PDF calculation
-- Test string representation
-- Test for invalid parameters
+### 3.1 Design Factory Functions
+- [ ] Define `fit_skew_normal()` function signature and parameters
+- [ ] Define `create_skew_normal()` function signature and parameters
+- [ ] Determine parameter validation approach
 
-#### 2.3 Implement SkewNormalDistribution
-Add a minimal implementation in `distributions.py`:
-- Constructor with parameter validation
-- Properties to access parameters
-- Methods for sampling and density calculation
-- String representation
+### 3.2 Develop Factory Function Tests
+- [ ] Write tests for `fit_skew_normal()` with various datasets
+- [ ] Write tests for `create_skew_normal()` with various parameters
+- [ ] Write tests for parameter validation and error handling
+- [ ] Write tests for edge cases (small datasets, high dimensions)
+- [ ] Write tests for handling invalid inputs
 
-#### 2.4 Refactor
-- Improve parameter validation
-- Optimize internal data structures
-- Add comprehensive docstrings
+### 3.3 Implement Factory Functions
+- [ ] Implement `fit_skew_normal()` function using R wrapper
+- [ ] Implement `create_skew_normal()` function
+- [ ] Add parameter validation and error handling
+- [ ] Handle edge cases gracefully
 
-### 3. Factory Functions - TDD Cycle
+### 3.4 Refactor Factory Functions
+- [ ] Improve error messages with specific context
+- [ ] Optimize fitting procedure for performance
+- [ ] Add comprehensive docstrings with usage examples
+- [ ] Ensure consistent behavior across different input types
 
-#### 3.1 Design Factory Functions
-Define factory functions for creating distributions:
-- `fit_skew_normal()` - Fit a distribution to data
-- `create_skew_normal()` - Create a distribution with given parameters
+## 4. Mathematical Validation Implementation
 
-#### 3.2 Write Factory Function Tests
-Add tests to `test/spi/test_distributions.py`:
+### 4.1 Study Mathematical Properties
+- [ ] Research moments of multivariate skew-normal distributions
+- [ ] Research marginal distributions and conditioning
+- [ ] Research transformations and their effects
+- [ ] Review truncation effects on distribution properties
 
-Test cases:
-- Test `fit_skew_normal()` with various datasets
-- Test `create_skew_normal()` with various parameters
-- Test parameter validation and error handling
-- Test edge cases (e.g., small datasets, high dimensions)
+### 4.2 Develop Mathematical Validation Tests
+- [ ] Create test file: `test/spi/test_math_validation.py`
+- [ ] Write tests for mean and covariance calculations
+- [ ] Write tests comparing against known reference distributions
+- [ ] Write tests for marginal distribution properties
+- [ ] Write tests for statistical properties of samples
+- [ ] Write tests verifying consistency with R implementation
 
-#### 3.3 Implement Factory Functions
-Add minimal implementations in `distributions.py`:
-- `fit_skew_normal()` function
-- `create_skew_normal()` function
-- Parameter validation and error handling
+### 4.3 Implement Statistical Methods
+- [ ] Add methods to calculate mean vector
+- [ ] Add methods to calculate covariance matrix
+- [ ] Add methods to compute other statistical properties
+- [ ] Handle truncation effects appropriately
 
-#### 3.4 Refactor
-- Improve error messages
-- Optimize fitting procedure
-- Add comprehensive docstrings
+### 4.4 Refactor Statistical Methods
+- [ ] Optimize calculations for numerical stability
+- [ ] Add comprehensive docstrings with mathematical formulas
+- [ ] Ensure consistency with theoretical expectations
 
-### 4. Mathematical Validation - TDD Cycle
+## Test Data Preparation
 
-#### 4.1 Study Mathematical Properties
-Research the mathematical properties of multivariate skew-normal distributions:
-- Moments (mean, variance, skewness)
-- Marginal distributions
-- Conditioning
-- Transformations
+- [ ] Create simple 2D datasets for basic functionality testing
+- [ ] Prepare reference datasets from the literature
+- [ ] Generate synthetic datasets with known properties
+- [ ] Create edge case datasets for testing robustness
+- [ ] Include reference results from R implementation for validation
 
-#### 4.2 Write Mathematical Validation Tests
-Create tests in `test/spi/test_math_validation.py`:
+## Success Criteria Checklist
 
-Test cases:
-- Test mean and covariance calculations
-- Test against known reference distributions
-- Test marginal distributions
-- Test statistical properties of samples
-- Test consistency with R implementation
-
-#### 4.3 Implement Statistical Methods
-Add statistical methods to `SkewNormalDistribution`:
-- Mean calculation
-- Covariance calculation
-- Method to compute statistical properties
-
-#### 4.4 Refactor
-- Optimize calculations
-- Add comprehensive docstrings
-
-## Testing Strategy
-
-### Test Structure
-
-```
-test/spi/
-├── test_r_msn.py           # Tests for R function wrappers
-├── test_distributions.py   # Tests for distribution class and factory functions
-├── test_math_validation.py # Tests for mathematical correctness
-```
-
-### Testing Approaches
-
-#### Verification Tests
-These tests ensure that our implementation matches the R implementation:
-- Generate reference data in R
-- Apply our implementation to the same data
-- Compare results
-- Include reference values in test data
-
-#### Parameter Validation Tests
-These tests ensure that our API correctly validates parameters:
-- Test with invalid parameter types
-- Test with invalid parameter shapes
-- Test with invalid parameter values (e.g., non-positive-definite scale matrix)
-- Verify error messages
-
-#### Sample-Based Tests
-These tests verify statistical properties using sampling:
-- Generate large samples
-- Calculate empirical statistics
-- Compare to theoretical values
-- Test for expected statistical properties
-
-#### Edge Case Tests
-These tests verify behavior in challenging cases:
-- High dimensions
-- Nearly singular covariance matrices
-- Extreme skewness values
-- Very small datasets
-
-## Test Data
-
-We will create several test datasets:
-1. **Simple 2D datasets** for basic functionality testing
-2. **Reference datasets** from the literature
-3. **Synthetic datasets** with known properties
-4. **Edge case datasets** for testing robustness
-
-Each dataset will be accompanied by reference results from the R implementation for validation.
-
-## API Design
-
-The final public API will include:
-
-```python
-class SkewNormalDistribution:
-    """Represents a multivariate skew-normal distribution.
-    
-    Parameters
-    ----------
-    location : array-like
-        Location parameter (xi), shape (n_dimensions,)
-    scale : array-like
-        Scale matrix (Omega), shape (n_dimensions, n_dimensions)
-    shape : array-like
-        Shape parameter (alpha), shape (n_dimensions,)
-    """
-    
-    def __init__(self, location, scale, shape):
-        # Parameter validation and storage
-        
-    @property
-    def location(self):
-        """Get the location parameter (xi)."""
-        
-    @property
-    def scale(self):
-        """Get the scale matrix (Omega)."""
-        
-    @property
-    def shape(self):
-        """Get the shape parameter (alpha)."""
-        
-    @property
-    def dimension(self):
-        """Get the dimension of the distribution."""
-        
-    def sample(self, n_samples=1):
-        """Generate samples from the distribution."""
-        
-    def pdf(self, points):
-        """Calculate probability density function at points."""
-        
-    def __repr__(self):
-        """String representation of the distribution."""
-
-def fit_skew_normal(data, *, initial_params=None):
-    """Fit a multivariate skew-normal distribution to data."""
-    
-def create_skew_normal(location, scale, shape):
-    """Create a multivariate skew-normal distribution with given parameters."""
-```
-
-## Development Sequence
-
-Following strict TDD, development will proceed in this sequence:
-
-### Phase 2A: R Function Wrappers
-1. Write tests for R function wrappers
-2. Implement minimal R function wrappers
-3. Refactor for robustness
-
-### Phase 2B: SkewNormalDistribution Implementation
-1. Write tests for SkewNormalDistribution
-2. Implement SkewNormalDistribution class
-3. Refactor for clarity and performance
-
-### Phase 2C: Factory Functions
-1. Write tests for factory functions
-2. Implement factory functions
-3. Refactor for usability
-
-### Phase 2D: Mathematical Validation
-1. Write tests for mathematical properties
-2. Implement statistical methods
-3. Validate against R implementation
-
-## Success Criteria
-
-Phase 2 will be considered complete when:
-
-1. R function wrappers correctly call the R functions
-2. SkewNormalDistribution class provides a clean API
-3. Factory functions provide convenient creation methods
-4. Mathematical validation tests pass
-5. All code is well-documented
-6. All tests pass with adequate coverage
+- [ ] All R function wrappers correctly call the R functions
+- [ ] SkewNormalDistribution class provides a clean, Pythonic API
+- [ ] Factory functions provide convenient creation methods
+- [ ] Mathematical validation tests pass
+- [ ] All code is well-documented with docstrings and examples
+- [ ] All tests pass with adequate coverage
+- [ ] Code follows Soundscapy's layered architecture principles
+- [ ] Implementation handles errors gracefully
 
 ## Next Steps
 
-After completing Phase 2, we'll move to Phase 3, implementing the SPI calculation functionality using the multivariate skew-normal distribution implementation from Phase 2, continuing with the TDD approach.
+After completing this checklist, we'll move to Phase 3, implementing the SPI calculation functionality using the multivariate skew-normal distribution implementation developed in this phase.

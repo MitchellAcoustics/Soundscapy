@@ -140,30 +140,28 @@ test/spi/
 
 ## Development Phases
 
-### Phase 1: Setup and R Integration
+The SPI feature will be implemented in four phases, with detailed plans available in separate documents:
 
+### Phase 1: Setup and R Integration ([phase1_plan.md](phase1_plan.md))
 1. Create module structure
 2. Implement optional dependency management for R/rpy2
 3. Create R session initialization and cleanup functions
 4. Add basic data conversion utilities
 5. Write tests for R integration
 
-### Phase 2: Distribution Functions
-
+### Phase 2: Distribution Functions ([phase2_plan.md](phase2_plan.md), [phase2_msn_details.md](phase2_msn_details.md))
 1. Implement R wrappers for MSN fitting and sampling
 2. Create SkewNormalDistribution class
 3. Implement fit_skew_normal and create_skew_normal functions
 4. Write tests for distribution functionality
 
-### Phase 3: SPI Calculation
-
+### Phase 3: SPI Calculation ([phase3_plan.md](phase3_plan.md))
 1. Implement K-S distance calculation
 2. Implement SPI score calculation
 3. Create high-level SPI calculation functions
 4. Write tests for SPI calculation
 
-### Phase 4: Documentation and Integration
-
+### Phase 4: Documentation and Integration ([phase4_plan.md](phase4_plan.md))
 1. Add comprehensive docstrings
 2. Create usage examples
 3. Update Soundscapy documentation
