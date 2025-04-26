@@ -1,5 +1,6 @@
 # %%
 
+from abc import ABC
 from typing import Literal
 import pandas as pd
 import numpy as np
@@ -44,10 +45,19 @@ class SELM:
             _param = {}
             for k, v in self._rselm.param.items():
                 if isinstance(v, BoolVector):
+                    # Registering context converter for BoolVector isn't working
+                    # Convert manually
                     v = boolvector2npbool(v)
                 _param[str(k)] = v
 
         return _param
+
+    @property
+    def cp(self) -> CentredParams:
+        """Returns the centred parameters of the model."""
+        if self._rselm is None:
+            raise ValueError("The model has not been fitted yet.")
+        return
 
     @property
     def coef(self, param_type: Literal["CP", "DP"] = "CP") -> np.ndarray:

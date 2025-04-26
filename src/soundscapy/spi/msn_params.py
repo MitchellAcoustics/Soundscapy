@@ -1,6 +1,22 @@
+from abc import ABC
+from dataclasses import dataclass
 import numpy as np
 from soundscapy.spi._r_wrapper import numpy2R
 
+
+
+# @dataclass
+# class MSNParams_(ABC):
+#     """
+#     Base class for the parameters of the SELM model.
+#     """
+#     xi: np.ndarray | float | tuple[float, float]
+#     omega: np.ndarray
+#     alpha: np.ndarray | float | tuple[float, float]
+
+#     def to_r(self) -> ListVector:
+#         """Convert the parameters to R format."""
+#         return ListVector({"xi": self.xi, "omega": self.omega, "alpha": self.alpha})
 
 class DirectParams:
     """
@@ -36,6 +52,8 @@ class DirectParams:
             f"\nomega: {self.omega.round(3)}"
             f"\nalpha: {self.alpha.round(3)}"
         )
+    
+    @
 
     def _omega_is_pos_def(self) -> bool:
         return np.all(np.linalg.eigvals(self.omega) > 0)
