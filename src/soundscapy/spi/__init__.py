@@ -59,8 +59,17 @@ except ImportError as e:
         "Python dependency rpy2 should be installed with: pip install soundscapy[spi]"
     ) from e
 
+# Import R wrapper functions
+try:
+    from .r_msn import (
+        fit_msn,
+        sample_msn,
+        evaluate_msn_density,
+    )
+except ImportError:
+    logger.debug("R wrapper functions not available")
+
 # Module structure will be implemented in subsequent phases
-# For now, raise NotImplementedError for the public API functions
 
 
 class SkewNormalDistribution:

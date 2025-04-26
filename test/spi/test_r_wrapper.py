@@ -20,7 +20,6 @@ class TestRWrapper:
         """Test that the module structure exists."""
         import soundscapy.spi._r_wrapper
 
-        # Module should exist but functions will be implemented later
         assert soundscapy.spi._r_wrapper is not None
 
     def test_initialize_r_session(self):
@@ -119,12 +118,13 @@ class TestRWrapper:
             shutdown_r_session()
 
         # Get session (should initialize if not active)
-        r_session, sn_package, stats_package = get_r_session()
+        r_session, sn_package, stats_package, base_package = get_r_session()
 
         # Verify session objects
         assert r_session is not None
         assert sn_package is not None
         assert stats_package is not None
+        assert base_package is not None
         assert is_session_active()
 
         # Clean up
@@ -143,12 +143,18 @@ class TestRWrapper:
             shutdown_r_session()
 
         # Use context manager
-        with r_session_context() as (r_session, sn_package, stats_package):
+        with r_session_context() as (
+            r_session,
+            sn_package,
+            stats_package,
+            base_package,
+        ):
             # Verify session is active inside context
             assert is_session_active()
             assert r_session is not None
             assert sn_package is not None
             assert stats_package is not None
+            assert base_package is not None
 
         # Verify session is still active after context exit
         # (context manager doesn't shut down the session to allow reuse)
@@ -162,7 +168,11 @@ class TestRWrapper:
         """Test error handling during session initialization."""
         mock_importr.side_effect = Exception("Test exception - package not found")
 
-        from soundscapy.spi._r_wrapper import initialize_r_session, shutdown_r_session, is_session_active
+        from soundscapy.spi._r_wrapper import (
+            initialize_r_session,
+            shutdown_r_session,
+            is_session_active,
+        )
 
         # Ensure session is not active
         if is_session_active():
@@ -176,94 +186,68 @@ class TestRWrapper:
         assert "Failed to initialize R session" in str(excinfo.value)
         assert not is_session_active()
 
-    def test_extract_r_list_element(self):
-        """Test extracting an element from an R list."""
-        from soundscapy.spi._r_wrapper import (
-            extract_r_list_element,
-            get_r_session,
-        )
-
-        # Get R session
-        r_session, _, _ = get_r_session()
-
-        # Create a simple R list
-        r_list = r_session.r("list(a=1:3, b=matrix(1:6, nrow=2), c='text')")
-
-        # Extract elements
-        a_element = extract_r_list_element(r_list, "a")
-        b_element = extract_r_list_element(r_list, "b")
-        c_element = extract_r_list_element(r_list, "c")
-
-        # Verify types (still R objects)
-        assert a_element is not None
-        assert b_element is not None
-        assert c_element is not None
-
-        # Test error handling
-        with pytest.raises(KeyError):
-            extract_r_list_element(r_list, "non_existent")
-
-        with pytest.raises(TypeError):
-            extract_r_list_element(r_session.r("c(1,2,3)"), "a")
-
     def test_basic_rpy2_conversion(self):
         """Test basic R/Python conversion using rpy2's built-in converters."""
         import numpy as np
         import pandas as pd
-        from rpy2.robjects import numpy2ri, pandas2ri, default_converter
+        from rpy2.robjects.conversion import get_conversion
+        from rpy2.robjects import numpy2ri, pandas2ri
 
         # Get R session
         from soundscapy.spi._r_wrapper import get_r_session
-        r_session, _, _ = get_r_session()
+
+        r_session, _, _, _ = get_r_session()
 
         # Create test data
         numpy_array = np.array([[1, 2, 3], [4, 5, 6]])
-        
+
         # Test basic NumPy array conversion
+        # Get default converter
+        default_converter = get_conversion()
+        # Activate NumPy conversion
         converter = default_converter + numpy2ri.converter
-        
+
         with converter.context():
             # Python → R conversion
             r_matrix = r_session.r.matrix(numpy_array, nrow=2, ncol=3)
-            
+
             # Check the R objects
             assert r_session.r("is.matrix")(r_matrix)[0]
             assert r_session.r("nrow")(r_matrix)[0] == 2
             assert r_session.r("ncol")(r_matrix)[0] == 3
-            
+
             # R → Python conversion
             numpy_array_back = np.array(r_matrix)
-            
+
             # Check the Python objects
             assert isinstance(numpy_array_back, np.ndarray)
             assert numpy_array_back.shape == (2, 3)
             assert np.array_equal(numpy_array, numpy_array_back)
-            
+
         # Only test pandas conversion if pandas2ri is available
         try:
             # Test basic pandas DataFrame conversion
             converter = default_converter + numpy2ri.converter + pandas2ri.converter
-            
+
             # Create pandas DataFrame
-            pandas_df = pd.DataFrame({
-                'a': [1, 2, 3],
-                'b': [4, 5, 6]
-            })
-            
+            pandas_df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+
             with converter.context():
                 # Convert pandas DataFrame to R dataframe via conversion.py2rpy
                 from rpy2.robjects.conversion import py2rpy
+
                 r_df = py2rpy(pandas_df)
-                
+
                 # Check R dataframe
                 assert r_session.r("is.data.frame")(r_df)[0]
                 assert r_session.r("nrow")(r_df)[0] == 3
                 assert r_session.r("ncol")(r_df)[0] == 2
-                
+
                 # Convert back to pandas
                 from rpy2.robjects.conversion import rpy2py
+
                 pandas_df_back = rpy2py(r_df)
-                
+
                 # Check pandas dataframe
                 assert isinstance(pandas_df_back, pd.DataFrame)
                 assert pandas_df_back.shape == (3, 2)

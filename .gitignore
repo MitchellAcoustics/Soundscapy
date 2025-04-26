@@ -185,3 +185,4 @@ tests/test_audio_files/*
 !tests/test_audio_files/*.wav
 /docs/tutorials/updated_config.yaml
 docs/tutorials/acoustic_analysis_results.xlsx
+CLAUDE.local.md

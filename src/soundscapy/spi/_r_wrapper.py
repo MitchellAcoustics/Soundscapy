@@ -10,9 +10,18 @@ This module provides functions for:
 It is not intended to be used directly by end users.
 """
 
-from typing import Dict, Any, Tuple
+from typing import Any
 import sys
 import contextlib
+from rpy2.robjects.conversion import localconverter
+import rpy2.robjects as robjects
+from rpy2.robjects import pandas2ri, numpy2ri, default_converter
+from rpy2.robjects.vectors import BoolVector
+from rpy2.rinterface_lib.sexp import NULLType
+import numpy as np
+import numpy.typing as npt
+import pandas as pd
+
 # These are used in the docstring examples but not in the code
 # They will be used by code that imports and uses this module
 from soundscapy.logging import get_logger
@@ -27,6 +36,7 @@ _sn_checked = False
 _r_session = None
 _sn_package = None
 _stats_package = None
+_base_package = None
 _session_active = False
 
 
@@ -132,7 +142,7 @@ def check_sn_package() -> None:
             )
 
 
-def check_dependencies() -> Dict[str, Any]:
+def check_dependencies() -> dict[str, Any]:
     """
     Check all required R dependencies for the SPI module.
 
@@ -143,7 +153,7 @@ def check_dependencies() -> Dict[str, Any]:
     4. 'sn' package version compatibility
 
     Returns:
-        Dict[str, Any]: Dictionary with dependency information.
+        dict[str, Any]: Dictionary with dependency information.
 
     Raises:
         ImportError: If any dependency check fails.
@@ -168,7 +178,7 @@ def check_dependencies() -> Dict[str, Any]:
 # === SESSION MANAGEMENT ===
 
 
-def initialize_r_session() -> Dict[str, Any]:
+def initialize_r_session() -> dict[str, Any]:
     """
     Initialize an R session for skew-normal distribution calculations.
 
@@ -179,13 +189,13 @@ def initialize_r_session() -> Dict[str, Any]:
     4. Updates global session state
 
     Returns:
-        Dict[str, Any]: Session information including R and package versions
+        dict[str, Any]: Session information including R and package versions
 
     Raises:
         ImportError: If dependencies are missing
         RuntimeError: If session initialization fails
     """
-    global _r_session, _sn_package, _stats_package, _session_active
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active
 
     # If session is already active, just return the state
     if _session_active:
@@ -194,6 +204,7 @@ def initialize_r_session() -> Dict[str, Any]:
             "r_session": "active",
             "sn_package": "loaded",
             "stats_package": "loaded",
+            "base_package": "loaded",
         }
 
     # First check all dependencies
@@ -203,16 +214,12 @@ def initialize_r_session() -> Dict[str, Any]:
     try:
         import rpy2.robjects as robjects
         import rpy2.robjects.packages as rpackages
-        from rpy2.robjects import numpy2ri
-
-        # Activate numpy conversion
-        numpy2ri.activate()
-        logger.debug("Activated numpy-to-R conversion")
 
         # Import required packages
         _sn_package = rpackages.importr("sn")
         _stats_package = rpackages.importr("stats")
-        logger.debug("Imported required R packages")
+        _base_package = rpackages.importr("base")
+        logger.debug("Imported R packages: sn, stats, base")
 
         # Set R random seed for reproducibility
         robjects.r("set.seed(42)")
@@ -228,6 +235,7 @@ def initialize_r_session() -> Dict[str, Any]:
             "r_session": "active",
             "sn_package": str(_sn_package),
             "stats_package": str(_stats_package),
+            "base_package": str(_base_package),
             **dep_info,
         }
 
@@ -237,6 +245,7 @@ def initialize_r_session() -> Dict[str, Any]:
         _r_session = None
         _sn_package = None
         _stats_package = None
+        _base_package = None
         raise RuntimeError(f"Failed to initialize R session: {str(e)}")
 
 
@@ -252,24 +261,20 @@ def shutdown_r_session() -> bool:
     Returns:
         bool: True if successful, False otherwise
     """
-    global _r_session, _sn_package, _stats_package, _session_active
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active
 
     if not _session_active:
         logger.debug("No active R session to shutdown")
         return True
 
     try:
-        import rpy2.robjects.numpy2ri as numpy2ri
         import gc
-
-        # Deactivate numpy conversion
-        numpy2ri.deactivate()
-        logger.debug("Deactivated numpy-to-R conversion")
 
         # Clear references to R objects
         _r_session = None
         _sn_package = None
         _stats_package = None
+        _base_package = None
 
         # Update session state
         _session_active = False
@@ -284,7 +289,7 @@ def shutdown_r_session() -> bool:
         return False
 
 
-def get_r_session() -> Tuple[Any, Any, Any]:
+def get_r_session() -> tuple[Any, Any, Any, Any]:
     """
     Get the current R session and package objects.
 
@@ -293,21 +298,27 @@ def get_r_session() -> Tuple[Any, Any, Any]:
     2. Returns the session and package references
 
     Returns:
-        Tuple[Any, Any, Any]: (r_session, sn_package, stats_package)
+        tuple[Any, Any, Any, Any]: (r_session, sn_package, stats_package, base_package)
 
     Raises:
         RuntimeError: If session initialization fails
     """
-    global _r_session, _sn_package, _stats_package, _session_active
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active
 
     if not _session_active:
         logger.debug("R session not active, initializing")
         initialize_r_session()
 
-    if not _session_active or not _r_session or not _sn_package or not _stats_package:
+    if (
+        not _session_active
+        or not _r_session
+        or not _sn_package
+        or not _stats_package
+        or not _base_package
+    ):
         raise RuntimeError("Failed to initialize R session")
 
-    return _r_session, _sn_package, _stats_package
+    return _r_session, _sn_package, _stats_package, _base_package
 
 
 def is_session_active() -> bool:
@@ -332,7 +343,7 @@ def r_session_context():
     3. Does NOT shutdown the session on exit to allow reuse
 
     Yields:
-        Tuple[Any, Any, Any]: (r_session, sn_package, stats_package)
+        tuple[Any, Any, Any, Any, Any]: (r_session, sn_package, stats_package, base_package, converter)
 
     Raises:
         RuntimeError: If session initialization fails
@@ -340,57 +351,146 @@ def r_session_context():
     try:
         if not is_session_active():
             initialize_r_session()
-        r_session, sn_package, stats_package = get_r_session()
-        yield r_session, sn_package, stats_package
+
+        r_session, sn_package, stats_package, base_package = get_r_session()
+
+        logger.debug("Entering R session context")
+
+        yield r_session, sn_package, stats_package, base_package
     except Exception as e:
         logger.error(f"Error in R session context: {str(e)}")
         raise
 
 
-# === DATA CONVERSION ===
-
-def extract_r_list_element(r_list: Any, name: str) -> Any:
-    """
-    Extract a named element from an R list or environment.
-    
-    This is a minimal helper function to simplify extracting elements from R lists
-    when working with the skew-normal distribution functions that return complex
-    result objects.
-    
-    Args:
-        r_list: An R list or environment
-        name: The name of the element to extract
-        
-    Returns:
-        The extracted element, still as an R object
-        
-    Raises:
-        KeyError: If the named element doesn't exist
-        TypeError: If the object is not an R list or environment
-    """
-    r_session, _, _ = get_r_session()
-    
-    # Check if it's a list or environment
-    is_list = r_session.r("is.list")(r_list)[0]
-    is_env = r_session.r("is.environment")(r_list)[0]
-    
-    if not (is_list or is_env):
-        raise TypeError(
-            "Input must be an R list or environment, got "
-            f"{r_session.r('class')(r_list)[0]}"
-        )
-    
-    # Check if element exists
-    names = list(r_session.r("names")(r_list))
-    if name not in names:
-        raise KeyError(f"Element '{name}' not found in R object. Available names: {names}")
-    
-    # Extract the element using the r_list.rx2() extraction method
-    element = r_list.rx2(name)
-    return element
-
-
 # === CONVERSION PATTERNS ===
+
+null_converter = robjects.conversion.Converter("null_converter")
+boolvector_converter = robjects.conversion.Converter("boolvector_converter")
+
+
+@null_converter.py2rpy.register(type(None))
+def none2null(none_obj):
+    """
+    Convert None to R NULL.
+
+    This function is registered with the rpy2 converter to handle
+    conversion of None values to R NULL.
+
+    Parameters:
+        none_obj (NoneType): The None object to convert.
+
+    Returns:
+        robjects.NULL: The converted R NULL object.
+    """
+    return robjects.r("NULL")
+
+
+@null_converter.rpy2py.register(NULLType)
+def null2none(r_null_obj):
+    """
+    Convert R NULL to Python None.
+
+    This function is registered with the rpy2 converter to handle
+    conversion of R NULL values to Python None.
+
+    Parameters:
+        r_obj (robjects.NULL): The R NULL object to convert.
+
+    Returns:
+        NoneType: The converted Python None object.
+    """
+    return None
+
+
+def npbool2boolvector(py_bool_array: npt.NDArray[np.bool_]):
+    """
+    Convert numpy array of Python bool to R BoolVector.
+
+    This function is registered with the rpy2 converter to handle
+    conversion of numpy arrays of Python bool to R BoolVector.
+
+    Parameters:
+        py_bool_array (np.ndarray): The numpy array of Python bool to convert.
+
+    Returns:
+        BoolVector: The converted R BoolVector object.
+    """
+    res = BoolVector(py_bool_array)
+    return res
+
+
+@boolvector_converter.rpy2py.register(BoolVector)
+def boolvector2npbool(r_bool_vector):
+    """
+    Convert R BoolVector to numpy array of Python bool.
+
+    This function is registered with the rpy2 converter to handle
+    conversion of R BoolVector objects to numpy array of Python bool.
+
+    Parameters:
+        r_bool_vector (BoolVector): The R BoolVector object to convert.
+
+    Returns:
+        np.ndarray: The converted numpy array of Python bool values.
+    """
+    res = np.array(r_bool_vector, dtype=bool)
+    return res
+
+
+conversion_rules = (
+    default_converter
+    + null_converter
+    # + boolvector_converter # These aren't working registered yet. Use the functions directly
+    + numpy2ri.converter
+    + pandas2ri.converter
+)
+
+
+def numpy2R(arr):
+    """Local conversion of R array to numpy as recommended by rpy2"""
+    with localconverter(robjects.default_converter + numpy2ri.converter):
+        data = robjects.conversion.get_conversion().rpy2py(arr)
+    return data
+
+
+def R2numpy(rarr):
+    """Local conversion of R array to numpy as recommended by rpy2"""
+    return np.asarray(rarr)
+
+
+def pandas2R(df):
+    """Local conversion of pandas dataframe to R dataframe as recommended by rpy2"""
+    with localconverter(robjects.default_converter + pandas2ri.converter):
+        data = robjects.conversion.get_conversion().py2rpy(df)
+    return data
+
+
+def R2pandas(rdf):
+    """Local conversion of R dataframe to pandas as recommended by rpy2"""
+    with localconverter(robjects.default_converter + pandas2ri.converter):
+        data = robjects.conversion.get_conversion().rpy2py(rdf)
+    return data
+
+
+def pydata2R(data):
+    """
+    Convert Python data to R object.
+
+    This function handles both pandas DataFrames and numpy arrays.
+
+    Parameters:
+        data (pd.DataFrame | np.ndarray): The data to convert.
+
+    Returns:
+        robjects.DataFrame | robjects.NumpyArray: The converted R object.
+    """
+    if isinstance(data, pd.DataFrame):
+        return pandas2R(data)
+    elif isinstance(data, np.ndarray):
+        return numpy2R(data)
+    else:
+        raise ValueError("data must be a pandas DataFrame or numpy array.")
+
 
 """
 Direct Conversion Patterns for R/Python Data Exchange
