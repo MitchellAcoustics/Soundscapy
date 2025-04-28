@@ -3167,7 +3167,6 @@ all = [
     { name = "acoustic-toolbox" },
     { name = "mosqito" },
     { name = "numba" },
-    { name = "rpy2" },
     { name = "scikit-maad" },
     { name = "tqdm" },
 ]
@@ -3178,13 +3177,11 @@ audio = [
     { name = "scikit-maad" },
     { name = "tqdm" },
 ]
-spi = [
-    { name = "rpy2" },
-]
 
 [package.dev-dependencies]
 dev = [
     { name = "bumpver" },
+    { name = "rpy2" },
     { name = "ruff" },
 ]
 docs = [
@@ -3218,7 +3215,6 @@ requires-dist = [
     { name = "plotly", specifier = ">=5.23.0" },
     { name = "pydantic", specifier = ">=2.8.2" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "rpy2", marker = "extra == 'spi'", specifier = ">=3.5.0" },
     { name = "scikit-maad", marker = "extra == 'audio'", specifier = ">=1.4.3" },
     { name = "scipy", specifier = ">=1.14.1" },
     { name = "seaborn", specifier = ">=0.13.2" },
@@ -3231,6 +3227,7 @@ provides-extras = ["all", "audio", "spi"]
 [package.metadata.requires-dev]
 dev = [
     { name = "bumpver", specifier = ">=2023.1129" },
+    { name = "rpy2", specifier = ">=3.5.17" },
     { name = "ruff", specifier = ">=0.7.2" },
 ]
 docs = [
