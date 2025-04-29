@@ -9,7 +9,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "SPI functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[audio]"
+        "Install with: pip install soundscapy[spi]"
     ) from e
 
 # Now we can import our modules that depend on the optional packages

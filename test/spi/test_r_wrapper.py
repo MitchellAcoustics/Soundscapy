@@ -6,12 +6,24 @@ They are skipped if rpy2 is not installed.
 """
 
 import pytest
+import os
 
-# Skip all tests in this file as SPI module is still in development
-pytestmark = pytest.mark.skip(reason="SPI module still in development")
 
-# This will be imported and tested for real when we implement Phase 1C
-# For now, we'll just test the stubs and mocks
+def test_initialize_r_session_fails():
+    """Test that R session initialization fails if R is not available."""
+    # Skip if dependencies are actually installed
+    if os.environ.get("SPI_DEPS") == "1":
+        pytest.skip("SPI dependencies are installed")
+
+    from soundscapy.spi._r_wrapper import initialize_r_session
+
+    # Simulate R not being available
+    with pytest.raises(ImportError) as excinfo:
+        initialize_r_session()
+
+    # Check for helpful error message
+    assert "R installation" in str(excinfo.value)
+    assert "install.packages('R')" in str(excinfo.value)
 
 
 @pytest.mark.optional_deps("spi")
@@ -25,30 +37,57 @@ class TestRWrapper:
         # Module should exist but functions will be implemented later
         assert soundscapy.spi._r_wrapper is not None
 
-    # These tests will be filled in during Phase 1C when we implement the actual R wrapper
-    # For now, we'll just add placeholders
-
-    @pytest.mark.skip(reason="To be implemented in Phase 1C")
     def test_initialize_r_session(self):
         """Test R session initialization."""
+        from soundscapy.spi._r_wrapper import initialize_r_session
+
+        # This should not raise if R is available
+        res = initialize_r_session()
+
+        assert res is not None, "R session should be initialized successfully"
+        assert res["r_session"] == "active", "R session should be active"
+
         pass
 
-    @pytest.mark.skip(reason="To be implemented in Phase 1C")
     def test_shutdown_r_session(self):
         """Test R session cleanup."""
-        pass
+        from soundscapy.spi._r_wrapper import shutdown_r_session
 
-    @pytest.mark.skip(reason="To be implemented in Phase 1C")
+        # This should not raise if R session is active
+        res = shutdown_r_session()
+
+        assert res, "R session should be shut down successfully"
+
     def test_r_session_reinitialization(self):
         """Test that the R session can be reinitialized after shutdown."""
-        pass
+        from soundscapy.spi._r_wrapper import initialize_r_session, shutdown_r_session
 
-    @pytest.mark.skip(reason="To be implemented in Phase 1C")
-    def test_python_to_r_conversion(self):
-        """Test conversion of Python objects to R objects."""
-        pass
+        # First initialize the R session
+        res = initialize_r_session()
+        assert res is not None, "R session should be initialized successfully"
 
-    @pytest.mark.skip(reason="To be implemented in Phase 1C")
-    def test_r_to_python_conversion(self):
-        """Test conversion of R objects to Python objects."""
-        pass
+        # Now shut it down
+        shutdown_res = shutdown_r_session()
+        assert shutdown_res, "R session should be shut down successfully"
+
+        # Reinitialize the R session
+        reinit_res = initialize_r_session()
+        assert reinit_res is not None, "R session should be reinitialized successfully"
+
+    def test_check_sn_package(self):
+        """Test that the R 'sn' package availability is checked."""
+        # Skip if dependencies are actually installed
+
+        if os.environ.get("SPI_DEPS") == "1":
+            from soundscapy.spi import _r_wrapper
+
+            _r_wrapper.check_sn_package()
+
+        else:
+            with pytest.raises(ImportError) as excinfo:
+                from soundscapy.spi import _r_wrapper
+
+                _r_wrapper.check_sn_package()
+
+            assert "R package 'sn'" in str(excinfo.value)
+            assert "install.packages('sn')" in str(excinfo.value)

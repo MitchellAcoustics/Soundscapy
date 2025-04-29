@@ -1,8 +1,9 @@
-# %%
 import numpy as np
 import pandas as pd
 import soundscapy.spi._rsn_wrapper as rsn
 import soundscapy as sspy
+from soundscapy.spi.ks2d import ks2d2s
+from test.plotting.test_plotting import sample_data
 
 
 class DirectParams:
@@ -289,43 +290,46 @@ class MultiSkewNorm:
         df = pd.DataFrame(self.sample_data, columns=["ISOPleasant", "ISOEventful"])
         sspy.density_plot(df, color=color, title=title)
 
-    # def ks2ds(
-    #     self, test: pd.DataFrame | np.ndarray, nboot: int = None, extra: bool = True
-    # ):
-    #     """
-    #     Computes the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
+    def ks2ds(self, test: pd.DataFrame | np.ndarray):
+        """
+        Computes the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
 
-    #     Args:
-    #         test: The test data as a pandas DataFrame or numpy array.
-    #         nboot: The number of bootstrap samples to use for computing the p-value.
-    #         extra: Whether to compute the extra statistics.
+        Args:
+            test: The test data as a pandas DataFrame or numpy array.
+            nboot: The number of bootstrap samples to use for computing the p-value.
+            extra: Whether to compute the extra statistics.
 
-    #     Returns:
-    #         tuple: The KS2D statistic, p-value, and extra statistics (if extra=True).
+        Returns:
+            tuple: The KS2D statistic, p-value, and extra statistics (if extra=True).
 
-    #     """
+        """
 
-    #     if self.sample_data is None:
-    #         self.sample()
+        if self.sample_data is None:
+            self.sample()
+        if isinstance(self.sample_data, pd.DataFrame):
+            sample_data = self.sample_data.values
+        else:
+            sample_data = self.sample_data
 
-    #     if isinstance(test, pd.DataFrame):
-    #         test = test[["ISOPleasant", "ISOEventful"]].values
+        if isinstance(test, pd.DataFrame):
+            assert test.shape[1] == 2, "Test data must have two columns."
+            test = test.values
 
-    #     return KS2D.ks2d2s(self.sample_data, test)
+        return ks2d2s(sample_data, test)  # type: ignore
 
-    # def spi(self, test: pd.DataFrame | np.ndarray):
-    #     """
-    #     Computes the Soundscape Perception Index (SPI) for the test data against the target distribution.
+    def spi(self, test: pd.DataFrame | np.ndarray):
+        """
+        Computes the Soundscape Perception Index (SPI) for the test data against the target distribution.
 
-    #     Args:
-    #         test: The test data as a pandas DataFrame or numpy array.
+        Args:
+            test: The test data as a pandas DataFrame or numpy array.
 
-    #     Returns:
-    #         int: The Soundscape Perception Index
+        Returns:
+            int: The Soundscape Perception Index
 
-    #     """
+        """
 
-    #     return int((1 - self.ks2ds(test)[0]) * 100)
+        return int((1 - self.ks2ds(test)[0]) * 100)
 
 
 def cp2dp(cp: CentredParams, family: str = "SN") -> DirectParams:
@@ -339,7 +343,7 @@ def cp2dp(cp: CentredParams, family: str = "SN") -> DirectParams:
         DirectParams: The direct parameters as a DirectParams object.
 
     """
-    dp_r = rsn._dp2cp(cp.mean, cp.sigma, cp.skew)
+    dp_r = rsn._dp2cp(cp.mean, cp.sigma, cp.skew, family=family)
 
     return DirectParams(*dp_r)
 
@@ -355,6 +359,6 @@ def dp2cp(dp: DirectParams, family: str = "SN") -> CentredParams:
         CentredParams: The centred parameters as a CentredParams object.
 
     """
-    cp_r = rsn._dp2cp(dp.xi, dp.omega, dp.alpha)
+    cp_r = rsn._dp2cp(dp.xi, dp.omega, dp.alpha, family=family)
 
     return CentredParams(*cp_r)

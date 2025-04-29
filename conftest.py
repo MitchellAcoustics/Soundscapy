@@ -70,6 +70,10 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "optional_deps(group): mark tests requiring optional dependencies"
     )
+    config.addinivalue_line(
+        "markers",
+        "skip_if_deps(group): mark tests to skip if dependencies are present",
+    )
 
     # Define known dependency groups
     dependency_groups = ["audio", "spi"]

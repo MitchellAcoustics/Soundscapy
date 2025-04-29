@@ -26,23 +26,19 @@ def test_soundscapy_audio_module():
     assert hasattr(soundscapy, "ConfigManager")
 
 
-@pytest.mark.skip(reason="SPI module still in development")
 @pytest.mark.optional_deps("spi")
 def test_soundscapy_spi_module():
     """Test that the SPI module can be imported when dependencies are available."""
     assert hasattr(soundscapy, "spi"), "Soundscapy should have an spi module"
     # Test top-level imports
-    assert hasattr(soundscapy, "SkewNormalDistribution"), (
-        "SkewNormalDistribution should be available"
-    )
-    assert hasattr(soundscapy, "fit_skew_normal"), "fit_skew_normal should be available"
-    assert hasattr(soundscapy, "calculate_spi"), "calculate_spi should be available"
-    assert hasattr(soundscapy, "calculate_spi_from_data"), (
-        "calculate_spi_from_data should be available"
-    )
+    assert hasattr(soundscapy, "MultiSkewNorm"), "MultiSkewNorm should be available"
+    assert hasattr(soundscapy, "dp2cp"), "dp2cp should be available"
+    # assert hasattr(soundscapy, "calculate_spi"), "calculate_spi should be available"
+    # assert hasattr(soundscapy, "calculate_spi_from_data"), (
+    #     "calculate_spi_from_data should be available"
+    # )
 
 
-@pytest.mark.skip(reason="SPI module still in development")
 def test_spi_import_error():
     """Test that helpful error message is shown when SPI dependencies are missing."""
     # Skip if dependencies are actually installed
@@ -52,24 +48,8 @@ def test_spi_import_error():
     # Since direct imports are now used instead of __getattr__, we need to test
     # through direct access to the module which would trigger ImportError
     with pytest.raises(ImportError) as excinfo:
-        pass
+        import soundscapy.spi  # noqa: F401
 
     # Check error message contains helpful instructions
-    assert "soundscape perception indices calculation" in str(excinfo.value)
+    assert "SPI functionality requires" in str(excinfo.value)
     assert "soundscapy[spi]" in str(excinfo.value)
-
-
-@pytest.mark.skip(reason="SPI module still in development")
-@patch("rpy2.robjects.r")
-def test_spi_module_dependency_check(mock_r):
-    """Test that the spi module checks for R dependencies correctly."""
-    # Make r raise an exception
-    mock_r.side_effect = Exception("Mock R Error")
-
-    # Importing the module should raise ImportError
-    with pytest.raises(ImportError):
-        # Force a reload if the module was already imported
-        if "soundscapy.spi" in sys.modules:
-            importlib.reload(sys.modules["soundscapy.spi"])
-        else:
-            pass
