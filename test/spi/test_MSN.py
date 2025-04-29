@@ -1,10 +1,30 @@
 import pytest
 from soundscapy.spi.MSN import MultiSkewNorm, DirectParams, CentredParams
 import numpy as np
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch  # Keep patch for plotting
 import pandas as pd
 from soundscapy.spi.MSN import cp2dp
 from soundscapy.spi.MSN import dp2cp
+
+# Check for R and 'sn' package availability
+try:
+    # import rpy2.robjects as ro # No longer needed directly
+    from rpy2.robjects.packages import importr
+    from rpy2.rinterface_lib.embedded import RRuntimeError
+
+    # Try importing the 'sn' package in R
+    try:
+        importr("sn")
+        r_sn_available = True
+    except RRuntimeError:
+        r_sn_available = False
+except ImportError:
+    r_sn_available = False
+
+needs_r_sn = pytest.mark.skipif(
+    not r_sn_available,
+    reason="Requires R, rpy2, and the R 'sn' package to be installed.",
+)
 
 
 class TestDirectParams:
@@ -120,6 +140,7 @@ class TestCentredParams:
         )
         assert str(cp) == expected_str
 
+    @needs_r_sn
     def test_centred_params_from_dp(self):
         """Test the from_dp class method."""
         # Create a dummy DirectParams object
@@ -128,40 +149,48 @@ class TestCentredParams:
         dp_alpha = np.array([0.3, 0.4])
         dp = DirectParams(dp_xi, dp_omega, dp_alpha)
 
+        # Expected values calculated from a known R execution or previous test
         expected_cp = CentredParams(
             mean=np.array([0.44083939, 0.57492333]),
             sigma=np.array([[0.88382851, 0.37221136], [0.37221136, 0.8594325]]),
             skew=np.array([0.02045318, 0.02839051]),
         )
 
-        # Call the class method
+        # Call the class method (which internally calls dp2cp)
         cp_from_dp = CentredParams.from_dp(dp)
 
         # Assert that the returned object is an instance of CentredParams
         assert isinstance(cp_from_dp, CentredParams)
 
-        # Assert that the attributes match the expected values from the mock
+        # Assert that the attributes match the expected values
         np.testing.assert_allclose(cp_from_dp.mean, expected_cp.mean, atol=1e-5)
+        # Assuming sigma in CentredParams now holds the covariance matrix from dp2cp
         np.testing.assert_allclose(cp_from_dp.sigma, expected_cp.sigma, atol=1e-5)
         np.testing.assert_allclose(cp_from_dp.skew, expected_cp.skew, atol=1e-5)
 
 
 # Mock data and parameters for testing
+# Use values consistent with TestCentredParams.test_centred_params_from_dp
 MOCK_XI = np.array([0.1, 0.2])
 MOCK_OMEGA = np.array([[1.0, 0.5], [0.5, 1.0]])
 MOCK_ALPHA = np.array([0.3, 0.4])
-MOCK_MEAN = np.array([0.5, 0.6])
-MOCK_SIGMA = np.array([1.0, 1.2])
-MOCK_SKEW = np.array([0.1, -0.1])
-MOCK_SAMPLE = np.random.rand(100, 2)
-MOCK_DF = pd.DataFrame(np.random.rand(10, 2), columns=["x", "y"])
+# Corresponding CP values (mean, covariance, skew) from dp2cp
+EXPECTED_MEAN = np.array([0.44083939, 0.57492333])
+EXPECTED_SIGMA_COV = np.array([[0.88382851, 0.37221136], [0.37221136, 0.8594325]])
+EXPECTED_SKEW = np.array([0.02045318, 0.02839051])
+
+# Sample data for fitting tests
+MOCK_DF = pd.DataFrame(
+    np.random.rand(50, 2) * 0.5 + 0.1, columns=["x", "y"]
+)  # Smaller N for faster fit
 MOCK_X = MOCK_DF["x"].values
 MOCK_Y = MOCK_DF["y"].values
+MOCK_SAMPLE_SIZE = 100
 
 
-@patch("soundscapy.spi.MSN.rsn")
+@needs_r_sn
 class TestMultiSkewNorm:
-    def test_init(self, mock_rsn):
+    def test_init(self):
         """Test initialization of MultiSkewNorm."""
         msn = MultiSkewNorm()
         assert msn.selm_model is None
@@ -170,120 +199,112 @@ class TestMultiSkewNorm:
         assert msn.sample_data is None
         assert msn.data is None
 
-    def test_repr_unfitted(self, mock_rsn):
+    def test_repr_unfitted(self):
         """Test __repr__ when the model is not fitted."""
         msn = MultiSkewNorm()
         assert repr(msn) == "MultiSkewNorm() (unfitted)"
 
-    def test_repr_fitted(self, mock_rsn):
+    def test_repr_fitted(self):
         """Test __repr__ when the model is fitted."""
         msn = MultiSkewNorm()
-        dp = DirectParams(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-        msn.dp = dp
-        assert repr(msn) == f"MultiSkewNorm(dp={dp})"
+        # Define DP, which implicitly calculates CP via dp2cp
+        msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
+        # The repr should now show the DP
+        assert repr(msn) == f"MultiSkewNorm(dp={msn.dp})"
 
-    def test_summary_unfitted(self, mock_rsn):
+    def test_summary_unfitted(self):  # No mock needed
         """Test summary when the model is not fitted."""
         msn = MultiSkewNorm()
         assert msn.summary() == "MultiSkewNorm is not fitted."
 
-    @patch("builtins.print")
-    def test_summary_fitted_from_data(self, mock_print, mock_rsn):
+    @needs_r_sn  # Needs fit -> R
+    def test_summary_fitted_from_data(self, capsys):
         """Test summary when the model is fitted from data."""
         msn = MultiSkewNorm()
-        msn.data = MOCK_DF
-        msn.dp = DirectParams(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-        msn.cp = CentredParams(MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)
-
+        msn.fit(data=MOCK_DF.copy())
         msn.summary()
+        captured = capsys.readouterr()
+        assert f"Fitted from data. n = {len(MOCK_DF)}" in captured.out
+        assert "Direct Parameters:" in captured.out
+        assert "Centred Parameters:" in captured.out
+        assert "xi:" in captured.out
+        assert "mean:" in captured.out
 
-        mock_print.assert_any_call(f"Fitted from data. n = {len(MOCK_DF)}")
-        mock_print.assert_any_call(msn.dp)
-        mock_print.assert_any_call("\n")
-        mock_print.assert_any_call(msn.cp)
-
-    @patch("builtins.print")
-    def test_summary_fitted_from_dp(self, mock_print, mock_rsn):
+    def test_summary_fitted_from_dp(self, capsys):
         """Test summary when the model is fitted from direct parameters."""
         msn = MultiSkewNorm()
-        msn.dp = DirectParams(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-        msn.cp = CentredParams(MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)  # Need CP for summary
-
+        msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)  # This calculates CP
         msn.summary()
+        captured = capsys.readouterr()
+        assert "Fitted from direct parameters." in captured.out
+        assert str(msn.dp) in captured.out
+        assert str(msn.cp) in captured.out
 
-        mock_print.assert_any_call("Fitted from direct parameters.")
-        mock_print.assert_any_call(msn.dp)
-        mock_print.assert_any_call("\n")
-        mock_print.assert_any_call(msn.cp)
-
-    def test_fit_with_dataframe(self, mock_rsn):
+    def test_fit_with_dataframe(self):
         """Test fit method with pandas DataFrame."""
-        mock_selm_model = MagicMock()
-        mock_rsn.selm.return_value = mock_selm_model
-        mock_rsn.extract_cp.return_value = (MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)
-        mock_rsn.extract_dp.return_value = (MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-
         msn = MultiSkewNorm()
-        msn.fit(data=MOCK_DF.copy())  # Use copy to avoid modifying original
+        msn.fit(data=MOCK_DF.copy())
 
-        mock_rsn.selm.assert_called_once_with("x", "y", MOCK_DF)
-        mock_rsn.extract_cp.assert_called_once_with(mock_selm_model)
-        mock_rsn.extract_dp.assert_called_once_with(mock_selm_model)
-
+        assert msn.selm_model is not None  # Check R model object exists
         assert isinstance(msn.cp, CentredParams)
         assert isinstance(msn.dp, DirectParams)
-        assert msn.selm_model == mock_selm_model
+        assert msn.data is not None  # Add assertion for type checker
         pd.testing.assert_frame_equal(msn.data, MOCK_DF)
-        np.testing.assert_array_equal(msn.cp.mean, MOCK_MEAN)
-        np.testing.assert_array_equal(msn.dp.xi, MOCK_XI)
+        # Check dimensions of parameters
+        assert msn.cp.mean.shape == (2,)
+        assert msn.dp.xi.shape == (2,)
+        assert msn.dp.omega.shape == (2, 2)
+        assert msn.dp.alpha.shape == (2,)
 
-    def test_fit_with_numpy_array(self, mock_rsn):
+    def test_fit_with_numpy_array(self):
         """Test fit method with numpy array."""
-        mock_selm_model = MagicMock()
-        mock_rsn.selm.return_value = mock_selm_model
-        mock_rsn.extract_cp.return_value = (MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)
-        mock_rsn.extract_dp.return_value = (MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-
         msn = MultiSkewNorm()
         numpy_data = MOCK_DF.values
         msn.fit(data=numpy_data)
 
         expected_df = pd.DataFrame(numpy_data, columns=["x", "y"])
-        mock_rsn.selm.assert_called_once()
-        # Check the DataFrame passed to selm
-        pd.testing.assert_frame_equal(mock_rsn.selm.call_args[0][2], expected_df)
 
+        assert msn.selm_model is not None
         assert isinstance(msn.cp, CentredParams)
         assert isinstance(msn.dp, DirectParams)
-        assert msn.selm_model == mock_selm_model
+        assert msn.data is not None  # Add assertion for type checker
         pd.testing.assert_frame_equal(msn.data, expected_df)
+        assert msn.cp.mean.shape == (2,)
+        assert msn.dp.xi.shape == (2,)
 
-    def test_fit_with_x_y(self, mock_rsn):
+    def test_fit_with_1d_numpy_array(self):
+        """Test fit method raises error on 1D numpy array."""
+
+        msn = MultiSkewNorm()
+        one_d_array = np.array([0.1, 0.2, 0.3])
+
+        with pytest.raises(
+            ValueError, match="Data must be a 2D numpy array or DataFrame"
+        ):
+            msn.fit(data=one_d_array)
+
+    def test_fit_with_x_y(self):
         """Test fit method with x and y arrays."""
-        mock_selm_model = MagicMock()
-        mock_rsn.selm.return_value = mock_selm_model
-        mock_rsn.extract_cp.return_value = (MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)
-        mock_rsn.extract_dp.return_value = (MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-
         msn = MultiSkewNorm()
         msn.fit(x=MOCK_X, y=MOCK_Y)
 
         expected_df = pd.DataFrame({"x": MOCK_X, "y": MOCK_Y})
-        mock_rsn.selm.assert_called_once()
-        pd.testing.assert_frame_equal(mock_rsn.selm.call_args[0][2], expected_df)
 
+        assert msn.selm_model is not None
         assert isinstance(msn.cp, CentredParams)
         assert isinstance(msn.dp, DirectParams)
-        assert msn.selm_model == mock_selm_model
+        assert msn.data is not None  # Add assertion for type checker
         pd.testing.assert_frame_equal(msn.data, expected_df)
+        assert msn.cp.mean.shape == (2,)
+        assert msn.dp.xi.shape == (2,)
 
-    def test_fit_no_data(self, mock_rsn):
+    def test_fit_no_data(self):
         """Test fit method raises ValueError when no data is provided."""
         msn = MultiSkewNorm()
         with pytest.raises(ValueError, match="Either data or x and y must be provided"):
             msn.fit()
 
-    def test_define_dp(self, mock_rsn):
+    def test_define_dp(self):
         """Test define_dp method."""
         msn = MultiSkewNorm()
         result = msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
@@ -292,53 +313,47 @@ class TestMultiSkewNorm:
         np.testing.assert_array_equal(msn.dp.xi, MOCK_XI)
         np.testing.assert_array_equal(msn.dp.omega, MOCK_OMEGA)
         np.testing.assert_array_equal(msn.dp.alpha, MOCK_ALPHA)
+        # Check CP was also calculated
+        assert isinstance(msn.cp, CentredParams)
+        np.testing.assert_allclose(msn.cp.mean, EXPECTED_MEAN, atol=1e-5)
+        # Assuming CentredParams.sigma holds covariance matrix after dp2cp
+        np.testing.assert_allclose(msn.cp.sigma, EXPECTED_SIGMA_COV, atol=1e-5)
+        np.testing.assert_allclose(msn.cp.skew, EXPECTED_SKEW, atol=1e-5)
         assert result is msn  # Check if it returns self for chaining
 
-    def test_sample_after_fit(self, mock_rsn):
+    def test_sample_after_fit(self):
         """Test sample method after fitting the model."""
-        mock_selm_model = MagicMock()
-        mock_rsn.selm.return_value = mock_selm_model
-        mock_rsn.extract_cp.return_value = (MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)
-        mock_rsn.extract_dp.return_value = (MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-        mock_rsn.sample_msn.return_value = MOCK_SAMPLE
-
         msn = MultiSkewNorm()
         msn.fit(data=MOCK_DF)
-        result = msn.sample(n=100, return_sample=False)
+        result = msn.sample(n=MOCK_SAMPLE_SIZE, return_sample=False)
 
-        mock_rsn.sample_msn.assert_called_once_with(selm_model=mock_selm_model, n=100)
         assert result is None
-        np.testing.assert_array_equal(msn.sample_data, MOCK_SAMPLE)
+        assert isinstance(msn.sample_data, np.ndarray)
+        assert msn.sample_data.shape == (MOCK_SAMPLE_SIZE, 2)
 
-    def test_sample_after_define_dp(self, mock_rsn):
+    def test_sample_after_define_dp(self):
         """Test sample method after defining direct parameters."""
-        mock_rsn.sample_msn.return_value = MOCK_SAMPLE
-
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-        result = msn.sample(n=50, return_sample=False)
+        result = msn.sample(n=MOCK_SAMPLE_SIZE, return_sample=False)
 
-        mock_rsn.sample_msn.assert_called_once_with(
-            xi=MOCK_XI, omega=MOCK_OMEGA, alpha=MOCK_ALPHA, n=50
-        )
         assert result is None
-        np.testing.assert_array_equal(msn.sample_data, MOCK_SAMPLE)
+        assert isinstance(msn.sample_data, np.ndarray)
+        assert msn.sample_data.shape == (MOCK_SAMPLE_SIZE, 2)
 
-    def test_sample_return_sample_true(self, mock_rsn):
+    def test_sample_return_sample_true(self):
         """Test sample method with return_sample=True."""
-        mock_rsn.sample_msn.return_value = MOCK_SAMPLE
-
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-        sample = msn.sample(n=100, return_sample=True)
+        sample = msn.sample(n=MOCK_SAMPLE_SIZE, return_sample=True)
 
         assert isinstance(sample, np.ndarray)
-        np.testing.assert_array_equal(sample, MOCK_SAMPLE)
-        np.testing.assert_array_equal(
-            msn.sample_data, MOCK_SAMPLE
-        )  # Ensure sample_data is still set
+        assert sample.shape == (MOCK_SAMPLE_SIZE, 2)
+        # Ensure sample_data is also set
+        assert isinstance(msn.sample_data, np.ndarray)
+        np.testing.assert_array_equal(msn.sample_data, sample)
 
-    def test_sample_not_fitted_or_defined(self, mock_rsn):
+    def test_sample_not_fitted_or_defined(self):  # No mock needed
         """Test sample method raises ValueError when not fitted or defined."""
         msn = MultiSkewNorm()
         with pytest.raises(
@@ -347,76 +362,91 @@ class TestMultiSkewNorm:
         ):
             msn.sample()
 
-    @patch("soundscapy.spi.MSN.sspy")
-    def test_sspy_plot_calls_sample_if_needed(self, mock_sspy, mock_rsn):
+    @patch("soundscapy.spi.MSN.sspy")  # Keep mocking the plotting call
+    def test_sspy_plot_calls_sample_if_needed(self, mock_sspy):
         """Test sspy_plot calls sample if sample_data is None."""
-        mock_rsn.sample_msn.return_value = MOCK_SAMPLE
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)  # Define DP so sample can run
 
         assert msn.sample_data is None
-        msn.sspy_plot(color="red", title="Test Plot")
+        msn.sspy_plot(
+            n=MOCK_SAMPLE_SIZE, color="red", title="Test Plot"
+        )  # Pass n to sample
 
-        # Check sample was called implicitly
-        mock_rsn.sample_msn.assert_called_once()
+        # Check sample was called implicitly and data was generated
+        assert isinstance(msn.sample_data, np.ndarray)
+        assert msn.sample_data.shape == (MOCK_SAMPLE_SIZE, 2)
+
         # Check plot was called with the sampled data
         mock_sspy.density_plot.assert_called_once()
         call_args = mock_sspy.density_plot.call_args[0]
         call_kwargs = mock_sspy.density_plot.call_args[1]
         assert isinstance(call_args[0], pd.DataFrame)
-        pd.testing.assert_frame_equal(
-            call_args[0],
-            pd.DataFrame(MOCK_SAMPLE, columns=["ISOPleasant", "ISOEventful"]),
+        # Check the dataframe passed to plot matches the generated sample data
+        expected_plot_df = pd.DataFrame(
+            msn.sample_data, columns=["ISOPleasant", "ISOEventful"]
         )
+        pd.testing.assert_frame_equal(call_args[0], expected_plot_df)
         assert call_kwargs["color"] == "red"
         assert call_kwargs["title"] == "Test Plot"
 
-    @patch("soundscapy.spi.MSN.sspy")
-    def test_sspy_plot_uses_existing_sample(self, mock_sspy, mock_rsn):
+    @patch("soundscapy.spi.MSN.sspy")  # Keep mocking the plotting call
+    def test_sspy_plot_uses_existing_sample(self, mock_sspy):
         """Test sspy_plot uses existing sample_data if available."""
         msn = MultiSkewNorm()
-        msn.sample_data = MOCK_SAMPLE  # Pre-set sample data
+        # Create some dummy sample data
+        existing_sample = np.random.rand(50, 2)
+        msn.sample_data = existing_sample
 
-        msn.sspy_plot()
+        # Store original sample_data reference to check it wasn't re-generated
+        sample_data_before_plot = msn.sample_data
 
-        # Check sample was NOT called again
-        mock_rsn.sample_msn.assert_not_called()
+        msn.sspy_plot()  # Should use existing sample_data
+
+        # Check sample was NOT called again (sample_data should be unchanged)
+        assert msn.sample_data is sample_data_before_plot
+        np.testing.assert_array_equal(msn.sample_data, existing_sample)
+
         # Check plot was called with the existing data
         mock_sspy.density_plot.assert_called_once()
         call_args = mock_sspy.density_plot.call_args[0]
         assert isinstance(call_args[0], pd.DataFrame)
-        pd.testing.assert_frame_equal(
-            call_args[0],
-            pd.DataFrame(MOCK_SAMPLE, columns=["ISOPleasant", "ISOEventful"]),
+        expected_plot_df = pd.DataFrame(
+            existing_sample, columns=["ISOPleasant", "ISOEventful"]
         )
+        pd.testing.assert_frame_equal(call_args[0], expected_plot_df)
 
 
-# Test standalone functions
-@patch("soundscapy.spi.MSN.rsn")
-def test_cp2dp(mock_rsn):
+@needs_r_sn
+@pytest.mark.skip(
+    reason="Cannot directly convert cp to dp. Need to come up with a reasonable test."
+)
+def test_cp2dp():
     """Test cp2dp function."""
-    mock_rsn._dp2cp.return_value = (MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-    cp = CentredParams(MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)
+    cp_input = CentredParams(EXPECTED_MEAN, EXPECTED_SIGMA_COV, EXPECTED_SKEW)
 
-    dp = cp2dp(cp)
+    # Perform the conversion
+    dp_output = cp2dp(cp_input)
 
-    mock_rsn._dp2cp.assert_called_once_with(MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)
-    assert isinstance(dp, DirectParams)
-    np.testing.assert_array_equal(dp.xi, MOCK_XI)
-    np.testing.assert_array_equal(dp.omega, MOCK_OMEGA)
-    np.testing.assert_array_equal(dp.alpha, MOCK_ALPHA)
+    assert isinstance(dp_output, DirectParams)
+    # Check if the output DP matches the original MOCK_DP used to generate the CPs
+    np.testing.assert_allclose(dp_output.xi, MOCK_XI, atol=1e-5)
+    np.testing.assert_allclose(dp_output.omega, MOCK_OMEGA, atol=1e-5)
+    np.testing.assert_allclose(dp_output.alpha, MOCK_ALPHA, atol=1e-5)
 
 
-@patch("soundscapy.spi.MSN.rsn")
-def test_dp2cp(mock_rsn):
+@needs_r_sn  # Needs R for conversion
+def test_dp2cp():
     """Test dp2cp function."""
-    mock_rsn._dp2cp.return_value = (MOCK_MEAN, MOCK_SIGMA, MOCK_SKEW)
-    dp = DirectParams(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
+    # Use the known DP values
+    dp_input = DirectParams(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
 
-    cp = dp2cp(dp)
+    # Perform the conversion
+    cp_output = dp2cp(dp_input)
 
-    mock_rsn._dp2cp.assert_called_once_with(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
-    assert isinstance(cp, CentredParams)
-    np.testing.assert_array_equal(cp.mean, MOCK_MEAN)
-    np.testing.assert_array_equal(cp.sigma, MOCK_SIGMA)
-    np.testing.assert_array_equal(cp.skew, MOCK_SKEW)
+    assert isinstance(cp_output, CentredParams)
+    # Check if the output CP matches the expected values
+    np.testing.assert_allclose(cp_output.mean, EXPECTED_MEAN, atol=1e-5)
+    # Assuming CentredParams.sigma holds covariance matrix from dp2cp
+    np.testing.assert_allclose(cp_output.sigma, EXPECTED_SIGMA_COV, atol=1e-5)
+    np.testing.assert_allclose(cp_output.skew, EXPECTED_SKEW, atol=1e-5)

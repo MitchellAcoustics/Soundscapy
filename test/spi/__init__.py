@@ -1,1 +1,0 @@
-# Empty package file for the spi test module

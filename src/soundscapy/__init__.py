@@ -78,22 +78,19 @@ except ImportError:
 # Try to import optional SPI module
 try:
     from soundscapy import spi  # noqa: F401
+
     from soundscapy.spi import (
-        SkewNormalDistribution,  # noqa: F401
-        fit_skew_normal,  # noqa: F401
-        calculate_spi,  # noqa: F401
-        calculate_spi_from_data,  # noqa: F401
+        MultiSkewNorm,  # noqa: F401
+        DirectParams,  # noqa: F401
+        CentredParams,  # noqa: F401
+        cp2dp,  # noqa: F401
+        dp2cp,  # noqa: F401
     )
 
     __all__.extend(
-        [
-            "spi",
-            "SkewNormalDistribution",
-            "fit_skew_normal",
-            "calculate_spi",
-            "calculate_spi_from_data",
-        ]
+        ["spi", "MultiSkewNorm", "DirectParams", "CentredParams", "cp2dp", "dp2cp"]
     )
+
 except ImportError:
     # SPI module not available
     pass

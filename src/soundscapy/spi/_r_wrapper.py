@@ -12,6 +12,7 @@ It is not intended to be used directly by end users.
 
 import sys
 from typing import Any
+import warnings
 
 import rpy2.robjects as robjects
 from rpy2.robjects import numpy2ri, pandas2ri
@@ -224,8 +225,16 @@ def initialize_r_session() -> dict[str, Any]:
         _session_active = True
         logger.info("R session successfully initialized")
 
-        numpy2ri.activate()
-        pandas2ri.activate()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Activate numpy and pandas conversion
+            logger.debug("Activating numpy and pandas conversion")
+            logger.info(
+                "rpy2 throws a DeprecationWarning about global activation, which we're ignoreing for now."
+            )
+            # TODO: Remove global conversion, as recommended by rpy2
+            numpy2ri.activate()
+            pandas2ri.activate()
 
         return {
             "r_session": "active",

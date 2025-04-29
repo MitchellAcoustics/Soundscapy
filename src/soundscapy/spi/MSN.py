@@ -4,8 +4,6 @@ import pandas as pd
 import soundscapy.spi._rsn_wrapper as rsn
 import soundscapy as sspy
 
-__all__ = ["DirectParams", "CentredParams", "MultiSkewNorm", "cp2dp", "dp2cp"]
-
 
 class DirectParams:
     """
@@ -199,11 +197,16 @@ class MultiSkewNorm:
                 df = data
                 df.columns = ["x", "y"]
 
+            elif isinstance(data, np.ndarray):
+                # If data is a numpy array, convert it to a DataFrame
+                if data.ndim == 2:
+                    # If data is 2D, assume it's two variables
+                    df = pd.DataFrame(data, columns=["x", "y"])
+                else:
+                    raise ValueError("Data must be a 2D numpy array or DataFrame")
             else:
-                assert x.shape == y.shape, "x and y must have the same shape"  # type: ignore
-
-                # Convert data to a DataFrame
-                df = pd.DataFrame(data, columns=["x", "y"])
+                # If data is neither a DataFrame nor a numpy array, raise an error
+                raise ValueError("Data must be a pandas DataFrame or 2D numpy array.")
 
         elif x is not None and y is not None:
             # If x and y are provided, convert them to a pandas DataFrame
@@ -211,7 +214,7 @@ class MultiSkewNorm:
 
         else:
             # This should never happen
-            raise ValueError("This should never happen")
+            raise ValueError("Either data or x and y must be provided")
 
         # Fit the model
         m = rsn.selm("x", "y", df)
@@ -239,6 +242,7 @@ class MultiSkewNorm:
         """
 
         self.dp = DirectParams(xi, omega, alpha)
+        self.cp = CentredParams.from_dp(self.dp)
         return self
 
     def sample(self, n: int = 1000, return_sample: bool = False) -> None | np.ndarray:
@@ -273,14 +277,14 @@ class MultiSkewNorm:
         if return_sample:
             return sample
 
-    def sspy_plot(self, color: str = "blue", title: str | None = None):
+    def sspy_plot(self, color: str = "blue", title: str | None = None, n: int = 1000):
         """
         Plots the joint distribution of the generated sample.
 
         """
 
         if self.sample_data is None:
-            self.sample()
+            self.sample(n=n)
 
         df = pd.DataFrame(self.sample_data, columns=["ISOPleasant", "ISOEventful"])
         sspy.density_plot(df, color=color, title=title)
@@ -354,65 +358,3 @@ def dp2cp(dp: DirectParams, family: str = "SN") -> CentredParams:
     cp_r = rsn._dp2cp(dp.xi, dp.omega, dp.alpha)
 
     return CentredParams(*cp_r)
-
-
-# %%
-
-if __name__ == "__main__":
-    from soundscapy.surveys.survey_utils import LANGUAGE_ANGLES, PAQ_IDS
-    import soundscapy as sspy
-
-    data = sspy.isd.load()
-    data, excl_data = sspy.isd.validate(data)
-    data = data.query("Language != 'cmn'")
-
-    excl_id = [652, 706, 548, 550, 551, 553, 569, 580, 609, 618, 623, 636, 643]
-    data.drop(excl_id, inplace=True)
-
-    for lang in data.Language.unique():
-        angles = LANGUAGE_ANGLES[lang]
-
-        lang_idx = data.query(f"Language == '{lang}'").index
-        iso_pl, iso_ev = sspy.surveys.processing.calculate_iso_coords(
-            data.loc[lang_idx, PAQ_IDS], (1, 5), angles
-        )
-        data.loc[lang_idx, "ISOPleasant"] = round(iso_pl, 3)
-        data.loc[lang_idx, "ISOEventful"] = round(iso_ev, 3)
-
-    # %%
-
-    ct = data.query("LocationID == 'SanMarco'")
-    x = ct["ISOPleasant"].values
-    y = ct["ISOEventful"].values
-
-    msn = MultiSkewNorm()
-    # msn.fit(x=x, y=y)
-    msn.fit(data=ct[["ISOPleasant", "ISOEventful"]])
-    msn.summary()
-    msn.sspy_plot()
-
-    # %%
-
-    msn2 = MultiSkewNorm()
-    msn2.define_dp(
-        xi=np.array([0.06534, 0.628637]),
-        omega=np.array([[0.14890315, -0.06423752], [-0.06423752, 0.10139612]]),
-        alpha=np.array([0.79105, -0.767217]),
-    )
-    msn2.sample(n=1000, return_sample=True)
-    msn2.summary()
-    msn2.sspy_plot()
-
-    # %%
-
-    fits = []
-
-    for loc in data.LocationID.unique():
-        df = data.query(f"LocationID == '{loc}'")[["ISOPleasant", "ISOEventful"]]
-
-        msn = MultiSkewNorm()
-        msn.fit(data=df)
-        msn.sample()
-        fits.append(msn)
-
-# %%

@@ -27,11 +27,15 @@ def calc_dp(x: str, y: str, data: pd.DataFrame):
 
 
 def extract_cp(selm_model):
-    return tuple(selm_model.slots["param"][1])
+    cp = tuple(selm_model.slots["param"][1])
+    cp = (cp[0].flatten(), cp[1], cp[2].flatten())
+    return cp
 
 
 def extract_dp(selm_model):
-    return tuple(selm_model.slots["param"][0])
+    dp = tuple(selm_model.slots["param"][0])
+    dp = (dp[0].flatten(), dp[1], dp[2].flatten())
+    return dp
 
 
 def sample_msn(selm_model=None, xi=None, omega=None, alpha=None, n=1000):
