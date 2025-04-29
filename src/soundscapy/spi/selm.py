@@ -57,7 +57,7 @@ class SELM:
         """Returns the centred parameters of the model."""
         if self._rselm is None:
             raise ValueError("The model has not been fitted yet.")
-        return
+        return None
 
     @property
     def coef(self, param_type: Literal["CP", "DP"] = "CP") -> np.ndarray:

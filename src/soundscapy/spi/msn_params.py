@@ -2,8 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 import numpy as np
 from soundscapy.spi._r_wrapper import numpy2R
-
-
+from soundscapy.spi._r_msnparams_wrapper import RmsnParams
 
 # @dataclass
 # class MSNParams_(ABC):
@@ -17,6 +16,7 @@ from soundscapy.spi._r_wrapper import numpy2R
 #     def to_r(self) -> ListVector:
 #         """Convert the parameters to R format."""
 #         return ListVector({"xi": self.xi, "omega": self.omega, "alpha": self.alpha})
+
 
 class DirectParams:
     """
@@ -36,10 +36,17 @@ class DirectParams:
             It is represented as a 2x1 array.
     """
 
-    def __init__(self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray):
+    def __init__(
+        self,
+        xi: np.ndarray | float,
+        omega: np.ndarray | float,
+        alpha: np.ndarray | float,
+        _pyrobj: RmsnParams | None = None,
+    ):
         self.xi = xi
         self.omega = omega
         self.alpha = alpha
+        self._pyrobj = _pyrobj
         self.validate()
 
     def __repr__(self) -> str:
@@ -52,8 +59,23 @@ class DirectParams:
             f"\nomega: {self.omega.round(3)}"
             f"\nalpha: {self.alpha.round(3)}"
         )
-    
-    @
+
+    @classmethod
+    def from_r(cls, Rmsnparams):
+        """
+        Convert RmsnParams object to DirectParams object.
+
+        Args:
+            Rmsnparams (RmsnParams): The RmsnParams object to convert.
+
+        Returns:
+            DirectParams: A new DirectParams object with the converted parameters.
+        """
+        py_dict = Rmsnparams.rpy2py()
+        xi = py_dict["beta"]
+        omega = py_dict["Omega"]
+        alpha = py_dict["alpha"]
+        return cls(xi=xi, omega=omega, alpha=alpha, _pyrobj=Rmsnparams)
 
     def _omega_is_pos_def(self) -> bool:
         return np.all(np.linalg.eigvals(self.omega) > 0)
@@ -81,8 +103,26 @@ class DirectParams:
         Returns:
             None
         """
-        assert self._omega_is_pos_def(), "Omega must be positive definite"
-        assert self._omega_is_symmetric(), "Omega must be symmetric"
+        if isinstance(self.xi, (float, int)):
+            self.xi = np.array([self.xi])
+        elif isinstance(self.xi, tuple):
+            self.xi = np.array(self.xi)
+
+        if isinstance(self.omega, (float, int)):
+            self.omega = np.array([[self.omega]])
+        elif isinstance(self.omega, tuple):
+            self.omega = np.array(self.omega)
+
+        if isinstance(self.alpha, (float, int)):
+            self.alpha = np.array([self.alpha])
+        elif isinstance(self.alpha, tuple):
+            self.alpha = np.array(self.alpha)
+
+        self._dim = self.xi.shape[0]
+
+        if self._dim >= 2:
+            assert self._omega_is_pos_def(), "Omega must be positive definite"
+            assert self._omega_is_symmetric(), "Omega must be symmetric"
 
     def to_r(self):
         """
@@ -130,22 +170,22 @@ class CentredParams:
             f"\nskew:  {self.skew.round(3)}"
         )
 
-    def from_dp(self, dp: DirectParams):
+    @classmethod
+    def from_r(cls, Rmsnparams):
         """
-        Converts a DirectParams object to a CentredParams object.
+        Convert RmsnParams object to DirectParams object.
 
         Args:
-            dp (DirectParams): The DirectParams object to convert.
+            Rmsnparams (RmsnParams): The RmsnParams object to convert.
 
         Returns:
-            CentredParams: A new CentredParams object with the converted parameters.
-
-        Note:
-            This method is not yet implemented.
-
+            DirectParams: A new DirectParams object with the converted parameters.
         """
-        # TODO: Implement this method with dp2cp function
-        pass
+        py_dict = Rmsnparams.rpy2py()
+        mean = py_dict["mean"]
+        sigma = py_dict["Sigma"]
+        skew = py_dict["skew"]
+        return cls(mean=mean, sigma=sigma, skew=skew)
 
     def to_r(self):
         """
