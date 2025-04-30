@@ -199,7 +199,7 @@ def validate(
     df = rename_paqs(df, paq_aliases)
 
     invalid_indices = likert_data_quality(
-        df, allow_na=allow_paq_na, val_range=val_range
+        df, val_range=val_range, allow_na=allow_paq_na
     )
 
     if invalid_indices:

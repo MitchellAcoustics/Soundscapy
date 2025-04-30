@@ -6,8 +6,10 @@ requires = ["setuptools-scm>=8", "setuptools>=64"]
 dev = [
     "build>=1.2.2.post1",
     "mypy>=1.15.0",
+    "pandas-stubs>=2.2.3.250308",
     "pre-commit>=4.2.0",
     "ruff>=0.7.2",
+    "scipy-stubs>=1.15.2.2",
     "setuptools-scm>=8.3.1",
     "tox>=4.25.0",
     "twine>=6.1.0",
@@ -114,6 +116,7 @@ lint.ignore = [
     "D212", # multi-line-summary-first-line
     "D407", # removed dashes lines under sections
     "D417", # argument description in docstring (unreliable)
+    "FIX002", # fixme (ruff-format recommended)
     "ISC001", # simplify implicit str concatenation (ruff-format recommended)
 ]
 lint.per-file-ignores = {"tests*" = [

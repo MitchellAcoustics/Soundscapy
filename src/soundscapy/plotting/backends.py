@@ -177,7 +177,7 @@ class SeabornBackend(PlotBackend):
         >>> import soundscapy as sspy
         >>> from soundscapy.plotting import Backend, CircumplexPlot, StyleOptions, CircumplexPlotParams
         >>> data = sspy.isd.load()
-        >>> data = sspy.surveys.add_iso_coords(data, overwrite=True)
+        >>> data = sspy.surveys.add_iso_coords(data,overwrite=True)
         >>> sample_data = sspy.isd.select_location_ids(data, ['CamdenTown'])
         >>> plot = CircumplexPlot(data=sample_data, backend=Backend.SEABORN)
         >>> g = plot.jointplot()

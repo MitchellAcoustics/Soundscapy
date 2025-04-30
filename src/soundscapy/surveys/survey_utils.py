@@ -23,7 +23,18 @@ class PAQ(Enum):
     UNEVENTFUL = ("uneventful", "PAQ7")
     CALM = ("calm", "PAQ8")
 
-    def __init__(self, label: str, id: str):
+    def __init__(self, label: str, id: str) -> None:  # noqa: A002
+        """
+        Initialize a PAQ enum member.
+
+        Parameters
+        ----------
+        label : str
+            The descriptive label for the PAQ (e.g., 'pleasant').
+        id : str
+            The standard identifier for the PAQ (e.g., 'PAQ1').
+
+        """
         self.label = label
         self.id = id
 
@@ -51,7 +62,7 @@ LANGUAGE_ANGLES = {
 
 
 def return_paqs(
-    df: pd.DataFrame, incl_ids: bool = True, other_cols: list[str] = None
+    df: pd.DataFrame, other_cols: list[str] | None = None, *, incl_ids: bool = True
 ) -> pd.DataFrame:
     """
     Return only the PAQ columns from a DataFrame.
@@ -60,15 +71,16 @@ def return_paqs(
     ----------
     df : pd.DataFrame
         Input DataFrame containing PAQ data.
-    incl_ids : bool, optional
-        Whether to include ID columns (RecordID, GroupID, etc.), by default True.
     other_cols : List[str], optional
         Other columns to include in the output, by default None.
+    incl_ids : bool, optional
+        Whether to include ID columns (RecordID, GroupID, etc.), by default True.
 
     Returns
     -------
     pd.DataFrame
-        DataFrame containing only the PAQ columns and optionally ID and other specified columns.
+        DataFrame containing only the PAQ columns and optionally ID and other specified
+        columns.
 
     Examples
     --------
@@ -112,7 +124,9 @@ def return_paqs(
     return df[cols]
 
 
-def rename_paqs(df: pd.DataFrame, paq_aliases: tuple | dict = None) -> pd.DataFrame:
+def rename_paqs(
+    df: pd.DataFrame, paq_aliases: list | tuple | dict | None = None
+) -> pd.DataFrame:
     """
     Rename the PAQ columns in a DataFrame to standard PAQ IDs.
 
@@ -164,12 +178,13 @@ def rename_paqs(df: pd.DataFrame, paq_aliases: tuple | dict = None) -> pd.DataFr
         if any(paq_name in df.columns for paq_name in PAQ_LABELS):
             paq_aliases = PAQ_LABELS
 
-    if isinstance(paq_aliases, (list, tuple)):
+    if isinstance(paq_aliases, list | tuple):
         rename_dict = dict(zip(paq_aliases, PAQ_IDS, strict=False))
     elif isinstance(paq_aliases, dict):
         rename_dict = paq_aliases
     else:
-        raise ValueError("paq_aliases must be a tuple, list, or dictionary.")
+        msg = "paq_aliases must be a tuple, list, or dictionary."
+        raise TypeError(msg)
 
     logger.debug(f"Renaming PAQs with the following mapping: {rename_dict}")
     return df.rename(columns=rename_dict)
@@ -192,8 +207,8 @@ def mean_responses(df: pd.DataFrame, group: str) -> pd.DataFrame:
         DataFrame with mean responses for each PAQ group.
 
     """
-    df = return_paqs(df, incl_ids=False, other_cols=[group])
-    return df.groupby(group).mean().reset_index()
+    data = return_paqs(df, other_cols=[group], incl_ids=False)
+    return data.groupby(group).mean().reset_index()
 
 
 # Add other utility functions here as needed
