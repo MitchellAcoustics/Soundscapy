@@ -1,9 +1,6 @@
 import soundscapy
 import pytest
 import os
-import sys
-import importlib
-from unittest.mock import patch
 
 
 def test_soundscapy_import():

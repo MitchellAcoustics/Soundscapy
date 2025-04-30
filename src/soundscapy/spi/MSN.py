@@ -3,7 +3,6 @@ import pandas as pd
 import soundscapy.spi._rsn_wrapper as rsn
 import soundscapy as sspy
 from soundscapy.spi.ks2d import ks2d2s
-from test.plotting.test_plotting import sample_data
 
 
 class DirectParams:
