@@ -34,6 +34,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y r-base
+        echo "R installed successfully"
 
     - name: Set R environment variables
       run: |
