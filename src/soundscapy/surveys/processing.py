@@ -9,9 +9,10 @@ Notes
 The functions in this module are designed to be fairly general and can be used with
 any dataset in a similar format to the ISD. The key to this is using a simple
 dataframe/sheet with the following columns:
-    Index columns: e.g. LocationID, RecordID, GroupID, SessionID
-    Perceptual attributes: PAQ1, PAQ2, ..., PAQ8
-    Independent variables: e.g. Laeq, N5, Sharpness, etc.
+
+ - Index columns: e.g. LocationID, RecordID, GroupID, SessionID
+ - Perceptual attributes: PAQ1, PAQ2, ..., PAQ8
+ - Independent variables: e.g. Laeq, N5, Sharpness, etc.
 
 The key functions of this module are designed to clean/validate datasets, calculate ISO
 coordinate values or SSM metrics, filter on index columns. Functions and operations
@@ -22,7 +23,12 @@ modules under `soundscape.databases`.
 
 import warnings
 from dataclasses import dataclass
-from typing import TypedDict, Unpack
+from typing import TypedDict
+
+try:
+    from typing import Unpack
+except ImportError:
+    from typing_extensions import Unpack
 
 import numpy as np
 import pandas as pd
@@ -30,6 +36,8 @@ from loguru import logger
 from scipy import optimize
 
 from .survey_utils import EQUAL_ANGLES, PAQ_IDS, return_paqs
+
+np.set_printoptions(legacy="1.21")
 
 
 @dataclass

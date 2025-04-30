@@ -8,7 +8,7 @@ logger.disable("soundscapy")
 
 # Always available core modules
 from soundscapy import databases, plotting, surveys
-from soundscapy.databases import araus, isd, satp
+from soundscapy.databases import isd, satp
 from soundscapy.plotting import density_plot, scatter_plot
 from soundscapy.sspylogging import (
     disable_logging,
@@ -21,7 +21,6 @@ from soundscapy.surveys import processing
 from ._version import __version__  # noqa: F401
 
 __all__ = [
-    "araus",
     "databases",
     "density_plot",
     "disable_logging",

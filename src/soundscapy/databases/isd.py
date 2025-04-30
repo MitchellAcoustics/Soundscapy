@@ -133,7 +133,8 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
     }
 
     if version not in url_mapping:
-        raise ValueError(f"Version {version} not recognised.")
+        msg = f"Version {version} not recognised."
+        raise ValueError(msg)
 
     url = url_mapping[version]
     file_type = "csv" if version in ["v1.0.0", "v1.0.1"] else "excel"
@@ -152,8 +153,9 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
 def validate(
     df: pd.DataFrame,
     paq_aliases: list | dict = _PAQ_ALIASES,
-    allow_paq_na: bool = False,
     val_range: tuple[int, int] = (1, 5),
+    *,
+    allow_paq_na: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame | None]:
     """
     Perform data quality checks and validate that the dataset fits the expected format.
@@ -171,8 +173,9 @@ def validate(
 
     Returns
     -------
-    Tuple[pd.DataFrame, Optional[pd.DataFrame]]
-        Tuple containing the cleaned dataframe and optionally a dataframe of excluded samples.
+    Tuple[pd.DataFrame, pd.DataFrame | None]
+        Tuple containing the cleaned dataframe
+        and optionally a dataframe of excluded samples.
 
     Notes
     -----
@@ -196,21 +199,21 @@ def validate(
 
     """
     logger.info("Validating ISD data")
-    df = rename_paqs(df, paq_aliases)
+    data = rename_paqs(df, paq_aliases)
 
     invalid_indices = likert_data_quality(
-        df, val_range=val_range, allow_na=allow_paq_na
+        data, val_range=val_range, allow_na=allow_paq_na
     )
 
     if invalid_indices:
-        excl_df = df.iloc[invalid_indices]
-        df = df.drop(df.index[invalid_indices])
+        excl_data = data.iloc[invalid_indices]
+        data = data.drop(data.index[invalid_indices])
         logger.info(f"Removed {len(invalid_indices)} rows with invalid PAQ data")
     else:
-        excl_df = None
+        excl_data = None
         logger.info("All PAQ data passed quality checks")
 
-    return df, excl_df
+    return data, excl_data
 
 
 def _isd_select(
@@ -250,11 +253,12 @@ def _isd_select(
     2  C      3
 
     """
-    if isinstance(condition, (str, int)):
+    if isinstance(condition, str | int):
         return data.query(f"{select_by} == @condition", engine="python")
-    if isinstance(condition, (list, tuple)):
+    if isinstance(condition, list | tuple):
         return data.query(f"{select_by} in @condition")
-    raise TypeError("Should be either a str, int, list, or tuple.")
+    msg = "Should be either a str, int, list, or tuple."
+    raise TypeError(msg)
 
 
 def select_record_ids(
@@ -435,7 +439,10 @@ def describe_location(
     ... })
     >>> df = add_iso_coords(df)
     >>> result = describe_location(df, 'L1')
-    >>> set(result.keys()) == {'count', 'ISOPleasant', 'ISOEventful', 'pleasant', 'eventful', 'vibrant', 'chaotic', 'monotonous', 'calm'}
+    >>> set(result.keys()) == {
+    ...     'count', 'ISOPleasant', 'ISOEventful', 'pleasant', 'eventful',
+    ...     'vibrant', 'chaotic', 'monotonous', 'calm'
+    ... }
     True
     >>> result['count']
     2
@@ -492,7 +499,8 @@ def describe_location(
             }
         )
     else:
-        raise ValueError("Type must be either 'percent' or 'count'")
+        msg = "Type must be either 'percent' or 'count'"
+        raise ValueError(msg)
 
     return {k: round(v, 3) if isinstance(v, float) else v for k, v in res.items()}
 
@@ -537,7 +545,10 @@ def soundscapy_describe(
     True
     >>> result.index.tolist()
     ['L1', 'L2']
-    >>> set(result.columns) == {'count', 'ISOPleasant', 'ISOEventful', 'pleasant', 'eventful', 'vibrant', 'chaotic', 'monotonous', 'calm'}
+    >>> set(result.columns) == {
+    ...     'count', 'ISOPleasant', 'ISOEventful', 'pleasant', 'eventful',
+    ...     'vibrant', 'chaotic', 'monotonous', 'calm'
+    ... }
     True
     >>> result = soundscapy_describe(df, calc_type="count")
     >>> result.loc['L1', 'count']

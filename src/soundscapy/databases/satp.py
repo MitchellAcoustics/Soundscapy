@@ -57,9 +57,8 @@ def _url_fetch(version: str) -> str:
 
     """
     if version.lower() not in ["latest", "v1.2.1", "v1.2"]:
-        raise ValueError(
-            "Invalid version. Should be either 'latest', 'v1.2.1', or 'v1.2'."
-        )
+        msg = "Invalid version. Should be either 'latest', 'v1.2.1', or 'v1.2'."
+        raise ValueError(msg)
 
     version = "v1.2.1" if version.lower() == "latest" else version.lower()
     url = "https://zenodo.org/record/7143599/files/SATP%20Dataset%20v1.2.xlsx"
@@ -84,9 +83,9 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
 
     """
     url = _url_fetch(version)
-    df = pd.read_excel(url, engine="openpyxl", sheet_name="Main Merge")
+    data = pd.read_excel(url, engine="openpyxl", sheet_name="Main Merge")
     logger.info(f"Loaded SATP dataset version {version} from Zenodo")
-    return df
+    return data
 
 
 def load_participants(version: str = "latest") -> pd.DataFrame:
@@ -105,10 +104,10 @@ def load_participants(version: str = "latest") -> pd.DataFrame:
 
     """
     url = _url_fetch(version)
-    df = pd.read_excel(url, engine="openpyxl", sheet_name="Participants")
-    df = df.drop(columns=["Unnamed: 3", "Unnamed: 4"])
+    data = pd.read_excel(url, engine="openpyxl", sheet_name="Participants")
+    data = data.drop(columns=["Unnamed: 3", "Unnamed: 4"])
     logger.info(f"Loaded SATP participants dataset version {version} from Zenodo")
-    return df
+    return data
 
 
 if __name__ == "__main__":
