@@ -30,17 +30,6 @@ jobs:
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
-    - name: Install R
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y r-base
-        echo "R installed successfully"
-
-    - name: Set R environment variables
-      run: |
-        echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
-        echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
-
     - name: Setup Python
       run: uv python install 3.12
 
@@ -69,6 +58,17 @@ jobs:
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
+    - name: Install R
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y r-base
+        echo "R installed successfully"
+
+    - name: Set R environment variables
+      run: |
+        echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+        echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
+
     - name: Setup Python ${{ matrix.python-version }}
       run: uv python install ${{ matrix.python-version }}
 
@@ -79,4 +79,4 @@ jobs:
     - name: Run tox environment
       run: |
         py_version="py$(echo '${{ matrix.python-version }}' | tr -d '.')"
-        tox r -e ${py_version}-${{ matrix.factor }}
+        tox r -e ${py_version}-${{ matrix.factor }} -p
