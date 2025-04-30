@@ -178,3 +178,5 @@ CLAUDE.local.md
 /.pytest_cache/
 /.ruff_cache/
 
+# package version
+*_version.py
