@@ -41,24 +41,24 @@ The settings for `bumpver` are stored in `pyproject.toml`.
 
 2. **Minor Version**:
 
-    - Incremented for new features or significant changes
-    - Reset to 0 for major versions
+   - Incremented for new features or significant changes
+   - Reset to 0 for major versions
 
 3. **Patch Version**:
 
-    - Incremented for bug fixes or minor changes
-    - Reset to 0 for new minor versions
+   - Incremented for bug fixes or minor changes
+   - Reset to 0 for new minor versions
 
 4. **Pre-release Versions**:
 
-    - Use `rc` for release candidates
-    - Use `dev` for development versions
+   - Use `rc` for release candidates
+   - Use `dev` for development versions
 
 ### Commit messages
 
 Try to use the [Angular commit message format](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines) for commit messages. Mostly this means starting the commit message with a type, followed by a colon and a short description. For example:
 
-``` txt
+```txt
 feat: add new feature
 fix: correct bug in feature
 docs: update documentation
@@ -122,7 +122,7 @@ Soundscapy uses a simple and standard approach to handle optional dependencies.
            process_all_metrics, prep_multiindex_df, add_results, parallel_process,
        )
        __all__.extend([
-           "audio", "Binaural", "AudioAnalysis", "AnalysisSettings", 
+           "audio", "Binaural", "AudioAnalysis", "AnalysisSettings",
            "ConfigManager", "process_all_metrics", "prep_multiindex_df",
            "add_results", "parallel_process",
        ])
@@ -188,7 +188,7 @@ The system uses standard Python try/except patterns at two levels:
 
 1. **Module Level**: Each optional module checks for its dependencies on import and raises a helpful error if they're missing.
 
-2. **Top Level**: The main package tries to import optional modules and their components, extending __all__ only when available.
+2. **Top Level**: The main package tries to import optional modules and their components, extending **all** only when available.
 
 Benefits:
 
@@ -207,11 +207,13 @@ Soundscapy uses a flexible system for testing optional dependencies that allows 
 Optional dependency tests exist at several levels:
 
 1. **Optional Module Tests**: Tests within optional modules (e.g., `audio/`)
+
    - Only collected when dependencies are available using pytest_ignore_collect
    - Test actual functionality
    - No need for special markers
 
 2. **Integration Tests**: Tests that use optional features from other modules
+
    - Use `@pytest.mark.optional_deps('group')` marker
    - Expected to fail when dependencies are unavailable
    - Test actual integration between components
@@ -240,12 +242,14 @@ tox -e py310-all
 ```
 
 Each environment is configured to run the appropriate tests:
+
 - Core: Run only tests with no optional dependency requirements
 - Audio: Run core tests and audio-specific tests, skipping SPI tests
 - SPI: Run core tests and SPI-specific tests
 - All: Run all tests
 
 Test selection is implemented using pytest's keyword-based filtering to precisely target the right tests:
+
 ```python
 # Core tests only
 pytest -k "not optional_deps"
@@ -260,11 +264,13 @@ pytest -k "not optional_deps or optional_deps and spi"
 #### When to Use Each Testing Approach
 
 1. **Use `@pytest.mark.optional_deps` when**:
+
    - Testing actual functionality that requires dependencies
    - Writing integration tests
    - Testing with real package interactions
 
 2. **No special handling needed when**:
+
    - Writing tests within an optional module directory
    - Testing core functionality that doesn't use optional features
 
@@ -278,6 +284,7 @@ pytest -k "not optional_deps or optional_deps and spi"
 When adding new optional features:
 
 1. **Inside Optional Module**:
+
    - Put tests in the module's test directory (e.g., `test/new_group/`)
    - Tests will only be collected when dependencies are available
    - No markers needed for tests within the module's directory
@@ -291,6 +298,7 @@ When adding new optional features:
    ```
 
 2. **Integration Tests**:
+
    - Use the optional_deps marker
    - Put in main test directory
 

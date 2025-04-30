@@ -1,9 +1,9 @@
-import pandas as pd
-from soundscapy.spi._r_wrapper import get_r_session
-import rpy2.robjects as robjects
 import numpy as np
+import pandas as pd
+from rpy2 import robjects
 
 from soundscapy import get_logger
+from soundscapy.spi._r_wrapper import get_r_session
 
 logger = get_logger()
 
@@ -41,7 +41,7 @@ def extract_dp(selm_model):
 def sample_msn(selm_model=None, xi=None, omega=None, alpha=None, n=1000):
     if selm_model is not None:
         return sn.rmsn(n, dp=selm_model.slots["param"][0])
-    elif xi is not None and omega is not None and alpha is not None:
+    if xi is not None and omega is not None and alpha is not None:
         xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
         omega = robjects.r.matrix(
             robjects.FloatVector(omega.flatten()),
@@ -50,8 +50,7 @@ def sample_msn(selm_model=None, xi=None, omega=None, alpha=None, n=1000):
         )
         alpha = robjects.FloatVector(alpha)  # Transpose to make it a column vector
         return sn.rmsn(n, xi=xi, Omega=omega, alpha=alpha)
-    else:
-        raise ValueError("Either selm_model or xi, omega, and alpha must be provided.")
+    raise ValueError("Either selm_model or xi, omega, and alpha must be provided.")
 
 
 def sample_sn(selm_model, n=1000):
@@ -59,7 +58,8 @@ def sample_sn(selm_model, n=1000):
 
 
 def sample_mtsn(selm_model=None, xi=None, omega=None, alpha=None, a=-1, b=1, n=1000):
-    """Sample from a multivariate truncated skew-normal distribution.
+    """
+    Sample from a multivariate truncated skew-normal distribution.
 
     Uses rejection sampling to ensure that the samples are within the bounds [a, b]
     for both dimensions.
@@ -91,6 +91,7 @@ def sample_mtsn(selm_model=None, xi=None, omega=None, alpha=None, a=-1, b=1, n=1
     ------
     ValueError
         If neither `selm_model` nor all of `xi`, `omega`, and `alpha` are provided.
+
     """
     samples = np.array([[0, 0]])
     n_samples = 0
@@ -112,7 +113,8 @@ def sample_mtsn(selm_model=None, xi=None, omega=None, alpha=None, a=-1, b=1, n=1
 
 
 def _dp2cp(xi, omega, alpha, family="SN"):
-    """Convert Direct Parameters (DP) to Centred Parameters (CP).
+    """
+    Convert Direct Parameters (DP) to Centred Parameters (CP).
 
     Parameters
     ----------
@@ -129,6 +131,7 @@ def _dp2cp(xi, omega, alpha, family="SN"):
     -------
     tuple
         Tuple containing the centred parameters (mean, sigma, skew).
+
     """
     xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
     omega = robjects.r.matrix(
@@ -152,7 +155,8 @@ def _dp2cp(xi, omega, alpha, family="SN"):
 
 
 def _cp2dp(mean, sigma, skew, family="SN"):
-    """Convert Centred Parameters (CP) to Direct Parameters (DP).
+    """
+    Convert Centred Parameters (CP) to Direct Parameters (DP).
 
     Parameters
     ----------
@@ -169,6 +173,7 @@ def _cp2dp(mean, sigma, skew, family="SN"):
     -------
     tuple
         Tuple containing the direct parameters (xi, omega, alpha).
+
     """
     mean = robjects.FloatVector(mean.T)  # Transpose to make it a column vector
     sigma = robjects.r.matrix(

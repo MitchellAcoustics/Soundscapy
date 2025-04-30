@@ -26,12 +26,12 @@ Notes
 -----
 This module relies on external libraries such as numpy, pandas, maad, mosqito, and scipy.
 Ensure these dependencies are installed before using this module.
+
 """
 
 import concurrent.futures
 import multiprocessing as mp
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ DEFAULT_LABELS = {
 
 
 def _stat_calcs(
-    label: str, ts_array: np.ndarray, res: dict, statistics: List[Union[int, str]]
+    label: str, ts_array: np.ndarray, res: dict, statistics: list[int | str]
 ) -> dict:
     """
     Calculate various statistics for a time series array and add them to a results dictionary.
@@ -95,6 +95,7 @@ def _stat_calcs(
     >>> updated_res = _stat_calcs("metric", ts, res, [50, "avg", "max"])
     >>> print(updated_res)
     {'metric_50': 3.0, 'metric_avg': 3.0, 'metric_max': 5}
+
     """
     logger.debug(f"Calculating statistics for {label}")
     for stat in statistics:
@@ -114,7 +115,7 @@ def _stat_calcs(
             else:
                 res[f"{label}_{stat}"] = np.percentile(ts_array, 100 - stat)
         except Exception as e:
-            logger.error(f"Error calculating {stat} for {label}: {str(e)}")
+            logger.error(f"Error calculating {stat} for {label}: {e!s}")
             res[f"{label}_{stat}"] = np.nan
     return res
 
@@ -122,7 +123,7 @@ def _stat_calcs(
 def mosqito_metric_1ch(
     s,
     metric: str,
-    statistics: Tuple[Union[int, str]] = (
+    statistics: tuple[int | str] = (
         5,
         10,
         50,
@@ -134,11 +135,11 @@ def mosqito_metric_1ch(
         "kurt",
         "skew",
     ),
-    label: Optional[str] = None,
+    label: str | None = None,
     as_df: bool = False,
     return_time_series: bool = False,
-    func_args: Dict = {},
-) -> Union[Dict, pd.DataFrame]:
+    func_args: dict = {},
+) -> dict | pd.DataFrame:
     """
     Calculate a MoSQITo psychoacoustic metric for a single channel signal.
 
@@ -177,6 +178,7 @@ def mosqito_metric_1ch(
     >>> from soundscapy.audio import Binaural
     >>> signal = Binaural.from_wav("audio.wav", resample=480000)
     >>> results = mosqito_metric_1ch(signal[0], "loudness_zwtv", as_df=True)
+
     """
     logger.debug(f"Calculating MoSQITo metric: {metric}")
 
@@ -236,7 +238,7 @@ def mosqito_metric_1ch(
             logger.error(f"Metric {metric} not recognized")
             raise ValueError(f"Metric {metric} not recognized.")
     except Exception as e:
-        logger.error(f"Error calculating {metric}: {str(e)}")
+        logger.error(f"Error calculating {metric}: {e!s}")
         raise
 
     # Return the results in the requested format
@@ -281,6 +283,7 @@ def maad_metric_1ch(s, metric: str, as_df: bool = False, func_args={}):
     --------
     maad.features.all_spectral_alpha_indices
     maad.features.all_temporal_alpha_indices
+
     """
     logger.debug(f"Calculating MAAD metric: {metric}")
 
@@ -302,7 +305,7 @@ def maad_metric_1ch(s, metric: str, as_df: bool = False, func_args={}):
             logger.error(f"Metric {metric} not recognized")
             raise ValueError(f"Metric {metric} not recognized.")
     except Exception as e:
-        logger.error(f"Error calculating {metric}: {str(e)}")
+        logger.error(f"Error calculating {metric}: {e!s}")
         raise
 
     if not as_df:
@@ -318,7 +321,7 @@ def maad_metric_1ch(s, metric: str, as_df: bool = False, func_args={}):
 def pyacoustics_metric_1ch(
     s,
     metric: str,
-    statistics: List[Union[int, str]] = (
+    statistics: list[int | str] = (
         5,
         10,
         50,
@@ -353,7 +356,7 @@ def pyacoustics_metric_1ch(
 def acoustics_metric_1ch(
     s,
     metric: str,
-    statistics: List[Union[int, str]] = (
+    statistics: list[int | str] = (
         5,
         10,
         50,
@@ -406,6 +409,7 @@ def acoustics_metric_1ch(
     See Also
     --------
     acoustic_toolbox
+
     """
     logger.debug(f"Calculating acoustics metric: {metric}")
 
@@ -453,7 +457,7 @@ def acoustics_metric_1ch(
             logger.error(f"Metric {metric} not recognized")
             raise ValueError(f"Metric {metric} not recognized.")
     except Exception as e:
-        logger.error(f"Error calculating {metric}: {str(e)}")
+        logger.error(f"Error calculating {metric}: {e!s}")
         raise
 
     if not as_df:
@@ -468,7 +472,7 @@ def acoustics_metric_1ch(
 def pyacoustics_metric_2ch(
     b,
     metric: str,
-    statistics: Union[Tuple, List] = (
+    statistics: tuple | list = (
         5,
         10,
         50,
@@ -481,7 +485,7 @@ def pyacoustics_metric_2ch(
         "skew",
     ),
     label: str = None,
-    channel_names: Tuple[str, str] = ("Left", "Right"),
+    channel_names: tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
     return_time_series: bool = False,
     func_args={},
@@ -505,7 +509,7 @@ def pyacoustics_metric_2ch(
 def acoustics_metric_2ch(
     b,
     metric: str,
-    statistics: Union[Tuple, List] = (
+    statistics: tuple | list = (
         5,
         10,
         50,
@@ -518,7 +522,7 @@ def acoustics_metric_2ch(
         "skew",
     ),
     label: str | None = None,
-    channel_names: Tuple[str, str] = ("Left", "Right"),
+    channel_names: tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
     return_time_series: bool = False,
     func_args={},
@@ -561,6 +565,7 @@ def acoustics_metric_2ch(
     See Also
     --------
     acoustics_metric_1ch
+
     """
     logger.debug(f"Calculating acoustics metric for 2 channels: {metric}")
 
@@ -595,7 +600,7 @@ def acoustics_metric_2ch(
 
         res = {channel_names[0]: res_l, channel_names[1]: res_r}
     except Exception as e:
-        logger.error(f"Error calculating {metric} for 2 channels: {str(e)}")
+        logger.error(f"Error calculating {metric} for 2 channels: {e!s}")
         raise
 
     if not as_df:
@@ -614,7 +619,7 @@ def acoustics_metric_2ch(
 def _parallel_mosqito_metric_2ch(
     b,
     metric: str,
-    statistics: Union[Tuple, List] = (
+    statistics: tuple | list = (
         5,
         10,
         50,
@@ -627,7 +632,7 @@ def _parallel_mosqito_metric_2ch(
         "skew",
     ),
     label: str | None = None,
-    channel_names: Tuple[str, str] = ("Left", "Right"),
+    channel_names: tuple[str, str] = ("Left", "Right"),
     return_time_series: bool = False,
     func_args={},
 ):
@@ -660,6 +665,7 @@ def _parallel_mosqito_metric_2ch(
     See Also
     --------
     mosqito_metric_1ch
+
     """
     logger.debug(f"Calculating MoSQITo metric in parallel: {metric}")
 
@@ -684,7 +690,7 @@ def _parallel_mosqito_metric_2ch(
         pool.close()
         return {channel: result_objects[i] for i, channel in enumerate(channel_names)}
     except Exception as e:
-        logger.error(f"Error in parallel MoSQITo calculation: {str(e)}")
+        logger.error(f"Error in parallel MoSQITo calculation: {e!s}")
         pool.close()
         raise
     finally:
@@ -694,7 +700,7 @@ def _parallel_mosqito_metric_2ch(
 def mosqito_metric_2ch(
     b,
     metric: str,
-    statistics: Union[Tuple, List] = (
+    statistics: tuple | list = (
         5,
         10,
         50,
@@ -707,7 +713,7 @@ def mosqito_metric_2ch(
         "skew",
     ),
     label: str = None,
-    channel_names: Tuple[str, str] = ("Left", "Right"),
+    channel_names: tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
     return_time_series: bool = False,
     parallel: bool = True,
@@ -751,6 +757,7 @@ def mosqito_metric_2ch(
     ------
     ValueError
         If the input signal is not 2-channel.
+
     """
     logger.debug(f"Calculating MoSQITo metric for 2 channels: {metric}")
 
@@ -812,9 +819,7 @@ def mosqito_metric_2ch(
 
         res = {channel_names[0]: res_l, channel_names[1]: res_r}
     except Exception as e:
-        logger.error(
-            f"Error calculating MoSQITo metric {metric} for 2 channels: {str(e)}"
-        )
+        logger.error(f"Error calculating MoSQITo metric {metric} for 2 channels: {e!s}")
         raise
 
     if not as_df:
@@ -833,7 +838,7 @@ def mosqito_metric_2ch(
 def maad_metric_2ch(
     b,
     metric: str,
-    channel_names: Tuple[str, str] = ("Left", "Right"),
+    channel_names: tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
     func_args={},
 ):
@@ -870,6 +875,7 @@ def maad_metric_2ch(
     --------
     scikit-maad library
     maad_metric_1ch
+
     """
     logger.debug(f"Calculating MAAD metric for 2 channels: {metric}")
 
@@ -884,7 +890,7 @@ def maad_metric_2ch(
         res_r = maad_metric_1ch(b[1], metric, as_df=False)
         res = {channel_names[0]: res_l, channel_names[1]: res_r}
     except Exception as e:
-        logger.error(f"Error calculating MAAD metric {metric} for 2 channels: {str(e)}")
+        logger.error(f"Error calculating MAAD metric {metric} for 2 channels: {e!s}")
         raise
 
     if not as_df:
@@ -925,6 +931,7 @@ def prep_multiindex_df(dictionary: dict, label: str = "Leq", incl_metric: bool =
     ------
     ValueError
         If the input dictionary is not in the expected format.
+
     """
     logger.info("Preparing MultiIndex DataFrame")
     try:
@@ -940,7 +947,7 @@ def prep_multiindex_df(dictionary: dict, label: str = "Leq", incl_metric: bool =
         logger.debug("MultiIndex DataFrame prepared successfully")
         return df
     except Exception as e:
-        logger.error(f"Error preparing MultiIndex DataFrame: {str(e)}")
+        logger.error(f"Error preparing MultiIndex DataFrame: {e!s}")
         raise ValueError("Invalid input dictionary format") from e
 
 
@@ -964,6 +971,7 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
     ------
     ValueError
         If the input DataFrames are not in the expected format.
+
     """
     logger.info("Adding results to MultiIndex DataFrame")
     try:
@@ -978,7 +986,7 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
         logger.debug("Results added successfully")
         return results_df
     except Exception as e:
-        logger.error(f"Error adding results to DataFrame: {str(e)}")
+        logger.error(f"Error adding results to DataFrame: {e!s}")
         raise ValueError("Invalid input DataFrame format") from e
 
 
@@ -1024,6 +1032,7 @@ def process_all_metrics(
     >>> signal = Binaural.from_wav("audio.wav", resample=480000)
     >>> settings = AnalysisSettings.from_yaml("settings.yaml")
     >>> results = process_all_metrics(signal,settings)
+
     """
     logger.info(f"Processing all metrics for {b.recording}")
     logger.debug(f"Parallel processing: {parallel}")
@@ -1074,7 +1083,7 @@ def process_all_metrics(
         logger.info("All metrics processed successfully")
         return results_df
     except Exception as e:
-        logger.error(f"Error processing metrics: {str(e)}")
+        logger.error(f"Error processing metrics: {e!s}")
         raise ValueError("Error processing metrics") from e
 
 

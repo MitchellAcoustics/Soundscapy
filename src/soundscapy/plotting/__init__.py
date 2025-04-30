@@ -29,13 +29,13 @@ from .plotting_utils import Backend, PlotType
 from .stylers import StyleOptions
 
 __all__ = [
+    "Backend",
     "CircumplexPlot",
     "CircumplexPlotParams",
-    "scatter_plot",
-    "density_plot",
-    "create_circumplex_subplots",
-    "Backend",
     "PlotType",
     "StyleOptions",
+    "create_circumplex_subplots",
+    "density_plot",
     "likert",
+    "scatter_plot",
 ]

@@ -15,11 +15,11 @@ the ISD. The key to this is using a simple dataframe/sheet with the following co
 The key functions of this module are designed to clean/validate datasets, calculate ISO coordinate values or SSM metrics,
 filter on index columns. Functions and operations which are specific to a particular dataset are located in their own
 modules under `soundscape.databases`.
+
 """
 
 import warnings
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -63,9 +63,9 @@ class SSMMetrics:
 
 def calculate_iso_coords(
     results_df: pd.DataFrame,
-    val_range: Tuple[int, int] = (5, 1),
-    angles: Tuple[int, ...] = EQUAL_ANGLES,
-) -> Tuple[pd.Series, pd.Series]:
+    val_range: tuple[int, int] = (5, 1),
+    angles: tuple[int, ...] = EQUAL_ANGLES,
+) -> tuple[pd.Series, pd.Series]:
     """
     Calculate the projected ISOPleasant and ISOEventful coordinates.
 
@@ -99,6 +99,7 @@ def calculate_iso_coords(
     0   -0.28
     1    0.18
     dtype: float64
+
     """
     scale = max(val_range) - min(val_range)
 
@@ -111,7 +112,7 @@ def calculate_iso_coords(
     return iso_pleasant, iso_eventful
 
 
-def _adj_iso_pl(values: pd.Series, angles: Tuple[int, ...], scale: float) -> float:
+def _adj_iso_pl(values: pd.Series, angles: tuple[int, ...], scale: float) -> float:
     """
     Calculate the adjusted ISOPleasant value.
 
@@ -130,16 +131,20 @@ def _adj_iso_pl(values: pd.Series, angles: Tuple[int, ...], scale: float) -> flo
     -------
     float
         Adjusted ISOPleasant value
+
     """
     iso_pl = np.sum(
-        [np.cos(np.deg2rad(angle)) * value for angle, value in zip(angles, values)]
+        [
+            np.cos(np.deg2rad(angle)) * value
+            for angle, value in zip(angles, values, strict=False)
+        ]
     )
     return iso_pl / (
         scale / 2 * np.sum(np.abs([np.cos(np.deg2rad(angle)) for angle in angles]))
     )
 
 
-def _adj_iso_ev(values: pd.Series, angles: Tuple[int, ...], scale: float) -> float:
+def _adj_iso_ev(values: pd.Series, angles: tuple[int, ...], scale: float) -> float:
     """
     Calculate the adjusted ISOEventful value.
 
@@ -158,9 +163,13 @@ def _adj_iso_ev(values: pd.Series, angles: Tuple[int, ...], scale: float) -> flo
     -------
     float
         Adjusted ISOEventful value
+
     """
     iso_ev = np.sum(
-        [np.sin(np.deg2rad(angle)) * value for angle, value in zip(angles, values)]
+        [
+            np.sin(np.deg2rad(angle)) * value
+            for angle, value in zip(angles, values, strict=False)
+        ]
     )
     return iso_ev / (
         scale / 2 * np.sum(np.abs([np.sin(np.deg2rad(angle)) for angle in angles]))
@@ -169,10 +178,10 @@ def _adj_iso_ev(values: pd.Series, angles: Tuple[int, ...], scale: float) -> flo
 
 def add_iso_coords(
     data: pd.DataFrame,
-    val_range: Tuple[int, int] = (1, 5),
-    names: Tuple[str, str] = ("ISOPleasant", "ISOEventful"),
+    val_range: tuple[int, int] = (1, 5),
+    names: tuple[str, str] = ("ISOPleasant", "ISOEventful"),
     overwrite: bool = False,
-    angles: Tuple[int, ...] = EQUAL_ANGLES,
+    angles: tuple[int, ...] = EQUAL_ANGLES,
 ) -> pd.DataFrame:
     """
     Calculate and add ISO coordinates as new columns in the DataFrame.
@@ -212,6 +221,7 @@ def add_iso_coords(
        ISOPleasant  ISOEventful
     0        -0.03        -0.28
     1         0.47         0.18
+
     """
     for name in names:
         if name in data.columns:
@@ -232,8 +242,8 @@ def add_iso_coords(
 
 
 def likert_data_quality(
-    df: pd.DataFrame, allow_na: bool = False, val_range: Tuple[int, int] = (1, 5)
-) -> Optional[List[int]]:
+    df: pd.DataFrame, allow_na: bool = False, val_range: tuple[int, int] = (1, 5)
+) -> list[int] | None:
     """
     Perform basic quality checks on PAQ (Likert scale) data.
 
@@ -264,6 +274,7 @@ def likert_data_quality(
     [0, 1, 2]
     >>> likert_data_quality(df, allow_na=True)
     [1, 2]
+
     """
     paqs = return_paqs(df, incl_ids=False)
     invalid_indices = []
@@ -272,9 +283,11 @@ def likert_data_quality(
         if not allow_na and row.isna().any():
             invalid_indices.append(i)
         elif row.notna().all():
-            if row.min() < min(val_range) or row.max() > max(val_range):
-                invalid_indices.append(i)
-            elif row.nunique() == 1 and row.iloc[0] != np.mean(val_range):
+            if (
+                row.min() < min(val_range)
+                or row.max() > max(val_range)
+                or (row.nunique() == 1 and row.iloc[0] != np.mean(val_range))
+            ):
                 invalid_indices.append(i)
 
     if invalid_indices:
@@ -287,7 +300,7 @@ def likert_data_quality(
 
 def simulation(
     n: int = 3000,
-    val_range: Tuple[int, int] = (1, 5),
+    val_range: tuple[int, int] = (1, 5),
     incl_iso_coords: bool = False,
     **coord_kwargs,
 ) -> pd.DataFrame:
@@ -317,6 +330,7 @@ def simulation(
     (5, 10)
     >>> list(df.columns)
     ['PAQ1', 'PAQ2', 'PAQ3', 'PAQ4', 'PAQ5', 'PAQ6', 'PAQ7', 'PAQ8', 'ISOPleasant', 'ISOEventful']
+
     """
     np.random.seed(42)
     df = pd.DataFrame(
@@ -333,10 +347,10 @@ def simulation(
 
 def ssm_metrics(
     df: pd.DataFrame,
-    paq_cols: List[str] = PAQ_IDS,
+    paq_cols: list[str] = PAQ_IDS,
     method: str = "cosine",
-    val_range: Tuple[int, int] = (5, 1),
-    angles: Tuple[int, ...] = EQUAL_ANGLES,
+    val_range: tuple[int, int] = (5, 1),
+    angles: tuple[int, ...] = EQUAL_ANGLES,
 ) -> pd.DataFrame:
     """
     Calculate the Structural Summary Method (SSM) metrics for each response.
@@ -376,6 +390,7 @@ def ssm_metrics(
        amplitude   angle  elevation  displacement  r_squared
     0       0.68  263.82      10.57         -7.57       0.15
     1       1.21   20.63       0.01          3.11       0.39
+
     """
     # TODO: Replace with a call to circumplex package
     warnings.warn(
@@ -403,20 +418,19 @@ def ssm_metrics(
                 "r_squared": 1,  # R-squared is always 1 for polar method
             }
         )
-    elif method == "cosine":
+    if method == "cosine":
         return df[paq_cols].apply(
             lambda y: ssm_cosine_fit(y, angles).table(),
             axis=1,
             result_type="expand",
         )
-    else:
-        raise ValueError("Method must be either 'polar' or 'cosine'")
+    raise ValueError("Method must be either 'polar' or 'cosine'")
 
 
 def ssm_cosine_fit(
     y: pd.Series,
-    angles: Tuple[int, ...] = EQUAL_ANGLES,
-    bounds: Tuple[List[float], List[float]] = (
+    angles: tuple[int, ...] = EQUAL_ANGLES,
+    bounds: tuple[list[float], list[float]] = (
         [0, 0, 0, -np.inf],
         [np.inf, 360, np.inf, np.inf],
     ),
@@ -446,6 +460,7 @@ def ssm_cosine_fit(
     >>> metrics = ssm_cosine_fit(y)
     >>> [round(v, 2) if isinstance(v, float) else v for v in metrics.table()]
     [0.68, 263.82, 10.57, -7.57, 0.15]
+
     """
     warnings.warn(
         "This function is not yet fully implemented. See https://github.com/MitchellAcoustics/circumplex for a more complete implementation.",
@@ -475,7 +490,7 @@ def ssm_cosine_fit(
 
 def _convert_to_polar_coords(
     x: float | np.ndarray, y: float | np.ndarray
-) -> Tuple[float | np.ndarray, float | np.ndarray]:
+) -> tuple[float | np.ndarray, float | np.ndarray]:
     """
     Convert Cartesian coordinates to polar coordinates.
 
@@ -497,6 +512,7 @@ def _convert_to_polar_coords(
     >>> r, theta = _convert_to_polar_coords(x, y)
     >>> round(r, 2), round(theta, 2)
     (5.0, 53.13)
+
     """
     r = np.sqrt(x**2 + y**2)
     theta = np.rad2deg(np.arctan2(y, x))
@@ -525,6 +541,7 @@ def _r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     >>> y_pred = np.array([2.5, 4.2, 5.1, 2.2, 1.3])
     >>> round(_r2_score(y_true, y_pred), 2)
     0.96
+
     """
     ss_total = np.sum((y_true - np.mean(y_true)) ** 2)
     ss_residual = np.sum((y_true - y_pred) ** 2)

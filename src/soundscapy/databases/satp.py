@@ -18,6 +18,7 @@ True
 True
 >>> 'Country' in participants.columns  # doctest: +SKIP
 True
+
 """
 
 import pandas as pd
@@ -53,6 +54,7 @@ def _url_fetch(version: str) -> str:
     Traceback (most recent call last):
         ...
     ValueError: Invalid version. Should be either 'latest', 'v1.2.1', or 'v1.2'.
+
     """
     if version.lower() not in ["latest", "v1.2.1", "v1.2"]:
         raise ValueError(
@@ -79,6 +81,7 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
     -------
     pd.DataFrame
         DataFrame containing the SATP dataset.
+
     """
     url = _url_fetch(version)
     df = pd.read_excel(url, engine="openpyxl", sheet_name="Main Merge")
@@ -99,6 +102,7 @@ def load_participants(version: str = "latest") -> pd.DataFrame:
     -------
     pd.DataFrame
         DataFrame containing the SATP participants dataset.
+
     """
     url = _url_fetch(version)
     df = pd.read_excel(url, engine="openpyxl", sheet_name="Participants")

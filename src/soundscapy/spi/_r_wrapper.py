@@ -19,7 +19,7 @@ from rpy2.robjects import numpy2ri, pandas2ri
 
 # These are used in the docstring examples but not in the code
 # They will be used by code that imports and uses this module
-from soundscapy.logging import get_logger
+from soundscapy.sspylogging import get_logger
 
 logger = get_logger()
 

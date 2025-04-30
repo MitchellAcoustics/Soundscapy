@@ -30,8 +30,8 @@ class PlotBackend(ABC):
         Returns
         -------
             The created plot object.
+
         """
-        pass
 
     @abstractmethod
     def create_density(self, data, params):
@@ -46,8 +46,8 @@ class PlotBackend(ABC):
         Returns
         -------
             The created plot object.
+
         """
-        pass
 
     @abstractmethod
     def apply_styling(self, plot_obj, params):
@@ -62,8 +62,8 @@ class PlotBackend(ABC):
         Returns
         -------
             The styled plot object.
+
         """
-        pass
 
 
 class SeabornBackend(PlotBackend):
@@ -86,6 +86,7 @@ class SeabornBackend(PlotBackend):
         Returns
         -------
             tuple: A tuple containing the figure and axes objects.
+
         """
         if ax is None:
             fig, ax = plt.subplots(figsize=self.style_options.figsize)
@@ -123,6 +124,7 @@ class SeabornBackend(PlotBackend):
         Returns
         -------
             tuple: A tuple containing the figure and axes objects.
+
         """
         if len(data) < 30:
             warnings.warn(
@@ -180,6 +182,7 @@ class SeabornBackend(PlotBackend):
         >>> plot = CircumplexPlot(data=sample_data, backend=Backend.SEABORN)
         >>> g = plot.jointplot()
         >>> g.show() # doctest: +SKIP
+
         """
         g = sns.JointGrid(xlim=params.xlim, ylim=params.ylim)
         joint_params = params
@@ -249,6 +252,7 @@ class SeabornBackend(PlotBackend):
         Returns
         -------
             tuple: The styled figure and axes objects.
+
         """
         fig, ax = plot_obj
         styler = SeabornStyler(params, self.style_options)
@@ -261,6 +265,7 @@ class SeabornBackend(PlotBackend):
         Parameters
         ----------
             fig: The figure to display.
+
         """
         fig, _ = plot_obj
         plt.show()
@@ -275,7 +280,6 @@ class PlotlyBackend(PlotBackend):
         warnings.warn(
             "PlotlyBackend is very experimental and not fully implemented.", UserWarning
         )
-        pass
 
     def create_scatter(self, data, params):
         """
@@ -289,6 +293,7 @@ class PlotlyBackend(PlotBackend):
         Returns
         -------
             go.Figure: A Plotly figure object.
+
         """
         fig = px.scatter(
             data,
@@ -320,6 +325,7 @@ class PlotlyBackend(PlotBackend):
         Returns
         -------
             go.Figure: A Plotly figure object.
+
         """
         if len(data) < 30:
             warnings.warn(
@@ -360,6 +366,7 @@ class PlotlyBackend(PlotBackend):
         Returns
         -------
             go.Figure: The styled Plotly figure object.
+
         """
         fig = plot_obj
         if params.diagonal_lines:
@@ -390,5 +397,6 @@ class PlotlyBackend(PlotBackend):
         Parameters
         ----------
             fig (go.Figure): The Plotly figure to display.
+
         """
         fig.show()

@@ -6,7 +6,6 @@ the soundscapy package for handling and analyzing soundscape survey data.
 """
 
 from enum import Enum
-from typing import Dict, List, Tuple, Union
 
 import pandas as pd
 from loguru import logger
@@ -52,7 +51,7 @@ LANGUAGE_ANGLES = {
 
 
 def return_paqs(
-    df: pd.DataFrame, incl_ids: bool = True, other_cols: List[str] = None
+    df: pd.DataFrame, incl_ids: bool = True, other_cols: list[str] = None
 ) -> pd.DataFrame:
     """
     Return only the PAQ columns from a DataFrame.
@@ -94,6 +93,7 @@ def return_paqs(
        PAQ1  PAQ2  PAQ3  PAQ4  PAQ5  PAQ6  PAQ7  PAQ8 OtherCol
     0     4     2     1     3     5     2     4     1        A
     1     3     5     2     4     1     3     5     2        B
+
     """
     cols = PAQ_IDS.copy()
 
@@ -112,9 +112,7 @@ def return_paqs(
     return df[cols]
 
 
-def rename_paqs(
-    df: pd.DataFrame, paq_aliases: Union[Tuple, Dict] = None
-) -> pd.DataFrame:
+def rename_paqs(df: pd.DataFrame, paq_aliases: tuple | dict = None) -> pd.DataFrame:
     """
     Rename the PAQ columns in a DataFrame to standard PAQ IDs.
 
@@ -157,6 +155,7 @@ def rename_paqs(
        PAQ1  PAQ2
     0     4     2
     1     3     5
+
     """
     if paq_aliases is None:
         if any(paq_id in df.columns for paq_id in PAQ_IDS):
@@ -166,7 +165,7 @@ def rename_paqs(
             paq_aliases = PAQ_LABELS
 
     if isinstance(paq_aliases, (list, tuple)):
-        rename_dict = dict(zip(paq_aliases, PAQ_IDS))
+        rename_dict = dict(zip(paq_aliases, PAQ_IDS, strict=False))
     elif isinstance(paq_aliases, dict):
         rename_dict = paq_aliases
     else:

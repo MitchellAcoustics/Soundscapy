@@ -27,11 +27,11 @@ Examples
 >>> from soundscapy.audio import Binaural
 >>> signal = Binaural.from_wav("audio.wav")
 >>> results = signal.process_all_metrics(analysis_settings)
+
 """
 
 import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -70,6 +70,7 @@ class Binaural(Signal):
     Notes
     -----
     This class only supports 2-channel (stereo) audio signals.
+
     """
 
     def __new__(cls, data, fs, recording="Rec"):
@@ -94,6 +95,7 @@ class Binaural(Signal):
         ------
         ValueError
             If the input signal is not 2-channel.
+
         """
         obj = super().__new__(cls, data, fs).view(cls)
         obj.recording = recording
@@ -115,6 +117,7 @@ class Binaural(Signal):
         ----------
         obj : Binaural or None
             The object from which the new object was created.
+
         """
         if obj is None:
             return
@@ -123,7 +126,7 @@ class Binaural(Signal):
 
     def calibrate_to(
         self,
-        decibel: Union[float, List[float], Tuple[float, float]],
+        decibel: float | list[float] | tuple[float, float],
         inplace: bool = False,
     ) -> "Binaural":
         """
@@ -157,6 +160,7 @@ class Binaural(Signal):
         >>> # xdoctest: +SKIP
         >>> signal = Binaural.from_wav("audio.wav")
         >>> calibrated_signal = signal.calibrate_to([60, 62])  # Calibrate left channel to 60 dB and right to 62 dB
+
         """
         logger.info(f"Calibrating Binaural signal to {decibel} dB")
         if isinstance(decibel, (np.ndarray, pd.Series)):  # Force into tuple
@@ -169,7 +173,7 @@ class Binaural(Signal):
                 decibel = np.array(decibel)
                 decibel = decibel[..., None]
                 return super().calibrate_to(decibel, inplace)
-            elif (
+            if (
                 len(decibel) == 1
             ):  # if one value given in tuple, assume same for both channels
                 logger.debug(f"Calibrating both channels to {decibel[0]}dB")
@@ -182,17 +186,16 @@ class Binaural(Signal):
         if isinstance(decibel, (int, float)):  # Calibrate both channels to same value
             logger.debug(f"Calibrating both channels to {decibel}dB")
             return super().calibrate_to(decibel, inplace)
-        else:
-            logger.error(f"Invalid calibration value: {decibel}")
-            raise ValueError("decibel must be a single value or a 2 value tuple")
+        logger.error(f"Invalid calibration value: {decibel}")
+        raise ValueError("decibel must be a single value or a 2 value tuple")
 
     @classmethod
     def from_wav(
         cls,
-        filename: Union[Path, str],
-        calibrate_to: Optional[Union[float, List, Tuple]] = None,
+        filename: Path | str,
+        calibrate_to: float | list | tuple | None = None,
         normalize: bool = False,
-        resample: Optional[int] = None,
+        resample: int | None = None,
     ) -> "Binaural":
         """
         Load a wav file and return a Binaural object.
@@ -221,6 +224,7 @@ class Binaural(Signal):
         See Also
         --------
         acoustic_toolbox.Signal.from_wav : Base method for loading wav files.
+
         """
         logger.info(f"Loading WAV file: {filename}")
         s = super().from_wav(filename, normalize)
@@ -254,6 +258,7 @@ class Binaural(Signal):
         See Also
         --------
         acoustic_toolbox.Signal.resample : Base method for resampling signals.
+
         """
         if fs == self.fs:
             logger.info(f"Signal already at {fs} Hz. No resampling needed.")
@@ -280,11 +285,12 @@ class Binaural(Signal):
         -------
         Signal
             Single channel signal.
+
         """
         if self.channels == 1:
             logger.debug("Returning single channel signal")
             return self
-        elif (
+        if (
             channel is None
             or channel == "both"
             or channel == ("Left", "Right")
@@ -292,23 +298,22 @@ class Binaural(Signal):
         ):
             logger.debug("Returning both channels")
             return self
-        elif channel in ["Left", 0, "L"]:
+        if channel in ["Left", 0, "L"]:
             logger.debug("Returning left channel")
             return self[0]
-        elif channel in ["Right", 1, "R"]:
+        if channel in ["Right", 1, "R"]:
             logger.debug("Returning right channel")
             return self[1]
-        else:
-            logger.warning(
-                f"Unrecognized channel specification: {channel}. Returning full Binaural object."
-            )
-            warnings.warn("Channel not recognised. Returning Binaural object as is.")
-            return self
+        logger.warning(
+            f"Unrecognized channel specification: {channel}. Returning full Binaural object."
+        )
+        warnings.warn("Channel not recognised. Returning Binaural object as is.")
+        return self
 
     def pyacoustics_metric(
         self,
         metric: str,
-        statistics: Union[Tuple, List] = (
+        statistics: tuple | list = (
             5,
             10,
             50,
@@ -320,13 +325,13 @@ class Binaural(Signal):
             "kurt",
             "skew",
         ),
-        label: Optional[str] = None,
-        channel: Union[str, int, List, Tuple] = ("Left", "Right"),
+        label: str | None = None,
+        channel: str | int | list | tuple = ("Left", "Right"),
         as_df: bool = True,
         return_time_series: bool = False,
-        metric_settings: Optional[MetricSettings] = None,
-        func_args: Dict = {},
-    ) -> Union[Dict, pd.DataFrame]:
+        metric_settings: MetricSettings | None = None,
+        func_args: dict = {},
+    ) -> dict | pd.DataFrame:
         warnings.warn(
             "pyacoustics has been deprecated. Use acoustics_metric instead.",
             DeprecationWarning,
@@ -345,7 +350,7 @@ class Binaural(Signal):
     def acoustics_metric(
         self,
         metric: str,
-        statistics: Union[Tuple, List] = (
+        statistics: tuple | list = (
             5,
             10,
             50,
@@ -357,13 +362,13 @@ class Binaural(Signal):
             "kurt",
             "skew",
         ),
-        label: Optional[str] = None,
-        channel: Union[str, int, List, Tuple] = ("Left", "Right"),
+        label: str | None = None,
+        channel: str | int | list | tuple = ("Left", "Right"),
         as_df: bool = True,
         return_time_series: bool = False,
-        metric_settings: Optional[MetricSettings] = None,
-        func_args: Dict = {},
-    ) -> Union[Dict, pd.DataFrame]:
+        metric_settings: MetricSettings | None = None,
+        func_args: dict = {},
+    ) -> dict | pd.DataFrame:
         """
         Run a metric from the acoustic_toolbox library.
 
@@ -401,6 +406,7 @@ class Binaural(Signal):
         acoustic_toolbox.standards_iso_tr_25417_2007.equivalent_sound_pressure_level : Base method for Leq calculation.
         acoustic_toolbox.standards.iec_61672_1_2013.sound_exposure_level : Base method for SEL calculation.
         acoustic_toolbox.standards.iec_61672_1_2013.time_weighted_sound_level : Base method for Leq level time series calculation.
+
         """
         if metric_settings:
             logger.debug("Using provided analysis settings")
@@ -421,23 +427,22 @@ class Binaural(Signal):
             return acoustics_metric_1ch(
                 s, metric, statistics, label, as_df, return_time_series, func_args
             )
-        else:
-            logger.debug("Processing both channels")
-            return acoustics_metric_2ch(
-                s,
-                metric,
-                statistics,
-                label,
-                channel,
-                as_df,
-                return_time_series,
-                func_args,
-            )
+        logger.debug("Processing both channels")
+        return acoustics_metric_2ch(
+            s,
+            metric,
+            statistics,
+            label,
+            channel,
+            as_df,
+            return_time_series,
+            func_args,
+        )
 
     def mosqito_metric(
         self,
         metric: str,
-        statistics: Union[Tuple, List] = (
+        statistics: tuple | list = (
             5,
             10,
             50,
@@ -449,14 +454,14 @@ class Binaural(Signal):
             "kurt",
             "skew",
         ),
-        label: Optional[str] = None,
-        channel: Union[int, Tuple, List, str] = ("Left", "Right"),
+        label: str | None = None,
+        channel: int | tuple | list | str = ("Left", "Right"),
         as_df: bool = True,
         return_time_series: bool = False,
         parallel: bool = True,
-        metric_settings: Optional[MetricSettings] = None,
-        func_args: Dict = {},
-    ) -> Union[Dict, pd.DataFrame]:
+        metric_settings: MetricSettings | None = None,
+        func_args: dict = {},
+    ) -> dict | pd.DataFrame:
         """
         Run a metric from the mosqito library.
 
@@ -495,6 +500,7 @@ class Binaural(Signal):
         --------
         binaural.mosqito_metric_2ch : Method for running metrics on 2 channels.
         binaural.mosqito_metric_1ch : Method for running metrics on 1 channel.
+
         """
         logger.info(f"Running mosqito metric: {metric}")
         if metric_settings:
@@ -517,28 +523,27 @@ class Binaural(Signal):
             return mosqito_metric_1ch(
                 s, metric, statistics, label, as_df, return_time_series, func_args
             )
-        else:
-            logger.debug("Processing both channels")
-            return mosqito_metric_2ch(
-                s,
-                metric,
-                statistics,
-                label,
-                channel,
-                as_df,
-                return_time_series,
-                parallel,
-                func_args,
-            )
+        logger.debug("Processing both channels")
+        return mosqito_metric_2ch(
+            s,
+            metric,
+            statistics,
+            label,
+            channel,
+            as_df,
+            return_time_series,
+            parallel,
+            func_args,
+        )
 
     def maad_metric(
         self,
         metric: str,
-        channel: Union[int, Tuple, List, str] = ("Left", "Right"),
+        channel: int | tuple | list | str = ("Left", "Right"),
         as_df: bool = True,
-        metric_settings: Optional[MetricSettings] = None,
-        func_args: Dict = {},
-    ) -> Union[Dict, pd.DataFrame]:
+        metric_settings: MetricSettings | None = None,
+        func_args: dict = {},
+    ) -> dict | pd.DataFrame:
         """
         Run a metric from the scikit-maad library.
 
@@ -572,6 +577,7 @@ class Binaural(Signal):
         --------
         metrics.maad_metric_1ch
         metrics.maad_metric_2ch
+
         """
         logger.info(f"Running maad metric: {metric}")
         if metric_settings:
@@ -593,9 +599,8 @@ class Binaural(Signal):
         if s.channels == 1:
             logger.debug("Processing single channel")
             return maad_metric_1ch(s, metric, as_df)
-        else:
-            logger.debug("Processing both channels")
-            return maad_metric_2ch(s, metric, channel, as_df, func_args)
+        logger.debug("Processing both channels")
+        return maad_metric_2ch(s, metric, channel, as_df, func_args)
 
     def process_all_metrics(
         self,
@@ -633,6 +638,7 @@ class Binaural(Signal):
         >>> signal = Binaural.from_wav("audio.wav")
         >>> settings = AnalysisSettings.from_yaml("settings.yaml")
         >>> results = signal.process_all_metrics(settings)
+
         """
         logger.info(f"Processing all metrics for {self.recording}")
         logger.debug(f"Parallel processing: {parallel}")

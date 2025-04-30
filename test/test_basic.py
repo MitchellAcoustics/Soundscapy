@@ -1,6 +1,8 @@
-import soundscapy
-import pytest
 import os
+
+import pytest
+
+import soundscapy
 
 
 def test_soundscapy_import():

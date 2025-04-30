@@ -3,9 +3,8 @@ name: Test Tagged Release
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+"         # v1.2.3-dev1
-      - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+"          # v1.2.3dev1
-
+      - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+" # v1.2.3-dev1
+      - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+" # v1.2.3dev1
 
 jobs:
   # Reuse the details job with no changes
@@ -34,7 +33,7 @@ jobs:
             echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
             echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
             echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
-          
+
             echo "Version is $VERSION_STR"
             echo "Suffix is $SUFFIX"
             echo "Tag name is $TAG_NAME"
@@ -44,14 +43,14 @@ jobs:
           fi
 
       - name: Verify version matches pyproject.toml
-        run: |    
-            VERSION_STR=${{ steps.release.outputs.version_str }}
-            TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
-        
-            if [ "${VERSION_STR}" != "${TOML_VERSION}" ]; then
-            echo "Error: Tag version (${VERSION_STR}) does not match pyproject.toml version (${TOML_VERSION})"
-            exit 1
-            fi
+        run: |
+          VERSION_STR=${{ steps.release.outputs.version_str }}
+          TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
+
+          if [ "${VERSION_STR}" != "${TOML_VERSION}" ]; then
+          echo "Error: Tag version (${VERSION_STR}) does not match pyproject.toml version (${TOML_VERSION})"
+          exit 1
+          fi
 
   # Reuse setup_and_build job with no changes
   setup_and_build:
@@ -75,10 +74,10 @@ jobs:
   tests-pass:
     needs: [details]
     uses: ./.github/workflows/test.yml
-  
+
   tutorial-tests-pass:
     needs: [details]
-    uses: ./.github/workflows/test-tutorials.yml  
+    uses: ./.github/workflows/test-tutorials.yml
 
   # Modified to publish to TestPyPI
   testpypi_publish:
@@ -103,7 +102,7 @@ jobs:
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12' 
+          python-version: "3.12"
       - name: Install soundscapy from TestPyPI
         uses: nick-fields/retry@v3
         with:

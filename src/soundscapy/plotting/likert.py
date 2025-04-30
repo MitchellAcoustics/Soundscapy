@@ -10,7 +10,8 @@ from soundscapy.surveys import PAQ_LABELS
 
 
 def paq_radar_plot(data, ax=None, index=None):
-    """Generate a radar/spider plot of PAQ values
+    """
+    Generate a radar/spider plot of PAQ values
 
     Parameters
     ----------
@@ -24,6 +25,7 @@ def paq_radar_plot(data, ax=None, index=None):
     -------
     plt.Axes
         matplotlib Axes with radar plot
+
     """
     # TODO: Resize the plot
     # TODO WARNING: Likely broken now

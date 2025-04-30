@@ -2,9 +2,17 @@
 site_name: "Soundscapy"
 site_url: https://soundscapy.readthedocs.io/en/latest/
 site_dir: site
+site_author: "Andrew Mitchell"
+site_description: "Documentation website for Soundscapy"
 repo_name: "MitchellAcoustics/Soundscapy"
 repo_url: https://github.com/MitchellAcoustics/Soundscapy
 copyright: Copyright &copy; 2025 Andrew Mitchell
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+
 nav:
   - Home: index.md
   - About:
@@ -25,6 +33,7 @@ nav:
   - "News":
       - news.md
       - "Changelog": CHANGELOG.md
+
 theme:
   name: material
   #  logo: img/DarkLogo.png
@@ -33,8 +42,15 @@ theme:
     - navigation.expand
     - navigation.path
     - navigation.top
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
   palette:
     # Palette toggle for light mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       toggle:
@@ -46,7 +62,8 @@ theme:
       scheme: slate
       toggle:
         icon: material/brightness-4
-        name: Switch to light mode
+        name: Switch to system preference
+
 extra_css:
   - stylesheets/extra.css
   - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.css
@@ -66,6 +83,11 @@ plugins:
             merge_init_into_class: true
             show_symbol_type_heading: true # waiting for general release
             show_symbol_type_toc: true
+          inventories:
+            - "https://docs.python.org/3/objects.inv"
+  - include-markdown:
+      opening_tag: "{!"
+      closing_tag: "!}"
   - mkdocs-jupyter:
       include_source: true
       theme: default
@@ -73,6 +95,7 @@ plugins:
 
 markdown_extensions:
   - admonition
+  - pymdownx.tasklist
   - pymdownx.arithmatex:
       generic: true
 
@@ -80,3 +103,8 @@ extra_javascript:
   - javascripts/katex.js
   - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.js
   - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/contrib/auto-render.min.js
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: "https://github.com/MitchellAcoustics"

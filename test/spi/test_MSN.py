@@ -1,16 +1,16 @@
-import pytest
-from soundscapy.spi.MSN import MultiSkewNorm, DirectParams, CentredParams
-import numpy as np
 from unittest.mock import patch  # Keep patch for plotting
+
+import numpy as np
 import pandas as pd
-from soundscapy.spi.MSN import cp2dp
-from soundscapy.spi.MSN import dp2cp
+import pytest
+
+from soundscapy.spi.MSN import CentredParams, DirectParams, MultiSkewNorm, cp2dp, dp2cp
 
 # Check for R and 'sn' package availability
 try:
     # import rpy2.robjects as ro # No longer needed directly
-    from rpy2.robjects.packages import importr
     from rpy2.rinterface_lib.embedded import RRuntimeError
+    from rpy2.robjects.packages import importr
 
     # Try importing the 'sn' package in R
     try:
@@ -274,7 +274,6 @@ class TestMultiSkewNorm:
 
     def test_fit_with_1d_numpy_array(self):
         """Test fit method raises error on 1D numpy array."""
-
         msn = MultiSkewNorm()
         one_d_array = np.array([0.1, 0.2, 0.3])
 

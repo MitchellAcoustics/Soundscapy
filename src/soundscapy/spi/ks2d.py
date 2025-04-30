@@ -20,7 +20,8 @@ import scipy.stats
 def CountQuads(
     Arr2D: np.ndarray, point: np.ndarray
 ) -> tuple[float, float, float, float]:
-    """Compute probabilities by counting points in quadrants.
+    """
+    Compute probabilities by counting points in quadrants.
 
     Computes the probabilities of finding points in each of the 4 quadrants
     defined by a vertical and horizontal line crossing the given `point`.
@@ -50,9 +51,10 @@ def CountQuads(
     TypeError
         If `point` or `Arr2D` are not list-like or numpy arrays, or if
         `point` does not have 2 elements, or if `Arr2D` is not 2D.
+
     """
     if isinstance(point, list):
-        point = np.asarray((np.ravel(point)))
+        point = np.asarray(np.ravel(point))
     elif type(point).__module__ + type(point).__name__ == "numpyndarray":
         point = np.ravel(point.copy())
     else:
@@ -60,7 +62,7 @@ def CountQuads(
     if len(point) != 2:
         raise TypeError("Input point must have exactly 2 elements")
     if isinstance(Arr2D, list):
-        Arr2D = np.asarray((Arr2D))
+        Arr2D = np.asarray(Arr2D)
     elif type(Arr2D).__module__ + type(Arr2D).__name__ == "numpyndarray":
         pass
     else:
@@ -88,7 +90,8 @@ def CountQuads(
 
 
 def FuncQuads(func2D, point, xlim, ylim, rounddig=4):
-    """Compute probabilities by integrating a density function in quadrants.
+    """
+    Compute probabilities by integrating a density function in quadrants.
 
     Computes the probabilities of finding points in each of the 4 quadrants
     defined by a vertical and horizontal line crossing the given `point`.
@@ -126,16 +129,16 @@ def FuncQuads(func2D, point, xlim, ylim, rounddig=4):
         If `func2D` is not a callable function with 2 arguments, or if
         `point`, `xlim`, or `ylim` are not list-like or numpy arrays with
         exactly 2 elements, or if limits in `xlim` or `ylim` are equal.
+
     """
     if callable(func2D):
         if len(inspect.getfullargspec(func2D)[0]) != 2:
             raise TypeError("Input func2D is not a function with 2 arguments")
-        pass
     else:
         raise TypeError("Input func2D is not a function")
     # If xlim, ylim and point are not lists or ndarray, exit.
     if isinstance(point, list):
-        point = np.asarray((np.ravel(point)))
+        point = np.asarray(np.ravel(point))
     elif type(point).__module__ + type(point).__name__ == "numpyndarray":
         point = np.ravel(point.copy())
     else:
@@ -143,7 +146,7 @@ def FuncQuads(func2D, point, xlim, ylim, rounddig=4):
     if len(point) != 2:
         raise TypeError("Input point has not exactly 2 elements")
     if isinstance(xlim, list):
-        xlim = np.asarray((np.sort(np.ravel(xlim))))
+        xlim = np.asarray(np.sort(np.ravel(xlim)))
     elif type(xlim).__module__ + type(xlim).__name__ == "numpyndarray":
         xlim = np.sort(np.ravel(xlim.copy()))
     else:
@@ -153,7 +156,7 @@ def FuncQuads(func2D, point, xlim, ylim, rounddig=4):
     if xlim[0] == xlim[1]:
         raise TypeError("Input xlim[0] should be different to xlim[1]")
     if isinstance(ylim, list):
-        ylim = np.asarray((np.sort(np.ravel(ylim))))
+        ylim = np.asarray(np.sort(np.ravel(ylim)))
     elif type(ylim).__module__ + type(ylim).__name__ == "numpyndarray":
         ylim = np.sort(np.ravel(ylim.copy()))
     else:
@@ -186,7 +189,8 @@ def FuncQuads(func2D, point, xlim, ylim, rounddig=4):
 
 
 def Qks(alam, iter=100, prec=1e-17):
-    """Compute the Kolmogorov-Smirnov probability function Q(lambda).
+    """
+    Compute the Kolmogorov-Smirnov probability function Q(lambda).
 
     Calculates the significance level for a given KS statistic `alam` (D).
     This function is based on the approximation given in Numerical Recipes in C,
@@ -214,6 +218,7 @@ def Qks(alam, iter=100, prec=1e-17):
     ------
     TypeError
         If `alam` is not an integer or float.
+
     """
     # If j iterations are performed, meaning that toadd
     # is still 2 times larger than the precision.
@@ -232,12 +237,12 @@ def Qks(alam, iter=100, prec=1e-17):
         return 1.0
     if qks < prec:
         return 0.0
-    else:
-        return qks
+    return qks
 
 
 def ks2d2s(Arr2D1: np.ndarray, Arr2D2: np.ndarray) -> tuple[float, float]:
-    """Perform the 2-dimensional, 2-sample Kolmogorov-Smirnov test.
+    """
+    Perform the 2-dimensional, 2-sample Kolmogorov-Smirnov test.
 
     Tests the null hypothesis that two independent 2D samples, `Arr2D1` and
     `Arr2D2`, are drawn from the same underlying probability distribution.
@@ -267,6 +272,7 @@ def ks2d2s(Arr2D1: np.ndarray, Arr2D2: np.ndarray) -> tuple[float, float]:
     ------
     TypeError
         If `Arr2D1` or `Arr2D2` are not numpy arrays or are not 2D.
+
     """
     if not isinstance(Arr2D1, np.ndarray):
         raise TypeError("Input Arr2D1 is not a numpyndarray")
@@ -311,7 +317,8 @@ def ks2d2s(Arr2D1: np.ndarray, Arr2D2: np.ndarray) -> tuple[float, float]:
 
 
 def ks2d1s(Arr2D, func2D, xlim=[], ylim=[]):
-    """Perform the 2-dimensional, 1-sample Kolmogorov-Smirnov test.
+    """
+    Perform the 2-dimensional, 1-sample Kolmogorov-Smirnov test.
 
     Tests the null hypothesis that a 2D sample `Arr2D` is drawn from a
     given 2D probability density distribution `func2D`.
@@ -347,11 +354,11 @@ def ks2d1s(Arr2D, func2D, xlim=[], ylim=[]):
     TypeError
         If `func2D` is not a callable function with 2 arguments, or if
         `Arr2D` is not a 2D numpy array.
+
     """
     if callable(func2D):
         if len(inspect.getfullargspec(func2D)[0]) != 2:
             raise TypeError("Input func2D is not a function with 2 input arguments")
-        pass
     else:
         raise TypeError("Input func2D is not a function")
     if type(Arr2D).__module__ + type(Arr2D).__name__ == "numpyndarray":

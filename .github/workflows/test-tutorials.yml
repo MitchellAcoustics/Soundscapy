@@ -7,9 +7,9 @@ on:
         description: "Indicates if all tutorial tests passed"
         value: ${{ github.event.inputs.tutorial-tests-pass }}
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -17,37 +17,36 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v3
-      with: 
-        # install a specific version of uv
-        version: "0.4.29"
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          # install a specific version of uv
+          version: "0.4.29"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install R
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y r-base
-        echo "R installed successfully"
+      - name: Install R
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y r-base
+          echo "R installed successfully"
 
-    - name: Set R environment variables
-      run: |
-        echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
-        echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
+      - name: Set R environment variables
+        run: |
+          echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+          echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
 
-    - name: Setup Python ${{ matrix.python-version }}
-      run: uv python install ${{ matrix.python-version }}
+      - name: Setup Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
 
-    - name: Install optional dependencies
-      run: uv sync --all-extras
+      - name: Install optional dependencies
+        run: uv sync --all-extras
 
-    - name: Run tests for tutorial notebooks
-      run: uv run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb --no-cov # BinauralAnalysis is too slow
-  
+      - name: Run tests for tutorial notebooks
+        run: uv run pytest --nbmake -n=auto docs --ignore=docs/tutorials/BinauralAnalysis.ipynb --no-cov # BinauralAnalysis is too slow
