@@ -93,11 +93,8 @@ docs/_build/
 doc/_build/
 
 # PyBuilder
+.pybuilder/
 target/
-
-# Jupyter Notebook
-
-# IPython
 
 # pyenv
 .python-version
@@ -153,18 +150,22 @@ dmypy.json
 # profiling data
 .prof
 
+# Cython debug symbols
+cython_debug/
+
 ### vscode ###
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode
+# .vscode/settings.json
+# !.vscode/tasks.json
+# !.vscode/launch.json
+# !.vscode/extensions.json
 *.code-workspace
 
+# package version
+*_version.py
+
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,vscode
-/.vscode/
 /.idea/
-.vscode/settings.json
 *.DS_Store
 
 # Ignore everything in tests/test_audio_files except .wav files
