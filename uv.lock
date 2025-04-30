@@ -3533,6 +3533,20 @@ wheels = [
 ]
 
 [[package]]
+name = "setuptools-scm"
+version = "8.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "setuptools" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b9/19/7ae64b70b2429c48c3a7a4ed36f50f94687d3bfcd0ae2f152367b6410dff/setuptools_scm-8.3.1.tar.gz", hash = "sha256:3d555e92b75dacd037d32bafdf94f97af51ea29ae8c7b234cf94b7a5bd242a63", size = 78088 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/ac/8f96ba9b4cfe3e4ea201f23f4f97165862395e9331a424ed325ae37024a8/setuptools_scm-8.3.1-py3-none-any.whl", hash = "sha256:332ca0d43791b818b841213e76b1971b7711a960761c5bea5fc5cdb5196fbce3", size = 43935 },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3590,6 +3604,7 @@ dev = [
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "ruff" },
+    { name = "setuptools-scm" },
     { name = "tox" },
     { name = "twine" },
 ]
@@ -3641,6 +3656,7 @@ dev = [
     { name = "mypy", specifier = ">=1.15.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "ruff", specifier = ">=0.7.2" },
+    { name = "setuptools-scm", specifier = ">=8.3.1" },
     { name = "tox", specifier = ">=4.25.0" },
     { name = "twine", specifier = ">=6.1.0" },
 ]

@@ -11,10 +11,10 @@ It is not intended to be used directly by end users.
 """
 
 import sys
-from typing import Any
 import warnings
+from typing import Any, NoReturn
 
-import rpy2.robjects as robjects
+from rpy2 import robjects
 from rpy2.robjects import numpy2ri, pandas2ri
 
 # These are used in the docstring examples but not in the code
@@ -34,63 +34,105 @@ _stats_package = None
 _base_package = None
 _session_active = False
 
+REQUIRED_R_VERSION = 3.6
+
 
 def check_r_availability() -> None:
-    """Check if R is installed and accessible through rpy2.
+    """
+    Check if R is installed and accessible through rpy2.
 
     Raises
     ------
     ImportError
         If R is not installed or cannot be accessed.
+
     """
-    global _r_checked
+    global _r_checked  # noqa: PLW0603
+
+    def _raise_r_not_found_error() -> NoReturn:
+        msg = (
+            "rpy2 is installed but it cannot find an R installation. "
+            "Please ensure R is installed and correctly configured. "
+            "On Linux: Install R with your package manager (e.g., apt-get install r-base)."  # noqa: E501
+            "On macOS: Install R from CRAN (https://cran.r-project.org/bin/macosx/). "
+            "On Windows: Install R from CRAN (https://cran.r-project.org/bin/windows/base/)."
+        )
+        raise ImportError(msg)
+
+    def _raise_r_access_error(e: Exception) -> NoReturn:
+        msg = (
+            f"Error accessing R installation: {e!s}. "
+            "Please ensure R is installed and correctly configured."
+        )
+        raise ImportError(msg)
+
+    def _raise_r_version_too_old_error(r_version_num: float) -> NoReturn:
+        msg = (
+            f"R version {r_version_num} is too old."
+            f"The 'sn' package requires R >= {REQUIRED_R_VERSION}."
+            "Please upgrade your R installation."
+        )
+        raise ImportError(msg)
 
     if _r_checked:
         return
 
     try:
-        import rpy2.robjects as robjects
+        from rpy2 import robjects
 
         # Basic check to ensure R is running by getting R version
-        r_version = robjects.r("R.version.string")[0]  # type: ignore
-        logger.debug(f"R version: {r_version}")
+        r_version = robjects.r("R.version.string")[0]  # type: ignore[index]
+        logger.debug("R version: %s", r_version)
 
         # Check if minimum R version requirements are met
         # The 'sn' package requires R >= 3.6.0
         r_version_num = robjects.r(
             "as.numeric(R.version$major) + as.numeric(R.version$minor)/10"
-        )[0]  # type: ignore
-        if r_version_num < 3.6:
-            raise ImportError(
-                f"R version {r_version_num} is too old. The 'sn' package requires R >= 3.6.0. "
-                "Please upgrade your R installation."
-            )
+        )[0]  # type: ignore[index]
+
+        if r_version_num < REQUIRED_R_VERSION:
+            _raise_r_version_too_old_error(r_version_num)
 
         _r_checked = True
     except ImportError:
-        raise ImportError(
-            "rpy2 is installed but it cannot find an R installation. "
-            "Please ensure R is installed and correctly configured. "
-            "On Linux: Install R with your package manager (e.g., apt-get install r-base). "
-            "On macOS: Install R from CRAN (https://cran.r-project.org/bin/macosx/). "
-            "On Windows: Install R from CRAN (https://cran.r-project.org/bin/windows/base/)."
-        )
-    except Exception as e:
-        raise ImportError(
-            f"Error accessing R installation: {str(e)}. "
-            "Please ensure R is installed and correctly configured."
-        )
+        _raise_r_not_found_error()  # Call the handler
+    except Exception as e:  # noqa: BLE001
+        _raise_r_access_error(e)  # Call the handler
 
 
 def check_sn_package() -> None:
-    """Check if the R 'sn' package is installed.
+    """
+    Check if the R 'sn' package is installed.
 
     Raises
     ------
     ImportError
         If the 'sn' package is not installed.
+
     """
-    global _sn_checked
+    global _sn_checked  # noqa: PLW0603
+
+    def _raise_sn_version_too_old_error(version: str) -> NoReturn:
+        msg = (
+            f"R 'sn' package version {version} is too old. "
+            "The SPI feature requires 'sn' >= 2.0.0. "
+            "Please upgrade the package by running in R: install.packages('sn')"
+        )
+        raise ImportError(msg)
+
+    def _raise_sn_not_installed_error() -> NoReturn:
+        msg = (
+            "R package 'sn' is not installed. "
+            "Please install it by running in R: install.packages('sn')"
+        )
+        raise ImportError(msg)
+
+    def _raise_sn_check_error(e: Exception) -> NoReturn:
+        msg = (
+            f"Error checking for R 'sn' package: {e!s}. "
+            "Please ensure the package is installed by running in R: install.packages('sn')"  # noqa: E501
+        )
+        raise ImportError(msg)
 
     if _sn_checked:
         return
@@ -107,40 +149,30 @@ def check_sn_package() -> None:
             _ = rpackages.importr("sn")
 
             # Get package version using R to verify compatibility
-            import rpy2.robjects as robjects
+            from rpy2 import robjects
 
             # Use R code to get the package version
-            version = robjects.r('as.character(packageVersion("sn"))')[0]  # type: ignore
-            logger.debug(f"R 'sn' package version: {version}")
+            version = robjects.r('as.character(packageVersion("sn"))')[0]  # type: ignore[index]
+            logger.debug("R 'sn' package version: %s", version)
 
             # Check if package version meets requirements
             # The SPI implementation requires 'sn' >= 2.0.0
             if version < "2.0.0":
-                raise ImportError(
-                    f"R 'sn' package version {version} is too old. "
-                    "The SPI feature requires 'sn' >= 2.0.0. "
-                    "Please upgrade the package by running in R: install.packages('sn')"
-                )
+                _raise_sn_version_too_old_error(version)
 
             _sn_checked = True
         except rpackages.PackageNotInstalledError:
-            raise ImportError(
-                "R package 'sn' is not installed. "
-                "Please install it by running in R: install.packages('sn')"
-            )
+            _raise_sn_not_installed_error()
     except Exception as e:
         if "sn" in str(e):
             # Already a more specific error about the sn package
-            raise
-        else:
-            raise ImportError(
-                f"Error checking for R 'sn' package: {str(e)}. "
-                "Please ensure the package is installed by running in R: install.packages('sn')"
-            )
+            raise  # Re-raising is okay here
+        _raise_sn_check_error(e)
 
 
 def check_dependencies() -> dict[str, Any]:
-    """Check all required R dependencies for the SPI module.
+    """
+    Check all required R dependencies for the SPI module.
 
     This function checks:
     1. R installation accessibility
@@ -157,6 +189,7 @@ def check_dependencies() -> dict[str, Any]:
     ------
     ImportError
         If any dependency check fails.
+
     """
     # Check R availability first
     check_r_availability()
@@ -169,8 +202,8 @@ def check_dependencies() -> dict[str, Any]:
     # Return information about the dependencies
     return {
         "rpy2_version": sys.modules["rpy2"].__version__,
-        "r_version": robjects.r("R.version.string")[0],  # type: ignore
-        "sn_version": robjects.r('as.character(packageVersion("sn"))')[0],  # type: ignore
+        "r_version": robjects.r("R.version.string")[0],  # type: ignore[index]
+        "sn_version": robjects.r('as.character(packageVersion("sn"))')[0],  # type: ignore[index]
     }
 
 
@@ -178,7 +211,8 @@ def check_dependencies() -> dict[str, Any]:
 
 
 def initialize_r_session() -> dict[str, Any]:
-    """Initialize an R session for skew-normal distribution calculations.
+    """
+    Initialize an R session for skew-normal distribution calculations.
 
     This function:
     1. Checks for R and package dependencies
@@ -197,8 +231,9 @@ def initialize_r_session() -> dict[str, Any]:
         If dependencies are missing.
     RuntimeError
         If session initialization fails.
+
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active  # noqa: PLW0603
 
     # If session is already active, just return the state
     if _session_active:
@@ -212,11 +247,11 @@ def initialize_r_session() -> dict[str, Any]:
 
     # First check all dependencies
     dep_info = check_dependencies()
-    logger.debug(f"Dependencies verified: {dep_info}")
+    logger.debug("Dependencies verified: %s", dep_info)
 
     try:
-        import rpy2.robjects as robjects
         import rpy2.robjects.packages as rpackages
+        from rpy2 import robjects
 
         # Import required packages
         _sn_package = rpackages.importr("sn")
@@ -239,9 +274,10 @@ def initialize_r_session() -> dict[str, Any]:
             # Activate numpy and pandas conversion
             logger.debug("Activating numpy and pandas conversion")
             logger.info(
-                "rpy2 throws a DeprecationWarning about global activation, which we're ignoreing for now."
+                "rpy2 throws a DeprecationWarning about global activation, which we're ignoring for now."  # noqa: E501
             )
-            # TODO: Remove global conversion, as recommended by rpy2
+            # TODO(MitchellAcoustics): Remove global conversion, as recommended by rpy2
+            # https://github.com/MitchellAcoustics/Soundscapy/issues/111
             numpy2ri.activate()
             pandas2ri.activate()
 
@@ -254,17 +290,19 @@ def initialize_r_session() -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Failed to initialize R session: {str(e)}")
+        logger.exception("Failed to initialize R session")
         _session_active = False
         _r_session = None
         _sn_package = None
         _stats_package = None
         _base_package = None
-        raise RuntimeError(f"Failed to initialize R session: {str(e)}")
+        msg = f"Failed to initialize R session: {e!s}"
+        raise RuntimeError(msg) from e
 
 
 def shutdown_r_session() -> bool:
-    """Shutdown the R session and clean up resources.
+    """
+    Shutdown the R session and clean up resources.
 
     This function:
     1. Deactivates numpy conversion
@@ -275,8 +313,9 @@ def shutdown_r_session() -> bool:
     -------
     bool
         True if successful, False otherwise.
+
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active  # noqa: PLW0603
 
     if not _session_active:
         logger.debug("No active R session to shutdown")
@@ -297,15 +336,17 @@ def shutdown_r_session() -> bool:
         # Force garbage collection to release R resources
         gc.collect()
         logger.info("R session successfully shutdown")
-        return True
 
-    except Exception as e:
-        logger.error(f"Error during R session shutdown: {str(e)}")
+    except Exception:
+        logger.exception("Error during R session shutdown")
         return False
+    else:
+        return True
 
 
 def get_r_session() -> tuple[Any, Any, Any, Any]:
-    """Get the current R session and package objects.
+    """
+    Get the current R session and package objects.
 
     This function:
     1. Initializes the session if not already active
@@ -320,8 +361,9 @@ def get_r_session() -> tuple[Any, Any, Any, Any]:
     ------
     RuntimeError
         If session initialization fails.
+
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active  # noqa: PLW0602
 
     if not _session_active:
         logger.debug("R session not active, initializing")
@@ -334,24 +376,30 @@ def get_r_session() -> tuple[Any, Any, Any, Any]:
         or not _stats_package
         or not _base_package
     ):
-        raise RuntimeError("Failed to initialize R session")
+        msg = "Failed to initialize R session"
+        raise RuntimeError(msg)
 
     return _r_session, _sn_package, _stats_package, _base_package
 
 
-def install_r_packages(packages: list[str] = ["sn", "tvtnorm"]) -> None:
-    """Install R packages if not already installed.
+def install_r_packages(packages: list[str] | None = None) -> None:
+    """
+    Install R packages if not already installed.
 
     Parameters
     ----------
-    packages : list[str], optional
-        List of R package names to install, by default ["sn", "tvtnorm"].
+    packages : list[str] | None, optional
+        List of R package names to install. Defaults to ["sn", "tvtnorm"].
 
     Raises
     ------
     ImportError
         If R is not available or package installation fails.
+
     """
+    if packages is None:
+        packages = ["sn", "tvtnorm"]
+
     check_r_availability()
 
     try:
@@ -363,26 +411,29 @@ def install_r_packages(packages: list[str] = ["sn", "tvtnorm"]) -> None:
 
         # Check if packages are installed
         packnames_to_install = [x for x in packages if not rpackages.isinstalled(x)]
-        logger.debug(f"Packages to install: {packnames_to_install}")
+        logger.debug("Packages to install: %s", packnames_to_install)
 
         # Install missing packages
         if len(packnames_to_install) > 0:
             utils.install_packages(StrVector(packnames_to_install))
-            logger.info(f"Installed missing R packages: {packnames_to_install}")
+            logger.info("Installed missing R packages: %s", packnames_to_install)
         else:
             logger.debug("All required R packages are already installed")
 
     except Exception as e:
-        raise ImportError(f"Failed to install R packages: {str(e)}")
+        msg = f"Failed to install R packages: {e!s}"
+        raise ImportError(msg) from e
 
 
 def is_session_active() -> bool:
-    """Check if the R session is currently active.
+    """
+    Check if the R session is currently active.
 
     Returns
     -------
     bool
         True if the session is active, False otherwise.
+
     """
-    global _session_active
+    global _session_active  # noqa: PLW0602
     return _session_active
