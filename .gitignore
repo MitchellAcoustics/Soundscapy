@@ -162,26 +162,19 @@ dmypy.json
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,vscode
-/.vscode
-/.idea
+/.vscode/
+/.idea/
 .vscode/settings.json
-Cultural-comparison-analysis.ipynb
-soundscapy_old/archive
-/notebooks/
-.idea/.name
-.idea/misc.xml
-.idea/Soundscapy.iml
-.idea/vcs.xml
-.idea/workspace.xml
-soundscapy_old/.DS_Store
 *.DS_Store
-/pyproject-poetry.toml
-/docs/_autosummary/
-!/.pytest_cache/
-!/.vscode/
-.pdm-python
+
 # Ignore everything in tests/test_audio_files except .wav files
 tests/test_audio_files/*
 !tests/test_audio_files/*.wav
 /docs/tutorials/updated_config.yaml
 docs/tutorials/acoustic_analysis_results.xlsx
+
+/scratch/
+CLAUDE.local.md
+/.pytest_cache/
+/.ruff_cache/
+
