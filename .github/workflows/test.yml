@@ -79,4 +79,4 @@ jobs:
     - name: Run tox environment
       run: |
         py_version="py$(echo '${{ matrix.python-version }}' | tr -d '.')"
-        tox r -e ${py_version}-${{ matrix.factor }} -p
+        tox r -e ${py_version}-${{ matrix.factor }}
