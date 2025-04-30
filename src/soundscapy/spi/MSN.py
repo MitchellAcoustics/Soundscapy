@@ -6,21 +6,26 @@ from soundscapy.spi.ks2d import ks2d2s
 
 
 class DirectParams:
-    """
-    Represents a set of direct parameters for a statistical model.
+    """Represents a set of direct parameters for a statistical model.
 
-    Direct parameters are the parameters that are directly used in the model. They are the parameters that
-    are used to define the distribution of the data. In the case of a skew normal distribution, the direct
-    parameters are the xi, omega, and alpha values.
+    Direct parameters are the parameters that are directly used in the model.
+    They are the parameters that are used to define the distribution of the
+    data. In the case of a skew normal distribution, the direct parameters
+    are the xi, omega, and alpha values.
 
-    Attributes:
-        xi (np.ndarray): The location of the distribution in 2D space, represented as a 2x1 array
-            with the x and y coordinates.
-        omega (np.ndarray): The covariance matrix of the distribution, represented as a 2x2 array.
-            The covariance matrix represents the measure of the relationship between different variables.
-            It provides information about how changes in one variable are associated with changes in other variables.
-        alpha (np.ndarray): The shape parameters for the x and y dimensions, controlling the shape (skewness) of the distribution.
-            It is represented as a 2x1 array.
+    Parameters
+    ----------
+    xi : np.ndarray
+        The location of the distribution in 2D space, represented as a 2x1 array
+        with the x and y coordinates.
+    omega : np.ndarray
+        The covariance matrix of the distribution, represented as a 2x2 array.
+        The covariance matrix represents the measure of the relationship between
+        different variables. It provides information about how changes in one
+        variable are associated with changes in other variables.
+    alpha : np.ndarray
+        The shape parameters for the x and y dimensions, controlling the shape
+        (skewness) of the distribution. It is represented as a 2x1 array.
     """
 
     def __init__(self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray):
@@ -52,39 +57,52 @@ class DirectParams:
         return np.all((xi_range[:, 0] <= self.xi) & (self.xi <= xi_range[:, 1]))
 
     def validate(self):
-        """
-        Validate the direct parameters.
+        """Validate the direct parameters.
 
-        In a skew normal distribution, the covariance matrix, often denoted as Ω (Omega), represents the
-        measure of the relationship between different variables. It provides information about how changes
-        in one variable are associated with changes in other variables. The covariance matrix must be positive
-        definite and symmetric.
+        In a skew normal distribution, the covariance matrix, often denoted as
+        Ω (Omega), represents the measure of the relationship between different
+        variables. It provides information about how changes in one variable are
+        associated with changes in other variables. The covariance matrix must
+        be positive definite and symmetric.
 
-        Raises:
-            AssertionError: If the direct parameters are not valid.
+        Raises
+        ------
+        AssertionError
+            If the direct parameters are not valid.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
         """
         assert self._omega_is_pos_def(), "Omega must be positive definite"
         assert self._omega_is_symmetric(), "Omega must be symmetric"
 
 
 class CentredParams:
-    """
-    Represents the centered parameters of a distribution.
+    """Represents the centered parameters of a distribution.
 
-    Attributes:
-        mean (float): The mean of the distribution.
-        sigma (float): The standard deviation of the distribution.
-        skew (float): The skewness of the distribution.
+    Parameters
+    ----------
+    mean : float
+        The mean of the distribution.
+    sigma : float
+        The standard deviation of the distribution.
+    skew : float
+        The skewness of the distribution.
 
-    Methods:
-        __init__(mean, sigma, skew): Initializes a new instance of the CentredParams class.
-        __repr__(): Returns a string representation of the CentredParams object.
-        __str__(): Returns a formatted string representation of the CentredParams object.
-        from_dp(dp): Converts DirectParams object to CentredParams object.
+    Attributes
+    ----------
+    mean : float
+        The mean of the distribution.
+    sigma : float
+        The standard deviation of the distribution.
+    skew : float
+        The skewness of the distribution.
 
+    Methods
+    -------
+    from_dp(dp)
+        Converts DirectParams object to CentredParams object.
     """
 
     def __init__(self, mean, sigma, skew):
@@ -105,42 +123,54 @@ class CentredParams:
 
     @classmethod
     def from_dp(cls, dp: DirectParams):
-        """
-        Converts a DirectParams object to a CentredParams object.
+        """Convert a DirectParams object to a CentredParams object.
 
-        Args:
-            dp (DirectParams): The DirectParams object to convert.
+        Parameters
+        ----------
+        dp : DirectParams
+            The DirectParams object to convert.
 
-        Returns:
-            CentredParams: A new CentredParams object with the converted parameters.
-
+        Returns
+        -------
+        CentredParams
+            A new CentredParams object with the converted parameters.
         """
         cp = dp2cp(dp)
         return cls(cp.mean, cp.sigma, cp.skew)
 
 
 class MultiSkewNorm:
-    """
-    A class representing a multi-dimensional skewed normal distribution.
+    """A class representing a multi-dimensional skewed normal distribution.
 
-    Attributes:
-        selm_model: The fitted SELM model.
-        cp: The centred parameters of the fitted model.
-        dp: The direct parameters of the fitted model.
-        sample_data: The generated sample data from the fitted model.
-        data: The input data used for fitting the model.
+    Attributes
+    ----------
+    selm_model
+        The fitted SELM model.
+    cp : CentredParams
+        The centred parameters of the fitted model.
+    dp : DirectParams
+        The direct parameters of the fitted model.
+    sample_data : np.ndarray | None
+        The generated sample data from the fitted model.
+    data : pd.DataFrame | None
+        The input data used for fitting the model.
 
-    Methods:
-        __init__: Initializes an instance of the MultiSkewNorm class.
-        __repr__: Returns a string representation of the MultiSkewNorm instance.
-        summary: Prints a summary of the fitted model.
-        fit: Fits the model to the provided data.
-        define_dp: Defines the direct parameters of the model.
-        sample: Generates a sample from the fitted model.
-        sspy_plot: Plots the joint distribution of the generated sample.
-        ks2ds: Computes the two-sample Kolmogorov-Smirnov statistic.
-        spi: Computes the similarity percentage index.
-
+    Methods
+    -------
+    summary()
+        Prints a summary of the fitted model.
+    fit(data=None, x=None, y=None)
+        Fits the model to the provided data.
+    define_dp(xi, omega, alpha)
+        Defines the direct parameters of the model.
+    sample(n=1000, return_sample=False)
+        Generates a sample from the fitted model.
+    sspy_plot(color='blue', title=None, n=1000)
+        Plots the joint distribution of the generated sample.
+    ks2ds(test)
+        Computes the two-sample Kolmogorov-Smirnov statistic.
+    spi(test)
+        Computes the similarity percentage index.
     """
 
     def __init__(self):
@@ -173,17 +203,21 @@ class MultiSkewNorm:
         x: np.ndarray | pd.Series | None = None,
         y: np.ndarray | pd.Series | None = None,
     ):
-        """
-        Fits the multi-dimensional skewed normal model to the provided data.
+        """Fit the multi-dimensional skewed normal model to the provided data.
 
-        Args:
-            data: The input data as a pandas DataFrame or numpy array.
-            x: The x-values of the input data as a numpy array or pandas Series.
-            y: The y-values of the input data as a numpy array or pandas Series.
+        Parameters
+        ----------
+        data : pd.DataFrame or np.ndarray, optional
+            The input data as a pandas DataFrame or numpy array.
+        x : np.ndarray or pd.Series, optional
+            The x-values of the input data as a numpy array or pandas Series.
+        y : np.ndarray or pd.Series, optional
+            The y-values of the input data as a numpy array or pandas Series.
 
-        Raises:
-            ValueError: If either data or x and y are not provided.
-
+        Raises
+        ------
+        ValueError
+            If neither `data` nor both `x` and `y` are provided.
         """
 
         if data is None and (x is None or y is None):
@@ -231,14 +265,20 @@ class MultiSkewNorm:
         return None
 
     def define_dp(self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray):
-        """
-        Initiate a distribution from the direct parameters.
+        """Initiate a distribution from the direct parameters.
 
-        Args:
-            xi: The xi values of the direct parameters as a numpy array.
-            omega: The omega values of the direct parameters as a numpy array.
-            alpha: The alpha values of the direct parameters as a numpy array.
+        Parameters
+        ----------
+        xi : np.ndarray
+            The xi values of the direct parameters.
+        omega : np.ndarray
+            The omega values of the direct parameters.
+        alpha : np.ndarray
+            The alpha values of the direct parameters.
 
+        Returns
+        -------
+        self
         """
 
         self.dp = DirectParams(xi, omega, alpha)
@@ -246,19 +286,25 @@ class MultiSkewNorm:
         return self
 
     def sample(self, n: int = 1000, return_sample: bool = False) -> None | np.ndarray:
-        """
-        Generates a sample from the fitted model.
+        """Generate a sample from the fitted model.
 
-        Args:
-            n: The number of samples to generate.
-            return_sample: Whether to return the generated sample as an np.ndarray.
+        Parameters
+        ----------
+        n : int, optional
+            The number of samples to generate, by default 1000.
+        return_sample : bool, optional
+            Whether to return the generated sample as an np.ndarray, by default False.
 
-        Returns:
-            None or numpy array: The generated sample if return_sample is True.
+        Returns
+        -------
+        None or np.ndarray
+            The generated sample if `return_sample` is True, otherwise None.
 
-        Raises:
-            ValueError: If either selm_model or xi, omega, and alpha are not provided.
-
+        Raises
+        ------
+        ValueError
+            If the model is not fitted (i.e., `selm_model` is None) and direct
+            parameters (`dp`) are also not defined.
         """
 
         if self.selm_model is not None:
@@ -278,9 +324,16 @@ class MultiSkewNorm:
             return sample
 
     def sspy_plot(self, color: str = "blue", title: str | None = None, n: int = 1000):
-        """
-        Plots the joint distribution of the generated sample.
+        """Plot the joint distribution of the generated sample using soundscapy.
 
+        Parameters
+        ----------
+        color : str, optional
+            Color for the density plot, by default "blue".
+        title : str, optional
+            Title for the plot, by default None.
+        n : int, optional
+            Number of samples to generate if `sample_data` is None, by default 1000.
         """
 
         if self.sample_data is None:
@@ -290,17 +343,17 @@ class MultiSkewNorm:
         sspy.density_plot(df, color=color, title=title)
 
     def ks2ds(self, test: pd.DataFrame | np.ndarray):
-        """
-        Computes the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
+        """Compute the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
 
-        Args:
-            test: The test data as a pandas DataFrame or numpy array.
-            nboot: The number of bootstrap samples to use for computing the p-value.
-            extra: Whether to compute the extra statistics.
+        Parameters
+        ----------
+        test : pd.DataFrame or np.ndarray
+            The test data.
 
-        Returns:
-            tuple: The KS2D statistic, p-value, and extra statistics (if extra=True).
-
+        Returns
+        -------
+        tuple
+            The KS2D statistic and p-value.
         """
 
         if self.sample_data is None:
@@ -317,30 +370,39 @@ class MultiSkewNorm:
         return ks2d2s(sample_data, test)  # type: ignore
 
     def spi(self, test: pd.DataFrame | np.ndarray):
-        """
-        Computes the Soundscape Perception Index (SPI) for the test data against the target distribution.
+        """Compute the Soundscape Perception Index (SPI).
 
-        Args:
-            test: The test data as a pandas DataFrame or numpy array.
+        Calculates the SPI for the test data against the target distribution
+        represented by this MultiSkewNorm instance.
 
-        Returns:
-            int: The Soundscape Perception Index
+        Parameters
+        ----------
+        test : pd.DataFrame or np.ndarray
+            The test data.
 
+        Returns
+        -------
+        int
+            The Soundscape Perception Index (SPI), ranging from 0 to 100.
         """
 
         return int((1 - self.ks2ds(test)[0]) * 100)
 
 
 def cp2dp(cp: CentredParams, family: str = "SN") -> DirectParams:
-    """
-    Converts centred parameters to direct parameters.
+    """Convert centred parameters to direct parameters.
 
-    Args:
-        cp: The centred parameters as a CentredParams object.
+    Parameters
+    ----------
+    cp : CentredParams
+        The centred parameters object.
+    family : str, optional
+        The distribution family, by default "SN" (Skew Normal).
 
-    Returns:
-        DirectParams: The direct parameters as a DirectParams object.
-
+    Returns
+    -------
+    DirectParams
+        The corresponding direct parameters object.
     """
     dp_r = rsn._dp2cp(cp.mean, cp.sigma, cp.skew, family=family)
 
@@ -348,15 +410,19 @@ def cp2dp(cp: CentredParams, family: str = "SN") -> DirectParams:
 
 
 def dp2cp(dp: DirectParams, family: str = "SN") -> CentredParams:
-    """
-    Converts direct parameters to centred parameters.
+    """Convert direct parameters to centred parameters.
 
-    Args:
-        dp: The direct parameters as a DirectParams object.
+    Parameters
+    ----------
+    dp : DirectParams
+        The direct parameters object.
+    family : str, optional
+        The distribution family, by default "SN" (Skew Normal).
 
-    Returns:
-        CentredParams: The centred parameters as a CentredParams object.
-
+    Returns
+    -------
+    CentredParams
+        The corresponding centred parameters object.
     """
     cp_r = rsn._dp2cp(dp.xi, dp.omega, dp.alpha, family=family)
 

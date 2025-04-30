@@ -19,4 +19,3 @@ This section provides an overview of the binaural analysis tools available in So
 
 ::: soundscapy.audio.parallel_processing
     show_submodules: true
-

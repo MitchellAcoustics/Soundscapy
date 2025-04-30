@@ -20,17 +20,36 @@ import scipy.stats
 def CountQuads(
     Arr2D: np.ndarray, point: np.ndarray
 ) -> tuple[float, float, float, float]:
-    """Computes the probabilities of finding points in each 4 quadrant
-    defined by a vertical and horizontal lines crossing the point, by counting
-    the proportion of points in Arr2D in each quadrant.
+    """Compute probabilities by counting points in quadrants.
 
-    :param list Arr2D: Array of points to be counted.
-    :param array point: A 2 element list, point, which is the center of
-    4 square quadrants.
-    :returns: a tuple of 4 floats.  The probabilities of finding a point in
-    each quadrants, with point as the origin.  p stands for positive, n for
-    negative, with the first and second positions meaning the x and y
-    directions respectively.
+    Computes the probabilities of finding points in each of the 4 quadrants
+    defined by a vertical and horizontal line crossing the given `point`.
+    The probabilities are determined by counting the proportion of points
+    from `Arr2D` that fall into each quadrant.
+
+    Parameters
+    ----------
+    Arr2D : np.ndarray
+        Array of 2D points (shape N x 2) to be counted.
+    point : np.ndarray
+        A 1D array or list with 2 elements representing the center (x, y)
+        of the 4 quadrants.
+
+    Returns
+    -------
+    tuple[float, float, float, float]
+        A tuple containing four floats (fpp, fnp, fpn, fnn), representing the
+        normalized fractions (probabilities) of points in each quadrant:
+        - fpp: Fraction in the positive-x, positive-y quadrant.
+        - fnp: Fraction in the negative-x, positive-y quadrant.
+        - fpn: Fraction in the positive-x, negative-y quadrant.
+        - fnn: Fraction in the negative-x, negative-y quadrant.
+
+    Raises
+    ------
+    TypeError
+        If `point` or `Arr2D` are not list-like or numpy arrays, or if
+        `point` does not have 2 elements, or if `Arr2D` is not 2D.
     """
     if isinstance(point, list):
         point = np.asarray((np.ravel(point)))
@@ -69,19 +88,44 @@ def CountQuads(
 
 
 def FuncQuads(func2D, point, xlim, ylim, rounddig=4):
-    """Computes the probabilities of finding points in each 4 quadrant
-    defined by a vertical and horizontal lines crossing the point, by
-    integrating the density function func2D in each quadrant.
+    """Compute probabilities by integrating a density function in quadrants.
 
-    :param array func2D: Density function that takes 2 arguments: x and y.
-    :param list point: A 2 element list, point, which is the center of 4
-    square quadrants.
-    :param array xlim,ylim: Domain of numerical integration necessary to
-    compute the quadrant probabilities.
-    :returns: a tuple of 4 floats. The probabilities of finding a point in
-    each quadrants, with point as the origin.  p stands for positive,
-    n for negative, with the first and second positions meaning the x and y
-    directions respectively.
+    Computes the probabilities of finding points in each of the 4 quadrants
+    defined by a vertical and horizontal line crossing the given `point`.
+    The probabilities are determined by numerically integrating the 2D density
+    function `func2D` over each quadrant within the specified limits.
+
+    Parameters
+    ----------
+    func2D : callable
+        A 2D density function that accepts two arguments (x, y).
+    point : list or np.ndarray
+        A 1D array or list with 2 elements representing the center (x, y)
+        of the 4 quadrants.
+    xlim : list or np.ndarray
+        A list or array with 2 elements defining the integration limits for x.
+    ylim : list or np.ndarray
+        A list or array with 2 elements defining the integration limits for y.
+    rounddig : int, optional
+        Number of decimal digits to round the resulting probabilities to,
+        by default 4.
+
+    Returns
+    -------
+    tuple[float, float, float, float]
+        A tuple containing four floats (fpp, fnp, fpn, fnn), representing the
+        integrated probabilities in each quadrant, normalized by the total integral:
+        - fpp: Probability in the positive-x, positive-y quadrant.
+        - fnp: Probability in the negative-x, positive-y quadrant.
+        - fpn: Probability in the positive-x, negative-y quadrant.
+        - fnn: Probability in the negative-x, negative-y quadrant.
+
+    Raises
+    ------
+    TypeError
+        If `func2D` is not a callable function with 2 arguments, or if
+        `point`, `xlim`, or `ylim` are not list-like or numpy arrays with
+        exactly 2 elements, or if limits in `xlim` or `ylim` are equal.
     """
     if callable(func2D):
         if len(inspect.getfullargspec(func2D)[0]) != 2:
@@ -142,19 +186,34 @@ def FuncQuads(func2D, point, xlim, ylim, rounddig=4):
 
 
 def Qks(alam, iter=100, prec=1e-17):
-    """Computes the value of the KS probability function, as a function of
-    alam, the D statistic. From *Numerical recipes in C* page 623: '[...]
-    the K–S statistic useful is that its distribution in the case of the null
-    hypothesis (data sets drawn from the same distribution) can be calculated,
-    at least to useful approximation, thus giving the significance of any
-    observed nonzero value of D.' (D being the KS statistic).
+    """Compute the Kolmogorov-Smirnov probability function Q(lambda).
 
-    :param float alam: D statistic.
-    :param int iter: Number of iterations to be perfomed. On non-convergence,
-    returns 1.0.
-    :param float prec: Convergence criteria of the qks. Stops converging if
-    that precision is attained.
-    :returns: a float. The significance level of the observed D statistic.
+    Calculates the significance level for a given KS statistic `alam` (D).
+    This function is based on the approximation given in Numerical Recipes in C,
+    page 623. It represents the probability that the KS statistic will exceed
+    the observed value `alam` under the null hypothesis.
+
+    Parameters
+    ----------
+    alam : float
+        The KS statistic D (or a related value, often D * sqrt(N_eff)).
+    iter : int, optional
+        Maximum number of iterations for the series summation, by default 100.
+    prec : float, optional
+        Convergence precision. The summation stops if the absolute value of
+        the term to add is less than `prec`, by default 1e-17.
+
+    Returns
+    -------
+    float
+        The significance level P(D > observed) associated with `alam`.
+        Returns 1.0 if the series does not converge within `iter` iterations
+        or if the result exceeds 1.0. Returns 0.0 if the result is below `prec`.
+
+    Raises
+    ------
+    TypeError
+        If `alam` is not an integer or float.
     """
     # If j iterations are performed, meaning that toadd
     # is still 2 times larger than the precision.
@@ -178,17 +237,36 @@ def Qks(alam, iter=100, prec=1e-17):
 
 
 def ks2d2s(Arr2D1: np.ndarray, Arr2D2: np.ndarray) -> tuple[float, float]:
-    """ks stands for Kolmogorov-Smirnov, 2d for 2 dimensional,
-    2s for 2 samples.
-    KS test for goodness-of-fit on two 2D samples. Tests the hypothesis that
-    the two samples are from the same distribution.
+    """Perform the 2-dimensional, 2-sample Kolmogorov-Smirnov test.
 
-    :param array Arr2D1: 2D array of points/samples.
-    :param array Arr2D2: 2D array of points/samples.
-    :returns: a tuple of two floats. First, the two-sample K-S statistic.
-    If this value is higher than the significance level of the hypothesis,
-    it is rejected. Second, the significance level of *d*. Small values of
-    prob show that the two samples are significantly different.
+    Tests the null hypothesis that two independent 2D samples, `Arr2D1` and
+    `Arr2D2`, are drawn from the same underlying probability distribution.
+    This implementation is based on the methods described by Peacock (1983)
+    and Fasano & Franceschini (1987).
+
+    Parameters
+    ----------
+    Arr2D1 : np.ndarray
+        First 2D sample array (shape N1 x 2).
+    Arr2D2 : np.ndarray
+        Second 2D sample array (shape N2 x 2).
+
+    Returns
+    -------
+    tuple[float, float]
+        d : float
+            The 2D KS statistic, representing the maximum difference found
+            between the cumulative distributions in any of the four quadrants,
+            evaluated at all data points.
+        prob : float
+            The significance level (p-value) of the observed statistic `d`.
+            A small `prob` indicates that the two samples are significantly
+            different.
+
+    Raises
+    ------
+    TypeError
+        If `Arr2D1` or `Arr2D2` are not numpy arrays or are not 2D.
     """
     if not isinstance(Arr2D1, np.ndarray):
         raise TypeError("Input Arr2D1 is not a numpyndarray")
@@ -233,21 +311,42 @@ def ks2d2s(Arr2D1: np.ndarray, Arr2D2: np.ndarray) -> tuple[float, float]:
 
 
 def ks2d1s(Arr2D, func2D, xlim=[], ylim=[]):
-    """ks stands for Kolmogorov-Smirnov, 2d for 2 dimensional,
-    1s for 1 sample.
-    KS test for goodness-of-fit on one 2D sample and one 2D density
-    distribution. Tests the hypothesis that the data was generated
-    from the density distribution.
+    """Perform the 2-dimensional, 1-sample Kolmogorov-Smirnov test.
 
-    :param array Arr2D: 2D array of points/samples.
-    :param func2D: Density distribution. Could implement a function for
-    arrays in the future...
-    :param array xlim, ylim: Defines the domain for the numerical integration
-    necessary to compute the quadrant probabilities.
-    :returns: tuple of two floats. First, the two-sample K-S statistic.
-    If this value is higher than the significance level of the hypothesis,
-    it is rejected. Second, the significance level of *d*. Small values of
-    prob show that the two samples are significantly different.
+    Tests the null hypothesis that a 2D sample `Arr2D` is drawn from a
+    given 2D probability density distribution `func2D`.
+
+    Parameters
+    ----------
+    Arr2D : np.ndarray
+        The 2D sample array (shape N x 2).
+    func2D : callable
+        The theoretical 2D probability density function func(x, y).
+    xlim : list or np.ndarray, optional
+        Integration limits for the x-dimension. If empty, defaults are
+        calculated based on the range of `Arr2D`.
+    ylim : list or np.ndarray, optional
+        Integration limits for the y-dimension. If empty, defaults are
+        calculated based on the range of `Arr2D`.
+
+    Returns
+    -------
+    tuple[float, float]
+        d : float
+            The 2D KS statistic, representing the maximum difference between
+            the empirical distribution (from `Arr2D`) and the theoretical
+            distribution (`func2D`) in any of the four quadrants, evaluated
+            at all data points.
+        prob : float
+            The significance level (p-value) of the observed statistic `d`.
+            A small `prob` indicates that the sample is significantly
+            different from the theoretical distribution.
+
+    Raises
+    ------
+    TypeError
+        If `func2D` is not a callable function with 2 arguments, or if
+        `Arr2D` is not a 2D numpy array.
     """
     if callable(func2D):
         if len(inspect.getfullargspec(func2D)[0]) != 2:

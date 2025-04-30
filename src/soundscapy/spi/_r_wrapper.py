@@ -36,11 +36,12 @@ _session_active = False
 
 
 def check_r_availability() -> None:
-    """
-    Check if R is installed and accessible through rpy2.
+    """Check if R is installed and accessible through rpy2.
 
-    Raises:
-        ImportError: If R is not installed or cannot be accessed.
+    Raises
+    ------
+    ImportError
+        If R is not installed or cannot be accessed.
     """
     global _r_checked
 
@@ -82,11 +83,12 @@ def check_r_availability() -> None:
 
 
 def check_sn_package() -> None:
-    """
-    Check if the R 'sn' package is installed.
+    """Check if the R 'sn' package is installed.
 
-    Raises:
-        ImportError: If the 'sn' package is not installed.
+    Raises
+    ------
+    ImportError
+        If the 'sn' package is not installed.
     """
     global _sn_checked
 
@@ -138,8 +140,7 @@ def check_sn_package() -> None:
 
 
 def check_dependencies() -> dict[str, Any]:
-    """
-    Check all required R dependencies for the SPI module.
+    """Check all required R dependencies for the SPI module.
 
     This function checks:
     1. R installation accessibility
@@ -147,11 +148,15 @@ def check_dependencies() -> dict[str, Any]:
     3. 'sn' package availability
     4. 'sn' package version compatibility
 
-    Returns:
-        dict[str, Any]: Dictionary with dependency information.
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary with dependency information.
 
-    Raises:
-        ImportError: If any dependency check fails.
+    Raises
+    ------
+    ImportError
+        If any dependency check fails.
     """
     # Check R availability first
     check_r_availability()
@@ -173,8 +178,7 @@ def check_dependencies() -> dict[str, Any]:
 
 
 def initialize_r_session() -> dict[str, Any]:
-    """
-    Initialize an R session for skew-normal distribution calculations.
+    """Initialize an R session for skew-normal distribution calculations.
 
     This function:
     1. Checks for R and package dependencies
@@ -182,12 +186,17 @@ def initialize_r_session() -> dict[str, Any]:
     3. Sets up the R environment
     4. Updates global session state
 
-    Returns:
-        dict[str, Any]: Session information including R and package versions
+    Returns
+    -------
+    dict[str, Any]
+        Session information including R and package versions.
 
-    Raises:
-        ImportError: If dependencies are missing
-        RuntimeError: If session initialization fails
+    Raises
+    ------
+    ImportError
+        If dependencies are missing.
+    RuntimeError
+        If session initialization fails.
     """
     global _r_session, _sn_package, _stats_package, _base_package, _session_active
 
@@ -255,16 +264,17 @@ def initialize_r_session() -> dict[str, Any]:
 
 
 def shutdown_r_session() -> bool:
-    """
-    Shutdown the R session and clean up resources.
+    """Shutdown the R session and clean up resources.
 
     This function:
     1. Deactivates numpy conversion
     2. Resets global session state
     3. Performs garbage collection
 
-    Returns:
-        bool: True if successful, False otherwise
+    Returns
+    -------
+    bool
+        True if successful, False otherwise.
     """
     global _r_session, _sn_package, _stats_package, _base_package, _session_active
 
@@ -295,18 +305,21 @@ def shutdown_r_session() -> bool:
 
 
 def get_r_session() -> tuple[Any, Any, Any, Any]:
-    """
-    Get the current R session and package objects.
+    """Get the current R session and package objects.
 
     This function:
     1. Initializes the session if not already active
     2. Returns the session and package references
 
-    Returns:
-        tuple[Any, Any, Any, Any]: (r_session, sn_package, stats_package, base_package)
+    Returns
+    -------
+    tuple[Any, Any, Any, Any]
+        (r_session, sn_package, stats_package, base_package)
 
-    Raises:
-        RuntimeError: If session initialization fails
+    Raises
+    ------
+    RuntimeError
+        If session initialization fails.
     """
     global _r_session, _sn_package, _stats_package, _base_package, _session_active
 
@@ -327,14 +340,17 @@ def get_r_session() -> tuple[Any, Any, Any, Any]:
 
 
 def install_r_packages(packages: list[str] = ["sn", "tvtnorm"]) -> None:
-    """
-    Install R packages if not already installed.
+    """Install R packages if not already installed.
 
-    Args:
-        packages (list[str]): List of R package names to install
+    Parameters
+    ----------
+    packages : list[str], optional
+        List of R package names to install, by default ["sn", "tvtnorm"].
 
-    Raises:
-        ImportError: If R is not available or package installation fails
+    Raises
+    ------
+    ImportError
+        If R is not available or package installation fails.
     """
     check_r_availability()
 
@@ -361,11 +377,12 @@ def install_r_packages(packages: list[str] = ["sn", "tvtnorm"]) -> None:
 
 
 def is_session_active() -> bool:
-    """
-    Check if the R session is currently active.
+    """Check if the R session is currently active.
 
-    Returns:
-        bool: True if the session is active, False otherwise
+    Returns
+    -------
+    bool
+        True if the session is active, False otherwise.
     """
     global _session_active
     return _session_active

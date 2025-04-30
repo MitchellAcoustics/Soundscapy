@@ -59,12 +59,38 @@ def sample_sn(selm_model, n=1000):
 
 
 def sample_mtsn(selm_model=None, xi=None, omega=None, alpha=None, a=-1, b=1, n=1000):
-    """
-    Sample from a multivariate truncated skew-normal distribution.
-    Uses rejection sampling to ensure that the samples are within the bounds
+    """Sample from a multivariate truncated skew-normal distribution.
 
-    Args:
+    Uses rejection sampling to ensure that the samples are within the bounds [a, b]
+    for both dimensions.
 
+    Parameters
+    ----------
+    selm_model : optional
+        Fitted SELM model from R's 'sn' package. If provided, parameters `xi`,
+        `omega`, and `alpha` are ignored.
+    xi : np.ndarray, optional
+        Location parameter (2x1 array).
+    omega : np.ndarray, optional
+        Scale matrix (2x2 array).
+    alpha : np.ndarray, optional
+        Skewness parameter (2x1 array).
+    a : float, optional
+        Lower truncation bound for both dimensions, by default -1.
+    b : float, optional
+        Upper truncation bound for both dimensions, by default 1.
+    n : int, optional
+        Number of samples to generate, by default 1000.
+
+    Returns
+    -------
+    np.ndarray
+        Array of samples (n x 2).
+
+    Raises
+    ------
+    ValueError
+        If neither `selm_model` nor all of `xi`, `omega`, and `alpha` are provided.
     """
     samples = np.array([[0, 0]])
     n_samples = 0
@@ -86,8 +112,23 @@ def sample_mtsn(selm_model=None, xi=None, omega=None, alpha=None, a=-1, b=1, n=1
 
 
 def _dp2cp(xi, omega, alpha, family="SN"):
-    """
-    Convert DP parameters to CP parameters.
+    """Convert Direct Parameters (DP) to Centred Parameters (CP).
+
+    Parameters
+    ----------
+    xi : np.ndarray
+        Location parameter (2x1 array).
+    omega : np.ndarray
+        Scale matrix (2x2 array).
+    alpha : np.ndarray
+        Skewness parameter (2x1 array).
+    family : str, optional
+        Distribution family, by default "SN".
+
+    Returns
+    -------
+    tuple
+        Tuple containing the centred parameters (mean, sigma, skew).
     """
     xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
     omega = robjects.r.matrix(
@@ -111,8 +152,23 @@ def _dp2cp(xi, omega, alpha, family="SN"):
 
 
 def _cp2dp(mean, sigma, skew, family="SN"):
-    """
-    Convert CP parameters to DP parameters.
+    """Convert Centred Parameters (CP) to Direct Parameters (DP).
+
+    Parameters
+    ----------
+    mean : np.ndarray
+        Mean vector (2x1 array).
+    sigma : np.ndarray
+        Covariance matrix (2x2 array).
+    skew : np.ndarray
+        Skewness vector (2x1 array).
+    family : str, optional
+        Distribution family, by default "SN".
+
+    Returns
+    -------
+    tuple
+        Tuple containing the direct parameters (xi, omega, alpha).
     """
     mean = robjects.FloatVector(mean.T)  # Transpose to make it a column vector
     sigma = robjects.r.matrix(
