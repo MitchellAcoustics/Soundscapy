@@ -1,6 +1,9 @@
+from typing import Literal
+
 import numpy as np
 import pandas as pd
 from rpy2 import robjects
+from rpy2.robjects.methods import RS4
 
 from soundscapy import get_logger
 from soundscapy.spi._r_wrapper import get_r_session
@@ -11,53 +14,62 @@ _, sn, _, _ = get_r_session()
 logger.debug("R session and packages retrieved successfully.")
 
 
-def selm(x: str, y: str, data: pd.DataFrame):
+def selm(x: str, y: str, data: pd.DataFrame) -> RS4:
     formula = f"cbind({x}, {y}) ~ 1"
     return sn.selm(formula, data=data, family="SN")
 
 
-def calc_cp(x: str, y: str, data: pd.DataFrame):
+def calc_cp(x: str, y: str, data: pd.DataFrame) -> tuple:
     selm_model = selm(x, y, data)
     return extract_cp(selm_model)
 
 
-def calc_dp(x: str, y: str, data: pd.DataFrame):
+def calc_dp(x: str, y: str, data: pd.DataFrame) -> tuple:
     selm_model = selm(x, y, data)
     return extract_dp(selm_model)
 
 
-def extract_cp(selm_model):
+def extract_cp(selm_model: RS4) -> tuple:
     cp = tuple(selm_model.slots["param"][1])
-    cp = (cp[0].flatten(), cp[1], cp[2].flatten())
-    return cp
+    return (cp[0].flatten(), cp[1], cp[2].flatten())
 
 
-def extract_dp(selm_model):
+def extract_dp(selm_model: RS4) -> tuple:
     dp = tuple(selm_model.slots["param"][0])
-    dp = (dp[0].flatten(), dp[1], dp[2].flatten())
-    return dp
+    return (dp[0].flatten(), dp[1], dp[2].flatten())
 
 
-def sample_msn(selm_model=None, xi=None, omega=None, alpha=None, n=1000):
+def sample_msn(
+    selm_model: RS4 | None = None,
+    xi: np.ndarray | None = None,
+    omega: np.ndarray | None = None,
+    alpha: np.ndarray | None = None,
+    n: int = 1000,
+) -> np.ndarray:
     if selm_model is not None:
         return sn.rmsn(n, dp=selm_model.slots["param"][0])
     if xi is not None and omega is not None and alpha is not None:
-        xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
-        omega = robjects.r.matrix(
+        r_xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
+        r_omega = robjects.r.matrix(
             robjects.FloatVector(omega.flatten()),
             nrow=omega.shape[0],
             ncol=omega.shape[1],
-        )
-        alpha = robjects.FloatVector(alpha)  # Transpose to make it a column vector
-        return sn.rmsn(n, xi=xi, Omega=omega, alpha=alpha)
-    raise ValueError("Either selm_model or xi, omega, and alpha must be provided.")
+        )  # type: ignore[reportCallIssue]
+        r_alpha = robjects.FloatVector(alpha)  # Transpose to make it a column vector
+        return sn.rmsn(n, xi=r_xi, Omega=r_omega, alpha=r_alpha)
+    msg = "Either selm_model or xi, omega, and alpha must be provided."
+    raise ValueError(msg)
 
 
-def sample_sn(selm_model, n=1000):
-    return sn.rsn(n, dp=selm_model.slots["param"][0])
-
-
-def sample_mtsn(selm_model=None, xi=None, omega=None, alpha=None, a=-1, b=1, n=1000):
+def sample_mtsn(
+    selm_model: RS4 | None = None,
+    xi: np.ndarray | None = None,
+    omega: np.ndarray | None = None,
+    alpha: np.ndarray | None = None,
+    a: float = -1,
+    b: float = 1,
+    n: int = 1000,
+) -> np.ndarray:
     """
     Sample from a multivariate truncated skew-normal distribution.
 
@@ -101,18 +113,30 @@ def sample_mtsn(selm_model=None, xi=None, omega=None, alpha=None, a=-1, b=1, n=1
         elif xi is not None and omega is not None and alpha is not None:
             sample = sample_msn(xi=xi, omega=omega, alpha=alpha, n=1)
         else:
-            raise ValueError(
-                "Either selm_model or xi, omega, and alpha must be provided."
-            )
+            msg = "Either selm_model or xi, omega, and alpha must be provided."
+            raise ValueError(msg)
         if a <= sample[0][0] <= b and a <= sample[0][1] <= b:
             samples = np.append(samples, sample, axis=0)
             if n_samples == 0:
                 samples = samples[1:]
             n_samples += 1
+
+    # Ensure the sample is within the bounds [a, b] for both dimensions
+    if not np.all((a <= samples[:, 0]) & (samples[:, 0] <= b)):
+        msg = f"Sample x-values are out of bounds: [{a}, {b}]"
+        raise ValueError(msg)
+    if not np.all((a <= samples[:, 1]) & (samples[:, 1] <= b)):
+        msg = f"Sample y-values are out of bounds: [{a}, {b}]"
+        raise ValueError(msg)
     return samples
 
 
-def _dp2cp(xi, omega, alpha, family="SN"):
+def dp2cp(
+    xi: np.ndarray,
+    omega: np.ndarray,
+    alpha: np.ndarray,
+    family: Literal["SN", "ESN", "ST", "SC"] = "SN",
+) -> tuple:
     """
     Convert Direct Parameters (DP) to Centred Parameters (CP).
 
@@ -133,19 +157,19 @@ def _dp2cp(xi, omega, alpha, family="SN"):
         Tuple containing the centred parameters (mean, sigma, skew).
 
     """
-    xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
-    omega = robjects.r.matrix(
+    r_xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
+    r_omega = robjects.r.matrix(
         robjects.FloatVector(omega.flatten()),
         nrow=omega.shape[0],
         ncol=omega.shape[1],
-    )
-    alpha = robjects.FloatVector(alpha)  # Transpose to make it a column vector
+    )  # type: ignore[reportCallIssue]
+    r_alpha = robjects.FloatVector(alpha)  # Transpose to make it a column vector
 
     dp_r = robjects.ListVector(
         {
-            "xi": xi,
-            "Omega": omega,
-            "alpha": alpha,
+            "xi": r_xi,
+            "Omega": r_omega,
+            "alpha": r_alpha,
         }
     )
 
@@ -154,7 +178,12 @@ def _dp2cp(xi, omega, alpha, family="SN"):
     return tuple(cp_r)
 
 
-def _cp2dp(mean, sigma, skew, family="SN"):
+def cp2dp(
+    mean: np.ndarray,
+    sigma: np.ndarray,
+    skew: np.ndarray,
+    family: Literal["SN", "ESN", "ST", "SC"] = "SN",
+) -> tuple:
     """
     Convert Centred Parameters (CP) to Direct Parameters (DP).
 
@@ -175,18 +204,18 @@ def _cp2dp(mean, sigma, skew, family="SN"):
         Tuple containing the direct parameters (xi, omega, alpha).
 
     """
-    mean = robjects.FloatVector(mean.T)  # Transpose to make it a column vector
-    sigma = robjects.r.matrix(
+    r_mean = robjects.FloatVector(mean.T)  # Transpose to make it a column vector
+    r_sigma = robjects.r.matrix(
         robjects.FloatVector(sigma.flatten()),
         nrow=sigma.shape[0],
         ncol=sigma.shape[1],
-    )
-    skew = robjects.FloatVector(skew)  # Transpose to make it a column vector
+    )  # type: ignore[reportCallIssue]
+    r_skew = robjects.FloatVector(skew)  # Transpose to make it a column vector
     cp_r = robjects.ListVector(
         {
-            "mean": mean,
-            "Sigma": sigma,
-            "skew": skew,
+            "mean": r_mean,
+            "Sigma": r_sigma,
+            "skew": r_skew,
         }
     )
     dp_r = sn.cp2dp(cp_r, family=family)

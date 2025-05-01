@@ -3646,6 +3646,7 @@ dev = [
     { name = "setuptools-scm" },
     { name = "tox" },
     { name = "twine" },
+    { name = "types-pyyaml" },
 ]
 docs = [
     { name = "ipywidgets" },
@@ -3700,6 +3701,7 @@ dev = [
     { name = "setuptools-scm", specifier = ">=8.3.1" },
     { name = "tox", specifier = ">=4.25.0" },
     { name = "twine", specifier = ">=6.1.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20250402" },
 ]
 docs = [
     { name = "ipywidgets", specifier = ">=8.1.3" },
@@ -3928,6 +3930,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/4b/66/38c89861242f2c61c8315ddbcc7d7bbf64979f4b0bdc48db0ba62aeec330/types_pytz-2025.2.0.20250326.tar.gz", hash = "sha256:deda02de24f527066fc8d6a19e284ab3f3ae716a42b4adb6b40e75e408c08d36", size = 10595 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/e0/17f3a6670db5c95dc195f346e2e7290f22ba8327c188133959389b578cbd/types_pytz-2025.2.0.20250326-py3-none-any.whl", hash = "sha256:3c397fd1b845cd2b3adc9398607764ced9e578a98a5d1fbb4a9bc9253edfb162", size = 10222 },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20250402"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/68/609eed7402f87c9874af39d35942744e39646d1ea9011765ec87b01b2a3c/types_pyyaml-6.0.12.20250402.tar.gz", hash = "sha256:d7c13c3e6d335b6af4b0122a01ff1d270aba84ab96d1a1a1063ecba3e13ec075", size = 17282 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/56/1fe61db05685fbb512c07ea9323f06ea727125951f1eb4dff110b3311da3/types_pyyaml-6.0.12.20250402-py3-none-any.whl", hash = "sha256:652348fa9e7a203d4b0d21066dfb00760d3cbd5a15ebb7cf8d33c88a49546681", size = 20329 },
 ]
 
 [[package]]

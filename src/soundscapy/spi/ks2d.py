@@ -1,3 +1,6 @@
+# ruff: noqa: PGH004
+# ruff: noqa
+# type: ignore
 # Code créé par Gabriel Taillon le 7 Mai 2018
 # From https://github.com/Gabinou/2DKS
 #  Kolmogorov-Smyrnov Test extended to two dimensions.
