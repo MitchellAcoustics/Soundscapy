@@ -50,22 +50,21 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
+      - name: Setup R environment
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 2
+          extra-packages: |
+            any::sn
+
       - name: Restore tox cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
         with:
           path: .tox
           key: tox-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.factor }}-${{ hashFiles('pyproject.toml') }}
-
-      - name: Install R
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y r-base libtirpc-dev
-          echo "R installed successfully"
-
-      - name: Set R environment variables
-        run: |
-          echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
-          echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
 
       - name: Setup Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
