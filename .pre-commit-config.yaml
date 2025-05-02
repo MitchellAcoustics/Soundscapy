@@ -32,6 +32,7 @@ repos:
       - id: prettier
         args:
           - --quote-props=as-needed
+        exclude: ^docs/.*\.md$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
