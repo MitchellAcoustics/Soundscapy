@@ -69,6 +69,11 @@ jobs:
       - name: Setup Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
+      - name: Set R environment variables
+        run: |
+          echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+          echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
+
       - name: Install tox
         run: uv tool install tox --with tox-uv
 
