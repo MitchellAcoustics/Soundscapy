@@ -2,7 +2,9 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.2
     hooks:
-      - id: ruff
+      # TODO(MitchellAcoustics): Enable linting pre-commit hooks
+      # https://github.com/MitchellAcoustics/Soundscapy/issues/114
+      # - id: ruff
       - id: ruff-format
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.44.0
@@ -18,10 +20,12 @@ repos:
     rev: v0.24.2
     hooks:
       - id: toml-sort-fix
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
-    hooks:
-      - id: mypy
+  # TODO(MitchellAcoustics): Enable linting pre-commit hooks
+  # https://github.com/MitchellAcoustics/Soundscapy/issues/114
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.15.0
+  #   hooks:
+  #     - id: mypy
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.5.3
     hooks:

@@ -227,7 +227,7 @@ Optional dependency tests exist at several levels:
 
 Soundscapy's tox configuration provides separate environments for different dependency groups:
 
-```
+```bash
 # Run core tests (no optional dependencies)
 tox -e py310-core
 

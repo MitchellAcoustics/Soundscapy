@@ -1,3 +1,5 @@
+# News
+
 ## [2024-08-15] Significant Enhancements to Soundscapy's Plotting Module
 
 I am pleased to announce a comprehensive update to Soundscapy's plotting module, introducing enhanced flexibility, improved performance, and more extensive customization options for soundscape visualizations. This update represents a substantial improvement in our toolkit's capabilities.

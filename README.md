@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/main/docs/img/LightLogo.png" width="300">
+![Soundscapy Logo](https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/main/docs/img/LightLogo.png) <!-- markdownlint-disable-line MD041 -->
 
 # Soundscapy
 
