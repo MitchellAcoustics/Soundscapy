@@ -62,6 +62,8 @@ jobs:
           extra-packages: |
             any::sn
 
+      - uses: fawazahmed0/action-debug-vscode@main
+
       - name: Set R environment variables
         run: |
           R RHOME
