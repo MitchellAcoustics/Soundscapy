@@ -1,3 +1,9 @@
+"""
+Soundscapy Psychoacoustic Indicator (SPI) calculation module.
+
+This module provides functions and classes for calculating SPI,
+based on the R implementation. Requires optional dependencies.
+"""
 # ruff: noqa: E402
 # ignore module level import order because we need to check dependencies first
 
@@ -7,20 +13,21 @@ try:
     import rpy2  # noqa: F401
 
 except ImportError as e:
-    raise ImportError(
+    msg = (
         "SPI functionality requires additional dependencies. "
         "Install with: pip install soundscapy[spi]"
-    ) from e
+    )
+    raise ImportError(msg) from e
 
 # Now we can import our modules that depend on the optional packages
-from . import MSN
-from .MSN import MultiSkewNorm, DirectParams, CentredParams, cp2dp, dp2cp
+from soundscapy.spi import msn
+from soundscapy.spi.msn import CentredParams, DirectParams, MultiSkewNorm, cp2dp, dp2cp
 
 __all__ = [
-    "MSN",
-    "MultiSkewNorm",
-    "DirectParams",
     "CentredParams",
+    "DirectParams",
+    "MultiSkewNorm",
     "cp2dp",
     "dp2cp",
+    "msn",
 ]

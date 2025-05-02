@@ -1,4 +1,4 @@
-
+# News
 
 ## [2024-08-15] Significant Enhancements to Soundscapy's Plotting Module
 
@@ -21,7 +21,7 @@ We have introduced a new `CircumplexPlot` class that serves as the central mecha
 While we've significantly expanded the capabilities of our plotting module, we've maintained a focus on user accessibility. We now offer two primary interfaces for plot creation:
 
 - Function-based Interface: The `scatter_plot()` and `density_plot()` functions remain available and have been optimized to leverage the new CircumplexPlot class internally. These functions offer a straightforward method for creating standard plots with minimal code.
-- Class-based Interface: For users requiring more advanced customization, the `CircumplexPlot` class provides direct access to a wide array of plotting options and methods. 
+- Class-based Interface: For users requiring more advanced customization, the `CircumplexPlot` class provides direct access to a wide array of plotting options and methods.
 
 This dual approach ensures that both newcomers and advanced users can efficiently create the visualizations they need.
 
@@ -42,9 +42,11 @@ Our development roadmap includes several exciting features:
 It's important to note that this update introduces breaking changes that will require modifications to existing code. The primary areas affected are:
 
 - Import statements: The module structure has changed, necessitating updates to import statements. For example:
-    ```python
-    from soundscapy.plotting import scatter_plot, density_plot, Backend
-    ```
+
+  ```python
+  from soundscapy.plotting import scatter_plot, density_plot, Backend
+  ```
+
 - Function names and parameters: Some function names and their parameters have been modified for consistency and clarity. Please refer to the updated documentation for specific changes.
 - Class-based interface: If you were previously using lower-level plotting functions, you may need to transition to the new CircumplexPlot class for advanced customizations.
 

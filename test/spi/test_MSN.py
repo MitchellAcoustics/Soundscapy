@@ -1,16 +1,16 @@
-import pytest
-from soundscapy.spi.MSN import MultiSkewNorm, DirectParams, CentredParams
-import numpy as np
 from unittest.mock import patch  # Keep patch for plotting
+
+import numpy as np
 import pandas as pd
-from soundscapy.spi.MSN import cp2dp
-from soundscapy.spi.MSN import dp2cp
+import pytest
+
+from soundscapy.spi.msn import CentredParams, DirectParams, MultiSkewNorm, cp2dp, dp2cp
 
 # Check for R and 'sn' package availability
 try:
     # import rpy2.robjects as ro # No longer needed directly
-    from rpy2.robjects.packages import importr
     from rpy2.rinterface_lib.embedded import RRuntimeError
+    from rpy2.robjects.packages import importr
 
     # Try importing the 'sn' package in R
     try:
@@ -47,7 +47,7 @@ class TestDirectParams:
         omega = np.array([[1.0, 2.0], [2.0, 1.0]])
         alpha = np.array([0.3, 0.4])
 
-        with pytest.raises(AssertionError, match="Omega must be positive definite"):
+        with pytest.raises(ValueError, match="Omega must be positive definite"):
             DirectParams(xi, omega, alpha)
 
     def test_direct_params_init_not_symmetric(self):
@@ -57,7 +57,7 @@ class TestDirectParams:
         omega = np.array([[1.0, 0.5], [0.6, 1.0]])
         alpha = np.array([0.3, 0.4])
 
-        with pytest.raises(AssertionError, match="Omega must be symmetric"):
+        with pytest.raises(ValueError, match="Omega must be symmetric"):
             DirectParams(xi, omega, alpha)
 
     def test_direct_params_repr(self):
@@ -274,7 +274,6 @@ class TestMultiSkewNorm:
 
     def test_fit_with_1d_numpy_array(self):
         """Test fit method raises error on 1D numpy array."""
-
         msn = MultiSkewNorm()
         one_d_array = np.array([0.1, 0.2, 0.3])
 
@@ -362,8 +361,8 @@ class TestMultiSkewNorm:
         ):
             msn.sample()
 
-    @patch("soundscapy.spi.MSN.sspy")  # Keep mocking the plotting call
-    def test_sspy_plot_calls_sample_if_needed(self, mock_sspy):
+    @patch("soundscapy.spi.msn.density_plot")  # Keep mocking the plotting call
+    def test_sspy_plot_calls_sample_if_needed(self, mock_density_plot):
         """Test sspy_plot calls sample if sample_data is None."""
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)  # Define DP so sample can run
@@ -378,9 +377,9 @@ class TestMultiSkewNorm:
         assert msn.sample_data.shape == (MOCK_SAMPLE_SIZE, 2)
 
         # Check plot was called with the sampled data
-        mock_sspy.density_plot.assert_called_once()
-        call_args = mock_sspy.density_plot.call_args[0]
-        call_kwargs = mock_sspy.density_plot.call_args[1]
+        mock_density_plot.assert_called_once()
+        call_args = mock_density_plot.call_args[0]
+        call_kwargs = mock_density_plot.call_args[1]
         assert isinstance(call_args[0], pd.DataFrame)
         # Check the dataframe passed to plot matches the generated sample data
         expected_plot_df = pd.DataFrame(
@@ -390,8 +389,8 @@ class TestMultiSkewNorm:
         assert call_kwargs["color"] == "red"
         assert call_kwargs["title"] == "Test Plot"
 
-    @patch("soundscapy.spi.MSN.sspy")  # Keep mocking the plotting call
-    def test_sspy_plot_uses_existing_sample(self, mock_sspy):
+    @patch("soundscapy.spi.msn.density_plot")  # Keep mocking the plotting call
+    def test_sspy_plot_uses_existing_sample(self, mock_density_plot):
         """Test sspy_plot uses existing sample_data if available."""
         msn = MultiSkewNorm()
         # Create some dummy sample data
@@ -408,49 +407,46 @@ class TestMultiSkewNorm:
         np.testing.assert_array_equal(msn.sample_data, existing_sample)
 
         # Check plot was called with the existing data
-        mock_sspy.density_plot.assert_called_once()
-        call_args = mock_sspy.density_plot.call_args[0]
+        mock_density_plot.assert_called_once()
+        call_args = mock_density_plot.call_args[0]
         assert isinstance(call_args[0], pd.DataFrame)
         expected_plot_df = pd.DataFrame(
             existing_sample, columns=["ISOPleasant", "ISOEventful"]
         )
         pd.testing.assert_frame_equal(call_args[0], expected_plot_df)
 
-    @patch("soundscapy.spi.MSN.ks2d2s")
-    def test_ks2ds_calls_sample_if_needed(self, mock_ks2d2s):
-        """Test ks2ds calls sample if sample_data is None and calls ks2d2s."""
-        mock_ks2d2s.return_value = (0.1, 0.05)  # Mock return value (D, p_value)
+    def test_ks2d2s_calls_sample_if_needed(self):
+        """Test ks2d2s calls sample if sample_data is None and calls ks2d2s."""
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)  # Define DP so sample can run
 
         assert msn.sample_data is None
-        test_data_np = np.random.rand(50, 2)
-        result = msn.ks2ds(test_data_np)
+        test_data_df = pd.DataFrame(np.random.rand(40, 2), columns=["col1", "col2"])
+
+        result = msn.ks2d2s(test_data_df)
+        # TODO: still need to implement check for actual result values
 
         # Check sample was called implicitly and data was generated
         assert isinstance(msn.sample_data, np.ndarray)
-        assert msn.sample_data.shape[1] == 2  # Check sample data has 2 columns
+        assert (
+            msn.sample_data.shape[1] == 2  # noqa: PLR2004
+        )  # Check sample data has 2 columns
 
-        # Check ks2d2s was called with the generated sample and test data
-        mock_ks2d2s.assert_called_once()
-        call_args = mock_ks2d2s.call_args[0]
-        np.testing.assert_array_equal(call_args[0], msn.sample_data)
-        np.testing.assert_array_equal(call_args[1], test_data_np)
+        assert isinstance(result, tuple)
+        assert isinstance(result[0], float)
+        assert isinstance(result[1], float)
 
-        # Check the result is the return value of the mocked ks2d2s
-        assert result == (0.1, 0.05)
-
-    def test_ks2ds(self):
-        """Test ks2ds converts DataFrame input to numpy array."""
+    def test_ks2d2s(self):
+        """Test ks2d2s converts DataFrame input to numpy array."""
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
         msn.sample(n=50)  # Generate sample data beforehand
 
         test_data_df = pd.DataFrame(np.random.rand(40, 2), columns=["col1", "col2"])
-        test_data_np = test_data_df.values
+        test_data_np = test_data_df.to_numpy()
 
-        df_result = msn.ks2ds(test_data_df)
-        np_result = msn.ks2ds(test_data_np)
+        df_result = msn.ks2d2s(test_data_df)
+        np_result = msn.ks2d2s(test_data_np)
         # TODO: still need to implement check for actual result values
 
         assert df_result == np_result, (
@@ -465,23 +461,23 @@ class TestMultiSkewNorm:
         assert isinstance(np_result[0], float)
         assert isinstance(np_result[1], float)
 
-    def test_ks2ds_dataframe_wrong_shape(self):
-        """Test ks2ds raises AssertionError for DataFrame with wrong shape."""
+    def test_ks2d2s_dataframe_wrong_shape(self):
+        """Test ks2d2s raises ValueError for DataFrame with wrong shape."""
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
         msn.sample(n=50)
 
         test_data_df_wrong = pd.DataFrame(np.random.rand(40, 3))  # 3 columns
 
-        with pytest.raises(AssertionError, match="Test data must have two columns."):
-            msn.ks2ds(test_data_df_wrong)
+        with pytest.raises(ValueError, match="Test data must have two columns."):
+            msn.ks2d2s(test_data_df_wrong)
 
-    @patch.object(MultiSkewNorm, "ks2ds")
-    def test_spi(self, mock_ks2ds):
+    @patch.object(MultiSkewNorm, "ks2d2s")
+    def test_spi(self, mock_ks2d2s):
         """Test spi method calculation."""
         # Mock ks2ds to return a specific KS statistic and p-value
         mock_ks_statistic = 0.15
-        mock_ks2ds.return_value = (mock_ks_statistic, 0.04)
+        mock_ks2d2s.return_value = (mock_ks_statistic, 0.04)
 
         msn = MultiSkewNorm()
         # No need to fit or define dp as we are mocking ks2ds
@@ -490,28 +486,28 @@ class TestMultiSkewNorm:
         spi_value = msn.spi(test_data)
 
         # Check ks2ds was called with the test data
-        mock_ks2ds.assert_called_once_with(test_data)
+        mock_ks2d2s.assert_called_once_with(test_data)
 
         # Check the SPI calculation
         expected_spi = int((1 - mock_ks_statistic) * 100)
         assert spi_value == expected_spi
         assert isinstance(spi_value, int)
 
-    @patch.object(MultiSkewNorm, "ks2ds")
-    def test_spi_with_dataframe(self, mock_ks2ds):
+    @patch.object(MultiSkewNorm, "ks2d2s")
+    def test_spi_with_dataframe(self, mock_ks2d2s):
         """Test spi method with DataFrame input."""
         mock_ks_statistic = 0.25
-        mock_ks2ds.return_value = (mock_ks_statistic, 0.01)
+        mock_ks2d2s.return_value = (mock_ks_statistic, 0.01)
 
         msn = MultiSkewNorm()
         test_data_df = pd.DataFrame(np.random.rand(60, 2), columns=["a", "b"])
 
         spi_value = msn.spi(test_data_df)
 
-        # Check ks2ds was called (the mock captures the call)
-        mock_ks2ds.assert_called_once()
+        # Check ks2d2s was called (the mock captures the call)
+        mock_ks2d2s.assert_called_once()
         # Check the argument passed to the mock was the DataFrame
-        call_args = mock_ks2ds.call_args[0]
+        call_args = mock_ks2d2s.call_args[0]
         pd.testing.assert_frame_equal(call_args[0], test_data_df)
 
         # Check the SPI calculation

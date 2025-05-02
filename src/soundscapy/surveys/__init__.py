@@ -1,12 +1,17 @@
-from . import processing
-from . import survey_utils
+"""
+Soundscapy Surveys Package.
 
-from .processing import (
+This package handles the processing and analysis of soundscape surveys,
+including PAQ (Perceived Affective Quality) data and ISO coordinate calculations.
+"""
+
+from soundscapy.surveys import processing, survey_utils
+from soundscapy.surveys.processing import (
     add_iso_coords,
-    return_paqs,
     calculate_iso_coords,
+    return_paqs,
 )
-from .survey_utils import (
+from soundscapy.surveys.survey_utils import (
     LANGUAGE_ANGLES,
     PAQ_IDS,
     PAQ_LABELS,
@@ -14,13 +19,13 @@ from .survey_utils import (
 )
 
 __all__ = [
-    "processing",
-    "survey_utils",
-    "return_paqs",
-    "add_iso_coords",
-    "calculate_iso_coords",
-    "rename_paqs",
     "LANGUAGE_ANGLES",
     "PAQ_IDS",
     "PAQ_LABELS",
+    "add_iso_coords",
+    "calculate_iso_coords",
+    "processing",
+    "rename_paqs",
+    "return_paqs",
+    "survey_utils",
 ]

@@ -1,14 +1,12 @@
-"""
-Styling utilities for circumplex plots using Seaborn and Matplotlib.
-"""
+"""Styling utilities for circumplex plots using Seaborn and Matplotlib."""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import matplotlib as mpl
 import seaborn as sns
 
-from .plotting_utils import DEFAULT_FIGSIZE
+from soundscapy.plotting.plotting_utils import DEFAULT_FIGSIZE
 
 
 @dataclass
@@ -24,6 +22,7 @@ class StyleOptions:
         bw_adjust (float): Bandwidth adjustment for kernel density estimation.
         figsize (Tuple[int, int]): Figure size (width, height) in inches.
         simple_density (Dict[str, Any]): Configuration for simple density plots.
+
     """
 
     diag_lines_zorder: int = 1
@@ -31,8 +30,8 @@ class StyleOptions:
     prim_lines_zorder: int = 2
     data_zorder: int = 3
     bw_adjust: float = 1.2
-    figsize: Tuple[int, int] = DEFAULT_FIGSIZE
-    simple_density: Dict[str, Any] = field(
+    figsize: tuple[int, int] = DEFAULT_FIGSIZE
+    simple_density: dict[str, Any] = field(
         default_factory=lambda: {
             "thresh": 0.5,
             "levels": 2,
@@ -53,7 +52,7 @@ class SeabornStyler:
 
     def apply_styling(
         self, fig: mpl.figure.Figure, ax: mpl.axes.Axes
-    ) -> Tuple[mpl.figure.Figure, mpl.axes.Axes]:
+    ) -> tuple[mpl.figure.Figure, mpl.axes.Axes]:
         """
         Apply styling to the plot.
 
@@ -65,6 +64,7 @@ class SeabornStyler:
         Returns
         -------
             Tuple[mpl.figure.Figure, mpl.axes.Axes]: The styled figure and axes.
+
         """
         self.set_style()
         self.circumplex_grid(ax)

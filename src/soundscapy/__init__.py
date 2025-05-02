@@ -1,6 +1,4 @@
-"""
-Soundscapy is a Python library for soundscape analysis and visualisation.
-"""
+"""Soundscapy is a Python library for soundscape analysis and visualisation."""
 
 # ruff: noqa: E402
 from loguru import logger
@@ -8,88 +6,87 @@ from loguru import logger
 # https://loguru.readthedocs.io/en/latest/resources/recipes.html#configuring-loguru-to-be-used-by-a-library-or-an-application
 logger.disable("soundscapy")
 
-import importlib.metadata
-
-__version__ = importlib.metadata.version("soundscapy")
-
 # Always available core modules
-from soundscapy import surveys
-from soundscapy import databases
-from soundscapy import plotting
-from soundscapy.logging import (
-    setup_logging,
-    enable_debug,
+from soundscapy import databases, plotting, surveys
+from soundscapy._version import __version__  # noqa: F401
+from soundscapy.databases import isd, satp
+from soundscapy.plotting import density_plot, scatter_plot
+from soundscapy.sspylogging import (
     disable_logging,
+    enable_debug,
     get_logger,
+    setup_logging,
 )
-from soundscapy.databases import araus, isd, satp
 from soundscapy.surveys import processing
-from soundscapy.plotting import scatter_plot, density_plot
 
 __all__ = [
-    # Core modules
-    "surveys",
     "databases",
-    "plotting",
-    "araus",
-    "isd",
-    "satp",
-    "processing",
-    "scatter_plot",
     "density_plot",
+    "disable_logging",
+    "enable_debug",
+    "get_logger",
+    "isd",
+    "plotting",
+    "processing",
+    "satp",
+    "scatter_plot",
     # Logging functions
     "setup_logging",
-    "enable_debug",
-    "disable_logging",
-    "get_logger",
+    # Core modules
+    "surveys",
 ]
 
 # Try to import optional audio module
 try:
-    from soundscapy import audio  # noqa: F401
+    from soundscapy import audio
     from soundscapy.audio import (
-        Binaural,  # noqa: F401
-        AudioAnalysis,  # noqa: F401
-        AnalysisSettings,  # noqa: F401
-        ConfigManager,  # noqa: F401
-        process_all_metrics,  # noqa: F401
-        prep_multiindex_df,  # noqa: F401
-        add_results,  # noqa: F401
-        parallel_process,  # noqa: F401
+        AnalysisSettings,
+        AudioAnalysis,
+        Binaural,
+        ConfigManager,
+        add_results,
+        parallel_process,
+        prep_multiindex_df,
+        process_all_metrics,
     )
 
-    __all__.extend(
-        [
-            "audio",
-            "Binaural",
-            "AudioAnalysis",
-            "AnalysisSettings",
-            "ConfigManager",
-            "process_all_metrics",
-            "prep_multiindex_df",
-            "add_results",
-            "parallel_process",
-        ]
-    )
+    __all__ += [
+        "AnalysisSettings",
+        "AudioAnalysis",
+        "Binaural",
+        "ConfigManager",
+        "add_results",
+        "audio",
+        "parallel_process",
+        "prep_multiindex_df",
+        "process_all_metrics",
+    ]
+
 except ImportError:
     # Audio module not available - this is expected if dependencies aren't installed
     pass
 
 # Try to import optional SPI module
 try:
-    from soundscapy import spi  # noqa: F401
-
+    from soundscapy import spi
     from soundscapy.spi import (
-        MultiSkewNorm,  # noqa: F401
-        DirectParams,  # noqa: F401
-        CentredParams,  # noqa: F401
-        cp2dp,  # noqa: F401
-        dp2cp,  # noqa: F401
+        CentredParams,
+        DirectParams,
+        MultiSkewNorm,
+        cp2dp,
+        dp2cp,
+        msn,
     )
 
-    __all__.extend(
-        ["spi", "MultiSkewNorm", "DirectParams", "CentredParams", "cp2dp", "dp2cp"]
-    )
+    __all__ += [
+        "CentredParams",
+        "DirectParams",
+        "MultiSkewNorm",
+        "cp2dp",
+        "dp2cp",
+        "msn",
+        "spi",
+    ]
 
 except ImportError:
     # SPI module not available

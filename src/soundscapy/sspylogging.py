@@ -1,21 +1,26 @@
 """
 Logging configuration for Soundscapy.
 
-This module provides simple functions to configure logging for both users and developers.
-By default, Soundscapy logging is disabled to avoid unwanted output.
+This module provides simple functions to configure logging for both users and
+developers. By default, Soundscapy logging is disabled to avoid unwanted output.
 Users can enable logging with the setup_logging function.
 """
 
-import sys
-from typing import Optional, Union
-from pathlib import Path
+from __future__ import annotations
 
+import sys
+from typing import TYPE_CHECKING
+
+import loguru
 from loguru import logger
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def setup_logging(
     level: str = "INFO",
-    log_file: Optional[Union[str, Path]] = None,
+    log_file: str | Path | None = None,
     format_level: str = "basic",
 ) -> None:
     """
@@ -27,7 +32,8 @@ def setup_logging(
         Logging level for console output.
         Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
     log_file : str or Path, optional
-        Path to a log file. If provided, all messages (including DEBUG) will be logged to this file.
+        Path to a log file.
+        If provided, all messages (including DEBUG) will be logged to this file.
     format_level : str, default="basic"
         Format complexity level. Options:
         - "basic": Simple format with timestamp, level, and message
@@ -45,6 +51,7 @@ def setup_logging(
     >>>
     >>> # Use detailed format for debugging
     >>> setup_logging(level="DEBUG", format_level="detailed")
+
     """
     # Enable soundscapy logging (disabled by default in __init__.py)
     logger.enable("soundscapy")
@@ -55,13 +62,19 @@ def setup_logging(
     # Format configurations
     formats = {
         "basic": "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
-        "detailed": "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-        "developer": "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}\n{exception}",
+        "detailed": (
+            "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
+            "{name}:{function}:{line} | {message}"
+        ),
+        "developer": (
+            "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
+            "{name}:{function}:{line} | {message}\n{exception}"
+        ),
     }
 
     # Use the appropriate format
     if format_level not in formats:
-        print(f"Warning: Unknown format_level '{format_level}'. Using 'basic' instead.")
+        logger.warning(f"Unknown format_level '{format_level}'. Using 'basic' instead.")
         format_level = "basic"
 
     log_format = formats[format_level]
@@ -100,6 +113,7 @@ def enable_debug() -> None:
     >>> from soundscapy import enable_debug
     >>> enable_debug()
     >>> # Now all debug messages will be shown
+
     """
     setup_logging(level="DEBUG", format_level="detailed")
     logger.info("Debug logging enabled")
@@ -114,6 +128,7 @@ def disable_logging() -> None:
     >>> from soundscapy import disable_logging
     >>> disable_logging()
     >>> # No more logging messages will be shown
+
     """
     # First remove all handlers to ensure no output
     logger.remove()
@@ -123,7 +138,7 @@ def disable_logging() -> None:
     logger.add(sys.stderr, level=100)  # Level 100 is higher than any standard level
 
 
-def get_logger():
+def get_logger() -> loguru.Logger:
     """
     Get the Soundscapy logger instance.
 
@@ -140,6 +155,7 @@ def get_logger():
     >>> from soundscapy import get_logger
     >>> logger = get_logger()
     >>> logger.debug("Custom debug message")
+
     """
     return logger
 
@@ -152,6 +168,7 @@ def is_notebook() -> bool:
     -------
     bool
         True if running in a Jupyter notebook, False otherwise
+
     """
     try:
         from IPython.core.getipython import get_ipython
@@ -159,9 +176,8 @@ def is_notebook() -> bool:
         shell = get_ipython().__class__.__name__
         if shell == "ZMQInteractiveShell":  # Jupyter notebook/lab
             return True
-        elif shell == "TerminalInteractiveShell":  # IPython
+        if shell == "TerminalInteractiveShell":  # IPython
             return False
-        else:
-            return False
+        return False  # noqa: TRY300
     except (NameError, ImportError):
         return False

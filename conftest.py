@@ -1,9 +1,10 @@
 """Configure pytest for soundscapy testing."""
 
-import pytest
 import os
-from loguru import logger
+
+import pytest
 from _pytest.logging import LogCaptureFixture
+from loguru import logger
 
 # Cache the dependency check results
 _dependency_cache = {}

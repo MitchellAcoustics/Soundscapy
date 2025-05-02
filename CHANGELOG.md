@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Improved handling of optional dependencies to provide better error messages and IDE support
-- Audio components (like `Binaural`) can now be imported directly from the top-level package 
-  (`from soundscapy import Binaural`) while maintaining helpful error messages when 
+- Audio components (like `Binaural`) can now be imported directly from the top-level package
+  (`from soundscapy import Binaural`) while maintaining helpful error messages when
   dependencies are missing
 - Centralized optional dependency configuration in `_optionals.py` for better maintainability
 
@@ -19,8 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No changes required to existing code using audio components
 - The new system provides better IDE completion support while maintaining the same runtime behavior
-- Optional components can still be imported from their original location 
-  (`from soundscapy.audio import Binaural`) or from the top level 
+- Optional components can still be imported from their original location
+  (`from soundscapy.audio import Binaural`) or from the top level
   (`from soundscapy import Binaural`)
 
 ## [0.7.5]
@@ -47,15 +47,15 @@ pip install soundscapy[all]
 
 #### Dev Container Configuration
 
-* Added a new `devcontainer.json` file to configure the development container with specific features and VSCode extensions. (`.devcontainer/devcontainer.json` [.devcontainer/devcontainer.jsonR1-R69](diffhunk://#diff-24ad71c8613ddcf6fd23818cb3bb477a1fb6d83af4550b0bad43099813088686R1-R69))
-* Updated `.dockerignore` to exclude the virtual environment directory. (`.devcontainer/.dockerignore` [.devcontainer/.dockerignoreR1](diffhunk://#diff-7691e653179b9ed2292151d962426f76e6f5378e4989e741859bdfcbcef16b97R1))
+- Added a new `devcontainer.json` file to configure the development container with specific features and VSCode extensions. (`.devcontainer/devcontainer.json` [.devcontainer/devcontainer.jsonR1-R69](diffhunk://#diff-24ad71c8613ddcf6fd23818cb3bb477a1fb6d83af4550b0bad43099813088686R1-R69))
+- Updated `.dockerignore` to exclude the virtual environment directory. (`.devcontainer/.dockerignore` [.devcontainer/.dockerignoreR1](diffhunk://#diff-7691e653179b9ed2292151d962426f76e6f5378e4989e741859bdfcbcef16b97R1))
 
-#### GitHub Workflows:
+#### GitHub Workflows
 
-* Removed old CI, release, and test-release workflows. (`.github/workflows/ci.yml` [[1]](diffhunk://#diff-b803fcb7f17ed9235f1e5cb1fcd2f5d3b2838429d4368ae4c57ce4436577f03fL1-L40) `.github/workflows/release.yml` [[2]](diffhunk://#diff-87db21a973eed4fef5f32b267aa60fcee5cbdf03c67fafdc2a9b553bb0b15f34L1-L33) `.github/workflows/test-release.yml` [[3]](diffhunk://#diff-191bb5b4e97db48c9d0bdb945dd00e17b53249422f60a642e9e8d73250b5913aL1-L53)
-* Added a new workflow for tagged releases to automate the release process, including building and publishing to PyPI and TestPyPI. (`.github/workflows/tag-release.yml` [.github/workflows/tag-release.ymlR1-R138](diffhunk://#diff-21e1251c1676ed10064d2d98ab1a8f6471a9718058bd316970abe934169f2b60R1-R138))
-* Added a new workflow for testing tagged releases, including installation from TestPyPI and running tests. (`.github/workflows/test-tag-release.yml` [.github/workflows/test-tag-release.ymlR1-R114](diffhunk://#diff-11b7dedbf7b09ab5a0bd90aa70d8a2eda1918dab64a511c82104706cfa09f3b7R1-R114))
-* Added new workflows for running tests on the main codebase and tutorial notebooks. (`.github/workflows/test.yml` [[1]](diffhunk://#diff-faff1af3d8ff408964a57b2e475f69a6b7c7b71c9978cccc8f471798caac2c88R1-R52) `.github/workflows/test-tutorials.yml` [[2]](diffhunk://#diff-01bd86ab14c3e8d7d1382e5ed2172404eb7d3c46bbffeffe09fc11431885e2a0R1-R42)
+- Removed old CI, release, and test-release workflows. (`.github/workflows/ci.yml` [[1]](diffhunk://#diff-b803fcb7f17ed9235f1e5cb1fcd2f5d3b2838429d4368ae4c57ce4436577f03fL1-L40) `.github/workflows/release.yml` [[2]](diffhunk://#diff-87db21a973eed4fef5f32b267aa60fcee5cbdf03c67fafdc2a9b553bb0b15f34L1-L33) `.github/workflows/test-release.yml` [[3]](diffhunk://#diff-191bb5b4e97db48c9d0bdb945dd00e17b53249422f60a642e9e8d73250b5913aL1-L53)
+- Added a new workflow for tagged releases to automate the release process, including building and publishing to PyPI and TestPyPI. (`.github/workflows/tag-release.yml` [.github/workflows/tag-release.ymlR1-R138](diffhunk://#diff-21e1251c1676ed10064d2d98ab1a8f6471a9718058bd316970abe934169f2b60R1-R138))
+- Added a new workflow for testing tagged releases, including installation from TestPyPI and running tests. (`.github/workflows/test-tag-release.yml` [.github/workflows/test-tag-release.ymlR1-R114](diffhunk://#diff-11b7dedbf7b09ab5a0bd90aa70d8a2eda1918dab64a511c82104706cfa09f3b7R1-R114))
+- Added new workflows for running tests on the main codebase and tutorial notebooks. (`.github/workflows/test.yml` [[1]](diffhunk://#diff-faff1af3d8ff408964a57b2e475f69a6b7c7b71c9978cccc8f471798caac2c88R1-R52) `.github/workflows/test-tutorials.yml` [[2]](diffhunk://#diff-01bd86ab14c3e8d7d1382e5ed2172404eb7d3c46bbffeffe09fc11431885e2a0R1-R42)
 
 ## [0.7.3]
 
@@ -70,6 +70,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 ### General Changes
 
 #### Added
+
 - New `soundscapy/surveys/survey_utils.py` for shared utilities
   - Implemented `PAQ` enum for Perceptual Attribute Questions
   - Added `return_paqs` function for filtering PAQ columns
@@ -95,6 +96,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - New test cases in `test_isd.py` to cover refactored functionality
 
 #### Changed
+
 - Modified default logging level to WARNING for better control over log output
 - Refactored `isd.py` to use new processing and survey utility functions
   - Updated `load`, `load_zenodo`, and `validate` functions
@@ -109,6 +111,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - Changed to Rye as the dependency and environment manager for the project
 
 #### Improved
+
 - Enhanced error handling and input validation in database modules
   - Added type hints to all functions for better code readability and IDE support
   - Implemented more specific exception handling
@@ -119,21 +122,25 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - Standardized coding style across all modules (using Black formatter)
 
 #### Deprecated
+
 - Removed `remove_lockdown` function in `isd.py` (redundant since the release of ISD v1.0)
 
 #### Removed
+
 - Eliminated redundant code and unused functions across modules
 
 #### Fixed
+
 - Resolved issues with inconsistent PAQ naming conventions
 - Fixed bugs in ISO coordinate calculations and SSM metric computations
 - Resolved issue where Jupyter notebooks were overriding the default log level
 
-
 #### Security
+
 - Implemented input validation to prevent potential security vulnerabilities
 
 #### Development
+
 - Implemented a more robust logging system using loguru
   - Added ability to easily change log levels for debugging and development
   - Enabled file logging for persistent log storage
@@ -142,6 +149,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - Implemented consistent error messages and logging across the package
 
 #### Documentation
+
 - Added comprehensive docstrings to all functions and classes
 - Included usage examples in function docstrings
 - Updated README with new package structure and usage instructions
@@ -149,39 +157,39 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 
 ### Changes to Plotting Module
 
-#### Code Structure:
+#### Code Structure
 
 - Split the original circumplex.py into multiple files: backends.py, circumplex_plot.py, plot_functions.py, stylers.py, and plotting_utils.py (implied).
 - Introduced abstract base class PlotBackend and concrete implementations SeabornBackend and PlotlyBackend.
 
-#### New Features:
+#### New Features
 
 - Added support for Plotly backend alongside Seaborn.
 - Introduced CircumplexPlot class for creating and managing plots.
 - Added StyleOptions dataclass for better style management.
 - Implemented simple_density plot type.
 
-#### Improved Customization:
+#### Improved Customization
 
 - Created CircumplexPlotParams dataclass for better parameter management.
 - Added more customization options for plots (e.g., incl_outline, fill, alpha).
 
-#### Enhancements:
+#### Enhancements
 
 - Improved type hinting throughout the codebase.
 - Added docstrings to classes and functions.
 - Implemented PlotType and Backend enums for better type safety.
 
-#### Refactoring:
+#### Refactoring
 
 - Moved plotting logic from functions to methods in backend classes.
 - Simplified scatter and density functions by leveraging CircumplexPlot class.
 
-#### Removed Features:
+#### Removed Features
 
 - Removed jointplot function (marked as TODO in CircumplexPlot class).
 
-#### Constants and Utilities:
+#### Constants and Utilities
 
 - Moved constants (e.g., DEFAULT_XLIM, DEFAULT_YLIM) to a separate utilities file.
 - Created ExtraParams TypedDict for additional plotting parameters.

@@ -4,12 +4,12 @@ from pathlib import Path
 
 from loguru import logger
 
-from soundscapy.logging import (
-    setup_logging,
-    enable_debug,
+from soundscapy.sspylogging import (
     disable_logging,
+    enable_debug,
     get_logger,
     is_notebook,
+    setup_logging,
 )
 
 

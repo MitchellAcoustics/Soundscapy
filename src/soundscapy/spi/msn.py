@@ -1,12 +1,27 @@
+"""
+Module for handling Multi-dimensional Skewed Normal (MSN) distributions.
+
+Provides classes and functions for defining, fitting, sampling, and analyzing
+MSN distributions, often used in soundscape analysis for modeling ISOPleasant
+and ISOEventful ratings.
+"""
+
+from typing import Literal
+
 import numpy as np
 import pandas as pd
-import soundscapy.spi._rsn_wrapper as rsn
-import soundscapy as sspy
+
+from soundscapy import get_logger
+from soundscapy.plotting import density_plot
+from soundscapy.spi import _rsn_wrapper as rsn
 from soundscapy.spi.ks2d import ks2d2s
+
+logger = get_logger()
 
 
 class DirectParams:
-    """Represents a set of direct parameters for a statistical model.
+    """
+    Represents a set of direct parameters for a statistical model.
 
     Direct parameters are the parameters that are directly used in the model.
     They are the parameters that are used to define the distribution of the
@@ -26,18 +41,22 @@ class DirectParams:
     alpha : np.ndarray
         The shape parameters for the x and y dimensions, controlling the shape
         (skewness) of the distribution. It is represented as a 2x1 array.
+
     """
 
-    def __init__(self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray):
+    def __init__(self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray) -> None:
+        """Initialize DirectParams instance."""
         self.xi = xi
         self.omega = omega
         self.alpha = alpha
         self.validate()
 
     def __repr__(self) -> str:
+        """Return a string representation of the DirectParams object."""
         return f"DirectParams(xi={self.xi}, omega={self.omega}, alpha={self.alpha})"
 
     def __str__(self) -> str:
+        """Return a user-friendly string representation of the DirectParams object."""
         return (
             f"Direct Parameters:"
             f"\nxi:    {self.xi.round(3)}"
@@ -46,7 +65,7 @@ class DirectParams:
         )
 
     def _omega_is_pos_def(self) -> bool:
-        return np.all(np.linalg.eigvals(self.omega) > 0)
+        return bool(np.all(np.linalg.eigvals(self.omega) > 0))
 
     def _omega_is_symmetric(self) -> bool:
         return np.allclose(self.omega, self.omega.T)
@@ -54,10 +73,11 @@ class DirectParams:
     def _xi_is_in_range(self, xi_range: np.ndarray | tuple[float, float]) -> bool:
         if isinstance(xi_range, tuple):
             xi_range = np.array([xi_range, xi_range])
-        return np.all((xi_range[:, 0] <= self.xi) & (self.xi <= xi_range[:, 1]))
+        return bool(np.all((xi_range[:, 0] <= self.xi) & (self.xi <= xi_range[:, 1])))
 
-    def validate(self):
-        """Validate the direct parameters.
+    def validate(self) -> None:
+        """
+        Validate the direct parameters.
 
         In a skew normal distribution, the covariance matrix, often denoted as
         Ω (Omega), represents the measure of the relationship between different
@@ -67,19 +87,25 @@ class DirectParams:
 
         Raises
         ------
-        AssertionError
+        ValueError
             If the direct parameters are not valid.
 
         Returns
         -------
         None
+
         """
-        assert self._omega_is_pos_def(), "Omega must be positive definite"
-        assert self._omega_is_symmetric(), "Omega must be symmetric"
+        if not self._omega_is_pos_def():
+            msg = "Omega must be positive definite"
+            raise ValueError(msg)
+        if not self._omega_is_symmetric():
+            msg = "Omega must be symmetric"
+            raise ValueError(msg)
 
 
 class CentredParams:
-    """Represents the centered parameters of a distribution.
+    """
+    Represents the centered parameters of a distribution.
 
     Parameters
     ----------
@@ -103,17 +129,21 @@ class CentredParams:
     -------
     from_dp(dp)
         Converts DirectParams object to CentredParams object.
+
     """
 
-    def __init__(self, mean, sigma, skew):
+    def __init__(self, mean: np.ndarray, sigma: np.ndarray, skew: np.ndarray) -> None:
+        """Initialize CentredParams instance."""
         self.mean = mean
         self.sigma = sigma
         self.skew = skew
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return a string representation of the CentredParams object."""
         return f"CentredParams(mean={self.mean}, sigma={self.sigma}, skew={self.skew})"
 
     def __str__(self) -> str:
+        """Return a user-friendly string representation of the CentredParams object."""
         return (
             f"Centred Parameters:"
             f"\nmean:  {self.mean.round(3)}"
@@ -122,8 +152,9 @@ class CentredParams:
         )
 
     @classmethod
-    def from_dp(cls, dp: DirectParams):
-        """Convert a DirectParams object to a CentredParams object.
+    def from_dp(cls, dp: DirectParams) -> "CentredParams":
+        """
+        Convert a DirectParams object to a CentredParams object.
 
         Parameters
         ----------
@@ -134,13 +165,15 @@ class CentredParams:
         -------
         CentredParams
             A new CentredParams object with the converted parameters.
+
         """
         cp = dp2cp(dp)
         return cls(cp.mean, cp.sigma, cp.skew)
 
 
 class MultiSkewNorm:
-    """A class representing a multi-dimensional skewed normal distribution.
+    """
+    A class representing a multi-dimensional skewed normal distribution.
 
     Attributes
     ----------
@@ -171,39 +204,53 @@ class MultiSkewNorm:
         Computes the two-sample Kolmogorov-Smirnov statistic.
     spi(test)
         Computes the similarity percentage index.
+
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the MultiSkewNorm object."""
         self.selm_model = None
         self.cp = None
         self.dp = None
         self.sample_data = None
         self.data: pd.DataFrame | None = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return a string representation of the MultiSkewNorm object."""
         if self.cp is None and self.dp is None and self.selm_model is None:
             return "MultiSkewNorm() (unfitted)"
         return f"MultiSkewNorm(dp={self.dp})"
 
-    def summary(self):
+    def summary(self) -> str | None:
+        """
+        Provide a summary of the fitted MultiSkewNorm model.
+
+        Returns
+        -------
+        str or None
+            A string summarizing the model parameters and data, or a message
+            indicating the model is not fitted. Returns None if fitted but
+            summary logic is not fully implemented yet.
+
+        """
         if self.cp is None and self.dp is None and self.selm_model is None:
             return "MultiSkewNorm is not fitted."
+        if self.data is not None:
+            print(f"Fitted from data. n = {len(self.data)}")  # noqa: T201
         else:
-            if self.data is not None:
-                print(f"Fitted from data. n = {len(self.data)}")
-            else:
-                print("Fitted from direct parameters.")
-            print(self.dp)
-            print("\n")
-            print(self.cp)
+            print("Fitted from direct parameters.")  # noqa: T201
+        print(self.dp)  # noqa: T201
+        print("\n")  # noqa: T201
+        print(self.cp)  # noqa: RET503, T201
 
     def fit(
         self,
         data: pd.DataFrame | np.ndarray | None = None,
         x: np.ndarray | pd.Series | None = None,
         y: np.ndarray | pd.Series | None = None,
-    ):
-        """Fit the multi-dimensional skewed normal model to the provided data.
+    ) -> None:
+        """
+        Fit the multi-dimensional skewed normal model to the provided data.
 
         Parameters
         ----------
@@ -218,40 +265,43 @@ class MultiSkewNorm:
         ------
         ValueError
             If neither `data` nor both `x` and `y` are provided.
-        """
 
+        """
         if data is None and (x is None or y is None):
             # Either data or x and y must be provided
-            raise ValueError("Either data or x and y must be provided")
+            msg = "Either data or x and y must be provided"
+            raise ValueError(msg)
 
         if data is not None:
             # If data is provided, convert it to a pandas DataFrame
             if isinstance(data, pd.DataFrame):
                 # If data is already a DataFrame, no need to convert
-                df = data
-                df.columns = ["x", "y"]
+                data.columns = ["x", "y"]
 
             elif isinstance(data, np.ndarray):
                 # If data is a numpy array, convert it to a DataFrame
-                if data.ndim == 2:
+                if data.ndim == 2:  # noqa: PLR2004
                     # If data is 2D, assume it's two variables
-                    df = pd.DataFrame(data, columns=["x", "y"])
+                    data = pd.DataFrame(data, columns=["x", "y"])
                 else:
-                    raise ValueError("Data must be a 2D numpy array or DataFrame")
+                    msg = "Data must be a 2D numpy array or DataFrame"
+                    raise ValueError(msg)
             else:
                 # If data is neither a DataFrame nor a numpy array, raise an error
-                raise ValueError("Data must be a pandas DataFrame or 2D numpy array.")
+                msg = "Data must be a pandas DataFrame or 2D numpy array."
+                raise ValueError(msg)
 
         elif x is not None and y is not None:
             # If x and y are provided, convert them to a pandas DataFrame
-            df = pd.DataFrame({"x": x, "y": y})
+            data = pd.DataFrame({"x": x, "y": y})
 
         else:
             # This should never happen
-            raise ValueError("Either data or x and y must be provided")
+            msg = "Either data or x and y must be provided"
+            raise ValueError(msg)
 
         # Fit the model
-        m = rsn.selm("x", "y", df)
+        m = rsn.selm("x", "y", data)
 
         # Extract the parameters
         cp = rsn.extract_cp(m)
@@ -259,13 +309,14 @@ class MultiSkewNorm:
 
         self.cp = CentredParams(*cp)
         self.dp = DirectParams(*dp)
-        self.data = df
+        self.data = data
         self.selm_model = m
 
-        return None
-
-    def define_dp(self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray):
-        """Initiate a distribution from the direct parameters.
+    def define_dp(
+        self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray
+    ) -> "MultiSkewNorm":
+        """
+        Initiate a distribution from the direct parameters.
 
         Parameters
         ----------
@@ -279,14 +330,17 @@ class MultiSkewNorm:
         Returns
         -------
         self
-        """
 
+        """
         self.dp = DirectParams(xi, omega, alpha)
         self.cp = CentredParams.from_dp(self.dp)
         return self
 
-    def sample(self, n: int = 1000, return_sample: bool = False) -> None | np.ndarray:
-        """Generate a sample from the fitted model.
+    def sample(
+        self, n: int = 1000, *, return_sample: bool = False
+    ) -> None | np.ndarray:
+        """
+        Generate a sample from the fitted model.
 
         Parameters
         ----------
@@ -305,8 +359,8 @@ class MultiSkewNorm:
         ValueError
             If the model is not fitted (i.e., `selm_model` is None) and direct
             parameters (`dp`) are also not defined.
-        """
 
+        """
         if self.selm_model is not None:
             sample = rsn.sample_msn(selm_model=self.selm_model, n=n)
         elif self.dp is not None:
@@ -314,17 +368,73 @@ class MultiSkewNorm:
                 xi=self.dp.xi, omega=self.dp.omega, alpha=self.dp.alpha, n=n
             )
         else:
-            raise ValueError(
-                "Either selm_model or xi, omega, and alpha must be provided."
-            )
+            msg = "Either selm_model or xi, omega, and alpha must be provided."
+            raise ValueError(msg)
 
         self.sample_data = sample
 
         if return_sample:
             return sample
+        return None
 
-    def sspy_plot(self, color: str = "blue", title: str | None = None, n: int = 1000):
-        """Plot the joint distribution of the generated sample using soundscapy.
+    def sample_mtsn(
+        self, n: int = 1000, a: float = -1, b: float = 1, *, return_sample: bool = False
+    ) -> None | np.ndarray:
+        """
+        Generate a sample from the multi-dimensional truncated skew-normal distribution.
+
+        Uses rejection sampling to ensure that the samples are within the bounds [a, b]
+        for both dimensions.
+
+        Parameters
+        ----------
+        n : int, optional
+            The number of samples to generate, by default 1000.
+        a : float, optional
+            Lower truncation bound for both dimensions, by default -1.
+        b : float, optional
+            Upper truncation bound for both dimensions, by default 1.
+        return_sample : bool, optional
+            Whether to return the generated sample as an np.ndarray, by default False.
+
+        Returns
+        -------
+        None or np.ndarray
+            The generated sample if `return_sample` is True, otherwise None.
+
+        """
+        if self.selm_model is not None:
+            sample = rsn.sample_mtsn(
+                selm_model=self.selm_model,
+                n=n,
+                a=a,
+                b=b,
+            )
+        elif self.dp is not None:
+            sample = rsn.sample_mtsn(
+                xi=self.dp.xi,
+                omega=self.dp.omega,
+                alpha=self.dp.alpha,
+                n=n,
+                a=a,
+                b=b,
+            )
+        else:
+            msg = "Either selm_model or xi, omega, and alpha must be provided."
+            raise ValueError(msg)
+
+        # Store the sample data
+        self.sample_data = sample
+
+        if return_sample:
+            return sample
+        return None
+
+    def sspy_plot(
+        self, color: str = "blue", title: str | None = None, n: int = 1000
+    ) -> None:
+        """
+        Plot the joint distribution of the generated sample using soundscapy.
 
         Parameters
         ----------
@@ -334,16 +444,18 @@ class MultiSkewNorm:
             Title for the plot, by default None.
         n : int, optional
             Number of samples to generate if `sample_data` is None, by default 1000.
-        """
 
+        """
         if self.sample_data is None:
             self.sample(n=n)
 
-        df = pd.DataFrame(self.sample_data, columns=["ISOPleasant", "ISOEventful"])
-        sspy.density_plot(df, color=color, title=title)
+        data = pd.DataFrame(self.sample_data, columns=["ISOPleasant", "ISOEventful"])
+        plot_title = title if title is not None else "Soundscapy Density Plot"
+        density_plot(data, color=color, title=plot_title)
 
-    def ks2ds(self, test: pd.DataFrame | np.ndarray):
-        """Compute the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
+    def ks2d2s(self, test_data: pd.DataFrame | np.ndarray) -> tuple[float, float]:
+        """
+        Compute the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
 
         Parameters
         ----------
@@ -354,23 +466,40 @@ class MultiSkewNorm:
         -------
         tuple
             The KS2D statistic and p-value.
+
         """
-
-        if self.sample_data is None:
-            self.sample()
-        if isinstance(self.sample_data, pd.DataFrame):
-            sample_data = self.sample_data.values
+        # Ensure test_data is a numpy array
+        if isinstance(test_data, pd.DataFrame):
+            if test_data.shape[1] != 2:  # noqa: PLR2004
+                msg = "Test data must have two columns."
+                raise ValueError(msg)
+            test_data_np = test_data.to_numpy()
+        elif isinstance(test_data, np.ndarray):
+            test_data_np = test_data
         else:
-            sample_data = self.sample_data
+            msg = "test_data must be a pandas DataFrame or numpy array."
+            raise TypeError(msg)
 
-        if isinstance(test, pd.DataFrame):
-            assert test.shape[1] == 2, "Test data must have two columns."
-            test = test.values
+        # Ensure sample_data exists, generate if needed and possible
+        if self.sample_data is None:
+            logger.info("Sample data not found, generating default sample (n=1000).")
+            self.sample(n=1000, return_sample=False)  # Generate sample if missing
+            if self.sample_data is None:  # Check again in case sample failed
+                msg = (
+                    "Could not generate sample data. "
+                    "Ensure model is defined (fit or define_dp)."
+                )
+                raise ValueError(msg)
 
-        return ks2d2s(sample_data, test)  # type: ignore
+        # Perform the 2-sample KS test using ks2d2s
+        # Note: ks2d2s expects data1, data2
+        ks_statistic, p_value = ks2d2s(self.sample_data, test_data_np)
 
-    def spi(self, test: pd.DataFrame | np.ndarray):
-        """Compute the Soundscape Perception Index (SPI).
+        return ks_statistic, p_value
+
+    def spi(self, test: pd.DataFrame | np.ndarray) -> int:
+        """
+        Compute the Soundscape Perception Index (SPI).
 
         Calculates the SPI for the test data against the target distribution
         represented by this MultiSkewNorm instance.
@@ -384,13 +513,16 @@ class MultiSkewNorm:
         -------
         int
             The Soundscape Perception Index (SPI), ranging from 0 to 100.
+
         """
+        return int((1 - self.ks2d2s(test)[0]) * 100)
 
-        return int((1 - self.ks2ds(test)[0]) * 100)
 
-
-def cp2dp(cp: CentredParams, family: str = "SN") -> DirectParams:
-    """Convert centred parameters to direct parameters.
+def cp2dp(
+    cp: CentredParams, family: Literal["SN", "ESN", "ST", "SC"] = "SN"
+) -> DirectParams:
+    """
+    Convert centred parameters to direct parameters.
 
     Parameters
     ----------
@@ -403,14 +535,18 @@ def cp2dp(cp: CentredParams, family: str = "SN") -> DirectParams:
     -------
     DirectParams
         The corresponding direct parameters object.
+
     """
-    dp_r = rsn._dp2cp(cp.mean, cp.sigma, cp.skew, family=family)
+    dp_r = rsn.cp2dp(cp.mean, cp.sigma, cp.skew, family=family)
 
     return DirectParams(*dp_r)
 
 
-def dp2cp(dp: DirectParams, family: str = "SN") -> CentredParams:
-    """Convert direct parameters to centred parameters.
+def dp2cp(
+    dp: DirectParams, family: Literal["SN", "ESN", "ST", "SC"] = "SN"
+) -> CentredParams:
+    """
+    Convert direct parameters to centred parameters.
 
     Parameters
     ----------
@@ -423,7 +559,8 @@ def dp2cp(dp: DirectParams, family: str = "SN") -> CentredParams:
     -------
     CentredParams
         The corresponding centred parameters object.
+
     """
-    cp_r = rsn._dp2cp(dp.xi, dp.omega, dp.alpha, family=family)
+    cp_r = rsn.dp2cp(dp.xi, dp.omega, dp.alpha, family=family)
 
     return CentredParams(*cp_r)

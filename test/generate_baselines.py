@@ -1,6 +1,4 @@
-"""
-Script to generate baseline images for pytest-mpl comparisons.
-"""
+"""Script to generate baseline images for pytest-mpl comparisons."""
 
 import os
 

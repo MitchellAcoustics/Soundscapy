@@ -5,8 +5,9 @@ These tests check the R session management and data conversion functions.
 They are skipped if rpy2 is not installed.
 """
 
-import pytest
 import os
+
+import pytest
 
 
 def test_initialize_r_session_fails():
@@ -46,8 +47,6 @@ class TestRWrapper:
 
         assert res is not None, "R session should be initialized successfully"
         assert res["r_session"] == "active", "R session should be active"
-
-        pass
 
     def test_shutdown_r_session(self):
         """Test R session cleanup."""
