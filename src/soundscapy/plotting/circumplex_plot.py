@@ -7,19 +7,16 @@ of different plot elements (scatter, density) and customization of styling.
 """
 
 import matplotlib.pyplot as plt
-import seaborn.objects as so
-import pandas as pd
-import numpy as np
 import seaborn as sns
-
+import seaborn.objects as so
 from soundscapy.plotting.plotting_utils import (
     DEFAULT_XLIM,
     DEFAULT_YLIM,
     PlotType
 )
 
-
 # =============== Core building blocks for circumplex plots ===============
+
 
 def apply_circumplex_grid(
     plot: so.Plot,
@@ -62,35 +59,77 @@ def apply_circumplex_grid(
     fig, ax = plt.subplots(figsize=(6, 6))
 
     # Add grid lines
-    ax.grid(True, which="major", color='grey', alpha=0.5)
-    ax.grid(True, which="minor", color='grey', linestyle='dashed',
-           linewidth=0.5, alpha=0.4)
+    ax.grid(True, which="major", color="grey", alpha=0.5)
+    ax.grid(
+        True, which="minor", color="grey", linestyle="dashed", linewidth=0.5, alpha=0.4
+    )
     ax.minorticks_on()
 
     # Add zero lines
-    ax.axhline(y=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
-    ax.axvline(x=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
+    ax.axhline(y=0, color="grey", linestyle="dashed", alpha=1, linewidth=1.5)
+    ax.axvline(x=0, color="grey", linestyle="dashed", alpha=1, linewidth=1.5)
 
     # Add diagonal elements if requested
     if diagonal_lines:
         # Draw diagonal lines
-        ax.plot([xlim[0], xlim[1]], [ylim[0], ylim[1]],
-               linestyle='dashed', color='grey', alpha=0.5, linewidth=1.5)
-        ax.plot([xlim[0], xlim[1]], [ylim[1], ylim[0]],
-               linestyle='dashed', color='grey', alpha=0.5, linewidth=1.5)
+        ax.plot(
+            [xlim[0], xlim[1]],
+            [ylim[0], ylim[1]],
+            linestyle="dashed",
+            color="grey",
+            alpha=0.5,
+            linewidth=1.5,
+        )
+        ax.plot(
+            [xlim[0], xlim[1]],
+            [ylim[1], ylim[0]],
+            linestyle="dashed",
+            color="grey",
+            alpha=0.5,
+            linewidth=1.5,
+        )
 
         # Add diagonal labels
-        diag_font = {'fontstyle': 'italic', 'fontsize': 'small',
-                     'fontweight': 'bold', 'color': 'black', 'alpha': 0.5}
+        diag_font = {
+            "fontstyle": "italic",
+            "fontsize": "small",
+            "fontweight": "bold",
+            "color": "black",
+            "alpha": 0.5,
+        }
 
-        ax.text(xlim[1]/2, ylim[1]/2, "(vibrant)",
-               ha='center', va='center', fontdict=diag_font)
-        ax.text(xlim[0]/2, ylim[1]/2, "(chaotic)",
-               ha='center', va='center', fontdict=diag_font)
-        ax.text(xlim[0]/2, ylim[0]/2, "(monotonous)",
-               ha='center', va='center', fontdict=diag_font)
-        ax.text(xlim[1]/2, ylim[0]/2, "(calm)",
-               ha='center', va='center', fontdict=diag_font)
+        ax.text(
+            xlim[1] / 2,
+            ylim[1] / 2,
+            "(vibrant)",
+            ha="center",
+            va="center",
+            fontdict=diag_font,
+        )
+        ax.text(
+            xlim[0] / 2,
+            ylim[1] / 2,
+            "(chaotic)",
+            ha="center",
+            va="center",
+            fontdict=diag_font,
+        )
+        ax.text(
+            xlim[0] / 2,
+            ylim[0] / 2,
+            "(monotonous)",
+            ha="center",
+            va="center",
+            fontdict=diag_font,
+        )
+        ax.text(
+            xlim[1] / 2,
+            ylim[0] / 2,
+            "(calm)",
+            ha="center",
+            va="center",
+            fontdict=diag_font,
+        )
 
     # Apply axis label changes if requested
     if not show_labels:
@@ -159,7 +198,7 @@ def add_annotation(
         "ha": "center",
         "va": "center",
         "fontsize": 9,
-        "arrowprops": {"arrowstyle": "-", "color": "black", "alpha": 0.7}
+        "arrowprops": {"arrowstyle": "-", "color": "black", "alpha": 0.7},
     }
     annotation_defaults.update(kwargs)
 
@@ -171,7 +210,7 @@ def add_annotation(
         text=text,
         xy=(x_val, y_val),
         xytext=(x_val + x_offset, y_val + y_offset),
-        **annotation_defaults
+        **annotation_defaults,
     )
 
     # Now use the fully prepared axes for the plot
@@ -222,7 +261,7 @@ class CircumplexPlot:
         self.hue = hue
         self.xlim = xlim
         self.ylim = ylim
-        self.fill = kwargs.get('fill', True)
+        self.fill = kwargs.get("fill", True)
         self.palette_name = palette
 
         # Initialize the plot
@@ -238,7 +277,7 @@ class CircumplexPlot:
         pointsize=30,
         alpha=0.7,
         marker="o",
-        color=None  # Overrides hue if provided
+        color=None,  # Overrides hue if provided
     ):
         """
         Add a scatter layer to the plot.
@@ -263,12 +302,11 @@ class CircumplexPlot:
 
         # Add the dots mark
         self.plot = self.plot.add(
-            so.Dots(pointsize=pointsize, alpha=alpha, marker=marker),
-            color=color_var
+            so.Dots(pointsize=pointsize, alpha=alpha, marker=marker), color=color_var
         )
 
         # If we have a color variable and palette, apply it using scale
-        if color_var and hasattr(self, 'palette_name'):
+        if color_var and hasattr(self, "palette_name"):
             self.plot = self.plot.scale(color=so.Nominal(self.palette_name))
 
         self.has_scatter = True
@@ -282,7 +320,7 @@ class CircumplexPlot:
         bw_adjust=1.2,
         color=None,  # Overrides hue if provided
         simple=False,
-        **kwargs  # For backwards compatibility
+        **kwargs,  # For backwards compatibility
     ):
         """
         Add a density layer to the plot.
@@ -317,23 +355,21 @@ class CircumplexPlot:
         self.plot = self.plot.add(
             so.Area(alpha=alpha, fill=fill),
             so.KDE(bw_adjust=bw_adjust),
-            color=color_var
+            color=color_var,
         )
 
         # Apply palette if needed
-        if color_var and hasattr(self, 'palette_name'):
+        if color_var and hasattr(self, "palette_name"):
             self.plot = self.plot.scale(color=so.Nominal(self.palette_name))
 
         # For simple density, add an outline
         if simple:
             self.plot = self.plot.add(
-                so.Line(alpha=1.0),
-                so.KDE(bw_adjust=bw_adjust),
-                color=color_var
+                so.Line(alpha=1.0), so.KDE(bw_adjust=bw_adjust), color=color_var
             )
 
             # Apply palette to the outline too if needed
-            if color_var and hasattr(self, 'palette_name'):
+            if color_var and hasattr(self, "palette_name"):
                 self.plot = self.plot.scale(color=so.Nominal(self.palette_name))
 
         self.has_density = True
@@ -362,7 +398,7 @@ class CircumplexPlot:
             diagonal_lines=diagonal_lines,
             show_labels=show_labels,
             x_label=self.x if show_labels else None,
-            y_label=self.y if show_labels else None
+            y_label=self.y if show_labels else None,
         )
 
         self.has_grid = True
@@ -397,7 +433,7 @@ class CircumplexPlot:
             text=text,
             x_offset=x_offset,
             y_offset=y_offset,
-            **kwargs
+            **kwargs,
         )
 
         return self
@@ -487,8 +523,9 @@ class CircumplexPlot:
         self.plot = self.plot.layout(size=(6, 6))
 
         # Apply legend customization if requested
-        if hasattr(self, '_legend_title') and self.hue is not None:
+        if hasattr(self, "_legend_title") and self.hue is not None:
             # Create a label mapping for the hue variable
+            # This sets the legend title to the specified value or the hue variable name
             self.plot = self.plot.label(**{self.hue: self._legend_title})
 
         if as_objects:
@@ -505,7 +542,7 @@ class CircumplexPlot:
             ax = plt.gca()
 
             # Apply legend location if needed (after plotting)
-            if hasattr(self, '_legend_loc') and ax.get_legend() is not None:
+            if hasattr(self, "_legend_loc") and ax.get_legend() is not None:
                 ax.legend(loc=self._legend_loc)
 
             # Return the figure and axes to be compatible with the legacy API
@@ -642,12 +679,10 @@ class CircumplexPlot:
         ax.set_ylim(self.ylim)
 
         # Add zero lines
-        ax.axhline(y=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
-        ax.axvline(x=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
-
+        ax.axhline(y=0, color="grey", linestyle="dashed", alpha=1, linewidth=1.5)
+        ax.axvline(x=0, color="grey", linestyle="dashed", alpha=1, linewidth=1.5)
         # Add grid
-        ax.grid(True, which="major", color='grey', alpha=0.5)
-
+        ax.grid(True, which="major", color="grey", alpha=0.5)
         # Store for get_figure and get_axes
         self._joint_grid = g
 
@@ -662,7 +697,7 @@ class CircumplexPlot:
         plt.Figure or tuple
             Figure object or (figure, axes) tuple depending on plotting method
         """
-        if hasattr(self, '_joint_grid'):
+        if hasattr(self, "_joint_grid"):
             return self._joint_grid.fig
         else:
             fig, ax = self.build(as_objects=False)
@@ -677,7 +712,7 @@ class CircumplexPlot:
         plt.Axes
             Axes object
         """
-        if hasattr(self, '_joint_grid'):
+        if hasattr(self, "_joint_grid"):
             return self._joint_grid.ax_joint
         else:
             fig, ax = self.build(as_objects=False)
