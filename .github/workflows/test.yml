@@ -27,8 +27,6 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: rpy2/base-ubuntu:latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' || github.event_name == 'push' }}
     name: Test with ${{ matrix.factor }} on Python ${{ matrix.python-version }}
 
@@ -57,20 +55,19 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 2
+          extra-packages: |
+            any::sn
+
       - name: Set R environment variables
         run: |
-          echo "R_LIBRARY=''" >> $GITHUB_ENV
-          echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
-          echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
-
-      - name: Set RSPM
-        if: startsWith(inputs.os, 'ubuntu')
-        run: |
-          echo "RSPM=\"https://packagemanager.rstudio.com/cran/__linux__/$(lsb_release -sc)/latest\"" >> $GITHUB_ENV
-      - name: Install R dependencies
-        run: |
-          install.packages(c("ggplot2", "dplyr", "tidyr", "dbplyr", "lazyeval", "rlang", "sn"))
-        shell: Rscript {0}
+          echo "R RHOME"
+          # echo "R_LIBRARY=''" >> $GITHUB_ENV
+          # echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+          # echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
 
       - name: Restore tox cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
