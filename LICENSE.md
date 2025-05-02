@@ -1,6 +1,8 @@
+<!-- markdownlint-disable MD041 -->
+
 BSD 3-Clause License
 
-Copyright (c) 2024, Andrew Mitchell
+Copyright (c) 2025, Andrew Mitchell
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

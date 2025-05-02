@@ -1,5 +1,9 @@
-# Customized functions specifically for the ARAUS dataset
+"""Customized functions specifically for the ARAUS dataset."""
 
-# Add soundscapy to the Python path
+import warnings
 
-# Constants and Labels
+warnings.warn(
+    "The ARAUS dataset module is not yet implemented",
+    FutureWarning,
+    stacklevel=2,
+)

@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD041 -->
+
 ![Image title](img/LightLogoSmall.png#only-light)
 ![Image title](img/DarkLogoSmall.png#only-dark)
 
@@ -10,7 +12,7 @@
 _Soundscapy_ is a Python library for analysing and visualising soundscape assessments. This package was designed to (1) load and process soundscape assessment data, (2) visualise the data, and (3) enable psychoacoustic analysis of soundscape recordings.
 
 !!! note
-    This project is still under development. We're working hard to make it as good as possible, but there may be bugs or missing features. If you find any issues, please let us know by submitting an issue on Github.
+This project is still under development. We're working hard to make it as good as possible, but there may be bugs or missing features. If you find any issues, please let us know by submitting an issue on Github.
 
 ## Getting Started
 
@@ -43,22 +45,24 @@ We welcome contributions from the community. If you're interested in contributin
 ## Citing Soundscapy
 
 !!! note
-    If you use _Soundscapy_ in your research, please include a citation to our accompanying paper:
-    
-    Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and represent quantitative soundscape data. _JASA Express Letters, 2_, 37201. [https://doi.org/10.1121/10.0009794](https://doi.org/10.1121/10.0009794)
+If you use _Soundscapy_ in your research, please include a citation to our accompanying paper:
+
+    Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and represent quantitative soundscape data. _JASA Express Letters, 2_, 37201. [https://doi.org/10.1121/10.0009794](https://doi.org/10.1121/10.0009794) <!-- markdownlint-disable MD046 -->
 
 ## License
 
-This project is licensed under the GNU GPLv3 License. For more information, please see the `license.md` file.
+This project is licensed under the BSD 3-Clause License. For more information, please see the `license.md` file.
 
 ## Project layout
 
-    mkdocs.yml     # The configuration file.
-    docs/
-        index.md   # The documentation homepage.
-        about.md   # The about page.
-        license.md # The license page.
-        tutorials/ # Tutorial pages.
-            Introduction to SSM Analysis.ipynb  
-        ...        # Other markdown pages, images and other files.
-    src/soundscapy/
+```plaintext
+mkdocs.yml     # The configuration file.
+docs/
+    index.md   # The documentation homepage.
+    about.md   # The about page.
+    license.md # The license page.
+    tutorials/ # Tutorial pages.
+        Introduction to SSM Analysis.ipynb
+    ...        # Other markdown pages, images and other files.
+src/soundscapy/
+```

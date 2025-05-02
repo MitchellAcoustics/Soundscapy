@@ -1,52 +1,85 @@
 name: Test
 
 on:
+  workflow_run:
+    workflows: ["Linting"]
+    types:
+      - completed
+    branches: [main, dev]
   workflow_call:
     outputs:
       tests-pass:
         description: "Indicates if all tests passed"
         value: ${{ github.event.inputs.tests-pass }}
   push:
-    branches: [ main, dev ]
+    branches: [main, dev]
+    paths-ignore:
+      - "**.md"
   pull_request:
-    branches: [ main, dev ]
+    paths-ignore:
+      - "**.md"
+    branches: [main, dev]
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
-    name: Run tests
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' || github.event_name == 'push' }}
+    name: Test with ${{ matrix.factor }} on Python ${{ matrix.python-version }}
+
+    outputs:
+      tests-pass: ${{ steps.test-results.outputs.result }}
+
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ["3.10", "3.11", "3.12"]
+        factor: [core, audio, spi, all, tutorials]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v3
-      with: 
-        # install a specific version of uv
-        version: "0.4.29"
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.7.2"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Setup Python ${{ matrix.python-version }}
-      run: uv python install ${{ matrix.python-version }}
+      - name: Setup R environment
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.4"
+          use-public-rspm: true
 
-    - name: Lint and format check # Run linting before wasting time on testing
-      run: |
-        uvx ruff check . 
-        uvx ruff format --check
+      - name: Install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 1
+          dependencies: '"all"'
 
-    - name: Install core dependencies
-      run: uv sync --extra test
+      - name: Restore tox cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
+        with:
+          path: .tox
+          key: tox-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.factor }}-${{ hashFiles('pyproject.toml') }}
 
-    - name: Run tests for core deps only
-      run: uv run pytest
+      - name: Setup Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
 
-    - name: Install optional dependencies
-      run: uv sync --all-extras
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
 
-    - name: Run tests for all dependencies
-      run: uv run pytest
+      # - uses: fawazahmed0/action-debug-vscode@main
+
+      # Convert Python version (e.g., 3.10) to format needed for tox (e.g., py310)
+      - name: Run tox environment
+        id: test-results
+        run: |
+          py_version="py$(echo '${{ matrix.python-version }}' | tr -d '.')"
+          tox r -e ${py_version}-${{ matrix.factor }}
+          echo "result=true" >> $GITHUB_OUTPUT

@@ -4,16 +4,15 @@ Main module for creating circumplex plots using different backends.
 
 import copy
 from dataclasses import dataclass, field
-from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from soundscapy.plotting.backends import PlotlyBackend, SeabornBackend
 from soundscapy.plotting.plotting_utils import (
-    Backend,
     DEFAULT_XLIM,
     DEFAULT_YLIM,
+    Backend,
     ExtraParams,
     PlotType,
 )
@@ -26,13 +25,13 @@ class CircumplexPlotParams:
 
     x: str = "ISOPleasant"
     y: str = "ISOEventful"
-    hue: Optional[str] = None
+    hue: str | None = None
     title: str = "Soundscape Plot"
-    xlim: Tuple[float, float] = DEFAULT_XLIM
-    ylim: Tuple[float, float] = DEFAULT_YLIM
+    xlim: tuple[float, float] = DEFAULT_XLIM
+    ylim: tuple[float, float] = DEFAULT_YLIM
     alpha: float = 0.8
     fill: bool = True
-    palette: Optional[str] = None
+    palette: str | None = None
     incl_outline: bool = False  # Fixed from (False,)
     diagonal_lines: bool = False
     show_labels: bool = True
@@ -76,16 +75,15 @@ class CircumplexPlot:
         """Create the appropriate backend based on the backend enum."""
         if backend == Backend.SEABORN:
             return SeabornBackend(style_options=self.style_options)
-        elif backend == Backend.PLOTLY:
+        if backend == Backend.PLOTLY:
             return PlotlyBackend()
-        else:
-            raise ValueError(f"Unsupported backend: {backend}")
+        raise ValueError(f"Unsupported backend: {backend}")
 
     def _create_plot(
         self,
         plot_type: PlotType,
         apply_styling: bool = True,
-        ax: Optional[plt.Axes] = None,
+        ax: plt.Axes | None = None,
     ) -> "CircumplexPlot":
         """Create a plot based on the specified plot type."""
         if plot_type == PlotType.SCATTER:
@@ -124,13 +122,13 @@ class CircumplexPlot:
         return self
 
     def scatter(
-        self, apply_styling: bool = True, ax: Optional[plt.Axes] = None
+        self, apply_styling: bool = True, ax: plt.Axes | None = None
     ) -> "CircumplexPlot":
         """Create a scatter plot."""
         return self._create_plot(PlotType.SCATTER, apply_styling, ax)
 
     def density(
-        self, apply_styling: bool = True, ax: Optional[plt.Axes] = None
+        self, apply_styling: bool = True, ax: plt.Axes | None = None
     ) -> "CircumplexPlot":
         """Create a density plot."""
         return self._create_plot(PlotType.DENSITY, apply_styling, ax)
@@ -140,7 +138,7 @@ class CircumplexPlot:
         return self._create_plot(PlotType.JOINT, apply_styling)
 
     def simple_density(
-        self, apply_styling: bool = True, ax: Optional[plt.Axes] = None
+        self, apply_styling: bool = True, ax: plt.Axes | None = None
     ) -> "CircumplexPlot":
         """Create a simple density plot."""
         return self._create_plot(PlotType.SIMPLE_DENSITY, apply_styling, ax)
@@ -169,8 +167,7 @@ class CircumplexPlot:
             )
         if isinstance(self._backend, SeabornBackend):
             return self._plot[1]  # Return the axes object
-        else:
-            raise AttributeError("Axes object is not available for Plotly backend")
+        raise AttributeError("Axes object is not available for Plotly backend")
 
     def get_style_options(self) -> StyleOptions:
         """Get the current StyleOptions."""

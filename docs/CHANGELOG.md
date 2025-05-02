@@ -12,6 +12,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 ### General Changes
 
 #### Added
+
 - New `soundscapy/surveys/survey_utils.py` for shared utilities
   - Implemented `PAQ` enum for Perceptual Attribute Questions
   - Added `return_paqs` function for filtering PAQ columns
@@ -37,6 +38,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - New test cases in `test_isd.py` to cover refactored functionality
 
 #### Changed
+
 - Modified default logging level to WARNING for better control over log output
 - Refactored `isd.py` to use new processing and survey utility functions
   - Updated `load`, `load_zenodo`, and `validate` functions
@@ -51,6 +53,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - Changed to Rye as the dependency and environment manager for the project
 
 #### Improved
+
 - Enhanced error handling and input validation in database modules
   - Added type hints to all functions for better code readability and IDE support
   - Implemented more specific exception handling
@@ -61,21 +64,25 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - Standardized coding style across all modules (using Black formatter)
 
 #### Deprecated
+
 - Removed `remove_lockdown` function in `isd.py` (redundant since the release of ISD v1.0)
 
 #### Removed
+
 - Eliminated redundant code and unused functions across modules
 
 #### Fixed
+
 - Resolved issues with inconsistent PAQ naming conventions
 - Fixed bugs in ISO coordinate calculations and SSM metric computations
 - Resolved issue where Jupyter notebooks were overriding the default log level
 
-
 #### Security
+
 - Implemented input validation to prevent potential security vulnerabilities
 
 #### Development
+
 - Implemented a more robust logging system using loguru
   - Added ability to easily change log levels for debugging and development
   - Enabled file logging for persistent log storage
@@ -84,6 +91,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - Implemented consistent error messages and logging across the package
 
 #### Documentation
+
 - Added comprehensive docstrings to all functions and classes
 - Included usage examples in function docstrings
 - Updated README with new package structure and usage instructions
@@ -91,39 +99,39 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 
 ### Changes to Plotting Module
 
-#### Code Structure:
+#### Code Structure
 
 - Split the original circumplex.py into multiple files: backends.py, circumplex_plot.py, plot_functions.py, stylers.py, and plotting_utils.py (implied).
 - Introduced abstract base class PlotBackend and concrete implementations SeabornBackend and PlotlyBackend.
 
-#### New Features:
+#### New Features
 
 - Added support for Plotly backend alongside Seaborn.
 - Introduced CircumplexPlot class for creating and managing plots.
 - Added StyleOptions dataclass for better style management.
 - Implemented simple_density plot type.
 
-#### Improved Customization:
+#### Improved Customization
 
 - Created CircumplexPlotParams dataclass for better parameter management.
 - Added more customization options for plots (e.g., incl_outline, fill, alpha).
 
-#### Enhancements:
+#### Enhancements
 
 - Improved type hinting throughout the codebase.
 - Added docstrings to classes and functions.
 - Implemented PlotType and Backend enums for better type safety.
 
-#### Refactoring:
+#### Refactoring
 
 - Moved plotting logic from functions to methods in backend classes.
 - Simplified scatter and density functions by leveraging CircumplexPlot class.
 
-#### Removed Features:
+#### Removed Features
 
 - Removed jointplot function (marked as TODO in CircumplexPlot class).
 
-#### Constants and Utilities:
+#### Constants and Utilities
 
 - Moved constants (e.g., DEFAULT_XLIM, DEFAULT_YLIM) to a separate utilities file.
 - Created ExtraParams TypedDict for additional plotting parameters.

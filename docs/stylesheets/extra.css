@@ -4,7 +4,6 @@
   --md-accent-color: #71e5e9;
 }
 
-
 /* This will only apply if the user has chosen a light color scheme */
 @media (prefers-color-scheme: light) {
   .only-dark {

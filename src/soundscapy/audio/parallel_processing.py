@@ -1,8 +1,5 @@
 """
-soundscapy.audio.parallel_processing
-====================================
-
-This module provides functions for parallel processing of binaural audio files.
+Functions for parallel processing of binaural audio files.
 
 It includes functions to load and analyze binaural files, as well as to process
 multiple files in parallel using concurrent.futures.
@@ -14,14 +11,14 @@ Functions:
 Note:
     This module requires the tqdm library for progress bars and concurrent.futures
     for parallel processing. It uses loguru for logging.
+
 """
 
 import concurrent.futures
 from pathlib import Path
-from typing import Dict, List, Optional
-from loguru import logger
 
 import pandas as pd
+from loguru import logger
 from tqdm.auto import tqdm
 
 from .analysis_settings import AnalysisSettings
@@ -33,21 +30,22 @@ from .metrics import (
 )
 
 
-def tqdm_write_sink(message):
+def tqdm_write_sink(message: str) -> None:
     """
-    A custom sink for loguru that writes messages using tqdm.write().
+    Custom sink for loguru that writes messages using tqdm.write().
 
     This ensures that log messages don't interfere with tqdm progress bars.
-    """
+    """  # noqa: D401
     tqdm.write(message, end="")
 
 
 def load_analyse_binaural(
     wav_file: Path,
-    levels: Dict | List[float],
+    levels: dict[str, float] | list[float] | None,
     analysis_settings: AnalysisSettings,
+    resample: int | None = None,
+    *,
     parallel_mosqito: bool = True,
-    resample: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Load and analyze a single binaural audio file.
@@ -68,6 +66,7 @@ def load_analyse_binaural(
     -------
     pd.DataFrame
         DataFrame with analysis results.
+
     """
     logger.info(f"Processing {wav_file}")
     try:
@@ -85,18 +84,19 @@ def load_analyse_binaural(
             logger.warning(f"No calibration levels found for {wav_file}")
         return process_all_metrics(b, analysis_settings, parallel=parallel_mosqito)
     except Exception as e:
-        logger.error(f"Error processing {wav_file}: {str(e)}")
+        logger.error(f"Error processing {wav_file}: {e!s}")
         raise
 
 
 def parallel_process(
-    wav_files: List[Path],
+    wav_files: list[Path],
     results_df: pd.DataFrame,
-    levels: Dict,
+    levels: dict,
     analysis_settings: AnalysisSettings,
-    max_workers: Optional[int] = None,
+    max_workers: int | None = None,
+    resample: int | None = None,
+    *,
     parallel_mosqito: bool = True,
-    resample: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Process multiple binaural files in parallel.
@@ -121,6 +121,7 @@ def parallel_process(
     -------
     pd.DataFrame
         Updated results DataFrame with analysis results for all files.
+
     """
     logger.info(f"Starting parallel processing of {len(wav_files)} files")
 
@@ -135,8 +136,8 @@ def parallel_process(
                 wav_file,
                 levels,
                 analysis_settings,
-                parallel_mosqito,
                 resample,
+                parallel_mosqito=parallel_mosqito,
             )
             futures.append(future)
 
@@ -146,7 +147,7 @@ def parallel_process(
                     result = future.result()
                     results_df = add_results(results_df, result)
                 except Exception as e:
-                    logger.error(f"Error processing file: {str(e)}")
+                    logger.error(f"Error processing file: {e!s}")
                 finally:
                     pbar.update(1)
 
@@ -159,13 +160,13 @@ def parallel_process(
 
 if __name__ == "__main__":
     # Example usage
-    from datetime import datetime
     import json
     import warnings
+    from datetime import datetime
 
     warnings.filterwarnings("ignore")
 
-    from soundscapy.logging import setup_logging
+    from soundscapy.sspylogging import setup_logging
 
     setup_logging("DEBUG")
 
