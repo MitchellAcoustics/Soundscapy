@@ -1,4 +1,4 @@
-"""Utility functions for creating various types of circumplex plots."""
+"""High level functions for creating various types of circumplex plots."""
 
 from typing import Any
 

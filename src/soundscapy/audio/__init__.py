@@ -1,8 +1,5 @@
 """
-soundscapy.audio.
-
-This module provides tools for working with audio signals,
-particularly binaural recordings.
+Provides tools for working with audio signals, particularly binaural recordings.
 
 Key Components:
 - Binaural: A class for processing and analyzing binaural audio signals.

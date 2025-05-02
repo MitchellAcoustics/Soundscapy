@@ -19,14 +19,16 @@ nav:
       - "License": license.md
   - Tutorials:
       - tutorials/index.md
-      - "`Soundscapy` - Quick Start": tutorials/QuickStart.ipynb
+      - "Quick Start": tutorials/QuickStart.ipynb
       - "How To Analyse and Represent Soundscape Perception": tutorials/HowToAnalyseAndRepresentSoundscapes.ipynb
       - "The Soundscape Perception Index (SPI)": tutorials/SoundscapePerceptionIndex-SPI.ipynb
       - "Using Soundscapy for Binaural Recording Analysis": tutorials/BinauralAnalysis.ipynb
   - "API reference":
       - "Core": reference/api.md
       - "Survey Analysis": reference/surveys.md
-      - "Plotting": reference/plotting.md
+      - "Plotting":
+          - reference/plotting.md
+          - reference/plotting/backends.md
       - "Soundscape Perception Index (SPI)": reference/spi.md
       - "Binaural Analysis": reference/audio.md
       - "Databases": reference/databases.md
@@ -84,6 +86,7 @@ plugins:
             show_symbol_type_heading: true # waiting for general release
             show_symbol_type_toc: true
             modernize_annotations: true
+            summary: true
           inventories:
             - "https://docs.python.org/3/objects.inv"
   - include-markdown:

@@ -1,3 +1,23 @@
+"""
+Backend classes for plotting.
+
+This module provides classes for different plotting backends, including Seaborn
+and Plotly. Each backend class implements methods for creating scatter and
+density plots, as well as applying styling to the plots.
+
+Example usage:
+
+```python
+from soundscapy.plotting import scatter_plot, density_plot, Backend, PlotType
+
+# Create a scatter plot using Seaborn backend
+scatter_plot(data, x='ISOPleasant', y='ISOEventful', backend=Backend.SEABORN)
+
+# Create a density plot using Plotly backend
+density_plot(data, x='ISOPleasant', y='ISOEventful', backend=Backend.PLOTLY)
+```
+"""
+
 import warnings
 from abc import ABC, abstractmethod
 
