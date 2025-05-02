@@ -1,7 +1,7 @@
 Package: Soundscapy
 Type: Package
 Title: Soundscapy
-Version: py0.8
+Version: 0.8.0
 Author: Andrew Mitchell <mitchellacoustics15@gmail.com>
 Maintainer: Andrew Mitchell <mitchellacoustics15@gmail.com>
 Description: A python library for analysing and visualising soundscape assessments.
