@@ -1,24 +1,24 @@
-"""High level functions for creating various types of circumplex plots."""
+"""
+High level functions for creating various types of circumplex plots.
 
-from typing import Any
+These functions provide a high-level interface for creating common plot types
+using the CircumplexPlot class with the Seaborn Objects API.
+"""
+
+from typing import Any, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import seaborn as sns
+import seaborn.objects as so
 
-from soundscapy.plotting.backends import SeabornBackend
-from soundscapy.plotting.circumplex_plot import CircumplexPlot, CircumplexPlotParams
+from soundscapy.plotting.circumplex_plot import CircumplexPlot
 from soundscapy.plotting.plotting_utils import (
-    DEFAULT_FIGSIZE,
     DEFAULT_XLIM,
     DEFAULT_YLIM,
-    Backend,
-    ExtraParams,
     PlotType,
 )
-from soundscapy.plotting.stylers import StyleOptions
 
 
 def scatter_plot(
@@ -32,67 +32,88 @@ def scatter_plot(
     palette: str = "colorblind",
     diagonal_lines: bool = False,
     show_labels: bool = True,
-    legend=True,
-    legend_location: str = "best",
-    backend: Backend = Backend.SEABORN,
-    apply_styling: bool = True,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
+    pointsize: int = 30,
+    alpha: float = 0.7,
     ax: plt.Axes | None = None,
-    extra_params: ExtraParams = {},
+    as_objects: bool = False,
     **kwargs: Any,
-) -> plt.Axes | go.Figure:
+) -> so.Plot | plt.Axes:
     """
-    Create a scatter plot using the CircumplexPlot class.
+    Create a scatter plot using the circumplex model.
 
     Parameters
     ----------
-        data (pd.DataFrame): The data to plot.
-        x (str): Column name for x-axis data.
-        y (str): Column name for y-axis data.
-        hue (Optional[str]): Column name for color-coding data points.
-        title (str): Title of the plot.
-        xlim (Tuple[float, float]): x-axis limits.
-        ylim (Tuple[float, float]): y-axis limits.
-        palette (str): Color palette to use.
-        diagonal_lines (bool): Whether to draw diagonal lines.
-        show_labels (bool): Whether to show axis labels.
-        legend (bool): Whether to show the legend.
-        legend_location (str): Location of the legend.
-        backend (Backend): The plotting backend to use.
-        apply_styling (bool): Whether to apply circumplex-specific styling.
-        figsize (Tuple[int, int]): Size of the figure.
-        ax (Optional[plt.Axes]): A matplotlib Axes object to plot on.
-        extra_params (ExtraParams): Additional parameters for backend-specific functions.
-        **kwargs: Additional keyword arguments to pass to the backend.
+    data : pd.DataFrame
+        Data to plot
+    x, y : str
+        Column names for coordinates
+    hue : str, optional
+        Column name for color grouping
+    title : str
+        Title for the plot
+    xlim, ylim : tuple
+        Axis limits
+    palette : str or list or dict
+        Color palette to use for hue
+    diagonal_lines : bool
+        Whether to show diagonal lines and quadrant labels
+    show_labels : bool
+        Whether to show axis labels
+    pointsize : int
+        Size of scatter points
+    alpha : float
+        Opacity of scatter points
+    ax : plt.Axes, optional
+        Axes to plot on (for matplotlib compatibility)
+    as_objects : bool
+        If True, return Seaborn Objects plot; if False, return Matplotlib axes
+    **kwargs
+        Additional keyword arguments for scatter plot
 
     Returns
     -------
-        plt.Axes | go.Figure: The resulting plot object.
-
+    so.Plot | plt.Axes
+        The completed plot object or axes
     """
-    params = CircumplexPlotParams(
-        x=x,
-        y=y,
-        hue=hue,
-        title=title,
-        xlim=xlim,
-        ylim=ylim,
-        palette=palette if hue else None,
-        diagonal_lines=diagonal_lines,
-        show_labels=show_labels,
-        legend=legend,
-        legend_location=legend_location,
-        extra_params={**extra_params, **kwargs},
-    )
+    plot = (CircumplexPlot(data, x, y, hue, xlim, ylim, palette)
+            .add_scatter(pointsize=pointsize, alpha=alpha, **kwargs)
+            .add_grid(diagonal_lines=diagonal_lines, show_labels=show_labels)
+            .add_title(title))
 
-    style_options = StyleOptions(figsize=figsize)
+    if as_objects:
+        return plot.build(as_objects=True)
+    elif ax is not None:
+        # If an axes is provided, draw directly on it
+        plot_obj = plot.build(as_objects=True)
+        # Clear previous contents
+        ax.clear()
+        # Use the ax limits and title from our plot
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_title(title)
+        ax.set_xlabel(x)
+        ax.set_ylabel(y)
+        # Draw points and style - only use palette if hue is provided
+        sns.scatterplot(
+            data=data, x=x, y=y, hue=hue,
+            palette=palette if hue else None,
+            s=pointsize, alpha=alpha, ax=ax, **kwargs
+        )
+        # Add grid lines
+        ax.grid(True, which="major", color='grey', alpha=0.5)
+        ax.axhline(y=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
+        ax.axvline(x=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
 
-    plot = CircumplexPlot(data, params, backend, style_options)
-    plot.scatter(apply_styling=apply_styling, ax=ax)
+        # Add diagonal lines if requested
+        if diagonal_lines:
+            ax.plot([xlim[0], xlim[1]], [ylim[0], ylim[1]],
+                   linestyle='dashed', color='grey', alpha=0.5, linewidth=1.5)
+            ax.plot([xlim[0], xlim[1]], [ylim[1], ylim[0]],
+                   linestyle='dashed', color='grey', alpha=0.5, linewidth=1.5)
 
-    if isinstance(plot._backend, SeabornBackend):
+        return ax
+    else:
         return plot.get_axes()
-    return plot.get_figure()
 
 
 def density_plot(
@@ -105,182 +126,308 @@ def density_plot(
     ylim: tuple[float, float] = DEFAULT_YLIM,
     palette: str = "colorblind",
     fill: bool = True,
-    incl_outline: bool = False,
-    incl_scatter: bool = True,
+    alpha: float = 0.5,
+    levels: int = 8,
+    bw_adjust: float = 1.2,
+    simple_density: bool = False,
+    incl_scatter: bool = False,
+    scatter_size: int = 15,
+    scatter_alpha: float = 0.5,
     diagonal_lines: bool = False,
     show_labels: bool = True,
-    legend=True,
-    legend_location: str = "best",
-    backend: Backend = Backend.SEABORN,
-    apply_styling: bool = True,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
-    simple_density: bool = False,
-    simple_density_thresh: float = 0.5,
-    simple_density_levels: int = 2,
-    simple_density_alpha: float = 0.5,
-    ax: plt.Axes | None = None,
-    extra_params: ExtraParams = {},
+    ax: Optional[plt.Axes] = None,
+    as_objects: bool = False,
     **kwargs: Any,
-) -> plt.Axes | go.Figure:
+) -> so.Plot | plt.Axes:
     """
-    Create a density plot using the CircumplexPlot class.
+    Create a density plot using the circumplex model.
 
     Parameters
     ----------
-        data (pd.DataFrame): The data to plot.
-        x (str): Column name for x-axis data.
-        y (str): Column name for y-axis data.
-        hue (Optional[str]): Column name for color-coding data points.
-        title (str): Title of the plot.
-        xlim (Tuple[float, float]): x-axis limits.
-        ylim (Tuple[float, float]): y-axis limits.
-        palette (str): Color palette to use.
-        fill (bool): Whether to fill the density contours.
-        incl_outline (bool): Whether to include an outline for the density contours.
-        diagonal_lines (bool): Whether to draw diagonal lines.
-        show_labels (bool): Whether to show axis labels.
-        legend (bool): Whether to show the legend.
-        legend_location (str): Location of the legend.
-        backend (Backend): The plotting backend to use.
-        apply_styling (bool): Whether to apply circumplex-specific styling.
-        figsize (Tuple[int, int]): Size of the figure.
-        simple_density (bool): Whether to use simple density plot (Seaborn only).
-        simple_density_thresh (float): Threshold for simple density plot.
-        simple_density_levels (int): Number of levels for simple density plot.
-        simple_density_alpha (float): Alpha value for simple density plot.
-        ax (Optional[plt.Axes]): A matplotlib Axes object to plot on.
-        extra_params (ExtraParams): Additional parameters for backend-specific functions.
-        **kwargs: Additional keyword arguments to pass to the backend.
+    data : pd.DataFrame
+        Data to plot
+    x, y : str
+        Column names for coordinates
+    hue : str, optional
+        Column name for color grouping
+    title : str
+        Title for the plot
+    xlim, ylim : tuple
+        Axis limits
+    palette : str or list or dict
+        Color palette to use for hue
+    fill : bool
+        Whether to fill the contours
+    alpha : float
+        Opacity of the fill
+    levels : int
+        Number of contour levels
+    bw_adjust : float
+        Bandwidth adjustment factor
+    simple_density : bool
+        If True, use simplified density with fewer levels and an outline
+    incl_scatter : bool
+        Whether to include scatter points with the density
+    scatter_size : int
+        Size of scatter points (if included)
+    scatter_alpha : float
+        Opacity of scatter points (if included)
+    diagonal_lines : bool
+        Whether to show diagonal lines and quadrant labels
+    show_labels : bool
+        Whether to show axis labels
+    ax : plt.Axes, optional
+        Axes to plot on (for matplotlib compatibility)
+    as_objects : bool
+        If True, return Seaborn Objects plot; if False, return Matplotlib axes
+    **kwargs
+        Additional keyword arguments for density plot
 
     Returns
     -------
-        plt.Axes | go.Figure: The resulting plot object.
-
+    so.Plot | plt.Axes
+        The completed plot object or axes
     """
-    params = CircumplexPlotParams(
+    cp = CircumplexPlot(data, x, y, hue, xlim, ylim, palette)
+
+    # Add density layer
+    cp.add_density(
+        alpha=alpha,
+        fill=fill,
+        levels=levels,
+        bw_adjust=bw_adjust,
+        simple=simple_density
+    )
+
+    # Add scatter if requested
+    if incl_scatter:
+        cp.add_scatter(pointsize=scatter_size, alpha=scatter_alpha)
+
+    # Complete the plot
+    cp.add_grid(diagonal_lines=diagonal_lines, show_labels=show_labels)
+    cp.add_title(title)
+
+    if as_objects:
+        return cp.build(as_objects=True)
+    elif ax is not None:
+        # If an axes is provided, draw directly on it
+        # Clear previous contents
+        ax.clear()
+        # Use the ax limits and title
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_title(title)
+        ax.set_xlabel(x)
+        ax.set_ylabel(y)
+
+        # Draw the KDE
+        if simple_density:
+            # Simple density with fewer levels
+            sns.kdeplot(
+                data=data, x=x, y=y, hue=hue,
+                fill=fill, alpha=alpha, levels=2,
+                bw_adjust=bw_adjust, ax=ax, **kwargs
+            )
+            # Add outline
+            sns.kdeplot(
+                data=data, x=x, y=y, hue=hue,
+                fill=False, alpha=1.0, levels=2,
+                bw_adjust=bw_adjust, ax=ax
+            )
+        else:
+            # Regular density
+            sns.kdeplot(
+                data=data, x=x, y=y, hue=hue,
+                fill=fill, alpha=alpha, levels=levels,
+                bw_adjust=bw_adjust, ax=ax, **kwargs
+            )
+
+        # Add scatter if requested
+        if incl_scatter:
+            sns.scatterplot(
+                data=data, x=x, y=y, hue=hue,
+                s=scatter_size, alpha=scatter_alpha, ax=ax
+            )
+
+        # Add grid lines
+        ax.grid(True, which="major", color='grey', alpha=0.5)
+        ax.axhline(y=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
+        ax.axvline(x=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
+
+        # Add diagonal lines if requested
+        if diagonal_lines:
+            ax.plot([xlim[0], xlim[1]], [ylim[0], ylim[1]],
+                   linestyle='dashed', color='grey', alpha=0.5, linewidth=1.5)
+            ax.plot([xlim[0], xlim[1]], [ylim[1], ylim[0]],
+                   linestyle='dashed', color='grey', alpha=0.5, linewidth=1.5)
+
+        return ax
+    else:
+        return cp.get_axes()
+
+
+def joint_plot(
+    data: pd.DataFrame,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    hue: str |None = None,
+    title: str = "Soundscape Joint Plot",
+    plot_type: str = "scatter",
+    **kwargs: Any,
+) -> sns.JointGrid:
+    """
+    Create a joint plot with marginals using matplotlib.
+
+    This function falls back to matplotlib/seaborn because
+    Seaborn Objects does not yet fully support joint plots with marginals.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Data to plot
+    x, y : str
+        Column names for coordinates
+    hue : str, optional
+        Column name for color grouping
+    title : str
+        Title for the plot
+    plot_type : str
+        Type of plot: "scatter", "density", or "simple_density"
+    **kwargs
+        Additional parameters for sns.jointplot
+
+    Returns
+    -------
+    sns.JointGrid
+        The joint plot grid
+    """
+    # Fall back to traditional seaborn for jointplot
+    kind = "scatter" if plot_type == "scatter" else "kde"
+
+    g = sns.jointplot(
+        data=data,
         x=x,
         y=y,
         hue=hue,
-        title=title,
-        xlim=xlim,
-        ylim=ylim,
-        palette=palette if hue else None,
-        fill=fill,
-        incl_outline=incl_outline,
-        diagonal_lines=diagonal_lines,
-        show_labels=show_labels,
-        legend=legend,
-        legend_location=legend_location,
-        extra_params={**extra_params, **kwargs},
+        kind=kind,
+        **kwargs
     )
 
-    style_options = StyleOptions(
-        figsize=figsize,
-        simple_density=dict(
-            thresh=simple_density_thresh,
-            levels=simple_density_levels,
-            alpha=simple_density_alpha,
+    # Add grid elements to the central plot
+    ax = g.ax_joint
+    ax.set_xlim((-1, 1))
+    ax.set_ylim((-1, 1))
+
+    # Add zero lines
+    ax.axhline(y=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
+    ax.axvline(x=0, color='grey', linestyle='dashed', alpha=1, linewidth=1.5)
+
+    # Add grid
+    ax.grid(True, which="major", color='grey', alpha=0.5)
+
+    # Add title
+    g.fig.suptitle(title, y=1.05)
+
+    # Add scatter if requested
+    if plot_type in ["density", "simple_density"] and kwargs.get("incl_scatter", False):
+        sns.scatterplot(
+            data=data,
+            x=x,
+            y=y,
+            hue=hue,
+            ax=ax,
+            s=kwargs.get("scatter_size", 15),
+            alpha=kwargs.get("scatter_alpha", 0.5)
         )
-        if simple_density
-        else None,
-    )
 
-    plot = CircumplexPlot(data, params, backend, style_options)
-
-    if incl_scatter and backend == Backend.SEABORN:
-        plot.scatter(apply_styling=True, ax=ax)
-        ax = plot.get_axes()
-    elif incl_scatter and backend == Backend.PLOTLY:
-        # TODO: Implement overlaying scatter on density plot for Plotly backend
-        raise NotImplementedError(
-            "Overlaying a scatter on a density plot is not yet supported for Plotly backend. "
-            "Please change to Seaborn backend or use `incl_scatter=False`."
-        )
-
-    if simple_density:
-        plot.simple_density(apply_styling=apply_styling, ax=ax)
-    else:
-        plot.density(apply_styling=apply_styling, ax=ax)
-
-    if isinstance(plot._backend, SeabornBackend):
-        return plot.get_axes()
-    return plot.get_figure()
+    return g
 
 
 def create_circumplex_subplots(
     data_list: list[pd.DataFrame],
-    plot_type: PlotType | str = PlotType.DENSITY,
-    incl_scatter: bool = True,
-    subtitles: list[str] | None = None,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    hue: Optional[str] = None,
+    subtitles: Optional[List[str]] = None,
     title: str = "Circumplex Subplots",
-    nrows: int = None,
-    ncols: int = None,
-    figsize: tuple[int, int] = (10, 10),
+    plot_type: str = "density",
+    incl_scatter: bool = False,
+    cols: int = 2,
+    as_objects: bool = False,
     **kwargs: Any,
-) -> plt.Figure:
+) -> so.Plot | plt.Figure:
     """
-    Create a figure with subplots containing circumplex plots.
+    Create a figure with multiple circumplex plots.
 
     Parameters
     ----------
-        data_list (List[pd.DataFrame]): List of DataFrames to plot.
-        plot_type (PlotType): Type of plot to create.
-        incl_scatter (bool): Whether to include scatter points on density plots.
-        nrows (int): Number of rows in the subplot grid.
-        ncols (int): Number of columns in the subplot grid.
-        figsize (tuple): Figure size (width, height) in inches.
-        **kwargs: Additional keyword arguments to pass to scatter_plot or density_plot.
+    data_list : list of DataFrames
+        List of data sources to plot
+    x, y : str
+        Column names for coordinates
+    hue : str, optional
+        Column name for color grouping
+    subtitles : list of str, optional
+        Titles for individual subplots
+    title : str
+        Main title for the plot
+    plot_type : str
+        Type of plot: "scatter", "density", or "simple_density"
+    incl_scatter : bool
+        Whether to include scatter points on density plots
+    cols : int
+        Number of columns for subplots
+    as_objects : bool
+        If True, return Seaborn Objects plot; if False, return Matplotlib figure
+    **kwargs
+        Additional arguments for plot functions
 
     Returns
     -------
-        matplotlib.figure.Figure: A figure containing the subplots.
-
-    Example
-    -------
-        >>> import pandas as pd
-        >>> import numpy as np
-        >>> np.random.seed(42)
-        >>> data1 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
-        ...                       'ISOEventful': np.random.uniform(-1, 1, 50)})
-        >>> data2 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
-        ...                       'ISOEventful': np.random.uniform(-1, 1, 50)})
-        >>> fig = create_circumplex_subplots([data1, data2], plot_type=PlotType.SCATTER, nrows=1, ncols=2)
-        >>> isinstance(fig, plt.Figure)
-        True
-
+    so.Plot | plt.Figure
+        The plot object or figure
     """
-    if isinstance(plot_type, str):
-        plot_type = PlotType[plot_type.upper()]
-
-    if nrows is None and ncols is None:
-        nrows = 2
-        ncols = len(data_list) // nrows
-    elif nrows is None:
-        nrows = len(data_list) // ncols
-    elif ncols is None:
-        ncols = len(data_list) // nrows
-
+    # Generate subplot titles if not provided
     if subtitles is None:
-        subtitles = [f"({i + 1})" for i in range(len(data_list))]
-    elif len(subtitles) != len(data_list):
-        raise ValueError("Number of subtitles must match number of dataframes")
+        subtitles = [f"Plot {i+1}" for i in range(len(data_list))]
 
-    fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
-    axes = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
+    # Remove any layout parameters that don't belong in plot functions
+    plotting_kwargs = kwargs.copy()
+    if 'nrows' in plotting_kwargs:
+        plotting_kwargs.pop('nrows')
+    if 'ncols' in plotting_kwargs:
+        plotting_kwargs.pop('ncols')
 
-    color = kwargs.get("color", sns.color_palette("colorblind", 1)[0])
+    # For the refactored version, we'll create a matplotlib figure directly
+    # instead of using the faceting in Seaborn Objects
+    nrows = (len(data_list) - 1) // cols + 1
 
-    for data, ax, subtitle in zip(data_list, axes, subtitles, strict=False):
-        if plot_type == PlotType.SCATTER or incl_scatter:
-            scatter_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
-        if plot_type == PlotType.DENSITY:
-            density_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
-        elif plot_type == PlotType.SIMPLE_DENSITY:
-            density_plot(
-                data, title=subtitle, simple_density=True, ax=ax, color=color, **kwargs
-            )
+    # Create a new figure
+    fig, axes = plt.subplots(nrows, cols, figsize=(cols * 6, nrows * 6), squeeze=False)
+    axes = axes.flatten()
 
-    plt.suptitle(title)
+    # Create individual plots
+    for i, (data, subtitle) in enumerate(zip(data_list, subtitles)):
+        if i < len(axes):
+            # Create a plot for this axis
+            if plot_type == "scatter":
+                scatter_plot(data, x=x, y=y, hue=hue, title=subtitle, ax=axes[i], **plotting_kwargs)
+            elif plot_type == "simple_density":
+                density_plot(data, x=x, y=y, hue=hue, title=subtitle,
+                            simple_density=True, incl_scatter=incl_scatter, ax=axes[i], **plotting_kwargs)
+            else:
+                density_plot(data, x=x, y=y, hue=hue, title=subtitle,
+                            incl_scatter=incl_scatter, ax=axes[i], **plotting_kwargs)
 
+    # Hide any unused axes
+    for i in range(len(data_list), len(axes)):
+        axes[i].set_visible(False)
+
+    # Add a title to the figure
+    fig.suptitle(title, fontsize=16)
+
+    # Adjust layout
     plt.tight_layout()
+
+    # We'll return the figure directly for legacy compatibility
     return fig
