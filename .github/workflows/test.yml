@@ -64,7 +64,7 @@ jobs:
 
       - name: Set R environment variables
         run: |
-          echo "R RHOME"
+          R RHOME
           # echo "R_LIBRARY=''" >> $GITHUB_ENV
           # echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
           # echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
