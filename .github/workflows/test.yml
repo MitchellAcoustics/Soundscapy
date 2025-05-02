@@ -1,6 +1,11 @@
 name: Test
 
 on:
+  workflow_run:
+    workflows: ["Linting"]
+    types:
+      - completed
+    branches: [main, dev]
   workflow_call:
     outputs:
       tests-pass:
@@ -8,7 +13,11 @@ on:
         value: ${{ github.event.inputs.tests-pass }}
   push:
     branches: [main, dev]
+    paths-ignore:
+      - "**.md"
   pull_request:
+    paths-ignore:
+      - "**.md"
     branches: [main, dev]
 
 concurrency:
@@ -16,47 +25,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint and format check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "0.4.29"
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-
-      - name: Setup Python
-        run: uv python install 3.12
-
-      - name: Lint and format check
-        run: |
-          uvx ruff check .
-          uvx ruff format --check
-
   test:
-    name: Test with ${{ matrix.factor }} on Python ${{ matrix.python-version }}
-    needs: lint
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' || github.event_name == 'push' }}
+    name: Test with ${{ matrix.factor }} on Python ${{ matrix.python-version }}
+
+    outputs:
+      tests-pass: ${{ steps.test-results.outputs.result }}
+
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        factor: [core, audio, spi, all]
+        factor: [core, audio, spi, all, tutorials]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v5
         with:
+          version: "0.7.2"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
+
+      - name: Restore tox cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
+        with:
+          path: .tox
+          key: tox-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.factor }}-${{ hashFiles('pyproject.toml') }}
 
       - name: Install R
         run: |
@@ -77,6 +75,8 @@ jobs:
 
       # Convert Python version (e.g., 3.10) to format needed for tox (e.g., py310)
       - name: Run tox environment
+        id: test-results
         run: |
           py_version="py$(echo '${{ matrix.python-version }}' | tr -d '.')"
           tox r -e ${py_version}-${{ matrix.factor }}
+          echo "result=true" >> $GITHUB_OUTPUT

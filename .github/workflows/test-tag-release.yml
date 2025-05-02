@@ -58,9 +58,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: "0.4.29"
+          version: "0.7.2"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
       - run: uv python install 3.12
@@ -75,14 +76,14 @@ jobs:
     needs: [details]
     uses: ./.github/workflows/test.yml
 
-  tutorial-tests-pass:
+  docs-pass:
     needs: [details]
-    uses: ./.github/workflows/test-tutorials.yml
+    uses: ./.github/workflows/docs.yml
 
   # Modified to publish to TestPyPI
   testpypi_publish:
     name: Upload release to TestPyPI
-    needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
+    needs: [setup_and_build, details, tests-pass, docs-pass]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
