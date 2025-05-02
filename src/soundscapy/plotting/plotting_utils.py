@@ -15,13 +15,6 @@ class PlotType(Enum):
     JOINT = "joint"
 
 
-class Backend(Enum):
-    """Enum for supported plotting backends."""
-
-    SEABORN = "seaborn"
-    PLOTLY = "plotly"
-
-
 class ExtraParams(TypedDict, total=False):
     """TypedDict for extra parameters passed to plotting functions."""
 

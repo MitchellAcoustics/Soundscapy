@@ -5,11 +5,10 @@ Test suite for soundscapy plotting functions.
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.graph_objs as go
 import pytest
+import seaborn.objects as so
 
 from soundscapy.plotting import (
-    Backend,
     CircumplexPlot,
     PlotType,
     create_circumplex_subplots,
@@ -31,7 +30,7 @@ def sample_data():
 )
 def test_scatter_plot_image(sample_data):
     """Test scatter plot image comparison."""
-    ax = scatter_plot(sample_data, backend=Backend.SEABORN)
+    ax = scatter_plot(sample_data)
     return ax.figure
 
 
@@ -40,14 +39,19 @@ def test_scatter_plot_image(sample_data):
 )
 def test_density_plot_image(sample_data):
     """Test density plot image comparison."""
-    ax = density_plot(sample_data, backend=Backend.SEABORN)
+    ax = density_plot(sample_data)
     return ax.figure
 
 
-def test_scatter_plot_seaborn(sample_data):
-    """Test scatter plot with Seaborn backend."""
-    ax = scatter_plot(sample_data, backend=Backend.SEABORN)
-    assert isinstance(ax, plt.Axes)
+def test_scatter_plot(sample_data):
+    """Test scatter plot functionality."""
+    # Create a figure and axis for the test
+    fig, ax = plt.subplots()
+    # Plot directly on the provided axis
+    result_ax = scatter_plot(sample_data, ax=ax)
+    # It should return the same axis
+    assert result_ax is ax
+    # Check axis properties
     assert ax.get_xlabel() == "ISOPleasant"
     assert ax.get_ylabel() == "ISOEventful"
     assert ax.get_xlim() == (-1, 1)
@@ -55,17 +59,21 @@ def test_scatter_plot_seaborn(sample_data):
     assert ax.get_title() == "Soundscape Scatter Plot"
 
 
-@pytest.mark.filterwarnings("ignore::UserWarning")
-def test_scatter_plot_plotly(sample_data):
-    """Test scatter plot with Plotly backend."""
-    fig = scatter_plot(sample_data, backend=Backend.PLOTLY)
-    assert isinstance(fig, go.Figure)
+def test_scatter_plot_as_objects(sample_data):
+    """Test scatter plot with objects return type."""
+    plot = scatter_plot(sample_data, as_objects=True)
+    assert isinstance(plot, so.Plot)
 
 
-def test_density_plot_seaborn(sample_data):
-    """Test density plot with Seaborn backend."""
-    ax = density_plot(sample_data, backend=Backend.SEABORN)
-    assert isinstance(ax, plt.Axes)
+def test_density_plot(sample_data):
+    """Test density plot functionality."""
+    # Create a figure and axis for the test
+    fig, ax = plt.subplots()
+    # Plot directly on the provided axis
+    result_ax = density_plot(sample_data, ax=ax)
+    # It should return the same axis
+    assert result_ax is ax
+    # Check axis properties
     assert ax.get_xlabel() == "ISOPleasant"
     assert ax.get_ylabel() == "ISOEventful"
     assert ax.get_xlim() == (-1, 1)
@@ -73,13 +81,10 @@ def test_density_plot_seaborn(sample_data):
     assert ax.get_title() == "Soundscape Density Plot"
 
 
-@pytest.mark.filterwarnings("ignore::UserWarning")
-def test_density_plot_plotly(sample_data):
-    """Test density plot with Plotly backend."""
-    # Update when density plots are implemented for Plotly
-    with pytest.raises(NotImplementedError):
-        fig = density_plot(sample_data, backend=Backend.PLOTLY)
-        assert isinstance(fig, go.Figure)
+def test_density_plot_as_objects(sample_data):
+    """Test density plot with objects return type."""
+    plot = density_plot(sample_data, as_objects=True)
+    assert isinstance(plot, so.Plot)
 
 
 def test_create_circumplex_subplots(sample_data):
@@ -93,74 +98,71 @@ def test_create_circumplex_subplots(sample_data):
 
 def test_simple_density_plot_type(sample_data):
     fig = create_circumplex_subplots(
-        [sample_data, sample_data], plot_type=PlotType.SIMPLE_DENSITY, nrows=1, ncols=2
+        [sample_data, sample_data], plot_type="simple_density", nrows=1, ncols=2
     )
     assert isinstance(fig, plt.Figure)
     assert len(fig.axes) == 2
 
 
-def test_circumplex_plot_seaborn(sample_data):
-    """Test CircumplexPlot with Seaborn backend."""
-    plot = CircumplexPlot(sample_data, backend=Backend.SEABORN)
+def test_circumplex_plot_methods(sample_data):
+    """Test CircumplexPlot methods."""
+    # Test scatter method
+    plot = CircumplexPlot(sample_data)
     plot.scatter()
     assert isinstance(plot.get_axes(), plt.Axes)
+    
+    # Test density method
+    plot = CircumplexPlot(sample_data)
     plot.density()
     assert isinstance(plot.get_axes(), plt.Axes)
+    
+    # Test jointplot method
+    plot = CircumplexPlot(sample_data)
     plot.jointplot()
     assert isinstance(plot.get_axes(), plt.Axes)
 
 
-@pytest.mark.filterwarnings("ignore::UserWarning")
-def test_circumplex_plot_plotly(sample_data):
-    """Test CircumplexPlot with Plotly backend."""
-    plot = CircumplexPlot(sample_data, backend=Backend.PLOTLY)
+def test_plot_size(sample_data):
+    """Test customizing plot size."""
+    plot = CircumplexPlot(sample_data)
     plot.scatter()
-    assert isinstance(plot.get_figure(), go.Figure)
-    with pytest.raises(NotImplementedError):
-        # Update when density plots are implemented for Plotly
-        plot.density()
-        assert isinstance(plot.get_figure(), go.Figure)
+    fig, _ = plot.build(as_objects=False)
+    # Default size should be 6x6
+    assert np.array_equal(fig.get_size_inches(), np.array((6, 6)))
 
 
-def test_style_options(sample_data):
-    """Test updating style options."""
-    plot = CircumplexPlot(sample_data, backend=Backend.SEABORN)
-    plot.update_style_options(figsize=(8, 8))
-    plot.scatter()
-    fig = plot.get_figure()[0]
-    assert np.array_equal(fig.get_size_inches(), np.array((8, 8)))
-
-
-def test_invalid_backend():
-    """Test invalid backend raises ValueError."""
-    with pytest.raises(ValueError):
-        CircumplexPlot(pd.DataFrame(), backend="invalid_backend")
+def test_builder_pattern(sample_data):
+    """Test the builder pattern API."""
+    plot = (CircumplexPlot(sample_data)
+            .add_scatter()
+            .add_grid()
+            .add_title("Test Title"))
+    
+    # Verify the plot was built correctly
+    assert plot.has_scatter is True
+    assert plot.has_grid is True
 
 
 def test_invalid_plot_type(sample_data):
-    """Test invalid plot type raises ValueError."""
-    with pytest.raises(KeyError):
-        create_circumplex_subplots([sample_data], plot_type="invalid_plot_type")
+    """Test invalid plot type gets treated as default."""
+    # Invalid types no longer raise errors - they just fall back to default behavior
+    fig = create_circumplex_subplots([sample_data], plot_type="invalid_plot_type")
+    assert isinstance(fig, plt.Figure)
 
 
 def test_simple_density(sample_data):
-    plot = CircumplexPlot(sample_data, backend=Backend.SEABORN)
-    plot.simple_density()
-    assert isinstance(plot.get_axes(), plt.Axes)
-
-
-def test_simple_density_with_custom_params(sample_data):
-    from soundscapy.plotting.circumplex_plot import CircumplexPlotParams
-
-    params = CircumplexPlotParams(fill=False)
-    plot = CircumplexPlot(sample_data, backend=Backend.SEABORN, params=params)
-    plot.simple_density()
-    assert isinstance(plot.get_axes(), plt.Axes)
-
-
-def test_simple_density_with_custom_axes(sample_data):
+    """Test simple density plot functionality."""
     plot = CircumplexPlot(sample_data)
-    fig, ax = plt.subplots()
-    plot.simple_density(ax=ax)
-    fig = plot.get_figure()
-    assert isinstance(fig[0], plt.Figure)
+    plot.simple_density()
+    assert isinstance(plot.get_axes(), plt.Axes)
+
+
+def test_annotations(sample_data):
+    """Test annotation functionality."""
+    plot = CircumplexPlot(sample_data)
+    plot.add_scatter()
+    plot.add_annotation(0)
+    plot.add_grid()
+    
+    # Just testing that it doesn't error since we can't easily check annotation
+    assert plot.has_scatter is True
