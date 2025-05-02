@@ -27,6 +27,8 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container:
+      image: rpy2/base-ubuntu:latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' || github.event_name == 'push' }}
     name: Test with ${{ matrix.factor }} on Python ${{ matrix.python-version }}
 
