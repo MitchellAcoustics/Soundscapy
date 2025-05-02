@@ -60,6 +60,7 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
+          dependencies: "all"
           # extra-packages: |
           #   any::sn
 
@@ -81,7 +82,7 @@ jobs:
       - name: Install tox
         run: uv tool install tox --with tox-uv
 
-      - uses: fawazahmed0/action-debug-vscode@main
+      # - uses: fawazahmed0/action-debug-vscode@main
 
       # Convert Python version (e.g., 3.10) to format needed for tox (e.g., py310)
       - name: Run tox environment
