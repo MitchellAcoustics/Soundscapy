@@ -60,14 +60,14 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
-          extra-packages: |
-            any::sn
+          # extra-packages: |
+          #   any::sn
 
-      - name: Set R environment variables
-        run: |
-          echo "R_LIBRARY='tempdir/Library'" >> $GITHUB_ENV
-          echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
-          # echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
+      # - name: Set R environment variables
+      #   run: |
+      #     echo "R_LIBRARY='/home/runner/work/_temp/Library'" >> $GITHUB_ENV
+      #     echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+      #     echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
 
       - name: Restore tox cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
