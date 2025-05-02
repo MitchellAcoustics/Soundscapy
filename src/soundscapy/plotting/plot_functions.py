@@ -1,6 +1,4 @@
-"""
-Utility functions for creating various types of circumplex plots.
-"""
+"""Utility functions for creating various types of circumplex plots."""
 
 from typing import Any
 
@@ -10,9 +8,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import seaborn as sns
 
-from .backends import SeabornBackend
-from .circumplex_plot import CircumplexPlot, CircumplexPlotParams
-from .plotting_utils import (
+from soundscapy.plotting.backends import SeabornBackend
+from soundscapy.plotting.circumplex_plot import CircumplexPlot, CircumplexPlotParams
+from soundscapy.plotting.plotting_utils import (
     DEFAULT_FIGSIZE,
     DEFAULT_XLIM,
     DEFAULT_YLIM,
@@ -20,7 +18,7 @@ from .plotting_utils import (
     ExtraParams,
     PlotType,
 )
-from .stylers import StyleOptions
+from soundscapy.plotting.stylers import StyleOptions
 
 
 def scatter_plot(

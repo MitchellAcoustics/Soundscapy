@@ -20,8 +20,8 @@ except ImportError as e:
     raise ImportError(msg) from e
 
 # Now we can import our modules that depend on the optional packages
-from . import msn
-from .msn import CentredParams, DirectParams, MultiSkewNorm, cp2dp, dp2cp
+from soundscapy.spi import msn
+from soundscapy.spi.msn import CentredParams, DirectParams, MultiSkewNorm, cp2dp, dp2cp
 
 __all__ = [
     "CentredParams",

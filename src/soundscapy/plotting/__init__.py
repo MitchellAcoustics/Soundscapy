@@ -1,8 +1,9 @@
 """
-Soundscapy Plotting Module
+Soundscapy Plotting Module.
 
 This module provides tools for creating circumplex plots for soundscape analysis.
-It supports various plot types and backends, with a focus on flexibility and ease of use.
+It supports various plot types and backends, with a focus on flexibility and ease
+of use.
 
 Main components:
 - CircumplexPlot: Main class for creating customizable circumplex plots
@@ -22,11 +23,15 @@ Example usage:
     density_plot(data, x='ISOPleasant', y='ISOEventful', backend=Backend.PLOTLY)
 """
 
-from . import likert
-from .circumplex_plot import CircumplexPlot, CircumplexPlotParams
-from .plot_functions import create_circumplex_subplots, density_plot, scatter_plot
-from .plotting_utils import Backend, PlotType
-from .stylers import StyleOptions
+from soundscapy.plotting import likert
+from soundscapy.plotting.circumplex_plot import CircumplexPlot, CircumplexPlotParams
+from soundscapy.plotting.plot_functions import (
+    create_circumplex_subplots,
+    density_plot,
+    scatter_plot,
+)
+from soundscapy.plotting.plotting_utils import Backend, PlotType
+from soundscapy.plotting.stylers import StyleOptions
 
 __all__ = [
     "Backend",

@@ -11,10 +11,12 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
+from soundscapy import get_logger
 from soundscapy.plotting import density_plot
+from soundscapy.spi import _rsn_wrapper as rsn
+from soundscapy.spi.ks2d import ks2d2s
 
-from . import _rsn_wrapper as rsn
-from .ks2d import ks2d2s
+logger = get_logger()
 
 
 class DirectParams:
@@ -234,10 +236,12 @@ class MultiSkewNorm:
         if self.cp is None and self.dp is None and self.selm_model is None:
             return "MultiSkewNorm is not fitted."
         if self.data is not None:
-            pass
+            print(f"Fitted from data. n = {len(self.data)}")  # noqa: T201
         else:
-            pass
-        return None
+            print("Fitted from direct parameters.")  # noqa: T201
+        print(self.dp)  # noqa: T201
+        print("\n")  # noqa: T201
+        print(self.cp)  # noqa: RET503, T201
 
     def fit(
         self,
@@ -449,7 +453,7 @@ class MultiSkewNorm:
         plot_title = title if title is not None else "Soundscapy Density Plot"
         density_plot(data, color=color, title=plot_title)
 
-    def ks2ds(self, test: pd.DataFrame | np.ndarray) -> tuple[float, float]:
+    def ks2d2s(self, test_data: pd.DataFrame | np.ndarray) -> tuple[float, float]:
         """
         Compute the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
 
@@ -464,28 +468,34 @@ class MultiSkewNorm:
             The KS2D statistic and p-value.
 
         """
-        if self.sample_data is None:
-            self.sample()
-
-        # Ensure sample_data is populated after calling self.sample()
-        if self.sample_data is None:
-            msg = "Failed to generate sample data."
-            raise ValueError(msg)
-
-        if isinstance(self.sample_data, pd.DataFrame):
-            sample_data = self.sample_data.to_numpy()
-        else:
-            # Explicitly cast to ndarray to satisfy type checker,
-            # although it should be one already
-            sample_data = np.asarray(self.sample_data)
-
-        if isinstance(test, pd.DataFrame):
-            if test.shape[1] != 2:  # noqa: PLR2004
+        # Ensure test_data is a numpy array
+        if isinstance(test_data, pd.DataFrame):
+            if test_data.shape[1] != 2:  # noqa: PLR2004
                 msg = "Test data must have two columns."
                 raise ValueError(msg)
-            test = test.to_numpy()
+            test_data_np = test_data.to_numpy()
+        elif isinstance(test_data, np.ndarray):
+            test_data_np = test_data
+        else:
+            msg = "test_data must be a pandas DataFrame or numpy array."
+            raise TypeError(msg)
 
-        return ks2d2s(sample_data, test)
+        # Ensure sample_data exists, generate if needed and possible
+        if self.sample_data is None:
+            logger.info("Sample data not found, generating default sample (n=1000).")
+            self.sample(n=1000, return_sample=False)  # Generate sample if missing
+            if self.sample_data is None:  # Check again in case sample failed
+                msg = (
+                    "Could not generate sample data. "
+                    "Ensure model is defined (fit or define_dp)."
+                )
+                raise ValueError(msg)
+
+        # Perform the 2-sample KS test using ks2d2s
+        # Note: ks2d2s expects data1, data2
+        ks_statistic, p_value = ks2d2s(self.sample_data, test_data_np)
+
+        return ks_statistic, p_value
 
     def spi(self, test: pd.DataFrame | np.ndarray) -> int:
         """
@@ -505,7 +515,7 @@ class MultiSkewNorm:
             The Soundscape Perception Index (SPI), ranging from 0 to 100.
 
         """
-        return int((1 - self.ks2ds(test)[0]) * 100)
+        return int((1 - self.ks2d2s(test)[0]) * 100)
 
 
 def cp2dp(

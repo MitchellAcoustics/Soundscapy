@@ -1,6 +1,4 @@
-"""
-Utility functions and constants for the soundscapy plotting module.
-"""
+"""Utility functions and constants for the soundscapy plotting module."""
 
 from enum import Enum
 from typing import Any, TypedDict

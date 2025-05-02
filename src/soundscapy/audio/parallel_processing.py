@@ -1,8 +1,5 @@
 """
-soundscapy.audio.parallel_processing
-====================================
-
-This module provides functions for parallel processing of binaural audio files.
+Functions for parallel processing of binaural audio files.
 
 It includes functions to load and analyze binaural files, as well as to process
 multiple files in parallel using concurrent.futures.
@@ -33,21 +30,22 @@ from .metrics import (
 )
 
 
-def tqdm_write_sink(message):
+def tqdm_write_sink(message: str) -> None:
     """
-    A custom sink for loguru that writes messages using tqdm.write().
+    Custom sink for loguru that writes messages using tqdm.write().
 
     This ensures that log messages don't interfere with tqdm progress bars.
-    """
+    """  # noqa: D401
     tqdm.write(message, end="")
 
 
 def load_analyse_binaural(
     wav_file: Path,
-    levels: dict | list[float],
+    levels: dict[str, float] | list[float] | None,
     analysis_settings: AnalysisSettings,
-    parallel_mosqito: bool = True,
     resample: int | None = None,
+    *,
+    parallel_mosqito: bool = True,
 ) -> pd.DataFrame:
     """
     Load and analyze a single binaural audio file.
@@ -96,8 +94,9 @@ def parallel_process(
     levels: dict,
     analysis_settings: AnalysisSettings,
     max_workers: int | None = None,
-    parallel_mosqito: bool = True,
     resample: int | None = None,
+    *,
+    parallel_mosqito: bool = True,
 ) -> pd.DataFrame:
     """
     Process multiple binaural files in parallel.
@@ -137,8 +136,8 @@ def parallel_process(
                 wav_file,
                 levels,
                 analysis_settings,
-                parallel_mosqito,
                 resample,
+                parallel_mosqito=parallel_mosqito,
             )
             futures.append(future)
 

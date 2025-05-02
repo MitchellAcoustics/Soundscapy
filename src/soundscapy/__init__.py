@@ -7,17 +7,17 @@ from loguru import logger
 logger.disable("soundscapy")
 
 # Always available core modules
-from . import databases, plotting, surveys
-from ._version import __version__  # noqa: F401
-from .databases import isd, satp
-from .plotting import density_plot, scatter_plot
-from .sspylogging import (
+from soundscapy import databases, plotting, surveys
+from soundscapy._version import __version__  # noqa: F401
+from soundscapy.databases import isd, satp
+from soundscapy.plotting import density_plot, scatter_plot
+from soundscapy.sspylogging import (
     disable_logging,
     enable_debug,
     get_logger,
     setup_logging,
 )
-from .surveys import processing
+from soundscapy.surveys import processing
 
 __all__ = [
     "databases",
@@ -38,8 +38,8 @@ __all__ = [
 
 # Try to import optional audio module
 try:
-    from . import audio
-    from .audio import (
+    from soundscapy import audio
+    from soundscapy.audio import (
         AnalysisSettings,
         AudioAnalysis,
         Binaural,
@@ -68,8 +68,8 @@ except ImportError:
 
 # Try to import optional SPI module
 try:
-    from . import spi
-    from .spi import (
+    from soundscapy import spi
+    from soundscapy.spi import (
         CentredParams,
         DirectParams,
         MultiSkewNorm,

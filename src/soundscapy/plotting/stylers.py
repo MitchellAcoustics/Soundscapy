@@ -1,6 +1,4 @@
-"""
-Styling utilities for circumplex plots using Seaborn and Matplotlib.
-"""
+"""Styling utilities for circumplex plots using Seaborn and Matplotlib."""
 
 from dataclasses import dataclass, field
 from typing import Any
@@ -8,7 +6,7 @@ from typing import Any
 import matplotlib as mpl
 import seaborn as sns
 
-from .plotting_utils import DEFAULT_FIGSIZE
+from soundscapy.plotting.plotting_utils import DEFAULT_FIGSIZE
 
 
 @dataclass

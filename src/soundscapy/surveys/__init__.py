@@ -5,13 +5,13 @@ This package handles the processing and analysis of soundscape surveys,
 including PAQ (Perceived Affective Quality) data and ISO coordinate calculations.
 """
 
-from . import processing, survey_utils
-from .processing import (
+from soundscapy.surveys import processing, survey_utils
+from soundscapy.surveys.processing import (
     add_iso_coords,
     calculate_iso_coords,
     return_paqs,
 )
-from .survey_utils import (
+from soundscapy.surveys.survey_utils import (
     LANGUAGE_ANGLES,
     PAQ_IDS,
     PAQ_LABELS,

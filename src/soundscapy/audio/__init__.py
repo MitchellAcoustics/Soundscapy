@@ -41,16 +41,15 @@ except ImportError as e:
     raise ImportError(msg) from e
 
 # Now we can import our modules that depend on the optional packages
+from soundscapy.audio.analysis_settings import AnalysisSettings, ConfigManager
 from soundscapy.audio.audio_analysis import AudioAnalysis
+from soundscapy.audio.binaural import Binaural
 from soundscapy.audio.metrics import (
     add_results,
     prep_multiindex_df,
     process_all_metrics,
 )
 from soundscapy.audio.parallel_processing import parallel_process
-
-from .analysis_settings import AnalysisSettings, ConfigManager
-from .binaural import Binaural
 
 __all__ = [
     "AnalysisSettings",

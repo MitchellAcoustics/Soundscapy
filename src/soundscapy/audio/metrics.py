@@ -1,40 +1,52 @@
 """
-soundscapy.audio.metrics
-========================
+Functions for calculating various acoustic and psychoacoustic metrics for audio signals.
 
-This module provides functions for calculating various acoustic and psychoacoustic metrics
-for audio signals. It includes implementations for single-channel and two-channel signals,
+It includes implementations for single-channel and two-channel signals,
 as well as wrapper functions for different libraries such as Acoustic Toolbox, MoSQITo,
 and scikit-maad.
 
 Functions
 ---------
 _stat_calcs : Calculate various statistics for a time series array.
-mosqito_metric_1ch : Calculate a MoSQITo psychoacoustic metric for a single channel signal.
+mosqito_metric_1ch : Calculate a MoSQITo psychoacoustic metric for a single channel
+    signal.
 maad_metric_1ch : Run a metric from the scikit-maad library on a single channel signal.
-acoustics_metric_1ch : Run a metric from the Acoustic Toolbox on a single channel object.
+acoustics_metric_1ch : Run a metric from the Acoustic Toolbox on a single channel
+    object.
 acoustics_metric_2ch : Run a metric from the Acoustic Toolbox on a Binaural object.
-pyacoustics_metric_1ch: Deprecated function for running a metric from the PyAcoustics library (replaced with `acoustics_metric_1ch`).
-pyacoustics_metric_2ch: Deprecated function for running a metric from the PyAcoustics library (replaced with `acoustics_metric_2ch`).
+pyacoustics_metric_1ch: Deprecated function for running a metric from the PyAcoustics
+    library
+pyacoustics_metric_2ch: Deprecated function for running a metric from the PyAcoustics
+    library (replaced with `acoustics_metric_2ch`).
+pyacoustics_metric_2ch: Deprecated function for running a metric from the PyAcoustics
+    library (replaced with `acoustics_metric_2ch`).
 mosqito_metric_2ch : Calculate metrics from MoSQITo for a two-channel signal.
 maad_metric_2ch : Run a metric from the scikit-maad library on a binaural signal.
 prep_multiindex_df : Prepare a MultiIndex dataframe from a dictionary of results.
 add_results : Add results to a MultiIndex dataframe.
-process_all_metrics : Process all metrics specified in the analysis settings for a binaural signal.
+process_all_metrics : Process all metrics specified in the analysis settings for a
+    binaural signal.
 
 Notes
 -----
-This module relies on external libraries such as numpy, pandas, maad, mosqito, and scipy.
-Ensure these dependencies are installed before using this module.
+This module relies on external libraries such as numpy, pandas, maad, mosqito,
+and scipy. Ensure these dependencies are installed before using this module.
 
 """
 
 import concurrent.futures
 import multiprocessing as mp
 import warnings
+from typing import Literal, TypedDict
+
+try:
+    from typing import Unpack
+except ImportError:
+    from typing_extensions import Unpack
 
 import numpy as np
 import pandas as pd
+from acoustic_toolbox import Signal
 from loguru import logger
 from maad.features import all_spectral_alpha_indices, all_temporal_alpha_indices
 from maad.sound import spectrogram
@@ -45,9 +57,10 @@ from mosqito.sq_metrics import (
     sharpness_din_perseg,
     sharpness_din_tv,
 )
+from numpy.typing import NDArray
 from scipy import stats
 
-from .analysis_settings import AnalysisSettings
+from soundscapy.audio.analysis_settings import AnalysisSettings
 
 DEFAULT_LABELS = {
     "LZeq": "LZeq",
@@ -64,10 +77,13 @@ DEFAULT_LABELS = {
 
 
 def _stat_calcs(
-    label: str, ts_array: np.ndarray, res: dict, statistics: list[int | str]
+    label: str,
+    ts_array: NDArray[np.float64],
+    res: dict,
+    statistics: tuple[int | str, ...],
 ) -> dict:
     """
-    Calculate various statistics for a time series array and add them to a results dictionary.
+    Calculate various statistics for a time series array and add them to a dictionary.
 
     Parameters
     ----------
@@ -112,18 +128,38 @@ def _stat_calcs(
                 res[f"{label}_{stat}"] = stats.skew(ts_array)
             elif stat == "std":
                 res[f"{label}_{stat}"] = np.std(ts_array)
-            else:
+            elif isinstance(stat, int):
                 res[f"{label}_{stat}"] = np.percentile(ts_array, 100 - stat)
-        except Exception as e:
+            else:
+                logger.error(f"Unrecognized statistic: {stat} for {label}")
+                res[f"{label}_{stat}"] = np.nan
+        except Exception as e:  # noqa: BLE001, PERF203
             logger.error(f"Error calculating {stat} for {label}: {e!s}")
             res[f"{label}_{stat}"] = np.nan
     return res
 
 
+class _MosqitoMetricParams(TypedDict, total=False):
+    field_type: str  # loudness_zwtv, sharpness_din_from_loudness, sharpness_din_tv
+    weighting: (
+        str  # sharpness_din_from_loudness, sharpness_din_perseg, sharpness_din_tv
+    )
+    overlap: float  # roughness_dw
+    nperseg: int  # sharpness_din_perseg
+    noverlap: int | None  # sharpness_din_perseg
+    skip: float  # sharpness_din_tv
+
+
 def mosqito_metric_1ch(
-    s,
-    metric: str,
-    statistics: tuple[int | str] = (
+    s: Signal,
+    metric: Literal[
+        "loudness_zwtv",
+        "roughness_dw",
+        "sharpness_din_from_loudness",
+        "sharpness_din_perseg",
+        "sharpness_din_tv",
+    ],
+    statistics: tuple[int | str, ...] = (
         5,
         10,
         50,
@@ -136,9 +172,10 @@ def mosqito_metric_1ch(
         "skew",
     ),
     label: str | None = None,
+    *,
     as_df: bool = False,
     return_time_series: bool = False,
-    func_args: dict = {},
+    **kwargs: Unpack[_MosqitoMetricParams],
 ) -> dict | pd.DataFrame:
     """
     Calculate a MoSQITo psychoacoustic metric for a single channel signal.
@@ -170,7 +207,8 @@ def mosqito_metric_1ch(
     Raises
     ------
     ValueError
-        If the input signal is not single-channel or if an unrecognized metric is specified.
+        If the input signal is not single-channel
+        or if an unrecognized metric is specified.
 
     Examples
     --------
@@ -185,12 +223,14 @@ def mosqito_metric_1ch(
     # Checks and warnings
     if s.channels != 1:
         logger.error("Signal must be single channel")
-        raise ValueError("Signal must be single channel")
+        msg = "Signal must be single channel"
+        raise ValueError(msg)
     try:
         label = label or DEFAULT_LABELS[metric]
     except KeyError as e:
         logger.error(f"Metric {metric} not recognized")
-        raise ValueError(f"Metric {metric} not recognized.") from e
+        msg = f"Metric {metric} not recognized."
+        raise ValueError(msg) from e
     if as_df and return_time_series:
         logger.warning(
             "Cannot return both a dataframe and time series. Returning dataframe only."
@@ -201,42 +241,92 @@ def mosqito_metric_1ch(
     res = {}
     try:
         if metric == "loudness_zwtv":
-            N, N_spec, bark_axis, time_axis = loudness_zwtv(s, s.fs, **func_args)
+            # Prepare args specifically for loudness_zwtv
+            loudness_args = {}
+            if "field_type" in kwargs:
+                loudness_args["field_type"] = kwargs["field_type"]
+            # Call with filtered args
+            N, N_spec, _, time_axis = loudness_zwtv(s, s.fs, **loudness_args)  # noqa: N806
+            # TODO(MitchellAcoustics): Add the bark_axis back in
+            # when we implement time series calcs
+            # https://github.com/MitchellAcoustics/Soundscapy/issues/113
             res = _stat_calcs(label, N, res, statistics)
             if return_time_series:
                 res[f"{label}_ts"] = (time_axis, N)
+
         elif metric == "roughness_dw":
-            R, R_spec, bark_axis, time_axis = roughness_dw(s, s.fs, **func_args)
-            res = _stat_calcs(label, R, res, statistics)
+            # Prepare args specifically for roughness_dw
+            roughness_args = {}
+            if "overlap" in kwargs:
+                roughness_args["overlap"] = kwargs["overlap"]
+            # Call with filtered args
+            R, _, _, time_axis = roughness_dw(s, s.fs, **roughness_args)  # noqa: N806
+            # TODO(MitchellAcoustics): Add the R_spec and bark_axis back in
+            # when we implement time series calcs
+            # https://github.com/MitchellAcoustics/Soundscapy/issues/113
+            if isinstance(R, float | int):
+                res[label] = R
+            elif isinstance(R, np.ndarray) and len(R) == 1:
+                res[label] = R[0]
+            else:
+                res = _stat_calcs(label, R, res, statistics)
             if return_time_series:
                 res[f"{label}_ts"] = (time_axis, R)
+
         elif metric == "sharpness_din_from_loudness":
-            field_type = func_args.get("field_type", "free")
-            N, N_spec, bark_axis, time_axis = loudness_zwtv(
-                s, s.fs, field_type=field_type
-            )
+            # Prepare args for loudness_zwtv (needed first)
+            loudness_args = {}
+            if "field_type" in kwargs:
+                loudness_args["field_type"] = kwargs["field_type"]
+            N, N_spec, _, time_axis = loudness_zwtv(s, s.fs, **loudness_args)  # noqa: N806
+            # TODO(MitchellAcoustics): Add the R_spec and bark_axis back in
+            # when we implement time series calcs
+            # https://github.com/MitchellAcoustics/Soundscapy/issues/113
             res = _stat_calcs("N", N, res, statistics)
             if return_time_series:
                 res["N_ts"] = time_axis, N
 
-            func_args.pop("field_type", None)
-            S = sharpness_din_from_loudness(N, N_spec, **func_args)
+            # Prepare args specifically for sharpness_din_from_loudness
+            sharpness_args = {}
+            if "weighting" in kwargs:
+                sharpness_args["weighting"] = kwargs["weighting"]
+            # Call with filtered args
+            S = sharpness_din_from_loudness(N, N_spec, **sharpness_args)  # noqa: N806
             res = _stat_calcs(label, S, res, statistics)
             if return_time_series:
                 res[f"{label}_ts"] = (time_axis, S)
+
         elif metric == "sharpness_din_perseg":
-            S, time_axis = sharpness_din_perseg(s, s.fs, **func_args)
+            # Prepare args specifically for sharpness_din_perseg
+            sharpness_args = {}
+            if "weighting" in kwargs:
+                sharpness_args["weighting"] = kwargs["weighting"]
+            if "nperseg" in kwargs:
+                sharpness_args["nperseg"] = kwargs["nperseg"]
+            if "noverlap" in kwargs:
+                sharpness_args["noverlap"] = kwargs["noverlap"]
+            # Call with filtered args
+            S, time_axis = sharpness_din_perseg(s, s.fs, **sharpness_args)  # noqa: N806
             res = _stat_calcs(label, S, res, statistics)
             if return_time_series:
                 res[f"{label}_ts"] = (time_axis, S)
+
         elif metric == "sharpness_din_tv":
-            S, time_axis = sharpness_din_tv(s, s.fs, **func_args)
+            # Prepare args specifically for sharpness_din_tv
+            sharpness_args = {}
+            if "weighting" in kwargs:
+                sharpness_args["weighting"] = kwargs["weighting"]
+            if "skip" in kwargs:
+                sharpness_args["skip"] = kwargs["skip"]
+            # Call with filtered args
+            S, time_axis = sharpness_din_tv(s, s.fs, **sharpness_args)  # noqa: N806
             res = _stat_calcs(label, S, res, statistics)
             if return_time_series:
                 res[f"{label}_ts"] = (time_axis, S)
         else:
-            logger.error(f"Metric {metric} not recognized")
-            raise ValueError(f"Metric {metric} not recognized.")
+            msg = f"Metric {metric} not recognized."
+            logger.error(msg)
+            raise ValueError(msg)
     except Exception as e:
         logger.error(f"Error calculating {metric}: {e!s}")
         raise
@@ -244,11 +334,9 @@ def mosqito_metric_1ch(
     # Return the results in the requested format
     if not as_df:
         return res
-    try:
-        rec = s.recording
-        return pd.DataFrame(res, index=[rec])
-    except AttributeError:
-        return pd.DataFrame(res, index=[0])
+
+    rec = getattr(s, "recording", None)
+    return pd.DataFrame(res, index=[rec])
 
 
 def maad_metric_1ch(s, metric: str, as_df: bool = False, func_args={}):
@@ -781,9 +869,9 @@ def mosqito_metric_2ch(
                     metric,
                     statistics,
                     label,
-                    False,
-                    return_time_series,
-                    func_args,
+                    as_df=False,
+                    return_time_series=return_time_series,
+                    **func_args,
                 )
                 future_r = executor.submit(
                     mosqito_metric_1ch,
@@ -791,9 +879,9 @@ def mosqito_metric_2ch(
                     metric,
                     statistics,
                     label,
-                    False,
-                    return_time_series,
-                    func_args,
+                    as_df=False,
+                    return_time_series=return_time_series,
+                    **func_args,
                 )
                 res_l = future_l.result()
                 res_r = future_r.result()
@@ -803,18 +891,18 @@ def mosqito_metric_2ch(
                 metric,
                 statistics,
                 label,
-                False,
-                return_time_series,
-                func_args,
+                as_df=False,
+                return_time_series=return_time_series,
+                **func_args,
             )
             res_r = mosqito_metric_1ch(
                 b[1],
                 metric,
                 statistics,
                 label,
-                False,
-                return_time_series,
-                func_args,
+                as_df=False,
+                return_time_series=return_time_series,
+                **func_args,
             )
 
         res = {channel_names[0]: res_l, channel_names[1]: res_r}
@@ -886,8 +974,8 @@ def maad_metric_2ch(
     logger.debug(f"Calculating scikit-maad {metric}")
 
     try:
-        res_l = maad_metric_1ch(b[0], metric, as_df=False)
-        res_r = maad_metric_1ch(b[1], metric, as_df=False)
+        res_l = maad_metric_1ch(b[0], metric, as_df=False, **func_args)
+        res_r = maad_metric_1ch(b[1], metric, as_df=False, **func_args)
         res = {channel_names[0]: res_l, channel_names[1]: res_r}
     except Exception as e:
         logger.error(f"Error calculating MAAD metric {metric} for 2 channels: {e!s}")

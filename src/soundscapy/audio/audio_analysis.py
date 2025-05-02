@@ -1,3 +1,11 @@
+"""
+Audio analysis module for psychoacoustic analysis of audio files.
+
+This module provides functionality for analyzing audio files using psychoacoustic
+metrics. It includes the AudioAnalysis class for processing single files or entire
+folders.
+"""
+
 import json
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -6,12 +14,51 @@ import pandas as pd
 from loguru import logger
 from tqdm.auto import tqdm
 
+from soundscapy._utils import ensure_input_path, ensure_path_type
 from soundscapy.audio.analysis_settings import ConfigManager
 from soundscapy.audio.parallel_processing import load_analyse_binaural
 
 
 class AudioAnalysis:
-    def __init__(self, config_path: str | Path | None = None):
+    """
+    A class for performing psychoacoustic analysis on audio files.
+
+    This class provides methods to analyze single audio files or entire folders
+    of audio files using parallel processing. It handles configuration management,
+    calibration, and saving of analysis results.
+
+    Attributes
+    ----------
+    config_manager : ConfigManager
+        Manages the configuration settings for audio analysis
+    settings : dict
+        The current configuration settings
+
+    Methods
+    -------
+    analyze_file(file_path, calibration_levels, resample)
+        Analyze a single audio file
+    analyze_folder(folder_path, calibration_file, max_workers, resample)
+        Analyze all audio files in a folder using parallel processing
+    save_results(results, output_path)
+        Save analysis results to a file
+    update_config(new_config)
+        Update the current configuration
+    save_config(config_path)
+        Save the current configuration to a file
+
+    """
+
+    def __init__(self, config_path: str | Path | None = None) -> None:
+        """
+        Initialize the AudioAnalysis with a configuration.
+
+        Parameters
+        ----------
+        config_path : str, Path, or None
+            Path to the configuration file. If None, uses default configuration.
+
+        """
         self.config_manager = ConfigManager(config_path)
         self.settings = self.config_manager.load_config()
         logger.info(
@@ -41,8 +88,8 @@ class AudioAnalysis:
             DataFrame containing the analysis results.
 
         """
-        if isinstance(file_path, str):
-            file_path = Path(file_path)
+        file_path = ensure_input_path(file_path)
+
         logger.info(f"Analyzing file: {file_path}")
         return load_analyse_binaural(
             file_path,
@@ -70,7 +117,8 @@ class AudioAnalysis:
         calibration_file : str or Path, optional
             Path to a JSON file containing calibration levels for each audio file.
         max_workers : int, optional
-            Maximum number of worker processes to use. If None, it will use the number of CPU cores.
+            Maximum number of worker processes to use.
+            If None, it will use the number of CPU cores.
 
         Returns
         -------
@@ -78,18 +126,20 @@ class AudioAnalysis:
             DataFrame containing the analysis results for all files.
 
         """
-        folder_path = Path(folder_path)
+        folder_path = ensure_input_path(folder_path)
         audio_files = list(folder_path.glob("*.wav"))
 
         logger.info(
-            f"Analyzing folder: {folder_path.name} of {len(audio_files)} files in parallel (max_workers={max_workers})"
+            f"Analyzing folder: {folder_path.name} of {len(audio_files)}"
+            f"files in parallel (max_workers={max_workers})"
         ) if max_workers else logger.info(
             f"Analyzing folder: {folder_path}, {len(audio_files)} files"
         )
 
         calibration_levels = {}
         if calibration_file:
-            with open(calibration_file) as f:
+            calibration_file = ensure_input_path(calibration_file)
+            with calibration_file.open() as f:
                 calibration_levels = json.load(f)
             logger.debug(f"Loaded calibration levels from: {calibration_file}")
 
@@ -102,8 +152,8 @@ class AudioAnalysis:
                     file,
                     calibration_levels,
                     self.settings,
-                    False,
                     resample,
+                    parallel_mosqito=False,
                 )
                 futures.append(future)
 
@@ -122,7 +172,7 @@ class AudioAnalysis:
         )
         return combined_results
 
-    def save_results(self, results: pd.DataFrame, output_path: str | Path):
+    def save_results(self, results: pd.DataFrame, output_path: str | Path) -> None:
         """
         Save analysis results to a file.
 
@@ -134,16 +184,19 @@ class AudioAnalysis:
             Path to save the results file.
 
         """
-        output_path = Path(output_path)
+        output_path = ensure_path_type(
+            output_path
+        )  # If doesn't already exist, pandas will create the file.
         if output_path.suffix == ".csv":
             results.to_csv(output_path)
         elif output_path.suffix == ".xlsx":
             results.to_excel(output_path)
         else:
-            raise ValueError("Unsupported file format. Use .csv or .xlsx")
+            msg = "Unsupported file format. Use .csv or .xlsx"
+            raise ValueError(msg)
         logger.info(f"Results saved to: {output_path}")
 
-    def update_config(self, new_config: dict):
+    def update_config(self, new_config: dict) -> "AudioAnalysis":
         """
         Update the current configuration.
 
@@ -155,8 +208,9 @@ class AudioAnalysis:
         """
         self.settings = self.config_manager.merge_configs(new_config)
         logger.info("Configuration updated")
+        return self
 
-    def save_config(self, config_path: str | Path):
+    def save_config(self, config_path: str | Path) -> None:
         """
         Save the current configuration to a file.
 

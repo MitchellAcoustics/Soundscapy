@@ -1,12 +1,10 @@
-"""
-Plotting functions for visualising Likert scale data.
-"""
+"""Plotting functions for visualising Likert scale data."""
 
 from math import pi
 
 from matplotlib import pyplot as plt
 
-from soundscapy.surveys import PAQ_LABELS
+from soundscapy.surveys.survey_utils import PAQ_LABELS
 
 
 def paq_radar_plot(data, ax=None, index=None):

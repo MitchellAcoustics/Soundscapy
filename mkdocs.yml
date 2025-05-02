@@ -83,6 +83,7 @@ plugins:
             merge_init_into_class: true
             show_symbol_type_heading: true # waiting for general release
             show_symbol_type_toc: true
+            modernize_annotations: true
           inventories:
             - "https://docs.python.org/3/objects.inv"
   - include-markdown:

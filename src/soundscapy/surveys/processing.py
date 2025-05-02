@@ -35,7 +35,7 @@ import pandas as pd
 from loguru import logger
 from scipy import optimize
 
-from .survey_utils import EQUAL_ANGLES, PAQ_IDS, return_paqs
+from soundscapy.surveys.survey_utils import EQUAL_ANGLES, PAQ_IDS, return_paqs
 
 np.set_printoptions(legacy="1.21")
 

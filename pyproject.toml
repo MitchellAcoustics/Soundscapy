@@ -38,7 +38,7 @@ test = [
 
 [project]
 authors = [
-    { email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell" },
+    {email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell"},
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -64,7 +64,7 @@ dependencies = [
 description = "A python library for analysing and visualising soundscape assessments."
 dynamic = ["version"]
 keywords = ["acoustics", "audio analysis", "psychoacoustics", "soundscape"]
-license = { text = "BSD-3-Clause" }
+license = {text = "BSD-3-Clause"}
 name = "soundscapy"
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -85,8 +85,8 @@ documentation = "https://soundscapy.readthedocs.io/en/latest/"
 repository = "https://github.com/MitchellAcoustics/Soundscapy"
 
 [tool.coverage]
-report = { sort = "cover" }
-run = { branch = true, parallel = true, source = ["soundscapy"] }
+report = {sort = "cover"}
+run = {branch = true, parallel = true, source = ["soundscapy"]}
 paths.source = ["src", ".tox*/*/lib/python*/site-packages"]
 
 [tool.mypy]
@@ -112,26 +112,29 @@ testpaths = ["src/soundscapy", "test"]
 fix = true
 force-exclude = true
 lint.ignore = [
-    "COM812",  # trailing commas (ruff-format recommended)
-    "D203",    # no-blank-line-before-class
-    "D212",    # multi-line-summary-first-line
-    "D407",    # removed dashes lines under sections
-    "D417",    # argument description in docstring (unreliable)
-    "FIX002",  # fixme (ruff-format recommended)
-    "ISC001",  # simplify implicit str concatenation (ruff-format recommended)
+    "COM812", # trailing commas (ruff-format recommended)
+    "D203", # no-blank-line-before-class
+    "D212", # multi-line-summary-first-line
+    "D407", # removed dashes lines under sections
+    "D417", # argument description in docstring (unreliable)
+    "FIX002", # fixme (ruff-format recommended)
+    "ISC001", # simplify implicit str concatenation (ruff-format recommended)
     "PLR0913", # too many arguments
 ]
-lint.per-file-ignores = { "tests*" = [
+lint.per-file-ignores = {"test*" = [
     "INP001", # File is part of an implicit namespace package.
-    "S101",   # Use of `assert` detected
-] }
+    "S101", # Use of `assert` detected
+]}
 lint.select = ["ALL"]
 lint.isort.known-first-party = ["soundscapy"]
 lint.mccabe.max-complexity = 18
 lint.pep8-naming.classmethod-decorators = ["classmethod"]
 
 [tool.setuptools.package-data]
-mypkg = ["*.csv", "*.yaml"]
+soundscapy = ["*.csv", "*.yaml", "py.typed"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
