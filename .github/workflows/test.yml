@@ -65,9 +65,8 @@ jobs:
 
       - name: Set R environment variables
         run: |
-          R RHOME
-          # echo "R_LIBRARY=''" >> $GITHUB_ENV
-          # echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+          echo "R_LIBRARY='tempdir/Library'" >> $GITHUB_ENV
+          echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
           # echo "PATH=$PATH:/usr/lib/R/bin" >> $GITHUB_ENV
 
       - name: Restore tox cache
