@@ -60,7 +60,7 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
-          dependencies: "all"
+          dependencies: '"all"'
           # extra-packages: |
           #   any::sn
 
