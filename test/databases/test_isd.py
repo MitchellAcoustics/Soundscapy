@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from pytest import raises
 
-import soundscapy.databases.isd as isd
+from soundscapy.databases import isd
 from soundscapy.surveys.processing import add_iso_coords
 
 

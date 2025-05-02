@@ -107,7 +107,7 @@ class TestAnalysisSettings:
         assert output_file.exists()
 
         # Read back and verify
-        with open(output_file, "r") as f:
+        with open(output_file) as f:
             loaded_config = yaml.safe_load(f)
         assert loaded_config["version"] == "1.1"
         assert "LAeq" in loaded_config["AcousticToolbox"]

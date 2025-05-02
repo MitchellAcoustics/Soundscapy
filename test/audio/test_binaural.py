@@ -73,7 +73,7 @@ def test_binaural_calibration(test_binaural_signal):
     assert isinstance(calibrated, Binaural)
 
     # Test invalid input
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         test_binaural_signal.calibrate_to([60, 62, 64])
 
 

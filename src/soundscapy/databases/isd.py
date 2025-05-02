@@ -19,13 +19,14 @@ Examples
 True
 >>> 'PAQ1' in df.columns
 True
+
 """
 
 from importlib import resources
-from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from loguru import logger
+
 from soundscapy.surveys.processing import (
     calculate_iso_coords,
     likert_data_quality,
@@ -75,6 +76,7 @@ def load() -> pd.DataFrame:
     True
     >>> set(PAQ_IDS).issubset(df.columns)
     True
+
     """
     isd_resource = resources.files("soundscapy.data").joinpath("ISD v1.0 Data.csv")
     with resources.as_file(isd_resource) as f:
@@ -116,6 +118,7 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
     True
     >>> set(PAQ_IDS).issubset(df.columns)  # doctest: +SKIP
     True
+
     """
     version = version.lower()
     version = "v1.0.1" if version == "latest" else version
@@ -130,7 +133,8 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
     }
 
     if version not in url_mapping:
-        raise ValueError(f"Version {version} not recognised.")
+        msg = f"Version {version} not recognised."
+        raise ValueError(msg)
 
     url = url_mapping[version]
     file_type = "csv" if version in ["v1.0.0", "v1.0.1"] else "excel"
@@ -148,10 +152,11 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
 
 def validate(
     df: pd.DataFrame,
-    paq_aliases: List | Dict = _PAQ_ALIASES,
+    paq_aliases: list | dict = _PAQ_ALIASES,
+    val_range: tuple[int, int] = (1, 5),
+    *,
     allow_paq_na: bool = False,
-    val_range: Tuple[int, int] = (1, 5),
-) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+) -> tuple[pd.DataFrame, pd.DataFrame | None]:
     """
     Perform data quality checks and validate that the dataset fits the expected format.
 
@@ -168,8 +173,9 @@ def validate(
 
     Returns
     -------
-    Tuple[pd.DataFrame, Optional[pd.DataFrame]]
-        Tuple containing the cleaned dataframe and optionally a dataframe of excluded samples.
+    Tuple[pd.DataFrame, pd.DataFrame | None]
+        Tuple containing the cleaned dataframe
+        and optionally a dataframe of excluded samples.
 
     Notes
     -----
@@ -190,27 +196,28 @@ def validate(
     2
     >>> excl_df.shape[0]
     2
+
     """
     logger.info("Validating ISD data")
-    df = rename_paqs(df, paq_aliases)
+    data = rename_paqs(df, paq_aliases)
 
     invalid_indices = likert_data_quality(
-        df, allow_na=allow_paq_na, val_range=val_range
+        data, val_range=val_range, allow_na=allow_paq_na
     )
 
     if invalid_indices:
-        excl_df = df.iloc[invalid_indices]
-        df = df.drop(df.index[invalid_indices])
+        excl_data = data.iloc[invalid_indices]
+        data = data.drop(data.index[invalid_indices])
         logger.info(f"Removed {len(invalid_indices)} rows with invalid PAQ data")
     else:
-        excl_df = None
+        excl_data = None
         logger.info("All PAQ data passed quality checks")
 
-    return df, excl_df
+    return data, excl_data
 
 
 def _isd_select(
-    data: pd.DataFrame, select_by: str, condition: str | int | List | Tuple
+    data: pd.DataFrame, select_by: str, condition: str | int | list | tuple
 ) -> pd.DataFrame:
     """
     General function to select by ID variables.
@@ -244,17 +251,18 @@ def _isd_select(
       ID  Value
     0  A      1
     2  C      3
+
     """
-    if isinstance(condition, (str, int)):
+    if isinstance(condition, str | int):
         return data.query(f"{select_by} == @condition", engine="python")
-    elif isinstance(condition, (list, tuple)):
+    if isinstance(condition, list | tuple):
         return data.query(f"{select_by} in @condition")
-    else:
-        raise TypeError("Should be either a str, int, list, or tuple.")
+    msg = "Should be either a str, int, list, or tuple."
+    raise TypeError(msg)
 
 
 def select_record_ids(
-    data: pd.DataFrame, record_ids: str | int | List | Tuple
+    data: pd.DataFrame, record_ids: str | int | list | tuple
 ) -> pd.DataFrame:
     """
     Filter the dataframe by RecordID.
@@ -281,12 +289,13 @@ def select_record_ids(
       RecordID  Value
     0        A      1
     2        C      3
+
     """
     return _isd_select(data, "RecordID", record_ids)
 
 
 def select_group_ids(
-    data: pd.DataFrame, group_ids: str | int | List | Tuple
+    data: pd.DataFrame, group_ids: str | int | list | tuple
 ) -> pd.DataFrame:
     """
     Filter the dataframe by GroupID.
@@ -313,12 +322,13 @@ def select_group_ids(
       GroupID  Value
     0      G1      1
     1      G1      2
+
     """
     return _isd_select(data, "GroupID", group_ids)
 
 
 def select_session_ids(
-    data: pd.DataFrame, session_ids: str | int | List | Tuple
+    data: pd.DataFrame, session_ids: str | int | list | tuple
 ) -> pd.DataFrame:
     """
     Filter the dataframe by SessionID.
@@ -347,12 +357,13 @@ def select_session_ids(
     1        S1      2
     2        S2      3
     3        S2      4
+
     """
     return _isd_select(data, "SessionID", session_ids)
 
 
 def select_location_ids(
-    data: pd.DataFrame, location_ids: str | int | List | Tuple
+    data: pd.DataFrame, location_ids: str | int | list | tuple
 ) -> pd.DataFrame:
     """
     Filter the dataframe by LocationID.
@@ -379,6 +390,7 @@ def select_location_ids(
       LocationID  Value
     2         L2      3
     3         L2      4
+
     """
     return _isd_select(data, "LocationID", location_ids)
 
@@ -389,7 +401,7 @@ def describe_location(
     calc_type: str = "percent",
     pl_threshold: float = 0,
     ev_threshold: float = 0,
-) -> Dict[str, int | float]:
+) -> dict[str, int | float]:
     """
     Return a summary of the data for a specific location.
 
@@ -427,10 +439,14 @@ def describe_location(
     ... })
     >>> df = add_iso_coords(df)
     >>> result = describe_location(df, 'L1')
-    >>> set(result.keys()) == {'count', 'ISOPleasant', 'ISOEventful', 'pleasant', 'eventful', 'vibrant', 'chaotic', 'monotonous', 'calm'}
+    >>> set(result.keys()) == {
+    ...     'count', 'ISOPleasant', 'ISOEventful', 'pleasant', 'eventful',
+    ...     'vibrant', 'chaotic', 'monotonous', 'calm'
+    ... }
     True
     >>> result['count']
     2
+
     """
     loc_df = select_location_ids(data, location_ids=location)
     count = len(loc_df)
@@ -483,7 +499,8 @@ def describe_location(
             }
         )
     else:
-        raise ValueError("Type must be either 'percent' or 'count'")
+        msg = "Type must be either 'percent' or 'count'"
+        raise ValueError(msg)
 
     return {k: round(v, 3) if isinstance(v, float) else v for k, v in res.items()}
 
@@ -528,11 +545,15 @@ def soundscapy_describe(
     True
     >>> result.index.tolist()
     ['L1', 'L2']
-    >>> set(result.columns) == {'count', 'ISOPleasant', 'ISOEventful', 'pleasant', 'eventful', 'vibrant', 'chaotic', 'monotonous', 'calm'}
+    >>> set(result.columns) == {
+    ...     'count', 'ISOPleasant', 'ISOEventful', 'pleasant', 'eventful',
+    ...     'vibrant', 'chaotic', 'monotonous', 'calm'
+    ... }
     True
     >>> result = soundscapy_describe(df, calc_type="count")
     >>> result.loc['L1', 'count']
     2
+
     """
     res = {
         location: describe_location(df, location, calc_type=calc_type)

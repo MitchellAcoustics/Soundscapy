@@ -2,15 +2,14 @@
 import tempfile
 from pathlib import Path
 
-import pytest
 from loguru import logger
 
-from soundscapy.logging import (
-    setup_logging,
-    enable_debug,
+from soundscapy.sspylogging import (
     disable_logging,
+    enable_debug,
     get_logger,
     is_notebook,
+    setup_logging,
 )
 
 
@@ -60,7 +59,7 @@ def test_disable_logging():
     # Set up logging with our test output
     logger.remove()
     logger.enable("soundscapy")
-    handler_id = logger.add(test_output, level="CRITICAL")
+    logger.add(test_output, level="CRITICAL")
 
     # Try with logging enabled
     logger.critical("This should be logged")
