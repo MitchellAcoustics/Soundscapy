@@ -7,6 +7,7 @@ of different plot elements (scatter, density) and customization of styling.
 """
 
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 import seaborn.objects as so
 
@@ -19,10 +20,11 @@ def apply_circumplex_grid(
     plot: so.Plot,
     xlim: tuple[float, float] = DEFAULT_XLIM,
     ylim: tuple[float, float] = DEFAULT_YLIM,
-    diagonal_lines: bool = False,
-    show_labels: bool = True,
     x_label: str | None = None,
     y_label: str | None = None,
+    *,
+    diagonal_lines: bool = False,
+    show_labels: bool = True,
 ) -> so.Plot:
     """
     Apply circumplex grid styling to a Seaborn Objects plot.
@@ -57,9 +59,14 @@ def apply_circumplex_grid(
     fig, ax = plt.subplots(figsize=(6, 6))
 
     # Add grid lines
-    ax.grid(True, which="major", color="grey", alpha=0.5)
+    ax.grid(visible=True, which="major", color="grey", alpha=0.5)
     ax.grid(
-        True, which="minor", color="grey", linestyle="dashed", linewidth=0.5, alpha=0.4
+        visible=True,
+        which="minor",
+        color="grey",
+        linestyle="dashed",
+        linewidth=0.5,
+        alpha=0.4,
     )
     ax.minorticks_on()
 
@@ -157,7 +164,7 @@ def add_annotation(
     text: str | None = None,
     x_offset: float = 0.1,
     y_offset: float = 0.1,
-    **kwargs,
+    **kwargs,  # noqa: ANN003
 ) -> so.Plot:
     """
     Add an annotation to a Seaborn Objects plot.
@@ -188,6 +195,13 @@ def add_annotation(
     # Get coordinates from data
     x_val = data[x].iloc[idx] if isinstance(idx, int) else data.loc[idx, x]
     y_val = data[y].iloc[idx] if isinstance(idx, int) else data.loc[idx, y]
+
+    if x_val is None or y_val is None:
+        msg = f"Invalid index {idx} for data: {data}"
+        raise ValueError(msg)
+    if not isinstance(x_val, int | float) or not isinstance(y_val, int | float):
+        msg = f"Invalid contents for x or y: {x_val}, {y_val}"
+        raise TypeError(msg)
 
     # Default text is the index value
     if text is None:
@@ -256,15 +270,36 @@ class CircumplexPlot:
         xlim: tuple[float, float] = DEFAULT_XLIM,
         ylim: tuple[float, float] = DEFAULT_YLIM,
         palette: str = "colorblind",
-        **kwargs,  # For backwards compatibility with tests
     ) -> None:
+        """
+        Initialize a CircumplexPlot instance.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Data to plot
+        x : str, default="ISOPleasant"
+            Column name for x-axis
+        y : str, default="ISOEventful"
+            Column name for y-axis
+        hue : str, optional
+            Column name for color grouping
+        xlim : tuple[float, float]
+            Axis limits for x-axis
+        ylim : tuple[float, float]
+            Axis limits for y-axis
+        palette : str, default="colorblind"
+            Color palette to use
+        fill : bool, default=True
+            Whether to fill the density contours
+
+        """
         self.data = data
         self.x = x
         self.y = y
         self.hue = hue
         self.xlim = xlim
         self.ylim = ylim
-        self.fill = kwargs.get("fill", True)
         self.palette_name = palette
 
         # Initialize the plot
@@ -277,11 +312,11 @@ class CircumplexPlot:
 
     def add_scatter(
         self,
-        pointsize=30,
-        alpha=0.7,
-        marker="o",
-        color=None,  # Overrides hue if provided
-    ):
+        pointsize: float = 30,
+        alpha: float = 0.7,
+        marker: str = "o",
+        color: str | None = None,  # Overrides hue if provided
+    ) -> so.Plot:
         """
         Add a scatter layer to the plot.
 
@@ -380,7 +415,7 @@ class CircumplexPlot:
         self.has_density = True
         return self
 
-    def add_grid(self, diagonal_lines=False, show_labels=True):
+    def add_grid(self, *, diagonal_lines=False, show_labels=True):
         """
         Add circumplex grid to the plot.
 
@@ -401,10 +436,10 @@ class CircumplexPlot:
             self.plot,
             xlim=self.xlim,
             ylim=self.ylim,
-            diagonal_lines=diagonal_lines,
-            show_labels=show_labels,
             x_label=self.x if show_labels else None,
             y_label=self.y if show_labels else None,
+            diagonal_lines=diagonal_lines,
+            show_labels=show_labels,
         )
 
         self.has_grid = True
