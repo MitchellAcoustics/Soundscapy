@@ -42,11 +42,11 @@ class StyleOptions:
 
 
 class SeabornStyler:
-    """
-    Class for applying Seaborn styles to circumplex plots.
-    """
+    """Class for applying Seaborn styles to circumplex plots."""
 
-    def __init__(self, params: Any, style_options: StyleOptions = StyleOptions()):
+    def __init__(
+        self, params: Any, style_options: StyleOptions = StyleOptions()
+    ) -> None:
         self.params = params
         self.style_options = style_options
 

@@ -9,11 +9,8 @@ of different plot elements (scatter, density) and customization of styling.
 import matplotlib.pyplot as plt
 import seaborn as sns
 import seaborn.objects as so
-from soundscapy.plotting.plotting_utils import (
-    DEFAULT_XLIM,
-    DEFAULT_YLIM,
-    PlotType
-)
+
+from soundscapy.plotting.plotting_utils import DEFAULT_XLIM, DEFAULT_YLIM
 
 # =============== Core building blocks for circumplex plots ===============
 
@@ -25,7 +22,7 @@ def apply_circumplex_grid(
     diagonal_lines: bool = False,
     show_labels: bool = True,
     x_label: str | None = None,
-    y_label: str | None = None
+    y_label: str | None = None,
 ) -> so.Plot:
     """
     Apply circumplex grid styling to a Seaborn Objects plot.
@@ -47,6 +44,7 @@ def apply_circumplex_grid(
     -------
     so.Plot
         The styled plot
+
     """
     # Apply limits and axes appearance
     plot = plot.limit(x=xlim, y=ylim)
@@ -149,17 +147,18 @@ def apply_circumplex_grid(
 
     return plot_with_styling
 
+
 def add_annotation(
-        plot: so.Plot,
-        data: pd.DataFrame,
-        idx: int | str,
-        x: str = "ISOPleasant",
-        y: str = "ISOEventful",
-        text: str | None = None,
-        x_offset: float = 0.1,
-        y_offset: float = 0.1,
-        **kwargs
-        ) -> so.Plot:
+    plot: so.Plot,
+    data: pd.DataFrame,
+    idx: int | str,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    text: str | None = None,
+    x_offset: float = 0.1,
+    y_offset: float = 0.1,
+    **kwargs,
+) -> so.Plot:
     """
     Add an annotation to a Seaborn Objects plot.
 
@@ -184,6 +183,7 @@ def add_annotation(
     -------
     so.Plot
         The plot with annotation added
+
     """
     # Get coordinates from data
     x_val = data[x].iloc[idx] if isinstance(idx, int) else data.loc[idx, x]
@@ -221,7 +221,9 @@ def add_annotation(
 
     return plot_with_annotation
 
+
 # =============== Main Circumplex Plot Class ===============
+
 
 class CircumplexPlot:
     """
@@ -242,6 +244,7 @@ class CircumplexPlot:
         Axis limits for the plot
     palette : str
         Color palette to use
+
     """
 
     def __init__(
@@ -253,8 +256,8 @@ class CircumplexPlot:
         xlim: tuple[float, float] = DEFAULT_XLIM,
         ylim: tuple[float, float] = DEFAULT_YLIM,
         palette: str = "colorblind",
-        **kwargs  # For backwards compatibility with tests
-    ):
+        **kwargs,  # For backwards compatibility with tests
+    ) -> None:
         self.data = data
         self.x = x
         self.y = y
@@ -297,6 +300,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         color_var = color if color is not None else self.hue
 
@@ -344,12 +348,13 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         color_var = color if color is not None else self.hue
 
         if simple:
             # For simple density, use just a few levels
-            levels = 2
+            pass
 
         # Use the Area mark with KDE stat for density plots
         self.plot = self.plot.add(
@@ -390,6 +395,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         self.plot = apply_circumplex_grid(
             self.plot,
@@ -423,6 +429,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         self.plot = add_annotation(
             self.plot,
@@ -451,6 +458,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         self.plot = self.plot.label(title=title)
         return self
@@ -470,6 +478,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         # For Seaborn Objects, we can handle this more directly
         # by adding a proper label to the plot
@@ -497,6 +506,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         self.plot = self.plot.facet(col=column, row=row, wrap=col_wrap)
         return self
@@ -514,6 +524,7 @@ class CircumplexPlot:
         -------
         so.Plot or (plt.Figure, plt.Axes)
             The completed plot object or (figure, axes) tuple
+
         """
         # Add grid if not already added
         if not self.has_grid:
@@ -530,25 +541,24 @@ class CircumplexPlot:
 
         if as_objects:
             return self.plot
-        else:
-            # Create a new figure with the right size
-            fig, ax = plt.subplots(figsize=(6, 6))
+        # Create a new figure with the right size
+        fig, ax = plt.subplots(figsize=(6, 6))
 
-            # Use pyplot mode for rendering
-            # This will render the plot directly to the current figure
-            self.plot.plot(pyplot=True)
+        # Use pyplot mode for rendering
+        # This will render the plot directly to the current figure
+        self.plot.plot(pyplot=True)
 
-            # Get the current axes
-            ax = plt.gca()
+        # Get the current axes
+        ax = plt.gca()
 
-            # Apply legend location if needed (after plotting)
-            if hasattr(self, "_legend_loc") and ax.get_legend() is not None:
-                ax.legend(loc=self._legend_loc)
+        # Apply legend location if needed (after plotting)
+        if hasattr(self, "_legend_loc") and ax.get_legend() is not None:
+            ax.legend(loc=self._legend_loc)
 
-            # Return the figure and axes to be compatible with the legacy API
-            fig = ax.figure
+        # Return the figure and axes to be compatible with the legacy API
+        fig = ax.figure
 
-            return fig, ax
+        return fig, ax
 
     @property
     def seaborn_plot(self):
@@ -559,6 +569,7 @@ class CircumplexPlot:
         -------
         so.Plot
             The Seaborn Objects plot
+
         """
         return self.plot
 
@@ -570,12 +581,13 @@ class CircumplexPlot:
         -------
         Tuple[plt.Figure, plt.Axes]
             Figure and axes for the plot
+
         """
         fig, ax = plt.subplots(figsize=(6, 6))
         self.plot.plot(ax=ax)
         return fig, ax
 
-    def show(self):
+    def show(self) -> None:
         """
         Build and display the plot.
 
@@ -605,6 +617,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         self.add_scatter()
         self.add_grid()
@@ -625,6 +638,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         self.add_density()
         self.add_grid()
@@ -645,6 +659,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         self.add_density(simple=True)
         self.add_grid()
@@ -663,6 +678,7 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         # Fall back to traditional seaborn for jointplot
         g = sns.jointplot(
@@ -696,12 +712,12 @@ class CircumplexPlot:
         -------
         plt.Figure or tuple
             Figure object or (figure, axes) tuple depending on plotting method
+
         """
         if hasattr(self, "_joint_grid"):
             return self._joint_grid.fig
-        else:
-            fig, ax = self.build(as_objects=False)
-            return fig
+        fig, ax = self.build(as_objects=False)
+        return fig
 
     def get_axes(self):
         """
@@ -711,12 +727,12 @@ class CircumplexPlot:
         -------
         plt.Axes
             Axes object
+
         """
         if hasattr(self, "_joint_grid"):
             return self._joint_grid.ax_joint
-        else:
-            fig, ax = self.build(as_objects=False)
-            return ax
+        fig, ax = self.build(as_objects=False)
+        return ax
 
     def iso_annotation(self, location, x_adj=0, y_adj=0, **kwargs):
         """
@@ -735,5 +751,6 @@ class CircumplexPlot:
         -------
         CircumplexPlot
             Self for method chaining
+
         """
         return self.add_annotation(location, x_offset=x_adj, y_offset=y_adj, **kwargs)

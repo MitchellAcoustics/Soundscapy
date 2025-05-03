@@ -33,7 +33,11 @@ density_plot(data, x='ISOPleasant', y='ISOEventful', incl_scatter=True)
 """
 
 from soundscapy.plotting import likert
-from soundscapy.plotting.circumplex_plot import CircumplexPlot, add_annotation, apply_circumplex_grid
+from soundscapy.plotting.circumplex_plot import (
+    CircumplexPlot,
+    add_annotation,
+    apply_circumplex_grid,
+)
 from soundscapy.plotting.plot_functions import (
     create_circumplex_subplots,
     density_plot,
@@ -44,14 +48,12 @@ from soundscapy.plotting.plotting_utils import PlotType
 
 __all__ = [
     "CircumplexPlot",
-    "apply_circumplex_grid",
+    "PlotType",
     "add_annotation",
-    "scatter_plot",
+    "apply_circumplex_grid",
+    "create_circumplex_subplots",
     "density_plot",
     "joint_plot",
-    "create_circumplex_subplots",
-    "CircumplexPlotParams",
-    "PlotType",
     "likert",
     "scatter_plot",
 ]

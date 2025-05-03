@@ -87,11 +87,9 @@ class PlotBackend(ABC):
 
 
 class SeabornBackend(PlotBackend):
-    """
-    Backend for creating plots using Seaborn and Matplotlib.
-    """
+    """Backend for creating plots using Seaborn and Matplotlib."""
 
-    def __init__(self, style_options: StyleOptions = StyleOptions()):
+    def __init__(self, style_options: StyleOptions = StyleOptions()) -> None:
         self.style_options = style_options
 
     def create_scatter(self, data, params, ax=None):
@@ -150,6 +148,7 @@ class SeabornBackend(PlotBackend):
             warnings.warn(
                 "Density plots are not recommended for small datasets (<30 samples).",
                 UserWarning,
+                stacklevel=2,
             )
 
         if ax is None:
@@ -278,7 +277,7 @@ class SeabornBackend(PlotBackend):
         styler = SeabornStyler(params, self.style_options)
         return styler.apply_styling(fig, ax)
 
-    def show(self, plot_obj):
+    def show(self, plot_obj) -> None:
         """
         Display the Matplotlib figure.
 
@@ -292,13 +291,13 @@ class SeabornBackend(PlotBackend):
 
 
 class PlotlyBackend(PlotBackend):
-    """
-    Backend for creating plots using Plotly.
-    """
+    """Backend for creating plots using Plotly."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         warnings.warn(
-            "PlotlyBackend is very experimental and not fully implemented.", UserWarning
+            "PlotlyBackend is very experimental and not fully implemented.",
+            UserWarning,
+            stacklevel=2,
         )
 
     def create_scatter(self, data, params):
@@ -328,8 +327,8 @@ class PlotlyBackend(PlotBackend):
         fig.update_layout(
             width=600,
             height=600,
-            xaxis=dict(scaleanchor="y", scaleratio=1),
-            yaxis=dict(scaleanchor="x", scaleratio=1),
+            xaxis={"scaleanchor": "y", "scaleratio": 1},
+            yaxis={"scaleanchor": "x", "scaleratio": 1},
         )
         return fig
 
@@ -351,6 +350,7 @@ class PlotlyBackend(PlotBackend):
             warnings.warn(
                 "Density plots are not recommended for small datasets (<30 samples). Consider using a scatter plot instead.",
                 UserWarning,
+                stacklevel=2,
             )
 
         fig = px.density_heatmap(
@@ -365,8 +365,8 @@ class PlotlyBackend(PlotBackend):
         fig.update_layout(
             width=600,
             height=600,
-            xaxis=dict(scaleanchor="y", scaleratio=1),
-            yaxis=dict(scaleanchor="x", scaleratio=1),
+            xaxis={"scaleanchor": "y", "scaleratio": 1},
+            yaxis={"scaleanchor": "x", "scaleratio": 1},
         )
         scatter_trace = px.scatter(
             data, x=params.x, y=params.y, color=params.hue, opacity=0.5
@@ -395,7 +395,7 @@ class PlotlyBackend(PlotBackend):
                     x=[params.xlim[0], params.xlim[1]],
                     y=[params.ylim[0], params.ylim[1]],
                     mode="lines",
-                    line=dict(color="gray", dash="dash"),
+                    line={"color": "gray", "dash": "dash"},
                     showlegend=False,
                 )
             )
@@ -404,13 +404,13 @@ class PlotlyBackend(PlotBackend):
                     x=[params.xlim[0], params.xlim[1]],
                     y=[params.ylim[1], params.ylim[0]],
                     mode="lines",
-                    line=dict(color="gray", dash="dash"),
+                    line={"color": "gray", "dash": "dash"},
                     showlegend=False,
                 )
             )
         return fig
 
-    def show(self, fig):
+    def show(self, fig) -> None:
         """
         Display the Plotly figure.
 
