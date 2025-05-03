@@ -64,7 +64,7 @@ dependencies = [
 description = "A python library for analysing and visualising soundscape assessments."
 dynamic = ["version"]
 keywords = ["acoustics", "audio analysis", "psychoacoustics", "soundscape"]
-license = {text = "BSD-3-Clause"}
+license = {file = "LICENSE.md"}
 name = "soundscapy"
 readme = "README.md"
 requires-python = ">= 3.10"
