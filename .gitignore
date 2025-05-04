@@ -180,3 +180,5 @@ CLAUDE.local.md
 
 # package version
 *_version.py
+
+**/.claude/settings.local.json
