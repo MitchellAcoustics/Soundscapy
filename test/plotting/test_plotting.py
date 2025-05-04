@@ -4,7 +4,6 @@ Test suite for soundscapy plotting functions.
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pytest
 import seaborn.objects as so
 
@@ -110,12 +109,12 @@ def test_circumplex_plot_methods(sample_data):
     plot = CircumplexPlot(sample_data)
     plot.scatter()
     assert isinstance(plot.get_axes(), plt.Axes)
-    
+
     # Test density method
     plot = CircumplexPlot(sample_data)
     plot.density()
     assert isinstance(plot.get_axes(), plt.Axes)
-    
+
     # Test jointplot method
     plot = CircumplexPlot(sample_data)
     plot.jointplot()
@@ -133,11 +132,8 @@ def test_plot_size(sample_data):
 
 def test_builder_pattern(sample_data):
     """Test the builder pattern API."""
-    plot = (CircumplexPlot(sample_data)
-            .add_scatter()
-            .add_grid()
-            .add_title("Test Title"))
-    
+    plot = CircumplexPlot(sample_data).add_scatter().add_grid().add_title("Test Title")
+
     # Verify the plot was built correctly
     assert plot.has_scatter is True
     assert plot.has_grid is True
@@ -163,6 +159,6 @@ def test_annotations(sample_data):
     plot.add_scatter()
     plot.add_annotation(0)
     plot.add_grid()
-    
+
     # Just testing that it doesn't error since we can't easily check annotation
     assert plot.has_scatter is True

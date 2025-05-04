@@ -1,0 +1,45 @@
+# soundscapy.mplstyle
+# Matplotlib style sheet for Soundscapy plots
+
+# Figure properties
+figure.figsize: 6, 6
+figure.constrained_layout.use: True
+
+# Axes properties
+axes.grid: True
+axes.linewidth: 1.0
+axes.axisbelow: True
+axes.labelsize: 10
+axes.titlesize: 12
+
+# Grid properties
+grid.alpha: 0.5
+grid.color: grey
+grid.linestyle: -
+grid.linewidth: 0.5
+
+# Tick properties
+xtick.direction: in
+ytick.direction: in
+xtick.minor.visible: True
+ytick.minor.visible: True
+xtick.labelsize: 9
+ytick.labelsize: 9
+
+# Line properties
+lines.linewidth: 1.5
+lines.solid_capstyle: round
+lines.dashed_pattern: 2.8, 1.2
+lines.dashdot_pattern: 4.8, 1.2, 0.8, 1.2
+
+# Font properties
+font.size: 10
+font.family: sans-serif
+
+# Legend properties
+legend.frameon: True
+legend.framealpha: 0.8
+legend.fontsize: 9
+
+# Colors for different groups
+axes.prop_cycle: cycler('color', ['4C72B0', '55A868', 'C44E52', '8172B2', 'CCB974', '64B5CD'])

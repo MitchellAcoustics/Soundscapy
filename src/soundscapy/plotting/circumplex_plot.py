@@ -4,16 +4,26 @@ Main module for creating circumplex plots using Seaborn Objects API.
 This module provides the CircumplexPlot class, which is a builder for creating
 circumplex plots with a grammar of graphics approach. It allows for layering
 of different plot elements (scatter, density) and customization of styling.
+
+Note: This class is maintained for backwards compatibility. For new code,
+consider using the direct function-based API instead.
 """
+
+import warnings
+from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import seaborn.objects as so
 
+from soundscapy.plotting.marks import (
+    SoundscapeCircumplex,
+    SoundscapePointAnnotation,
+    SoundscapeQuadrantLabels,
+)
 from soundscapy.plotting.plotting_utils import DEFAULT_XLIM, DEFAULT_YLIM
-
-# =============== Core building blocks for circumplex plots ===============
+from soundscapy.plotting.soundscape_functions import use_soundscapy_style
 
 
 def apply_circumplex_grid(
@@ -48,111 +58,38 @@ def apply_circumplex_grid(
         The styled plot
 
     """
+    warnings.warn(
+        "The apply_circumplex_grid function is deprecated. "
+        "Use SoundscapeCircumplex and SoundscapeQuadrantLabels marks instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     # Apply limits and axes appearance
     plot = plot.limit(x=xlim, y=ylim)
 
     # Apply square aspect ratio and layout
     plot = plot.layout(size=(6, 6))
 
-    # Compile the plot to a temporary figure to apply matplotlib styling
-    # This creates a temporary figure for styling
-    fig, ax = plt.subplots(figsize=(6, 6))
+    # Add the circumplex grid mark
+    plot = plot.add(SoundscapeCircumplex(xlim=xlim, ylim=ylim))
 
-    # Add grid lines
-    ax.grid(visible=True, which="major", color="grey", alpha=0.5)
-    ax.grid(
-        visible=True,
-        which="minor",
-        color="grey",
-        linestyle="dashed",
-        linewidth=0.5,
-        alpha=0.4,
-    )
-    ax.minorticks_on()
-
-    # Add zero lines
-    ax.axhline(y=0, color="grey", linestyle="dashed", alpha=1, linewidth=1.5)
-    ax.axvline(x=0, color="grey", linestyle="dashed", alpha=1, linewidth=1.5)
-
-    # Add diagonal elements if requested
+    # Add quadrant labels if requested
     if diagonal_lines:
-        # Draw diagonal lines
-        ax.plot(
-            [xlim[0], xlim[1]],
-            [ylim[0], ylim[1]],
-            linestyle="dashed",
-            color="grey",
-            alpha=0.5,
-            linewidth=1.5,
-        )
-        ax.plot(
-            [xlim[0], xlim[1]],
-            [ylim[1], ylim[0]],
-            linestyle="dashed",
-            color="grey",
-            alpha=0.5,
-            linewidth=1.5,
-        )
-
-        # Add diagonal labels
-        diag_font = {
-            "fontstyle": "italic",
-            "fontsize": "small",
-            "fontweight": "bold",
-            "color": "black",
-            "alpha": 0.5,
-        }
-
-        ax.text(
-            xlim[1] / 2,
-            ylim[1] / 2,
-            "(vibrant)",
-            ha="center",
-            va="center",
-            fontdict=diag_font,
-        )
-        ax.text(
-            xlim[0] / 2,
-            ylim[1] / 2,
-            "(chaotic)",
-            ha="center",
-            va="center",
-            fontdict=diag_font,
-        )
-        ax.text(
-            xlim[0] / 2,
-            ylim[0] / 2,
-            "(monotonous)",
-            ha="center",
-            va="center",
-            fontdict=diag_font,
-        )
-        ax.text(
-            xlim[1] / 2,
-            ylim[0] / 2,
-            "(calm)",
-            ha="center",
-            va="center",
-            fontdict=diag_font,
-        )
+        plot = plot.add(SoundscapeQuadrantLabels(xlim=xlim, ylim=ylim))
 
     # Apply axis label changes if requested
     if not show_labels:
-        ax.set_xlabel("")
-        ax.set_ylabel("")
+        plot = plot.label(x=None, y=None)
     elif x_label is not None or y_label is not None:
+        labels = {}
         if x_label is not None:
-            ax.set_xlabel(x_label)
+            labels["x"] = x_label
         if y_label is not None:
-            ax.set_ylabel(y_label)
+            labels["y"] = y_label
+        plot = plot.label(**labels)
 
-    # Now use the fully prepared axes for the plot
-    plot_with_styling = plot.on(ax)
-
-    # Clean up the temporary figure - we don't need it as we've transferred the styling
-    plt.close(fig)
-
-    return plot_with_styling
+    return plot
 
 
 def add_annotation(
@@ -164,7 +101,7 @@ def add_annotation(
     text: str | None = None,
     x_offset: float = 0.1,
     y_offset: float = 0.1,
-    **kwargs,  # noqa: ANN003
+    **kwargs: Any,
 ) -> so.Plot:
     """
     Add an annotation to a Seaborn Objects plot.
@@ -192,51 +129,25 @@ def add_annotation(
         The plot with annotation added
 
     """
-    # Get coordinates from data
-    x_val = data[x].iloc[idx] if isinstance(idx, int) else data.loc[idx, x]
-    y_val = data[y].iloc[idx] if isinstance(idx, int) else data.loc[idx, y]
+    warnings.warn(
+        "The add_annotation function is deprecated. "
+        "Use SoundscapePointAnnotation mark instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-    if x_val is None or y_val is None:
-        msg = f"Invalid index {idx} for data: {data}"
-        raise ValueError(msg)
-    if not isinstance(x_val, int | float) or not isinstance(y_val, int | float):
-        msg = f"Invalid contents for x or y: {x_val}, {y_val}"
-        raise TypeError(msg)
-
-    # Default text is the index value
+    # Get the text if not provided
     if text is None:
         text = str(data.index[idx]) if isinstance(idx, int) else str(idx)
 
-    # Default annotation styling
-    annotation_defaults = {
-        "ha": "center",
-        "va": "center",
-        "fontsize": 9,
-        "arrowprops": {"arrowstyle": "-", "color": "black", "alpha": 0.7},
-    }
-    annotation_defaults.update(kwargs)
-
-    # Create a temporary figure to add the annotation
-    fig, ax = plt.subplots(figsize=(6, 6))
-
-    # Add the annotation
-    ax.annotate(
-        text=text,
-        xy=(x_val, y_val),
-        xytext=(x_val + x_offset, y_val + y_offset),
-        **annotation_defaults,
+    # Add the annotation using the mark
+    plot = plot.add(
+        SoundscapePointAnnotation(
+            points=[idx], texts=[text], offsets=(x_offset, y_offset), **kwargs
+        )
     )
 
-    # Now use the fully prepared axes for the plot
-    plot_with_annotation = plot.on(ax)
-
-    # Clean up the temporary figure
-    plt.close(fig)
-
-    return plot_with_annotation
-
-
-# =============== Main Circumplex Plot Class ===============
+    return plot
 
 
 class CircumplexPlot:
@@ -290,10 +201,18 @@ class CircumplexPlot:
             Axis limits for y-axis
         palette : str, default="colorblind"
             Color palette to use
-        fill : bool, default=True
-            Whether to fill the density contours
 
         """
+        warnings.warn(
+            "The CircumplexPlot class is maintained for backwards compatibility. "
+            "For new code, consider using the function-based API instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+
+        # Apply the soundscapy style
+        use_soundscapy_style()
+
         self.data = data
         self.x = x
         self.y = y
@@ -316,7 +235,7 @@ class CircumplexPlot:
         alpha: float = 0.7,
         marker: str = "o",
         color: str | None = None,  # Overrides hue if provided
-    ) -> so.Plot:
+    ) -> "CircumplexPlot":
         """
         Add a scatter layer to the plot.
 
@@ -353,14 +272,14 @@ class CircumplexPlot:
 
     def add_density(
         self,
-        alpha=0.5,
-        fill=True,
-        levels=8,
-        bw_adjust=1.2,
-        color=None,  # Overrides hue if provided
-        simple=False,
-        **kwargs,  # For backwards compatibility
-    ):
+        alpha: float = 0.5,
+        fill: bool = True,
+        levels: int = 8,
+        bw_adjust: float = 1.2,
+        color: str | None = None,  # Overrides hue if provided
+        simple: bool = False,
+        **kwargs: Any,  # For backwards compatibility
+    ) -> "CircumplexPlot":
         """
         Add a density layer to the plot.
 
@@ -389,33 +308,44 @@ class CircumplexPlot:
 
         if simple:
             # For simple density, use just a few levels
-            pass
-
-        # Use the Area mark with KDE stat for density plots
-        self.plot = self.plot.add(
-            so.Area(alpha=alpha, fill=fill),
-            so.KDE(bw_adjust=bw_adjust),
-            color=color_var,
-        )
-
-        # Apply palette if needed
-        if color_var and hasattr(self, "palette_name"):
-            self.plot = self.plot.scale(color=so.Nominal(self.palette_name))
-
-        # For simple density, add an outline
-        if simple:
             self.plot = self.plot.add(
-                so.Line(alpha=1.0), so.KDE(bw_adjust=bw_adjust), color=color_var
+                so.Area(alpha=alpha, fill=fill),
+                so.KDE(bw_adjust=bw_adjust, levels=2),
+                color=color_var,
+            )
+
+            # Apply palette if needed
+            if color_var and hasattr(self, "palette_name"):
+                self.plot = self.plot.scale(color=so.Nominal(self.palette_name))
+
+            # Add outline
+            self.plot = self.plot.add(
+                so.Line(alpha=1.0),
+                so.KDE(bw_adjust=bw_adjust, levels=2),
+                color=color_var,
             )
 
             # Apply palette to the outline too if needed
+            if color_var and hasattr(self, "palette_name"):
+                self.plot = self.plot.scale(color=so.Nominal(self.palette_name))
+        else:
+            # Use the Area mark with KDE stat for regular density plots
+            self.plot = self.plot.add(
+                so.Area(alpha=alpha, fill=fill),
+                so.KDE(bw_adjust=bw_adjust, levels=levels),
+                color=color_var,
+            )
+
+            # Apply palette if needed
             if color_var and hasattr(self, "palette_name"):
                 self.plot = self.plot.scale(color=so.Nominal(self.palette_name))
 
         self.has_density = True
         return self
 
-    def add_grid(self, *, diagonal_lines=False, show_labels=True):
+    def add_grid(
+        self, *, diagonal_lines: bool = False, show_labels: bool = True
+    ) -> "CircumplexPlot":
         """
         Add circumplex grid to the plot.
 
@@ -432,20 +362,30 @@ class CircumplexPlot:
             Self for method chaining
 
         """
-        self.plot = apply_circumplex_grid(
-            self.plot,
-            xlim=self.xlim,
-            ylim=self.ylim,
-            x_label=self.x if show_labels else None,
-            y_label=self.y if show_labels else None,
-            diagonal_lines=diagonal_lines,
-            show_labels=show_labels,
-        )
+        # Add the circumplex grid
+        self.plot = self.plot.add(SoundscapeCircumplex(xlim=self.xlim, ylim=self.ylim))
+
+        # Add quadrant labels if requested
+        if diagonal_lines:
+            self.plot = self.plot.add(
+                SoundscapeQuadrantLabels(xlim=self.xlim, ylim=self.ylim)
+            )
+
+        # Hide labels if requested
+        if not show_labels:
+            self.plot = self.plot.label(x=None, y=None)
 
         self.has_grid = True
         return self
 
-    def add_annotation(self, idx, text=None, x_offset=0.1, y_offset=0.1, **kwargs):
+    def add_annotation(
+        self,
+        idx: int | str,
+        text: str | None = None,
+        x_offset: float = 0.1,
+        y_offset: float = 0.1,
+        **kwargs: Any,
+    ) -> "CircumplexPlot":
         """
         Add an annotation to the plot.
 
@@ -466,21 +406,20 @@ class CircumplexPlot:
             Self for method chaining
 
         """
-        self.plot = add_annotation(
-            self.plot,
-            self.data,
-            idx,
-            x=self.x,
-            y=self.y,
-            text=text,
-            x_offset=x_offset,
-            y_offset=y_offset,
-            **kwargs,
+        # Get text if not provided
+        if text is None:
+            text = str(self.data.index[idx]) if isinstance(idx, int) else str(idx)
+
+        # Add annotation
+        self.plot = self.plot.add(
+            SoundscapePointAnnotation(
+                points=[idx], texts=[text], offsets=(x_offset, y_offset), **kwargs
+            )
         )
 
         return self
 
-    def add_title(self, title):
+    def add_title(self, title: str) -> "CircumplexPlot":
         """
         Add a title to the plot.
 
@@ -498,7 +437,9 @@ class CircumplexPlot:
         self.plot = self.plot.label(title=title)
         return self
 
-    def add_legend(self, title=None, loc="best"):
+    def add_legend(
+        self, title: str | None = None, loc: str = "best"
+    ) -> "CircumplexPlot":
         """
         Customize the legend appearance.
 
@@ -515,16 +456,18 @@ class CircumplexPlot:
             Self for method chaining
 
         """
-        # For Seaborn Objects, we can handle this more directly
-        # by adding a proper label to the plot
-
-        # Just store the legend parameters for when we create the final plot
+        # Store the legend parameters for when we create the final plot
         self._legend_title = title if title is not None else self.hue
         self._legend_loc = loc
 
         return self
 
-    def facet(self, column=None, row=None, col_wrap=None):
+    def facet(
+        self,
+        column: str | None = None,
+        row: str | None = None,
+        col_wrap: int | None = None,
+    ) -> "CircumplexPlot":
         """
         Add faceting to the plot.
 
@@ -546,7 +489,7 @@ class CircumplexPlot:
         self.plot = self.plot.facet(col=column, row=row, wrap=col_wrap)
         return self
 
-    def build(self, as_objects=True):
+    def build(self, as_objects: bool = True) -> so.Plot | tuple[plt.Figure, plt.Axes]:
         """
         Complete the plot with any default elements that haven't been added.
 
@@ -576,27 +519,22 @@ class CircumplexPlot:
 
         if as_objects:
             return self.plot
+
         # Create a new figure with the right size
         fig, ax = plt.subplots(figsize=(6, 6))
 
-        # Use pyplot mode for rendering
-        # This will render the plot directly to the current figure
-        self.plot.plot(pyplot=True)
-
-        # Get the current axes
-        ax = plt.gca()
+        # Draw to the axes
+        self.plot.plot(ax)
 
         # Apply legend location if needed (after plotting)
         if hasattr(self, "_legend_loc") and ax.get_legend() is not None:
             ax.legend(loc=self._legend_loc)
 
         # Return the figure and axes to be compatible with the legacy API
-        fig = ax.figure
-
         return fig, ax
 
     @property
-    def seaborn_plot(self):
+    def seaborn_plot(self) -> so.Plot:
         """
         Return the underlying Seaborn Objects plot.
 
@@ -608,7 +546,7 @@ class CircumplexPlot:
         """
         return self.plot
 
-    def get_matplotlib_objects(self):
+    def get_matplotlib_objects(self) -> tuple[plt.Figure, plt.Axes]:
         """
         Return matplotlib figure and axes objects.
 
@@ -619,7 +557,7 @@ class CircumplexPlot:
 
         """
         fig, ax = plt.subplots(figsize=(6, 6))
-        self.plot.plot(ax=ax)
+        self.plot.plot(ax)
         return fig, ax
 
     def show(self) -> None:
@@ -633,11 +571,15 @@ class CircumplexPlot:
         if not self.has_grid:
             self.add_grid()
 
-        # This is the correct way to display a plot in a notebook
-        self.plot.plot(pyplot=True)
+        # Draw the plot
+        fig, ax = plt.subplots(figsize=(6, 6))
+        self.plot.plot(ax)
+        plt.show()
 
     # Legacy API compatibility methods
-    def scatter(self, apply_styling=True, ax=None):
+    def scatter(
+        self, apply_styling: bool = True, ax: plt.Axes | None = None
+    ) -> "CircumplexPlot":
         """
         Create a scatter plot (legacy API compatibility).
 
@@ -658,7 +600,9 @@ class CircumplexPlot:
         self.add_grid()
         return self
 
-    def density(self, apply_styling=True, ax=None):
+    def density(
+        self, apply_styling: bool = True, ax: plt.Axes | None = None
+    ) -> "CircumplexPlot":
         """
         Create a density plot (legacy API compatibility).
 
@@ -679,7 +623,9 @@ class CircumplexPlot:
         self.add_grid()
         return self
 
-    def simple_density(self, apply_styling=True, ax=None):
+    def simple_density(
+        self, apply_styling: bool = True, ax: plt.Axes | None = None
+    ) -> "CircumplexPlot":
         """
         Create a simple density plot (legacy API compatibility).
 
@@ -700,7 +646,7 @@ class CircumplexPlot:
         self.add_grid()
         return self
 
-    def jointplot(self, apply_styling=True):
+    def jointplot(self, apply_styling: bool = True) -> "CircumplexPlot":
         """
         Create a joint plot (legacy API compatibility).
 
@@ -739,7 +685,7 @@ class CircumplexPlot:
 
         return self
 
-    def get_figure(self):
+    def get_figure(self) -> plt.Figure | tuple[plt.Figure, plt.Axes]:
         """
         Get the figure object (legacy API compatibility).
 
@@ -754,7 +700,7 @@ class CircumplexPlot:
         fig, ax = self.build(as_objects=False)
         return fig
 
-    def get_axes(self):
+    def get_axes(self) -> plt.Axes:
         """
         Get the axes object (legacy API compatibility).
 
@@ -769,7 +715,9 @@ class CircumplexPlot:
         fig, ax = self.build(as_objects=False)
         return ax
 
-    def iso_annotation(self, location, x_adj=0, y_adj=0, **kwargs):
+    def iso_annotation(
+        self, location: int | str, x_adj: float = 0, y_adj: float = 0, **kwargs: Any
+    ) -> "CircumplexPlot":
         """
         Add an annotation to the plot (legacy API compatibility).
 
