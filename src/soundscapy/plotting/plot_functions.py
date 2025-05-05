@@ -1,6 +1,6 @@
-"""High level functions for creating various types of circumplex plots."""
+"""Utility functions for creating various types of circumplex plots."""
 
-from typing import Any
+from typing import Any, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,27 +8,25 @@ import pandas as pd
 import plotly.graph_objects as go
 import seaborn as sns
 
-from soundscapy.plotting.backends import SeabornBackend
 from soundscapy.plotting.circumplex_plot import CircumplexPlot, CircumplexPlotParams
 from soundscapy.plotting.plotting_utils import (
-    DEFAULT_FIGSIZE,
     DEFAULT_XLIM,
     DEFAULT_YLIM,
     Backend,
     ExtraParams,
     PlotType,
 )
-from soundscapy.plotting.stylers import StyleOptions
+from soundscapy.plotting.stylers import DEFAULT_FIGSIZE, StyleOptions
 
 
 def scatter_plot(
     data: pd.DataFrame,
     x: str = "ISOPleasant",
     y: str = "ISOEventful",
-    hue: str | None = None,
+    hue: Optional[str] = None,
     title: str = "Soundscape Scatter Plot",
-    xlim: tuple[float, float] = DEFAULT_XLIM,
-    ylim: tuple[float, float] = DEFAULT_YLIM,
+    xlim: Tuple[float, float] = DEFAULT_XLIM,
+    ylim: Tuple[float, float] = DEFAULT_YLIM,
     palette: str = "colorblind",
     diagonal_lines: bool = False,
     show_labels: bool = True,
@@ -36,8 +34,8 @@ def scatter_plot(
     legend_location: str = "best",
     backend: Backend = Backend.SEABORN,
     apply_styling: bool = True,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
-    ax: plt.Axes | None = None,
+    figsize: Tuple[int, int] = DEFAULT_FIGSIZE,
+    ax: Optional[plt.Axes] = None,
     extra_params: ExtraParams = {},
     **kwargs: Any,
 ) -> plt.Axes | go.Figure:
@@ -92,17 +90,18 @@ def scatter_plot(
 
     if isinstance(plot._backend, SeabornBackend):
         return plot.get_axes()
-    return plot.get_figure()
+    else:
+        return plot.get_figure()
 
 
 def density_plot(
     data: pd.DataFrame,
     x: str = "ISOPleasant",
     y: str = "ISOEventful",
-    hue: str | None = None,
+    hue: Optional[str] = None,
     title: str = "Soundscape Density Plot",
-    xlim: tuple[float, float] = DEFAULT_XLIM,
-    ylim: tuple[float, float] = DEFAULT_YLIM,
+    xlim: Tuple[float, float] = DEFAULT_XLIM,
+    ylim: Tuple[float, float] = DEFAULT_YLIM,
     palette: str = "colorblind",
     fill: bool = True,
     incl_outline: bool = False,
@@ -113,12 +112,12 @@ def density_plot(
     legend_location: str = "best",
     backend: Backend = Backend.SEABORN,
     apply_styling: bool = True,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
+    figsize: Tuple[int, int] = DEFAULT_FIGSIZE,
     simple_density: bool = False,
     simple_density_thresh: float = 0.5,
     simple_density_levels: int = 2,
     simple_density_alpha: float = 0.5,
-    ax: plt.Axes | None = None,
+    ax: Optional[plt.Axes] = None,
     extra_params: ExtraParams = {},
     **kwargs: Any,
 ) -> plt.Axes | go.Figure:
@@ -204,18 +203,19 @@ def density_plot(
 
     if isinstance(plot._backend, SeabornBackend):
         return plot.get_axes()
-    return plot.get_figure()
+    else:
+        return plot.get_figure()
 
 
 def create_circumplex_subplots(
-    data_list: list[pd.DataFrame],
+    data_list: List[pd.DataFrame],
     plot_type: PlotType | str = PlotType.DENSITY,
     incl_scatter: bool = True,
-    subtitles: list[str] | None = None,
+    subtitles: Optional[List[str]] = None,
     title: str = "Circumplex Subplots",
     nrows: int = None,
     ncols: int = None,
-    figsize: tuple[int, int] = (10, 10),
+    figsize: Tuple[int, int] = (10, 10),
     **kwargs: Any,
 ) -> plt.Figure:
     """
@@ -247,7 +247,6 @@ def create_circumplex_subplots(
         >>> fig = create_circumplex_subplots([data1, data2], plot_type=PlotType.SCATTER, nrows=1, ncols=2)
         >>> isinstance(fig, plt.Figure)
         True
-
     """
     if isinstance(plot_type, str):
         plot_type = PlotType[plot_type.upper()]
@@ -270,7 +269,7 @@ def create_circumplex_subplots(
 
     color = kwargs.get("color", sns.color_palette("colorblind", 1)[0])
 
-    for data, ax, subtitle in zip(data_list, axes, subtitles, strict=False):
+    for data, ax, subtitle in zip(data_list, axes, subtitles):
         if plot_type == PlotType.SCATTER or incl_scatter:
             scatter_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
         if plot_type == PlotType.DENSITY:

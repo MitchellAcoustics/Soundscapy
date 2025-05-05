@@ -1,47 +1,24 @@
-"""
-Main module for creating circumplex plots using different backends.
-"""
+"""Main module for creating circumplex plots using different backends."""
 
 import copy
-from dataclasses import dataclass, field
+import warnings
 
-import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
+from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure, SubFigure
 
-from soundscapy.plotting.backends import PlotlyBackend, SeabornBackend
 from soundscapy.plotting.plotting_utils import (
-    DEFAULT_XLIM,
-    DEFAULT_YLIM,
-    Backend,
-    ExtraParams,
-    PlotType,
+    DEFAULT_CIRCUMPLEX_PLOT_PARAMS,
+    DEFAULT_STYLE_OPTIONS,
+    CircumplexPlotParams,
+    SeabornStyler,
+    StyleOptions,
 )
-from soundscapy.plotting.stylers import StyleOptions
 
-
-@dataclass
-class CircumplexPlotParams:
-    """Parameters for customizing CircumplexPlot."""
-
-    x: str = "ISOPleasant"
-    y: str = "ISOEventful"
-    hue: str | None = None
-    title: str = "Soundscape Plot"
-    xlim: tuple[float, float] = DEFAULT_XLIM
-    ylim: tuple[float, float] = DEFAULT_YLIM
-    alpha: float = 0.8
-    fill: bool = True
-    palette: str | None = None
-    incl_outline: bool = False  # Fixed from (False,)
-    diagonal_lines: bool = False
-    show_labels: bool = True
-    legend: bool = "auto"
-    legend_location: str = "best"
-    extra_params: ExtraParams = field(default_factory=dict)
-
-    def __post_init__(self):
-        if self.palette is None:
-            self.palette = "colorblind" if self.hue else None
+RECOMMENDED_MIN_SAMPLES: int = 30
 
 
 class CircumplexPlot:
@@ -52,122 +29,283 @@ class CircumplexPlot:
     based on the circumplex model of soundscape perception. It supports multiple
     backends (currently Seaborn and Plotly) and offers various customization options.
 
+    Example:
+    -------
+    >>> from soundscapy import isd, surveys
+    >>> df = isd.load()
+    >>> df = surveys.add_iso_coords(df)
+    >>> ct = isd.select_location_ids(df, ["CamdenTown", "RegentsParkJapan"])
+    >>> cp = (
+            CircumplexPlot(ct, params=params)
+            .create_subplots()
+            .add_scatter()
+            .add_density()
+            .apply_styling()
+        )
+    >>> cp
+
     """
 
     # TODO: Implement jointplot method for Seaborn backend.
-    # TODO: Implement density plots for Plotly backend.
-    # TODO: Improve Plotly backend to support more customization options.
 
     def __init__(
         self,
         data: pd.DataFrame,
-        params: CircumplexPlotParams = CircumplexPlotParams(),
-        backend: Backend = Backend.SEABORN,
-        style_options: StyleOptions = StyleOptions(),
-    ):
-        self.data = data
-        self.params = params
-        self.style_options = style_options
-        self._backend = self._create_backend(backend)
-        self._plot = None
+        xcol: str = "ISOPleasant",
+        ycol: str = "ISOEventful",
+        params: CircumplexPlotParams = DEFAULT_CIRCUMPLEX_PLOT_PARAMS,
+        style_options: StyleOptions = DEFAULT_STYLE_OPTIONS,
+        fig: Figure | SubFigure | None = None,
+        ax: Axes | np.ndarray | None = None,
+    ) -> None:
+        self._data = data
+        self.x = xcol
+        self.y = ycol
+        self._params = params
+        self._style_options = style_options
+        self._styler = SeabornStyler(self._params, self._style_options)
+        self.fig = fig
+        self.ax = ax
 
-    def _create_backend(self, backend: Backend):
-        """Create the appropriate backend based on the backend enum."""
-        if backend == Backend.SEABORN:
-            return SeabornBackend(style_options=self.style_options)
-        if backend == Backend.PLOTLY:
-            return PlotlyBackend()
-        raise ValueError(f"Unsupported backend: {backend}")
-
-    def _create_plot(
-        self,
-        plot_type: PlotType,
-        apply_styling: bool = True,
-        ax: plt.Axes | None = None,
+    def create_subplots(
+        self, nrows: int = 1, ncols: int = 1, **kwargs
     ) -> "CircumplexPlot":
-        """Create a plot based on the specified plot type."""
-        if plot_type == PlotType.SCATTER:
-            if isinstance(self._backend, SeabornBackend):
-                self._plot = self._backend.create_scatter(self.data, self.params, ax)
-            else:
-                self._plot = self._backend.create_scatter(self.data, self.params)
-        elif plot_type == PlotType.DENSITY:
-            if isinstance(self._backend, SeabornBackend):
-                self._plot = self._backend.create_density(self.data, self.params, ax)
-            else:
-                raise NotImplementedError(
-                    "Density plots are only available for the Seaborn backend."
-                )
-        elif plot_type == PlotType.SIMPLE_DENSITY:
-            if isinstance(self._backend, SeabornBackend):
-                self._plot = self._backend.create_simple_density(
-                    self.data, self.params, ax
-                )
-            else:
-                raise NotImplementedError(
-                    "Simple density plots are only available for the Seaborn backend."
-                )
-        elif plot_type == PlotType.JOINT:
-            if isinstance(self._backend, SeabornBackend):
-                self._plot = self._backend.create_jointplot(self.data, self.params)
-            else:
-                raise NotImplementedError(
-                    "Joint plots are only available for the Seaborn backend."
-                )
-        else:
-            raise ValueError(f"Unsupported plot type: {plot_type}")
+        """
+        Create subplots for the circumplex plot.
 
-        if apply_styling:
-            self._plot = self._backend.apply_styling(self._plot, self.params)
+        Parameters
+        ----------
+            nrows (int): Number of rows in the subplot grid.
+            ncols (int): Number of columns in the subplot grid.
+
+        Returns
+        -------
+            tuple: A tuple containing the figure and axes objects.
+
+        """
+        self.fig, self.ax = plt.subplots(
+            nrows=nrows, ncols=ncols, figsize=self._style_options.figsize, **kwargs
+        )
         return self
 
-    def scatter(
-        self, apply_styling: bool = True, ax: plt.Axes | None = None
-    ) -> "CircumplexPlot":
-        """Create a scatter plot."""
-        return self._create_plot(PlotType.SCATTER, apply_styling, ax)
+    def _check_for_ax(self) -> "CircumplexPlot":
+        """
+        Check if the axes object is provided.
 
-    def density(
-        self, apply_styling: bool = True, ax: plt.Axes | None = None
-    ) -> "CircumplexPlot":
-        """Create a density plot."""
-        return self._create_plot(PlotType.DENSITY, apply_styling, ax)
+        Returns
+        -------
+            Axes: The axes object to be used for plotting.
 
-    def jointplot(self, apply_styling: bool = True) -> "CircumplexPlot":
-        """Create a joint plot."""
-        return self._create_plot(PlotType.JOINT, apply_styling)
+        Raises
+            ValueError: If the axes object does not exist.
 
-    def simple_density(
-        self, apply_styling: bool = True, ax: plt.Axes | None = None
-    ) -> "CircumplexPlot":
-        """Create a simple density plot."""
-        return self._create_plot(PlotType.SIMPLE_DENSITY, apply_styling, ax)
-
-    def show(self):
-        """Display the plot."""
-        if self._plot is None:
-            raise ValueError(
-                "No plot has been created yet. Call scatter(), density(), or simple_density() first."
+        """
+        if self.ax is None:
+            msg = (
+                "No axes object provided. "
+                "Please create a figure and axes using create_subplots() first."
             )
-        self._backend.show(self._plot)
+            raise ValueError(msg)
+        return self
 
-    def get_figure(self):
-        """Get the figure object of the plot."""
-        if self._plot is None:
-            raise ValueError(
-                "No plot has been created yet. Call scatter(), density(), or simple_density() first."
-            )
-        return self._plot
+    def _valid_density(self) -> None:
+        """
+        Check if the data is valid for density plots.
 
-    def get_axes(self):
-        """Get the axes object of the plot (only for Seaborn backend)."""
-        if self._plot is None:
-            raise ValueError(
-                "No plot has been created yet. Call scatter(), density(), or simple_density() first."
+        Raises
+        ------
+            UserWarning: If the data is too small for density plots.
+
+        """
+        if len(self._data) < RECOMMENDED_MIN_SAMPLES:
+            warnings.warn(
+                f"Density plots are not recommended for small datasets (<{RECOMMENDED_MIN_SAMPLES} samples).",
+                UserWarning,
+                stacklevel=2,
             )
-        if isinstance(self._backend, SeabornBackend):
-            return self._plot[1]  # Return the axes object
-        raise AttributeError("Axes object is not available for Plotly backend")
+
+    def add_scatter(self) -> "CircumplexPlot":
+        """
+        Add a scatter plot to the existing axes.
+
+        Parameters
+        ----------
+            data (pd.DataFrame): The data to plot.
+
+        Returns
+        -------
+            tuple: A tuple containing the figure and axes objects.
+
+        """
+        self._check_for_ax()
+
+        if isinstance(self.ax, np.ndarray):
+            for i, axis in enumerate(self.ax.flatten()):
+                self.ax[i] = sns.scatterplot(
+                    data=self._data,
+                    x=self._params.x,
+                    y=self._params.y,
+                    hue=self._params.hue,
+                    palette=self._params.palette if self._params.hue else None,
+                    alpha=self._params.alpha,
+                    ax=axis,
+                    zorder=self._style_options.data_zorder,
+                    legend=self._params.legend,
+                    **self._params.extra_params,
+                )
+        elif isinstance(self.ax, Axes):
+            self.ax = sns.scatterplot(
+                data=self._data,
+                x=self._params.x,
+                y=self._params.y,
+                hue=self._params.hue,
+                palette=self._params.palette if self._params.hue else None,
+                alpha=self._params.alpha,
+                ax=self.ax,
+                zorder=self._style_options.data_zorder,
+                legend=self._params.legend,
+                **self._params.extra_params,
+            )
+        else:
+            msg = "Invalid axes object. Please provide a valid Axes or ndarray of Axes."
+            raise TypeError(msg)
+        return self
+
+    def add_density(self) -> "CircumplexPlot":
+        """
+        Add a density plot to the existing axes.
+
+        Parameters
+        ----------
+            data (pd.DataFrame): The data to plot.
+
+        Returns
+        -------
+            tuple: A tuple containing the figure and axes objects.
+
+        """
+        self._valid_density()
+        self._check_for_ax()
+
+        if isinstance(self.ax, np.ndarray):
+            for i, axis in enumerate(self.ax.flatten()):
+                self.ax[i] = sns.kdeplot(
+                    data=self._data,
+                    x=self._params.x,
+                    y=self._params.y,
+                    hue=self._params.hue,
+                    palette=self._params.palette if self._params.hue else None,
+                    fill=self._params.fill,
+                    alpha=self._params.alpha,
+                    ax=axis,
+                    bw_adjust=self.style_options.bw_adjust,
+                    zorder=self._style_options.data_zorder,
+                    common_norm=False,
+                    legend=self._params.legend,
+                    **self._params.extra_params,
+                )
+
+                if self._params.incl_outline:
+                    self.ax[i] = sns.kdeplot(
+                        data=self._data,
+                        x=self._params.x,
+                        y=self._params.y,
+                        hue=self._params.hue,
+                        alpha=1,
+                        palette=self._params.palette,
+                        fill=False,
+                        ax=axis,
+                        bw_adjust=self._style_options.bw_adjust,
+                        zorder=self._style_options.data_zorder,
+                        common_norm=False,
+                        legend=False,
+                        **self._params.extra_params,
+                    )
+
+        elif isinstance(self.ax, Axes):
+            self.ax = sns.kdeplot(
+                data=self._data,
+                x=self._params.x,
+                y=self._params.y,
+                hue=self._params.hue,
+                palette=self._params.palette if self._params.hue else None,
+                fill=self._params.fill,
+                alpha=self._params.alpha,
+                ax=self.ax,
+                bw_adjust=self._style_options.bw_adjust,
+                zorder=self._style_options.data_zorder,
+                common_norm=False,
+                legend=self._params.legend,
+                **self._params.extra_params,
+            )
+            if self._params.incl_outline:
+                self.ax = sns.kdeplot(
+                    data=self._data,
+                    x=self._params.x,
+                    y=self._params.y,
+                    hue=self._params.hue,
+                    alpha=1,
+                    palette=self._params.palette,
+                    fill=False,
+                    ax=self.ax,
+                    bw_adjust=self._style_options.bw_adjust,
+                    zorder=self._style_options.data_zorder,
+                    common_norm=False,
+                    legend=False,
+                    **self._params.extra_params,
+                )
+        else:
+            msg = "Invalid axes object. Please provide a valid Axes or ndarray of Axes."
+            raise TypeError(msg)
+        return self
+
+    def add_simple_density(self) -> "CircumplexPlot":
+        """
+        Add a simple density plot to the existing axes.
+
+        Parameters
+        ----------
+            data (pd.DataFrame): The data to plot.
+
+        Returns
+        -------
+            tuple: A tuple containing the figure and axes objects.
+
+        """
+        self._valid_density()
+        self._check_for_ax()
+
+        if isinstance(self.ax, np.ndarray):
+            for i, axis in enumerate(self.ax.flatten()):
+                self.ax[i] = sns.kdeplot(
+                    data=self._data,
+                    x=self._params.x,
+                    y=self._params.y,
+                    hue=self._params.hue,
+                    palette=self._params.palette if self._params.hue else None,
+                    alpha=self._params.alpha,
+                    ax=axis,
+                    zorder=self._style_options.data_zorder,
+                    legend=self._params.legend,
+                    **self._params.extra_params,
+                )
+        elif isinstance(self.ax, Axes):
+            self.ax = sns.kdeplot(
+                data=self._data,
+                x=self._params.x,
+                y=self._params.y,
+                hue=self._params.hue,
+                palette=self._params.palette if self._params.hue else None,
+                alpha=self._params.alpha,
+                ax=self.ax,
+                zorder=self._style_options.data_zorder,
+                legend=self._params.legend,
+                **self._params.extra_params,
+            )
+        else:
+            msg = "Invalid axes object. Please provide a valid Axes or ndarray of Axes."
+            raise TypeError(msg)
+        return self
 
     def get_style_options(self) -> StyleOptions:
         """Get the current StyleOptions."""
@@ -180,27 +318,55 @@ class CircumplexPlot:
             if hasattr(new_style_options, key):
                 setattr(new_style_options, key, value)
             else:
-                raise ValueError(f"Invalid StyleOptions attribute: {key}")
+                msg = f"Invalid StyleOptions attribute: {key}"
+                raise ValueError(msg)
 
         self.style_options = new_style_options
-        self._backend.style_options = new_style_options
         return self
 
-    def iso_annotation(self, location, x_adj: float = 0, y_adj: float = 0, **kwargs):
+    def apply_styling(
+        self,
+    ) -> "CircumplexPlot":
+        """
+        Apply styling to the Seaborn plot.
+
+        Returns
+        -------
+            tuple: The styled figure and axes objects.
+
+        """
+        self._check_for_ax()
+        self.fig, self.ax = self._styler.apply_styling(self.fig, self.ax)
+        return self
+
+    def iso_annotation(
+        self, location_idx: int, x_adj: float = 0, y_adj: float = 0, **kwargs
+    ) -> "CircumplexPlot":
         """Add an annotation to the plot (only for Seaborn backend)."""
-        if isinstance(self._backend, SeabornBackend):
-            ax = self.get_axes()
-            x = self.data[self.params.x].iloc[location]
-            y = self.data[self.params.y].iloc[location]
-            ax.annotate(
-                text=self.data.index[location],
+        x = self._data[self._params.x].iloc[location_idx]
+        y = self._data[self._params.y].iloc[location_idx]
+        if isinstance(self.ax, np.ndarray):
+            for i, _ in enumerate(self.ax.flatten()):
+                self.ax[i].annotate(
+                    text=self._data.index[location_idx],
+                    xy=(x, y),
+                    xytext=(x + x_adj, y + y_adj),
+                    ha="center",
+                    va="center",
+                    arrowprops={"arrowstyle": "-", "ec": "black"},
+                    **kwargs,
+                )
+        elif isinstance(self.ax, Axes):
+            self.ax.annotate(
+                text=self._data.index[location_idx],
                 xy=(x, y),
                 xytext=(x + x_adj, y + y_adj),
                 ha="center",
                 va="center",
-                arrowprops=dict(arrowstyle="-", ec="black"),
+                arrowprops={"arrowstyle": "-", "ec": "black"},
                 **kwargs,
             )
         else:
-            raise AttributeError("iso_annotation is not available for Plotly backend")
+            msg = "Invalid axes object. Please provide a valid Axes or ndarray of Axes."
+            raise TypeError(msg)
         return self

@@ -1,100 +1,37 @@
-"""
-Backend classes for plotting.
-
-This module provides classes for different plotting backends, including Seaborn
-and Plotly. Each backend class implements methods for creating scatter and
-density plots, as well as applying styling to the plots.
-
-Example usage:
-
-```python
-from soundscapy.plotting import scatter_plot, density_plot, Backend, PlotType
-
-# Create a scatter plot using Seaborn backend
-scatter_plot(data, x='ISOPleasant', y='ISOEventful', backend=Backend.SEABORN)
-
-# Create a density plot using Plotly backend
-density_plot(data, x='ISOPleasant', y='ISOEventful', backend=Backend.PLOTLY)
-```
-"""
-
 import warnings
 from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
-import plotly.express as px
-import plotly.graph_objects as go
+import pandas as pd
 import seaborn as sns
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure, SubFigure
 
+from soundscapy.plotting.plotting_utils import (
+    DEFAULT_STYLE_OPTIONS,
+    CircumplexPlotParams,
+)
 from soundscapy.plotting.stylers import SeabornStyler, StyleOptions
 
 
-class PlotBackend(ABC):
-    """
-    Abstract base class for plot backends.
+class SeabornBackend:
+    """Backend for creating plots using Seaborn and Matplotlib."""
 
-    This class defines the interface for creating scatter and density plots,
-    as well as applying styling to the plots.
-    """
-
-    @abstractmethod
-    def create_scatter(self, data, params):
+    def __init__(self, style_options: StyleOptions = DEFAULT_STYLE_OPTIONS) -> None:
         """
-        Create a scatter plot.
+        Initialize the SeabornBackend with style options.
 
         Parameters
         ----------
-            data (pd.DataFrame): The data to plot.
-            params (CircumplexPlotParams): The parameters for the plot.
-
-        Returns
-        -------
-            The created plot object.
+        style_options : StyleOptions, optional
+            The styling options for plots, by default DEFAULT_STYLE_OPTIONS
 
         """
-
-    @abstractmethod
-    def create_density(self, data, params):
-        """
-        Create a density plot.
-
-        Parameters
-        ----------
-            data (pd.DataFrame): The data to plot.
-            params (CircumplexPlotParams): The parameters for the plot.
-
-        Returns
-        -------
-            The created plot object.
-
-        """
-
-    @abstractmethod
-    def apply_styling(self, plot_obj, params):
-        """
-        Apply styling to the plot.
-
-        Parameters
-        ----------
-            plot_obj: The plot object to style.
-            params (CircumplexPlotParams): The parameters for styling.
-
-        Returns
-        -------
-            The styled plot object.
-
-        """
-
-
-class SeabornBackend(PlotBackend):
-    """
-    Backend for creating plots using Seaborn and Matplotlib.
-    """
-
-    def __init__(self, style_options: StyleOptions = StyleOptions()):
         self.style_options = style_options
 
-    def create_scatter(self, data, params, ax=None):
+    def create_scatter(
+        self, data: pd.DataFrame, params: CircumplexPlotParams, ax: Axes | None = None
+    ) -> tuple[Figure | SubFigure | None, Axes]:
         """
         Create a scatter plot using Seaborn.
 
@@ -132,7 +69,9 @@ class SeabornBackend(PlotBackend):
         )
         return fig, ax
 
-    def create_density(self, data, params, ax=None):
+    def create_density(
+        self, data: pd.DataFrame, params: CircumplexPlotParams, ax: Axes | None = None
+    ) -> tuple[Figure | SubFigure | None, Axes]:
         """
         Create a density plot using Seaborn.
 
@@ -150,12 +89,14 @@ class SeabornBackend(PlotBackend):
             warnings.warn(
                 "Density plots are not recommended for small datasets (<30 samples).",
                 UserWarning,
+                stacklevel=2,
             )
 
         if ax is None:
             fig, ax = plt.subplots(figsize=self.style_options.figsize)
         else:
             fig = ax.get_figure()
+
         sns.kdeplot(
             data=data,
             x=params.x,
@@ -189,15 +130,18 @@ class SeabornBackend(PlotBackend):
             )
         return fig, ax
 
-    def create_jointplot(self, data, params):
+    def create_jointplot(
+        self, data: pd.DataFrame, params: CircumplexPlotParams
+    ) -> tuple[Figure | SubFigure | None, Axes]:
         """
+        Create a joint plot using Seaborn.
 
         Examples
         --------
         >>> import soundscapy as sspy
         >>> from soundscapy.plotting import Backend, CircumplexPlot, StyleOptions, CircumplexPlotParams
         >>> data = sspy.isd.load()
-        >>> data = sspy.surveys.add_iso_coords(data,overwrite=True)
+        >>> data = sspy.surveys.add_iso_coords(data, overwrite=True)
         >>> sample_data = sspy.isd.select_location_ids(data, ['CamdenTown'])
         >>> plot = CircumplexPlot(data=sample_data, backend=Backend.SEABORN)
         >>> g = plot.jointplot()
@@ -219,7 +163,24 @@ class SeabornBackend(PlotBackend):
             g.ax_joint,
         )  # TODO: Should return the whole JointGrid object - repeat throughout plotting methods
 
-    def create_simple_density(self, data, params, ax=None):
+    def create_simple_density(
+        self, data: pd.DataFrame, params: CircumplexPlotParams, ax: Axes | None = None
+    ) -> tuple[Figure | SubFigure | None, Axes]:
+        """
+        Create a simple density plot using Seaborn with simplified styling.
+
+        Parameters
+        ----------
+            data (pd.DataFrame): The data to plot.
+            params (CircumplexPlotParams): The parameters for the plot.
+            ax (Axes | None, optional): Matplotlib axes object to plot on.
+                If None, a new figure is created.
+
+        Returns
+        -------
+            tuple: A tuple containing the figure and axes objects.
+
+        """
         if ax is None:
             fig, ax = plt.subplots(figsize=self.style_options.figsize)
         else:
@@ -260,7 +221,11 @@ class SeabornBackend(PlotBackend):
             )
         return fig, ax
 
-    def apply_styling(self, plot_obj, params):
+    def apply_styling(
+        self,
+        plot_obj: tuple[Figure | SubFigure | None, Axes],
+        params: CircumplexPlotParams,
+    ) -> tuple[Figure | SubFigure | None, Axes]:
         """
         Apply styling to the Seaborn plot.
 
@@ -278,145 +243,14 @@ class SeabornBackend(PlotBackend):
         styler = SeabornStyler(params, self.style_options)
         return styler.apply_styling(fig, ax)
 
-    def show(self, plot_obj):
+    def show(self, plot_obj: tuple[Figure | SubFigure | None, Axes]) -> None:
         """
         Display the Matplotlib figure.
 
         Parameters
         ----------
-            fig: The figure to display.
+            plot_obj: A tuple containing the figure and axes objects.
 
         """
         fig, _ = plot_obj
         plt.show()
-
-
-class PlotlyBackend(PlotBackend):
-    """
-    Backend for creating plots using Plotly.
-    """
-
-    def __init__(self):
-        warnings.warn(
-            "PlotlyBackend is very experimental and not fully implemented.", UserWarning
-        )
-
-    def create_scatter(self, data, params):
-        """
-        Create a scatter plot using Plotly.
-
-        Parameters
-        ----------
-            data (pd.DataFrame): The data to plot.
-            params (CircumplexPlotParams): The parameters for the plot.
-
-        Returns
-        -------
-            go.Figure: A Plotly figure object.
-
-        """
-        fig = px.scatter(
-            data,
-            x=params.x,
-            y=params.y,
-            color=params.hue,
-            title=params.title,
-            range_x=params.xlim,
-            range_y=params.ylim,
-            **params.extra_params,
-        )
-        fig.update_layout(
-            width=600,
-            height=600,
-            xaxis=dict(scaleanchor="y", scaleratio=1),
-            yaxis=dict(scaleanchor="x", scaleratio=1),
-        )
-        return fig
-
-    def create_density(self, data, params):
-        """
-        Create a density plot using Plotly.
-
-        Parameters
-        ----------
-            data (pd.DataFrame): The data to plot.
-            params (CircumplexPlotParams): The parameters for the plot.
-
-        Returns
-        -------
-            go.Figure: A Plotly figure object.
-
-        """
-        if len(data) < 30:
-            warnings.warn(
-                "Density plots are not recommended for small datasets (<30 samples). Consider using a scatter plot instead.",
-                UserWarning,
-            )
-
-        fig = px.density_heatmap(
-            data,
-            x=params.x,
-            y=params.y,
-            title=params.title,
-            range_x=params.xlim,
-            range_y=params.ylim,
-            **params.extra_params,
-        )
-        fig.update_layout(
-            width=600,
-            height=600,
-            xaxis=dict(scaleanchor="y", scaleratio=1),
-            yaxis=dict(scaleanchor="x", scaleratio=1),
-        )
-        scatter_trace = px.scatter(
-            data, x=params.x, y=params.y, color=params.hue, opacity=0.5
-        ).data[0]
-        fig.add_trace(scatter_trace)
-        return fig
-
-    def apply_styling(self, plot_obj, params):
-        """
-        Apply styling to the Plotly plot.
-
-        Parameters
-        ----------
-            plot_obj (go.Figure): A Plotly figure object.
-            params (CircumplexPlotParams): The parameters for styling.
-
-        Returns
-        -------
-            go.Figure: The styled Plotly figure object.
-
-        """
-        fig = plot_obj
-        if params.diagonal_lines:
-            fig.add_trace(
-                go.Scatter(
-                    x=[params.xlim[0], params.xlim[1]],
-                    y=[params.ylim[0], params.ylim[1]],
-                    mode="lines",
-                    line=dict(color="gray", dash="dash"),
-                    showlegend=False,
-                )
-            )
-            fig.add_trace(
-                go.Scatter(
-                    x=[params.xlim[0], params.xlim[1]],
-                    y=[params.ylim[1], params.ylim[0]],
-                    mode="lines",
-                    line=dict(color="gray", dash="dash"),
-                    showlegend=False,
-                )
-            )
-        return fig
-
-    def show(self, fig):
-        """
-        Display the Plotly figure.
-
-        Parameters
-        ----------
-            fig (go.Figure): The Plotly figure to display.
-
-        """
-        fig.show()
