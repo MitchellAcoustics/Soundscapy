@@ -143,4 +143,6 @@ class StyleParamsTypes(TypedDict):
     data_zorder: int
     show_labels: bool
     legend_location: MplLegendLocType
-    lineweights: float
+    linewidth: float
+    primary_lines: bool
+    diagonal_lines: bool

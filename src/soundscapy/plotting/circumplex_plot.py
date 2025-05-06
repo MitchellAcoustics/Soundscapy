@@ -72,6 +72,8 @@ DEFAULT_DENSITY_PARAMS: DensityParamTypes = DensityParamTypes(
     y=DEFAULT_YCOL,
     alpha=0.8,
     fill=True,
+    common_norm=False,
+    common_grid=False,
     palette=DEFAULT_PALETTE,
     color=DEFAULT_COLOR,
     bw_adjust=1.2,
@@ -86,7 +88,9 @@ DEFAULT_STYLE_PARAMS: StyleParamsTypes = StyleParamsTypes(
     data_zorder=3,
     show_labels=True,
     legend_location="best",
-    lineweights=1.5,
+    linewidth=1.5,
+    primary_lines=True,
+    diagonal_lines=False,
 )
 
 DEFAULT_SUBPLOTS_PARAMS: SubplotsParamsTypes = SubplotsParamsTypes(
@@ -127,9 +131,9 @@ class CircumplexPlot:
         xcol: str = "ISOPleasant",
         ycol: str = "ISOEventful",
         title: str | None = "Soundscape Density Plot",
+        title_fontsize: int = 16,
         hue: str | None = None,
         palette: str | None = "colorblind",
-        figsize: tuple[int, int] = (5, 5),
         figure: Figure | SubFigure | None = None,
         axes: Axes | np.ndarray | None = None,
     ) -> None:
@@ -162,8 +166,8 @@ class CircumplexPlot:
         self.x = xcol
         self.y = ycol
         self.title = title
+        self.title_fontsize = title_fontsize
         self.hue = hue
-        self.figsize = figsize
         self.figure = figure
         self.axes = axes
 
@@ -208,11 +212,12 @@ class CircumplexPlot:
         self,
         nrows: int = 1,
         ncols: int = 1,
+        figsize: tuple[int, int] = (5, 5),
         subplot_by: str | None = None,
         subplot_datas: list[pd.DataFrame] | None = None,
         subplot_titles: list[str] | None = None,
         *,
-        adjust_figsize: bool = False,
+        adjust_figsize: bool = True,
         auto_allocate_axes: bool = False,  # Considered experimental
         **kwargs: Unpack[SubplotsParamsTypes],
     ) -> "CircumplexPlot":
@@ -231,6 +236,7 @@ class CircumplexPlot:
             tuple: A tuple containing the figure and axes objects.
 
         """
+        self.figsize = figsize
         subplot_kwargs = copy.deepcopy(DEFAULT_SUBPLOTS_PARAMS)
         fig_kw = kwargs.pop("fig_kw", {})
         subplot_kwargs.update(**kwargs)
@@ -846,8 +852,10 @@ class CircumplexPlot:
         prim_lines_zorder: int = 2,
         data_zorder: int = 3,
         legend_location: MplLegendLocType = "best",
-        lineweights: float = 1.5,
+        linewidth: float = 1.5,
         *,
+        primary_lines: bool = True,
+        diagonal_lines: bool = False,
         show_labels: bool = True,
     ) -> "CircumplexPlot":
         """
@@ -866,8 +874,10 @@ class CircumplexPlot:
             prim_lines_zorder=prim_lines_zorder,
             data_zorder=data_zorder,
             legend_location=legend_location,
-            lineweights=lineweights,
+            linewidth=linewidth,
             show_labels=show_labels,
+            primary_lines=primary_lines,
+            diagonal_lines=diagonal_lines,
         )
         self._check_for_axes()
 
@@ -876,7 +886,14 @@ class CircumplexPlot:
         self._set_title()
         self._set_axes_titles()
         self._deal_w_default_labels()
+        if primary_lines:
+            self._primary_lines_and_labels()
+        if diagonal_lines:
+            self._diagonal_lines_and_labels()
         if self.hue and self._style_params.get("legend_location") is not False:
+            # NOTE: Should really check for the presence of a legend.
+            # If hue is added in the .add_* methods,
+            # it doesn't show up in the class attributes.
             self._move_legend()
 
         return self
@@ -902,7 +919,7 @@ class CircumplexPlot:
         """Set the title of the plot."""
         if self.title:
             figure = self.get_figure()
-            figure.suptitle(self.title, fontsize=16)
+            figure.suptitle(self.title, fontsize=self.title_fontsize)
         return self
 
     def _set_axes_titles(self) -> "CircumplexPlot":
@@ -915,19 +932,9 @@ class CircumplexPlot:
     def _deal_w_default_labels(self) -> "CircumplexPlot":
         """Handle the default labels for the axes."""
         if not self._style_params.get("show_labels"):
-            if isinstance(self.axes, np.ndarray):
-                for _, axis in enumerate(self.axes.flatten()):
-                    axis.set_xlabel("")
-                    axis.set_ylabel("")
-            elif isinstance(self.axes, Axes):
-                self.axes.set_xlabel("")
-                self.axes.set_ylabel("")
-            else:
-                msg = (
-                    "Invalid axes object. "
-                    "Please provide a valid Axes or ndarray of Axes."
-                )
-                raise TypeError(msg)
+            for _, axis in enumerate(self.yield_axes_objects()):
+                axis.set_xlabel("")
+                axis.set_ylabel("")
         return self
 
     def _move_legend(self) -> "CircumplexPlot":
@@ -953,7 +960,7 @@ class CircumplexPlot:
                 color="grey",
                 linestyle="dashed",
                 alpha=1,
-                lw=self._style_params.get("line_weights"),
+                lw=self._style_params.get("linewidth"),
                 zorder=self._style_params.get("prim_lines_zorder"),
             )
             axis.axvline(
@@ -961,7 +968,7 @@ class CircumplexPlot:
                 color="grey",
                 linestyle="dashed",
                 alpha=1,
-                lw=self._style_params.get("line_weights"),
+                lw=self._style_params.get("linewidth"),
                 zorder=self._style_params.get("prim_lines_zorder"),
             )
         return self
@@ -969,23 +976,69 @@ class CircumplexPlot:
     def _diagonal_lines_and_labels(self) -> "CircumplexPlot":
         """Add diagonal lines and labels to the plot."""
         for _, axis in enumerate(self.yield_axes_objects()):
+            xlim = self._style_params.get("xlim")
+            ylim = self._style_params.get("ylim")
             axis.plot(
-                self._style_params.get("xlim"),
-                self._style_params.get("ylim"),
+                xlim,
+                ylim,
                 linestyle="dashed",
                 color="grey",
                 alpha=0.5,
-                lw=self._style_params.get("lineweights"),
-                zorder=self._style_params.get("diag_lines_zorder"),
+                lw=self._style_params["linewidth"],
+                zorder=self._style_params["diag_lines_zorder"],
             )
             axis.plot(
-                self._style_params.get("xlim"),
-                self._style_params.get("ylim")[::-1],
+                xlim,
+                ylim[::-1],
                 linestyle="dashed",
                 color="grey",
                 alpha=0.5,
-                lw=self._style_params.get("lineweights"),
-                zorder=self._style_params.get("diag_lines_zorder"),
+                lw=self._style_params["linewidth"],
+                zorder=self._style_params["diag_lines_zorder"],
+            )
+
+            diag_ax_font = {
+                "fontstyle": "italic",
+                "fontsize": "small",
+                "fontweight": "bold",
+                "color": "black",
+                "alpha": 0.5,
+            }
+            axis.text(
+                xlim[1] / 2,
+                ylim[1] / 2,
+                "(vibrant)",
+                ha="center",
+                va="center",
+                fontdict=diag_ax_font,
+                zorder=self._style_params["diag_labels_zorder"],
+            )
+            axis.text(
+                xlim[0] / 2,
+                ylim[1] / 2,
+                "(chaotic)",
+                ha="center",
+                va="center",
+                fontdict=diag_ax_font,
+                zorder=self._style_params["diag_labels_zorder"],
+            )
+            axis.text(
+                xlim[0] / 2,
+                ylim[0] / 2,
+                "(monotonous)",
+                ha="center",
+                va="center",
+                fontdict=diag_ax_font,
+                zorder=self._style_params["diag_labels_zorder"],
+            )
+            axis.text(
+                xlim[1] / 2,
+                ylim[0] / 2,
+                "(calm)",
+                ha="center",
+                va="center",
+                fontdict=diag_ax_font,
+                zorder=self._style_params["diag_labels_zorder"],
             )
         return self
 
