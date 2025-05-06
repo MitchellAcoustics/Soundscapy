@@ -290,7 +290,8 @@ class CircumplexPlot:
                 "Please create a figure using create_subplots() first."
             )
             raise ValueError(msg)
-        plt.tight_layout()
+        if self._has_subplots:
+            plt.tight_layout()
         plt.show()
 
     def _setup_subplot_by(
