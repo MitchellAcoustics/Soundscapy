@@ -8,16 +8,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import seaborn as sns
 
-from soundscapy.plotting.circumplex_plot import CircumplexPlot, CircumplexPlotParams
-from soundscapy.plotting.plotting_utils import (
-    DEFAULT_XLIM,
-    DEFAULT_YLIM,
-    Backend,
-    ExtraParams,
-    PlotType,
-)
-from soundscapy.plotting.stylers import DEFAULT_FIGSIZE, StyleOptions
-
 
 def scatter_plot(
     data: pd.DataFrame,
