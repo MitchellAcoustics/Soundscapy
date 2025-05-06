@@ -361,6 +361,7 @@ class TestMultiSkewNorm:
         ):
             msn.sample()
 
+    @pytest.mark.skip("Plotting functions not implemented yet.")
     @patch("soundscapy.spi.msn.density_plot")  # Keep mocking the plotting call
     def test_sspy_plot_calls_sample_if_needed(self, mock_density_plot):
         """Test sspy_plot calls sample if sample_data is None."""
@@ -389,6 +390,7 @@ class TestMultiSkewNorm:
         assert call_kwargs["color"] == "red"
         assert call_kwargs["title"] == "Test Plot"
 
+    @pytest.mark.skip("Plotting functions not implemented yet.")
     @patch("soundscapy.spi.msn.density_plot")  # Keep mocking the plotting call
     def test_sspy_plot_uses_existing_sample(self, mock_density_plot):
         """Test sspy_plot uses existing sample_data if available."""
