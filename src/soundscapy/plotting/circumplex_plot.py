@@ -43,6 +43,7 @@ from soundscapy.plotting.plotting_types import (
     StyleParamsTypes,
     SubplotsParamsTypes,
 )
+from soundscapy.spi.msn import CentredParams, DirectParams, MultiSkewNorm
 
 DEFAULT_TITLE = "Soundscape Density Plot"
 DEFAULT_XCOL = "ISOPleasant"
@@ -806,6 +807,103 @@ class CircumplexPlot:
                     ax=axis,
                     **outline_params,
                 )
+
+        return self
+
+    def add_spi_simple_density(
+        self,
+        spi_data: pd.DataFrame | np.ndarray | None = None,
+        spi_params: DirectParams | CentredParams | None = None,
+        n: int = 1000,
+        on_axis: int | tuple[int, int] | None = None,
+        label: str = "SPI",
+        **kwargs: Unpack[DensityParamTypes],  # type: ignore[reportGeneralTypeIssues]
+    ) -> "CircumplexPlot":
+        """
+        Add a SPI plot to the existing axes.
+
+        Parameters
+        ----------
+            spi_data (pd.DataFrame): The data to plot.
+
+        Returns
+        -------
+            tuple: A tuple containing the figure and axes objects.
+
+        Examples
+        --------
+        >>> import soundscapy as sspy
+        >>> from soundscapy.plotting import CircumplexPlot
+        >>> from soundscapy.spi import MultiSkewNorm, DirectParams
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy as np
+
+        >>> df = sspy.isd.load()
+        >>> df = sspy.surveys.add_iso_coords(df)
+        >>> sub_df = sspy.isd.select_location_ids(df, ['CamdenTown'])
+        >>> spi = DirectParams(
+        >>>     xi=np.array([0.5, 0.7]),
+        >>>     omega=np.array([[0.1, 0.05], [0.05, 0.1]]),
+        >>>     alpha=np.array([0, -5])
+        >>>     )
+
+        >>> spi_p = (
+        >>>     CircumplexPlot(sub_df)
+        >>>     .create_subplots()
+        >>>     .add_scatter()
+        >>>     .add_simple_density()
+        >>>     .add_spi_simple_density(spi_params=spi)
+        >>>     .apply_styling()
+        >>> )
+        >>> plt.show() # doctest: +SKIP
+
+        """
+        self._check_for_axes()
+
+        if spi_data is not None and spi_params is not None:
+            msg = "Please provide either spi_data or spi_params, not both."
+            raise ValueError(msg)
+        if spi_data is None and spi_params is None:
+            msg = (
+                "No data provided for SPI plot. "
+                "Please provide either spi_data or spi_params."
+            )
+            raise ValueError(msg)
+
+        if spi_params is not None:
+            spi_msn = MultiSkewNorm.from_params(spi_params)
+            sample_data = spi_msn.sample(n=n, return_sample=True)
+            self._spi_data = pd.DataFrame(sample_data, columns=[self.x, self.y])
+
+        elif spi_data is not None:
+            xcol = kwargs.get("x", self.x)
+            ycol = kwargs.get("y", self.y)
+            if not (isinstance(xcol, str) and isinstance(ycol, str)):
+                msg = "Sorry, at the moment in this method, x and y must be strings."
+                raise ValueError(msg)
+
+            # Check if the data is a DataFrame
+            if isinstance(spi_data, pd.DataFrame) and (
+                xcol not in spi_data.columns or ycol not in spi_data.columns
+            ):
+                spi_data = spi_data.rename(columns={xcol: self.x, self.y: self.y})
+
+            if isinstance(spi_data, np.ndarray):
+                if len(spi_data.shape) != 2 or spi_data.shape[1] != 2:
+                    msg = "Invalid shape for SPI data. Expected a 2D array with 2 columns."
+                    raise ValueError(msg)
+                # Convert the numpy array to a DataFrame
+                spi_data = pd.DataFrame(spi_data, columns=[self.x, self.y])
+
+            self._valid_density(spi_data)
+            self._spi_data = spi_data
+
+        spi_density_params = copy.deepcopy(DEFAULT_DENSITY_PARAMS)
+        spi_density_params.update(color="r")
+        spi_density_params.update(**kwargs)
+        spi_density_params.update(data=self._spi_data, x=self.x, y=self.y, label=label)
+
+        self.add_simple_density(on_axis=on_axis, **spi_density_params)
 
         return self
 

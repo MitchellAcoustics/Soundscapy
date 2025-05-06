@@ -58,6 +58,7 @@ class _SeabornParamTypes(TypedDict, total=False):
     alpha: float
     # matplotlib kwargs
     color: ColorType | None
+    label: str | None
 
 
 class ScatterParamTypes(_SeabornParamTypes, total=False):
