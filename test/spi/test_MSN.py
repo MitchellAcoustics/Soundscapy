@@ -485,7 +485,7 @@ class TestMultiSkewNorm:
         # No need to fit or define dp as we are mocking ks2ds
         test_data = np.random.rand(50, 2)
 
-        spi_value = msn.spi(test_data)
+        spi_value = msn.spi_score(test_data)
 
         # Check ks2ds was called with the test data
         mock_ks2d2s.assert_called_once_with(test_data)
@@ -504,7 +504,7 @@ class TestMultiSkewNorm:
         msn = MultiSkewNorm()
         test_data_df = pd.DataFrame(np.random.rand(60, 2), columns=["a", "b"])
 
-        spi_value = msn.spi(test_data_df)
+        spi_value = msn.spi_score(test_data_df)
 
         # Check ks2d2s was called (the mock captures the call)
         mock_ks2d2s.assert_called_once()

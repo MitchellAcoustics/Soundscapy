@@ -59,6 +59,7 @@ class _SeabornParamTypes(TypedDict, total=False):
     # matplotlib kwargs
     color: ColorType | None
     label: str | None
+    zorder: float
 
 
 class ScatterParamTypes(_SeabornParamTypes, total=False):
@@ -73,7 +74,6 @@ class ScatterParamTypes(_SeabornParamTypes, total=False):
     # ax: Axes | np.ndarray | None  # noqa: ERA001
     marker: str
     linewidth: float
-    zorder: float
     # matplotlib kwargs
 
 
@@ -143,7 +143,9 @@ class StyleParamsTypes(TypedDict):
     prim_lines_zorder: int
     data_zorder: int
     show_labels: bool
+    legend: bool
     legend_location: MplLegendLocType
     linewidth: float
     primary_lines: bool
     diagonal_lines: bool
+    title_fontsize: int
