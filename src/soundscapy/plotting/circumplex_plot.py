@@ -33,6 +33,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib import ticker
+from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 from matplotlib.contour import QuadContourSet
 from matplotlib.figure import Figure, SubFigure
@@ -40,7 +41,7 @@ from matplotlib.lines import Line2D
 
 from soundscapy.plotting.plotting_types import (
     DensityParamTypes,
-    JointPlotParamTypes,
+    JointPlotParamTypes,  # noqa: F401
     ScatterParamTypes,
     SeabornPaletteType,
     StyleParamsTypes,
@@ -804,11 +805,7 @@ class CircumplexPlot:
             axis = self.get_single_axes(on_axis)
             if self._subplot_datas is not None:
                 # Get the corresponding subplot idx to match up to the data
-                ax_idx = (
-                    on_axis
-                    if isinstance(on_axis, int)
-                    else ((on_axis[0] + 1) * (on_axis[1] + 1) - 1)
-                )
+                ax_idx = self._get_ax_idx_from_on_axis(on_axis)
                 scatter_params["data"] = self._subplot_datas[ax_idx]
             sns.scatterplot(ax=axis, **scatter_params)
         return self
@@ -915,11 +912,7 @@ class CircumplexPlot:
             # If subplot data is provided, use it for the density plot
             if self._subplot_datas is not None:
                 # Get the corresponding subplot idx to match up to the data
-                ax_idx = (
-                    on_axis
-                    if isinstance(on_axis, int)
-                    else ((on_axis[0] + 1) * (on_axis[1] + 1) - 1)
-                )
+                ax_idx = self._get_ax_idx_from_on_axis(on_axis)
                 density_params["data"] = self._subplot_datas[ax_idx]
                 self._record_density_label(ax_idx, **density_params)
             self._sns_density(
@@ -981,11 +974,7 @@ class CircumplexPlot:
             # If subplot data is provided, use it for the density plot
             if self._subplot_datas is not None:
                 # Get the corresponding subplot idx to match up to the data
-                ax_idx = (
-                    on_axis
-                    if isinstance(on_axis, int)
-                    else ((on_axis[0] + 1) * (on_axis[1] + 1) - 1)
-                )
+                ax_idx = self._get_ax_idx_from_on_axis(on_axis)
                 simple_density_params["data"] = self._subplot_datas[ax_idx]
 
                 # Record the label for the subplot
@@ -998,6 +987,183 @@ class CircumplexPlot:
             self._record_density_label(0, **simple_density_params)
 
         return self
+
+    def _prepare_spi_data(
+        self,
+        spi_data: pd.DataFrame | np.ndarray | None,
+        spi_params: DirectParams | CentredParams | None,
+        n: int,
+        kwargs: dict,
+    ) -> pd.DataFrame:
+        """
+        Validate and prepare SPI data from either direct data or parameters.
+
+        Parameters
+        ----------
+        spi_data : pd.DataFrame | np.ndarray | None
+            Data to use for SPI plotting
+        spi_params : DirectParams | CentredParams | None
+            Parameters to generate SPI data
+        n : int
+            Number of samples to generate if using spi_params
+        kwargs : dict
+            Additional parameters
+
+        Returns
+        -------
+        pd.DataFrame
+            Prepared data for SPI plotting
+
+        """
+        # Input validation
+        if spi_data is not None and spi_params is not None:
+            msg = "Please provide either spi_data or spi_params, not both."
+            raise ValueError(msg)
+
+        # Generate data from parameters if provided
+        if spi_params is not None:
+            spi_msn = MultiSkewNorm.from_params(spi_params)
+            sample_data = spi_msn.sample(n=n, return_sample=True)
+            return pd.DataFrame(sample_data, columns=[self.x, self.y])
+
+        if spi_data is not None:
+            # Process provided data
+            return self._process_spi_data(spi_data, kwargs)
+        msg = (
+            "No data provided for SPI plot. "
+            "Please provide either spi_data or spi_params."
+        )
+        raise ValueError(msg)
+
+    def _process_spi_data(
+        self, spi_data: pd.DataFrame | np.ndarray, kwargs: dict
+    ) -> pd.DataFrame:
+        """
+        Process SPI data into standard format.
+
+        Parameters
+        ----------
+        spi_data : pd.DataFrame | np.ndarray
+            Data to process
+        kwargs : dict
+            Additional parameters with x and y column names
+
+        Returns
+        -------
+        pd.DataFrame
+            Processed data in standard format
+
+        """
+        xcol = kwargs.get("x", self.x)
+        ycol = kwargs.get("y", self.y)
+
+        if not (isinstance(xcol, str) and isinstance(ycol, str)):
+            msg = "Sorry, at the moment in this method, x and y must be strings."
+            raise TypeError(msg)
+
+        # DataFrame handling
+        if isinstance(spi_data, pd.DataFrame):
+            if xcol not in spi_data.columns or ycol not in spi_data.columns:
+                spi_data = spi_data.rename(columns={xcol: self.x, ycol: self.y})
+            self._valid_density(spi_data)
+            return spi_data
+
+        # Numpy array handling
+        if isinstance(spi_data, np.ndarray):
+            if len(spi_data.shape) != 2 or spi_data.shape[1] != 2:  # noqa: PLR2004
+                msg = "Invalid shape for SPI data. Expected a 2D array with 2 columns."
+                raise ValueError(msg)
+            spi_data = pd.DataFrame(spi_data, columns=[self.x, self.y])
+            self._valid_density(spi_data)
+            return spi_data
+
+        msg = "Invalid SPI data type. Expected DataFrame or numpy array."
+        raise TypeError(msg)
+
+    def _prepare_spi_simple_density_params(
+        self,
+        label: str,
+        **spi_simple_dens_args: Unpack[DensityParamTypes],  # type: ignore[reportGeneralTypeIssues]
+    ) -> DensityParamTypes:
+        """
+        Prepare parameters for SPI density plotting.
+
+        Parameters
+        ----------
+        label : str
+            Label for the plot
+        kwargs : dict
+            Additional parameters
+
+        Returns
+        -------
+        dict
+            Parameters for density plotting
+
+        """
+        spi_density_params = copy.deepcopy(self._simple_density_params)
+        spi_density_params.update(color="r")
+        spi_density_params.update(**spi_simple_dens_args)
+        spi_density_params.update(
+            data=self._spi_data, x=self.x, y=self.y, label=label, hue=None, palette=None
+        )
+        return spi_density_params
+
+    def _show_score_on_axis(
+        self,
+        axis: Axes,
+        ax_idx: int,
+        show_score: Literal["on axis", "under title"],
+        axis_text_kw: dict[str, Any] | None = None,
+    ) -> None:
+        """Add the SPI score to the specified axis."""
+        # If subplot data is provided, use it for the spi_score
+        if self._subplot_datas is not None:
+            test_data = self._subplot_datas[ax_idx][[self.x, self.y]]
+        else:
+            test_data = self._data[[self.x, self.y]]
+        spi_val = spi_score(target=self._spi_data, test=test_data)
+
+        if show_score == "under title":
+            self._add_spi_score_under_title(axis, ax_idx, spi_val)
+        if show_score == "on axis":
+            # Add the SPI score to the plot
+            self._add_spi_score_as_text(
+                axis=axis,
+                spi_val=spi_val,
+                text_kw=axis_text_kw,
+            )
+
+    @staticmethod
+    def _add_spi_score_as_text(
+        axis: Axes,
+        spi_val: float,
+        text_kw: dict[str, Any] | None = None,
+    ) -> None:
+        """Add the SPI score to the specified axis."""
+        text_kwargs = DEFAULT_SPI_TEXT_KWARGS.copy()
+        text_kwargs["s"] = f"SPI: {spi_val}"
+        if text_kw is not None:
+            text_kwargs.update(text_kw)
+        # Add the SPI score to the plot
+        axis.text(**text_kwargs)
+
+    def _add_spi_score_under_title(self, axis: Axes, ax_idx: int, spi_val: int) -> None:
+        # Add the SPI score to the plot title
+        if self._subplot_titles is not None:
+            self._subplot_titles[ax_idx] = (
+                f"{self._subplot_titles[ax_idx]}\nSPI: {spi_val}"
+            )
+        else:
+            axis.set_title(f"{axis.get_title()}\nSPI: {spi_val}")
+
+    def _get_ax_idx_from_on_axis(self, on_axis: int | tuple[int, int]) -> int:
+        """Convert on_axis parameter to a flat index."""
+        return (
+            on_axis
+            if isinstance(on_axis, int)
+            else ((on_axis[0] + 1) * (on_axis[1] + 1) - 1)
+        )
 
     def add_spi_simple_density(
         self,
@@ -1016,11 +1182,18 @@ class CircumplexPlot:
 
         Parameters
         ----------
-            spi_data (pd.DataFrame): The data to plot.
+            spi_data : The data to plot.
+            spi_params : Parameters to generate SPI data.
+            n : Number of samples to generate if using parameters.
+            on_axis : Axis to plot on (None for all axes).
+            label : Label for the SPI plot.
+            show_score : How to display the SPI score.
+            axis_text_kw : Text parameters for on-axis display.
+            **kwargs: Additional parameters for density plotting.
 
         Returns
         -------
-            tuple: A tuple containing the figure and axes objects.
+            CircumplexPlot: The current plot instance for chaining.
 
         Examples
         --------
@@ -1053,169 +1226,43 @@ class CircumplexPlot:
         >>> spi_p.show() # doctest: +SKIP
 
         """
-        if spi_data is not None and spi_params is not None:
-            msg = "Please provide either spi_data or spi_params, not both."
-            raise ValueError(msg)
-        if spi_data is None and spi_params is None:
-            msg = (
-                "No data provided for SPI plot. "
-                "Please provide either spi_data or spi_params."
-            )
-            raise ValueError(msg)
-
-        if spi_params is not None:
-            spi_msn = MultiSkewNorm.from_params(spi_params)
-            sample_data = spi_msn.sample(n=n, return_sample=True)
-            self._spi_data = pd.DataFrame(sample_data, columns=[self.x, self.y])
-
-        elif spi_data is not None:
-            xcol = kwargs.get("x", self.x)
-            ycol = kwargs.get("y", self.y)
-            if not (isinstance(xcol, str) and isinstance(ycol, str)):
-                msg = "Sorry, at the moment in this method, x and y must be strings."
-                raise ValueError(msg)
-
-            # Check if the data is a DataFrame
-            if isinstance(spi_data, pd.DataFrame) and (
-                xcol not in spi_data.columns or ycol not in spi_data.columns
-            ):
-                spi_data = spi_data.rename(columns={xcol: self.x, self.y: self.y})
-
-            if isinstance(spi_data, np.ndarray):
-                if len(spi_data.shape) != 2 or spi_data.shape[1] != 2:  # noqa: PLR2004
-                    msg = (
-                        "Invalid shape for SPI data. "
-                        "Expected a 2D array with 2 columns."
-                    )
-                    raise ValueError(msg)
-                # Convert the numpy array to a DataFrame
-                spi_data = pd.DataFrame(spi_data, columns=[self.x, self.y])
-
-            self._valid_density(spi_data)
-            self._spi_data = spi_data
-
+        # Prepare the SPI data
+        self._spi_data = self._prepare_spi_data(spi_data, spi_params, n, kwargs)  # type: ignore[reportArgumentType]
         self._check_for_axes()
 
-        # Start with the default density parameters
-        spi_density_params = copy.deepcopy(self._simple_density_params)
-        spi_density_params.update(color="r")
-        spi_density_params.update(**kwargs)
-        spi_density_params.update(
-            data=self._spi_data, x=self.x, y=self.y, label=label, hue=None, palette=None
-        )
+        # Prepare density parameters
+        spi_density_params = self._prepare_spi_simple_density_params(label, **kwargs)  # type: ignore[reportCallIssue]
 
         if on_axis is None:
             for i, axis in enumerate(self.yield_axes_objects()):
+                # Create the plot
                 self._sns_density(axis=axis, include_outline=True, **spi_density_params)
                 # Record the label for the subplot
                 self._record_density_label(i, **spi_density_params)
 
                 if show_score:
-                    # If subplot data is provided, use it for the spi_score
-                    if self._subplot_datas is not None:
-                        test_data = self._subplot_datas[i][[self.x, self.y]]
-                    else:
-                        test_data = self._data[[self.x, self.y]]
-                    spi_val = spi_score(target=self._spi_data, test=test_data)
-
-                    if show_score == "under title":
-                        # Add the SPI score to the plot title
-                        if self._subplot_titles is not None:
-                            self._subplot_titles[i] = (
-                                f"{self._subplot_titles[i]}\nSPI: {spi_val}"
-                            )
-                        else:
-                            axis.set_title(f"{axis.get_title()}\nSPI: {spi_val}")
-                    if show_score == "on axis":
-                        # Add the SPI score to the plot
-                        self._add_spi_score_to_axis(
-                            axis=axis,
-                            spi_val=spi_val,
-                            text_kw=axis_text_kw,
-                        )
+                    self._show_score_on_axis(
+                        axis, ax_idx=i, show_score=show_score, axis_text_kw=axis_text_kw
+                    )
 
         # If no axis is specified, plot on all axes
         # in the figure (if multiple subplots exist)
         else:
             axis = self.get_single_axes(on_axis)
+            # Create the plot
             self._sns_density(axis=axis, **spi_density_params)
             # Record the label for the main plot
             self._record_density_label(0, **spi_density_params)
 
             if show_score:
-                # If subplot data is provided, use it for the spi_score
-                if self._subplot_datas is not None:
-                    # Get the corresponding subplot idx to match up to the data
-                    ax_idx = (
-                        on_axis
-                        if isinstance(on_axis, int)
-                        else ((on_axis[0] + 1) * (on_axis[1] + 1) - 1)
-                    )
-                    test_data = self._subplot_datas[ax_idx][[self.x, self.y]]
-                else:
-                    test_data = self._data[[self.x, self.y]]
-                spi_val = spi_score(target=self._spi_data, test=test_data)
-
-                if show_score == "under title":
-                    # Add the SPI score to the plot title
-                    axis.set_title(f"{axis.get_title()}\nSPI: {spi_val}")
-                if show_score == "on axis":
-                    # Add the SPI score to the plot
-                    self._add_spi_score_to_axis(
-                        axis=axis,
-                        spi_val=spi_val,
-                        text_kw=axis_text_kw,
-                    )
+                self._show_score_on_axis(
+                    axis=axis,
+                    ax_idx=0,
+                    show_score=show_score,
+                    axis_text_kw=axis_text_kw,
+                )
 
         return self
-
-    @staticmethod
-    def _add_spi_score_to_axis(
-        axis: Axes,
-        spi_val: float,
-        text_kw: dict[str, Any] | None = None,
-    ) -> None:
-        """Add the SPI score to the specified axis."""
-        text_kwargs = DEFAULT_SPI_TEXT_KWARGS.copy()
-        text_kwargs["s"] = f"SPI: {spi_val}"
-        if text_kw is not None:
-            text_kwargs.update(text_kw)
-        # Add the SPI score to the plot
-        axis.text(**text_kwargs)
-
-    # def create_jointplot(
-    #     self, **kwargs: Unpack[JointPlotParamTypes]
-    # ) -> tuple[Figure | SubFigure | None, Axes]:
-    #     """
-    #     Create a joint plot using Seaborn.
-
-    #     Examples
-    #     --------
-    #     >>> import soundscapy as sspy
-    #     >>> from soundscapy.plotting import Backend, CircumplexPlot, StyleOptions, CircumplexPlotParams
-    #     >>> data = sspy.isd.load()
-    #     >>> data = sspy.surveys.add_iso_coords(data, overwrite=True)
-    #     >>> sample_data = sspy.isd.select_location_ids(data, ['CamdenTown'])
-    #     >>> plot = CircumplexPlot(data=sample_data, backend=Backend.SEABORN)
-    #     >>> g = plot.jointplot()
-    #     >>> g.show() # doctest: +SKIP
-
-    #     """
-
-    #     self._jointgrid = sns.JointGrid(xlim=params.xlim, ylim=params.ylim)
-    #     joint_params = params
-    #     joint_params.title = ""
-    #     SeabornBackend.create_density(self, data, joint_params, ax=g.ax_joint)
-
-    #     margin_params = params
-    #     margin_params.title = ""
-    #     sns.kdeplot(data, x=params.x, ax=g.ax_marg_x, fill=True, alpha=params.alpha)
-    #     sns.kdeplot(data, y=params.y, ax=g.ax_marg_y, fill=True, alpha=params.alpha)
-
-    #     return (
-    #         g.fig,
-    #         g.ax_joint,
-    #     )  # TODO: Should return the whole JointGrid object - repeat throughout plotting methods
 
     def apply_styling(
         self,
@@ -1364,14 +1411,29 @@ class CircumplexPlot:
 
     def _move_legend(self) -> "CircumplexPlot":
         """Move the legend to the specified location."""
-        for _, axis in enumerate(self.yield_axes_objects()):
+        for i, axis in enumerate(self.yield_axes_objects()):
             old_legend = axis.get_legend()
             if old_legend is None:
                 axis.legend()
                 old_legend = axis.get_legend()
-            handles = old_legend.legend_handles
+
+            # Get handles and filter out None values
+            handles = [
+                h for h in old_legend.legend_handles if isinstance(h, Artist | tuple)
+            ]
+            # Skip if no valid handles remain
+            if not handles:
+                logger.warning(
+                    "_move_legend: No valid handles found in legend for axis %s", i
+                )
+                continue
+
             labels = [t.get_text() for t in old_legend.get_texts()]
             title = old_legend.get_title().get_text()
+            # Ensure labels and handles match in length
+            if len(handles) != len(labels):
+                labels = labels[: len(handles)]
+
             axis.legend(
                 handles,
                 labels,
@@ -1471,9 +1533,19 @@ class CircumplexPlot:
         return self
 
     def iso_annotation(
-        self, location_idx: int, x_adj: float = 0, y_adj: float = 0, **kwargs
+        self,
+        location_idx: int,
+        x_adj: float = 0,
+        y_adj: float = 0,
+        **kwargs,  # noqa: ANN003
     ) -> "CircumplexPlot":
         """Add an annotation to the plot (only for Seaborn backend)."""
+        warnings.warn(
+            "This method is deprecated / not implemented. "
+            "Most likely it will not be added and will break things.",
+            UserWarning,
+            stacklevel=2,
+        )
         x = self._data[self.x].iloc[location_idx]
         y = self._data[self.y].iloc[location_idx]
         if isinstance(self.axes, np.ndarray):
