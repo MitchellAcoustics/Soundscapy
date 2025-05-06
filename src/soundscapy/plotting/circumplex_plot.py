@@ -19,6 +19,7 @@ Example:
 >>>     .add_simple_density(fill=False)
 >>>     .apply_styling()
 >>> )
+>>> cp.show() # doctest: +SKIP
 
 """
 
@@ -275,6 +276,22 @@ class CircumplexPlot:
         self._subplot_titles = subplot_titles
 
         return self
+
+    def show(self) -> None:
+        """
+        Show the figure.
+
+        This method is a wrapper around plt.show() to display the figure.
+
+        """
+        if self.figure is None:
+            msg = (
+                "No figure object provided. "
+                "Please create a figure using create_subplots() first."
+            )
+            raise ValueError(msg)
+        plt.tight_layout()
+        plt.show()
 
     def _setup_subplot_by(
         self,
@@ -855,7 +872,7 @@ class CircumplexPlot:
         >>>     .add_spi_simple_density(spi_params=spi)
         >>>     .apply_styling()
         >>> )
-        >>> plt.show() # doctest: +SKIP
+        >>> cp.show() # doctest: +SKIP
 
         """
         self._check_for_axes()
