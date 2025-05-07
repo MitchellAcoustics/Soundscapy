@@ -1,9 +1,9 @@
 """Plotting functions for visualising circumplex data."""
 
 # ruff: noqa: ANN003
-from collections.abc import Iterable
 import functools
 import warnings
+from collections.abc import Iterable
 from typing import Any, Literal
 
 import matplotlib.pyplot as plt
@@ -351,155 +351,166 @@ def density(
     return d
 
 
-# TODO: Consider changing to displot
 def jointplot(
-    data=None,
-    x="ISOPleasant",
-    y="ISOEventful",
-    incl_scatter=True,
-    density_type="full",
-    title="Soundscape Joint Plot",
-    diagonal_lines=False,
-    xlim=(-1, 1),
-    ylim=(-1, 1),
-    scatter_kws=dict(s=25, linewidth=0),
-    incl_outline=False,
-    legend_loc="lower left",
-    alpha=0.75,
-    joint_kws={},
-    marginal_kws={"fill": True, "common_norm": False},
-    hue=None,
-    color=None,
-    palette="colorblind",
-    fill=True,
-    bw_adjust=None,
-    thresh=0.1,
-    levels=10,
-    legend=False,
-    marginal_kind="kde",
-):
+    data: pd.DataFrame,
+    *,
+    x: str = DEFAULT_XCOL,
+    y: str = DEFAULT_YCOL,
+    title: str | None = "Soundscape Joint Plot",
+    hue: str | np.ndarray | pd.Series | None = None,
+    incl_scatter: bool = True,
+    density_type: str = "full",
+    palette: SeabornPaletteType | None = "colorblind",
+    color: ColorType | None = DEFAULT_COLOR,
+    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
+    scatter_kws: dict[str, Any] | None = None,
+    incl_outline: bool = False,
+    alpha: float = DEFAULT_SEABORN_PARAMS["alpha"],
+    fill: bool = True,
+    levels: int | Iterable[float] = 10,
+    thresh: float = 0.05,
+    bw_adjust: float = DEFAULT_BW_ADJUST,
+    legend: Literal["auto", "brief", "full", False] = "auto",
+    prim_labels: bool | None = None,  # Alias for primary_labels, deprecated
+    joint_kws: dict[str, Any] | None = None,
+    marginal_kws: dict[str, Any] | None = None,
+    marginal_kind: str = "kde",
+    **kwargs,
+) -> sns.JointGrid:
     """
     Create a jointplot with distribution or scatter in the center and distributions on the margins.
 
-    This method works by calling sns.jointplot() and creating a circumplex grid in the joint position, then
-    overlaying a density or circumplex_scatter plot. The options for both the joint and marginal plots can be
-    passed through the sns.jointplot() separately to customise them separately. The marginal distribution plots
-    can be either a density or histogram.
+    This method works by calling sns.JointGrid and creating a circumplex grid in the joint position, then
+    overlaying a density or scatter plot. The options for both the joint and marginal plots can be
+    passed through as separate parameters to customize them independently. The marginal distribution plots
+    can be either a density (kde) or histogram.
 
     Parameters
     ----------
-    color
-    data : pd.DataFrame, np.ndarray, mapping, or sequence
+    data : pd.DataFrame
         Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a
         wide-form dataset that will be internally reshaped.
-    x : vector or key in `data`, optional
-        column name for x variable, by default "ISOPleasant"
-    y : vector or key in `data`, optional
-        column name for y variable, by default "ISOEventful"
+    x : str, optional
+        Column name for x variable, by default "ISOPleasant"
+    y : str, optional
+        Column name for y variable, by default "ISOEventful"
+    title : str, optional
+        Title to add to the jointplot, by default "Soundscape Joint Plot"
+    hue : str | np.ndarray | pd.Series | None, optional
+        Grouping variable that will produce points with different colors.
+        Can be either categorical or numeric, although color mapping will behave
+        differently in latter case, by default None
     incl_scatter : bool, optional
-        Whether to include a scatter plot of the data, by default True
+        Whether to include a scatter plot of the data in the joint plot, by default True
     density_type : str, optional
-        Type of density plot to draw, by default "full"
-    diagonal_lines : bool, optional
-        whether to include diagonal dimension axis labels in the joint plot, by default False
-    palette : str, optional
-        [description], by default "colorblind"
-    incl_scatter : bool, optional
-        plot coordinate scatter underneath density plot, by default False
-    fill : bool, optional
-        whether to fill the density plot, by default True
-    bw_adjust : [type], optional
-        [description], by default default_bw_adjust
+        Type of density plot to draw: "full" or "simple", by default "full"
+    palette : SeabornPaletteType | None, optional
+        Method for choosing the colors to use when mapping the hue semantic. String values are passed to
+        seaborn.color_palette(). List or dict values imply categorical mapping, while a colormap object
+        implies numeric mapping, by default "colorblind"
+    color : ColorType | None, optional
+        Color to use for the plot elements when not using hue mapping, by default DEFAULT_COLOR
+    figsize : tuple[int, int], optional
+        Size of the figure to create, by default DEFAULT_FIGSIZE
+    scatter_kws : dict[str, Any] | None, optional
+        Additional keyword arguments to pass to scatter plot, by default None
+    incl_outline : bool, optional
+        Whether to include an outline for the density contours, by default False
     alpha : float, optional
-        [description], by default 0.95
-    legend : bool, optional
-        whether to include the hue labels legend, by default False
-    legend_loc : str, optional
-        relative location of the legend, by default "lower left"
-    marginal_kind : str, optional
-        density or histogram plot in the margins, by default "kde"
-    hue : vector or key in data, optional
-        Grouping variable that will produce points with different colors. Can be either categorical or numeric,
-        although color mapping will behave differently in latter case, by default None
-    joint_kws : dict, optional
-        Arguments to pass to density or scatter joint plot, by default {}
-    marginal_kws : dict, optional
-        Arguments to pass to marginal distribution plots, by default {"fill": True}
-    hue : vector or key in `data`, optional
-        Semantic variable that is mapped to determine the color of plot elements.
-    palette : string, list, dict, or `matplotlib.colors.Colormap`, optional
-        Method for choosing the colors to use when mapping the `hue` semantic. String values are passed to
-        `color_palette()`. List or dict values imply categorical mapping, while a colormap object implies numeric
-        mapping.
-        by default, `"colorblind"`
+        Opacity level for the density fill, by default DEFAULT_SEABORN_PARAMS["alpha"]
     fill : bool, optional
-        If True, fill in the area under univariate density curves or between bivariate contours. If None, the default
-        depends on `multiple`. by default True
-    bw_adjust : number, optional
-        Factor that multiplicatively scales the value chosen using `bw_method`. Increasing will make the curve smoother.
-        See Notes. by default default_bw_adjust (1.2)
-    thresh : number in [0, 1], optional
-        Lowest iso-proportional level at which to draw a contour line. Ignored when `levels` is a vector. Only relevant
-        with bivariate plots. by default 0.1
-    levels : int or vector, optional
-        Number of contour levels or values to draw contours at. A vector argument must have increasing values in [0, 1].
-        Levels correspond to iso-proportionas of the density: e.g. 20% of the probability mass will lie below the
-        contour drawn for 0.2. Only relevant with bivariate data.
-        by default 10
-    legend : bool, optional
-        If False, suppress the legend for semantic variables, by default False
-    legend_loc : str, optional
-        Relative location of the legend, by default "lower left"
+        Whether to fill the density contours, by default True
+    levels : int | Iterable[float], optional
+        Number of contour levels or specific levels to draw, by default 10
+    thresh : float, optional
+        Lowest iso-proportion level at which to draw contours, by default 0.05
+    bw_adjust : float, optional
+        Factor to adjust bandwidth of the kernel density estimate, by default DEFAULT_BW_ADJUST
+    legend : Literal["auto", "brief", "full", False], optional
+        How to draw the legend for hue mapping, by default "auto"
+    prim_labels : bool | None, optional
+        Deprecated. Use xlabel and ylabel parameters instead
+    joint_kws : dict[str, Any] | None, optional
+        Additional keyword arguments to pass to the joint plot, by default None
+    marginal_kws : dict[str, Any] | None, optional
+        Additional keyword arguments to pass to the marginal plots, by default None
     marginal_kind : str, optional
-        density or histogram plot in the margins, by default "kde"
+        Type of plot to draw in the marginal axes: "kde" or "hist", by default "kde"
+    **kwargs : dict, optional
+        Additional styling parameters to pass to the circumplex grid
 
     Returns
     -------
-    plt.Axes
+    sns.JointGrid
+        The seaborn JointGrid object containing the plot
 
     """
-    if bw_adjust is None:
-        bw_adjust = default_bw_adjust
+    # Initialize default dicts if None
+    scatter_kws = {} if scatter_kws is None else scatter_kws
+    joint_kws = {} if joint_kws is None else joint_kws
+    marginal_kws = (
+        {"fill": True, "common_norm": False} if marginal_kws is None else marginal_kws
+    )
+
+    # Get style parameters
+    xlabel, ylabel, xlim, ylim, legend_loc, diagonal_lines, prim_ax_fontdict = (
+        _pop_style_kwargs(kwargs)
+    )
 
     if density_type == "simple":
-        thresh = simple_density["thresh"]
-        levels = simple_density["levels"]
-        alpha = simple_density["alpha"]
-        incl_outline = simple_density["incl_outline"]
+        thresh = DEFAULT_SIMPLE_DENSITY_PARAMS["thresh"]
+        levels = DEFAULT_SIMPLE_DENSITY_PARAMS["levels"]
+        alpha = DEFAULT_SIMPLE_DENSITY_PARAMS["alpha"]
+        incl_outline = True
 
+    # Handle hue and color
     if hue is None:
         # Removes the palette if no hue is specified
         palette = None
         color = sns.color_palette("colorblind", 1)[0] if color is None else color
 
-    g = sns.JointGrid()
+    # Create the joint grid
+    g = sns.JointGrid(
+        data=data,
+        x=x,
+        y=y,
+        hue=hue,
+        palette=palette,
+        height=figsize[0],  # Use figsize for height
+        ratio=3,  # Default ratio of joint to marginal plots
+        space=0.2,  # Space between joint and marginal plots
+        xlim=xlim,
+        ylim=ylim,
+    )
+
+    # Add the density plot to the joint plot area
     density(
         data,
         x=x,
         y=y,
         incl_scatter=incl_scatter,
         density_type=density_type,
-        title=None,
-        diagonal_lines=diagonal_lines,
-        xlim=xlim,
-        ylim=ylim,
+        title=None,  # We'll set the title separately
+        ax=g.ax_joint,
+        hue=hue,
+        palette=palette,
+        color=color,
         scatter_kws=scatter_kws,
         incl_outline=incl_outline,
         legend_loc=legend_loc,
         alpha=alpha,
         legend=legend,
-        ax=g.ax_joint,
-        hue=hue,
-        palette=palette,
         fill=fill,
         levels=levels,
         thresh=thresh,
         bw_adjust=bw_adjust,
+        diagonal_lines=diagonal_lines,
+        xlim=xlim,
+        ylim=ylim,
         **joint_kws,
     )
-    # if legend and hue:
-    #     _move_legend(g.ax_joint, legend_loc)
 
+    # Add the marginal plots
     if marginal_kind == "hist":
         sns.histplot(
             data=data,
@@ -542,7 +553,15 @@ def jointplot(
             legend=False,
             **marginal_kws,
         )
-    g.ax_marg_x.set_title(title, pad=6.0)
+
+    # Set title
+    if title is not None:
+        g.ax_marg_x.set_title(title, pad=6.0)
+
+    # Process primary labels (x and y)
+    xlabel, ylabel = _deal_w_default_labels(
+        x=x, y=y, xlabel=xlabel, ylabel=ylabel, prim_labels=prim_labels
+    )
 
     return g
 
@@ -950,21 +969,51 @@ def scatter_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
     return scatter(*args, **kwargs)
 
 
-# @functools.wraps(density)
-# def density_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
-#     """
-#     Wrapper for the density function to maintain backwards compatibility.
+@functools.wraps(density)
+def density_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
+    """
+    Wrapper for the density function to maintain backwards compatibility.
 
-#     Parameters
-#     ----------
-#     *args : tuple
-#         Positional arguments to pass to the density function.
-#     **kwargs : dict
-#         Keyword arguments to pass to the density function.
+    Parameters
+    ----------
+    *args : tuple
+        Positional arguments to pass to the density function.
+    **kwargs : dict
+        Keyword arguments to pass to the density function.
 
-#     Returns
-#     -------
-#     Axes
-#         The Axes object containing the plot.
+    Returns
+    -------
+    Axes
+        The Axes object containing the plot.
 
-#     """  # noqa: D401
+    """  # noqa: D401
+    warnings.warn(
+        "The `density_plot` function is deprecated and will be removed in a "
+        "future version. Use `density` instead."
+        "\nAs of v0.8, `density_plot` is an alias for `density` and does not maintain "
+        "full backwards compatibility with v0.7. It may work, or some arguments may "
+        "fail.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    args = [a for a in args if not isinstance(a, Backend)]
+    kwargs = {
+        k: v
+        for k, v in kwargs.items()
+        if k
+        not in (
+            "backend",
+            "show_labels",
+            "apply_styling",
+            "simple_density",
+            "simple_density_thresh",
+            "simple_density_levels",
+            "simple_density_alpha",
+        )
+    }
+
+    # Convert simple_density parameters to the new API if they exist
+    if "density_type" not in kwargs and kwargs.pop("simple_density", False):
+        kwargs["density_type"] = "simple"
+
+    return density(*args, **kwargs)

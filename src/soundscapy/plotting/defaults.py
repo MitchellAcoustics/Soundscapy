@@ -60,7 +60,7 @@ DEFAULT_DENSITY_PARAMS: DensityParamTypes = DensityParamTypes(
 )
 
 DEFAULT_SIMPLE_DENSITY_PARAMS: DensityParamTypes = copy.deepcopy(DEFAULT_DENSITY_PARAMS)
-DEFAULT_SIMPLE_DENSITY_PARAMS.update({"thresh": 0.05, "levels": 2, "alpha": 0.5})
+DEFAULT_SIMPLE_DENSITY_PARAMS.update({"thresh": 0.5, "levels": 2, "alpha": 0.5})
 
 DEFAULT_STYLE_PARAMS: StyleParamsTypes = StyleParamsTypes(
     xlim=(-1, 1),
