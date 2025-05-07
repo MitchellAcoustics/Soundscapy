@@ -16,9 +16,9 @@ from soundscapy.plotting.backends import (
 )
 from soundscapy.plotting.iso_plot import ISOPlot
 from soundscapy.plotting.plot_functions import (
+    density,
     # density_plot,
     scatter,
-    # density,
     # jointplot,
     scatter_plot,
 )
@@ -30,6 +30,7 @@ __all__ = [
     "ISOPlot",
     "PlotType",
     "StyleOptions",
+    "density",
     # "density_plot",
     "likert",
     "scatter",

@@ -22,7 +22,7 @@ Example:
 >>> cp.show() # doctest: +SKIP
 
 """
-# ruff: noqa: SLF001
+# ruff: noqa: SLF001, G004
 
 from __future__ import annotations
 
@@ -49,13 +49,14 @@ from matplotlib.lines import Line2D
 from soundscapy.plotting.defaults import (
     DEFAULT_DENSITY_PARAMS,
     DEFAULT_SCATTER_PARAMS,
+    DEFAULT_SIMPLE_DENSITY_PARAMS,
     DEFAULT_SPI_TEXT_KWARGS,
     DEFAULT_STYLE_PARAMS,
     DEFAULT_SUBPLOTS_PARAMS,
     DEFAULT_XCOL,
-    DEFAULT_XLIM,
+    # DEFAULT_XLIM,
     DEFAULT_YCOL,
-    DEFAULT_YLIM,
+    # DEFAULT_YLIM,
     RECOMMENDED_MIN_SAMPLES,
 )
 from soundscapy.sspylogging import get_logger
@@ -188,18 +189,7 @@ class ISOPlot:
             palette=self.palette,
         )
 
-        self._simple_density_params = copy.deepcopy(DEFAULT_DENSITY_PARAMS)
-        # Override default params with user-provided params
-        self._simple_density_params.update(
-            data=data,
-            x=x,
-            y=y,
-            hue=hue,
-            palette=self.palette,
-            thresh=0.5,
-            levels=2,
-            alpha=0.5,
-        )
+        self._simple_density_params = copy.deepcopy(DEFAULT_SIMPLE_DENSITY_PARAMS)
 
         self._style_params: StyleParamsTypes = copy.deepcopy(DEFAULT_STYLE_PARAMS)
 
@@ -1532,16 +1522,18 @@ class ISOPlot:
         """Handle the default labels for the x and y axes."""
         xlabel = self._style_params.get("xlabel")
         ylabel = self._style_params.get("ylabel")
+
         xlabel = self.x if xlabel is None else xlabel
         ylabel = self.y if ylabel is None else ylabel
+        fontdict = self._style_params.get("prim_ax_fontdict")
 
         for _, axis in enumerate(self.yield_axes_objects()):
             axis.set_xlabel(
-                xlabel, fontdict=self._style_params.get("label_fontdict")
+                xlabel, fontdict=fontdict
             ) if xlabel is not False else axis.xaxis.label.set_visible(False)
 
             axis.set_ylabel(
-                ylabel, fontdict=self._style_params.get("label_fontdict")
+                ylabel, fontdict=fontdict
             ) if ylabel is not False else axis.yaxis.label.set_visible(False)
 
         return self
@@ -1549,8 +1541,8 @@ class ISOPlot:
     def _diagonal_lines_and_labels(self) -> ISOPlot:
         """Add diagonal lines and labels to the plot."""
         for _, axis in enumerate(self.yield_axes_objects()):
-            xlim = self._style_params.get("xlim", DEFAULT_XLIM)
-            ylim = self._style_params.get("ylim", DEFAULT_YLIM)
+            xlim = self._style_params.get("xlim", DEFAULT_STYLE_PARAMS["xlim"])
+            ylim = self._style_params.get("ylim", DEFAULT_STYLE_PARAMS["ylim"])
             axis.plot(
                 xlim,
                 ylim,
@@ -1560,6 +1552,7 @@ class ISOPlot:
                 lw=self._style_params.get("linewidth"),
                 zorder=self._style_params.get("diag_lines_zorder"),
             )
+            logger.debug("Plotting diagonal line for axis.")
             axis.plot(
                 xlim,
                 ylim[::-1],

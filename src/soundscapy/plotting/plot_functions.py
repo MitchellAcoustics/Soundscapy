@@ -1,10 +1,10 @@
 """Plotting functions for visualising circumplex data."""
 
 # ruff: noqa: ANN003
+from collections.abc import Iterable
 import functools
 import warnings
-from typing import Literal
-from unittest.mock import DEFAULT
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,34 +18,37 @@ from matplotlib.typing import ColorType
 from soundscapy.plotting.backends import Backend
 from soundscapy.plotting.defaults import (
     COLORBLIND_CMAP,
-    DATA_ZORDER,
-    DEFAULT_ALPHA,
+    # DATA_ZORDER,
+    # DEFAULT_ALPHA,
     DEFAULT_BW_ADJUST,
     DEFAULT_COLOR,
+    DEFAULT_DENSITY_PARAMS,
     DEFAULT_FIGSIZE,
-    DEFAULT_LEGEND_LOC,
-    DEFAULT_PALETTE,
+    # DEFAULT_LEGEND_LOC,
+    # DEFAULT_PALETTE,
     DEFAULT_POINT_SIZE,
+    DEFAULT_SCATTER_PARAMS,
+    DEFAULT_SEABORN_PARAMS,
+    DEFAULT_SIMPLE_DENSITY_PARAMS,
+    DEFAULT_STYLE_PARAMS,
     DEFAULT_TITLE,
-    DEFAULT_TITLE_FONTSIZE,
+    # DEFAULT_TITLE_FONTSIZE,
     DEFAULT_XCOL,
-    DEFAULT_XLABEL,
-    DEFAULT_XLIM,
+    # DEFAULT_XLABEL,
+    # DEFAULT_XLIM,
     DEFAULT_XY_LABEL_FONTDICT,
     DEFAULT_YCOL,
-    DEFAULT_YLABEL,
-    DEFAULT_YLIM,
-    DIAG_LABELS_ZORDER,
-    DIAG_LINES_ZORDER,
-    PRIM_LINES_ZORDER,
+    # DEFAULT_YLABEL,
+    # DEFAULT_YLIM,
+    # DIAG_LABELS_ZORDER,
+    # DIAG_LINES_ZORDER,
+    # PRIM_LINES_ZORDER,
     RECOMMENDED_MIN_SAMPLES,
 )
 from soundscapy.plotting.plotting_types import MplLegendLocType, SeabornPaletteType
 from soundscapy.sspylogging import get_logger
 
 logger = get_logger()
-
-simple_density = {"thresh": 0.5, "levels": 2, "incl_outline": True, "alpha": 0.5}
 
 
 def scatter(
@@ -54,20 +57,14 @@ def scatter(
     x: str = DEFAULT_XCOL,
     y: str = DEFAULT_YCOL,
     title: str | None = "Soundscape Scatter Plot",
-    xlim: tuple[float, float] = DEFAULT_XLIM,
-    ylim: tuple[float, float] = DEFAULT_YLIM,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
-    legend_loc: MplLegendLocType = DEFAULT_LEGEND_LOC,
-    hue: str | np.ndarray | pd.Series | None = None,
-    s: float = DEFAULT_POINT_SIZE,
-    palette: SeabornPaletteType | None = DEFAULT_PALETTE,
-    color: ColorType | None = DEFAULT_COLOR,
-    legend: Literal["auto", "brief", "full", False] = "auto",
     ax: Axes | None = None,
-    xlabel: str | None | Literal[False] = DEFAULT_XLABEL,
-    ylabel: str | None | Literal[False] = DEFAULT_YLABEL,
+    hue: str | np.ndarray | pd.Series | None = None,
+    palette: SeabornPaletteType | None = "colorblind",
+    color: ColorType | None = DEFAULT_COLOR,
+    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
+    s: float = DEFAULT_POINT_SIZE,
+    legend: Literal["auto", "brief", "full", False] = "auto",
     prim_labels: bool | None = None,  # Alias for primary_labels, deprecated
-    diagonal_lines: bool = False,
     **kwargs,
 ) -> Axes:
     """
@@ -128,11 +125,10 @@ def scatter(
     # Removes the palette if no hue is specified
     palette = palette if hue is not None else None
 
-    # Pull out any fontdict options which might be loose in the kwargs
-    prim_ax_fontdict = kwargs.pop("prim_ax_fontdict", DEFAULT_XY_LABEL_FONTDICT.copy())
-    for key in DEFAULT_XY_LABEL_FONTDICT:
-        if key in kwargs:
-            prim_ax_fontdict[key] = kwargs.pop(key)
+    # Get style params / kwargs
+    xlabel, ylabel, xlim, ylim, legend_loc, diagonal_lines, prim_ax_fontdict = (
+        _pop_style_kwargs(kwargs)
+    )
 
     p = sns.scatterplot(
         data=data,
@@ -144,7 +140,7 @@ def scatter(
         color=color,
         legend=legend,
         ax=ax,
-        zorder=DATA_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["data_zorder"],
         **kwargs,
     )
 
@@ -174,30 +170,24 @@ def density(
     x: str = DEFAULT_XCOL,
     y: str = DEFAULT_YCOL,
     title: str | None = "Soundscape Density Plot",
-    xlim: tuple[float, float] = DEFAULT_XLIM,
-    ylim: tuple[float, float] = DEFAULT_YLIM,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
-    legend_loc: MplLegendLocType = DEFAULT_LEGEND_LOC,
-    hue: str | np.ndarray | pd.Series | None = None,
-    palette: SeabornPaletteType | None = DEFAULT_PALETTE,
-    color: ColorType | None = DEFAULT_COLOR,
-    legend: Literal["auto", "brief", "full", False] = "auto",
     ax: Axes | None = None,
-    xlabel: str | None | Literal[False] = DEFAULT_XLABEL,
-    ylabel: str | None | Literal[False] = DEFAULT_YLABEL,
-    prim_labels: bool | None = None,  # Alias for primary_labels, deprecated
-    diagonal_lines: bool = False,
+    hue: str | np.ndarray | pd.Series | None = None,
     incl_scatter: bool = True,
     density_type: str = "full",
+    palette: SeabornPaletteType | None = "colorblind",
+    color: ColorType | None = DEFAULT_COLOR,
+    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
+    legend: Literal["auto", "brief", "full", False] = "auto",
+    prim_labels: bool | None = None,  # Alias for primary_labels, deprecated
     scatter_kws: dict | None = None,
     incl_outline: bool = False,
-    alpha: float = DEFAULT_ALPHA,
+    alpha: float = DEFAULT_SEABORN_PARAMS["alpha"],
     fill: bool = True,
-    levels: int = 10,
+    levels: int | Iterable[float] = 10,
     thresh: float = 0.05,
-    bw_adjust: float | None = None,
+    bw_adjust: float = DEFAULT_BW_ADJUST,
     **kwargs,
-):
+) -> Axes:
     """
     Plot a density plot of ISOCoordinates.
 
@@ -274,17 +264,23 @@ def density(
 
     """
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        _, ax = plt.subplots(1, 1, figsize=figsize)
 
     scatter_kws = {"s": 25, "linewidth": 0} if scatter_kws is None else scatter_kws
+
     # Removes the palette if no hue is specified
     palette = palette if hue is not None else None
 
+    # Get style params / kwargs
+    xlabel, ylabel, xlim, ylim, legend_loc, diagonal_lines, prim_ax_fontdict = (
+        _pop_style_kwargs(kwargs)
+    )
+
     if density_type == "simple":
-        thresh = simple_density["thresh"]
-        levels = simple_density["levels"]
-        alpha = simple_density["alpha"]
-        incl_outline = simple_density["incl_outline"]
+        thresh = DEFAULT_SIMPLE_DENSITY_PARAMS["thresh"]
+        levels = DEFAULT_SIMPLE_DENSITY_PARAMS["levels"]
+        alpha = DEFAULT_SIMPLE_DENSITY_PARAMS["alpha"]
+        incl_outline = True
 
     if incl_scatter:
         d = sns.scatterplot(
@@ -294,7 +290,7 @@ def density(
             hue=hue,
             ax=ax,
             palette=palette,
-            zorder=data_zorder,
+            zorder=DEFAULT_SCATTER_PARAMS["zorder"],
             **scatter_kws,
         )
 
@@ -311,7 +307,7 @@ def density(
             thresh=thresh,
             bw_adjust=bw_adjust,
             fill=False,
-            zorder=data_zorder,
+            zorder=DEFAULT_DENSITY_PARAMS["zorder"],
             color=color,
             **kwargs,
         )
@@ -321,7 +317,7 @@ def density(
         x=x,
         y=y,
         alpha=alpha,
-        legend=legend,
+        legend=legend,  # type: ignore[reportArgumentType d]
         ax=ax,
         hue=hue,
         palette=palette,
@@ -329,18 +325,28 @@ def density(
         thresh=thresh,
         bw_adjust=bw_adjust,
         fill=fill,
-        zorder=data_zorder,
+        zorder=DEFAULT_DENSITY_PARAMS["zorder"],
         color=color,
         **kwargs,
     )
 
-    _circumplex_grid(
-        ax, prim_labels=False, diagonal_lines=diagonal_lines, xlim=xlim, ylim=ylim
+    xlabel, ylabel = _deal_w_default_labels(
+        x=x, y=y, xlabel=xlabel, ylabel=ylabel, prim_labels=prim_labels
     )
-    _set_circum_title(ax, prim_labels=False, title=title)
-    _deal_w_default_labels(ax, prim_labels=False)
-    if legend:
-        _move_legend(ax, legend_loc)
+    _set_style()
+    _circumplex_grid(
+        ax=ax,
+        xlim=xlim,
+        ylim=ylim,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        diagonal_lines=diagonal_lines,
+        prim_ax_fontdict=prim_ax_fontdict,
+    )
+    if title is not None:
+        _set_circum_title(ax=ax, title=title, xlabel=xlabel, ylabel=ylabel)
+    if legend is not None and hue is not None:
+        _move_legend(ax=ax, new_loc=legend_loc)
 
     return d
 
@@ -541,6 +547,31 @@ def jointplot(
     return g
 
 
+def _pop_style_kwargs(kwargs: dict[str, Any]) -> tuple:
+    # Get style params / kwargs
+    xlabel: str | None | Literal[False] = kwargs.pop(
+        "xlabel", DEFAULT_STYLE_PARAMS["xlabel"]
+    )
+    ylabel: str | None | Literal[False] = kwargs.pop(
+        "ylabel", DEFAULT_STYLE_PARAMS["ylabel"]
+    )
+    xlim: tuple[float, float] = kwargs.pop("xlim", DEFAULT_STYLE_PARAMS["xlim"])
+    ylim: tuple[float, float] = kwargs.pop("ylim", DEFAULT_STYLE_PARAMS["ylim"])
+    legend_loc: MplLegendLocType = kwargs.pop(
+        "legend_loc", DEFAULT_STYLE_PARAMS["legend_loc"]
+    )
+    diagonal_lines: bool = kwargs.pop(
+        "diagonal_lines", DEFAULT_STYLE_PARAMS["diagonal_lines"]
+    )
+
+    # Pull out any fontdict options which might be loose in the kwargs
+    prim_ax_fontdict = kwargs.pop("prim_ax_fontdict", DEFAULT_XY_LABEL_FONTDICT.copy())
+    for key in DEFAULT_XY_LABEL_FONTDICT:
+        if key in kwargs:
+            prim_ax_fontdict[key] = kwargs.pop(key)
+    return xlabel, ylabel, xlim, ylim, legend_loc, diagonal_lines, prim_ax_fontdict
+
+
 def _move_legend(
     ax: Axes,
     new_loc: MplLegendLocType,
@@ -624,7 +655,7 @@ def _circumplex_grid(
         linestyle="dashed",
         linewidth=0.5,
         alpha=0.4,
-        zorder=PRIM_LINES_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["prim_lines_zorder"],
     )
 
     _primary_lines_and_labels(
@@ -657,7 +688,7 @@ def _set_circum_title(
 
     """
     title_pad = 30.0 if (xlabel is not False or ylabel is not False) else 6.0
-    ax.set_title(title, pad=title_pad, fontsize=DEFAULT_TITLE_FONTSIZE)
+    ax.set_title(title, pad=title_pad, fontsize=DEFAULT_STYLE_PARAMS["title_fontsize"])
 
 
 def _deal_w_default_labels(
@@ -714,7 +745,7 @@ def _primary_lines_and_labels(
         linestyle="dashed",
         alpha=1,
         lw=line_weights,
-        zorder=PRIM_LINES_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["prim_lines_zorder"],
     )
     ax.axvline(  # vertical line
         x=0,
@@ -722,7 +753,7 @@ def _primary_lines_and_labels(
         linestyle="dashed",
         alpha=1,
         lw=line_weights,
-        zorder=PRIM_LINES_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["prim_lines_zorder"],
     )
 
     # Add labels for circumplex model
@@ -762,7 +793,7 @@ def _diagonal_lines_and_labels(ax: Axes, line_weights: float) -> None:
         color="grey",
         alpha=0.5,
         lw=line_weights,
-        zorder=DIAG_LINES_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["diag_lines_zorder"],
     )
     ax.plot(  # downward diagonal
         [x_lim[0], x_lim[1]],
@@ -771,7 +802,7 @@ def _diagonal_lines_and_labels(ax: Axes, line_weights: float) -> None:
         color="grey",
         alpha=0.5,
         lw=line_weights,
-        zorder=DIAG_LINES_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["diag_lines_zorder"],
     )
 
     ### Labels
@@ -782,7 +813,7 @@ def _diagonal_lines_and_labels(ax: Axes, line_weights: float) -> None:
         ha="center",
         va="center",
         fontdict=diag_ax_font,
-        zorder=DIAG_LABELS_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["diag_labels_zorder"],
     )
     ax.text(  # Chaotic label
         x=x_lim[0] / 2,
@@ -791,7 +822,7 @@ def _diagonal_lines_and_labels(ax: Axes, line_weights: float) -> None:
         ha="center",
         va="center",
         fontdict=diag_ax_font,
-        zorder=DIAG_LABELS_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["diag_labels_zorder"],
     )
     ax.text(  # monotonous label
         x=x_lim[0] / 2,
@@ -800,7 +831,7 @@ def _diagonal_lines_and_labels(ax: Axes, line_weights: float) -> None:
         ha="center",
         va="center",
         fontdict=diag_ax_font,
-        zorder=DIAG_LABELS_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["diag_labels_zorder"],
     )
     ax.text(  # calm label
         x=x_lim[1] / 2,
@@ -809,7 +840,7 @@ def _diagonal_lines_and_labels(ax: Axes, line_weights: float) -> None:
         ha="center",
         va="center",
         fontdict=diag_ax_font,
-        zorder=DIAG_LABELS_ZORDER,
+        zorder=DEFAULT_STYLE_PARAMS["diag_labels_zorder"],
     )
 
 

@@ -41,19 +41,7 @@ class SubplotsParamsTypes(TypedDict, total=False):
     gridspec_kw: dict[str, Any] | None
 
 
-TYPED_SUBPLOT_KWS: list[str] = [
-    "sharex",
-    "sharey",
-    "squeeze",
-    "width_ratios",
-    "height_ratios",
-    "subplot_kw",
-    "gridspec_kw",
-    "fig_kw",
-]
-
-
-class _SeabornParamTypes(TypedDict, total=False):
+class SeabornParamTypes(TypedDict, total=False):
     """Base typing for seaborn plotting parameters."""
 
     data: pd.DataFrame | None
@@ -73,25 +61,7 @@ class _SeabornParamTypes(TypedDict, total=False):
     zorder: float
 
 
-TYPED_SEABORN_KWS: list[str] = [
-    "data",
-    "x",
-    "y",
-    "hue",
-    "size",
-    "style",
-    "palette",
-    "hue_order",
-    "hue_norm",
-    "alpha",
-    "legend",
-    "color",
-    "label",
-    "zorder",
-]
-
-
-class ScatterParamTypes(_SeabornParamTypes, total=False):
+class ScatterParamTypes(SeabornParamTypes, total=False):
     """TypedDict for scatter plot parameters."""
 
     sizes: list | dict | tuple | None
@@ -106,19 +76,7 @@ class ScatterParamTypes(_SeabornParamTypes, total=False):
     # matplotlib kwargs
 
 
-TYPED_SCATTER_KWS: list[str] = [
-    "sizes",
-    "size_order",
-    "size_norm",
-    "markers",
-    "style_order",
-    "marker",
-    "linewidth",
-    "s",
-]
-
-
-class DensityParamTypes(_SeabornParamTypes, total=False):
+class DensityParamTypes(SeabornParamTypes, total=False):
     """TypedDict for density plot parameters."""
 
     weights: str | np.ndarray | pd.Series | None
@@ -142,28 +100,6 @@ class DensityParamTypes(_SeabornParamTypes, total=False):
     # matplotlib kwargs
 
 
-TYPED_DENSITY_KWS: list[str] = [
-    "weights",
-    "fill",
-    "multiple",
-    "common_norm",
-    "common_grid",
-    "cumulative",
-    "bw_method",
-    "bw_adjust",
-    "warn_singular",
-    "log_scale",
-    "levels",
-    "thresh",
-    "gridsize",
-    "cut",
-    "clip",
-    "cbar",
-    "cbar_ax",
-    "cbar_kws",
-]
-
-
 class JointPlotParamTypes(TypedDict, total=False):
     """TypedDict for jointplot parameters."""
 
@@ -181,24 +117,6 @@ class JointPlotParamTypes(TypedDict, total=False):
     palette: SeabornPaletteType | None
     hue_order: Iterable[str] | None
     hue_norm: tuple | Normalize | None
-
-
-TYPED_JOINTPLOT_KWS: list[str] = [
-    "data",
-    "x",
-    "y",
-    "height",
-    "ratio",
-    "space",
-    "dropna",
-    "xlim",
-    "ylim",
-    "marginal_ticks",
-    "hue",
-    "palette",
-    "hue_order",
-    "hue_norm",
-]
 
 
 class StyleParamsTypes(TypedDict, total=False):
