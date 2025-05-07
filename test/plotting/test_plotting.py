@@ -1,22 +1,24 @@
-"""
-Test suite for soundscapy plotting functions.
-"""
+"""Test suite for soundscapy plotting functions."""
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import pytest
+from matplotlib.axes import Axes
+from numpy.random import default_rng
 
 from soundscapy.plotting import (
     Backend,
-    CircumplexPlot,
-    PlotType,
-    create_circumplex_subplots,
-    density_plot,
+    # density_plot,
+    # CircumplexPlot,
+    # PlotType,
+    scatter,
     scatter_plot,
 )
 from soundscapy.surveys.processing import simulation
+
+rng = default_rng(42)
 
 
 @pytest.fixture
@@ -29,25 +31,26 @@ def sample_data():
 @pytest.mark.mpl_image_compare(
     baseline_dir="baseline", filename="test_scatter_plot.png"
 )
-def test_scatter_plot_image(sample_data):
+def test_scatter_plot_image(sample_data: pd.DataFrame):
     """Test scatter plot image comparison."""
-    ax = scatter_plot(sample_data, backend=Backend.SEABORN)
+    with pytest.deprecated_call():
+        ax = scatter_plot(sample_data, backend=Backend.SEABORN)
     return ax.figure
 
 
 @pytest.mark.mpl_image_compare(
     baseline_dir="baseline", filename="test_density_plot.png"
 )
-def test_density_plot_image(sample_data):
+def test_density_plot_image(sample_data: pd.DataFrame):
     """Test density plot image comparison."""
-    ax = density_plot(sample_data, backend=Backend.SEABORN)
-    return ax.figure
+    with pytest.deprecated_call():
+        ax = density_plot(sample_data, backend=Backend.SEABORN)
 
 
-def test_scatter_plot_seaborn(sample_data):
+def test_scatter_plot_seaborn(sample_data: pd.DataFrame):
     """Test scatter plot with Seaborn backend."""
-    ax = scatter_plot(sample_data, backend=Backend.SEABORN)
-    assert isinstance(ax, plt.Axes)
+    ax = scatter(sample_data)
+    assert isinstance(ax, Axes)
     assert ax.get_xlabel() == "ISOPleasant"
     assert ax.get_ylabel() == "ISOEventful"
     assert ax.get_xlim() == (-1, 1)
@@ -58,8 +61,8 @@ def test_scatter_plot_seaborn(sample_data):
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_scatter_plot_plotly(sample_data):
     """Test scatter plot with Plotly backend."""
-    fig = scatter_plot(sample_data, backend=Backend.PLOTLY)
-    assert isinstance(fig, go.Figure)
+    with pytest.raises(DeprecationWarning):
+        fig = scatter_plot(sample_data, backend=Backend.PLOTLY)
 
 
 def test_density_plot_seaborn(sample_data):

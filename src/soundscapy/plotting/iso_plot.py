@@ -28,7 +28,12 @@ from __future__ import annotations
 
 import copy
 import warnings
-from typing import TYPE_CHECKING, Any, Literal, Unpack
+from typing import TYPE_CHECKING, Any, Literal
+
+try:
+    from typing import Unpack
+except ImportError:
+    from typing_extensions import Unpack
 
 import numpy as np
 import pandas as pd
@@ -41,98 +46,45 @@ from matplotlib.contour import QuadContourSet
 from matplotlib.figure import Figure, SubFigure
 from matplotlib.lines import Line2D
 
-from soundscapy.plotting.plotting_types import (
-    DensityParamTypes,
-    JointPlotParamTypes,  # noqa: F401
-    ScatterParamTypes,
-    SeabornPaletteType,
-    StyleParamsTypes,
-    SubplotsParamsTypes,
+from soundscapy.plotting.defaults import (
+    DEFAULT_DENSITY_PARAMS,
+    DEFAULT_SCATTER_PARAMS,
+    DEFAULT_SPI_TEXT_KWARGS,
+    DEFAULT_STYLE_PARAMS,
+    DEFAULT_SUBPLOTS_PARAMS,
+    DEFAULT_XCOL,
+    DEFAULT_XLIM,
+    DEFAULT_YCOL,
+    DEFAULT_YLIM,
+    RECOMMENDED_MIN_SAMPLES,
 )
-from soundscapy.spi.msn import CentredParams, DirectParams, MultiSkewNorm, spi_score
 from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
+    from soundscapy.plotting.plotting_types import (
+        DensityParamTypes,
+        JointPlotParamTypes,  # noqa: F401
+        ScatterParamTypes,
+        SeabornPaletteType,
+        StyleParamsTypes,
+        SubplotsParamsTypes,
+    )
+
+    try:
+        from soundscapy.spi.msn import (
+            CentredParams,
+            DirectParams,
+        )
+    except ImportError as e:
+        msg = (
+            "SPI functionality requires additional dependencies. "
+            "Install with: pip install soundscapy[spi]"
+        )
+        raise ImportError(msg) from e
+
 logger = get_logger()
-
-DEFAULT_TITLE = "Soundscape Density Plot"
-DEFAULT_TITLE_FONTSIZE = 14
-DEFAULT_XCOL = "ISOPleasant"
-DEFAULT_YCOL = "ISOEventful"
-DEFAULT_XLIM = (-1, 1)
-DEFAULT_YLIM = (-1, 1)
-DEFAULT_FIGSIZE = (5, 5)
-
-DATA_ZORDER = 3
-DIAG_LINES_ZORDER = 1
-DIAG_LABELS_ZORDER = 4
-PRIM_LINES_ZORDER = 2
-DEFAULT_BW_ADJUST = 1.2
-
-DEFAULT_PALETTE: SeabornPaletteType = "colorblind"
-DEFAULT_COLOR: str = "#0173B2"  # First color from colorblind palette
-
-COLORBLIND_CMAP: list[str] = sns.color_palette("colorblind", as_cmap=True)
-
-RECOMMENDED_MIN_SAMPLES: int = 30
-
-DEFAULT_SCATTER_PARAMS: ScatterParamTypes = ScatterParamTypes(
-    x=DEFAULT_XCOL,
-    y=DEFAULT_YCOL,
-    alpha=0.8,
-    palette=DEFAULT_PALETTE,
-    color=DEFAULT_COLOR,
-    legend="auto",
-    zorder=DATA_ZORDER,
-)
-
-DEFAULT_DENSITY_PARAMS: DensityParamTypes = DensityParamTypes(
-    x=DEFAULT_XCOL,
-    y=DEFAULT_YCOL,
-    alpha=0.8,
-    fill=True,
-    common_norm=False,
-    common_grid=False,
-    palette=DEFAULT_PALETTE,
-    color=DEFAULT_COLOR,
-    bw_adjust=DEFAULT_BW_ADJUST,
-    zorder=DATA_ZORDER,
-)
-
-DEFAULT_STYLE_PARAMS: StyleParamsTypes = StyleParamsTypes(
-    xlim=DEFAULT_XLIM,
-    ylim=DEFAULT_YLIM,
-    diag_lines_zorder=DIAG_LINES_ZORDER,
-    diag_labels_zorder=DIAG_LABELS_ZORDER,
-    prim_lines_zorder=PRIM_LINES_ZORDER,
-    data_zorder=DATA_ZORDER,
-    title_fontsize=DEFAULT_TITLE_FONTSIZE,
-    show_labels=True,
-    legend_loc="best",
-    linewidth=1.5,
-    primary_lines=True,
-    diagonal_lines=False,
-)
-
-DEFAULT_SUBPLOTS_PARAMS: SubplotsParamsTypes = SubplotsParamsTypes(
-    sharex=True,
-    sharey=True,
-)
-
-DEFAULT_SPI_TEXT_KWARGS: dict[str, Any] = {
-    "x": 0,
-    "y": -0.85,
-    "fontsize": 10,
-    "bbox": {
-        "facecolor": "white",
-        "edgecolor": "black",
-        "boxstyle": "round,pad=0.3",
-    },
-    "ha": "center",
-    "va": "center",
-}
 
 
 class ISOPlot:
@@ -216,7 +168,7 @@ class ISOPlot:
 
         self._subplot_datas = None
         self._subplot_titles = None
-        self._subplot_labels = [None]
+        self._subplot_labels: list[list[str] | None] = [None]
 
         self._scatter_params: ScatterParamTypes = copy.deepcopy(DEFAULT_SCATTER_PARAMS)
         self._scatter_params.update(
@@ -454,7 +406,7 @@ class ISOPlot:
         if adjust_figsize:
             self.figsize = (ncols * self.figsize[0], nrows * self.figsize[1])
 
-        figure, axes = plt.subplots(
+        self.figure, self.axes = plt.subplots(
             nrows=nrows, ncols=ncols, figsize=self.figsize, **subplot_kwargs
         )
         self._nrows = nrows
@@ -467,14 +419,15 @@ class ISOPlot:
         if subplot_datas is not None or subplot_titles is not None:
             self._validate_subplots_datas(subplot_datas, subplot_titles)
 
-        new = self._clone()
+        # new = self._clone() # TODO(MitchellAcoustcs): Refactor to use this  # noqa: E501, ERA001, TD003
+
         # Assign subplot data and titles to the class attributes
         # (incl. if None were provided)
-        new._subplot_datas = subplot_datas
-        new._subplot_titles = subplot_titles
-        new._subplot_labels = [None] * new._naxes
+        self._subplot_datas = subplot_datas
+        self._subplot_titles = subplot_titles
+        self._subplot_labels = [None] * self._naxes
 
-        return new
+        return self
 
     def show(self) -> None:
         """
@@ -1096,6 +1049,8 @@ class ISOPlot:
             Prepared data for SPI plotting
 
         """
+        from soundscapy.spi.msn import MultiSkewNorm
+
         # Input validation
         if spi_data is not None and spi_params is not None:
             msg = "Please provide either spi_data or spi_params, not both."
@@ -1198,6 +1153,8 @@ class ISOPlot:
         axis_text_kw: dict[str, Any] | None = None,
     ) -> None:
         """Add the SPI score to the specified axis."""
+        from soundscapy.spi import spi_score
+
         # If subplot data is provided, use it for the spi_score
         if self._subplot_datas is not None:
             if ax_idx >= len(self._subplot_datas):
@@ -1209,7 +1166,7 @@ class ISOPlot:
                 msg = "Data is not available for SPI to score against the target. "
                 raise ValueError(msg)
             test_data = self._data[[self.x, self.y]]
-        spi_val = spi_score(target=self._spi_data, test=test_data)
+        spi_val = spi_score(target=self._spi_data, test=test_data)  # type: ignore[reportArgumentType]
 
         if show_score == "under title":
             self._add_spi_score_under_title(axis, ax_idx, spi_val)
@@ -1313,6 +1270,20 @@ class ISOPlot:
         >>> spi_p.show() # doctest: +SKIP
 
         """
+        try:
+            from soundscapy.spi.msn import (
+                CentredParams,  # noqa: F401
+                DirectParams,  # noqa: F401
+                MultiSkewNorm,  # noqa: F401
+                spi_score,  # noqa: F401
+            )
+        except ImportError as e:
+            msg = (
+                "SPI functionality requires additional dependencies. "
+                "Install with: pip install soundscapy[spi]"
+            )
+            raise ImportError(msg) from e
+
         # Prepare the SPI data
         self._spi_data = self._prepare_spi_data(spi_data, spi_params, n, kwargs)  # type: ignore[reportArgumentType]
         self._check_for_axes()
@@ -1320,6 +1291,9 @@ class ISOPlot:
         # Prepare density parameters
         spi_density_params = self._prepare_spi_simple_density_params(label, kwargs)  # type: ignore[reportCallIssue]
 
+        # TODO(MitchellAcoustics): Feature - collect SPI scores into a table  # noqa: E501, TD003
+        # Thinking this should not be returned from this method, but just attached
+        # to the ISOPlot object and retrieved with a get_spi_scores() method.
         if on_axis is None:
             for i, axis in enumerate(self.yield_axes_objects()):
                 if self._subplot_datas is not None:  # noqa: SIM102
@@ -1377,9 +1351,9 @@ class ISOPlot:
         self._circumplex_grid()
         self._set_title()
         self._set_axes_titles()
-        self._deal_w_default_labels()
+        self._primary_labels()
         if self._style_params.get("primary_lines"):
-            self._primary_lines_and_labels()
+            self._primary_lines()
         if self._style_params.get("diagonal_lines"):
             self._diagonal_lines_and_labels()
 
@@ -1455,14 +1429,6 @@ class ISOPlot:
                     logger.info("Axis index exceeds available subplot titles.")
                     break
                 axis.set_title(self._subplot_titles[i])
-        return self
-
-    def _deal_w_default_labels(self) -> ISOPlot:
-        """Handle the default labels for the axes."""
-        if not self._style_params.get("show_labels"):
-            for _, axis in enumerate(self.yield_axes_objects()):
-                axis.set_xlabel("")
-                axis.set_ylabel("")
         return self
 
     def _add_density_labels(self) -> ISOPlot:
@@ -1541,7 +1507,7 @@ class ISOPlot:
             )
         return self
 
-    def _primary_lines_and_labels(self) -> ISOPlot:
+    def _primary_lines(self) -> ISOPlot:
         """Add primary lines to the plot."""
         for _, axis in enumerate(self.yield_axes_objects()):
             axis.axhline(
@@ -1560,6 +1526,24 @@ class ISOPlot:
                 lw=self._style_params.get("linewidth"),
                 zorder=self._style_params.get("prim_lines_zorder"),
             )
+        return self
+
+    def _primary_labels(self) -> ISOPlot:
+        """Handle the default labels for the x and y axes."""
+        xlabel = self._style_params.get("xlabel")
+        ylabel = self._style_params.get("ylabel")
+        xlabel = self.x if xlabel is None else xlabel
+        ylabel = self.y if ylabel is None else ylabel
+
+        for _, axis in enumerate(self.yield_axes_objects()):
+            axis.set_xlabel(
+                xlabel, fontdict=self._style_params.get("label_fontdict")
+            ) if xlabel is not False else axis.xaxis.label.set_visible(False)
+
+            axis.set_ylabel(
+                ylabel, fontdict=self._style_params.get("label_fontdict")
+            ) if ylabel is not False else axis.yaxis.label.set_visible(False)
+
         return self
 
     def _diagonal_lines_and_labels(self) -> ISOPlot:

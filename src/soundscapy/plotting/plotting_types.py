@@ -8,7 +8,6 @@ import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap, Normalize
 from matplotlib.typing import ColorType
-from numpy.typing import ArrayLike
 
 SeabornPaletteType: TypeAlias = str | list | dict | Colormap
 
@@ -219,29 +218,34 @@ class StyleParamsTypes(TypedDict, total=False):
 
     xlim: tuple[float, float]
     ylim: tuple[float, float]
+    # if None: use col name (default), if False: no label
+    xlabel: str | None
+    ylabel: str | None
     diag_lines_zorder: int
     diag_labels_zorder: int
     prim_lines_zorder: int
     data_zorder: int
-    show_labels: bool
     legend_loc: MplLegendLocType
     linewidth: float
     primary_lines: bool
     diagonal_lines: bool
     title_fontsize: int
+    prim_ax_fontdict: dict[str, Any]
 
 
 TYPED_STYLE_KWS: list[str] = [
     "xlim",
     "ylim",
+    "xlabel",
+    "ylabel",
     "diag_lines_zorder",
     "diag_labels_zorder",
     "prim_lines_zorder",
     "data_zorder",
-    "show_labels",
     "legend_loc",
     "linewidth",
     "primary_lines",
     "diagonal_lines",
     "title_fontsize",
+    "prim_ax_fontdict",
 ]

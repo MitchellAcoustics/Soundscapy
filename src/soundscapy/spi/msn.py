@@ -12,6 +12,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
+from soundscapy.plotting.plot_functions import scatter
 from soundscapy.spi import _rsn_wrapper as rsn
 from soundscapy.spi.ks2d import ks2d2s
 from soundscapy.sspylogging import get_logger
@@ -119,7 +120,8 @@ class DirectParams:
 
         """
         warnings.warn(
-            "Converting from Centred Parameters to Direct Parameters is not guaranteed.",
+            "Converting from Centred Parameters to Direct Parameters "
+            "is not guaranteed.",
             UserWarning,
             stacklevel=2,
         )  # TODO(MitchellAcoustics): Add a more specific warning message  # noqa: TD003
@@ -389,10 +391,10 @@ class MultiSkewNorm:
         instance = cls()
 
         if params is None:
-            if (xi is None and omega is None and alpha is None) or (
-                mean is None and sigma is None and skew is None
+            if (xi is None or omega is None or alpha is None) and (
+                mean is None or sigma is None or skew is None
             ):
-                msg = "Either params or xi, omega, and alpha must be provided."
+                msg = "Either params object or xi, omega, and alpha must be provided."
                 raise ValueError(msg)
             if xi is not None and omega is not None and alpha is not None:
                 # If xi, omega, and alpha are provided, create DirectParams
@@ -516,28 +518,28 @@ class MultiSkewNorm:
             return sample
         return None
 
-    # def sspy_plot(
-    #     self, color: str = "blue", title: str | None = None, n: int = 1000
-    # ) -> None:
-    #     """
-    #     Plot the joint distribution of the generated sample using soundscapy.
+    def sspy_plot(
+        self, color: str = "blue", title: str | None = None, n: int = 1000
+    ) -> None:
+        """
+        Plot the joint distribution of the generated sample using soundscapy.
 
-    #     Parameters
-    #     ----------
-    #     color : str, optional
-    #         Color for the density plot, by default "blue".
-    #     title : str, optional
-    #         Title for the plot, by default None.
-    #     n : int, optional
-    #         Number of samples to generate if `sample_data` is None, by default 1000.
+        Parameters
+        ----------
+        color : str, optional
+            Color for the density plot, by default "blue".
+        title : str, optional
+            Title for the plot, by default None.
+        n : int, optional
+            Number of samples to generate if `sample_data` is None, by default 1000.
 
-    #     """
-    #     if self.sample_data is None:
-    #         self.sample(n=n)
+        """
+        if self.sample_data is None:
+            self.sample(n=n)
 
-    #     data = pd.DataFrame(self.sample_data, columns=["ISOPleasant", "ISOEventful"])
-    #     plot_title = title if title is not None else "Soundscapy Density Plot"
-    #     density_plot(data, color=color, title=plot_title)
+        data = pd.DataFrame(self.sample_data, columns=["ISOPleasant", "ISOEventful"])
+        plot_title = title if title is not None else "Soundscapy Density Plot"
+        scatter(data, color=color, title=plot_title)
 
     def ks2d2s(self, test: pd.DataFrame | np.ndarray) -> tuple[float, float]:
         """

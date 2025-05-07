@@ -21,7 +21,14 @@ except ImportError as e:
 
 # Now we can import our modules that depend on the optional packages
 from soundscapy.spi import msn
-from soundscapy.spi.msn import CentredParams, DirectParams, MultiSkewNorm, cp2dp, dp2cp
+from soundscapy.spi.msn import (
+    CentredParams,
+    DirectParams,
+    MultiSkewNorm,
+    cp2dp,
+    dp2cp,
+    spi_score,
+)
 
 __all__ = [
     "CentredParams",
@@ -30,4 +37,5 @@ __all__ = [
     "cp2dp",
     "dp2cp",
     "msn",
+    "spi_score",
 ]

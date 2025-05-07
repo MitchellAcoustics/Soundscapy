@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pytest import approx
 
 from soundscapy.surveys.processing import (
     add_iso_coords,
@@ -99,8 +98,8 @@ class TestISOCoordinates:
         assert isinstance(iso_eventful, pd.Series)
         assert len(iso_pleasant) == len(basic_test_df)
         assert len(iso_eventful) == len(basic_test_df)
-        assert iso_pleasant.iloc[0] == approx(0.53, abs=0.05)
-        assert iso_eventful.iloc[0] == approx(0.03, abs=0.05)
+        assert iso_pleasant.iloc[0] == pytest.approx(0.53, abs=0.05)
+        assert iso_eventful.iloc[0] == pytest.approx(0.03, abs=0.05)
 
     def test_add_iso_coords(self, basic_test_df):
         df = add_iso_coords(basic_test_df)
@@ -120,10 +119,10 @@ class TestISOCoordinates:
             basic_test_df, angles=LANGUAGE_ANGLES["cmn"]
         )
 
-        assert iso_pleasant_eng.iloc[0] == approx(0.66, abs=0.01)
-        assert iso_eventful_eng.iloc[0] == approx(0.14, abs=0.01)
-        assert iso_pleasant_cmn.iloc[0] == approx(0.41, abs=0.01)
-        assert iso_eventful_cmn.iloc[0] == approx(-0.09, abs=0.01)
+        assert iso_pleasant_eng.iloc[0] == pytest.approx(0.66, abs=0.01)
+        assert iso_eventful_eng.iloc[0] == pytest.approx(0.14, abs=0.01)
+        assert iso_pleasant_cmn.iloc[0] == pytest.approx(0.41, abs=0.01)
+        assert iso_eventful_cmn.iloc[0] == pytest.approx(-0.09, abs=0.01)
 
 
 class TestDataQuality:
