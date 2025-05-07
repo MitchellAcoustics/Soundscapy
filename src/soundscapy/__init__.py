@@ -18,9 +18,10 @@ from soundscapy.sspylogging import (
     get_logger,
     setup_logging,
 )
-from soundscapy.surveys import processing
+from soundscapy.surveys import add_iso_coords, processing, rename_paqs
 
 __all__ = [
+    "add_iso_coords",
     "databases",
     # "density_plot",
     "disable_logging",
@@ -29,6 +30,7 @@ __all__ = [
     "isd",
     "plotting",
     "processing",
+    "rename_paqs",
     "satp",
     # "scatter_plot",
     # Logging functions

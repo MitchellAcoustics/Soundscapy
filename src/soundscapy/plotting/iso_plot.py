@@ -4,12 +4,12 @@ Main module for creating circumplex plots using different backends.
 Example:
 -------
 >>> from soundscapy import isd, surveys
->>> from soundscapy.plotting.circumplex_plot import CircumplexPlot
+>>> from soundscapy.plotting.iso_plot import ISOPlot
 >>> df = isd.load()
 >>> df = surveys.add_iso_coords(df)
 >>> sub_df = isd.select_location_ids(df, ['CamdenTown', 'RegentsParkJapan'])
 >>> cp = (
->>>     CircumplexPlot(data=sub_df, hue="SessionID")
+>>>     ISOPlot(data=sub_df, hue="SessionID")
 >>>     .create_subplots(
 >>>         subplot_by="LocationID",
 >>>         auto_allocate_axes=True,
@@ -22,6 +22,8 @@ Example:
 >>> cp.show() # doctest: +SKIP
 
 """
+
+from __future__ import annotations
 
 import copy
 import warnings
@@ -105,8 +107,7 @@ DEFAULT_STYLE_PARAMS: StyleParamsTypes = StyleParamsTypes(
     data_zorder=DATA_ZORDER,
     title_fontsize=DEFAULT_TITLE_FONTSIZE,
     show_labels=True,
-    legend_location="best",
-    legend=False,
+    legend_loc="best",
     linewidth=1.5,
     primary_lines=True,
     diagonal_lines=False,
@@ -131,7 +132,7 @@ DEFAULT_SPI_TEXT_KWARGS: dict[str, Any] = {
 }
 
 
-class CircumplexPlot:
+class ISOPlot:
     """
     A class for creating circumplex plots using different backends.
 
@@ -145,7 +146,7 @@ class CircumplexPlot:
     >>> df = surveys.add_iso_coords(df)
     >>> ct = isd.select_location_ids(df, ["CamdenTown", "RegentsParkJapan"])
     >>> cp = (
-            CircumplexPlot(ct, hue="LocationID")
+            ISOPlot(ct, hue="LocationID")
             .create_subplots()
             .add_scatter()
             .add_density()
@@ -160,16 +161,16 @@ class CircumplexPlot:
     def __init__(
         self,
         data: pd.DataFrame | None = None,
-        x: str = "ISOPleasant",
-        y: str = "ISOEventful",
+        x: str | np.ndarray | pd.Series | None = "ISOPleasant",
+        y: str | np.ndarray | pd.Series | None = "ISOEventful",
         title: str | None = "Soundscape Density Plot",
         hue: str | None = None,
-        palette: str | None = "colorblind",
+        palette: SeabornPaletteType | None = "colorblind",
         figure: Figure | SubFigure | None = None,
         axes: Axes | np.ndarray | None = None,
     ) -> None:
         """
-        Initialize a CircumplexPlot instance.
+        Initialize a ISOPlot instance.
 
         Parameters
         ----------
@@ -248,7 +249,7 @@ class CircumplexPlot:
         data: pd.DataFrame | None,
         x: str | pd.Series | np.ndarray | None,
         y: str | pd.Series | np.ndarray | None,
-    ) -> tuple[pd.DataFrame, str, str]:
+    ) -> tuple[pd.DataFrame | None, str, str]:
         """
         Allocate data to the class attributes.
 
@@ -256,73 +257,80 @@ class CircumplexPlot:
         ----------
             data : pd.DataFrame | None
                 The data to be plotted.
-            x : str | pd.Series | np.ndarray | None
+            x : str | pd.Series | np.ndarray
                 The x-axis data.
-            y : str | pd.Series | np.ndarray | None
+            y : str | pd.Series | np.ndarray
                 The y-axis data.
 
         """
-        if data is None:
-            if x is not None and y is not None:
-                # If data is not provided, and x and y are provided as arrays or Series:
-                if isinstance(x, np.ndarray | pd.Series) and isinstance(
-                    y, np.ndarray | pd.Series
-                ):
-                    logger.info("Combine x and y data into DataFrame.")
-
-                    # Can get the name from the Series
-                    xcol = (
-                        x.get("name", DEFAULT_XCOL)
-                        if isinstance(x, pd.Series)
-                        else DEFAULT_XCOL
-                    )
-                    ycol = (
-                        y.get("name", DEFAULT_YCOL)
-                        if isinstance(y, pd.Series)
-                        else DEFAULT_YCOL
-                    )
-
-                    data = pd.DataFrame({xcol: x, ycol: y})
-                    x = xcol
-                    y = ycol
-
-                    return data, x, y
-
-                # If data is not provided, and x and y are provided as strings:
-                if isinstance(x, str) or isinstance(y, str):
-                    msg = "x and y cannot be strings when data is not provided."
-                    raise TypeError(msg)
-                raise TypeError
-
-            # If data is not provided, and x and y are not provided:
+        if not isinstance(data, pd.DataFrame) and data is not None:
             msg = (
-                "No data provided. "
-                "Please provide data to CircumplexPlot to make it available "
-                "to the whole Figure."
+                "data must be a pandas DataFrame or None. "
+                "Please provide data as a DataFrame."
             )
-            raise ValueError(msg)
+            raise TypeError(msg)
 
-        # If data is provided as DataFrame, and x and y are provided as strings:
-        if isinstance(data, pd.DataFrame) and isinstance(x, str) and isinstance(y, str):
-            # If data is provided, and x and y are provided as arrays or Series:
-            if not isinstance(x, str) and not isinstance(y, str):
+        # If data is provided as DataFrame
+        if isinstance(data, pd.DataFrame):
+            # and x and y are not provided as strings:
+            if not isinstance(x, str) or not isinstance(y, str):
                 msg = (
                     "x and y cannot be arrays or Series when data is provided."
-                    "Please provide data as a DataFrame, and x and y as column names."
+                    "Please provide data as a DataFrame, "
+                    "and x and y as column names (str)."
                 )
                 raise TypeError(msg)
-            if x not in data.columns or y not in data.columns:
-                msg = (
-                    f"Invalid x or y column names. "
-                    f"Available columns are: {data.columns.tolist()}"
-                )
-                raise ValueError(msg)
 
-            logger.info("Data and columns are valid.")
+            # and x and y are provided as strings:
+            if isinstance(x, str) and isinstance(y, str):
+                if x not in data.columns or y not in data.columns:
+                    msg = (
+                        f"Invalid x or y column names. "
+                        f"Available columns are: {data.columns.tolist()}"
+                    )
+                    raise ValueError(msg)
+
+                logger.info("Data and columns are valid.")
+                return data, x, y
+
+        # By this point, we know data is None
+        if isinstance(x, pd.Series | np.ndarray) and isinstance(
+            y, pd.Series | np.ndarray
+        ):
+            # If data is not provided, and x and y are provided as arrays or Series:
+            logger.info("Combine x and y data into DataFrame.")
+
+            # Can get the name from the Series
+            xcol = (
+                x.get("name", DEFAULT_XCOL)
+                if isinstance(x, pd.Series)
+                else DEFAULT_XCOL
+            )
+            ycol = (
+                y.get("name", DEFAULT_YCOL)
+                if isinstance(y, pd.Series)
+                else DEFAULT_YCOL
+            )
+
+            data = pd.DataFrame({xcol: x, ycol: y})
+            x = xcol
+            y = ycol
+
             return data, x, y
 
-        msg = "Invalid data provided. Please provide a DataFrame."
-        raise ValueError(msg)
+        # If data is None, and x and y are strings:
+        if isinstance(x, str) and isinstance(y, str):
+            logger.info(
+                "No data provided to ISOPlot. "
+                "Assuming will be passed later in the chain."
+            )
+            return data, x, y
+        msg = (
+            "Invalid data provided. "
+            "Please provide data as a DataFrame, "
+            "or x and y as arrays or Series."
+        )
+        raise TypeError(msg)
 
     @staticmethod
     def _check_data_hue(
@@ -341,12 +349,8 @@ class CircumplexPlot:
 
         """
         if data is None:
-            msg = (
-                "No data provided. "
-                "Please provide data to CircumplexPlot to make it available "
-                "to the whole Figure."
-            )
-            raise ValueError(msg)
+            return
+
         if isinstance(hue, str) and hue not in data.columns:
             msg = (
                 f"Invalid hue column '{hue}'. "
@@ -372,7 +376,7 @@ class CircumplexPlot:
         adjust_figsize: bool = True,
         auto_allocate_axes: bool = False,  # Considered experimental
         **kwargs: Unpack[SubplotsParamsTypes],
-    ) -> "CircumplexPlot":
+    ) -> ISOPlot:
         """
         Create subplots for the circumplex plot.
 
@@ -390,7 +394,6 @@ class CircumplexPlot:
         """
         self.figsize = figsize
         subplot_kwargs = copy.deepcopy(DEFAULT_SUBPLOTS_PARAMS)
-        fig_kw = kwargs.pop("fig_kw", {})
         subplot_kwargs.update(**kwargs)
 
         # Create a list of dataframes and titles for each subplot
@@ -408,8 +411,8 @@ class CircumplexPlot:
             self.figsize = (ncols * self.figsize[0], nrows * self.figsize[1])
 
         self.figure, self.axes = plt.subplots(
-            nrows=nrows, ncols=ncols, figsize=self.figsize, **subplot_kwargs, **fig_kw
-        )  # type: ignore[reportCallIssue]
+            nrows=nrows, ncols=ncols, figsize=self.figsize, **subplot_kwargs
+        )
         self._nrows = nrows
         self._ncols = ncols
         self._naxes = nrows * ncols
@@ -458,7 +461,7 @@ class CircumplexPlot:
         if self._data is None:
             msg = (
                 "No data provided for subplots. "
-                "Please provide data to CircumplexPlot to make it available "
+                "Please provide data to ISOPlot to make it available "
                 "to the whole Figure."
             )
             raise ValueError(msg)
@@ -527,15 +530,15 @@ class CircumplexPlot:
                 f"Got {len(subplot_datas)} data and {len(subplot_titles)} titles."
             )
             raise ValueError(msg)
-        if subplot_datas and len(subplot_datas) != naxes:
+        if subplot_datas and len(subplot_datas) > naxes:
             msg = (
-                "Number of subplot data must match number of axes. "
+                "Number of subplot data must not exceed number of axes. "
                 f"Got {len(subplot_datas)} data and {naxes} axes."
             )
             raise ValueError(msg)
-        if subplot_titles and len(subplot_titles) != naxes:
+        if subplot_titles and len(subplot_titles) > naxes:
             msg = (
-                "Number of subplot titles must match number of axes. "
+                "Number of subplot titles must not exceed number of axes. "
                 f"Got {len(subplot_titles)} titles and {naxes} axes."
             )
             raise ValueError(msg)
@@ -765,9 +768,9 @@ class CircumplexPlot:
 
     def add_scatter(
         self,
-        on_axis: int | tuple[int, int] | None = None,
+        on_axis: Axes | int | tuple[int, int] | None = None,
         **kwargs: Unpack[ScatterParamTypes],
-    ) -> "CircumplexPlot":
+    ) -> ISOPlot:
         """
         Add a scatter plot to the existing axes.
 
@@ -791,14 +794,21 @@ class CircumplexPlot:
         if scatter_params.get("data") is None and self._subplot_datas is None:
             msg = (
                 "No data provided for scatter plot. "
-                "You should either pass data to CircumplexPlot to make it available "
+                "You should either pass data to ISOPlot to make it available "
                 "to the whole Figure, or to this method to plot on a single axis."
             )
             raise ValueError(msg)
 
-        if on_axis is None:
+        if isinstance(on_axis, Axes):
+            self.axes = on_axis
+            sns.scatterplot(ax=on_axis, **scatter_params)
+
+        elif on_axis is None:
             for i, axis in enumerate(self.yield_axes_objects()):
                 if self._subplot_datas is not None:
+                    if i >= len(self._subplot_datas):
+                        logger.info("Axis index exceeds available subplot data.")
+                        break
                     scatter_params["data"] = self._subplot_datas[i]
                 sns.scatterplot(ax=axis, **scatter_params)
         else:
@@ -806,12 +816,16 @@ class CircumplexPlot:
             if self._subplot_datas is not None:
                 # Get the corresponding subplot idx to match up to the data
                 ax_idx = self._get_ax_idx_from_on_axis(on_axis)
-                scatter_params["data"] = self._subplot_datas[ax_idx]
+                if ax_idx < len(self._subplot_datas):
+                    scatter_params["data"] = self._subplot_datas[ax_idx]
+                else:
+                    logger.info("Axis index exceeds available subplot data.")
+                    return self
             sns.scatterplot(ax=axis, **scatter_params)
         return self
 
     def _record_density_label(
-        self, idx: int, **density_params: Unpack[DensityParamTypes]
+        self, idx: int, density_params: DensityParamTypes
     ) -> None:
         """See: https://github.com/mwaskom/seaborn/issues/3523 ."""
         label = density_params.get("label")
@@ -839,7 +853,7 @@ class CircumplexPlot:
         axis: Axes,
         *,
         include_outline: bool = False,
-        **density_params: Unpack[DensityParamTypes],  # type: ignore[reportGeneralTypeIssues]
+        density_params: DensityParamTypes,
     ) -> None:
         """Add a density plot to the selected axes."""
         # Check if the data is provided either in the class or in the method call  # noqa: E501
@@ -855,14 +869,14 @@ class CircumplexPlot:
         # Plot the density plot on the current axis
         sns.kdeplot(
             ax=axis,
-            **density_params,
+            **density_params,  # type: ignore[reportArgumentType]
         )
         if include_outline:
             outline_params = density_params.copy()
             outline_params.update({"fill": False, "alpha": 1, "legend": False})
             sns.kdeplot(
                 ax=axis,
-                **outline_params,
+                **outline_params,  # type: ignore[reportArgumentType]
             )
 
     def add_density(
@@ -871,7 +885,7 @@ class CircumplexPlot:
         *,
         include_outline: bool = False,
         **kwargs: Unpack[DensityParamTypes],
-    ) -> "CircumplexPlot":
+    ) -> ISOPlot:
         """
         Add a density plot to the existing axes.
 
@@ -900,11 +914,16 @@ class CircumplexPlot:
             for i, axis in enumerate(self.yield_axes_objects()):
                 # If subplot data is provided, use it for the density plot
                 if self._subplot_datas is not None:
+                    if i >= len(self._subplot_datas):
+                        logger.info("Axis index exceeds available subplot data.")
+                        break
                     density_params["data"] = self._subplot_datas[i]
                 self._sns_density(
-                    axis=axis, include_outline=include_outline, **density_params
+                    axis=axis,
+                    include_outline=include_outline,
+                    density_params=density_params,
                 )
-                self._record_density_label(i, **density_params)
+                self._record_density_label(i, density_params)
 
         # If an axis is specified, plot on that axis
         else:
@@ -913,12 +932,18 @@ class CircumplexPlot:
             if self._subplot_datas is not None:
                 # Get the corresponding subplot idx to match up to the data
                 ax_idx = self._get_ax_idx_from_on_axis(on_axis)
-                density_params["data"] = self._subplot_datas[ax_idx]
-                self._record_density_label(ax_idx, **density_params)
+                if ax_idx < len(self._subplot_datas):
+                    density_params["data"] = self._subplot_datas[ax_idx]
+                    self._record_density_label(ax_idx, density_params)
+                else:
+                    logger.info("Axis index exceeds available subplot data.")
+                    return self
             self._sns_density(
-                axis=axis, include_outline=include_outline, **density_params
+                axis=axis,
+                include_outline=include_outline,
+                density_params=density_params,
             )
-            self._record_density_label(0, **density_params)
+            self._record_density_label(0, density_params)
         return self
 
     def add_simple_density(
@@ -930,7 +955,7 @@ class CircumplexPlot:
         *,
         include_outline: bool = True,
         **kwargs: Unpack[DensityParamTypes],  # type: ignore[reportGeneralTypeIssues]
-    ) -> "CircumplexPlot":
+    ) -> ISOPlot:
         """
         Add a simple density plot to the existing axes.
 
@@ -961,12 +986,17 @@ class CircumplexPlot:
             for i, axis in enumerate(self.yield_axes_objects()):
                 # If subplot data is provided, use it for the density plot
                 if self._subplot_datas is not None:
+                    if i >= len(self._subplot_datas):
+                        logger.info("Axis index exceeds available subplot data.")
+                        break
                     simple_density_params["data"] = self._subplot_datas[i]
                 self._sns_density(
-                    axis=axis, include_outline=include_outline, **simple_density_params
+                    axis=axis,
+                    include_outline=include_outline,
+                    density_params=simple_density_params,
                 )
                 # Record the label for the subplot
-                self._record_density_label(i, **simple_density_params)
+                self._record_density_label(i, simple_density_params)
 
         # If an axis is specified, plot on that axis
         else:
@@ -975,16 +1005,22 @@ class CircumplexPlot:
             if self._subplot_datas is not None:
                 # Get the corresponding subplot idx to match up to the data
                 ax_idx = self._get_ax_idx_from_on_axis(on_axis)
-                simple_density_params["data"] = self._subplot_datas[ax_idx]
+                if ax_idx < len(self._subplot_datas):
+                    simple_density_params["data"] = self._subplot_datas[ax_idx]
 
-                # Record the label for the subplot
-                self._record_density_label(ax_idx, **simple_density_params)
+                    # Record the label for the subplot
+                    self._record_density_label(ax_idx, simple_density_params)
+                else:
+                    logger.info("Axis index exceeds available subplot data.")
+                    return self
             self._sns_density(
-                axis=axis, include_outline=include_outline, **simple_density_params
+                axis=axis,
+                include_outline=include_outline,
+                density_params=simple_density_params,
             )
             # Record the label for the main plot
             # (if no subplot data is provided)
-            self._record_density_label(0, **simple_density_params)
+            self._record_density_label(0, simple_density_params)
 
         return self
 
@@ -1083,7 +1119,7 @@ class CircumplexPlot:
     def _prepare_spi_simple_density_params(
         self,
         label: str,
-        **spi_simple_dens_args: Unpack[DensityParamTypes],  # type: ignore[reportGeneralTypeIssues]
+        spi_simple_dens_args: DensityParamTypes,
     ) -> DensityParamTypes:
         """
         Prepare parameters for SPI density plotting.
@@ -1119,8 +1155,14 @@ class CircumplexPlot:
         """Add the SPI score to the specified axis."""
         # If subplot data is provided, use it for the spi_score
         if self._subplot_datas is not None:
+            if ax_idx >= len(self._subplot_datas):
+                logger.info("Axis index exceeds available subplot data.")
+                return
             test_data = self._subplot_datas[ax_idx][[self.x, self.y]]
         else:
+            if self._data is None:
+                msg = "Data is not available for SPI to score against the target. "
+                raise ValueError(msg)
             test_data = self._data[[self.x, self.y]]
         spi_val = spi_score(target=self._spi_data, test=test_data)
 
@@ -1176,7 +1218,7 @@ class CircumplexPlot:
         show_score: Literal["on axis", "under title", False] = "under title",
         axis_text_kw: dict[str, Any] | None = None,
         **kwargs: Unpack[DensityParamTypes],  # type: ignore[reportGeneralTypeIssues]
-    ) -> "CircumplexPlot":
+    ) -> ISOPlot:
         """
         Add a SPI plot to the existing axes.
 
@@ -1193,12 +1235,12 @@ class CircumplexPlot:
 
         Returns
         -------
-            CircumplexPlot: The current plot instance for chaining.
+            ISOPlot: The current plot instance for chaining.
 
         Examples
         --------
         >>> import soundscapy as sspy
-        >>> from soundscapy.plotting import CircumplexPlot
+        >>> from soundscapy.plotting import ISOPlot
         >>> from soundscapy.spi import MultiSkewNorm, DirectParams
         >>> import matplotlib.pyplot as plt
         >>> import numpy as np
@@ -1212,7 +1254,7 @@ class CircumplexPlot:
                 alpha=np.array([0, -5]),
                 )
         >>> spi_p = (
-                CircumplexPlot(sub_df)
+                ISOPlot(sub_df)
                 .create_subplots(subplot_by="LocationID", auto_allocate_axes=True)
                 .add_scatter()
                 .add_simple_density(label="Test")
@@ -1220,7 +1262,7 @@ class CircumplexPlot:
                     spi_params=spi, label="Target", show_score="on axis"
                 )
                 .apply_styling(
-                    legend=True, diagonal_lines=True, legend_location="lower left"
+                    diagonal_lines=True, legend_loc="lower left"
                 )
             )
         >>> spi_p.show() # doctest: +SKIP
@@ -1231,14 +1273,21 @@ class CircumplexPlot:
         self._check_for_axes()
 
         # Prepare density parameters
-        spi_density_params = self._prepare_spi_simple_density_params(label, **kwargs)  # type: ignore[reportCallIssue]
+        spi_density_params = self._prepare_spi_simple_density_params(label, kwargs)  # type: ignore[reportCallIssue]
 
         if on_axis is None:
             for i, axis in enumerate(self.yield_axes_objects()):
+                if self._subplot_datas is not None:  # noqa: SIM102
+                    if i >= len(self._subplot_datas):
+                        logger.info("Axis index exceeds available subplot data.")
+                        break
+
                 # Create the plot
-                self._sns_density(axis=axis, include_outline=True, **spi_density_params)
+                self._sns_density(
+                    axis=axis, include_outline=True, density_params=spi_density_params
+                )
                 # Record the label for the subplot
-                self._record_density_label(i, **spi_density_params)
+                self._record_density_label(i, spi_density_params)
 
                 if show_score:
                     self._show_score_on_axis(
@@ -1250,9 +1299,9 @@ class CircumplexPlot:
         else:
             axis = self.get_single_axes(on_axis)
             # Create the plot
-            self._sns_density(axis=axis, **spi_density_params)
+            self._sns_density(axis=axis, density_params=spi_density_params)
             # Record the label for the main plot
-            self._record_density_label(0, **spi_density_params)
+            self._record_density_label(0, spi_density_params)
 
             if show_score:
                 self._show_score_on_axis(
@@ -1267,13 +1316,13 @@ class CircumplexPlot:
     def apply_styling(
         self,
         **kwargs: Unpack[StyleParamsTypes],
-    ) -> "CircumplexPlot":
+    ) -> ISOPlot:
         """
         Apply styling to the Seaborn plot.
 
         Returns
         -------
-            tuple: The styled figure and axes objects.
+            ISOPlot: The current plot instance for chaining.
 
         """
         self._style_params.update(**kwargs)
@@ -1284,9 +1333,9 @@ class CircumplexPlot:
         self._set_title()
         self._set_axes_titles()
         self._deal_w_default_labels()
-        if self._style_params["primary_lines"]:
+        if self._style_params.get("primary_lines"):
             self._primary_lines_and_labels()
-        if self._style_params["diagonal_lines"]:
+        if self._style_params.get("diagonal_lines"):
             self._diagonal_lines_and_labels()
 
         try:
@@ -1298,10 +1347,7 @@ class CircumplexPlot:
                 stacklevel=2,
             )
 
-        if (
-            self._style_params["legend"]
-            and self._style_params["legend_location"] is not False
-        ):
+        if self._style_params.get("legend_loc") is not False:
             # NOTE: Should really check for the presence of a legend.
             # If hue is added in the .add_* methods,
             # it doesn't show up in the class attributes.
@@ -1313,7 +1359,7 @@ class CircumplexPlot:
         """Set the overall style for the plot."""
         sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
 
-    def _circumplex_grid(self) -> "CircumplexPlot":
+    def _circumplex_grid(self) -> ISOPlot:
         """Add the circumplex grid to the plot."""
         for _, axis in enumerate(self.yield_axes_objects()):
             axis.set_xlim(self._style_params.get("xlim"))
@@ -1336,32 +1382,37 @@ class CircumplexPlot:
 
         return self
 
-    def _set_title(self) -> "CircumplexPlot":
+    def _set_title(self) -> ISOPlot:
         """Set the title of the plot."""
         if self.title and self._has_subplots:
             figure = self.get_figure()
-            figure.suptitle(self.title, fontsize=self._style_params["title_fontsize"])
+            figure.suptitle(
+                self.title, fontsize=self._style_params.get("title_fontsize")
+            )
         elif self.title and not self._has_subplots:
             axis = self.get_single_axes()
             if axis.get_title() == "":
                 axis.set_title(
-                    self.title, fontsize=self._style_params["title_fontsize"]
+                    self.title, fontsize=self._style_params.get("title_fontsize")
                 )
             else:
                 figure = self.get_figure()
                 figure.suptitle(
-                    self.title, fontsize=self._style_params["title_fontsize"]
+                    self.title, fontsize=self._style_params.get("title_fontsize")
                 )
         return self
 
-    def _set_axes_titles(self) -> "CircumplexPlot":
+    def _set_axes_titles(self) -> ISOPlot:
         """Set the titles of the subplots plot."""
         if self._has_subplots and self._subplot_titles is not None:
             for i, axis in enumerate(self.yield_axes_objects()):
+                if i >= len(self._subplot_titles):
+                    logger.info("Axis index exceeds available subplot titles.")
+                    break
                 axis.set_title(self._subplot_titles[i])
         return self
 
-    def _deal_w_default_labels(self) -> "CircumplexPlot":
+    def _deal_w_default_labels(self) -> ISOPlot:
         """Handle the default labels for the axes."""
         if not self._style_params.get("show_labels"):
             for _, axis in enumerate(self.yield_axes_objects()):
@@ -1369,7 +1420,7 @@ class CircumplexPlot:
                 axis.set_ylabel("")
         return self
 
-    def _add_density_labels(self) -> "CircumplexPlot":
+    def _add_density_labels(self) -> ISOPlot:
         """
         See https://github.com/mwaskom/seaborn/issues/3523 .
 
@@ -1377,7 +1428,10 @@ class CircumplexPlot:
         """
         for i, axis in enumerate(self.yield_axes_objects()):
             labels = self._subplot_labels[i]
-            if labels is not None:
+            if (
+                labels is not None
+                and len([lab for lab in labels if lab is not None]) > 0
+            ):
                 contours = [
                     child
                     for child in axis.get_children()
@@ -1409,13 +1463,13 @@ class CircumplexPlot:
                 )
         return self
 
-    def _move_legend(self) -> "CircumplexPlot":
+    def _move_legend(self) -> ISOPlot:
         """Move the legend to the specified location."""
         for i, axis in enumerate(self.yield_axes_objects()):
             old_legend = axis.get_legend()
             if old_legend is None:
-                axis.legend()
-                old_legend = axis.get_legend()
+                logger.debug("_move_legend: No legend found for axis %s", i)
+                continue
 
             # Get handles and filter out None values
             handles = [
@@ -1437,12 +1491,12 @@ class CircumplexPlot:
             axis.legend(
                 handles,
                 labels,
-                loc=self._style_params.get("legend_location"),
+                loc=self._style_params.get("legend_loc"),
                 title=title,
             )
         return self
 
-    def _primary_lines_and_labels(self) -> "CircumplexPlot":
+    def _primary_lines_and_labels(self) -> ISOPlot:
         """Add primary lines to the plot."""
         for _, axis in enumerate(self.yield_axes_objects()):
             axis.axhline(
@@ -1463,19 +1517,19 @@ class CircumplexPlot:
             )
         return self
 
-    def _diagonal_lines_and_labels(self) -> "CircumplexPlot":
+    def _diagonal_lines_and_labels(self) -> ISOPlot:
         """Add diagonal lines and labels to the plot."""
         for _, axis in enumerate(self.yield_axes_objects()):
-            xlim = self._style_params.get("xlim")
-            ylim = self._style_params.get("ylim")
+            xlim = self._style_params.get("xlim", DEFAULT_XLIM)
+            ylim = self._style_params.get("ylim", DEFAULT_YLIM)
             axis.plot(
                 xlim,
                 ylim,
                 linestyle="dashed",
                 color="grey",
                 alpha=0.5,
-                lw=self._style_params["linewidth"],
-                zorder=self._style_params["diag_lines_zorder"],
+                lw=self._style_params.get("linewidth"),
+                zorder=self._style_params.get("diag_lines_zorder"),
             )
             axis.plot(
                 xlim,
@@ -1483,8 +1537,8 @@ class CircumplexPlot:
                 linestyle="dashed",
                 color="grey",
                 alpha=0.5,
-                lw=self._style_params["linewidth"],
-                zorder=self._style_params["diag_lines_zorder"],
+                lw=self._style_params.get("linewidth"),
+                zorder=self._style_params.get("diag_lines_zorder"),
             )
 
             diag_ax_font = {
@@ -1501,7 +1555,7 @@ class CircumplexPlot:
                 ha="center",
                 va="center",
                 fontdict=diag_ax_font,
-                zorder=self._style_params["diag_labels_zorder"],
+                zorder=self._style_params.get("diag_labels_zorder"),
             )
             axis.text(
                 xlim[0] / 2,
@@ -1510,7 +1564,7 @@ class CircumplexPlot:
                 ha="center",
                 va="center",
                 fontdict=diag_ax_font,
-                zorder=self._style_params["diag_labels_zorder"],
+                zorder=self._style_params.get("diag_labels_zorder"),
             )
             axis.text(
                 xlim[0] / 2,
@@ -1519,7 +1573,7 @@ class CircumplexPlot:
                 ha="center",
                 va="center",
                 fontdict=diag_ax_font,
-                zorder=self._style_params["diag_labels_zorder"],
+                zorder=self._style_params.get("diag_labels_zorder"),
             )
             axis.text(
                 xlim[1] / 2,
@@ -1528,7 +1582,7 @@ class CircumplexPlot:
                 ha="center",
                 va="center",
                 fontdict=diag_ax_font,
-                zorder=self._style_params["diag_labels_zorder"],
+                zorder=self._style_params.get("diag_labels_zorder"),
             )
         return self
 
@@ -1538,7 +1592,7 @@ class CircumplexPlot:
         x_adj: float = 0,
         y_adj: float = 0,
         **kwargs,  # noqa: ANN003
-    ) -> "CircumplexPlot":
+    ) -> ISOPlot:
         """Add an annotation to the plot (only for Seaborn backend)."""
         warnings.warn(
             "This method is deprecated / not implemented. "
@@ -1546,12 +1600,12 @@ class CircumplexPlot:
             UserWarning,
             stacklevel=2,
         )
-        x = self._data[self.x].iloc[location_idx]
-        y = self._data[self.y].iloc[location_idx]
+        x = self._data[self.x].iloc[location_idx]  # type: ignore[reportOptionalSubscript]
+        y = self._data[self.y].iloc[location_idx]  # type: ignore[reportOptionalSubscript]
         if isinstance(self.axes, np.ndarray):
             for i, _ in enumerate(self.axes.flatten()):
                 self.axes[i].annotate(
-                    text=self._data.index[location_idx],
+                    text=self._data.index[location_idx],  # type: ignore[reportOptionalMemberAccess]
                     xy=(x, y),
                     xytext=(x + x_adj, y + y_adj),
                     ha="center",
@@ -1561,7 +1615,7 @@ class CircumplexPlot:
                 )
         elif isinstance(self.axes, Axes):
             self.axes.annotate(
-                text=self._data.index[location_idx],
+                text=self._data.index[location_idx],  # type: ignore[reportOptionalMemberAccess]
                 xy=(x, y),
                 xytext=(x + x_adj, y + y_adj),
                 ha="center",

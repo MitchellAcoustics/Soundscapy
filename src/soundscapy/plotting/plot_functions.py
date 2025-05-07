@@ -1,12 +1,67 @@
-# """Utility functions for creating various types of circumplex plots."""
+"""Utility functions for creating various types of circumplex plots."""
 
-# from typing import Any, List, Optional, Tuple
+# %%
 
-# import matplotlib.pyplot as plt
-# import numpy as np
-# import pandas as pd
-# import plotly.graph_objects as go
-# import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import seaborn as sns
+from matplotlib.axes import Axes
+
+from soundscapy.plotting.iso_plot import (
+    DEFAULT_SCATTER_PARAMS,
+    DEFAULT_STYLE_PARAMS,
+    ISOPlot,
+)
+from soundscapy.plotting.plotting_types import (
+    TYPED_DENSITY_KWS,
+    TYPED_JOINTPLOT_KWS,
+    TYPED_SCATTER_KWS,
+    TYPED_SEABORN_KWS,
+    TYPED_STYLE_KWS,
+    TYPED_SUBPLOT_KWS,
+)
+
+
+# %%
+def scatter(
+    data: pd.DataFrame,
+    title: str = "Soundscape Scatter Plot",
+    figsize: tuple[int, int] = (5, 5),
+    hue: str | None = None,
+    s: float | None = 20,
+    ax: Axes | None = None,
+    **kwargs,  # noqa: ANN003
+) -> Axes | np.ndarray:
+    scatter_params = DEFAULT_SCATTER_PARAMS
+    scatter_params.update(**{k: v for k, v in kwargs.items() if k in TYPED_SCATTER_KWS})
+    scatter_params["s"] = s
+
+    style_params = DEFAULT_STYLE_PARAMS
+    style_params.update(**{k: v for k, v in kwargs.items() if k in TYPED_STYLE_KWS})
+
+    p = ISOPlot(
+        data=data,
+        x=scatter_params.get("x", "ISOPleasant"),
+        y=scatter_params.get("y", "ISOEventful"),
+        title=title,
+        hue=hue,
+        palette=scatter_params.get("palette", "colorblind"),
+        axes=ax,
+    )
+
+    if ax is None:
+        p.create_subplots(figsize=figsize)
+        p.add_scatter(**scatter_params)
+    else:
+        p.add_scatter(on_axis=ax, **scatter_params)
+    p.apply_styling(**style_params)
+
+    return p.get_axes()
+
+
+# %%
 
 
 # def scatter_plot(
@@ -21,7 +76,7 @@
 #     diagonal_lines: bool = False,
 #     show_labels: bool = True,
 #     legend=True,
-#     legend_location: str = "best",
+#     legend_loc: str = "best",
 #     backend: Backend = Backend.SEABORN,
 #     apply_styling: bool = True,
 #     figsize: Tuple[int, int] = DEFAULT_FIGSIZE,
@@ -45,7 +100,7 @@
 #         diagonal_lines (bool): Whether to draw diagonal lines.
 #         show_labels (bool): Whether to show axis labels.
 #         legend (bool): Whether to show the legend.
-#         legend_location (str): Location of the legend.
+#         legend_loc (str): Location of the legend.
 #         backend (Backend): The plotting backend to use.
 #         apply_styling (bool): Whether to apply circumplex-specific styling.
 #         figsize (Tuple[int, int]): Size of the figure.
@@ -69,7 +124,7 @@
 #         diagonal_lines=diagonal_lines,
 #         show_labels=show_labels,
 #         legend=legend,
-#         legend_location=legend_location,
+#         legend_loc=legend_loc,
 #         extra_params={**extra_params, **kwargs},
 #     )
 
@@ -99,7 +154,7 @@
 #     diagonal_lines: bool = False,
 #     show_labels: bool = True,
 #     legend=True,
-#     legend_location: str = "best",
+#     legend_loc: str = "best",
 #     backend: Backend = Backend.SEABORN,
 #     apply_styling: bool = True,
 #     figsize: Tuple[int, int] = DEFAULT_FIGSIZE,
@@ -129,7 +184,7 @@
 #         diagonal_lines (bool): Whether to draw diagonal lines.
 #         show_labels (bool): Whether to show axis labels.
 #         legend (bool): Whether to show the legend.
-#         legend_location (str): Location of the legend.
+#         legend_loc (str): Location of the legend.
 #         backend (Backend): The plotting backend to use.
 #         apply_styling (bool): Whether to apply circumplex-specific styling.
 #         figsize (Tuple[int, int]): Size of the figure.
@@ -159,7 +214,7 @@
 #         diagonal_lines=diagonal_lines,
 #         show_labels=show_labels,
 #         legend=legend,
-#         legend_location=legend_location,
+#         legend_loc=legend_loc,
 #         extra_params={**extra_params, **kwargs},
 #     )
 

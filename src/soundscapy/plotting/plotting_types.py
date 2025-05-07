@@ -1,6 +1,6 @@
 """Utility functions and constants for the soundscapy plotting module."""
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import Any, Literal, TypeAlias, TypedDict
 
 import numpy as np
@@ -16,7 +16,7 @@ MplLegendLocType: TypeAlias = (
     Literal[
         "best",
         "upper right",
-        "uppder left",
+        "upper left",
         "lower left",
         "lower right",
         "right",
@@ -36,11 +36,22 @@ class SubplotsParamsTypes(TypedDict, total=False):
     sharex: bool
     sharey: bool
     squeeze: bool
-    width_ratios: ArrayLike | None
-    height_ratios: ArrayLike | None
+    width_ratios: Sequence[float] | None
+    height_ratios: Sequence[float] | None
     subplot_kw: dict[str, Any] | None
     gridspec_kw: dict[str, Any] | None
-    fig_kw: dict[str, Any] | None
+
+
+TYPED_SUBPLOT_KWS: list[str] = [
+    "sharex",
+    "sharey",
+    "squeeze",
+    "width_ratios",
+    "height_ratios",
+    "subplot_kw",
+    "gridspec_kw",
+    "fig_kw",
+]
 
 
 class _SeabornParamTypes(TypedDict, total=False):
@@ -56,10 +67,29 @@ class _SeabornParamTypes(TypedDict, total=False):
     hue_order: Iterable[str] | None
     hue_norm: tuple | Normalize | None
     alpha: float
+    legend: Literal["auto", "brief", "full", False]  # NOTE: Might move to Styler?
     # matplotlib kwargs
     color: ColorType | None
     label: str | None
     zorder: float
+
+
+TYPED_SEABORN_KWS: list[str] = [
+    "data",
+    "x",
+    "y",
+    "hue",
+    "size",
+    "style",
+    "palette",
+    "hue_order",
+    "hue_norm",
+    "alpha",
+    "legend",
+    "color",
+    "label",
+    "zorder",
+]
 
 
 class ScatterParamTypes(_SeabornParamTypes, total=False):
@@ -70,11 +100,23 @@ class ScatterParamTypes(_SeabornParamTypes, total=False):
     size_norm: tuple | Normalize | None
     markers: bool | list | dict
     style_order: list
-    legend: Literal["auto", "brief", "full", False]  # NOTE: Might move to Styler?
     # ax: Axes | np.ndarray | None  # noqa: ERA001
     marker: str
     linewidth: float
+    s: float | None
     # matplotlib kwargs
+
+
+TYPED_SCATTER_KWS: list[str] = [
+    "sizes",
+    "size_order",
+    "size_norm",
+    "markers",
+    "style_order",
+    "marker",
+    "linewidth",
+    "s",
+]
 
 
 class DensityParamTypes(_SeabornParamTypes, total=False):
@@ -94,12 +136,33 @@ class DensityParamTypes(_SeabornParamTypes, total=False):
     thresh: float
     gridsize: int
     cut: float
-    legend: bool
     clip: tuple[tuple[float, float], tuple[float, float]] | None
     cbar: bool
     cbar_ax: Axes | None
     cbar_kws: dict[str, Any] | None
     # matplotlib kwargs
+
+
+TYPED_DENSITY_KWS: list[str] = [
+    "weights",
+    "fill",
+    "multiple",
+    "common_norm",
+    "common_grid",
+    "cumulative",
+    "bw_method",
+    "bw_adjust",
+    "warn_singular",
+    "log_scale",
+    "levels",
+    "thresh",
+    "gridsize",
+    "cut",
+    "clip",
+    "cbar",
+    "cbar_ax",
+    "cbar_kws",
+]
 
 
 class JointPlotParamTypes(TypedDict, total=False):
@@ -121,7 +184,25 @@ class JointPlotParamTypes(TypedDict, total=False):
     hue_norm: tuple | Normalize | None
 
 
-class StyleParamsTypes(TypedDict):
+TYPED_JOINTPLOT_KWS: list[str] = [
+    "data",
+    "x",
+    "y",
+    "height",
+    "ratio",
+    "space",
+    "dropna",
+    "xlim",
+    "ylim",
+    "marginal_ticks",
+    "hue",
+    "palette",
+    "hue_order",
+    "hue_norm",
+]
+
+
+class StyleParamsTypes(TypedDict, total=False):
     """
     Configuration options for styling circumplex plots.
 
@@ -143,9 +224,24 @@ class StyleParamsTypes(TypedDict):
     prim_lines_zorder: int
     data_zorder: int
     show_labels: bool
-    legend: bool
-    legend_location: MplLegendLocType
+    legend_loc: MplLegendLocType
     linewidth: float
     primary_lines: bool
     diagonal_lines: bool
     title_fontsize: int
+
+
+TYPED_STYLE_KWS: list[str] = [
+    "xlim",
+    "ylim",
+    "diag_lines_zorder",
+    "diag_labels_zorder",
+    "prim_lines_zorder",
+    "data_zorder",
+    "show_labels",
+    "legend_loc",
+    "linewidth",
+    "primary_lines",
+    "diagonal_lines",
+    "title_fontsize",
+]
