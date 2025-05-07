@@ -22,13 +22,13 @@ Example:
 >>> cp.show() # doctest: +SKIP
 
 """
+# ruff: noqa: SLF001
 
 from __future__ import annotations
 
 import copy
 import warnings
-from collections.abc import Generator, Iterable
-from typing import Any, Literal, Unpack
+from typing import TYPE_CHECKING, Any, Literal, Unpack
 
 import numpy as np
 import pandas as pd
@@ -51,6 +51,9 @@ from soundscapy.plotting.plotting_types import (
 )
 from soundscapy.spi.msn import CentredParams, DirectParams, MultiSkewNorm, spi_score
 from soundscapy.sspylogging import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
 
 logger = get_logger()
 
@@ -211,6 +214,10 @@ class ISOPlot:
 
         self._has_subplots = False
 
+        self._subplot_datas = None
+        self._subplot_titles = None
+        self._subplot_labels = [None]
+
         self._scatter_params: ScatterParamTypes = copy.deepcopy(DEFAULT_SCATTER_PARAMS)
         self._scatter_params.update(
             data=data,
@@ -243,6 +250,43 @@ class ISOPlot:
         )
 
         self._style_params: StyleParamsTypes = copy.deepcopy(DEFAULT_STYLE_PARAMS)
+
+        self._spi_data = None
+
+    def _clone(self) -> ISOPlot:
+        new = ISOPlot()
+
+        new._data = self._data
+        new.x = self.x
+        new.y = self.y
+
+        new.hue = self.hue
+
+        new.title = self.title
+        new.figure = self.figure
+        new.axes = self.axes
+        new.labels = self.labels
+
+        new.palette = self.palette
+
+        new._nrows = self._nrows
+        new._ncols = self._ncols
+        new._naxes = self._naxes
+        new._subplots_params = self._subplots_params
+        new._has_subplots = self._has_subplots
+
+        new._subplot_datas = self._subplot_datas
+        new._subplot_titles = self._subplot_titles
+        new._subplot_labels = self._subplot_labels
+
+        new._scatter_params = copy.deepcopy(self._scatter_params)
+        new._density_params = copy.deepcopy(self._density_params)
+        new._simple_density_params = copy.deepcopy(self._simple_density_params)
+        new._style_params = copy.deepcopy(self._style_params)
+
+        new._spi_data = self._spi_data
+
+        return new
 
     @staticmethod
     def _check_data_x_y(
@@ -410,7 +454,7 @@ class ISOPlot:
         if adjust_figsize:
             self.figsize = (ncols * self.figsize[0], nrows * self.figsize[1])
 
-        self.figure, self.axes = plt.subplots(
+        figure, axes = plt.subplots(
             nrows=nrows, ncols=ncols, figsize=self.figsize, **subplot_kwargs
         )
         self._nrows = nrows
@@ -423,13 +467,14 @@ class ISOPlot:
         if subplot_datas is not None or subplot_titles is not None:
             self._validate_subplots_datas(subplot_datas, subplot_titles)
 
+        new = self._clone()
         # Assign subplot data and titles to the class attributes
         # (incl. if None were provided)
-        self._subplot_datas = subplot_datas
-        self._subplot_titles = subplot_titles
-        self._subplot_labels: list[list[str] | None] = [None] * self._naxes
+        new._subplot_datas = subplot_datas
+        new._subplot_titles = subplot_titles
+        new._subplot_labels = [None] * new._naxes
 
-        return self
+        return new
 
     def show(self) -> None:
         """
