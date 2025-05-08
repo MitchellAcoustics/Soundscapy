@@ -9,11 +9,12 @@ class CircumplexPlot:
     """Alias for v0.7 API to raise deprecation warnings."""
 
     def __init__(self, *args, **kwargs) -> None:
-        warnings.warn(
+        msg = (
             "The v0.7 APIs are deprecated. Please update your code accordingly."
-            "CircumplexPlot is deprecated. Use ISOPlot instead.",
-            DeprecationWarning,
-            stacklevel=2,
+            "CircumplexPlot is deprecated. Use ISOPlot instead."
+        )
+        raise DeprecationWarning(
+            msg,
         )
 
 
@@ -21,12 +22,12 @@ class CircumplexPlotParams:
     """Alias for v0.7 API to raise deprecation warnings."""
 
     def __init__(self, *args, **kwargs) -> None:
-        warnings.warn(
-            "The v0.7 APIs are deprecated. Please update your code accordingly. "
-            "CircumplexPlotParams is deprecated. "
-            "Use `ISOPlot` and `plotting_types` instead.",
-            DeprecationWarning,
-            stacklevel=2,
+        msg = (
+            "The v0.7 APIs are deprecated. Please update your code accordingly."
+            "CircumplexPlot is deprecated. Use ISOPlot instead."
+        )
+        raise DeprecationWarning(
+            msg,
         )
 
 
@@ -39,7 +40,7 @@ class Backend(Enum):
     def __call__(self, *args, **kwargs) -> None:
         warnings.warn(
             "The v0.7 APIs are deprecated. Please update your code accordingly."
-            "Backend is deprecated. Use ISOPlotBackend instead.",
+            "Backend is deprecated. Use ISOPlot instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -54,12 +55,11 @@ class PlotType:
     SIMPLE_DENSITY = "simple_density"
 
     def __call__(self, *args, **kwargs) -> None:
-        msg = (
+        warnings.warn(
             "The v0.7 APIs are deprecated. Please update your code accordingly."
-            "PlotType is deprecated. Add plot types as layers in ISOPlot instead."
-        )
-        raise DeprecationWarning(
-            msg,
+            "Backend is deprecated. Use ISOPlot instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
 
 
@@ -67,10 +67,9 @@ class StyleOptions:
     """Alias for v0.7 API to raise deprecation warnings."""
 
     def __init__(self, *args, **kwargs) -> None:
-        msg = (
+        warnings.warn(
             "The v0.7 APIs are deprecated. Please update your code accordingly."
-            "StyleOptions is deprecated. Use ISOPlot StylingParamsTypes instead."
-        )
-        raise DeprecationWarning(
-            msg,
+            "Backend is deprecated. Use ISOPlot instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )

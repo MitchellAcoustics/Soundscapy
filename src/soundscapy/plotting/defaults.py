@@ -1,3 +1,12 @@
+"""
+Default parameters and constants for soundscape plotting functions.
+
+This module provides common default values used for various plot types,
+including density plots, scatter plots, and styling parameters. It contains
+predefined color schemes, font settings, and layout configurations to ensure
+consistent visualization across the package.
+"""
+
 import copy
 from typing import Any
 
@@ -6,7 +15,6 @@ import seaborn as sns
 from soundscapy.plotting.plotting_types import (
     DensityParamTypes,
     ScatterParamTypes,
-    SeabornPaletteType,
     SeabornParamTypes,
     StyleParamsTypes,
     SubplotsParamsTypes,

@@ -630,6 +630,8 @@ def jointplot(
     >>> g = sspy.jointplot(
     ...     data,
     ...     hue="LocationID",
+    ...     incl_scatter=True,
+    ...     density_type="simple",
     ...     diagonal_lines=True,
     ...     figsize=(6, 6),
     ...     title="Grouped Soundscape Analysis"
@@ -1154,7 +1156,13 @@ def scatter_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
         DeprecationWarning,
         stacklevel=2,
     )
-    args = [a for a in args if not isinstance(a, Backend)]
+    if kwargs.pop("backend", None) is not None:
+        warnings.warn(
+            "`Backend` is no longer supported in the scatter_plot function (v0.8+).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     kwargs = {
         k: v
         for k, v in kwargs.items()
@@ -1191,6 +1199,12 @@ def density_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
         DeprecationWarning,
         stacklevel=2,
     )
+    if kwargs.pop("backend", None) is not None:
+        warnings.warn(
+            "`Backend` is no longer supported in the density_plot function (v0.8+).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     args = [a for a in args if not isinstance(a, Backend)]
     kwargs = {
         k: v

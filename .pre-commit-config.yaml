@@ -5,6 +5,7 @@ repos:
       # TODO(MitchellAcoustics): Enable linting pre-commit hooks
       # https://github.com/MitchellAcoustics/Soundscapy/issues/114
       # - id: ruff
+      #   exclude: ^test/.*\.py$
       - id: ruff-format
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.44.0
