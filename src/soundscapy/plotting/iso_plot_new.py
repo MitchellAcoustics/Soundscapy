@@ -3,23 +3,25 @@ Main module for creating circumplex plots using different backends.
 
 Example:
 -------
->>> from soundscapy import isd, surveys
->>> from soundscapy.plotting.iso_plot_new import ISOPlot
->>> df = isd.load()
->>> df = surveys.add_iso_coords(df)
->>> sub_df = isd.select_location_ids(df, ['CamdenTown', 'RegentsParkJapan'])
->>> cp = (
->>>     ISOPlot(data=sub_df, hue="SessionID")
->>>     .create_subplots(
->>>         subplot_by="LocationID",
->>>         auto_allocate_axes=True,
->>>         adjust_figsize=True
->>>     )
->>>     .add_scatter()
->>>     .add_simple_density(fill=False)
->>>     .apply_styling()
->>> )
->>> cp.show() # doctest: +SKIP
+```python
+from soundscapy import isd, surveys
+from soundscapy.plotting.iso_plot_new import ISOPlot
+df = isd.load()
+df = surveys.add_iso_coords(df)
+sub_df = isd.select_location_ids(df, ['CamdenTown', 'RegentsParkJapan'])
+cp = (
+    ISOPlot(data=sub_df, hue="SessionID")
+    .create_subplots(
+        subplot_by="LocationID",
+        auto_allocate_axes=True,
+        adjust_figsize=True
+    )
+    .add_scatter()
+    .add_simple_density(fill=False)
+    .apply_styling()
+)
+cp.show()
+```
 
 """
 # ruff: noqa: SLF001, G004
@@ -95,19 +97,20 @@ class ISOPlot:
 
     Example:
     -------
-    >>> from soundscapy import isd, surveys
-    >>> df = isd.load()
-    >>> df = surveys.add_iso_coords(df)
-    >>> ct = isd.select_location_ids(df, ["CamdenTown", "RegentsParkJapan"])
-    >>> cp = (
-            ISOPlot(ct, hue="LocationID")
-            .create_subplots()
-            .add_scatter()
-            .add_density()
-            .apply_styling()
-        )
-    >>> cp.show() # doctest: +SKIP
-
+    ```python
+    from soundscapy import isd, surveys
+    df = isd.load()
+    df = surveys.add_iso_coords(df)
+    ct = isd.select_location_ids(df, ["CamdenTown", "RegentsParkJapan"])
+    cp = (
+        ISOPlot(ct, hue="LocationID")
+        .create_subplots()
+        .add_scatter()
+        .add_density()
+        .apply_styling()
+    )
+    cp.show()
+    ```
     """
 
     def __init__(
@@ -142,6 +145,35 @@ class ISOPlot:
             Existing figure to plot on, by default None
         axes : Axes | np.ndarray | None, optional
             Existing axes to plot on, by default None
+            
+        Examples
+        --------
+        Create a plot with default parameters:
+        
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> plot = ISOPlot()
+        >>> isinstance(plot, ISOPlot)
+        True
+        
+        Create a plot with a DataFrame:
+        
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(0, 1, 100),
+        ...     'ISOEventful': np.random.normal(0, 1, 100),
+        ...     'Group': ['A'] * 50 + ['B'] * 50
+        ... })
+        >>> plot = ISOPlot(data=data, hue='Group')
+        >>> plot.hue
+        'Group'
+        
+        Create a plot with arrays:
+        
+        >>> x = np.random.normal(0, 1, 100)
+        >>> y = np.random.normal(0, 1, 100)
+        >>> plot = ISOPlot(x=x, y=y)
+        >>> isinstance(plot, ISOPlot)
+        True
 
         """
         # Process and validate input data and coordinates
@@ -380,6 +412,44 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+            
+        Examples
+        --------
+        Create a basic subplot grid:
+        
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(0, 1, 100),
+        ...     'ISOEventful': np.random.normal(0, 1, 100)
+        ... })
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(nrows=2, ncols=2)
+        >>> len(plot.subplot_contexts) == 4
+        True
+        >>> plt.close('all')  # Clean up
+        
+        Create subplots by a column in the data:
+        
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(0, 1, 100),
+        ...     'ISOEventful': np.random.normal(0, 1, 100),
+        ...     'Location': ['A'] * 50 + ['B'] * 50
+        ... })
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(nrows=1, ncols=2, subplot_by='Location')
+        >>> len(plot.subplot_contexts) == 2
+        True
+        >>> plt.close('all')  # Clean up
+        
+        Create subplots with auto-allocation of axes:
+        
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(subplot_by='Location', auto_allocate_axes=True)
+        >>> len(plot.subplot_contexts) == 2
+        True
+        >>> plt.close('all')  # Clean up
 
         """
         self.figsize = figsize
@@ -824,6 +894,49 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+            
+        Examples
+        --------
+        Add a scatter layer to all subplots:
+        
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> from soundscapy.plotting.layers import ScatterLayer
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(0, 1, 100),
+        ...     'ISOEventful': np.random.normal(0, 1, 100)
+        ... })
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(nrows=2, ncols=2)
+        >>> plot = plot.add_layer(ScatterLayer)
+        >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
+        True
+        >>> plt.close('all')  # Clean up
+        
+        Add a layer to a specific subplot:
+        
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(nrows=2, ncols=2)
+        >>> plot = plot.add_layer(ScatterLayer, on_axis=0)
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> all(len(ctx.layers) == 0 for ctx in plot.subplot_contexts[1:])
+        True
+        >>> plt.close('all')  # Clean up
+        
+        Add a layer to multiple subplots:
+        
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(nrows=2, ncols=2)
+        >>> plot = plot.add_layer(ScatterLayer, on_axis=[0, 2])
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> len(plot.subplot_contexts[2].layers) == 1
+        True
+        >>> len(plot.subplot_contexts[1].layers) == 0
+        True
+        >>> plt.close('all')  # Clean up
 
         """
         # Create the layer instance
@@ -949,10 +1062,47 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+            
+        Examples
+        --------
+        Add a scatter layer to all subplots:
+        
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(0, 1, 100),
+        ...     'ISOEventful': np.random.normal(0, 1, 100),
+        ...     'Group': ['A'] * 50 + ['B'] * 50
+        ... })
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(nrows=2, ncols=1)
+        >>> plot = plot.add_scatter(s=50, alpha=0.7, hue='Group')
+        >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
+        True
+        >>> plt.close('all')  # Clean up
+        
+        Add a scatter layer with custom data to a specific subplot:
+        
+        >>> custom_data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(1, 0.5, 50),
+        ...     'ISOEventful': np.random.normal(1, 0.5, 50)
+        ... })
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(nrows=2, ncols=1)
+        >>> plot = plot.add_scatter(on_axis=0, data=custom_data, color='red')
+        >>> plot.subplot_contexts[0].layers[0].custom_data is custom_data
+        True
+        >>> plt.close('all')  # Clean up
 
         """
         # Merge default scatter parameters with provided ones
         scatter_params = self._scatter_params.as_dict()
+        
+        # Remove data from scatter_params to avoid conflict
+        if 'data' in scatter_params:
+            del scatter_params['data']
+            
         scatter_params.update(params)
 
         return self.add_layer(
@@ -985,10 +1135,42 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+            
+        Examples
+        --------
+        Add a density layer to all subplots:
+        
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(0, 1, 100),
+        ...     'ISOEventful': np.random.normal(0, 1, 100)
+        ... })
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots()
+        >>> plot = plot.add_density(alpha=0.5, levels=5)
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> plt.close('all')  # Clean up
+        
+        Add a density layer with an outline:
+        
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots()
+        >>> plot = plot.add_density(include_outline=True)
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> plt.close('all')  # Clean up
 
         """
         # Merge default density parameters with provided ones
         density_params = self._density_params.as_dict()
+        
+        # Remove data from density_params to avoid conflict
+        if 'data' in density_params:
+            del density_params['data']
+            
         density_params.update(params)
 
         return self.add_layer(
@@ -1035,9 +1217,31 @@ class ISOPlot:
         ISOPlot
             The current plot instance for chaining
 
+        Examples
+        --------
+        Add a simple density layer:
+        
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(0, 1, 100),
+        ...     'ISOEventful': np.random.normal(0, 1, 100)
+        ... })
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots()
+        >>> plot = plot.add_simple_density(levels=3, alpha=0.7)
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> plt.close('all')  # Clean up
         """
         # Merge default simple density parameters with provided ones
         simple_density_params = self._simple_density_params.as_dict()
+        
+        # Remove data from simple_density_params to avoid conflict
+        if 'data' in simple_density_params:
+            del simple_density_params['data']
+            
         simple_density_params.update(thresh=thresh, levels=levels, alpha=alpha)
         simple_density_params.update(params)
 
@@ -1062,7 +1266,56 @@ class ISOPlot:
 
         Returns
         -------
-            ISOPlot: The current plot instance for chaining.
+        ISOPlot
+            The current plot instance for chaining
+            
+        Examples
+        --------
+        Apply styling with default parameters:
+        
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': np.random.normal(0, 1, 100),
+        ...     'ISOEventful': np.random.normal(0, 1, 100)
+        ... })
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots()
+        >>> plot = plot.add_scatter()
+        >>> plot = plot.apply_styling()
+        >>> plot.get_figure() is not None
+        True
+        >>> plt.close('all')  # Clean up
+        
+        Apply styling with custom parameters:
+        
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots()
+        >>> plot = plot.add_scatter()
+        >>> plot = plot.apply_styling(xlim=(-2, 2), ylim=(-2, 2), primary_lines=False)
+        >>> plot.get_figure() is not None
+        True
+        >>> plt.close('all')  # Clean up
+        
+        Demonstrate the fluent interface (method chaining):
+        
+        >>> # Create simple data for method chaining example
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': [-1, 0, 1] * 10,
+        ...     'ISOEventful': [-1, 0, 1] * 10,
+        ...     'Group': ['A', 'B', 'C'] * 10
+        ... })
+        >>> # Create plot with method chaining
+        >>> plot = ISOPlot(data=data)
+        >>> plot = plot.create_subplots(nrows=1, ncols=1)
+        >>> plot = plot.add_scatter(alpha=0.7)
+        >>> plot = plot.add_density(levels=5)
+        >>> plot = plot.apply_styling(title_fontsize=14)
+        >>> # Verify results
+        >>> isinstance(plot, ISOPlot)
+        True
+        >>> plt.close('all')  # Clean up
 
         """
         self._style_params.update(**kwargs)
