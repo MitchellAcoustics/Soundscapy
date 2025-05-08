@@ -144,6 +144,22 @@ def scatter(
     This function applies special styling appropriate for circumplex plots including
     gridlines, axis labels, and proportional axes.
 
+    Examples
+    --------
+    Basic scatter plot with default settings:
+
+    >>> import soundscapy as sspy
+    >>> import matplotlib.pyplot as plt
+    >>> data = sspy.isd.load()
+    >>> data = sspy.add_iso_coords(data)
+    >>> ax = sspy.scatter(data)
+    >>> plt.show() # xdoctest: +SKIP
+
+    Scatter plot with grouping by location:
+
+    >>> ax = sspy.scatter(data, hue="LocationID", diagonal_lines=True)
+    >>> plt.show() # xdoctest: +SKIP
+
     """
     if ax is None:
         _, ax = plt.subplots(1, 1, figsize=figsize)
@@ -333,6 +349,33 @@ def density(
     This function will raise a warning if the dataset has fewer than
     RECOMMENDED_MIN_SAMPLES (30) data points, as density plots are not reliable
     with small sample sizes.
+
+    Examples
+    --------
+    Basic density plot with default settings:
+
+    >>> import soundscapy as sspy
+    >>> import matplotlib.pyplot as plt
+    >>> data = sspy.isd.load()
+    >>> data = sspy.add_iso_coords(data)
+    >>> ax = sspy.density(data)
+    >>> plt.show() # xdoctest: +SKIP
+
+    Simple density plot with fewer contour levels:
+
+    >>> ax = sspy.density(data, density_type="simple")
+    >>> plt.show() # xdoctest: +SKIP
+
+    Density plot with custom styling:
+
+    >>> ax = sspy.density(
+    ...     data,
+    ...     hue="LocationID",
+    ...     incl_scatter=True,
+    ...     diagonal_lines=True,
+    ...     legend_loc="upper right"
+    ... )
+    >>> plt.show() # xdoctest: +SKIP
 
     """
     # Check if dataset is large enough for density plots
@@ -565,6 +608,33 @@ def jointplot(
     This function will raise a warning if the dataset has fewer than
     RECOMMENDED_MIN_SAMPLES (30) data points, as density plots are not reliable
     with small sample sizes.
+
+    Examples
+    --------
+    Basic jointplot with default settings:
+
+    >>> import soundscapy as sspy
+    >>> import matplotlib.pyplot as plt
+    >>> data = sspy.isd.load()
+    >>> data = sspy.add_iso_coords(data)
+    >>> g = sspy.jointplot(data)
+    >>> plt.show() # xdoctest: +SKIP
+
+    Jointplot with histogram marginals:
+
+    >>> g = sspy.jointplot(data, marginal_kind="hist")
+    >>> plt.show() # xdoctest: +SKIP
+
+    Jointplot with custom styling and grouping:
+
+    >>> g = sspy.jointplot(
+    ...     data,
+    ...     hue="LocationID",
+    ...     diagonal_lines=True,
+    ...     figsize=(6, 6),
+    ...     title="Grouped Soundscape Analysis"
+    ... )
+    >>> plt.show() # xdoctest: +SKIP
 
     """
     # Check if dataset is large enough for density plots
