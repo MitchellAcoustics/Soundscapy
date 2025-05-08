@@ -78,7 +78,7 @@ plugins:
         python:
           paths: [.]
           options:
-            docstring_section_style: spacy
+            docstring_section_style: list
             docstring_style: "numpy"
             separate_signature: true
             show_if_no_docstring: false

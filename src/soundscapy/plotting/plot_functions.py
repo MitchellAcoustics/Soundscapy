@@ -61,7 +61,7 @@ def scatter(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         Input data structure containing coordinate data, typically with ISOPleasant
         and ISOEventful columns.
     x : str, optional
@@ -100,39 +100,38 @@ def scatter(
     prim_labels : bool | None, optional
         Deprecated. Use xlabel and ylabel parameters instead.
 
-    **kwargs : dict, optional
-        Additional styling parameters:
+    Other Parameters
+    ----------------
+    xlabel, ylabel
+        Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$"
+        with math rendering.
 
-        - xlabel, ylabel : str | Literal[False], optional
-            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$"
-            with math rendering.
+        If None is passed, the column names (x and y) will be used as labels.
 
-            If None is passed, the column names (x and y) will be used as labels.
+        If a string is provided, it will be used as the label.
 
-            If a string is provided, it will be used as the label.
+        If False is passed, axis labels will be hidden.
+    xlim, ylim : tuple[float, float], optional
+        Limits for x and y axes, by default (-1, 1) for both
+    legend_loc : MplLegendLocType, optional
+        Location of legend, by default "best"
+    diagonal_lines : bool, optional
+        Whether to include diagonal dimension labels (e.g. calm, etc.),
+        by default False
+    prim_ax_fontdict : dict, optional
+        Font dictionary for axis labels with these defaults:
 
-            If False is passed, axis labels will be hidden.
-        - xlim, ylim : tuple[float, float], optional
-            Limits for x and y axes, by default (-1, 1) for both
-        - legend_loc : MplLegendLocType, optional
-            Location of legend, by default "best"
-        - diagonal_lines : bool, optional
-            Whether to include diagonal dimension labels (e.g. calm, etc.),
-            by default False
-        - prim_ax_fontdict : dict, optional
-            Font dictionary for axis labels with these defaults:
-
-            {
-                "family": "sans-serif",
-                "fontstyle": "normal",
-                "fontsize": "large",
-                "fontweight": "medium",
-                "parse_math": True,
-                "c": "black",
-                "alpha": 1,
-            }
-        - fontsize, fontweight, fontstyle, family, c, alpha, parse_math:
-            Direct parameters for font styling in axis labels
+        {
+            "family": "sans-serif",
+            "fontstyle": "normal",
+            "fontsize": "large",
+            "fontweight": "medium",
+            "parse_math": True,
+            "c": "black",
+            "alpha": 1,
+        }
+    fontsize, fontweight, fontstyle, family, c, alpha, parse_math:
+        Direct parameters for font styling in axis labels
 
     Returns
     -------
