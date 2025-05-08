@@ -8,20 +8,23 @@ and knows how to render itself on a given context.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
-import pandas as pd
 import seaborn as sns
-from matplotlib.axes import Axes
 
 from soundscapy.plotting.defaults import (
     DEFAULT_DENSITY_PARAMS,
     DEFAULT_SCATTER_PARAMS,
     DEFAULT_SIMPLE_DENSITY_PARAMS,
 )
-from soundscapy.plotting.plot_context import PlotContext
-from soundscapy.plotting.plotting_types import SeabornPaletteType
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
+    from matplotlib.axes import Axes
+
+    from soundscapy.plotting.plot_context import PlotContext
+    from soundscapy.plotting.plotting_types import SeabornPaletteType
 
 
 class Layer:

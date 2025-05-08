@@ -8,8 +8,11 @@ for layered visualizations and subplot management.
 
 from __future__ import annotations
 
-import pandas as pd
-from matplotlib.axes import Axes
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from matplotlib.axes import Axes
 
 
 class PlotContext:
