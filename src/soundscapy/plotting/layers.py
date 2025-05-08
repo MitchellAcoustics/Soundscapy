@@ -8,13 +8,12 @@ and knows how to render itself on a given context.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.axes import Axes
-from matplotlib.contour import QuadContourSet
 
 from soundscapy.plotting.defaults import (
     DEFAULT_DENSITY_PARAMS,
@@ -22,7 +21,7 @@ from soundscapy.plotting.defaults import (
     DEFAULT_SIMPLE_DENSITY_PARAMS,
 )
 from soundscapy.plotting.plot_context import PlotContext
-from soundscapy.plotting.plotting_types import DensityParamTypes, ScatterParamTypes
+from soundscapy.plotting.plotting_types import SeabornPaletteType
 
 
 class Layer:
@@ -38,11 +37,10 @@ class Layer:
         Optional custom data for this specific layer, overriding context data
     params : dict
         Parameters for the layer
+
     """
 
-    def __init__(
-        self, custom_data: Optional[pd.DataFrame] = None, **params: Any
-    ) -> None:
+    def __init__(self, custom_data: pd.DataFrame | None = None, **params: Any) -> None:
         """
         Initialize a Layer.
 
@@ -52,6 +50,7 @@ class Layer:
             Optional custom data for this specific layer, overriding context data
         **params : dict
             Parameters for the layer
+
         """
         self.custom_data = custom_data
         self.params = params
@@ -64,15 +63,18 @@ class Layer:
         ----------
         context : PlotContext
             The context containing data and axes for rendering
+
         """
         if context.ax is None:
-            raise ValueError("Cannot render layer: context has no associated axes")
+            msg = "Cannot render layer: context has no associated axes"
+            raise ValueError(msg)
 
         # Use custom data if provided, otherwise context data
         data = self.custom_data if self.custom_data is not None else context.data
 
         if data is None:
-            raise ValueError("No data available for rendering layer")
+            msg = "No data available for rendering layer"
+            raise ValueError(msg)
 
         self._render_implementation(data, context, context.ax)
 
@@ -90,16 +92,37 @@ class Layer:
             The context containing state for rendering
         ax : Axes
             The matplotlib axes to render on
+
         """
-        raise NotImplementedError("Subclasses must implement _render_implementation")
+        msg = "Subclasses must implement _render_implementation"
+        raise NotImplementedError(msg)
+
+    @staticmethod
+    def _crosscheck_palette_hue(
+        palette: SeabornPaletteType | None, hue: str | np.ndarray | pd.Series | None
+    ) -> SeabornPaletteType | None:
+        """
+        Check if the palette is valid for the given hue.
+
+        Parameters
+        ----------
+            palette : SeabornPaletteType
+                The color palette to use.
+            hue : str | np.ndarray | pd.Series | None
+                The column name for color encoding.
+
+        Raises
+        ------
+            ValueError: If the palette is not valid for the given hue.
+
+        """
+        return palette if hue is not None else None
 
 
 class ScatterLayer(Layer):
     """Layer for rendering scatter plots."""
 
-    def __init__(
-        self, custom_data: Optional[pd.DataFrame] = None, **params: Any
-    ) -> None:
+    def __init__(self, custom_data: pd.DataFrame | None = None, **params: Any) -> None:
         """
         Initialize a ScatterLayer.
 
@@ -109,6 +132,7 @@ class ScatterLayer(Layer):
             Optional custom data for this specific layer
         **params : dict
             Parameters for the scatter plot
+
         """
         default_params = DEFAULT_SCATTER_PARAMS.copy()
         merged_params = {**default_params, **params}
@@ -128,6 +152,7 @@ class ScatterLayer(Layer):
             The context containing state for rendering
         ax : Axes
             The matplotlib axes to render on
+
         """
         # Get data-specific properties or fall back to context defaults
         x = self.params.get("x", context.x)
@@ -138,6 +163,10 @@ class ScatterLayer(Layer):
         plot_params = {
             k: v for k, v in self.params.items() if k not in ("x", "y", "hue", "data")
         }
+        # Check if the palette is valid for the given hue
+        plot_params["palette"] = self._crosscheck_palette_hue(
+            plot_params.get("palette"), hue
+        )
 
         # Render scatter plot
         sns.scatterplot(data=data, x=x, y=y, hue=hue, ax=ax, **plot_params)
@@ -148,7 +177,8 @@ class DensityLayer(Layer):
 
     def __init__(
         self,
-        custom_data: Optional[pd.DataFrame] = None,
+        custom_data: pd.DataFrame | None = None,
+        *,
         include_outline: bool = False,
         **params: Any,
     ) -> None:
@@ -163,6 +193,7 @@ class DensityLayer(Layer):
             Whether to include an outline around the density plot
         **params : dict
             Parameters for the density plot
+
         """
         default_params = DEFAULT_DENSITY_PARAMS.copy()
         merged_params = {**default_params, **params}
@@ -183,6 +214,7 @@ class DensityLayer(Layer):
             The context containing state for rendering
         ax : Axes
             The matplotlib axes to render on
+
         """
         # Check if there's enough data for a meaningful density plot
         if len(data) < 30:
@@ -203,6 +235,10 @@ class DensityLayer(Layer):
         plot_params = {
             k: v for k, v in self.params.items() if k not in ("x", "y", "hue", "data")
         }
+        # Check if the palette is valid for the given hue
+        plot_params["palette"] = self._crosscheck_palette_hue(
+            plot_params.get("palette"), hue
+        )
 
         # Render density plot
         sns.kdeplot(data=data, x=x, y=y, hue=hue, ax=ax, **plot_params)
@@ -219,7 +255,7 @@ class SimpleDensityLayer(DensityLayer):
 
     def __init__(
         self,
-        custom_data: Optional[pd.DataFrame] = None,
+        custom_data: pd.DataFrame | None = None,
         include_outline: bool = True,
         **params: Any,
     ) -> None:
@@ -234,6 +270,7 @@ class SimpleDensityLayer(DensityLayer):
             Whether to include an outline around the density plot
         **params : dict
             Parameters for the density plot
+
         """
         default_params = DEFAULT_SIMPLE_DENSITY_PARAMS.copy()
         merged_params = {**default_params, **params}

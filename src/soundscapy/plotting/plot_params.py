@@ -9,7 +9,7 @@ parameter management and improves type safety.
 from __future__ import annotations
 
 import copy
-from typing import Any, Dict, Optional, TypeVar, Union, cast
+from typing import Any, TypeVar, cast
 
 from soundscapy.plotting.defaults import (
     DEFAULT_DENSITY_PARAMS,
@@ -26,7 +26,7 @@ from soundscapy.plotting.plotting_types import (
 )
 
 # Type variable for generic parameter typing
-T = TypeVar("T", bound=Dict[str, Any])
+T = TypeVar("T", bound=dict[str, Any])
 
 
 class PlotParams:
@@ -43,6 +43,7 @@ class PlotParams:
         The current parameter values
     default_params : dict
         The default parameter values for this parameter type
+
     """
 
     def __init__(self, params_type: str, **initial_params: Any) -> None:
@@ -55,6 +56,7 @@ class PlotParams:
             The type of parameters to manage ('scatter', 'density', 'style', etc.)
         **initial_params :
             Initial parameter values to set
+
         """
         self.params_type = params_type
         self.default_params = self._get_default_params(params_type)
@@ -64,7 +66,7 @@ class PlotParams:
         if initial_params:
             self.update(**initial_params)
 
-    def _get_default_params(self, params_type: str) -> Dict[str, Any]:
+    def _get_default_params(self, params_type: str) -> dict[str, Any]:
         """
         Get the appropriate default parameters based on type.
 
@@ -82,19 +84,20 @@ class PlotParams:
         ------
         ValueError
             If an unknown parameter type is specified
+
         """
         if params_type == "scatter":
             return copy.deepcopy(DEFAULT_SCATTER_PARAMS)
-        elif params_type == "density":
+        if params_type == "density":
             return copy.deepcopy(DEFAULT_DENSITY_PARAMS)
-        elif params_type == "simple_density":
+        if params_type == "simple_density":
             return copy.deepcopy(DEFAULT_SIMPLE_DENSITY_PARAMS)
-        elif params_type == "style":
+        if params_type == "style":
             return copy.deepcopy(DEFAULT_STYLE_PARAMS)
-        elif params_type == "subplots":
+        if params_type == "subplots":
             return copy.deepcopy(DEFAULT_SUBPLOTS_PARAMS)
-        else:
-            raise ValueError(f"Unknown parameter type: {params_type}")
+        msg = f"Unknown parameter type: {params_type}"
+        raise ValueError(msg)
 
     def update(self, **kwargs: Any) -> None:
         """
@@ -104,10 +107,10 @@ class PlotParams:
         ----------
         **kwargs : Any
             New parameter values to set
+
         """
         # Filter out None values to avoid overriding defaults
-        filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        self.params.update(filtered_kwargs)
+        self.params.update(kwargs)
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -124,6 +127,7 @@ class PlotParams:
         -------
         Any
             The parameter value
+
         """
         return self.params.get(key, default)
 
@@ -145,6 +149,7 @@ class PlotParams:
         ------
         KeyError
             If the parameter doesn't exist
+
         """
         return self.params[key]
 
@@ -152,7 +157,7 @@ class PlotParams:
         """Return parameter items for iteration."""
         return self.params.items()
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """
         Get all parameters as a dictionary.
 
@@ -160,14 +165,13 @@ class PlotParams:
         -------
         dict
             The parameters as a dictionary
+
         """
         return self.params.copy()
 
     def as_typed_dict(
         self,
-    ) -> Union[
-        ScatterParamTypes, DensityParamTypes, StyleParamsTypes, SubplotsParamsTypes
-    ]:
+    ) -> ScatterParamTypes | DensityParamTypes | StyleParamsTypes | SubplotsParamsTypes:
         """
         Get parameters as a typed dictionary based on params_type.
 
@@ -175,17 +179,18 @@ class PlotParams:
         -------
         TypedDict
             The parameters as the appropriate TypedDict
+
         """
         if self.params_type == "scatter":
             return cast(ScatterParamTypes, self.params.copy())
-        elif self.params_type in ("density", "simple_density"):
+        if self.params_type in ("density", "simple_density"):
             return cast(DensityParamTypes, self.params.copy())
-        elif self.params_type == "style":
+        if self.params_type == "style":
             return cast(StyleParamsTypes, self.params.copy())
-        elif self.params_type == "subplots":
+        if self.params_type == "subplots":
             return cast(SubplotsParamsTypes, self.params.copy())
-        else:
-            raise ValueError(f"Unknown parameter type: {self.params_type}")
+        msg = f"Unknown parameter type: {self.params_type}"
+        raise ValueError(msg)
 
     def reset(self) -> None:
         """Reset parameters to default values."""
