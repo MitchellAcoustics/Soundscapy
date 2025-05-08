@@ -29,11 +29,6 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING, Any
 
-try:
-    from typing import Unpack
-except ImportError:
-    from typing_extensions import Unpack
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -56,32 +51,32 @@ from soundscapy.plotting.layers import (
     SimpleDensityLayer,
 )
 from soundscapy.plotting.plot_context import PlotContext
-from soundscapy.plotting.plot_params import PlotParams
+from soundscapy.plotting.plotting_types import ParamModel
 from soundscapy.sspylogging import get_logger
+
+try:
+    from soundscapy.spi.msn import (
+        CentredParams,
+        DirectParams,
+    )
+except ImportError as e:
+    msg = (
+        "SPI functionality requires additional dependencies. "
+        "Install with: pip install soundscapy[spi]"
+    )
+    raise ImportError(msg) from e
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
-    from soundscapy.plotting.plotting_types import (
-        DensityParamTypes,
-        JointPlotParamTypes,  # noqa: F401
-        ScatterParamTypes,
-        SeabornPaletteType,
-        StyleParamsTypes,
-        SubplotsParamsTypes,
-    )
+    from soundscapy.plotting.plotting_types import SeabornPaletteType
 
-    try:
-        from soundscapy.spi.msn import (
-            CentredParams,
-            DirectParams,
-        )
-    except ImportError as e:
-        msg = (
-            "SPI functionality requires additional dependencies. "
-            "Install with: pip install soundscapy[spi]"
-        )
-        raise ImportError(msg) from e
+
+# Helper function to create parameter models
+def create_param_model(param_type: str, **kwargs) -> ParamModel:
+    """Create a parameter model instance."""
+    return ParamModel.create(param_type, **kwargs)
+
 
 logger = get_logger()
 
@@ -201,7 +196,7 @@ class ISOPlot:
         self.subplot_contexts: list[PlotContext] = []
 
         # Initialize parameter managers
-        self._scatter_params = PlotParams(
+        self._scatter_params = ParamModel.create(
             "scatter",
             data=data,
             x=self.main_context.x,
@@ -210,7 +205,7 @@ class ISOPlot:
             palette=self.palette,
         )
 
-        self._density_params = PlotParams(
+        self._density_params = ParamModel.create(
             "density",
             data=data,
             x=self.main_context.x,
@@ -219,8 +214,8 @@ class ISOPlot:
             palette=self.palette,
         )
 
-        self._simple_density_params = PlotParams("simple_density")
-        self._style_params = PlotParams("style")
+        self._simple_density_params = ParamModel.create("simple_density")
+        self._style_params = ParamModel.create("style")
 
         # SPI-related attributes
         self._spi_data = None
@@ -381,7 +376,7 @@ class ISOPlot:
         *,
         adjust_figsize: bool = True,
         auto_allocate_axes: bool = False,
-        **kwargs: Unpack[SubplotsParamsTypes],
+        **kwargs,
     ) -> ISOPlot:
         """
         Create subplots for the circumplex plot.
@@ -450,7 +445,7 @@ class ISOPlot:
         self.figsize = figsize
 
         # Set up subplot parameters
-        subplot_params = PlotParams("subplots", **kwargs)
+        subplot_params = ParamModel.create("subplots", **kwargs)
 
         # Create a list of dataframes and titles for each subplot
         # based on the unique values in the specified column
@@ -1052,7 +1047,7 @@ class ISOPlot:
         self,
         on_axis: int | tuple[int, int] | list[int] | None = None,
         data: pd.DataFrame | None = None,
-        **params: Unpack[ScatterParamTypes],  # type: ignore[reportGeneralTypeIssues]
+        **params: Any,
     ) -> ISOPlot:
         """
         Add a scatter layer to specific subplot(s).
@@ -1128,7 +1123,7 @@ class ISOPlot:
         data: pd.DataFrame | None = None,
         *,
         include_outline: bool = False,
-        **params: Unpack[DensityParamTypes],  # type: ignore[reportGeneralTypeIssues]
+        **params: Any,
     ) -> ISOPlot:
         """
         Add a density layer to specific subplot(s).
@@ -1212,7 +1207,7 @@ class ISOPlot:
         alpha: float = 0.5,
         *,
         include_outline: bool = True,
-        **params: Unpack[DensityParamTypes],  # type: ignore[reportGeneralTypeIssues]
+        **params: Any,
     ) -> ISOPlot:
         """
         Add a simple density layer to specific subplot(s).
@@ -1302,7 +1297,7 @@ class ISOPlot:
 
     def apply_styling(
         self,
-        **kwargs: Unpack[StyleParamsTypes],
+        **kwargs: Any,
     ) -> ISOPlot:
         """
         Apply styling to the plot.

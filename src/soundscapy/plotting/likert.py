@@ -9,7 +9,7 @@ from soundscapy.surveys.survey_utils import PAQ_LABELS
 
 def paq_radar_plot(data, ax=None, index=None):
     """
-    Generate a radar/spider plot of PAQ values
+    Generate a radar/spider plot of PAQ values.
 
     Parameters
     ----------
