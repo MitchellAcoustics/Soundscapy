@@ -9,6 +9,7 @@ consistent visualization across the package.
 
 import copy
 from typing import Any
+from unittest.mock import DEFAULT
 
 import seaborn as sns
 
@@ -23,6 +24,8 @@ from soundscapy.plotting.plotting_types import (
 DEFAULT_TITLE = "Soundscape Density Plot"
 DEFAULT_XCOL = "ISOPleasant"
 DEFAULT_YCOL = "ISOEventful"
+DEFAULT_XLIM = (-1, 1)
+DEFAULT_YLIM = (-1, 1)
 
 DEFAULT_FIGSIZE = (5, 5)
 DEFAULT_POINT_SIZE = 20
@@ -65,14 +68,15 @@ DEFAULT_DENSITY_PARAMS: DensityParamTypes = DensityParamTypes(
     common_grid=False,
     bw_adjust=DEFAULT_BW_ADJUST,
     levels=10,
+    clip=(DEFAULT_XLIM, DEFAULT_YLIM),
 )
 
 DEFAULT_SIMPLE_DENSITY_PARAMS: DensityParamTypes = copy.deepcopy(DEFAULT_DENSITY_PARAMS)
-DEFAULT_SIMPLE_DENSITY_PARAMS.update({"thresh": 0.5, "levels": 2, "alpha": 0.5})
+DEFAULT_SIMPLE_DENSITY_PARAMS.update({"levels": [0, 0.5], "alpha": 0.5})
 
 DEFAULT_STYLE_PARAMS: StyleParamsTypes = StyleParamsTypes(
-    xlim=(-1, 1),
-    ylim=(-1, 1),
+    xlim=DEFAULT_XLIM,
+    ylim=DEFAULT_YLIM,
     xlabel=r"$P_{ISO}$",
     ylabel=r"$E_{ISO}$",
     diag_lines_zorder=1,

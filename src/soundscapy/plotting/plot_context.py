@@ -8,8 +8,6 @@ for layered visualizations and subplot management.
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union
-
 import pandas as pd
 from matplotlib.axes import Axes
 
@@ -38,16 +36,17 @@ class PlotContext:
         The title for this context's plot
     layers : list
         The visualization layers to be rendered on this context
+
     """
 
     def __init__(
         self,
-        data: Optional[pd.DataFrame] = None,
+        data: pd.DataFrame | None = None,
         x: str = "ISOPleasant",
         y: str = "ISOEventful",
-        hue: Optional[str] = None,
-        ax: Optional[Axes] = None,
-        title: Optional[str] = None,
+        hue: str | None = None,
+        ax: Axes | None = None,
+        title: str | None = None,
     ) -> None:
         """
         Initialize a PlotContext.
@@ -66,6 +65,7 @@ class PlotContext:
             Matplotlib axis to render on
         title : str | None
             Title for this plot context
+
         """
         self.data = data
         self.x = x
@@ -74,13 +74,13 @@ class PlotContext:
         self.ax = ax
         self.title = title
         self.layers = []
-        self.parent: Optional[PlotContext] = None
+        self.parent: PlotContext | None = None
 
     def create_child(
         self,
-        data: Optional[pd.DataFrame] = None,
-        title: Optional[str] = None,
-        ax: Optional[Axes] = None,
+        data: pd.DataFrame | None = None,
+        title: str | None = None,
+        ax: Axes | None = None,
     ) -> PlotContext:
         """
         Create a child context that inherits properties from this context.
@@ -98,6 +98,7 @@ class PlotContext:
         -------
         PlotContext
             A new child context with inherited properties
+
         """
         child = PlotContext(
             data=data if data is not None else self.data,
