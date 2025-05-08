@@ -75,6 +75,7 @@ def scatter(
         If `None` call `matplotlib.pyplot.subplots` with `figsize` internally.
     hue : str | np.ndarray | pd.Series | None, optional
         Grouping variable that will produce points with different colors.
+
         Can be either categorical or numeric,
         although color mapping will behave differently in latter case, by default None
     palette : SeabornPaletteType, optional
@@ -94,6 +95,7 @@ def scatter(
         represented with a sample of evenly spaced values. If "full", every group will
         get an entry in the legend. If "auto", choose between brief or full
         representation based on number of levels.
+
         If False, no legend data is added and no legend is drawn, by default "auto"
     prim_labels : bool | None, optional
         Deprecated. Use xlabel and ylabel parameters instead.
@@ -102,18 +104,24 @@ def scatter(
         Additional styling parameters:
 
         - xlabel, ylabel : str | Literal[False], optional
-            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$" with math rendering.
+            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$"
+            with math rendering.
+
             If None is passed, the column names (x and y) will be used as labels.
+
             If a string is provided, it will be used as the label.
+
             If False is passed, axis labels will be hidden.
         - xlim, ylim : tuple[float, float], optional
             Limits for x and y axes, by default (-1, 1) for both
         - legend_loc : MplLegendLocType, optional
             Location of legend, by default "best"
         - diagonal_lines : bool, optional
-            Whether to include diagonal dimension labels (e.g. calm, etc.), by default False
+            Whether to include diagonal dimension labels (e.g. calm, etc.),
+            by default False
         - prim_ax_fontdict : dict, optional
             Font dictionary for axis labels with these defaults:
+
             {
                 "family": "sans-serif",
                 "fontstyle": "normal",
@@ -135,6 +143,7 @@ def scatter(
     -----
     This function applies special styling appropriate for circumplex plots including
     gridlines, axis labels, and proportional axes.
+
     """
     if ax is None:
         _, ax = plt.subplots(1, 1, figsize=figsize)
@@ -208,9 +217,9 @@ def density(
     """
     Plot a density plot of ISOCoordinates.
 
-    Creates a kernel density estimate visualization of data distribution on a circumplex grid
-    with the custom Soundscapy styling for soundscape circumplex visualisations. Can optionally
-    include a scatter plot of the underlying data points.
+    Creates a kernel density estimate visualization of data distribution on a
+    circumplex grid with the custom Soundscapy styling for soundscape circumplex
+    visualisations. Can optionally include a scatter plot of the underlying data points.
 
     Parameters
     ----------
@@ -225,6 +234,7 @@ def density(
         Title to add to circumplex plot, by default "Soundscape Density Plot"
     ax : matplotlib.axes.Axes, optional
         Pre-existing axes object to use for the plot, by default None
+
         If `None` call `matplotlib.pyplot.subplots` with `figsize` internally.
     hue : str | np.ndarray | pd.Series | None, optional
         Grouping variable that will produce density contours with different colors.
@@ -251,6 +261,7 @@ def density(
         represented with a sample of evenly spaced values. If "full", every group will
         get an entry in the legend. If "auto", choose between brief or full
         representation based on number of levels.
+
         If False, no legend data is added and no legend is drawn, by default "auto"
     prim_labels : bool | None, optional
         Deprecated. Use xlabel and ylabel parameters instead.
@@ -279,18 +290,24 @@ def density(
         Additional styling parameters:
 
         - xlabel, ylabel : str | Literal[False], optional
-            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$" with math rendering.
+            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$" with math
+            rendering.
+
             If None is passed, the column names (x and y) will be used as labels.
+
             If a string is provided, it will be used as the label.
+
             If False is passed, axis labels will be hidden.
         - xlim, ylim : tuple[float, float], optional
             Limits for x and y axes, by default (-1, 1) for both
         - legend_loc : MplLegendLocType, optional
             Location of legend, by default "best"
         - diagonal_lines : bool, optional
-            Whether to include diagonal dimension labels (e.g. calm, etc.), by default False
+            Whether to include diagonal dimension labels (e.g. calm, etc.),
+            by default False
         - prim_ax_fontdict : dict, optional
             Font dictionary for axis labels with these defaults:
+
             {
                 "family": "sans-serif",
                 "fontstyle": "normal",
@@ -316,6 +333,7 @@ def density(
     This function will raise a warning if the dataset has fewer than
     RECOMMENDED_MIN_SAMPLES (30) data points, as density plots are not reliable
     with small sample sizes.
+
     """
     # Check if dataset is large enough for density plots
     _valid_density(data)
@@ -509,18 +527,24 @@ def jointplot(
         Additional styling parameters:
 
         - xlabel, ylabel : str | Literal[False], optional
-            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$" with math rendering.
+            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$" with
+            math rendering.
+
             If None is passed, the column names (x and y) will be used as labels.
+
             If a string is provided, it will be used as the label.
+
             If False is passed, axis labels will be hidden.
         - xlim, ylim : tuple[float, float], optional
             Limits for x and y axes, by default (-1, 1) for both
         - legend_loc : MplLegendLocType, optional
             Location of legend, by default "best"
         - diagonal_lines : bool, optional
-            Whether to include diagonal dimension labels (e.g. calm, etc.), by default False
+            Whether to include diagonal dimension labels (e.g. calm, etc.),
+            by default False
         - prim_ax_fontdict : dict, optional
             Font dictionary for axis labels with these defaults:
+
             {
                 "family": "sans-serif",
                 "fontstyle": "normal",
@@ -541,6 +565,7 @@ def jointplot(
     This function will raise a warning if the dataset has fewer than
     RECOMMENDED_MIN_SAMPLES (30) data points, as density plots are not reliable
     with small sample sizes.
+
     """
     # Check if dataset is large enough for density plots
     _valid_density(data)
@@ -825,7 +850,7 @@ def _deal_w_default_labels(
     ax : plt.Axes
         Existing axes object to adjust the legend on
     prim_labels: bool, optional
-        flag for whether to include the custom primary labels ISOPleasant and ISOEventful
+        whether to include the custom primary labels ISOPleasant and ISOEventful
           by default True
         If using your own x and y names, you should set this to False.
 
@@ -1134,6 +1159,7 @@ def _valid_density(data: pd.DataFrame) -> None:
     ------
     UserWarning
         If the data is too small for density plots (< RECOMMENDED_MIN_SAMPLES).
+
     """
     if len(data) < RECOMMENDED_MIN_SAMPLES:
         warnings.warn(
