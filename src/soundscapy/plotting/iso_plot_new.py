@@ -26,9 +26,8 @@ Example:
 
 from __future__ import annotations
 
-import copy
 import warnings
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union, cast
+from typing import TYPE_CHECKING, Any
 
 try:
     from typing import Unpack
@@ -45,11 +44,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure, SubFigure
 
 from soundscapy.plotting.defaults import (
-    DEFAULT_DENSITY_PARAMS,
-    DEFAULT_SCATTER_PARAMS,
-    DEFAULT_SIMPLE_DENSITY_PARAMS,
     DEFAULT_STYLE_PARAMS,
-    DEFAULT_SUBPLOTS_PARAMS,
     DEFAULT_XCOL,
     DEFAULT_YCOL,
     RECOMMENDED_MIN_SAMPLES,
@@ -147,6 +142,7 @@ class ISOPlot:
             Existing figure to plot on, by default None
         axes : Axes | np.ndarray | None, optional
             Existing axes to plot on, by default None
+
         """
         # Process and validate input data and coordinates
         data, x, y = self._check_data_x_y(data, x, y)
@@ -209,17 +205,17 @@ class ISOPlot:
         return self.main_context.y
 
     @property
-    def hue(self) -> Optional[str]:
+    def hue(self) -> str | None:
         """Get the hue column name."""
         return self.main_context.hue
 
     @property
-    def title(self) -> Optional[str]:
+    def title(self) -> str | None:
         """Get the plot title."""
         return self.main_context.title
 
     @property
-    def _data(self) -> Optional[pd.DataFrame]:
+    def _data(self) -> pd.DataFrame | None:
         """Get the main data."""
         return self.main_context.data
 
@@ -384,6 +380,7 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+
         """
         self.figsize = figsize
 
@@ -423,16 +420,15 @@ class ISOPlot:
         self.subplot_contexts = []
 
         # Helper function to get ax from flattened or 2D array
-        def get_axes_at_index(idx: int) -> Optional[Axes]:
+        def get_axes_at_index(idx: int) -> Axes | None:
             if isinstance(self.axes, Axes):
                 return self.axes if idx == 0 else None
-            elif isinstance(self.axes, np.ndarray):
+            if isinstance(self.axes, np.ndarray):
                 if self.axes.ndim == 1:
                     return self.axes[idx] if idx < len(self.axes) else None
-                else:
-                    # 2D array of axes
-                    flat_axes = self.axes.flatten()
-                    return flat_axes[idx] if idx < len(flat_axes) else None
+                # 2D array of axes
+                flat_axes = self.axes.flatten()
+                return flat_axes[idx] if idx < len(flat_axes) else None
             return None
 
         # Create context for each subplot
@@ -591,6 +587,7 @@ class ISOPlot:
         ------
         ValueError
             If the axes object does not exist.
+
         """
         if self.axes is None:
             msg = (
@@ -686,6 +683,7 @@ class ISOPlot:
             If the axes object does not exist or the index is invalid.
         TypeError
             If the axes object is not a valid Axes or ndarray of Axes.
+
         """
         self._check_for_axes()
 
@@ -826,6 +824,7 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+
         """
         # Create the layer instance
         layer = layer_class(custom_data=data, **params)
@@ -877,6 +876,7 @@ class ISOPlot:
         -------
         list[PlotContext]
             List of target subplot contexts
+
         """
         # If no specific axis, target all subplot contexts
         if on_axis is None:
@@ -915,17 +915,17 @@ class ISOPlot:
         ------
         ValueError
             If an invalid axis specification is provided
+
         """
         if isinstance(on_axis, int):
             return [on_axis]
-        elif isinstance(on_axis, tuple) and len(on_axis) == 2:
+        if isinstance(on_axis, tuple) and len(on_axis) == 2:
             # Convert (row, col) to flattened index
             row, col = on_axis
             return [row * self._ncols + col]
-        elif isinstance(on_axis, list):
+        if isinstance(on_axis, list):
             return on_axis
-        else:
-            raise ValueError(f"Invalid axis specification: {on_axis}")
+        raise ValueError(f"Invalid axis specification: {on_axis}")
 
     def add_scatter(
         self,
@@ -949,6 +949,7 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+
         """
         # Merge default scatter parameters with provided ones
         scatter_params = self._scatter_params.as_dict()
@@ -984,6 +985,7 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+
         """
         # Merge default density parameters with provided ones
         density_params = self._density_params.as_dict()
@@ -1032,6 +1034,7 @@ class ISOPlot:
         -------
         ISOPlot
             The current plot instance for chaining
+
         """
         # Merge default simple density parameters with provided ones
         simple_density_params = self._simple_density_params.as_dict()
