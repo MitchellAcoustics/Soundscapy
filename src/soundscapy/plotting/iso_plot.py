@@ -1613,7 +1613,7 @@ class ISOPlot:
         location_idx: int,
         x_adj: float = 0,
         y_adj: float = 0,
-        **kwargs,  # noqa: ANN003
+        **kwargs,
     ) -> ISOPlot:
         """Add an annotation to the plot (only for Seaborn backend)."""
         warnings.warn(

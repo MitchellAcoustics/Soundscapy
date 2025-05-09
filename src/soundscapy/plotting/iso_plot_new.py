@@ -26,6 +26,7 @@ Example:
 
 from __future__ import annotations
 
+import functools
 import warnings
 from typing import TYPE_CHECKING, Any
 
@@ -51,7 +52,7 @@ from soundscapy.plotting.layers import (
     SimpleDensityLayer,
 )
 from soundscapy.plotting.plot_context import PlotContext
-from soundscapy.plotting.plotting_types import ParamModel
+from soundscapy.plotting.plotting_types import ParamModel, SubplotsParams
 from soundscapy.sspylogging import get_logger
 
 try:
@@ -105,7 +106,7 @@ class ISOPlot:
         title: str | None = "Soundscape Density Plot",
         hue: str | None = None,
         palette: SeabornPaletteType | None = "colorblind",
-        figure: Figure | SubFigure | None = None,
+        figure: Figure | None = None,  # Removed SubFigure type, don't think we need it
         axes: Axes | np.ndarray | None = None,
     ) -> None:
         """
@@ -183,11 +184,8 @@ class ISOPlot:
         self.palette = palette
 
         # Initialize subplot management
-        self._has_subplots = False
-        self._nrows = 1
-        self._ncols = 1
-        self._naxes = 1
         self.subplot_contexts: list[PlotContext] = []
+        self.subplots_params = SubplotsParams()
 
         # Initialize parameter managers
         self._scatter_params = ParamModel.create(
@@ -235,6 +233,26 @@ class ISOPlot:
         return self.main_context.title
 
     @property
+    def _nrows(self) -> int:
+        """Get the number of rows in the subplot grid."""
+        return self.subplots_params.nrows
+
+    @property
+    def _ncols(self) -> int:
+        """Get the number of columns in the subplot grid."""
+        return self.subplots_params.ncols
+
+    @property
+    def _naxes(self) -> int:
+        """Get the number of axes."""
+        return self.subplots_params.n_subplots
+
+    @property
+    def _has_subplots(self) -> bool:
+        """Check if the plot has subplots."""
+        return self._naxes > 1
+
+    @property
     def _data(self) -> pd.DataFrame | None:
         """Get the main data."""
         return self.main_context.data
@@ -258,6 +276,7 @@ class ISOPlot:
                 The y-axis data.
 
         """
+        # NOTE: Move to PlotContext class?
         if not isinstance(data, pd.DataFrame) and data is not None:
             msg = (
                 "data must be a pandas DataFrame or None. "
@@ -436,11 +455,6 @@ class ISOPlot:
         >>> plt.close('all')  # Clean up
 
         """
-        self.figsize = figsize
-
-        # Set up subplot parameters
-        subplot_params = ParamModel.create("subplots", **kwargs)
-
         # Create a list of dataframes and titles for each subplot
         # based on the unique values in the specified column
         if subplot_by:
@@ -453,18 +467,15 @@ class ISOPlot:
             nrows, ncols = self._allocate_subplot_axes(subplot_titles)
 
         if adjust_figsize:
-            self.figsize = (ncols * self.figsize[0], nrows * self.figsize[1])
+            figsize = (ncols * figsize[0], nrows * figsize[1])
 
-        # Create the figure and axes
-        self.figure, self.axes = plt.subplots(
-            nrows=nrows, ncols=ncols, figsize=self.figsize, **subplot_params.as_dict()
+            # Set up subplot parameters
+        self.subplots_params = self.subplots_params.update(
+            nrows=nrows, ncols=ncols, figsize=figsize, **kwargs
         )
 
-        # Store subplot configuration
-        self._nrows = nrows
-        self._ncols = ncols
-        self._naxes = nrows * ncols
-        self._has_subplots = self._naxes > 1
+        # Create the figure and axes
+        self.figure, self.axes = plt.subplots(**self.subplots_params.as_dict())
 
         # If subplot_datas or subplot_titles are provided, validate them
         if subplot_datas is not None or subplot_titles is not None:
@@ -473,20 +484,7 @@ class ISOPlot:
         # Create PlotContext objects for each subplot
         self.subplot_contexts = []
 
-        # Helper function to get ax from flattened or 2D array
-        def get_axes_at_index(idx: int) -> Axes | None:
-            if isinstance(self.axes, Axes):
-                return self.axes if idx == 0 else None
-            if isinstance(self.axes, np.ndarray):
-                if self.axes.ndim == 1:
-                    return self.axes[idx] if idx < len(self.axes) else None
-                # 2D array of axes
-                flat_axes = self.axes.flatten()
-                return flat_axes[idx] if idx < len(flat_axes) else None
-            return None
-
-        # Create context for each subplot
-        for i in range(self._naxes):
+        for i, ax in enumerate(self.yield_axes_objects()):
             # Get data and title for this subplot if available
             data = (
                 subplot_datas[i]
@@ -499,15 +497,12 @@ class ISOPlot:
                 else None
             )
 
-            # Get the axis for this subplot
-            ax = get_axes_at_index(i)
-
-            # Create a child context for this subplot
             context = self.main_context.create_child(data=data, title=title, ax=ax)
             self.subplot_contexts.append(context)
 
         return self
 
+    @functools.wraps(plt.show)
     def show(self) -> None:
         """
         Show the figure.
@@ -524,6 +519,40 @@ class ISOPlot:
         if self._has_subplots:
             plt.tight_layout()
         plt.show()
+
+    @functools.wraps(plt.close)
+    def close(self, fig: int | str | Figure | None = None) -> None:
+        """
+        Close the figure.
+
+        This method is a wrapper around plt.close() to close the figure.
+
+        """
+        if fig is None:
+            fig = self.figure
+            if fig is None:
+                msg = (
+                    "No figure object provided. "
+                    "Please create a figure using create_subplots() first."
+                )
+                raise ValueError(msg)
+        plt.close(fig)
+
+    @functools.wraps(Figure.savefig)
+    def savefig(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Save the figure.
+
+        This method is a wrapper around plt.savefig() to save the figure.
+
+        """
+        if self.figure is None:
+            msg = (
+                "No figure object provided. "
+                "Please create a figure using create_subplots() first."
+            )
+            raise ValueError(msg)
+        self.figure.savefig(*args, **kwargs)
 
     def _setup_subplot_by(
         self,
@@ -839,6 +868,7 @@ class ISOPlot:
         self,
         layer_class: type[Layer],
         on_axis: int | tuple[int, int] | list[int] | None = None,
+        *,
         data: pd.DataFrame | None = None,
         **params: Any,
     ) -> ISOPlot:
@@ -878,7 +908,7 @@ class ISOPlot:
         ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...          rng.integers(1, 3, 100)],
         ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
-        ... # Will create 2x2 subplots all with the same data
+        >>> # Will create 2x2 subplots all with the same data
         >>> plot = (ISOPlot(data=data)
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer)
@@ -886,7 +916,7 @@ class ISOPlot:
         >>> plot.show() # xdoctest: +SKIP
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
             True
-        >>> plt.close('all')  # Clean up
+        >>> plot.close()  # Clean up
 
         Add a layer to a specific subplot:
 
@@ -899,7 +929,7 @@ class ISOPlot:
         True
         >>> all(len(ctx.layers) == 0 for ctx in plot.subplot_contexts[1:])
         True
-        >>> plt.close('all')  # Clean up
+        >>> plot.close()
 
         Add a layer to multiple subplots:
 
@@ -914,7 +944,7 @@ class ISOPlot:
         True
         >>> len(plot.subplot_contexts[1].layers) == 0
         True
-        >>> plt.close('all')  # Clean up
+        >>> plot.close()
 
         Add a layer with custom data to a specific subplot:
         >>> custom_data = pd.DataFrame({
@@ -930,6 +960,7 @@ class ISOPlot:
         ...        .add_layer(ScatterLayer, data=custom_data, on_axis=1)
         ...        .apply_styling())
         >>> plot.show() # xdoctest: +SKIP
+        >>> plot.close()
 
         """
         # TODO(MitchellAcoustics): Need to handle legend/label creation   # noqa: TD003
@@ -1099,16 +1130,11 @@ class ISOPlot:
 
         """
         # Merge default scatter parameters with provided ones
-        scatter_params = self._scatter_params.as_dict()
-
         # Remove data from scatter_params to avoid conflict
-        if "data" in scatter_params:
-            del scatter_params["data"]
-
-        scatter_params.update(params)
+        scatter_params = self._scatter_params.model_copy().drop("data").update(**params)
 
         return self.add_layer(
-            ScatterLayer, on_axis=on_axis, data=data, **scatter_params
+            ScatterLayer, on_axis=on_axis, data=data, **scatter_params.as_dict()
         )
 
     def add_density(
@@ -1176,30 +1202,24 @@ class ISOPlot:
 
         """
         # Merge default density parameters with provided ones
-        density_params = self._density_params.as_dict()
-
-        # Remove data from density_params to avoid conflict
-        if "data" in density_params:
-            del density_params["data"]
-
-        density_params.update(params)
+        density_params = self._density_params.model_copy().drop("data").update(**params)
 
         return self.add_layer(
             DensityLayer,
             on_axis=on_axis,
             data=data,
             include_outline=include_outline,
-            **density_params,
+            **density_params.as_dict(),
         )
 
     def add_simple_density(
         self,
         on_axis: int | tuple[int, int] | list[int] | None = None,
         data: pd.DataFrame | None = None,
+        *,
         thresh: float = 0.5,
         levels: int | Iterable[float] = 2,
         alpha: float = 0.5,
-        *,
         include_outline: bool = True,
         **params: Any,
     ) -> ISOPlot:
@@ -1272,21 +1292,18 @@ class ISOPlot:
 
         """
         # Merge default simple density parameters with provided ones
-        simple_density_params = self._simple_density_params.as_dict()
-
-        # Remove data from simple_density_params to avoid conflict
-        if "data" in simple_density_params:
-            del simple_density_params["data"]
-
-        simple_density_params.update(thresh=thresh, levels=levels, alpha=alpha)
-        simple_density_params.update(params)
+        simple_density_params = (
+            self._simple_density_params.model_copy()
+            .drop("data")
+            .update(thresh=thresh, levels=levels, alpha=alpha, **params)
+        )
 
         return self.add_layer(
             SimpleDensityLayer,
             on_axis=on_axis,
             data=data,
             include_outline=include_outline,
-            **simple_density_params,
+            **simple_density_params.as_dict(),
         )
 
     def apply_styling(
@@ -1462,6 +1479,9 @@ class ISOPlot:
         ylabel = self.y if ylabel is None else ylabel
         fontdict = self._style_params.get("prim_ax_fontdict")
 
+        # BUG: For some reason, this ruins the sharex and sharey
+        #       functionality, but only when a layer is applied
+        #       a specific subplot.
         for _, axis in enumerate(self.yield_axes_objects()):
             axis.set_xlabel(
                 xlabel, fontdict=fontdict
