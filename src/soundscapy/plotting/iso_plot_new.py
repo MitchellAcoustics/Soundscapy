@@ -50,28 +50,26 @@ from soundscapy.plotting.layers import (
     Layer,
     ScatterLayer,
     SimpleDensityLayer,
+    SPIDensityLayer,
+    SPIScatterLayer,
+    SPISimpleLayer,
 )
 from soundscapy.plotting.plot_context import PlotContext
-from soundscapy.plotting.plotting_types import ParamModel, SubplotsParams
+from soundscapy.plotting.plotting_types import (
+    ParamModel,
+    SPISimpleDensityParams,
+    SubplotsParams,
+)
 from soundscapy.sspylogging import get_logger
-
-try:
-    from soundscapy.spi.msn import (
-        CentredParams,
-        DirectParams,
-    )
-except ImportError as e:
-    msg = (
-        "SPI functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[spi]"
-    )
-    raise ImportError(msg) from e
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
     from soundscapy.plotting.plotting_types import SeabornPaletteType
-
+    from soundscapy.spi.msn import (
+        CentredParams,
+        DirectParams,
+    )
 
 logger = get_logger()
 
@@ -206,7 +204,21 @@ class ISOPlot:
             palette=self.palette,
         )
 
-        self._simple_density_params = ParamModel.create("simple_density")
+        self._simple_density_params = ParamModel.create(
+            "simple_density",
+            data=data,
+            x=self.main_context.x,
+            y=self.main_context.y,
+            hue=hue,
+        )
+
+        self._spi_scatter_params = NotImplementedError
+        self._spi_density_params = NotImplementedError
+        self._spi_simple_density_params = SPISimpleDensityParams(
+            x=self.main_context.x,
+            y=self.main_context.y,
+        )
+
         self._style_params = ParamModel.create("style")
 
         # SPI-related attributes
@@ -1137,6 +1149,103 @@ class ISOPlot:
             ScatterLayer, on_axis=on_axis, data=data, **scatter_params.as_dict()
         )
 
+    def add_spi(
+        self,
+        on_axis: int | tuple[int, int] | list[int] | None = None,
+        spi_data: pd.DataFrame | np.ndarray | None = None,
+        msn_params: DirectParams | CentredParams | None = None,
+        *,
+        layer_class: type[Layer] = SPISimpleLayer,
+        **params: Any,
+    ) -> ISOPlot:
+        """
+        Add a SPI layer to specific subplot(s).
+
+        Parameters
+        ----------
+        on_axis : int | tuple[int, int] | list[int] | None, optional
+            Target specific axis/axes
+        spi_data : pd.DataFrame | np.ndarray | None, optional
+            Custom data for this specific SPI plot
+        msn_params : DirectParams | CentredParams | None, optional
+            Parameters for the SPI plot
+
+        Returns
+        -------
+        ISOPlot
+            The current plot instance for chaining
+
+        Examples
+        --------
+        Add a SPI layer to all subplots:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> from soundscapy.spi import DirectParams
+        >>> rng = np.random.default_rng(42)
+        >>>    # Create a DataFrame with random data
+        >>> data = pd.DataFrame(
+        ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...    columns=['ISOPleasant', 'ISOEventful']
+        ... )
+        >>>    # Define MSN parameters for the SPI target
+        >>> msn_params = DirectParams(
+        ...     xi=np.array([0.5, 0.7]),
+        ...     omega=np.array([[0.1, 0.05], [0.05, 0.1]]),
+        ...     alpha=np.array([0, -5]),
+        ...     )
+        >>>    # Create the plot with only an SPI layer
+        >>> plot = (
+        ...     ISOPlot()
+        ...     .create_subplots()
+        ...     .add_spi(msn_params=msn_params)
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> plot.close()  # Clean up
+
+        Add an SPI layer over top of 'real' data:
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_density()
+        ...     .add_spi(msn_params=msn_params)
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 3
+        True
+        >>> plot.close()  # Clean up
+
+        """
+        if layer_class == SPISimpleLayer:
+            spi_simple_params = (
+                self._spi_simple_density_params.model_copy()
+                .drop("data")
+                .update(**params)
+            )
+
+            return self.add_layer(
+                layer_class,
+                on_axis=on_axis,
+                msn_params=msn_params,
+                data=spi_data,
+                **spi_simple_params.as_dict(),
+            )
+        if layer_class in (SPIDensityLayer, SPIScatterLayer):
+            msg = (
+                "Only the simple density layer type is currently supported for "
+                "SPI plots. Please use SPISimpleLayer"
+            )
+            raise NotImplementedError(msg)
+
+        msg = "Invalid layer class provided. Expected SPISimpleLayer. "
+        raise ValueError(msg)
+
     def add_density(
         self,
         on_axis: int | tuple[int, int] | list[int] | None = None,
@@ -1177,7 +1286,7 @@ class ISOPlot:
         ...     'ISOEventful': rng.normal(0.15, 0.4, 50),
         ... })
         >>> plot = (
-        >>>     ISOPlot(data=data)
+        ...     ISOPlot(data=data)
         ...     .create_subplots()
         ...     .add_density()
         ...     .apply_styling()
@@ -1190,11 +1299,11 @@ class ISOPlot:
         Add a density layer with custom settings:
 
         >>> plot = (
-        >>>     ISOPlot(data=data)
-        >>>     .create_subplots()
-        >>>     .add_density(levels=5, alpha=0.7)
-        >>>     .apply_styling()
-        >>> )
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_density(levels=5, alpha=0.7)
+        ...     .apply_styling()
+        ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
@@ -1217,9 +1326,6 @@ class ISOPlot:
         on_axis: int | tuple[int, int] | list[int] | None = None,
         data: pd.DataFrame | None = None,
         *,
-        thresh: float = 0.5,
-        levels: int | Iterable[float] = 2,
-        alpha: float = 0.5,
         include_outline: bool = True,
         **params: Any,
     ) -> ISOPlot:
@@ -1267,10 +1373,10 @@ class ISOPlot:
         ...     .add_simple_density()
         ...     .apply_styling()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers) == 2
         True
-        >>> plt.close('all')  # Clean up
+        >>> plot.close()  # Clean up
 
         Add a simple density with splitting by group:
         >>> data = pd.DataFrame(
@@ -1278,24 +1384,22 @@ class ISOPlot:
         ...          rng.integers(1, 3, 100)],
         ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
         >>> plot = (
-        >>>     ISOPlot(data=data, hue='Group')
-        >>>     .create_subplots()
-        >>>     .add_scatter()
-        >>>     .add_simple_density()
-        >>>     .apply_styling()
-        >>> )
-        >>> plot.show() # xdoctest: +SKIP
+        ...     ISOPlot(data=data, hue='Group')
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_simple_density()
+        ...     .apply_styling()
+        ... )
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers) == 2
         True
-        >>> plt.close('all')
+        >>> plot.close()
         ...
 
         """
         # Merge default simple density parameters with provided ones
         simple_density_params = (
-            self._simple_density_params.model_copy()
-            .drop("data")
-            .update(thresh=thresh, levels=levels, alpha=alpha, **params)
+            self._simple_density_params.model_copy().drop("data").update(**params)
         )
 
         return self.add_layer(
@@ -1332,9 +1436,9 @@ class ISOPlot:
         >>> rng = np.random.default_rng(42)
         >>> # Create simple data for styling example
         >>> data = pd.DataFrame(
-        >>>     np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
-        >>>             rng.integers(1, 3, 100)],
-        >>>     columns=['ISOPleasant', 'ISOEventful', 'Group'])
+        ...     np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...             rng.integers(1, 3, 100)],
+        ...     columns=['ISOPleasant', 'ISOEventful', 'Group'])
         >>> # Create plot with default styling
         >>> plot = (
         ...    ISOPlot(data=data)

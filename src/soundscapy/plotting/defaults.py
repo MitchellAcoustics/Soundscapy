@@ -68,7 +68,7 @@ DEFAULT_DENSITY_PARAMS: dict[str, Any] = {
 
 # Default simple density parameters
 DEFAULT_SIMPLE_DENSITY_PARAMS: dict[str, Any] = copy.deepcopy(DEFAULT_DENSITY_PARAMS)
-DEFAULT_SIMPLE_DENSITY_PARAMS.update({"levels": [0, 0.5], "alpha": 0.5})
+DEFAULT_SIMPLE_DENSITY_PARAMS.update({"thresh": 0.5, "levels": 2, "alpha": 0.5})
 
 # Default style parameters
 DEFAULT_STYLE_PARAMS: dict[str, Any] = {

@@ -1029,7 +1029,7 @@ class ISOPlot:
         spi_params : DirectParams | CentredParams | None
             Parameters to generate SPI data
         n : int
-            Number of samples to generate if using spi_params
+            Number of samples to generate if using msn_params
         kwargs : dict
             Additional parameters
 
@@ -1043,7 +1043,7 @@ class ISOPlot:
 
         # Input validation
         if spi_data is not None and spi_params is not None:
-            msg = "Please provide either spi_data or spi_params, not both."
+            msg = "Please provide either spi_data or msn_params, not both."
             raise ValueError(msg)
 
         # Generate data from parameters if provided
@@ -1057,7 +1057,7 @@ class ISOPlot:
             return self._process_spi_data(spi_data, kwargs)
         msg = (
             "No data provided for SPI plot. "
-            "Please provide either spi_data or spi_params."
+            "Please provide either spi_data or msn_params."
         )
         raise ValueError(msg)
 
@@ -1251,7 +1251,7 @@ class ISOPlot:
                 .add_scatter()
                 .add_simple_density(label="Test")
                 .add_spi_simple_density(
-                    spi_params=spi, label="Target", show_score="on axis"
+                    msn_params=spi, label="Target", show_score="on axis"
                 )
                 .apply_styling(
                     diagonal_lines=True, legend_loc="lower left"
