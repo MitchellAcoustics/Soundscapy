@@ -270,6 +270,57 @@ class ParamModel(BaseModel):
         """
         return {key: getattr(self, key) for key in keys if hasattr(self, key)}
 
+    def pop(self, key: str) -> Any:
+        """
+        Remove a parameter and return its value.
+
+        Parameters
+        ----------
+        key : str
+            Name of the parameter
+
+        Returns
+        -------
+        Any
+            Value of the removed parameter
+
+        Raises
+        ------
+        KeyError
+            If the parameter doesn't exist
+
+        """
+        if not hasattr(self, key):
+            msg = f"Parameter '{key}' does not exist."
+            raise KeyError(msg)
+        value = getattr(self, key)
+        delattr(self, key)
+        return value
+
+    def drop(self, keys: str | Iterable[str]) -> Self:
+        """
+        Remove a parameter without returning its value.
+
+        Parameters
+        ----------
+        keys : str | Iterable[str]
+            Name of the parameter or list of parameters
+
+        Raises
+        ------
+        KeyError
+            If the parameter doesn't exist
+
+        """
+        if isinstance(keys, str):
+            keys = [keys]
+        for k in keys:
+            if not hasattr(self, k):
+                msg = f"Parameter '{k}' does not exist."
+                raise KeyError(msg)
+            delattr(self, k)
+        return self
+
     @property
     def field_names(self) -> list[str]:
         """
@@ -339,6 +390,30 @@ class DensityParams(SeabornParams):
         (-1, 1),
         (-1, 1),
     )  # DEFAULT_XLIM, DEFAULT_YLIM
+
+    def get_outline_dict(
+        self, *, levels: int | Iterable[float] = [0, 0.5], alpha: float = 0.5
+    ) -> dict[str, Any]:
+        """
+        Get parameters for the outline of density plots.
+
+        Parameters
+        ----------
+        levels : int | Iterable[float], optional
+            The levels for the outline. Default is [0, 0.5].
+        alpha : float, optional
+            The alpha value for the outline. Default is 0.5.
+
+        Returns
+        -------
+        dict[str, Any]
+            The parameters for the outline of density plots.
+
+        """
+        # Set levels and alpha for simple density plots
+        return self.model_copy(
+            update={"levels": levels, "alpha": alpha, "legend": False}
+        ).as_dict()
 
 
 class SimpleDensityParams(DensityParams):
@@ -428,6 +503,44 @@ class StyleParams(ParamModel):
 class SubplotsParams(ParamModel):
     """Parameters for subplot configuration."""
 
-    sharex: bool = True
-    sharey: bool = True
+    nrows: int = 1
+    ncols: int = 1
     figsize: tuple[float, float] = (5, 5)
+    sharex: bool | Literal["none", "all", "row", "col"] = True
+    sharey: bool | Literal["none", "all", "row", "col"] = True
+
+    @property
+    def n_subplots(self) -> int:
+        """
+        Calculate the total number of subplots.
+
+        Returns
+        -------
+        int
+            Total number of subplots.
+
+        """
+        return self.nrows * self.ncols
+
+    def get_plt_subplot_args(self) -> dict[str, Any]:
+        """
+        Pass matplotlib subplot arguments to a plt.subplots call.
+
+        Parameters
+        ----------
+        ax : Any
+            Matplotlib Axes object.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary of subplot parameters.
+
+        """
+        return {
+            "nrows": self.nrows,
+            "ncols": self.ncols,
+            "figsize": self.figsize,
+            "sharex": self.sharex,
+            "sharey": self.sharey,
+        }

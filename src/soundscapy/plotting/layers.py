@@ -8,23 +8,27 @@ and knows how to render itself on a given context.
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Any
 
 import seaborn as sns
 
-from soundscapy.plotting.defaults import (
-    DEFAULT_DENSITY_PARAMS,
-    DEFAULT_SCATTER_PARAMS,
-    DEFAULT_SIMPLE_DENSITY_PARAMS,
+from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
+from soundscapy.plotting.plotting_types import (
+    DensityParams,
+    ScatterParams,
+    SeabornParams,
+    SimpleDensityParams,
 )
+from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
-    import numpy as np
     import pandas as pd
     from matplotlib.axes import Axes
 
     from soundscapy.plotting.plot_context import PlotContext
-    from soundscapy.plotting.plotting_types import SeabornPaletteType
+
+logger = get_logger()
 
 
 class Layer:
@@ -38,12 +42,17 @@ class Layer:
     ----------
     custom_data : pd.DataFrame | None
         Optional custom data for this specific layer, overriding context data
-    params : dict
-        Parameters for the layer
+    params : ParamModel
+        Parameter model instance for this layer
 
     """
 
-    def __init__(self, custom_data: pd.DataFrame | None = None, **params: Any) -> None:
+    def __init__(
+        self,
+        custom_data: pd.DataFrame | None = None,
+        param_model: type[SeabornParams] = SeabornParams,
+        **params: Any,
+    ) -> None:
         """
         Initialize a Layer.
 
@@ -51,12 +60,15 @@ class Layer:
         ----------
         custom_data : pd.DataFrame | None
             Optional custom data for this specific layer, overriding context data
+        param_model : type[ParamModel] | None
+            The parameter model class to use, if None uses a generic ParamModel
         **params : dict
             Parameters for the layer
 
         """
         self.custom_data = custom_data
-        self.params = params
+        # Create parameter model instance
+        self.params = param_model(**params)
 
     def render(self, context: PlotContext) -> None:
         """
@@ -100,27 +112,6 @@ class Layer:
         msg = "Subclasses must implement _render_implementation"
         raise NotImplementedError(msg)
 
-    @staticmethod
-    def _crosscheck_palette_hue(
-        palette: SeabornPaletteType | None, hue: str | np.ndarray | pd.Series | None
-    ) -> SeabornPaletteType | None:
-        """
-        Check if the palette is valid for the given hue.
-
-        Parameters
-        ----------
-            palette : SeabornPaletteType
-                The color palette to use.
-            hue : str | np.ndarray | pd.Series | None
-                The column name for color encoding.
-
-        Raises
-        ------
-            ValueError: If the palette is not valid for the given hue.
-
-        """
-        return palette if hue is not None else None
-
 
 class ScatterLayer(Layer):
     """Layer for rendering scatter plots."""
@@ -137,9 +128,8 @@ class ScatterLayer(Layer):
             Parameters for the scatter plot
 
         """
-        default_params = DEFAULT_SCATTER_PARAMS.copy()
-        merged_params = {**default_params, **params}
-        super().__init__(custom_data=custom_data, **merged_params)
+        self.params: ScatterParams
+        super().__init__(custom_data=custom_data, param_model=ScatterParams, **params)
 
     def _render_implementation(
         self, data: pd.DataFrame, context: PlotContext, ax: Axes
@@ -160,19 +150,16 @@ class ScatterLayer(Layer):
         # Get data-specific properties or fall back to context defaults
         x = self.params.get("x", context.x)
         y = self.params.get("y", context.y)
-        hue = self.params.get("hue", context.hue)
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
-        plot_params = {
-            k: v for k, v in self.params.items() if k not in ("x", "y", "hue", "data")
-        }
-        # Check if the palette is valid for the given hue
-        plot_params["palette"] = self._crosscheck_palette_hue(
-            plot_params.get("palette"), hue
-        )
+        plot_params = self.params.model_copy()
+        plot_params = plot_params.drop(["x", "y", "data"])
+
+        # Apply palette only if hue is used
+        plot_params.crosscheck_palette_hue()
 
         # Render scatter plot
-        sns.scatterplot(data=data, x=x, y=y, hue=hue, ax=ax, **plot_params)
+        sns.scatterplot(data=data, x=x, y=y, ax=ax, **plot_params.as_dict())
 
 
 class DensityLayer(Layer):
@@ -182,6 +169,7 @@ class DensityLayer(Layer):
         self,
         custom_data: pd.DataFrame | None = None,
         *,
+        param_model: type[DensityParams] = DensityParams,
         include_outline: bool = False,
         **params: Any,
     ) -> None:
@@ -198,10 +186,9 @@ class DensityLayer(Layer):
             Parameters for the density plot
 
         """
-        default_params = DEFAULT_DENSITY_PARAMS.copy()
-        merged_params = {**default_params, **params}
         self.include_outline = include_outline
-        super().__init__(custom_data=custom_data, **merged_params)
+        self.params: DensityParams
+        super().__init__(custom_data=custom_data, param_model=param_model, **params)
 
     def _render_implementation(
         self, data: pd.DataFrame, context: PlotContext, ax: Axes
@@ -220,9 +207,7 @@ class DensityLayer(Layer):
 
         """
         # Check if there's enough data for a meaningful density plot
-        if len(data) < 30:
-            import warnings
-
+        if len(data) < RECOMMENDED_MIN_SAMPLES:
             warnings.warn(
                 "Density plots are not recommended for small datasets (<30 samples).",
                 UserWarning,
@@ -235,22 +220,24 @@ class DensityLayer(Layer):
         hue = self.params.get("hue", context.hue)
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
-        plot_params = {
-            k: v for k, v in self.params.items() if k not in ("x", "y", "hue", "data")
-        }
-        # Check if the palette is valid for the given hue
-        plot_params["palette"] = self._crosscheck_palette_hue(
-            plot_params.get("palette"), hue
-        )
+        plot_params = self.params.model_copy()
+        plot_params = plot_params.drop(["x", "y", "data"])
+
+        # Apply palette only if hue is used
+        plot_params.crosscheck_palette_hue()
 
         # Render density plot
-        sns.kdeplot(data=data, x=x, y=y, hue=hue, ax=ax, **plot_params)
+        sns.kdeplot(data=data, x=x, y=y, ax=ax, **plot_params.as_dict())
 
         # If requested, add an outline around the density plot
         if self.include_outline:
-            outline_params = plot_params.copy()
-            outline_params.update({"fill": False, "alpha": 1, "legend": False})
-            sns.kdeplot(data=data, x=x, y=y, hue=hue, ax=ax, **outline_params)
+            sns.kdeplot(
+                data=data,
+                x=x,
+                y=y,
+                ax=ax,
+                **plot_params.get_outline_dict(),
+            )
 
 
 class SimpleDensityLayer(DensityLayer):
@@ -259,6 +246,7 @@ class SimpleDensityLayer(DensityLayer):
     def __init__(
         self,
         custom_data: pd.DataFrame | None = None,
+        *,
         include_outline: bool = True,
         **params: Any,
     ) -> None:
@@ -275,8 +263,9 @@ class SimpleDensityLayer(DensityLayer):
             Parameters for the density plot
 
         """
-        default_params = DEFAULT_SIMPLE_DENSITY_PARAMS.copy()
-        merged_params = {**default_params, **params}
         super().__init__(
-            custom_data=custom_data, include_outline=include_outline, **merged_params
+            custom_data=custom_data,
+            include_outline=include_outline,
+            param_model=SimpleDensityParams,
+            **params,
         )

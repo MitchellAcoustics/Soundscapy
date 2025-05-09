@@ -32,10 +32,8 @@ from soundscapy.plotting.defaults import (
 )
 from soundscapy.plotting.plotting_types import (
     MplLegendLocType,
-    ParamModel,
     ScatterParams,
     SeabornPaletteType,
-    SeabornParams,
     StyleParams,
     SubplotsParams,
 )
