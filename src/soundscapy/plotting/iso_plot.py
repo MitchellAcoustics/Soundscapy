@@ -469,9 +469,12 @@ class ISOPlot:
         # Create a list of dataframes and titles for each subplot
         # based on the unique values in the specified column
         if subplot_by:
-            subplot_datas, subplot_titles = self._setup_subplot_by(
+            logger.debug(f"Creating subplots by unique values in {subplot_by}.")
+            subplot_datas, subplot_titles, n_subplots_by = self._setup_subplot_by(
                 subplot_by, subplot_datas, subplot_titles
             )
+        else:
+            n_subplots_by = -1
 
         if subplot_titles and auto_allocate_axes:
             # Attempt to allocate axes based on the number of subplots
@@ -482,11 +485,18 @@ class ISOPlot:
 
             # Set up subplot parameters
         self.subplots_params = self.subplots_params.update(
-            nrows=nrows, ncols=ncols, figsize=figsize, **kwargs
+            nrows=nrows,
+            ncols=ncols,
+            figsize=figsize,
+            n_subplots_by=n_subplots_by,
+            **kwargs,
         )
+        logger.debug(f"Subplot parameters: {self.subplots_params}")
 
         # Create the figure and axes
-        self.figure, self.axes = plt.subplots(**self.subplots_params.as_dict())
+        self.figure, self.axes = plt.subplots(
+            **self.subplots_params.as_plt_subplots_args()
+        )
 
         # If subplot_datas or subplot_titles are provided, validate them
         if subplot_datas is not None or subplot_titles is not None:
@@ -496,11 +506,14 @@ class ISOPlot:
         self.subplot_contexts = []
 
         for i, ax in enumerate(self.yield_axes_objects()):
+            if i >= self._naxes:
+                break
+            if subplot_by and i >= n_subplots_by:
+                logger.debug(f"Created {i + 1} subplots for {subplot_by}.")
+                break
             # Get data and title for this subplot if available
             data = (
-                subplot_datas[i]
-                if subplot_datas and i < len(subplot_datas)
-                else self._data
+                subplot_datas[i] if subplot_datas and i < len(subplot_datas) else None
             )
             title = (
                 subplot_titles[i]
@@ -570,7 +583,7 @@ class ISOPlot:
         subplot_by: str,
         subplot_datas: list[pd.DataFrame] | None,
         subplot_titles: list[str] | None,
-    ) -> tuple[list[pd.DataFrame], list[str]]:
+    ) -> tuple[list[pd.DataFrame], list[str], int]:
         """If subplot_by is provided, create subplots based on the unique values."""
         if subplot_datas:
             msg = "Provide either subplot_by or subplot_datas, but not both."
@@ -592,9 +605,11 @@ class ISOPlot:
         # Create subplot_datas based on the unique values in the specified column
         full_data = self._data.copy()
         unique_values = full_data[subplot_by].unique()
-        if len(unique_values) < 2:  # noqa: PLR2004
+        n_subplots_by = len(unique_values)
+        logger.debug(f"Found {n_subplots_by + 1} unique values in '{subplot_by}'.")
+        if n_subplots_by < 2:  # noqa: PLR2004
             warnings.warn(
-                f"Only {len(unique_values)} unique values found in '{subplot_by}'. "
+                f"Only {n_subplots_by} unique values found in '{subplot_by}'. "
                 "Subplots may not be meaningful.",
                 UserWarning,
                 stacklevel=2,
@@ -608,11 +623,11 @@ class ISOPlot:
         # Create subplot titles based on the unique values
         if subplot_titles is None:
             subplot_titles = [str(value) for value in unique_values]
-        elif len(subplot_titles) != len(unique_values):
+        elif len(subplot_titles) != n_subplots_by:
             msg = (
                 "Number of subplot titles must match the number of unique values "
                 f"for '{subplot_by}'. Got {len(subplot_titles)} titles and "
-                f"{len(unique_values)} unique values."
+                f"{n_subplots_by} unique values."
             )
             raise ValueError(msg)
         else:
@@ -624,7 +639,7 @@ class ISOPlot:
             )
             warnings.warn(msg, UserWarning, stacklevel=2)
 
-        return subplot_datas, subplot_titles
+        return subplot_datas, subplot_titles, n_subplots_by
 
     def _validate_subplots_datas(
         self,
@@ -878,9 +893,9 @@ class ISOPlot:
     def add_layer(
         self,
         layer_class: type[Layer],
-        on_axis: int | tuple[int, int] | list[int] | None = None,
-        *,
         data: pd.DataFrame | None = None,
+        *,
+        on_axis: int | tuple[int, int] | list[int] | None = None,
         **params: Any,
     ) -> ISOPlot:
         """
@@ -998,9 +1013,13 @@ class ISOPlot:
 
         # Handle various axis targeting options
         target_contexts = self._resolve_target_contexts(on_axis)
+        logger.debug(f"N target contexts: {len(target_contexts)}")
 
         # Add the layer to each target context and render it
-        for context in target_contexts:
+        for i, context in enumerate(target_contexts):
+            if data is not None and i >= self.subplots_params.n_subplots_by > 0:
+                # If custom data is provided, use it for the specific subplot
+                break
             context.layers.append(layer)
             layer.render(context)
 
@@ -1080,8 +1099,9 @@ class ISOPlot:
 
     def add_scatter(
         self,
-        on_axis: int | tuple[int, int] | list[int] | None = None,
         data: pd.DataFrame | None = None,
+        *,
+        on_axis: int | tuple[int, int] | list[int] | None = None,
         **params: Any,
     ) -> ISOPlot:
         """
@@ -1143,7 +1163,7 @@ class ISOPlot:
         scatter_params = self._scatter_params.model_copy().drop("data").update(**params)
 
         return self.add_layer(
-            ScatterLayer, on_axis=on_axis, data=data, **scatter_params.as_dict()
+            ScatterLayer, data=data, on_axis=on_axis, **scatter_params.as_dict()
         )
 
     def add_spi(
@@ -1311,8 +1331,8 @@ class ISOPlot:
 
         return self.add_layer(
             DensityLayer,
-            on_axis=on_axis,
             data=data,
+            on_axis=on_axis,
             include_outline=include_outline,
             **density_params.as_dict(),
         )
@@ -1725,7 +1745,7 @@ class ISOPlot:
         for i, axis in enumerate(self.yield_axes_objects()):
             old_legend = axis.get_legend()
             if old_legend is None:
-                logger.debug("_move_legend: No legend found for axis %s", i)
+                # logger.debug("_move_legend: No legend found for axis %s", i)
                 continue
 
             # Get handles and filter out None values
@@ -1734,9 +1754,6 @@ class ISOPlot:
             ]
             # Skip if no valid handles remain
             if not handles:
-                logger.warning(
-                    "_move_legend: No valid handles found in legend for axis %s", i
-                )
                 continue
 
             labels = [t.get_text() for t in old_legend.get_texts()]
