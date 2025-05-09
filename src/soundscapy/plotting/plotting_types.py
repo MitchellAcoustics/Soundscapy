@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import Colormap
 from matplotlib.typing import ColorType
-from pydantic import BaseModel, ConfigDict, validate_call
+from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_snake
 
 from soundscapy.sspylogging import get_logger
@@ -136,7 +136,7 @@ class ParamModel(BaseModel):
 
         return cls._param_registry[param_type]
 
-    @validate_call
+    # @validate_call
     def update(
         self,
         *,
@@ -297,7 +297,7 @@ class ParamModel(BaseModel):
         delattr(self, key)
         return value
 
-    def drop(self, keys: str | Iterable[str]) -> Self:
+    def drop(self, keys: str | Iterable[str], *, ignore_missing: bool = True) -> Self:
         """
         Remove a parameter without returning its value.
 
@@ -316,6 +316,8 @@ class ParamModel(BaseModel):
             keys = [keys]
         for k in keys:
             if not hasattr(self, k):
+                if ignore_missing:
+                    continue
                 msg = f"Parameter '{k}' does not exist."
                 raise KeyError(msg)
             delattr(self, k)
@@ -371,6 +373,18 @@ class SeabornParams(ParamModel):
         """
         self.palette = self.palette if self.hue is not None else None
 
+    def as_seaborn_kwargs(self) -> dict[str, Any]:
+        """
+        Convert parameters to kwargs compatible with seaborn functions.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary of parameter values suitable for seaborn plotting functions.
+
+        """
+        return self.as_dict()
+
 
 class ScatterParams(SeabornParams):
     """Parameters for scatter plot functions."""
@@ -385,24 +399,40 @@ class DensityParams(SeabornParams):
     common_norm: bool = False
     common_grid: bool = False
     bw_adjust: float = 1.2  # DEFAULT_BW_ADJUST
-    levels: int | Iterable[float] = 10
+    levels: int | tuple[float, ...] = 10
     clip: tuple[tuple[float, float], tuple[float, float]] | None = (
         (-1, 1),
         (-1, 1),
     )  # DEFAULT_XLIM, DEFAULT_YLIM
 
-    def get_outline_dict(
-        self, *, levels: int | Iterable[float] = [0, 0.5], alpha: float = 0.5
-    ) -> dict[str, Any]:
+    def as_seaborn_kwargs(self) -> dict[str, Any]:
+        """
+        Convert parameters to kwargs compatible with seaborn functions.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary of parameter values suitable for seaborn plotting functions.
+
+        """
+        # None to drop yet
+        return super().as_seaborn_kwargs()
+
+    def to_outline(
+        self,
+        *,
+        alpha: float = 1,
+        fill: bool = False,
+    ) -> Self:
         """
         Get parameters for the outline of density plots.
 
         Parameters
         ----------
-        levels : int | Iterable[float], optional
-            The levels for the outline. Default is [0, 0.5].
+        levels : int | tuple[float, float], optional
+            The levels for the outline. Default is (0, 0.5).
         alpha : float, optional
-            The alpha value for the outline. Default is 0.5.
+            The alpha value for the outline. Default is 1.
 
         Returns
         -------
@@ -411,17 +441,51 @@ class DensityParams(SeabornParams):
 
         """
         # Set levels and alpha for simple density plots
-        return self.model_copy(
-            update={"levels": levels, "alpha": alpha, "legend": False}
-        ).as_dict()
+        return self.model_copy(update={"alpha": alpha, "fill": fill, "legend": False})
 
 
 class SimpleDensityParams(DensityParams):
     """Parameters for simple density plots."""
 
     # Override default levels for simple density plots
-    levels: int | Iterable[float] = [0, 0.5]
+    thresh: float = 0.5
+    levels: int | tuple[float, ...] = 2
     alpha: float = 0.5
+
+
+class SPISeabornParams(SeabornParams):
+    """Base parameters for seaborn plotting functions for SPI data."""
+
+    color: ColorType | None = "red"
+    hue: str | np.ndarray | pd.Series | None = None
+    palette: SeabornPaletteType | None = None
+    label: str = "SPI"
+    n: int = 1000
+    show_score: Literal["on axis", "under title"] = "under title"
+    axis_text_kw: dict[str, Any] | None = None
+
+    def as_seaborn_kwargs(self) -> dict[str, Any]:
+        """
+        Convert parameters to kwargs compatible with seaborn functions.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary of parameter values suitable for seaborn plotting functions.
+
+        """
+        self.drop(["n", "show_score", "axis_text_kw"])
+        return self.as_dict()
+
+
+class SPISimpleDensityParams(SPISeabornParams, SimpleDensityParams):
+    """Parameters for simple density plotting of SPI data."""
+
+    # include_outline: bool = True
+    #
+    # def as_seaborn_kwargs(self) -> dict[str, Any]:
+    #     self.drop(["include_outline"])
+    #     return super().as_seaborn_kwargs()
 
 
 class JointPlotParams(ParamModel):

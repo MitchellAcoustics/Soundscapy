@@ -11,6 +11,8 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
@@ -19,13 +21,15 @@ from soundscapy.plotting.plotting_types import (
     ScatterParams,
     SeabornParams,
     SimpleDensityParams,
+    SPISeabornParams,
+    SPISimpleDensityParams,
 )
 from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
-    import pandas as pd
     from matplotlib.axes import Axes
 
+    from soundscapy import CentredParams, DirectParams
     from soundscapy.plotting.plot_context import PlotContext
 
 logger = get_logger()
@@ -128,7 +132,6 @@ class ScatterLayer(Layer):
             Parameters for the scatter plot
 
         """
-        self.params: ScatterParams
         super().__init__(custom_data=custom_data, param_model=ScatterParams, **params)
 
     def _render_implementation(
@@ -159,7 +162,7 @@ class ScatterLayer(Layer):
         plot_params.crosscheck_palette_hue()
 
         # Render scatter plot
-        sns.scatterplot(data=data, x=x, y=y, ax=ax, **plot_params.as_dict())
+        sns.scatterplot(data=data, x=x, y=y, ax=ax, **plot_params.as_seaborn_kwargs())
 
 
 class DensityLayer(Layer):
@@ -187,7 +190,6 @@ class DensityLayer(Layer):
 
         """
         self.include_outline = include_outline
-        self.params: DensityParams
         super().__init__(custom_data=custom_data, param_model=param_model, **params)
 
     def _render_implementation(
@@ -207,17 +209,11 @@ class DensityLayer(Layer):
 
         """
         # Check if there's enough data for a meaningful density plot
-        if len(data) < RECOMMENDED_MIN_SAMPLES:
-            warnings.warn(
-                "Density plots are not recommended for small datasets (<30 samples).",
-                UserWarning,
-                stacklevel=2,
-            )
+        self._valid_density_size(data)
 
         # Get data-specific properties or fall back to context defaults
         x = self.params.get("x", context.x)
         y = self.params.get("y", context.y)
-        hue = self.params.get("hue", context.hue)
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
         plot_params = self.params.model_copy()
@@ -227,7 +223,7 @@ class DensityLayer(Layer):
         plot_params.crosscheck_palette_hue()
 
         # Render density plot
-        sns.kdeplot(data=data, x=x, y=y, ax=ax, **plot_params.as_dict())
+        sns.kdeplot(data=data, x=x, y=y, ax=ax, **plot_params.as_seaborn_kwargs())
 
         # If requested, add an outline around the density plot
         if self.include_outline:
@@ -236,7 +232,17 @@ class DensityLayer(Layer):
                 x=x,
                 y=y,
                 ax=ax,
-                **plot_params.get_outline_dict(),
+                **plot_params.to_outline().as_seaborn_kwargs(),
+            )
+
+    @staticmethod
+    def _valid_density_size(data: pd.DataFrame) -> None:
+        # Check if there's enough data for a meaningful density plot
+        if len(data) < RECOMMENDED_MIN_SAMPLES:
+            warnings.warn(
+                "Density plots are not recommended for small datasets (<30 samples).",
+                UserWarning,
+                stacklevel=2,
             )
 
 
@@ -247,6 +253,247 @@ class SimpleDensityLayer(DensityLayer):
         self,
         custom_data: pd.DataFrame | None = None,
         *,
+        include_outline: bool = True,
+        param_model: type[SimpleDensityParams] = SimpleDensityParams,
+        **params: Any,
+    ) -> None:
+        """
+        Initialize a SimpleDensityLayer.
+
+        Parameters
+        ----------
+        custom_data : pd.DataFrame | None
+            Optional custom data for this specific layer
+        include_outline : bool
+            Whether to include an outline around the density plot
+        **params : dict
+            Parameters for the density plot
+
+        """
+        super().__init__(
+            custom_data=custom_data,
+            include_outline=include_outline,  # Could move into params now
+            param_model=param_model,
+            **params,
+        )
+
+
+class SPILayer(Layer):
+    """Layer for rendering SPI plots."""
+
+    def __init__(
+        self,
+        custom_data: pd.DataFrame | None = None,
+        *,
+        # TODO(MitchellAcoustics): Allow passing raw param values,
+        #  not just Param objects
+        msn_params: DirectParams | CentredParams | None = None,
+        n: int = 10000,
+        param_model: type[SPISeabornParams] = SPISeabornParams,
+        **params: Any,
+    ) -> None:
+        # The custom_data passed when adding this layer should be the spi_data.
+        # We will retrieve the test_data from the subplot context, so real data layers
+        # need to be passed before this one, or use the data from the
+        # main ISOPlot context
+        spi_data = custom_data
+
+        # Check that we have the information needed to generate SPI target data
+        # (either the spi_data or msn_params)
+        self.spi_data, self.spi_params = self._validate_spi_inputs(spi_data, msn_params)
+        # Generate the spi target data
+        self.spi_data = self._generate_spi_data(self.spi_data, self.spi_params, n)
+        params["n"] = n
+
+        super().__init__(custom_data=spi_data, param_model=param_model, **params)
+
+    def render(self, context: PlotContext) -> None:
+        """
+        Render this layer on the given context.
+
+        Parameters
+        ----------
+        context : PlotContext
+            The context containing data and axes for rendering
+
+        """
+        if context.ax is None:
+            msg = "Cannot render layer: context has no associated axes"
+            raise ValueError(msg)
+
+        target_data = self.spi_data
+        # Mutate spi_data to match the context test_data.
+        target_data = self._process_spi_data(target_data, context)
+
+        if target_data is None:
+            msg = "No data available for rendering layer"
+            raise ValueError(msg)
+
+        # Now we have the SPI target_data and the test data in context.data
+        # SPILayer._render_implementation() will handle calculating the SPI score
+        # against this particular context / ax test data
+
+        self._render_implementation(target_data, context, context.ax)
+
+    def _render_implementation(
+        self, data: pd.DataFrame, context: PlotContext, ax: Axes
+    ) -> None:
+        target_data = data if data is not None else self.spi_data
+        test_data = context.data
+        if test_data is None:
+            warnings.warn(
+                "Cannot find data to test SPI against. Skipping this plot.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return
+
+        # Process spi_data then pass to DensityLayer method
+        spi_sc = self._calc_context_spi_score(target_data, test_data)
+        # TODO: Add spi_score to plot and table
+        super()._render_implementation(target_data, context, ax)
+
+    @staticmethod
+    def _validate_spi_inputs(
+        spi_data: pd.DataFrame | np.ndarray | None,
+        spi_params: DirectParams | CentredParams | None,
+    ) -> tuple[pd.DataFrame | np.ndarray | None, DirectParams | CentredParams | None]:
+        """Validate the right combination of inputs for the SPI plot."""
+        from soundscapy.spi.msn import CentredParams, DirectParams
+
+        # Input validation
+        if spi_data is None and spi_params is None:
+            msg = (
+                "No data provided for SPI plot. "
+                "Please provide either spi_data or msn_params."
+            )
+            raise ValueError(msg)
+
+        if spi_data is not None and spi_params is not None:
+            msg = (
+                "Please provide either spi_data or msn_params, not both. "
+                "Got: \n"
+                f"\n`spi_data`: {type(spi_data)}\n`spi_params`: {type(spi_params)}"
+            )
+            raise ValueError(msg)
+
+        if spi_data is not None and not isinstance(spi_data, pd.DataFrame | np.ndarray):
+            msg = "Invalid data type for SPI plot. Expected DataFrame or ndarray."
+            raise TypeError(msg)
+
+        if spi_params is not None and not isinstance(
+            spi_params, DirectParams | CentredParams
+        ):
+            msg = (
+                "Invalid parameters for SPI plot. "
+                "Expected DirectParams or CentredParams."
+            )
+            raise TypeError(msg)
+
+        return spi_data, spi_params
+
+    @staticmethod
+    def _generate_spi_data(
+        spi_data: pd.DataFrame | np.ndarray | None,
+        spi_params: DirectParams | CentredParams | None,
+        n: int,
+    ) -> pd.DataFrame:
+        """
+        Validate and prepare SPI data from either direct data or parameters.
+
+        Parameters
+        ----------
+        spi_data : pd.DataFrame | np.ndarray | None
+            Data to use for SPI plotting
+        spi_params : DirectParams | CentredParams | None
+            Parameters to generate SPI data
+        n : int
+            Number of samples to generate if using msn_params
+        kwargs : dict
+            Additional parameters
+
+        Returns
+        -------
+        pd.DataFrame
+            Prepared data for SPI plotting
+
+        """
+        from soundscapy.spi.msn import MultiSkewNorm
+
+        # Generate data from parameters if provided
+        if spi_params is not None:
+            spi_msn = MultiSkewNorm.from_params(spi_params)
+            sample_data = spi_msn.sample(n=n, return_sample=True)
+            spi_data = pd.DataFrame(
+                sample_data,
+                columns=["x", "y"],
+            )
+        if spi_data is not None:
+            # Process provided data
+            return spi_data
+
+        msg = "Please provide either spi_data or msn_params, not both."
+        raise ValueError(msg)
+
+    def _process_spi_data(
+        self, spi_data: pd.DataFrame | np.ndarray, context: PlotContext
+    ) -> pd.DataFrame:
+        """
+        Process SPI data into standard format.
+
+        Parameters
+        ----------
+        spi_data : pd.DataFrame | np.ndarray
+            Data to process
+        kwargs : dict
+            Additional parameters with x and y column names
+
+        Returns
+        -------
+        pd.DataFrame
+            Processed data in standard format
+
+        """
+        xcol = self.params.get("x", context.x)
+        ycol = self.params.get("y", context.y)
+
+        if not (isinstance(xcol, str) and isinstance(ycol, str)):
+            msg = "Sorry, at the moment in this method, x and y must be strings."
+            raise TypeError(msg)
+
+        # DataFrame handling
+        if isinstance(spi_data, pd.DataFrame):
+            if xcol not in spi_data.columns or ycol not in spi_data.columns:
+                spi_data = spi_data.rename(columns={"x": xcol, "y": ycol})
+            return spi_data
+
+        # Numpy array handling
+        if isinstance(spi_data, np.ndarray):
+            if len(spi_data.shape) != 2 or spi_data.shape[1] != 2:  # noqa: PLR2004
+                msg = "Invalid shape for SPI data. Expected a 2D array with 2 columns."
+                raise ValueError(msg)
+            return pd.DataFrame(spi_data, columns=[xcol, ycol])
+        msg = "Invalid SPI data type. Expected DataFrame or numpy array."
+        raise TypeError(msg)
+
+    @staticmethod
+    def _calc_context_spi_score(
+        target_data: pd.DataFrame,
+        test_data: pd.DataFrame,
+    ) -> int | None:
+        from soundscapy.spi import spi_score
+
+        return spi_score(target=target_data, test=test_data)
+
+
+class SPISimpleLayer(SimpleDensityLayer, SPILayer):
+    """Layer for rendering simplified SPI plots with fewer contour levels."""
+
+    def __init__(
+        self,
+        custom_data: pd.DataFrame | None = None,
+        *,
+        msn_params: DirectParams | CentredParams | None = None,
         include_outline: bool = True,
         **params: Any,
     ) -> None:
@@ -266,6 +513,41 @@ class SimpleDensityLayer(DensityLayer):
         super().__init__(
             custom_data=custom_data,
             include_outline=include_outline,
-            param_model=SimpleDensityParams,
+            param_model=SPISimpleDensityParams,
+            msn_params=msn_params,
             **params,
         )
+
+
+class SPIDensityLayer(SPILayer, DensityLayer):
+    """Layer for rendering simplified SPI plots with fewer contour levels."""
+
+    def __init__(self) -> None:
+        """
+        Initialize SPIDensityLayer.
+
+        This initialization is not supported and will raise NotImplementedError.
+        Use SPISimpleLayer instead.
+        """
+        msg = (
+            "Only the simple density layer type is currently supported for SPI plots. "
+            "Please use SPISimpleLayer"
+        )
+        raise NotImplementedError(msg)
+
+
+class SPIScatterLayer(SPILayer, ScatterLayer):
+    """Layer for rendering simplified SPI plots with fewer contour levels."""
+
+    def __init__(self) -> None:
+        """
+        Initialize SPIScatterLayer.
+
+        This initialization is not supported and will raise NotImplementedError.
+        Use SPISimpleLayer instead.
+        """
+        msg = (
+            "Only the simple density layer type is currently supported for SPI plots. "
+            "Please use SPISimpleLayer"
+        )
+        raise NotImplementedError(msg)
