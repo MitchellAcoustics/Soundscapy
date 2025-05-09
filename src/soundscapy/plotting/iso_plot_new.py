@@ -1197,13 +1197,14 @@ class ISOPlot:
         ...     )
         >>>    # Create the plot with only an SPI layer
         >>> plot = (
-        ...     ISOPlot()
+        ...     ISOPlot(data=data)
         ...     .create_subplots()
+        ...     .add_scatter()
         ...     .add_spi(msn_params=msn_params)
         ...     .apply_styling()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
-        >>> len(plot.subplot_contexts[0].layers) == 1
+        >>> plot.show()
+        >>> len(plot.subplot_contexts[0].layers) == 2
         True
         >>> plot.close()  # Clean up
 
@@ -1213,10 +1214,10 @@ class ISOPlot:
         ...     .create_subplots()
         ...     .add_scatter()
         ...     .add_density()
-        ...     .add_spi(msn_params=msn_params)
+        ...     .add_spi(msn_params=msn_params, show_score="on axis")
         ...     .apply_styling()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers) == 3
         True
         >>> plot.close()  # Clean up
