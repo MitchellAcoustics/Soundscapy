@@ -15,13 +15,12 @@ from matplotlib.axes import Axes
 from matplotlib.ticker import AutoMinorLocator
 from matplotlib.typing import ColorType
 
-from soundscapy.plotting.backends import Backend
+from soundscapy.plotting.backends_deprecated import Backend
 from soundscapy.plotting.defaults import (
     DEFAULT_BW_ADJUST,
     DEFAULT_COLOR,
     DEFAULT_DENSITY_PARAMS,
     DEFAULT_FIGSIZE,
-    DEFAULT_POINT_SIZE,
     DEFAULT_SCATTER_PARAMS,
     DEFAULT_SEABORN_PARAMS,
     DEFAULT_SIMPLE_DENSITY_PARAMS,
@@ -31,7 +30,15 @@ from soundscapy.plotting.defaults import (
     DEFAULT_YCOL,
     RECOMMENDED_MIN_SAMPLES,
 )
-from soundscapy.plotting.plotting_types import MplLegendLocType, SeabornPaletteType
+from soundscapy.plotting.plotting_types import (
+    MplLegendLocType,
+    ParamModel,
+    ScatterParams,
+    SeabornPaletteType,
+    SeabornParams,
+    StyleParams,
+    SubplotsParams,
+)
 from soundscapy.sspylogging import get_logger
 
 logger = get_logger()
@@ -46,9 +53,6 @@ def scatter(
     ax: Axes | None = None,
     hue: str | np.ndarray | pd.Series | None = None,
     palette: SeabornPaletteType | None = "colorblind",
-    color: ColorType | None = DEFAULT_COLOR,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
-    s: float = DEFAULT_POINT_SIZE,
     legend: Literal["auto", "brief", "full", False] = "auto",
     prim_labels: bool | None = None,  # Alias for primary_labels, deprecated
     **kwargs,
@@ -160,48 +164,44 @@ def scatter(
     >>> plt.show() # xdoctest: +SKIP
 
     """
-    if ax is None:
-        _, ax = plt.subplots(1, 1, figsize=figsize)
+    style_args = StyleParams().update(**kwargs, extra="ignore", na_rm=False)
+    subplots_args = SubplotsParams().update(**kwargs, extra="ignore", na_rm=False)
+
+    # Remove style and scatter args from kwargs
+    [kwargs.pop(k, None) for k in style_args.field_names + subplots_args.field_names]
+
+    scatter_args = ScatterParams().update(
+        data=data, x=x, y=y, palette=palette, extra="allow", na_rm=False, **kwargs
+    )  # pass all the rest to scatter
 
     # Removes the palette if no hue is specified
-    palette = palette if hue is not None else None
+    scatter_args.crosscheck_palette_hue()
 
-    # Get style params / kwargs
-    xlabel, ylabel, xlim, ylim, legend_loc, diagonal_lines, prim_ax_fontdict = (
-        _pop_style_kwargs(kwargs)
-    )
+    if ax is None:
+        _, ax = plt.subplots(1, 1, figsize=subplots_args.figsize)
 
-    p = sns.scatterplot(
-        data=data,
+    p = sns.scatterplot(ax=ax, **scatter_args.as_dict())
+
+    style_args.xlabel, style_args.ylabel = _deal_w_default_labels(
         x=x,
         y=y,
-        hue=hue,
-        s=s,
-        palette=palette,
-        color=color,
-        legend=legend,
-        ax=ax,
-        zorder=DEFAULT_STYLE_PARAMS["data_zorder"],
-        **kwargs,
-    )
-
-    xlabel, ylabel = _deal_w_default_labels(
-        x=x, y=y, xlabel=xlabel, ylabel=ylabel, prim_labels=prim_labels
+        xlabel=style_args.xlabel,
+        ylabel=style_args.ylabel,
+        prim_labels=prim_labels,
     )
     _set_style()
     _circumplex_grid(
         ax=ax,
-        xlim=xlim,
-        ylim=ylim,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        diagonal_lines=diagonal_lines,
-        prim_ax_fontdict=prim_ax_fontdict,
+        **style_args.get_multiple(
+            ["xlim", "ylim", "xlabel", "ylabel", "diagonal_lines", "prim_ax_fontdict"]
+        ),
     )
     if title is not None:
-        _set_circum_title(ax=ax, title=title, xlabel=xlabel, ylabel=ylabel)
-    if legend is not None and hue is not None:
-        _move_legend(ax=ax, new_loc=legend_loc)
+        _set_circum_title(
+            ax=ax, title=title, xlabel=style_args.xlabel, ylabel=style_args.ylabel
+        )
+    if legend is not None and hue is not None and style_args.legend_loc is not False:
+        _move_legend(ax=ax, new_loc=style_args.legend_loc)
     return p
 
 

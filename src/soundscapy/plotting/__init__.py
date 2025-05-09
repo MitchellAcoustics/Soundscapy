@@ -7,7 +7,7 @@ of use.
 """
 
 from soundscapy.plotting import likert
-from soundscapy.plotting.backends import (
+from soundscapy.plotting.backends_deprecated import (
     Backend,
     CircumplexPlot,
     CircumplexPlotParams,

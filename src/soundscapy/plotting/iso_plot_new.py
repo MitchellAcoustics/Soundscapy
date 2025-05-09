@@ -72,12 +72,6 @@ if TYPE_CHECKING:
     from soundscapy.plotting.plotting_types import SeabornPaletteType
 
 
-# Helper function to create parameter models
-def create_param_model(param_type: str, **kwargs) -> ParamModel:
-    """Create a parameter model instance."""
-    return ParamModel.create(param_type, **kwargs)
-
-
 logger = get_logger()
 
 
