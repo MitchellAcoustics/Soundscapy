@@ -4,8 +4,8 @@ repos:
     hooks:
       # TODO(MitchellAcoustics): Enable linting pre-commit hooks
       # https://github.com/MitchellAcoustics/Soundscapy/issues/114
-      # - id: ruff
-      #   exclude: ^test/.*\.py$
+      - id: ruff
+        exclude: ^test/.*\.py$
       - id: ruff-format
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.44.0
@@ -23,10 +23,10 @@ repos:
       - id: toml-sort-fix
   # TODO(MitchellAcoustics): Enable linting pre-commit hooks
   # https://github.com/MitchellAcoustics/Soundscapy/issues/114
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.15.0
-  #   hooks:
-  #     - id: mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.5.3
     hooks:
