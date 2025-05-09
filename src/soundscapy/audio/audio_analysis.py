@@ -163,7 +163,7 @@ class AudioAnalysis:
                 try:
                     result = future.result()
                     all_results.append(result)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001, PERF203
                     logger.error(f"Error processing file: {e!s}")
 
         combined_results = pd.concat(all_results)

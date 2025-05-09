@@ -383,7 +383,8 @@ class SeabornParams(ParamModel):
             Dictionary of parameter values suitable for seaborn plotting functions.
 
         """
-        return self.as_dict()
+        new = self.model_copy()
+        return new.as_dict()
 
 
 class ScatterParams(SeabornParams):
@@ -487,8 +488,9 @@ class SPISeabornParams(SeabornParams):
             Dictionary of parameter values suitable for seaborn plotting functions.
 
         """
-        self.drop(["n", "show_score", "axis_text_kw"])
-        return self.as_dict()
+        new = self.model_copy()
+        new.drop(["n", "show_score", "axis_text_kw"])
+        return new.as_dict()
 
 
 class SPISimpleDensityParams(SPISeabornParams, SimpleDensityParams):
@@ -579,6 +581,12 @@ class SubplotsParams(ParamModel):
     figsize: tuple[float, float] = (5, 5)
     sharex: bool | Literal["none", "all", "row", "col"] = True
     sharey: bool | Literal["none", "all", "row", "col"] = True
+    subplot_by: str | None = None
+    n_subplots_by: int = -1
+    """"The number of subplots allocated for each subplot_by category."""
+
+    auto_allocate_axes: bool = False
+    adjust_figsize: bool = True
 
     @property
     def n_subplots(self) -> int:
@@ -608,10 +616,8 @@ class SubplotsParams(ParamModel):
             Dictionary of subplot parameters.
 
         """
-        return {
-            "nrows": self.nrows,
-            "ncols": self.ncols,
-            "figsize": self.figsize,
-            "sharex": self.sharex,
-            "sharey": self.sharey,
-        }
+        new = self.model_copy()
+        new.drop(
+            ["subplot_by", "n_subplots_by", "auto_allocate_axes", "adjust_figsize"]
+        )
+        return new.as_dict()
