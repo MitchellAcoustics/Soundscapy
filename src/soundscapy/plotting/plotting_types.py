@@ -1,11 +1,10 @@
 """Utility functions and constants for the soundscapy plotting module."""
 
+# ruff: noqa: ANN401, TC002, TC003
 from __future__ import annotations
 
-import copy
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Iterable
 from typing import (
-    TYPE_CHECKING,
     Any,
     ClassVar,
     Literal,
@@ -15,19 +14,11 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from matplotlib.axes import Axes
-from matplotlib.colors import Colormap, Normalize
+from matplotlib.colors import Colormap
 from matplotlib.typing import ColorType
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, validate_call
 from pydantic.alias_generators import to_snake
 
-from soundscapy.plotting.defaults import (
-    DEFAULT_DENSITY_PARAMS,
-    DEFAULT_SCATTER_PARAMS,
-    DEFAULT_SIMPLE_DENSITY_PARAMS,
-    DEFAULT_STYLE_PARAMS,
-    DEFAULT_SUBPLOTS_PARAMS,
-)
 from soundscapy.sspylogging import get_logger
 
 logger = get_logger()
@@ -58,18 +49,8 @@ class ParamModel(BaseModel):
     Base model for parameter validation.
 
     This class provides the foundation for all parameter models with
-    common configuration settings and utility methods. It also maintains
-    the default parameter registry for creating parameter instances.
+    common configuration settings and utility methods.
     """
-
-    # Registry of default parameters
-    _default_params: ClassVar[dict[str, dict[str, Any]]] = {
-        "scatter": DEFAULT_SCATTER_PARAMS,
-        "density": DEFAULT_DENSITY_PARAMS,
-        "simple_density": DEFAULT_SIMPLE_DENSITY_PARAMS,
-        "style": DEFAULT_STYLE_PARAMS,
-        "subplots": DEFAULT_SUBPLOTS_PARAMS,
-    }
 
     # Registry for parameter model classes
     _param_registry: ClassVar[dict[str, type[ParamModel]]] = {}
@@ -125,11 +106,8 @@ class ParamModel(BaseModel):
         # Get the parameter model class
         model_class = cls.get_param_class(param_type)
 
-        # Get default parameter values
-        default_params = cls._get_default_params(param_type)
-
-        # Create instance with defaults and then update with kwargs
-        return model_class(**default_params).update(**kwargs)
+        # Create instance and update with kwargs
+        return model_class().update(**kwargs)
 
     @classmethod
     def get_param_class(cls, param_type: str) -> type[ParamModel]:
@@ -158,39 +136,21 @@ class ParamModel(BaseModel):
 
         return cls._param_registry[param_type]
 
-    @classmethod
-    def _get_default_params(cls, param_type: str) -> dict[str, Any]:
-        """
-        Get the default parameters for a parameter type.
-
-        Parameters
-        ----------
-        param_type : str
-            The type of parameters to get defaults for
-
-        Returns
-        -------
-        Dict[str, Any]
-            Default parameters for the specified type
-
-        Raises
-        ------
-        ValueError
-            If the parameter type is unknown
-
-        """
-        if param_type in cls._default_params:
-            return copy.deepcopy(cls._default_params[param_type])
-
-        msg = f"Unknown parameter type: {param_type}"
-        raise ValueError(msg)
-
-    def update(self, **kwargs: Any) -> Self:
+    @validate_call
+    def update(
+        self,
+        *,
+        extra: Literal["allow", "forbid", "ignore"] = "allow",
+        na_rm: bool = True,
+        **kwargs: Any,
+    ) -> Self:
         """
         Update parameters with new values.
 
         Parameters
         ----------
+        extra : Literal["allow", "forbid", "ignore"], optional
+            Controls how extra fields are handled. Default is "allow".
         **kwargs : Any
             New parameter values
 
@@ -200,14 +160,28 @@ class ParamModel(BaseModel):
             The updated parameter instance (for chaining)
 
         """
-        # Filter out None values to avoid overriding defaults with None
-        filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        if extra == "forbid":
+            # Forbid extra fields
+            unknown_keys = set(kwargs) - set(self.model_fields)
+            if unknown_keys:
+                msg = f"Unknown parameters: {unknown_keys}"
+                raise ValueError(msg)
+        elif extra == "ignore":
+            # Ignore extra fields
+            kwargs = {k: v for k, v in kwargs.items() if k in self.model_fields}
+        elif extra != "allow":
+            msg = f"Invalid value for 'extra': {extra}"
+            raise ValueError(msg)
+        # Remove None values if na_rm is True
+        if na_rm:
+            # Filter out None values to avoid overriding defaults with None
+            kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
-        for key, value in filtered_kwargs.items():
+        for key, value in kwargs.items():
             try:
                 setattr(self, key, value)
-            except ValueError as e:
-                logger.warning(f"Invalid value for {key}: {e}")
+            except ValueError as e:  # noqa: PERF203
+                logger.warning("Invalid value for %s: %s", key, e)
 
         return self
 
@@ -255,7 +229,7 @@ class ParamModel(BaseModel):
         except AttributeError as e:
             raise KeyError(str(e)) from e
 
-    def as_dict(self) -> dict[str, Any]:
+    def as_dict(self, **kwargs) -> dict[str, Any]:
         """
         Get all parameters as a dictionary.
 
@@ -265,91 +239,127 @@ class ParamModel(BaseModel):
             Dictionary of parameter values
 
         """
-        return self.model_dump(exclude_none=True)
+        return self.model_dump(**kwargs)
+
+    def get_changed_params(self) -> dict[str, Any]:
+        """
+        Get parameters that have been changed from their defaults.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary of changed parameters
+
+        """
+        return self.model_dump(exclude_unset=True)
+
+    def get_multiple(self, keys: list[str]) -> dict[str, Any]:
+        """
+        Get multiple parameters as a dictionary.
+
+        Parameters
+        ----------
+        keys : list[str]
+            List of parameter names
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary of parameter values
+
+        """
+        return {key: getattr(self, key) for key in keys if hasattr(self, key)}
+
+    @property
+    def field_names(self) -> list[str]:
+        """
+        Get the names of all fields in the model.
+
+        Returns
+        -------
+        List[str]
+            List of field names
+
+        """
+        return list(self.model_fields.keys())
 
 
 class SeabornParams(ParamModel):
     """Base parameters for seaborn plotting functions."""
 
     data: pd.DataFrame | None = None
-    x: str | np.ndarray | pd.Series | None = None
-    y: str | np.ndarray | pd.Series | None = None
+    x: str | np.ndarray | pd.Series | None = "ISOPleasant"
+    y: str | np.ndarray | pd.Series | None = "ISOEventful"
+    palette: SeabornPaletteType | None = "colorblind"
+    alpha: float = 0.8
+    color: ColorType | None = "#0173B2"  # First color from colorblind palette
+    zorder: float = 3
     hue: str | np.ndarray | pd.Series | None = None
-    size: str | np.ndarray | pd.Series | None = None
-    style: str | np.ndarray | pd.Series | None = None
-    palette: SeabornPaletteType | None = None
-    hue_order: Iterable[str] | None = None
-    hue_norm: tuple | Normalize | None = None
-    alpha: float | None = None
-    legend: Literal["auto", "brief", "full", False] | None = None
-    # matplotlib kwargs
-    color: ColorType | None = None
-    label: str | None = None
-    zorder: float | None = None
+
+    def crosscheck_palette_hue(self) -> None:
+        """
+        Check if the palette is valid for the given hue.
+
+        Parameters
+        ----------
+        palette : SeabornPaletteType
+            The color palette to use.
+        hue : str | np.ndarray | pd.Series | None
+            The column name for color encoding.
+
+        Returns
+        -------
+        SeabornPaletteType
+            The validated color palette.
+
+        Raises
+        ------
+        ValueError
+            If the palette is not valid for the given hue.
+
+        """
+        self.palette = self.palette if self.hue is not None else None
 
 
 class ScatterParams(SeabornParams):
     """Parameters for scatter plot functions."""
 
-    sizes: list | dict | tuple | None = None
-    size_order: list | None = None
-    size_norm: tuple | Normalize | None = None
-    markers: bool | list | dict | None = None
-    style_order: list | None = None
-    marker: str | None = None
-    linewidth: float | None = None
-    s: float | None = None
+    s: float | None = 20  # DEFAULT_POINT_SIZE
 
 
 class DensityParams(SeabornParams):
     """Parameters for density plot functions."""
 
-    weights: str | np.ndarray | pd.Series | None = None
-    fill: bool | None = None
-    multiple: Literal["layer", "stack", "fill"] | None = None
-    common_norm: bool | None = None
-    common_grid: bool | None = None
-    cumulative: bool | None = None
-    bw_method: Literal["scott", "silverman"] | float | Callable | None = None
-    bw_adjust: float | None = None
-    warn_singular: bool | None = None
-    log_scale: bool | tuple[bool, bool] | float | tuple[float, float] | None = None
-    levels: int | Iterable[float] | None = None
-    thresh: float | None = None
-    gridsize: int | None = None
-    cut: float | None = None
-    clip: tuple[tuple[float, float], tuple[float, float]] | None = None
-    cbar: bool | None = None
-    cbar_ax: Axes | None = None
-    cbar_kws: dict[str, Any] | None = None
-    include_outline: bool | None = None
+    fill: bool = True
+    common_norm: bool = False
+    common_grid: bool = False
+    bw_adjust: float = 1.2  # DEFAULT_BW_ADJUST
+    levels: int | Iterable[float] = 10
+    clip: tuple[tuple[float, float], tuple[float, float]] | None = (
+        (-1, 1),
+        (-1, 1),
+    )  # DEFAULT_XLIM, DEFAULT_YLIM
 
 
 class SimpleDensityParams(DensityParams):
     """Parameters for simple density plots."""
 
     # Override default levels for simple density plots
-    levels: int | Iterable[float] | None = 10
-    alpha: float | None = 0.5
+    levels: int | Iterable[float] = [0, 0.5]
+    alpha: float = 0.5
 
 
 class JointPlotParams(ParamModel):
     """Parameters for jointplot functions."""
 
     data: pd.DataFrame | None = None
-    x: str | np.ndarray | pd.Series | None = None
-    y: str | np.ndarray | pd.Series | None = None
-    height: float | None = None
-    ratio: float | None = None
-    space: float | None = None
-    dropna: bool | None = None
-    xlim: tuple[float, float] | None = None
-    ylim: tuple[float, float] | None = None
-    marginal_ticks: bool | None = None
+    x: str | np.ndarray | pd.Series | None = "ISOPleasant"
+    y: str | np.ndarray | pd.Series | None = "ISOEventful"
+    xlim: tuple[float, float] | None = (-1, 1)  # DEFAULT_XLIM
+    ylim: tuple[float, float] | None = (-1, 1)
     hue: str | np.ndarray | pd.Series | None = None
-    palette: SeabornPaletteType | None = None
-    hue_order: Iterable[str] | None = None
-    hue_norm: tuple | Normalize | None = None
+    palette: SeabornPaletteType | None = "colorblind"
+    marginal_ticks: bool | None = None
 
 
 class StyleParams(ParamModel):
@@ -389,30 +399,35 @@ class StyleParams(ParamModel):
 
     """
 
-    xlim: tuple[float, float] | None = None
-    ylim: tuple[float, float] | None = None
+    xlim: tuple[float, float] = (-1, 1)  # DEFAULT_XLIM
+    ylim: tuple[float, float] = (-1, 1)  # DEFAULT_YLIM
     # if None: use col name (default), if False: no label
-    xlabel: str | Literal[False] | None = None
-    ylabel: str | Literal[False] | None = None
-    diag_lines_zorder: int | None = None
-    diag_labels_zorder: int | None = None
-    prim_lines_zorder: int | None = None
-    data_zorder: int | None = None
-    legend_loc: MplLegendLocType | Literal[False] | None = None
-    linewidth: float | None = None
-    primary_lines: bool | None = None
-    diagonal_lines: bool | None = None
-    title_fontsize: int | None = None
-    prim_ax_fontdict: dict[str, Any] | None = None
+    xlabel: str | Literal[False] | None = r"$P_{ISO}$"
+    ylabel: str | Literal[False] | None = r"$E_{ISO}$"
+    diag_lines_zorder: int = 1
+    diag_labels_zorder: int = 4
+    prim_lines_zorder: int = 2
+    data_zorder: int = 3
+    legend_loc: MplLegendLocType | Literal[False] = "best"
+    linewidth: float = 1.5
+    primary_lines: bool = True
+    diagonal_lines: bool = False
+    title_fontsize: int = 14
+    # This should be properly defined with its own Pydantic model in a future iteration
+    prim_ax_fontdict: dict[str, Any] = {
+        "family": "sans-serif",
+        "fontstyle": "normal",
+        "fontsize": "large",
+        "fontweight": "medium",
+        "parse_math": True,
+        "c": "black",
+        "alpha": 1,
+    }
 
 
 class SubplotsParams(ParamModel):
     """Parameters for subplot configuration."""
 
-    sharex: bool | None = None
-    sharey: bool | None = None
-    squeeze: bool | None = None
-    width_ratios: Sequence[float] | None = None
-    height_ratios: Sequence[float] | None = None
-    subplot_kw: dict[str, Any] | None = None
-    gridspec_kw: dict[str, Any] | None = None
+    sharex: bool = True
+    sharey: bool = True
+    figsize: tuple[float, float] = (5, 5)
