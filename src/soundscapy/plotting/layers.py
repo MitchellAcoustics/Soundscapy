@@ -8,8 +8,6 @@ and knows how to render itself on a given context.
 
 from __future__ import annotations
 
-from pydoc import text
-from unittest.mock import DEFAULT
 import warnings
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -192,6 +190,7 @@ class DensityLayer(Layer):
 
         """
         self.include_outline = include_outline
+        self.params: DensityParams
         super().__init__(custom_data=custom_data, param_model=param_model, **params)
 
     def _render_implementation(
@@ -285,29 +284,66 @@ class SPILayer(Layer):
 
     def __init__(
         self,
-        custom_data: pd.DataFrame | None = None,
+        spi_target_data: pd.DataFrame | np.ndarray | None = None,
         *,
-        # TODO(MitchellAcoustics): Allow passing raw param values,
+        # TODO(MitchellAcoustics): Allow passing raw param values,  # noqa: TD003
         #  not just Param objects
         msn_params: DirectParams | CentredParams | None = None,
         n: int = 10000,
         param_model: type[SPISeabornParams] = SPISeabornParams,
         **params: Any,
     ) -> None:
+        """
+        Initialize an SPILayer.
+
+        Parameters
+        ----------
+        spi_target_data : pd.DataFrame | np.ndarray | None
+            Pre-sampled data for SPI target distribution.
+            When None, msn_params must be provided.
+        msn_params : DirectParams | CentredParams | None
+            Parameters to generate SPI data if no spi_target_data is provided
+        n : int
+            Number of samples to generate if using msn_params
+        param_model : type[SPISeabornParams]
+            The parameter model class to use
+        **params : dict
+            Parameters for the layer. For compatibility with other layers,
+            if 'custom_data' is present and spi_target_data is None,
+            custom_data will be used as the SPI target data.
+
+        Notes
+        -----
+        Either spi_target_data or msn_params must be provided, but not both.
+        The test data for SPI calculations will be retrieved from the plot context.
+
+        """
         # The custom_data passed when adding this layer should be the spi_data.
         # We will retrieve the test_data from the subplot context, so real data layers
         # need to be passed before this one, or use the data from the
         # main ISOPlot context
-        spi_data = custom_data
+        custom_data = params.pop("custom_data", None)
+        if custom_data is not None and spi_target_data is None:
+            logger.warning(
+                "`spi_target_data` not found, but `custom_data` was found. "
+                "Using `custom_data` as the SPI target data. "
+                "\nNote: Passing the SPI data to `spi_target_data` is preferred."
+            )
+            spi_target_data = custom_data
 
         # Check that we have the information needed to generate SPI target data
         # (either the spi_data or msn_params)
-        self.spi_data, self.spi_params = self._validate_spi_inputs(spi_data, msn_params)
+        spi_target_data, self.spi_params = self._validate_spi_inputs(
+            spi_target_data, msn_params
+        )
         # Generate the spi target data
-        self.spi_data = self._generate_spi_data(self.spi_data, self.spi_params, n)
+        self.spi_data: pd.DataFrame = self._generate_spi_data(
+            spi_target_data, self.spi_params, n
+        )
         params["n"] = n
+        self.params: SPISeabornParams
 
-        super().__init__(custom_data=spi_data, param_model=param_model, **params)
+        super().__init__(custom_data=self.spi_data, param_model=param_model, **params)
 
     def render(self, context: PlotContext) -> None:
         """
@@ -490,7 +526,7 @@ class SPILayer(Layer):
         spi_data: pd.DataFrame | np.ndarray | None,
         spi_params: DirectParams | CentredParams | None,
         n: int,
-    ) -> pd.DataFrame | np.ndarray:
+    ) -> pd.DataFrame:
         """
         Validate and prepare SPI data from either direct data or parameters.
 
@@ -523,6 +559,14 @@ class SPILayer(Layer):
             )
         if spi_data is not None:
             # Process provided data
+            if isinstance(spi_data, np.ndarray):
+                if len(spi_data.shape) != 2 or spi_data.shape[1] != 2:  # noqa: PLR2004
+                    msg = (
+                        "Invalid shape for SPI data. "
+                        "Expected a 2D array with 2 columns."
+                    )
+                    raise ValueError(msg)
+                spi_data = pd.DataFrame(spi_data, columns=["x", "y"])
             return spi_data
 
         msg = "Please provide either spi_data or msn_params, not both."
@@ -584,7 +628,7 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
 
     def __init__(
         self,
-        custom_data: pd.DataFrame | None = None,
+        spi_target_data: pd.DataFrame | np.ndarray | None = None,
         *,
         msn_params: DirectParams | CentredParams | None = None,
         include_outline: bool = True,
@@ -605,8 +649,9 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
             Parameters for the density plot
 
         """
+        self.params: SPISimpleDensityParams
         super().__init__(
-            custom_data=custom_data,
+            spi_target_data=spi_target_data,
             include_outline=include_outline,
             param_model=SPISimpleDensityParams,
             msn_params=msn_params,

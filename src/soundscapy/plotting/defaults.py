@@ -10,10 +10,7 @@ consistent visualization across the package.
 import copy
 from typing import Any
 
-import seaborn as sns
-
 # Basic defaults
-DEFAULT_TITLE = "Soundscape Density Plot"
 DEFAULT_XCOL = "ISOPleasant"
 DEFAULT_YCOL = "ISOEventful"
 DEFAULT_XLIM = (-1, 1)
@@ -25,9 +22,10 @@ DEFAULT_BW_ADJUST = 1.2
 
 DEFAULT_COLOR: str = "#0173B2"  # First color from colorblind palette
 
-COLORBLIND_CMAP: list[str] = sns.color_palette("colorblind", as_cmap=True)
-
 RECOMMENDED_MIN_SAMPLES: int = 30
+
+# NOTE: The following are kept in only for the plot_functions currently.
+# Should be replaced with ParamModels instead.
 
 DEFAULT_XY_LABEL_FONTDICT: dict[str, Any] = {
     "family": "sans-serif",
@@ -88,11 +86,6 @@ DEFAULT_STYLE_PARAMS: dict[str, Any] = {
     "prim_ax_fontdict": DEFAULT_XY_LABEL_FONTDICT,
 }
 
-# Default subplot parameters
-DEFAULT_SUBPLOTS_PARAMS: dict[str, Any] = {
-    "sharex": True,
-    "sharey": True,
-}
 
 # Default SPI text kwargs
 DEFAULT_SPI_TEXT_KWARGS: dict[str, Any] = {

@@ -3,7 +3,6 @@
 # ruff: noqa: ANN003
 import functools
 import warnings
-from collections.abc import Iterable
 from typing import Any, Literal
 
 import matplotlib.pyplot as plt
@@ -222,7 +221,7 @@ def density(
     incl_outline: bool = False,
     alpha: float = DEFAULT_SEABORN_PARAMS["alpha"],
     fill: bool = True,
-    levels: int | tuple[float, float] = 10,
+    levels: int | tuple[float, ...] = 10,
     thresh: float = 0.05,
     bw_adjust: float = DEFAULT_BW_ADJUST,
     **kwargs,
@@ -1202,7 +1201,8 @@ def density_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
             DeprecationWarning,
             stacklevel=2,
         )
-    args = [a for a in args if not isinstance(a, Backend)]
+    filtered_args = [a for a in args if not isinstance(a, Backend)]
+
     kwargs = {
         k: v
         for k, v in kwargs.items()
@@ -1222,7 +1222,7 @@ def density_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
     if "density_type" not in kwargs and kwargs.pop("simple_density", False):
         kwargs["density_type"] = "simple"
 
-    return density(*args, **kwargs)
+    return density(*filtered_args, **kwargs)
 
 
 def _valid_density(data: pd.DataFrame) -> None:

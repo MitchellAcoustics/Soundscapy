@@ -8,12 +8,13 @@ for layered visualizations and subplot management.
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pandas as pd
     from matplotlib.axes import Axes
+
+    from soundscapy.plotting.layers import Layer
 
 
 class PlotContext:
@@ -77,7 +78,7 @@ class PlotContext:
         self.hue = hue
         self.ax = ax
         self.title = title
-        self.layers = []
+        self.layers: list[Layer] = []
         self.parent: PlotContext | None = None
 
     def create_child(
@@ -114,39 +115,3 @@ class PlotContext:
         )
         child.parent = self
         return child
-
-    def traverse_parents(self) -> Generator[PlotContext, None, None]:
-        """
-        Yield the chain of parent PlotContext objects.
-
-        Works by traversing upwards from the current PlotContext instance.
-
-        Yields
-        ------
-        Generator[PlotContext, None, None]
-            A generator object that yields each parent PlotContext object, starting
-            from the immediate parent of the current context and moving upward to the
-            root of the hierarchy.
-
-        """
-        context = self
-        while context.parent is not None:
-            yield context.parent
-            context = context.parent
-
-    def traverse_children(self) -> Generator[PlotContext, None, None]:
-        """
-        Yield the chain of child PlotContext objects.
-
-        Works by traversing downwards from the current PlotContext instance.
-
-        Yields
-        ------
-        Generator[PlotContext, None, None]
-            A generator object that yields each child PlotContext object, starting
-            from the immediate child of the current context and moving downward to the
-            leaf of the hierarchy.
-
-        """
-        for layer in self.layers:
-            yield from layer.traverse_children()

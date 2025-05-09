@@ -404,6 +404,8 @@ class DensityParams(SeabornParams):
         (-1, 1),
         (-1, 1),
     )  # DEFAULT_XLIM, DEFAULT_YLIM
+    # NOTE: Would like to add include_outline here, but would need to refactor
+    #       throughout the code.
 
     def as_seaborn_kwargs(self) -> dict[str, Any]:
         """
@@ -491,12 +493,6 @@ class SPISeabornParams(SeabornParams):
 
 class SPISimpleDensityParams(SPISeabornParams, SimpleDensityParams):
     """Parameters for simple density plotting of SPI data."""
-
-    # include_outline: bool = True
-    #
-    # def as_seaborn_kwargs(self) -> dict[str, Any]:
-    #     self.drop(["include_outline"])
-    #     return super().as_seaborn_kwargs()
 
 
 class JointPlotParams(ParamModel):
@@ -597,7 +593,7 @@ class SubplotsParams(ParamModel):
         """
         return self.nrows * self.ncols
 
-    def get_plt_subplot_args(self) -> dict[str, Any]:
+    def as_plt_subplots_args(self) -> dict[str, Any]:
         """
         Pass matplotlib subplot arguments to a plt.subplots call.
 
