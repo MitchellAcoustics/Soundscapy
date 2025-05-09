@@ -462,7 +462,18 @@ class SPISeabornParams(SeabornParams):
     label: str = "SPI"
     n: int = 1000
     show_score: Literal["on axis", "under title"] = "under title"
-    axis_text_kw: dict[str, Any] | None = None
+    axis_text_kw: dict[str, Any] | None = {
+        "x": 0,
+        "y": -0.85,
+        "fontsize": 10,
+        "bbox": {
+            "facecolor": "white",
+            "edgecolor": "black",
+            "boxstyle": "round,pad=0.3",
+        },
+        "ha": "center",
+        "va": "center",
+    }
 
     def as_seaborn_kwargs(self) -> dict[str, Any]:
         """

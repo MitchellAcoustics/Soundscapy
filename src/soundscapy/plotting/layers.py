@@ -8,8 +8,10 @@ and knows how to render itself on a given context.
 
 from __future__ import annotations
 
+from pydoc import text
+from unittest.mock import DEFAULT
 import warnings
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -339,6 +341,8 @@ class SPILayer(Layer):
         self, data: pd.DataFrame, context: PlotContext, ax: Axes
     ) -> None:
         target_data = data if data is not None else self.spi_data
+        target_data = target_data[[context.x, context.y]]
+
         test_data = context.data
         if test_data is None:
             warnings.warn(
@@ -350,8 +354,97 @@ class SPILayer(Layer):
 
         # Process spi_data then pass to DensityLayer method
         spi_sc = self._calc_context_spi_score(target_data, test_data)
-        # TODO: Add spi_score to plot and table
+        self.show_score(
+            spi_sc,
+            show_score=self.params.show_score,
+            context=context,
+            ax=ax,
+            axis_text_kwargs={"fontsize": 12},
+        )
+
         super()._render_implementation(target_data, context, ax)
+
+    def show_score(
+        self,
+        spi_sc: int | None,
+        show_score: Literal["on axis", "under title"],
+        context: PlotContext,
+        ax: Axes,
+        axis_text_kwargs: dict[str, Any],
+    ) -> None:
+        """
+        Show the SPI score on the plot.
+
+        Parameters
+        ----------
+        spi_sc : int | None
+            The SPI score to show
+        show_score : Literal["on axis", "under title"]
+            Where to show the score
+        context : PlotContext
+            The context containing data and axes for rendering
+        ax : Axes
+            The axes to render the score on
+        axis_text_kwargs : dict[str, Any]
+            Additional arguments for the axis text
+
+        """
+        if spi_sc is not None:
+            if show_score == "on axis":
+                self._add_score_as_text(
+                    ax=ax,
+                    spi_sc=spi_sc,
+                    **axis_text_kwargs,
+                )
+            elif show_score == "under title":
+                self._add_score_under_title(
+                    context=context,
+                    ax=ax,
+                    spi_sc=spi_sc,
+                )
+
+    @staticmethod
+    def _add_score_as_text(ax: Axes, spi_sc: int, **text_kwargs: Any) -> None:
+        """
+        Add the SPI score as text on the axis.
+
+        Parameters
+        ----------
+        axis : Axes
+            The axes to add the text to
+        spi_sc : int
+            The SPI score to show
+        **text_kwargs : dict[str, Any]
+            Additional arguments for the text
+
+        """
+        from soundscapy.plotting.defaults import DEFAULT_SPI_TEXT_KWARGS
+
+        text_kwargs = DEFAULT_SPI_TEXT_KWARGS.copy()
+        text_kwargs.update(**text_kwargs)
+        text_kwargs["s"] = f"SPI: {spi_sc}"
+
+        ax.text(**text_kwargs)
+
+    @staticmethod
+    def _add_score_under_title(context: PlotContext, ax: Axes, spi_sc: int) -> None:
+        """
+        Add the SPI score under the title.
+
+        Parameters
+        ----------
+        axis : Axes
+            The axes to add the text to
+        spi_sc : int
+            The SPI score to show
+
+        """
+        if context.title is not None:
+            new_title = f"{context.title}\nSPI: {spi_sc}"
+        else:
+            new_title = f"SPI: {spi_sc}"
+
+        ax.set_title(new_title)
 
     @staticmethod
     def _validate_spi_inputs(
@@ -397,7 +490,7 @@ class SPILayer(Layer):
         spi_data: pd.DataFrame | np.ndarray | None,
         spi_params: DirectParams | CentredParams | None,
         n: int,
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame | np.ndarray:
         """
         Validate and prepare SPI data from either direct data or parameters.
 
@@ -414,7 +507,7 @@ class SPILayer(Layer):
 
         Returns
         -------
-        pd.DataFrame
+        pd.DataFrame | np.ndarray
             Prepared data for SPI plotting
 
         """
@@ -486,7 +579,7 @@ class SPILayer(Layer):
         return spi_score(target=target_data, test=test_data)
 
 
-class SPISimpleLayer(SimpleDensityLayer, SPILayer):
+class SPISimpleLayer(SPILayer, SimpleDensityLayer):
     """Layer for rendering simplified SPI plots with fewer contour levels."""
 
     def __init__(
@@ -498,12 +591,14 @@ class SPISimpleLayer(SimpleDensityLayer, SPILayer):
         **params: Any,
     ) -> None:
         """
-        Initialize a SimpleDensityLayer.
+        Initialize an SPISimpleLayer.
 
         Parameters
         ----------
         custom_data : pd.DataFrame | None
             Optional custom data for this specific layer
+        msn_params : DirectParams | CentredParams | None
+            Parameters to generate SPI data if no custom data is provided
         include_outline : bool
             Whether to include an outline around the density plot
         **params : dict
