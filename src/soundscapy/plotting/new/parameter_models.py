@@ -8,7 +8,7 @@ and provide a single source of truth for parameter values with proper type valid
 
 from __future__ import annotations
 
-from typing import Any, Literal, Self, TypeAlias
+from typing import Any, Literal, Self, TypeAlias, TypeGuard
 
 import numpy as np
 import pandas as pd
@@ -310,9 +310,7 @@ class JointPlotParams(BaseParams):
 
 
 class StyleParams(BaseParams):
-    """
-    Configuration options for style_mgr circumplex plots.
-    """
+    """Configuration options for style_mgr circumplex plots."""
 
     xlim: tuple[float, float] = DEFAULT_XLIM
     ylim: tuple[float, float] = DEFAULT_YLIM
@@ -342,6 +340,7 @@ class SubplotsParams(BaseParams):
     sharey: bool | Literal["none", "all", "row", "col"] = True
     subplot_by: str | None = None
     n_subplots_by: int = -1
+    subplot_titles: list[str] | None = None
     auto_allocate_axes: bool = False
     adjust_figsize: bool = True
 
@@ -372,7 +371,52 @@ class SubplotsParams(BaseParams):
             exclude={
                 "subplot_by",
                 "n_subplots_by",
+                "subplot_titles",
                 "auto_allocate_axes",
                 "adjust_figsize",
             }
         )
+
+
+_ParamModels = (
+    BaseParams
+    | SeabornParams
+    | ScatterParams
+    | DensityParams
+    | SimpleDensityParams
+    | SPISimpleDensityParams
+)
+
+_LayerParamsT = (
+    SeabornParams
+    | ScatterParams
+    | DensityParams
+    | SimpleDensityParams
+    | SPISimpleDensityParams
+)
+"""Type alias for layer parameter models."""
+
+
+def is_layer_params(param_mod: BaseParams) -> TypeGuard[_LayerParamsT]:
+    """
+    Determine whether the given parameters are of a specific layer parameters type.
+
+    This function checks if the provided `params` object is an instance of the
+    specified `_LayerParamsT` type. It is used to provide type narrowing and helps
+    ensure that the `params` object adheres to the desired type constraints. It
+    returns a type guard, which allows type checkers to infer the type of `params`
+    as `_LayerParamsT` within a guarded code block.
+
+    Parameters
+    ----------
+    params : BaseParams
+        The parameters to be evaluated for the specific layer type.
+
+    Returns
+    -------
+    TypeGuard[_LayerParamsT]
+        A boolean-like value indicating whether the `params` object is of the type
+        `_LayerParamsT`.
+
+    """
+    return isinstance(param_mod, _LayerParamsT)

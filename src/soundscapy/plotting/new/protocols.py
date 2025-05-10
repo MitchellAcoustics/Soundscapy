@@ -15,6 +15,9 @@ if TYPE_CHECKING:
     import pandas as pd
     from matplotlib.axes import Axes
 
+    from soundscapy.plotting.new.parameter_models import _LayerParamsT
+
+
 # Type variable for generic parameter models
 P = TypeVar("P", bound="ParamModel")
 
@@ -100,7 +103,7 @@ class PlotContext(Protocol):
     title: str | None
     layers: list[RenderableLayer]
 
-    def get_params_for_layer(self, layer_type: type[RenderableLayer]) -> ParamModel:
+    def get_params_for_layer(self, layer_type: type[RenderableLayer]) -> _LayerParamsT:
         """
         Get parameters appropriate for a specific layer type.
 

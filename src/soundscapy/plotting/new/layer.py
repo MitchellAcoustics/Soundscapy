@@ -16,6 +16,9 @@ import pandas as pd
 import seaborn as sns
 
 from soundscapy.plotting.new.constants import RECOMMENDED_MIN_SAMPLES
+from soundscapy.plotting.new.parameter_models import (
+    _LayerParamsT,
+)
 from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
@@ -28,7 +31,7 @@ if TYPE_CHECKING:
         SimpleDensityParams,
         SPISimpleDensityParams,
     )
-    from soundscapy.plotting.new.protocols import PlotContext
+    from soundscapy.plotting.new.plot_context import PlotContext
     from soundscapy.spi.msn import (
         CentredParams,
         DirectParams,
@@ -121,7 +124,7 @@ class Layer:
         # Render the layer
         self._render_implementation(data, context, context.ax, params)
 
-    def _get_params_from_context(self, context: PlotContext) -> BaseParams:
+    def _get_params_from_context(self, context: PlotContext) -> _LayerParamsT:
         """
         Get parameters from context and apply overrides.
 
@@ -138,19 +141,25 @@ class Layer:
         """
         # Get parameters from context based on layer type
         params = context.get_params_for_layer(type(self))
+        if not isinstance(params, _LayerParamsT):
+            msg = (
+                f"Invalid parameters for layer type {type(self).__name__}: "
+                f"expected {type(_LayerParamsT)}, got {type(params)}"
+            )
+            raise TypeError(msg)
 
         # Apply overrides
         if self.param_overrides:
             params.update(**self.param_overrides)
 
-        return cast("BaseParams", params)
+        return params
 
     def _render_implementation(
         self,
         data: pd.DataFrame,
         context: PlotContext,
         ax: Axes,
-        params: BaseParams,
+        params: _LayerParamsT,
     ) -> None:
         """
         Implement actual rendering (to be overridden by subclasses).
@@ -228,7 +237,7 @@ class ScatterLayer(Layer):
         data: pd.DataFrame,
         context: PlotContext,
         ax: Axes,
-        params: BaseParams,
+        params: ScatterParams,  # type: ignore[override]
     ) -> None:
         """
         Render a scatter plot.
@@ -245,11 +254,8 @@ class ScatterLayer(Layer):
             The parameters for this layer
 
         """
-        # Cast params to the correct type
-        scatter_params = cast("ScatterParams", params)
-
         # Create a copy of the parameters with data
-        kwargs = scatter_params.as_seaborn_kwargs()
+        kwargs = params.as_seaborn_kwargs()
         kwargs["data"] = data
 
         # Ensure x and y are set correctly
@@ -270,7 +276,7 @@ class DensityLayer(Layer):
         data: pd.DataFrame,
         context: PlotContext,
         ax: Axes,
-        params: BaseParams,
+        params: DensityParams,  # type: ignore[override]
     ) -> None:
         """
         Render a density plot.
@@ -296,11 +302,8 @@ class DensityLayer(Layer):
                 stacklevel=2,
             )
 
-        # Cast params to the correct type
-        density_params = cast("DensityParams", params)
-
         # Create a copy of the parameters with data
-        kwargs = density_params.as_seaborn_kwargs()
+        kwargs = params.as_seaborn_kwargs()
         kwargs["data"] = data
 
         # Ensure x and y are set correctly
@@ -321,7 +324,7 @@ class SimpleDensityLayer(DensityLayer):
         data: pd.DataFrame,
         context: PlotContext,
         ax: Axes,
-        params: BaseParams,
+        params: SimpleDensityParams,  # type: ignore[override]
     ) -> None:
         """
         Render a simple density plot.
@@ -565,7 +568,7 @@ class SPILayer(Layer):
         """
         from soundscapy.plotting.new.constants import DEFAULT_SPI_TEXT_KWARGS
 
-        text_kwargs_copy = DEFAULT_SPI_TEXT_KWARGS.copy()
+        text_kwargs_copy: dict[str, Any] = DEFAULT_SPI_TEXT_KWARGS.copy()
         text_kwargs_copy.update(**text_kwargs)
         text_kwargs_copy["s"] = f"SPI: {spi_score}"
 
@@ -807,7 +810,7 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
         data: pd.DataFrame,
         context: PlotContext,
         ax: Axes,
-        params: BaseParams,
+        params: SPISimpleDensityParams,  # type: ignore[override]
     ) -> None:
         """
         Render an SPI simple density plot.
@@ -824,8 +827,7 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
             The parameters for this layer
 
         """
-        # Cast params to the correct type
-        spi_params = cast("SPISimpleDensityParams", params)
+        spi_params = params
 
         # Create a copy of the parameters with data
         kwargs = spi_params.as_seaborn_kwargs()
@@ -858,3 +860,6 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
                     ax=ax,
                     axis_text_kwargs=spi_params.axis_text_kw or {},
                 )
+
+
+_LayerT = Layer | ScatterLayer | DensityLayer | SPILayer | SPISimpleLayer

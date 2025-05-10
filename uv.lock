@@ -3660,6 +3660,7 @@ dev = [
     { name = "setuptools-scm" },
     { name = "tox" },
     { name = "twine" },
+    { name = "types-deprecated" },
     { name = "types-pyyaml" },
     { name = "types-seaborn" },
 ]
@@ -3718,6 +3719,7 @@ dev = [
     { name = "setuptools-scm", specifier = ">=8.3.1" },
     { name = "tox", specifier = ">=4.25.0" },
     { name = "twine", specifier = ">=6.1.0" },
+    { name = "types-deprecated", specifier = ">=1.2.15.20250304" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250402" },
     { name = "types-seaborn", specifier = ">=0.13.2.20250111" },
 ]
@@ -3930,6 +3932,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c8/a2/6df94fc5c8e2170d21d7134a565c3a8fb84f9797c1dd65a5976aaf714418/twine-6.1.0.tar.gz", hash = "sha256:be324f6272eff91d07ee93f251edf232fc647935dd585ac003539b42404a8dbd", size = 168404, upload-time = "2025-01-21T18:45:26.758Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7c/b6/74e927715a285743351233f33ea3c684528a0d374d2e43ff9ce9585b73fe/twine-6.1.0-py3-none-any.whl", hash = "sha256:a47f973caf122930bf0fbbf17f80b83bc1602c9ce393c7845f289a3001dc5384", size = 40791, upload-time = "2025-01-21T18:45:24.584Z" },
+]
+
+[[package]]
+name = "types-deprecated"
+version = "1.2.15.20250304"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/67/eeefaaabb03b288aad85483d410452c8bbcbf8b2bd876b0e467ebd97415b/types_deprecated-1.2.15.20250304.tar.gz", hash = "sha256:c329030553029de5cc6cb30f269c11f4e00e598c4241290179f63cda7d33f719", size = 8015, upload-time = "2025-03-04T02:48:17.894Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4d/e3/c18aa72ab84e0bc127a3a94e93be1a6ac2cb281371d3a45376ab7cfdd31c/types_deprecated-1.2.15.20250304-py3-none-any.whl", hash = "sha256:86a65aa550ea8acf49f27e226b8953288cd851de887970fbbdf2239c116c3107", size = 8553, upload-time = "2025-03-04T02:48:16.666Z" },
 ]
 
 [[package]]

@@ -339,10 +339,7 @@ class ISOPlot:
             )
 
             data = pd.DataFrame({xcol: x, ycol: y})
-            x = xcol
-            y = ycol
-
-            return data, x, y
+            return data, xcol, ycol
 
         # If data is None, and x and y are strings:
         if isinstance(x, str) and isinstance(y, str):

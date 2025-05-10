@@ -8,18 +8,18 @@ architecture, owning both custom_data and parameter models for different layer t
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 
 from soundscapy.plotting.new.constants import DEFAULT_XCOL, DEFAULT_YCOL
 from soundscapy.plotting.new.parameter_models import (
-    BaseParams,
     DensityParams,
     ScatterParams,
     SimpleDensityParams,
     SPISimpleDensityParams,
     StyleParams,
+    _ParamModels,
 )
 from soundscapy.sspylogging import get_logger
 
@@ -28,9 +28,9 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
     from soundscapy.plotting.new.iso_plot import ISOPlot
-    from soundscapy.plotting.new.protocols import ParamModel, RenderableLayer
+    from soundscapy.plotting.new.layer import Layer
+    from soundscapy.plotting.new.protocols import RenderableLayer
 
-    _ISOPlotT = TypeVar("_ISOPlotT", bound="ISOPlot")
 
 logger = get_logger()
 
@@ -103,7 +103,7 @@ class PlotContext:
         self.parent: PlotContext | None = None
 
         # Parameter models for different layer types
-        self._param_models: dict[str, BaseParams] = {}
+        self._param_models: dict[str, _ParamModels] = {}
 
         # Initialize default parameter models
         self._init_param_models()
@@ -131,7 +131,7 @@ class PlotContext:
             ylabel=r"$E_{ISO}$",
         )
 
-    def get_params(self, param_type: str) -> BaseParams:
+    def get_params(self, param_type: str) -> _ParamModels:
         """
         Get parameters for a specific type.
 
@@ -157,7 +157,7 @@ class PlotContext:
 
         return self._param_models[param_type]
 
-    def get_params_for_layer(self, layer_type: type[RenderableLayer]) -> ParamModel:
+    def get_params_for_layer(self, layer_type: type[Layer]) -> _ParamModels:
         """
         Get parameters appropriate for a specific layer type.
 
@@ -179,22 +179,22 @@ class PlotContext:
         layer_name = layer_type.__name__.lower()
 
         if "scatter" in layer_name:
-            return cast("ParamModel", self.get_params("scatter"))
-        if "simpledensity" in layer_name:
+            return self.get_params("scatter")
+        if "simple" in layer_name:
             if "spi" in layer_name:
-                return cast("ParamModel", self.get_params("spi_simple_density"))
-            return cast("ParamModel", self.get_params("simple_density"))
+                return self.get_params("spi_simple_density")
+            return self.get_params("simple_density")
         if "density" in layer_name:
-            return cast("ParamModel", self.get_params("density"))
+            return self.get_params("density")
 
         # Default to scatter parameters if no match
         logger.warning(
             f"No specific parameters for layer type {layer_type.__name__}, "  # noqa: G004
             "using scatter parameters"
         )
-        return cast("ParamModel", self.get_params("scatter"))
+        return self.get_params("scatter")
 
-    def update_params(self, param_type: str, **kwargs: Any) -> BaseParams:
+    def update_params(self, param_type: str, **kwargs: Any) -> _ParamModels:
         """
         Update parameters for a specific type.
 
@@ -257,7 +257,7 @@ class PlotContext:
 
         return child
 
-    def ensure_axes_exist(self, plot: _ISOPlotT) -> None:
+    def ensure_axes_exist(self, plot: ISOPlot) -> None:
         """
         Check if we have axes to render on, create if needed.
 
@@ -276,7 +276,7 @@ class PlotContext:
             plot.figure, plot.axes = plt.subplots(figsize=(5, 5))
 
     def get_axes_by_spec(
-        self, plot: _ISOPlotT, spec: int | tuple[int, int] | list[int] | None
+        self, plot: ISOPlot, spec: int | tuple[int, int] | list[int] | None
     ) -> list[Axes]:
         """
         Get axes based on specification.
@@ -306,7 +306,7 @@ class PlotContext:
 
     @classmethod
     def get_contexts_by_spec(
-        cls, plot: _ISOPlotT, spec: int | tuple[int, int] | list[int] | None
+        cls, plot: ISOPlot, spec: int | tuple[int, int] | list[int] | None
     ) -> list[PlotContext]:
         """
         Resolve which subplot contexts to target based on axis specification.
@@ -348,7 +348,7 @@ class PlotContext:
 
     @staticmethod
     def resolve_axis_indices(
-        plot: _ISOPlotT, spec: int | tuple[int, int] | list[int]
+        plot: ISOPlot, spec: int | tuple[int, int] | list[int]
     ) -> list[int]:
         """
         Convert axis specification to list of indices.

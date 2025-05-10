@@ -19,9 +19,12 @@ Create a simple scatter plot:
 ...     columns=['ISOPleasant', 'ISOEventful']
 ... )
 >>> # Create a plot and add a scatter layer
->>> plot = ISOPlot(data=data).create_subplots()
->>> plot.add_scatter()
->>> plot.apply_styling()
+>>> plot = (
+...     ISOPlot(data=data)
+...         .create_subplots()
+...         .add_scatter()
+...         .apply_styling()
+... )
 >>> plot.show()
 >>> isinstance(plot, ISOPlot)
 True
@@ -31,11 +34,14 @@ Create a plot with subplots and multiple layers:
 >>> # Add a group column to the data
 >>> data['Group'] = rng.integers(1, 3, 100)
 >>> # Create a plot with subplots by group
->>> plot = (ISOPlot(data=data, hue='Group')
+>>> plot = (
+...     ISOPlot(data=data, hue='Group')
 ...         .create_subplots()
 ...         .add_scatter()
 ...         .add_simple_density(fill=False)
-...         .apply_styling())
+...         .apply_styling()
+... )
+>>> plot.show()
 >>> isinstance(plot, ISOPlot)
 True
 
@@ -43,7 +49,6 @@ True
 
 from __future__ import annotations
 
-import functools
 from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.pyplot as plt
@@ -310,9 +315,12 @@ class ISOPlot:
         ncols: int = 1,
         figsize: tuple[float, float] | None = None,
         subplot_by: str | None = None,
+        subplot_titles: list[str] | None = None,
         *,
         sharex: bool | Literal["none", "all", "row", "col"] = True,
         sharey: bool | Literal["none", "all", "row", "col"] = True,
+        auto_allocate_axes: bool = False,
+        adjust_figsize: bool = True,
         **kwargs: Any,
     ) -> ISOPlot:
         """
@@ -328,11 +336,18 @@ class ISOPlot:
             Figure size, by default None
         subplot_by : str | None, optional
             Column to create subplots by, by default None
+        subplot_titles : list[str] | None, optional
+            Custom titles for subplots, by default None
         *
         sharex : bool | Literal["none", "all", "row", "col"], optional
             Whether to share x-axis, by default True
         sharey : bool | Literal["none", "all", "row", "col"], optional
             Whether to share y-axis, by default True
+        auto_allocate_axes : bool, optional
+            Whether to automatically determine nrows/ncols based on data,
+            by default False
+        adjust_figsize : bool, optional
+            Whether to adjust the figure size based on nrows/ncols, by default True
         **kwargs : Any
             Additional parameters for subplots
 
@@ -361,7 +376,7 @@ class ISOPlot:
 
         >>> data['Group'] = rng.integers(1, 3, 100)
         >>> plot = ISOPlot(data=data)
-        >>> plot = plot.create_subplots(subplot_by='Group')
+        >>> plot = plot.create_subplots(subplot_by='Group', auto_allocate_axes=True)
         >>> len(plot.subplot_contexts)
         2
         >>> plot.subplot_contexts[0].title is not None
@@ -375,6 +390,9 @@ class ISOPlot:
             sharex=sharex,
             sharey=sharey,
             subplot_by=subplot_by,
+            subplot_titles=subplot_titles,
+            auto_allocate_axes=auto_allocate_axes,
+            adjust_figsize=adjust_figsize,
             **kwargs,
         )
 
@@ -383,6 +401,7 @@ class ISOPlot:
         data: pd.DataFrame | None = None,
         *,
         on_axis: int | tuple[int, int] | list[int] | None = None,
+        subplot_by: str | None = None,
         **params: Any,
     ) -> ISOPlot:
         """
@@ -394,6 +413,10 @@ class ISOPlot:
             Custom data for this layer, by default None
         on_axis : int | tuple[int, int] | list[int] | None, optional
             Target specific axis/axes, by default None
+        subplot_by : str | None, optional
+            Column to split data across existing subplots, by default None.
+            If provided, the data will be split based on unique values in this column
+            and rendered on the corresponding subplots.
         **params : Any
             Additional parameters for the scatter layer
 
@@ -413,32 +436,48 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data).create_subplots()
-        >>> plot = plot.add_scatter()
-        >>> len(plot.subplot_contexts[0].layers)
+        >>> plot1 = (
+        ...     ISOPlot(data=data)
+        ...        .create_subplots()
+        ...        .add_scatter()
+        ...        .apply_styling()
+        ... )
+        >>> plot1.show()
+        >>> len(plot1.subplot_contexts[0].layers)
         1
 
         Add a scatter layer with custom parameters:
 
-        >>> plot = ISOPlot(data=data).create_subplots()
-        >>> plot = plot.add_scatter(s=50, alpha=0.5, color='red')
-        >>> len(plot.subplot_contexts[0].layers)
+        >>> plot2 = (
+        ...     ISOPlot(data=data)
+        ...         .create_subplots()
+        ...         .add_scatter(s=50, alpha=0.5, color='red')
+        ...         .apply_styling()
+        ... )
+        >>> plot2.show()
+        >>> len(plot2.subplot_contexts[0].layers)
         1
 
         Add a scatter layer to a specific subplot:
 
-        >>> plot = ISOPlot(data=data)
-        >>> plot = plot.create_subplots(nrows=2,ncols=2)
-        >>> plot = plot.add_scatter(on_axis=0)
-        >>> len(plot.subplot_contexts[0].layers)
+        >>> plot3 = (
+        ...     ISOPlot(data=data)
+        ...         .create_subplots(nrows=2,ncols=2)
+        ...         .add_scatter(on_axis=0)
+        ...         .apply_styling()
+        ... )
+        >>> plot3.show()
+        >>> len(plot3.subplot_contexts[0].layers)
         1
-        >>> len(plot.subplot_contexts[1].layers)
+        >>> len(plot3.subplot_contexts[1].layers)
         0
 
         """
-        return self.layer_mgr.add_scatter(
+        return self.layer_mgr.add_layer(
+            "scatter",
             data=data,
             on_axis=on_axis,
+            subplot_by=subplot_by,
             **params,
         )
 
@@ -447,6 +486,7 @@ class ISOPlot:
         data: pd.DataFrame | None = None,
         *,
         on_axis: int | tuple[int, int] | list[int] | None = None,
+        subplot_by: str | None = None,
         **params: Any,
     ) -> ISOPlot:
         """
@@ -458,6 +498,10 @@ class ISOPlot:
             Custom data for this layer, by default None
         on_axis : int | tuple[int, int] | list[int] | None, optional
             Target specific axis/axes, by default None
+        subplot_by : str | None, optional
+            Column to split data across existing subplots, by default None.
+            If provided, the data will be split based on unique values in this column
+            and rendered on the corresponding subplots.
         **params : Any
             Additional parameters for the density layer
 
@@ -477,32 +521,46 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data).create_subplots()
-        >>> plot = plot.add_density()
+        >>> plot = (
+        ...     ISOPlot(data=data).create_subplots()
+        ...         .add_density()
+        ...         .apply_styling()
+        ... )
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a density layer with custom parameters:
 
-        >>> plot = ISOPlot(data=data).create_subplots()
-        >>> plot = plot.add_density(fill=False, levels=5, alpha=0.7)
+        >>> plot = (
+        ...     ISOPlot(data=data).create_subplots()
+        ...         .add_density(fill=False, levels=5, alpha=0.7)
+        ...         .apply_styling()
+        ... )
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a density layer to a specific subplot:
 
-        >>> plot = ISOPlot(data=data)
-        >>> plot = plot.create_subplots(nrows=2,ncols=2)
-        >>> plot = plot.add_density(on_axis=1)
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...         .create_subplots(nrows=2,ncols=2)
+        ...         .add_density(on_axis=1)
+        ...         .apply_styling()
+        ...  )
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers)
         0
         >>> len(plot.subplot_contexts[1].layers)
         1
 
         """
-        return self.layer_mgr.add_density(
+        return self.layer_mgr.add_layer(
+            "density",
             data=data,
             on_axis=on_axis,
+            subplot_by=subplot_by,
             **params,
         )
 
@@ -541,23 +599,35 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data).create_subplots()
-        >>> plot = plot.add_simple_density()
+        >>> plot = (
+        ...     ISOPlot(data=data).create_subplots()
+        ...         .add_simple_density()
+        ...         .apply_styling()
+        ... )
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a simple density layer with custom parameters:
 
-        >>> plot = ISOPlot(data=data).create_subplots()
-        >>> plot = plot.add_simple_density(fill=False, thresh=0.3)
+        >>> plot = (
+        ...     ISOPlot(data=data).create_subplots()
+        ...         .add_simple_density(fill=False, thresh=0.3)
+        ...         .apply_styling()
+        ... )
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a simple density layer to multiple subplots:
 
-        >>> plot = ISOPlot(data=data)
-        >>> plot = plot.create_subplots(nrows=2,ncols=2)
-        >>> plot = plot.add_simple_density(on_axis=[0, 2])
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...         .create_subplots(nrows=2,ncols=2)
+        ...         .add_simple_density(on_axis=[0, 2])
+        ...         .apply_styling()
+        ... )
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers)
         1
         >>> len(plot.subplot_contexts[1].layers)
@@ -596,8 +666,55 @@ class ISOPlot:
         ISOPlot
             The current plot instance for chaining
 
+        Examples
+        --------
+        Add a SPI layer to all subplots:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> from soundscapy.spi import DirectParams
+        >>> rng = np.random.default_rng(42)
+        >>>    # Create a DataFrame with random data
+        >>> data = pd.DataFrame(
+        ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...    columns=['ISOPleasant', 'ISOEventful']
+        ... )
+        >>>    # Define MSN parameters for the SPI target
+        >>> msn_params = DirectParams(
+        ...     xi=np.array([0.5, 0.7]),
+        ...     omega=np.array([[0.1, 0.05], [0.05, 0.1]]),
+        ...     alpha=np.array([0, -5]),
+        ...     )
+        >>>    # Create the plot with only an SPI layer
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_spi_simple(msn_params=msn_params)
+        ...     .apply_styling()
+        ... )
+        >>> plot.show()
+        >>> len(plot.subplot_contexts[0].layers) == 2
+        True
+        >>> plot.close()  # Clean up
+
+        Add an SPI layer over top of 'real' data:
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_density()
+        ...     .add_spi_simple(msn_params=msn_params, show_score="on axis")
+        ...     .apply_styling()
+        ... )
+        >>> plot.show()
+        >>> len(plot.subplot_contexts[0].layers) == 3
+        True
+        >>> plot.close()  # Clean up
+
         """
-        return self.layer_mgr.add_spi_simple(
+        return self.layer_mgr.add_layer(
+            "spi_simple",
             data=data,
             on_axis=on_axis,
             **params,
@@ -609,71 +726,48 @@ class ISOPlot:
         data: pd.DataFrame | None = None,
         *,
         on_axis: AxisSpec | None = None,
+        subplot_by: str | None = None,
         **params: Any,
     ) -> ISOPlot:
         """
-        Add a visualization layer, optionally targeting specific subplot(s).
+        Add a new layer to the plot based on the provided specifications and parameters.
+
+        This function integrates a new visual layer into the current plot by specifying
+        what and how to display data. It uses the `layer_mgr.add_layer` method to handle
+        the layer addition. The layer can be associated with a specific axis, use a subset
+        of data, and be customized with additional parameters.
 
         Parameters
         ----------
-        layer_class : Layer subclass
-            The type of layer to add
-        data : pd.DataFrame | None, optional
-            Custom data for this layer, by default None
-        on_axis : int | tuple[int, int] | list[int] | None, optional
-            Target specific axis/axes, by default None
+        layer_spec : LayerSpec
+            The specification of the layer to be added. Defines the functionality,
+            appearance, and behavior of the layer.
+        data : pd.DataFrame, optional
+            A Pandas DataFrame holding the data to be used by the layer. If not
+            provided, the layer might use existing data from the plot or handle
+            plotting differently based on its implementation.
+        on_axis : AxisSpec, optional
+            Specifies the axis where the layer should be drawn. If omitted, defaults
+            to the plot's primary or default axis.
+        subplot_by : str, optional
+            Key or column in the data to use for creating subplots. Used for splitting
+            data and visualizing it in separate subplots, if required.
         **params : Any
-            Additional parameters for the layer
+            Additional custom parameters that may be required by the layer. These
+            parameters are passed through to configure the layer further.
 
         Returns
         -------
         ISOPlot
-            The current plot instance for chaining
-
-        Examples
-        --------
-        Add a scatter layer using the generic add_layer method:
-
-        >>> import pandas as pd
-        >>> import numpy as np
-        >>> from soundscapy.plotting.new import ScatterLayer
-        >>> rng = np.random.default_rng(42)
-        >>> data = pd.DataFrame(
-        ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
-        ...     columns=['ISOPleasant', 'ISOEventful']
-        ... )
-        >>> plot = ISOPlot(data=data).create_subplots()
-        >>> plot = plot.add_layer(ScatterLayer)
-        >>> len(plot.subplot_contexts[0].layers)
-        1
-        >>> isinstance(plot.subplot_contexts[0].layers[0], ScatterLayer)
-        True
-
-        Add a density layer to a specific subplot:
-
-        >>> plot = ISOPlot(data=data)
-        >>> plot = plot.create_subplots(nrows=2,ncols=2)
-        >>> plot = plot.add_layer("density", on_axis=3, fill=False)
-        >>> len(plot.subplot_contexts[3].layers)
-        1
-        >>> from soundscapy.plotting.new import DensityLayer
-        >>> isinstance(plot.subplot_contexts[3].layers[0], DensityLayer)
-        True
-
-        Add a layer with custom data:
-
-        >>> custom_data = pd.DataFrame({
-        ...     'ISOPleasant': rng.normal(0.5, 0.1, 50),
-        ...     'ISOEventful': rng.normal(0.5, 0.1, 50),
-        ... })
-        >>> plot = ISOPlot(data=data).create_subplots()
-        >>> plot = plot.add_layer(ScatterLayer, data=custom_data, color='red')
-        >>> len(plot.subplot_contexts[0].layers)
-        1
+            The updated instance of the plot with the new layer added.
 
         """
         return self.layer_mgr.add_layer(
-            layer_spec=layer_spec, data=data, on_axis=on_axis, **params
+            layer_spec=layer_spec,
+            data=data,
+            on_axis=on_axis,
+            subplot_by=subplot_by,
+            **params,
         )
 
     def apply_styling(
@@ -711,6 +805,7 @@ class ISOPlot:
         >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_scatter()
         >>> plot = plot.apply_styling()
+        >>> plot.show()
         >>> isinstance(plot, ISOPlot)
         True
 
@@ -726,6 +821,7 @@ class ISOPlot:
         ...     primary_lines=True,
         ...     diagonal_lines=True
         ... )
+        >>> plot.show()
         >>> isinstance(plot, ISOPlot)
         True
 
@@ -735,6 +831,7 @@ class ISOPlot:
         >>> plot = plot.create_subplots(nrows=2,ncols=2)
         >>> plot = plot.add_scatter()
         >>> plot = plot.apply_styling(on_axis=0, title="Subplot 0")
+        >>> plot.show()
         >>> isinstance(plot, ISOPlot)
         True
 
@@ -744,7 +841,6 @@ class ISOPlot:
             **style_params,
         )
 
-    @functools.wraps(plt.show)
     def show(self) -> None:
         """
         Display the plot.
@@ -763,12 +859,11 @@ class ISOPlot:
         >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot.add_scatter()
         >>> plot.apply_styling()
-        >>> # plot.show()  # Uncomment to display the plot
+        >>> plot.show()
 
         """
         plt.show()
 
-    @functools.wraps(plt.close)
     def close(self) -> None:
         """
         Close the plot.
@@ -787,7 +882,7 @@ class ISOPlot:
         >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot.add_scatter()
         >>> plot.apply_styling()
-        >>> # plot.show()  # Uncomment to display the plot
+        >>> plot.show()
         >>> plot.close()  # Close the plot
 
         """

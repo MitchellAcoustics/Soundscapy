@@ -8,7 +8,7 @@ original implementation, using composition instead of inheritance.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,7 +27,7 @@ from soundscapy.sspylogging import get_logger
 
 try:
     # Python 3.13 made a @deprecated decorator available
-    from warnings import deprecated
+    from warnings import deprecated  # type: ignore[attr-defined]
 
 except ImportError:
     # Fall back to using specific module
@@ -35,8 +35,7 @@ except ImportError:
 
 if TYPE_CHECKING:
     from soundscapy.plotting.new import ISOPlot
-
-    _ISOPlotT = TypeVar("_ISOPlotT", bound="ISOPlot")
+    from soundscapy.plotting.new.parameter_models import StyleParams
 
 
 logger = get_logger()
@@ -44,8 +43,7 @@ logger = get_logger()
 # Type definitions
 AxisSpec = int | tuple[int, int] | list[int]
 LayerType = Literal["scatter", "density", "simple_density", "spi_simple"]
-LayerClass = type[Layer]
-LayerSpec = LayerType | LayerClass | Layer
+LayerSpec = LayerType | type[Layer] | Layer
 
 
 class LayerManager:
@@ -78,33 +76,39 @@ class LayerManager:
         """
         self.plot = plot
 
-    # Pass a fully instantiated layer
-    @overload
-    def add_layer(
-        self, layer: Layer, *, on_axis: AxisSpec | None = None
-    ) -> _ISOPlotT: ...
-
-    # Pass an uninstantiated layer class
-    @overload
-    def add_layer(
-        self,
-        layer_class: LayerClass,
-        data: pd.DataFrame | None = None,
-        *,
-        on_axis: AxisSpec | None = None,
-        **params: Any,
-    ) -> _ISOPlotT: ...
-
-    # Pass a string of the layer type name
-    @overload
-    def add_layer(
-        self,
-        layer_type: LayerType,
-        data: pd.DataFrame | None = None,
-        *,
-        on_axis: AxisSpec | None = None,
-        **params: Any,
-    ) -> _ISOPlotT: ...
+    # # Pass a fully instantiated layer
+    # @overload
+    # def add_layer(
+    #     self,
+    #     layer_spec: Layer,
+    #     *,
+    #     on_axis: AxisSpec | None = None,
+    #     subplot_by: str | None = None,
+    # ) -> ISOPlot: ...
+    #
+    # # Pass an uninstantiated layer class
+    # @overload
+    # def add_layer(
+    #     self,
+    #     layer_spec: LayerClass,
+    #     data: pd.DataFrame | None = None,
+    #     *,
+    #     on_axis: AxisSpec | None = None,
+    #     subplot_by: str | None = None,
+    #     **params: Any,
+    # ) -> ISOPlot: ...
+    #
+    # # Pass a string of the layer type name
+    # @overload
+    # def add_layer(
+    #     self,
+    #     layer_spec: LayerType,
+    #     data: pd.DataFrame | None = None,
+    #     *,
+    #     on_axis: AxisSpec | None = None,
+    #     subplot_by: str | None = None,
+    #     **params: Any,
+    # ) -> ISOPlot: ...
 
     def add_layer(
         self,
@@ -112,8 +116,9 @@ class LayerManager:
         data: pd.DataFrame | None = None,
         *,
         on_axis: AxisSpec | None = None,
+        subplot_by: str | None = None,
         **params: Any,
-    ) -> _ISOPlotT:
+    ) -> ISOPlot:
         """
         Add a visualization layer, optionally targeting specific subplot(s).
 
@@ -129,6 +134,12 @@ class LayerManager:
             Ignored if layer_spec is a Layer instance.
         on_axis : AxisSpec, optional
             Target specific axis/axes, by default None
+        subplot_by : str | None, optional
+            Column to split data across existing subplots, by default None.
+            If provided, the data will be split based on unique values in this column
+            and rendered on the corresponding subplots.
+            Note: This is different from the subplot_by parameter in create_subplots,
+            which creates new subplots based on unique values.
         **params : Any
             Additional parameters for the layer. Special parameters:
             - msn_params: Used only for "spi_simple" layer type
@@ -164,10 +175,18 @@ class LayerManager:
         # Handle the case when an instantiated Layer is provided
         if isinstance(layer_spec, Layer):
             # Use the provided layer directly
-            return self._render_layer(layer_spec, on_axis=on_axis, **params)
+            return self._render_layer(
+                layer_spec, on_axis=on_axis, subplot_by=subplot_by, **params
+            )
 
         # Get the layer class from either the class or
         layer_class = self._resolve_layer_class(layer_spec)
+
+        # If subplot_by is provided, we need to handle it specially
+        if subplot_by is not None:
+            return self._render_layer_with_subplot_by(
+                layer_class, data, subplot_by, on_axis, **params
+            )
 
         # Create the layer instance
         is_spi = "spi" in layer_class.__name__.lower()
@@ -227,9 +246,106 @@ class LayerManager:
         )
         raise TypeError(msg)
 
+    def _render_layer_with_subplot_by(
+        self,
+        layer_class: type[Layer],
+        data: pd.DataFrame | None,
+        subplot_by: str,
+        on_axis: AxisSpec | None = None,
+        **params: Any,
+    ) -> ISOPlot:
+        """
+        Render a layer with data split across subplots based on a grouping variable.
+
+        Parameters
+        ----------
+        layer_class : type[Layer]
+            The layer class to instantiate
+        data : pd.DataFrame | None
+            The data to split and render
+        subplot_by : str
+            Column to split data by
+        on_axis : AxisSpec | None, optional
+            Target specific axis/axes, by default None
+        **params : Any
+            Additional parameters for the layer
+
+        Returns
+        -------
+        ISOPlot
+            The parent plot instance for chaining
+
+        Raises
+        ------
+        ValueError
+            If the subplot_by column doesn't exist in the data
+        RuntimeError
+            If no subplots have been created yet
+
+        """
+        # If no subplots created yet, raise an error
+        if self.plot.figure is None or self.plot.axes is None:
+            msg = "Cannot add layer to main context before creating subplots."
+            raise RuntimeError(msg)
+
+        # If no data provided, use the main context data
+        if data is None:
+            data = self.plot.main_context.data
+
+        # If still no data, raise an error
+        if data is None:
+            msg = "No data provided for layer and no data in main context."
+            raise ValueError(msg)
+
+        # Validate that the subplot_by column exists in the data
+        if subplot_by not in data.columns:
+            msg = (
+                f"Invalid subplot_by column '{subplot_by}'. "
+                f"Available columns are: {data.columns.tolist()}"
+            )
+            raise ValueError(msg)
+
+        # Get the unique values in the subplot_by column
+        unique_values = data[subplot_by].unique()
+
+        # Get the target contexts
+        target_contexts = PlotContext.get_contexts_by_spec(self.plot, on_axis)
+
+        # Check if we have enough subplots
+        if len(unique_values) > len(target_contexts):
+            msg = (
+                f"Not enough subplots for all unique values in '{subplot_by}'. "
+                f"Got {len(unique_values)} unique values and {len(target_contexts)} subplots."
+            )
+            raise ValueError(msg)
+
+        # For each unique value, create a layer with the filtered data and render it
+        for i, value in enumerate(unique_values):
+            # Filter the data for this value
+            filtered_data = data[data[subplot_by] == value]
+
+            # Create the layer instance
+            is_spi = "spi" in layer_class.__name__.lower()
+            if is_spi:
+                layer = layer_class(spi_target_data=filtered_data, **params)
+            else:
+                layer = layer_class(custom_data=filtered_data, **params)
+
+            # Add the layer to the context and render it
+            context = target_contexts[i]
+            context.layers.append(layer)
+            layer.render(context)
+
+        return self.plot
+
     def _render_layer(
-        self, layer: Layer, *, on_axis: AxisSpec | None = None
-    ) -> _ISOPlotT:
+        self,
+        layer: Layer,
+        *,
+        on_axis: AxisSpec | None = None,
+        subplot_by: str | None = None,
+        **params: Any,
+    ) -> ISOPlot:
         """
         Render a layer on the appropriate axes.
 
@@ -239,6 +355,10 @@ class LayerManager:
             The layer to render
         on_axis : AxisSpec | None, optional
             Target specific axis/axes, by default None
+        subplot_by : str | None, optional
+            Column to split data by, by default None
+        **params : Any
+            Additional parameters for the layer
 
         Returns
         -------
@@ -255,6 +375,15 @@ class LayerManager:
             msg = "Cannot add layer to main context before creating subplots."
             raise RuntimeError(msg)
 
+        # If subplot_by is provided, we need to handle it specially
+        if subplot_by is not None:
+            # We can't handle subplot_by for an already instantiated layer
+            msg = (
+                "Cannot use subplot_by with an already instantiated layer. "
+                "Please provide the layer class and data instead."
+            )
+            raise ValueError(msg)
+
         # Handle various axis targeting options
         # TODO: If feels like this should be done via
         #       self.plot.get_contexts_by_spec(on_axis), rather than a classmethod
@@ -268,19 +397,50 @@ class LayerManager:
         return self.plot
 
     @deprecated()
-    def add_scatter(self, data=None, *, on_axis=None, **params) -> _ISOPlotT:  # noqa: ANN001
+    def add_scatter(
+        self,
+        data=None,  # noqa: ANN001
+        *,
+        on_axis=None,  # noqa: ANN001
+        subplot_by=None,  # noqa: ANN001
+        **params,
+    ) -> ISOPlot:
         """Legacy method that forwards to add_layer(layer_type="scatter", ...)."""
-        return self.add_layer("scatter", data=data, on_axis=on_axis, **params)
+        return self.add_layer(
+            "scatter", data=data, on_axis=on_axis, subplot_by=subplot_by, **params
+        )
 
     @deprecated()
-    def add_density(self, data=None, *, on_axis=None, **params) -> _ISOPlotT:  # noqa: ANN001
+    def add_density(
+        self,
+        data=None,  # noqa: ANN001
+        *,
+        on_axis=None,  # noqa: ANN001
+        subplot_by=None,  # noqa: ANN001
+        **params,
+    ) -> ISOPlot:
         """Legacy method that forwards to add_layer(layer_type="density", ...)."""
-        return self.add_layer("density", data=data, on_axis=on_axis, **params)
+        return self.add_layer(
+            "density", data=data, on_axis=on_axis, subplot_by=subplot_by, **params
+        )
 
     @deprecated()
-    def add_simple_density(self, data=None, *, on_axis=None, **params) -> _ISOPlotT:  # noqa: ANN001
+    def add_simple_density(
+        self,
+        data=None,  # noqa: ANN001
+        *,
+        on_axis=None,  # noqa: ANN001
+        subplot_by=None,  # noqa: ANN001
+        **params,
+    ) -> ISOPlot:
         """Legacy method that forwards to add_layer(layer_type="simple_density",...)."""
-        return self.add_layer("simple_density", data=data, on_axis=on_axis, **params)
+        return self.add_layer(
+            "simple_density",
+            data=data,
+            on_axis=on_axis,
+            subplot_by=subplot_by,
+            **params,
+        )
 
     @deprecated()
     def add_spi_simple(
@@ -289,11 +449,17 @@ class LayerManager:
         *,
         msn_params=None,  # noqa: ANN001
         on_axis=None,  # noqa: ANN001
+        subplot_by=None,  # noqa: ANN001
         **params,
-    ) -> _ISOPlotT:
+    ) -> ISOPlot:
         """Legacy method that forwards to add_layer(layer_type="spi_simple", ...)."""
         return self.add_layer(
-            "spi_simple", data=data, on_axis=on_axis, msn_params=msn_params, **params
+            "spi_simple",
+            data=data,
+            on_axis=on_axis,
+            subplot_by=subplot_by,
+            msn_params=msn_params,
+            **params,
         )
 
 
@@ -374,7 +540,7 @@ class StyleManager:
             return
 
         # Get style parameters
-        style_params = context.get_params("style")
+        style_params = cast("StyleParams", context.get_params("style"))
 
         # Apply style_mgr to the axes
         ax = context.ax
@@ -575,6 +741,10 @@ class SubplotManager:
         sharex: bool | Literal["none", "all", "row", "col"] = True,
         sharey: bool | Literal["none", "all", "row", "col"] = True,
         subplot_by: str | None = None,
+        subplot_titles: list[str] | None = None,
+        *,
+        auto_allocate_axes: bool = False,
+        adjust_figsize: bool = True,
         **kwargs: Any,
     ) -> Any:
         """
@@ -594,6 +764,13 @@ class SubplotManager:
             Whether to share y-axis, by default True
         subplot_by : str | None, optional
             Column to create subplots by, by default None
+        subplot_titles : list[str] | None, optional
+            Custom titles for subplots, by default None
+        auto_allocate_axes : bool, optional
+            Whether to automatically determine nrows/ncols based on data,
+            by default False
+        adjust_figsize : bool, optional
+            Whether to adjust the figure size based on nrows/ncols, by default True
         **kwargs : Any
             Additional parameters for subplots
 
@@ -611,6 +788,9 @@ class SubplotManager:
             sharex=sharex,
             sharey=sharey,
             subplot_by=subplot_by,
+            subplot_titles=subplot_titles,
+            auto_allocate_axes=auto_allocate_axes,
+            adjust_figsize=adjust_figsize,
             **kwargs,
         )
 
@@ -665,6 +845,33 @@ class SubplotManager:
             # Add to subplot contexts
             self.plot.subplot_contexts.append(context)
 
+    def _allocate_subplot_axes(self, n_groups: int) -> tuple[int, int]:
+        """
+        Allocate the subplot axes based on the number of data subsets.
+
+        Parameters
+        ----------
+        n_groups : int
+            Number of groups to allocate subplots for
+
+        Returns
+        -------
+        tuple[int, int]
+            Tuple of (nrows, ncols)
+
+        """
+        import warnings
+
+        msg = (
+            "This is an experimental feature. "
+            "The number of rows and columns may not be optimal."
+        )
+        warnings.warn(msg, UserWarning, stacklevel=2)
+
+        ncols = int(np.ceil(np.sqrt(n_groups)))
+        nrows = int(np.ceil(n_groups / ncols))
+        return nrows, ncols
+
     def _create_subplots_by_group(self) -> None:
         """
         Create subplots by grouping the custom_data.
@@ -679,18 +886,74 @@ class SubplotManager:
         if subplot_by is None or self.plot.main_context.data is None:
             return
 
-        # Get unique values in the subplot_by column
+        # Validate that the subplot_by column exists in the data
         data = self.plot.main_context.data
+        if subplot_by not in data.columns:
+            msg = (
+                f"Invalid subplot_by column '{subplot_by}'. "
+                f"Available columns are: {data.columns.tolist()}"
+            )
+            raise ValueError(msg)
+
+        # Get unique values in the subplot_by column
         groups = data[subplot_by].unique()
+        n_subplots_by = len(groups)
+
+        # Warn if there are few unique values
+        if n_subplots_by < 2:  # noqa: PLR2004
+            import warnings
+
+            warnings.warn(
+                f"Only {n_subplots_by} unique values found in '{subplot_by}'. "
+                "Subplots may not be meaningful.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         # Limit to the number of subplots if specified
         if params.n_subplots_by > 0:
             groups = groups[: params.n_subplots_by]
+            n_subplots_by = len(groups)
+
+        # Auto-allocate axes if requested
+        if params.auto_allocate_axes:
+            nrows, ncols = self._allocate_subplot_axes(n_subplots_by)
+            # Update the subplot parameters
+            self.plot.subplots_params.update(nrows=nrows, ncols=ncols)
+            # Recreate the figure and axes with the new dimensions
+            self.plot.figure, self.plot.axes = plt.subplots(
+                **self.plot.subplots_params.as_plt_subplots_args()
+            )
 
         # Check if we have enough subplots
-        if len(groups) > params.n_subplots:
-            msg = f"Not enough subplots for all groups: {len(groups)} groups, {params.n_subplots} subplots"
+        if n_subplots_by > params.n_subplots:
+            msg = f"Not enough subplots for all groups: {n_subplots_by} groups, {params.n_subplots} subplots"
             raise ValueError(msg)
+
+        # Handle subplot titles
+        subplot_titles = params.subplot_titles
+        if subplot_titles is None:
+            # Create subplot titles based on the unique values
+            subplot_titles = [str(value) for value in groups]
+        elif len(subplot_titles) != n_subplots_by:
+            # Validate that the number of titles matches the number of unique values
+            msg = (
+                "Number of subplot titles must match the number of unique values "
+                f"for '{subplot_by}'. Got {len(subplot_titles)} titles and "
+                f"{n_subplots_by} unique values."
+            )
+            raise ValueError(msg)
+        else:
+            # Warn if custom titles are provided with subplot_by
+            import warnings
+
+            warnings.warn(
+                "Not recommended to provide separate subplot titles when using "
+                "subplot_by. Consider using the default titles based on unique values. "
+                "Manual subplot_titles may not be in the same order as the data.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         # Get axes array
         axes = self.plot.axes
@@ -717,11 +980,11 @@ class SubplotManager:
             # Filter custom_data for this group
             group_data = data[data[subplot_by] == group]
 
-            # Create a title for this subplot
+            # Create a title for this subplot using the custom title or group value
             title = (
-                f"{group}"
+                subplot_titles[i]
                 if self.plot.main_context.title is None
-                else f"{self.plot.main_context.title}: {group}"
+                else f"{self.plot.main_context.title}: {subplot_titles[i]}"
             )
 
             # Create a child context for this subplot
