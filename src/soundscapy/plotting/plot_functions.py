@@ -5,7 +5,6 @@ import functools
 import warnings
 from typing import Any, Literal
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -18,9 +17,7 @@ from soundscapy.plotting.backends_deprecated import Backend
 from soundscapy.plotting.defaults import (
     DEFAULT_BW_ADJUST,
     DEFAULT_COLOR,
-    DEFAULT_DENSITY_PARAMS,
     DEFAULT_FIGSIZE,
-    DEFAULT_SCATTER_PARAMS,
     DEFAULT_SEABORN_PARAMS,
     DEFAULT_SIMPLE_DENSITY_PARAMS,
     DEFAULT_STYLE_PARAMS,
