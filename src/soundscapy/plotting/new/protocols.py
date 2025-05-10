@@ -29,7 +29,7 @@ class RenderableLayer(Protocol):
         Parameters
         ----------
         context : PlotContext
-            The context containing data and axes for rendering
+            The context containing custom_data and axes for rendering
 
         """
         ...

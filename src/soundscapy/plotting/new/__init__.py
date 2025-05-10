@@ -20,6 +20,7 @@ Create a simple scatter plot:
 ... )
 >>> # Create a plot with multiple layers
 >>> plot = (ISOPlot(data=data)
+...         .create_subplots()
 ...         .add_scatter()
 ...         .add_simple_density(fill=False)
 ...         .apply_styling(

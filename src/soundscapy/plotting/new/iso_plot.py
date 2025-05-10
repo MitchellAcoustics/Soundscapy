@@ -19,9 +19,10 @@ Create a simple scatter plot:
 ...     columns=['ISOPleasant', 'ISOEventful']
 ... )
 >>> # Create a plot and add a scatter layer
->>> plot = ISOPlot(data=data)
+>>> plot = ISOPlot(data=data).create_subplots()
 >>> plot.add_scatter()
 >>> plot.apply_styling()
+>>> plot.show()
 >>> isinstance(plot, ISOPlot)
 True
 
@@ -31,6 +32,7 @@ Create a plot with subplots and multiple layers:
 >>> data['Group'] = rng.integers(1, 3, 100)
 >>> # Create a plot with subplots by group
 >>> plot = (ISOPlot(data=data, hue='Group')
+...         .create_subplots()
 ...         .add_scatter()
 ...         .add_simple_density(fill=False)
 ...         .apply_styling())
@@ -52,11 +54,10 @@ from soundscapy.plotting.new.constants import (
     DEFAULT_XCOL,
     DEFAULT_YCOL,
 )
-from soundscapy.plotting.new.layer import (
-    Layer,
-)
 from soundscapy.plotting.new.managers import (
+    AxisSpec,
     LayerManager,
+    LayerSpec,
     StyleManager,
     SubplotManager,
 )
@@ -93,11 +94,11 @@ class ISOPlot:
         List of subplot contexts
     subplots_params : SubplotsParams
         Parameters for subplot configuration
-    layers : LayerManager
+    layer_mgr : LayerManager
         Manager for layer-related functionality
-    styling : StyleManager
+    style_mgr : StyleManager
         Manager for styling-related functionality
-    subplots : SubplotManager
+    subplot_mgr : SubplotManager
         Manager for subplot-related functionality
 
     Examples
@@ -191,16 +192,16 @@ class ISOPlot:
         # Store additional plot attributes
         self.figure = figure
         self.axes = axes
-        self.palette = palette
+        self.palette = palette  # TODO: Should move to PlotContext?
 
         # Initialize subplot management
         self.subplot_contexts: list[PlotContext] = []
         self.subplots_params = SubplotsParams()
 
         # Initialize managers using composition
-        self.layers = LayerManager(self)
-        self.styling = StyleManager(self)
-        self.subplots = SubplotManager(self)
+        self.layer_mgr = LayerManager(self)
+        self.style_mgr = StyleManager(self)
+        self.subplot_mgr = SubplotManager(self)
 
     @property
     def x(self) -> str:
@@ -367,7 +368,7 @@ class ISOPlot:
         True
 
         """
-        return self.subplots.create_subplots(
+        return self.subplot_mgr.create_subplots(
             nrows=nrows,
             ncols=ncols,
             figsize=figsize,
@@ -412,16 +413,16 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_scatter()
-        >>> len(plot.main_context.layers)
+        >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a scatter layer with custom parameters:
 
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_scatter(s=50, alpha=0.5, color='red')
-        >>> len(plot.main_context.layers)
+        >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a scatter layer to a specific subplot:
@@ -435,7 +436,7 @@ class ISOPlot:
         0
 
         """
-        return self.layers.add_scatter(
+        return self.layer_mgr.add_scatter(
             data=data,
             on_axis=on_axis,
             **params,
@@ -476,16 +477,16 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_density()
-        >>> len(plot.main_context.layers)
+        >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a density layer with custom parameters:
 
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_density(fill=False, levels=5, alpha=0.7)
-        >>> len(plot.main_context.layers)
+        >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a density layer to a specific subplot:
@@ -499,7 +500,7 @@ class ISOPlot:
         1
 
         """
-        return self.layers.add_density(
+        return self.layer_mgr.add_density(
             data=data,
             on_axis=on_axis,
             **params,
@@ -540,16 +541,16 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_simple_density()
-        >>> len(plot.main_context.layers)
+        >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a simple density layer with custom parameters:
 
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_simple_density(fill=False, thresh=0.3)
-        >>> len(plot.main_context.layers)
+        >>> len(plot.subplot_contexts[0].layers)
         1
 
         Add a simple density layer to multiple subplots:
@@ -565,7 +566,7 @@ class ISOPlot:
         1
 
         """
-        return self.layers.add_simple_density(
+        return self.layer_mgr.add_simple_density(
             data=data,
             on_axis=on_axis,
             **params,
@@ -596,7 +597,7 @@ class ISOPlot:
             The current plot instance for chaining
 
         """
-        return self.layers.add_spi_simple(
+        return self.layer_mgr.add_spi_simple(
             data=data,
             on_axis=on_axis,
             **params,
@@ -604,10 +605,10 @@ class ISOPlot:
 
     def add_layer(
         self,
-        layer_class: type[Layer],
+        layer_spec: LayerSpec,
         data: pd.DataFrame | None = None,
         *,
-        on_axis: int | tuple[int, int] | list[int] | None = None,
+        on_axis: AxisSpec | None = None,
         **params: Any,
     ) -> ISOPlot:
         """
@@ -641,21 +642,21 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_layer(ScatterLayer)
-        >>> len(plot.main_context.layers)
+        >>> len(plot.subplot_contexts[0].layers)
         1
-        >>> isinstance(plot.main_context.layers[0], ScatterLayer)
+        >>> isinstance(plot.subplot_contexts[0].layers[0], ScatterLayer)
         True
 
         Add a density layer to a specific subplot:
 
-        >>> from soundscapy.plotting.new import DensityLayer
         >>> plot = ISOPlot(data=data)
         >>> plot = plot.create_subplots(nrows=2,ncols=2)
-        >>> plot = plot.add_layer(DensityLayer, on_axis=3, fill=False)
+        >>> plot = plot.add_layer("density", on_axis=3, fill=False)
         >>> len(plot.subplot_contexts[3].layers)
         1
+        >>> from soundscapy.plotting.new import DensityLayer
         >>> isinstance(plot.subplot_contexts[3].layers[0], DensityLayer)
         True
 
@@ -665,17 +666,14 @@ class ISOPlot:
         ...     'ISOPleasant': rng.normal(0.5, 0.1, 50),
         ...     'ISOEventful': rng.normal(0.5, 0.1, 50),
         ... })
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_layer(ScatterLayer, data=custom_data, color='red')
-        >>> len(plot.main_context.layers)
+        >>> len(plot.subplot_contexts[0].layers)
         1
 
         """
-        return self.layers.add_layer(
-            layer_class=layer_class,
-            data=data,
-            on_axis=on_axis,
-            **params,
+        return self.layer_mgr.add_layer(
+            layer_spec=layer_spec, data=data, on_axis=on_axis, **params
         )
 
     def apply_styling(
@@ -710,7 +708,7 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_scatter()
         >>> plot = plot.apply_styling()
         >>> isinstance(plot, ISOPlot)
@@ -718,7 +716,7 @@ class ISOPlot:
 
         Apply custom styling to a plot:
 
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot = plot.add_scatter()
         >>> plot = plot.apply_styling(
         ...     xlim=(-2, 2),
@@ -741,7 +739,7 @@ class ISOPlot:
         True
 
         """
-        return self.styling.apply_styling(
+        return self.style_mgr.apply_styling(
             on_axis=on_axis,
             **style_params,
         )
@@ -762,7 +760,7 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot.add_scatter()
         >>> plot.apply_styling()
         >>> # plot.show()  # Uncomment to display the plot
@@ -786,7 +784,7 @@ class ISOPlot:
         ...     rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...     columns=['ISOPleasant', 'ISOEventful']
         ... )
-        >>> plot = ISOPlot(data=data)
+        >>> plot = ISOPlot(data=data).create_subplots()
         >>> plot.add_scatter()
         >>> plot.apply_styling()
         >>> # plot.show()  # Uncomment to display the plot

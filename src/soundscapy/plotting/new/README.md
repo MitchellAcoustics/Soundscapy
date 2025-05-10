@@ -1,6 +1,7 @@
 # Refactored Plotting Module
 
-This directory contains a refactored implementation of the plotting functionality in soundscapy. The refactoring focuses on:
+This directory contains a refactored implementation of the plotting functionality in soundscapy. The refactoring focuses
+on:
 
 1. Using composition instead of inheritance
 2. Simplifying the relationships between components
@@ -13,8 +14,10 @@ The new architecture consists of the following components:
 
 ### Core Components
 
-- **ISOPlot**: The main entry point for creating plots. Uses composition to delegate functionality to specialized managers.
-- **PlotContext**: Manages data, state, and parameters for a plot or subplot. The central component that owns parameter models.
+- **ISOPlot**: The main entry point for creating plots. Uses composition to delegate functionality to specialized
+  managers.
+- **PlotContext**: Manages data, state, and parameters for a plot or subplot. The central component that owns parameter
+  models.
 - **Layer**: Base class for visualization layers. Layers know how to render themselves onto a PlotContext's axes.
 
 ### Managers
@@ -52,7 +55,8 @@ The new architecture consists of the following components:
 
 ## Usage
 
-The new implementation maintains the same public API as the original, so existing code should continue to work with minimal changes:
+The new implementation maintains the same public API as the original, so existing code should continue to work with
+minimal changes:
 
 ```python
 from soundscapy.plotting.new import ISOPlot
@@ -60,7 +64,7 @@ from soundscapy.plotting.new import ISOPlot
 # Create a plot
 plot = ISOPlot(data=data, hue="LocationID")
 
-# Add layers
+# Add layer_mgr
 plot.create_subplots()
 plot.add_scatter()
 plot.add_density()

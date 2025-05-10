@@ -54,6 +54,7 @@ classifiers = [
 ]
 dependencies = [
     "coverage==7.8.0",
+    "deprecated>=1.2.18",
     "loguru>=0.7.2",
     "numpy!=1.26",
     "pandas[excel]>=2.2.2",

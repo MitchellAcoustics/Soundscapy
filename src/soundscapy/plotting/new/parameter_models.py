@@ -8,11 +8,12 @@ and provide a single source of truth for parameter values with proper type valid
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, Self, TypeAlias
+from typing import Any, Literal, Self, TypeAlias
 
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Colormap
+from matplotlib.typing import ColorType
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_snake
 
@@ -28,9 +29,6 @@ from soundscapy.plotting.new.constants import (
     DEFAULT_YLIM,
 )
 from soundscapy.sspylogging import get_logger
-
-if TYPE_CHECKING:
-    from matplotlib.typing import ColorType
 
 logger = get_logger()
 
@@ -244,7 +242,7 @@ class SimpleDensityParams(DensityParams):
 
 
 class SPISeabornParams(SeabornParams):
-    """Base parameters for seaborn plotting functions for SPI data."""
+    """Base parameters for seaborn plotting functions for SPI custom_data."""
 
     color: ColorType | None = "red"
     hue: str | np.ndarray | pd.Series | None = None
@@ -255,6 +253,9 @@ class SPISeabornParams(SeabornParams):
     axis_text_kw: dict[str, Any] | None = Field(
         default_factory=lambda: DEFAULT_SPI_TEXT_KWARGS.copy()
     )
+    # msn_params is not directly stored in the parameter model
+    # but is used by SPILayer to generate SPI custom_data
+    # It should be passed to the layer constructor, not to the parameter model
 
     def as_seaborn_kwargs(self) -> dict[str, Any]:
         """
@@ -272,7 +273,7 @@ class SPISeabornParams(SeabornParams):
 
 
 class SPISimpleDensityParams(SimpleDensityParams):
-    """Parameters for simple density plotting of SPI data."""
+    """Parameters for simple density plotting of SPI custom_data."""
 
     color: ColorType | None = "red"
     label: str = "SPI"
@@ -310,7 +311,7 @@ class JointPlotParams(BaseParams):
 
 class StyleParams(BaseParams):
     """
-    Configuration options for styling circumplex plots.
+    Configuration options for style_mgr circumplex plots.
     """
 
     xlim: tuple[float, float] = DEFAULT_XLIM
@@ -347,19 +348,19 @@ class SubplotsParams(BaseParams):
     @property
     def n_subplots(self) -> int:
         """
-        Calculate the total number of subplots.
+        Calculate the total number of subplot_mgr.
 
         Returns
         -------
         int
-            Total number of subplots.
+            Total number of subplot_mgr.
 
         """
         return self.nrows * self.ncols
 
     def as_plt_subplots_args(self) -> dict[str, Any]:
         """
-        Pass matplotlib subplot arguments to a plt.subplots call.
+        Pass matplotlib subplot arguments to a plt.subplot_mgr call.
 
         Returns
         -------

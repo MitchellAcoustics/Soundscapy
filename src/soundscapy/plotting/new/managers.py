@@ -8,17 +8,13 @@ original implementation, using composition instead of inheritance.
 
 from __future__ import annotations
 
-import warnings
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar, overload
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 
-from soundscapy.plotting.new.constants import (
-    RECOMMENDED_MIN_SAMPLES,
-)
 from soundscapy.plotting.new.layer import (
     DensityLayer,
     Layer,
@@ -26,21 +22,35 @@ from soundscapy.plotting.new.layer import (
     SimpleDensityLayer,
     SPISimpleLayer,
 )
-from soundscapy.plotting.new.protocols import RenderableLayer
+from soundscapy.plotting.new.plot_context import PlotContext
 from soundscapy.sspylogging import get_logger
 
+try:
+    # Python 3.13 made a @deprecated decorator available
+    from warnings import deprecated
+
+except ImportError:
+    # Fall back to using specific module
+    from deprecated import deprecated
+
 if TYPE_CHECKING:
-    from soundscapy.plotting.new.plot_context import PlotContext
+    from soundscapy.plotting.new import ISOPlot
+
+    _ISOPlotT = TypeVar("_ISOPlotT", bound="ISOPlot")
+
 
 logger = get_logger()
+
+# Type definitions
+AxisSpec = int | tuple[int, int] | list[int]
+LayerType = Literal["scatter", "density", "simple_density", "spi_simple"]
+LayerClass = type[Layer]
+LayerSpec = LayerType | LayerClass | Layer
 
 
 class LayerManager:
     """
     Manages the creation and rendering of visualization layers.
-
-    This class encapsulates the layer-related functionality that was previously
-    implemented as a mixin in the ISOPlot class.
 
     Attributes
     ----------
@@ -48,6 +58,13 @@ class LayerManager:
         The parent plot instance
 
     """
+
+    _LAYER_CLASSES: ClassVar[dict] = {
+        "scatter": ScatterLayer,
+        "density": DensityLayer,
+        "simple_density": SimpleDensityLayer,
+        "spi_simple": SPISimpleLayer,
+    }
 
     def __init__(self, plot: Any) -> None:
         """
@@ -61,195 +78,187 @@ class LayerManager:
         """
         self.plot = plot
 
-    def add_scatter(
+    # Pass a fully instantiated layer
+    @overload
+    def add_layer(
+        self, layer: Layer, *, on_axis: AxisSpec | None = None
+    ) -> _ISOPlotT: ...
+
+    # Pass an uninstantiated layer class
+    @overload
+    def add_layer(
         self,
+        layer_class: LayerClass,
         data: pd.DataFrame | None = None,
         *,
-        on_axis: int | tuple[int, int] | list[int] | None = None,
+        on_axis: AxisSpec | None = None,
         **params: Any,
-    ) -> Any:
-        """
-        Add a scatter layer to the plot.
+    ) -> _ISOPlotT: ...
 
-        Parameters
-        ----------
-        data : pd.DataFrame | None, optional
-            Custom data for this layer, by default None
-        on_axis : int | tuple[int, int] | list[int] | None, optional
-            Target specific axis/axes, by default None
-        **params : Any
-            Additional parameters for the scatter layer
-
-        Returns
-        -------
-        Any
-            The parent plot instance for chaining
-
-        """
-        return self.add_layer(
-            ScatterLayer,
-            data=data,
-            on_axis=on_axis,
-            **params,
-        )
-
-    def add_density(
+    # Pass a string of the layer type name
+    @overload
+    def add_layer(
         self,
+        layer_type: LayerType,
         data: pd.DataFrame | None = None,
         *,
-        on_axis: int | tuple[int, int] | list[int] | None = None,
+        on_axis: AxisSpec | None = None,
         **params: Any,
-    ) -> Any:
-        """
-        Add a density layer to the plot.
-
-        Parameters
-        ----------
-        data : pd.DataFrame | None, optional
-            Custom data for this layer, by default None
-        on_axis : int | tuple[int, int] | list[int] | None, optional
-            Target specific axis/axes, by default None
-        **params : Any
-            Additional parameters for the density layer
-
-        Returns
-        -------
-        Any
-            The parent plot instance for chaining
-
-        """
-        # Check if we have enough data for a density plot
-        plot_data = data if data is not None else self.plot.main_context.data
-        if plot_data is not None and len(plot_data) < RECOMMENDED_MIN_SAMPLES:
-            warnings.warn(
-                "Density plots are not recommended for "
-                f"small datasets (<{RECOMMENDED_MIN_SAMPLES} samples).",
-                UserWarning,
-                stacklevel=2,
-            )
-
-        return self.add_layer(
-            DensityLayer,
-            data=data,
-            on_axis=on_axis,
-            **params,
-        )
-
-    def add_simple_density(
-        self,
-        data: pd.DataFrame | None = None,
-        *,
-        on_axis: int | tuple[int, int] | list[int] | None = None,
-        **params: Any,
-    ) -> Any:
-        """
-        Add a simple density layer to the plot.
-
-        Parameters
-        ----------
-        data : pd.DataFrame | None, optional
-            Custom data for this layer, by default None
-        on_axis : int | tuple[int, int] | list[int] | None, optional
-            Target specific axis/axes, by default None
-        **params : Any
-            Additional parameters for the simple density layer
-
-        Returns
-        -------
-        Any
-            The parent plot instance for chaining
-
-        """
-        return self.add_layer(
-            SimpleDensityLayer,
-            data=data,
-            on_axis=on_axis,
-            **params,
-        )
-
-    def add_spi_simple(
-        self,
-        data: pd.DataFrame | None = None,
-        *,
-        on_axis: int | tuple[int, int] | list[int] | None = None,
-        **params: Any,
-    ) -> Any:
-        """
-        Add an SPI simple layer to the plot.
-
-        Parameters
-        ----------
-        data : pd.DataFrame | None, optional
-            Custom data for this layer, by default None
-        on_axis : int | tuple[int, int] | list[int] | None, optional
-            Target specific axis/axes, by default None
-        **params : Any
-            Additional parameters for the SPI simple layer
-
-        Returns
-        -------
-        Any
-            The parent plot instance for chaining
-
-        """
-        return self.add_layer(
-            SPISimpleLayer,
-            data=data,
-            on_axis=on_axis,
-            **params,
-        )
+    ) -> _ISOPlotT: ...
 
     def add_layer(
         self,
-        layer_class: type[RenderableLayer],
+        layer_spec: LayerSpec,
         data: pd.DataFrame | None = None,
         *,
-        on_axis: int | tuple[int, int] | list[int] | None = None,
+        on_axis: AxisSpec | None = None,
         **params: Any,
-    ) -> Any:
+    ) -> _ISOPlotT:
         """
         Add a visualization layer, optionally targeting specific subplot(s).
 
         Parameters
         ----------
-        layer_class : type[RenderableLayer]
-            The type of layer to add
+        layer_spec : LayerSpec
+            Either:
+            - A string layer type ("scatter", "density", "simple_density", "spi_simple")
+            - A layer class (ScatterLayer, DensityLayer, etc.)
+            - An already instantiated Layer object
         data : pd.DataFrame | None, optional
-            Custom data for this layer, by default None
-        on_axis : int | tuple[int, int] | list[int] | None, optional
+            Custom data for this layer, by default None.
+            Ignored if layer_spec is a Layer instance.
+        on_axis : AxisSpec, optional
             Target specific axis/axes, by default None
         **params : Any
-            Additional parameters for the layer
+            Additional parameters for the layer. Special parameters:
+            - msn_params: Used only for "spi_simple" layer type
+            Ignored if layer_spec is a Layer instance.
+
 
         Returns
         -------
-        Any
+        ISOPlot
+            The parent plot instance for chaining
+
+        Examples
+        --------
+        >>> import soundscapy as sspy
+        >>> from soundscapy.plotting.new import ISOPlot
+        >>> data = sspy.add_iso_coords(sspy.isd.load())
+        >>> plot = ISOPlot(data).create_subplots(2, 2)
+
+        # Using layer type string
+        >>> custom_df = data.query("LocationID == 'CamdenTown'")
+        >>> plot.layer_mgr.add_layer("scatter", x="col1", y="col2", alpha=0.5)
+        >>> plot.layer_mgr.add_layer("density", data=custom_df, on_axis=1)
+
+        # Using layer type class (works essentially the same as the string version)
+        >>> plot.layer_mgr.add_layer(ScatterLayer, x="col1", y="col2", alpha=0.5)
+        >>> plot.layer_mgr.add_layer(DensityLayer, data=custom_df, on_axis=1)
+
+        # Using instantiated Layer object
+        >>> my_layer = ScatterLayer(x="col1", y="col2", alpha=0.7)
+        >>> plot.layer_mgr.add_layer(my_layer, on_axis=0)
+
+        """
+        # Handle the case when an instantiated Layer is provided
+        if isinstance(layer_spec, Layer):
+            # Use the provided layer directly
+            return self._render_layer(layer_spec, on_axis=on_axis, **params)
+
+        # Get the layer class from either the class or
+        layer_class = self._resolve_layer_class(layer_spec)
+
+        # Create the layer instance
+        is_spi = "spi" in layer_class.__name__.lower()
+        if is_spi:
+            layer = layer_class(spi_target_data=data, **params)
+        else:
+            layer = layer_class(custom_data=data, **params)
+
+        # Render the layer and return the plot
+        return self._render_layer(layer, on_axis=on_axis)
+
+    def _resolve_layer_class(self, layer_spec: str | type[Layer]) -> type[Layer]:
+        """
+        Resolve a layer specification to a Layer class.
+
+        Parameters
+        ----------
+        layer_spec : str | type[Layer]
+            Either a string layer type ("scatter", "density", "simple_density", "spi_simple")
+                or a Layer class (ScatterLayer, DensityLayer, etc.)
+
+        Returns
+        -------
+        type[Layer]
+            The resolved Layer class
+
+        Raises
+        ------
+        ValueError
+            If an unknown layer type string is provided
+        TypeError
+            If layer_spec is not a string or a Layer subclass
+
+        """
+        # Case 1: layer_spec is a Layer class
+        if isinstance(layer_spec, type) and issubclass(layer_spec, Layer):
+            return layer_spec
+
+        # Case 2: layer_spec is a string
+        if isinstance(layer_spec, str):
+            layer_class = self._LAYER_CLASSES.get(layer_spec)
+            if layer_class is None:
+                msg = (
+                    f"Unknown layer type: {layer_spec}. "
+                    f"Available layer types: {list(self._LAYER_CLASSES.keys())}"
+                )
+                raise ValueError(msg)
+            return layer_class
+
+        # If we get here, layer_spec was an invalid type
+        msg = (
+            "Expected `layer_spec` to be either: "
+            f"  - str (layer type name): {list(self._LAYER_CLASSES.keys())} "
+            "  - Uninstantiated Layer class, e.g. ScatterLayer "
+            "  - Already instantiated Layer object "
+            f"Got: {type(layer_spec).__name__}"
+        )
+        raise TypeError(msg)
+
+    def _render_layer(
+        self, layer: Layer, *, on_axis: AxisSpec | None = None
+    ) -> _ISOPlotT:
+        """
+        Render a layer on the appropriate axes.
+
+        Parameters
+        ----------
+        layer : Layer
+            The layer to render
+        on_axis : AxisSpec | None, optional
+            Target specific axis/axes, by default None
+
+        Returns
+        -------
+        ISOPlot
             The parent plot instance for chaining
 
         """
-        # Create the layer instance
-        layer = cast("Layer", layer_class(custom_data=data, **params))
-
-        # Check if we have axes to render on
-        self._check_for_axes()
-
+        # TODO: This should maybe be moved to a different class's responsibility
+        #       What about encapsulating this in .get_contexts_by_spec ?
+        #       Then LayerManager doesn't need to know anything about the context,
+        #       it just asks for a list of contexts to add the layer to.
         # If no subplots created yet, add to main context
-        if not self.plot.subplot_contexts:
-            if self.plot.main_context.ax is None:
-                # Get the single axis and assign it to main context
-                if isinstance(self.plot.axes, Axes):
-                    self.plot.main_context.ax = self.plot.axes
-                elif isinstance(self.plot.axes, np.ndarray) and self.plot.axes.size > 0:
-                    self.plot.main_context.ax = self.plot.axes.flatten()[0]
-
-            # Add layer to main context
-            self.plot.main_context.layers.append(layer)
-            # Render the layer immediately
-            layer.render(self.plot.main_context)
-            return self.plot
+        if self.plot.figure is None or self.plot.axes is None:
+            msg = "Cannot add layer to main context before creating subplots."
+            raise RuntimeError(msg)
 
         # Handle various axis targeting options
-        target_contexts = self._resolve_target_contexts(on_axis)
+        # TODO: If feels like this should be done via
+        #       self.plot.get_contexts_by_spec(on_axis), rather than a classmethod
+        target_contexts = PlotContext.get_contexts_by_spec(self.plot, on_axis)
 
         # Add the layer to each target context and render it
         for context in target_contexts:
@@ -258,95 +267,41 @@ class LayerManager:
 
         return self.plot
 
-    def _check_for_axes(self) -> None:
-        """
-        Check if we have axes to render on, create if needed.
+    @deprecated()
+    def add_scatter(self, data=None, *, on_axis=None, **params) -> _ISOPlotT:  # noqa: ANN001
+        """Legacy method that forwards to add_layer(layer_type="scatter", ...)."""
+        return self.add_layer("scatter", data=data, on_axis=on_axis, **params)
 
-        This method ensures that the plot has axes to render on,
-        creating them if necessary.
-        """
-        if self.plot.figure is None:
-            # Create a new figure and axes
-            self.plot.figure, self.plot.axes = plt.subplots(figsize=(5, 5))
+    @deprecated()
+    def add_density(self, data=None, *, on_axis=None, **params) -> _ISOPlotT:  # noqa: ANN001
+        """Legacy method that forwards to add_layer(layer_type="density", ...)."""
+        return self.add_layer("density", data=data, on_axis=on_axis, **params)
 
-    def _resolve_target_contexts(
-        self, on_axis: int | tuple[int, int] | list[int] | None
-    ) -> list[PlotContext]:
-        """
-        Resolve which subplot contexts to target based on axis specification.
+    @deprecated()
+    def add_simple_density(self, data=None, *, on_axis=None, **params) -> _ISOPlotT:  # noqa: ANN001
+        """Legacy method that forwards to add_layer(layer_type="simple_density",...)."""
+        return self.add_layer("simple_density", data=data, on_axis=on_axis, **params)
 
-        Parameters
-        ----------
-        on_axis : int | tuple[int, int] | list[int] | None
-            The axis specification:
-            - None: All subplot contexts
-            - int: Single subplot at flattened index
-            - tuple[int, int]: Subplot at (row, col)
-            - list[int]: Multiple subplots at specified indices
-
-        Returns
-        -------
-        list[PlotContext]
-            List of target subplot contexts
-
-        """
-        # If no specific axis, target all subplot contexts
-        if on_axis is None:
-            return self.plot.subplot_contexts
-
-        # Convert axis specification to list of indices
-        indices = self._resolve_axis_indices(on_axis)
-
-        # Get the contexts for each valid index
-        target_contexts = []
-        for idx in indices:
-            if 0 <= idx < len(self.plot.subplot_contexts):
-                target_contexts.append(self.plot.subplot_contexts[idx])
-            else:
-                msg = f"Subplot index {idx} out of range"
-                raise IndexError(msg)
-
-        return target_contexts
-
-    def _resolve_axis_indices(
-        self, on_axis: int | tuple[int, int] | list[int]
-    ) -> list[int]:
-        """
-        Convert axis specification to list of indices.
-
-        Parameters
-        ----------
-        on_axis : int | tuple[int, int] | list[int]
-            The axis specification to resolve
-
-        Returns
-        -------
-        list[int]
-            List of flattened indices
-
-        Raises
-        ------
-        ValueError
-            If an invalid axis specification is provided
-
-        """
-        if isinstance(on_axis, int):
-            return [on_axis]
-        if isinstance(on_axis, tuple) and len(on_axis) == 2:
-            # Convert (row, col) to flattened index
-            row, col = on_axis
-            return [row * self.plot.subplots_params.ncols + col]
-        if isinstance(on_axis, list):
-            return on_axis
-        msg = f"Invalid axis specification: {on_axis}"
-        raise ValueError(msg)
+    @deprecated()
+    def add_spi_simple(
+        self,
+        data=None,  # noqa: ANN001
+        *,
+        msn_params=None,  # noqa: ANN001
+        on_axis=None,  # noqa: ANN001
+        **params,
+    ) -> _ISOPlotT:
+        """Legacy method that forwards to add_layer(layer_type="spi_simple", ...)."""
+        return self.add_layer(
+            "spi_simple", data=data, on_axis=on_axis, msn_params=msn_params, **params
+        )
 
 
 class StyleManager:
     """
-    Manages the styling of plots.
+    Manages the style_mgr of plots.
 
-    This class encapsulates the styling-related functionality that was previously
+    This class encapsulates the style_mgr-related functionality that was previously
     implemented as a mixin in the ISOPlot class.
 
     Attributes
@@ -375,14 +330,14 @@ class StyleManager:
         **style_params: Any,
     ) -> Any:
         """
-        Apply styling to the plot.
+        Apply style_mgr to the plot.
 
         Parameters
         ----------
         on_axis : int | tuple[int, int] | list[int] | None, optional
             Target specific axis/axes, by default None
         **style_params : Any
-            Additional styling parameters
+            Additional style_mgr parameters
 
         Returns
         -------
@@ -399,7 +354,7 @@ class StyleManager:
             return self.plot
 
         # Apply to specified subplots
-        target_contexts = self._resolve_target_contexts(on_axis)
+        target_contexts = PlotContext.get_contexts_by_spec(self.plot, on_axis)
         for context in target_contexts:
             self._apply_styling_to_context(context)
 
@@ -407,12 +362,12 @@ class StyleManager:
 
     def _apply_styling_to_context(self, context: PlotContext) -> None:
         """
-        Apply styling to a specific context.
+        Apply style_mgr to a specific context.
 
         Parameters
         ----------
         context : PlotContext
-            The context to apply styling to
+            The context to apply style_mgr to
 
         """
         if context.ax is None:
@@ -421,7 +376,7 @@ class StyleManager:
         # Get style parameters
         style_params = context.get_params("style")
 
-        # Apply styling to the axes
+        # Apply style_mgr to the axes
         ax = context.ax
 
         # Set limits
@@ -447,9 +402,10 @@ class StyleManager:
         if hasattr(style_params, "primary_lines") and style_params.primary_lines:
             self._add_primary_lines(ax, style_params)
 
-        # Add diagonal lines
+        # Add diagonal lines and labels
         if hasattr(style_params, "diagonal_lines") and style_params.diagonal_lines:
             self._add_diagonal_lines(ax, style_params)
+            self._add_diagonal_labels(ax, style_params)
 
         # Add legend if needed
         if hasattr(style_params, "legend_loc") and style_params.legend_loc:
@@ -503,8 +459,9 @@ class StyleManager:
         ax.plot(
             xlim,
             ylim,
-            color="black",
-            linestyle="--",
+            color="grey",
+            linestyle="dashed",
+            alpha=0.5,
             linewidth=style_params.linewidth,
             zorder=style_params.diag_lines_zorder,
         )
@@ -513,83 +470,75 @@ class StyleManager:
         ax.plot(
             xlim,
             ylim[::-1],
-            color="black",
-            linestyle="--",
+            color="grey",
+            linestyle="dashed",
+            alpha=0.5,
             linewidth=style_params.linewidth,
             zorder=style_params.diag_lines_zorder,
         )
 
-    def _resolve_target_contexts(
-        self, on_axis: int | tuple[int, int] | list[int] | None
-    ) -> list[PlotContext]:
+    def _add_diagonal_labels(self, ax: Axes, style_params: Any) -> None:
         """
-        Resolve which subplot contexts to target based on axis specification.
+        Add diagonal labels to the plot.
 
         Parameters
         ----------
-        on_axis : int | tuple[int, int] | list[int] | None
-            The axis specification:
-            - None: All subplot contexts
-            - int: Single subplot at flattened index
-            - tuple[int, int]: Subplot at (row, col)
-            - list[int]: Multiple subplots at specified indices
-
-        Returns
-        -------
-        list[PlotContext]
-            List of target subplot contexts
+        ax : Axes
+            The axes to add labels to
+        style_params : Any
+            The style parameters
 
         """
-        # If no specific axis, target all subplot contexts
-        if on_axis is None:
-            return self.plot.subplot_contexts
+        # Add diagonal labels
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
 
-        # Convert axis specification to list of indices
-        indices = self._resolve_axis_indices(on_axis)
+        # Define font dictionary for diagonal labels
+        diag_ax_font = {
+            "fontstyle": "italic",
+            "fontsize": "small",
+            "fontweight": "bold",
+            "color": "black",
+            "alpha": 0.5,
+        }
 
-        # Get the contexts for each valid index
-        target_contexts = []
-        for idx in indices:
-            if 0 <= idx < len(self.plot.subplot_contexts):
-                target_contexts.append(self.plot.subplot_contexts[idx])
-            else:
-                msg = f"Subplot index {idx} out of range"
-                raise IndexError(msg)
-
-        return target_contexts
-
-    def _resolve_axis_indices(
-        self, on_axis: int | tuple[int, int] | list[int]
-    ) -> list[int]:
-        """
-        Convert axis specification to list of indices.
-
-        Parameters
-        ----------
-        on_axis : int | tuple[int, int] | list[int]
-            The axis specification to resolve
-
-        Returns
-        -------
-        list[int]
-            List of flattened indices
-
-        Raises
-        ------
-        ValueError
-            If an invalid axis specification is provided
-
-        """
-        if isinstance(on_axis, int):
-            return [on_axis]
-        if isinstance(on_axis, tuple) and len(on_axis) == 2:
-            # Convert (row, col) to flattened index
-            row, col = on_axis
-            return [row * self.plot.subplots_params.ncols + col]
-        if isinstance(on_axis, list):
-            return on_axis
-        msg = f"Invalid axis specification: {on_axis}"
-        raise ValueError(msg)
+        # Add the four diagonal labels
+        ax.text(
+            xlim[1] / 2,
+            ylim[1] / 2,
+            "(vibrant)",
+            ha="center",
+            va="center",
+            fontdict=diag_ax_font,
+            zorder=style_params.diag_labels_zorder,
+        )
+        ax.text(
+            xlim[0] / 2,
+            ylim[1] / 2,
+            "(chaotic)",
+            ha="center",
+            va="center",
+            fontdict=diag_ax_font,
+            zorder=style_params.diag_labels_zorder,
+        )
+        ax.text(
+            xlim[0] / 2,
+            ylim[0] / 2,
+            "(monotonous)",
+            ha="center",
+            va="center",
+            fontdict=diag_ax_font,
+            zorder=style_params.diag_labels_zorder,
+        )
+        ax.text(
+            xlim[1] / 2,
+            ylim[0] / 2,
+            "(calm)",
+            ha="center",
+            va="center",
+            fontdict=diag_ax_font,
+            zorder=style_params.diag_labels_zorder,
+        )
 
 
 class SubplotManager:
@@ -680,7 +629,7 @@ class SubplotManager:
         Create subplot contexts based on the current configuration.
 
         This method creates a PlotContext for each subplot, either with
-        the same data or with data split by a grouping variable.
+        the same custom_data or with custom_data split by a grouping variable.
         """
         # Clear existing subplot contexts
         self.plot.subplot_contexts = []
@@ -693,47 +642,35 @@ class SubplotManager:
             self._create_subplots_by_group()
             return
 
-        # Otherwise, create a grid of subplots with the same data
+        # Otherwise, create a grid of subplots with the same custom_data
         axes = self.plot.axes
         if not isinstance(axes, np.ndarray):
             axes = np.array([[axes]])
 
         # Create a context for each axis
-        for i in range(params.nrows):
-            for j in range(params.ncols):
-                # Get the axis for this subplot
-                ax = (
-                    axes[i, j]
-                    if params.nrows > 1 and params.ncols > 1
-                    else axes[i]
-                    if params.nrows > 1
-                    else axes[j]
-                    if params.ncols > 1
-                    else axes
-                )
+        for i, ax in enumerate(axes.flatten()):
+            # Create a title for this subplot
+            title = (
+                f"Subplot {i + 1}"
+                if self.plot.main_context.title is None
+                else f"{self.plot.main_context.title} {i + 1}"
+            )
 
-                # Create a title for this subplot
-                title = (
-                    f"Subplot {i * params.ncols + j + 1}"
-                    if self.plot.main_context.title is None
-                    else f"{self.plot.main_context.title} {i * params.ncols + j + 1}"
-                )
+            # Create a child context for this subplot
+            context = self.plot.main_context.create_child(
+                ax=ax,
+                title=title,
+            )
 
-                # Create a child context for this subplot
-                context = self.plot.main_context.create_child(
-                    ax=ax,
-                    title=title,
-                )
-
-                # Add to subplot contexts
-                self.plot.subplot_contexts.append(context)
+            # Add to subplot contexts
+            self.plot.subplot_contexts.append(context)
 
     def _create_subplots_by_group(self) -> None:
         """
-        Create subplots by grouping the data.
+        Create subplots by grouping the custom_data.
 
         This method creates a subplot for each unique value in the
-        subplot_by column of the data.
+        subplot_by column of the custom_data.
         """
         # Get subplot parameters
         params = self.plot.subplots_params
@@ -777,7 +714,7 @@ class SubplotManager:
                 else axes
             )
 
-            # Filter data for this group
+            # Filter custom_data for this group
             group_data = data[data[subplot_by] == group]
 
             # Create a title for this subplot

@@ -9,15 +9,16 @@ a PlotContext's axes using parameters provided by the context.
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
+import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from soundscapy.plotting.new.constants import RECOMMENDED_MIN_SAMPLES
 from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
-    import pandas as pd
     from matplotlib.axes import Axes
 
     from soundscapy.plotting.new.parameter_models import (
@@ -28,6 +29,10 @@ if TYPE_CHECKING:
         SPISimpleDensityParams,
     )
     from soundscapy.plotting.new.protocols import PlotContext
+    from soundscapy.spi.msn import (
+        CentredParams,
+        DirectParams,
+    )
 
 logger = get_logger()
 
@@ -108,6 +113,10 @@ class Layer:
 
         # Get parameters from context and apply overrides
         params = self._get_params_from_context(context)
+
+        # Remove palette if no hue in this layer
+        if params.hue is None:
+            params.palette = None
 
         # Render the layer
         self._render_implementation(data, context, context.ax, params)
@@ -357,10 +366,441 @@ class SimpleDensityLayer(DensityLayer):
         sns.kdeplot(ax=ax, **kwargs)
 
 
-class SPISimpleLayer(SimpleDensityLayer):
+class SPILayer(Layer):
+    """Base layer for rendering SPI plots."""
+
+    param_type = "spi"
+
+    def __init__(
+        self,
+        spi_target_data: pd.DataFrame | np.ndarray | None = None,
+        *,
+        msn_params: DirectParams | CentredParams | None = None,
+        n: int = 10000,
+        custom_data: pd.DataFrame | None = None,
+        **params: Any,
+    ) -> None:
+        """
+        Initialize an SPILayer.
+
+        Parameters
+        ----------
+        spi_target_data : pd.DataFrame | np.ndarray | None, optional
+            Pre-sampled data for SPI target distribution.
+            When None, msn_params must be provided.
+        msn_params : DirectParams | CentredParams | None, optional
+            Parameters to generate SPI data if no spi_target_data is provided
+        n : int, optional
+            Number of samples to generate if using msn_params, by default 10000
+        custom_data : pd.DataFrame | None, optional
+            Custom data for this layer, by default None
+        **params : Any
+            Additional parameters for the layer
+
+        Notes
+        -----
+        Either spi_target_data or msn_params must be provided, but not both.
+        The test data for SPI calculations will be retrieved from the plot context.
+
+        """
+        # If custom_data is provided but spi_target_data is not, use custom_data as spi_target_data
+        if custom_data is not None and spi_target_data is None:
+            logger.warning(
+                "`spi_target_data` not found, but `custom_data` was found. "
+                "Using `custom_data` as the SPI target data. "
+                "\nNote: Passing the SPI data to `spi_target_data` is preferred."
+            )
+            spi_target_data = custom_data
+            custom_data = None
+
+        # Validate inputs and get SPI parameters
+        spi_target_data, self.spi_params = self._validate_spi_inputs(
+            spi_target_data, msn_params
+        )
+
+        # Generate the SPI target data
+        self.spi_data: pd.DataFrame = self._generate_spi_data(
+            spi_target_data, self.spi_params, n
+        )
+
+        # Add n to params
+        params["n"] = n
+
+        # Initialize the base layer with the SPI data
+        super().__init__(custom_data=self.spi_data, **params)
+
+    def render(self, context: PlotContext) -> None:
+        """
+        Render this layer on the given context.
+
+        Parameters
+        ----------
+        context : PlotContext
+            The context containing data and axes for rendering
+
+        """
+        if context.ax is None:
+            msg = "Cannot render layer: context has no associated axes"
+            raise ValueError(msg)
+
+        # Get the SPI target data
+        target_data = self.spi_data
+
+        # Process the SPI data to match the context
+        target_data = self._process_spi_data(target_data, context)
+
+        if target_data is None:
+            msg = "No data available for rendering SPI layer"
+            raise ValueError(msg)
+
+        # Get parameters from context
+        params = self._get_params_from_context(context)
+
+        # Render the layer
+        self._render_implementation(target_data, context, context.ax, params)
+
+    def _render_implementation(
+        self,
+        data: pd.DataFrame,
+        context: PlotContext,
+        ax: Axes,
+        params: BaseParams,
+    ) -> None:
+        """
+        Render an SPI plot.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to render
+        context : PlotContext
+            The context containing state for rendering
+        ax : Axes
+            The matplotlib axes to render on
+        params : BaseParams
+            The parameters for this layer
+
+        """
+        target_data = data[[context.x, context.y]]
+
+        # Get test data from context
+        test_data = context.data
+        if test_data is None:
+            warnings.warn(
+                "Cannot find data to test SPI against. Skipping this plot.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return
+
+        # Calculate SPI score
+        spi_score = self._calc_context_spi_score(target_data, test_data)
+
+        # Show the score
+        self.show_score(
+            spi_score,
+            show_score=params.show_score
+            if hasattr(params, "show_score")
+            else "under title",
+            context=context,
+            ax=ax,
+            axis_text_kwargs=params.axis_text_kw
+            if hasattr(params, "axis_text_kw")
+            else {},
+        )
+
+    def show_score(
+        self,
+        spi_score: int | None,
+        show_score: Literal["on axis", "under title"],
+        context: PlotContext,
+        ax: Axes,
+        axis_text_kwargs: dict[str, Any],
+    ) -> None:
+        """
+        Show the SPI score on the plot.
+
+        Parameters
+        ----------
+        spi_score : int | None
+            The SPI score to show
+        show_score : Literal["on axis", "under title"]
+            Where to show the score
+        context : PlotContext
+            The context containing data and axes for rendering
+        ax : Axes
+            The axes to render the score on
+        axis_text_kwargs : dict[str, Any]
+            Additional arguments for the axis text
+
+        """
+        if spi_score is not None:
+            if show_score == "on axis":
+                self._add_score_as_text(
+                    ax=ax,
+                    spi_score=spi_score,
+                    **axis_text_kwargs,
+                )
+            elif show_score == "under title":
+                self._add_score_under_title(
+                    context=context,
+                    ax=ax,
+                    spi_score=spi_score,
+                )
+
+    @staticmethod
+    def _add_score_as_text(ax: Axes, spi_score: int, **text_kwargs: Any) -> None:
+        """
+        Add the SPI score as text on the axis.
+
+        Parameters
+        ----------
+        ax : Axes
+            The axes to add the text to
+        spi_score : int
+            The SPI score to show
+        **text_kwargs : Any
+            Additional arguments for the text
+
+        """
+        from soundscapy.plotting.new.constants import DEFAULT_SPI_TEXT_KWARGS
+
+        text_kwargs_copy = DEFAULT_SPI_TEXT_KWARGS.copy()
+        text_kwargs_copy.update(**text_kwargs)
+        text_kwargs_copy["s"] = f"SPI: {spi_score}"
+
+        ax.text(transform=ax.transAxes, **text_kwargs_copy)
+
+    @staticmethod
+    def _add_score_under_title(context: PlotContext, ax: Axes, spi_score: int) -> None:
+        """
+        Add the SPI score under the title.
+
+        Parameters
+        ----------
+        context : PlotContext
+            The context containing data and axes for rendering
+        ax : Axes
+            The axes to add the text to
+        spi_score : int
+            The SPI score to show
+
+        """
+        if context.title is not None:
+            new_title = f"{context.title}\nSPI: {spi_score}"
+        else:
+            new_title = f"SPI: {spi_score}"
+
+        ax.set_title(new_title)
+
+    @staticmethod
+    def _validate_spi_inputs(
+        spi_data: pd.DataFrame | np.ndarray | None,
+        spi_params: DirectParams | CentredParams | None,
+    ) -> tuple[pd.DataFrame | np.ndarray | None, DirectParams | CentredParams | None]:
+        """
+        Validate the right combination of inputs for the SPI plot.
+
+        Parameters
+        ----------
+        spi_data : pd.DataFrame | np.ndarray | None
+            Data to use for SPI plotting
+        spi_params : DirectParams | CentredParams | None
+            Parameters to generate SPI data
+
+        Returns
+        -------
+        tuple[pd.DataFrame | np.ndarray | None, DirectParams | CentredParams | None]
+            Validated data and parameters
+
+        """
+        # Input validation
+        if spi_data is None and spi_params is None:
+            msg = (
+                "No data provided for SPI plot. "
+                "Please provide either spi_data or msn_params."
+            )
+            raise ValueError(msg)
+
+        if spi_data is not None and spi_params is not None:
+            msg = (
+                "Please provide either spi_data or msn_params, not both. "
+                "Got: \n"
+                f"\n`spi_data`: {type(spi_data)}\n`spi_params`: {type(spi_params)}"
+            )
+            raise ValueError(msg)
+
+        if spi_data is not None and not isinstance(spi_data, pd.DataFrame | np.ndarray):
+            msg = "Invalid data type for SPI plot. Expected DataFrame or ndarray."
+            raise TypeError(msg)
+
+        if spi_params is not None:
+            # Check if the import is available
+            try:
+                from soundscapy.spi.msn import CentredParams, DirectParams
+
+                if not isinstance(spi_params, (DirectParams, CentredParams)):
+                    msg = (
+                        "Invalid parameters for SPI plot. "
+                        "Expected DirectParams or CentredParams."
+                    )
+                    raise TypeError(msg)
+            except ImportError:
+                msg = (
+                    "Could not import DirectParams or CentredParams from soundscapy.spi.msn. "
+                    "Please ensure the module is available."
+                )
+                raise ImportError(msg)
+
+        return spi_data, spi_params
+
+    @staticmethod
+    def _generate_spi_data(
+        spi_data: pd.DataFrame | np.ndarray | None,
+        spi_params: DirectParams | CentredParams | None,
+        n: int,
+    ) -> pd.DataFrame:
+        """
+        Validate and prepare SPI data from either direct data or parameters.
+
+        Parameters
+        ----------
+        spi_data : pd.DataFrame | np.ndarray | None
+            Data to use for SPI plotting
+        spi_params : DirectParams | CentredParams | None
+            Parameters to generate SPI data
+        n : int
+            Number of samples to generate if using msn_params
+
+        Returns
+        -------
+        pd.DataFrame
+            Prepared data for SPI plotting
+
+        """
+        # Generate data from parameters if provided
+        if spi_params is not None:
+            try:
+                from soundscapy.spi.msn import MultiSkewNorm
+
+                spi_msn = MultiSkewNorm.from_params(spi_params)
+                sample_data = spi_msn.sample(n=n, return_sample=True)
+                spi_data = pd.DataFrame(
+                    sample_data,
+                    columns=["x", "y"],
+                )
+            except ImportError:
+                msg = (
+                    "Could not import MultiSkewNorm from soundscapy.spi.msn. "
+                    "Please ensure the module is available."
+                )
+                raise ImportError(msg)
+
+        if spi_data is not None:
+            # Process provided data
+            if isinstance(spi_data, np.ndarray):
+                if len(spi_data.shape) != 2 or spi_data.shape[1] != 2:  # noqa: PLR2004
+                    msg = (
+                        "Invalid shape for SPI data. "
+                        "Expected a 2D array with 2 columns."
+                    )
+                    raise ValueError(msg)
+                spi_data = pd.DataFrame(spi_data, columns=["x", "y"])
+            return spi_data
+
+        msg = "Please provide either spi_data or msn_params."
+        raise ValueError(msg)
+
+    def _process_spi_data(
+        self, spi_data: pd.DataFrame | np.ndarray, context: PlotContext
+    ) -> pd.DataFrame:
+        """
+        Process SPI data into standard format.
+
+        Parameters
+        ----------
+        spi_data : pd.DataFrame | np.ndarray
+            Data to process
+        context : PlotContext
+            The context containing state for rendering
+
+        Returns
+        -------
+        pd.DataFrame
+            Processed data in standard format
+
+        """
+        params = self._get_params_from_context(context)
+        xcol = getattr(params, "x", context.x)
+        ycol = getattr(params, "y", context.y)
+
+        # DataFrame handling
+        if isinstance(spi_data, pd.DataFrame):
+            if xcol not in spi_data.columns or ycol not in spi_data.columns:
+                spi_data = spi_data.rename(columns={"x": xcol, "y": ycol})
+            return spi_data
+
+        # Numpy array handling
+        if isinstance(spi_data, np.ndarray):
+            if len(spi_data.shape) != 2 or spi_data.shape[1] != 2:  # noqa: PLR2004
+                msg = "Invalid shape for SPI data. Expected a 2D array with 2 columns."
+                raise ValueError(msg)
+            return pd.DataFrame(spi_data, columns=[xcol, ycol])
+
+        msg = "Invalid SPI data type. Expected DataFrame or numpy array."
+        raise TypeError(msg)
+
+    @staticmethod
+    def _calc_context_spi_score(
+        target_data: pd.DataFrame,
+        test_data: pd.DataFrame,
+    ) -> int | None:
+        """
+        Calculate the SPI score between target and test data.
+
+        Parameters
+        ----------
+        target_data : pd.DataFrame
+            The target data
+        test_data : pd.DataFrame
+            The test data
+
+        Returns
+        -------
+        int | None
+            The SPI score, or None if calculation failed
+
+        """
+        try:
+            from soundscapy.spi import spi_score
+
+            return spi_score(target=target_data, test=test_data)
+        except ImportError:
+            warnings.warn(
+                "Could not import spi_score from soundscapy.spi. "
+                "SPI score calculation will be skipped.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return None
+
+
+class SPISimpleLayer(SPILayer, SimpleDensityLayer):
     """Layer for rendering SPI simple density plots."""
 
     param_type = "spi_simple_density"
+
+    # Note: SPIDensityLayer and SPIScatterLayer could be implemented similarly
+    # by inheriting from SPILayer and DensityLayer or ScatterLayer respectively.
+    # For example:
+    #
+    # class SPIDensityLayer(SPILayer, DensityLayer):
+    #     """Layer for rendering SPI density plots."""
+    #     param_type = "spi_density"
+    #
+    # class SPIScatterLayer(SPILayer, ScatterLayer):
+    #     """Layer for rendering SPI scatter plots."""
+    #     param_type = "spi_scatter"
 
     def _render_implementation(
         self,
@@ -402,33 +842,19 @@ class SPISimpleLayer(SimpleDensityLayer):
         # Render the SPI simple density plot
         sns.kdeplot(ax=ax, **kwargs)
 
-        # Add SPI score text if needed
-        if hasattr(spi_params, "show_score") and spi_params.show_score:
-            self._add_spi_score_text(context, ax, spi_params)
+        # Calculate SPI score
+        target_data = data[[context.x, context.y]]
+        test_data = context.data
 
-    def _add_spi_score_text(
-        self, context: PlotContext, ax: Axes, params: SPISimpleDensityParams
-    ) -> None:
-        """
-        Add SPI score text to the plot.
+        if test_data is not None:
+            spi_score = self._calc_context_spi_score(target_data, test_data)
 
-        Parameters
-        ----------
-        context : PlotContext
-            The context containing state for rendering
-        ax : Axes
-            The matplotlib axes to render on
-        params : SPISimpleDensityParams
-            The parameters for this layer
-
-        """
-        # This is a simplified version - in a real implementation,
-        # we would calculate and display the actual SPI score
-        if params.show_score == "under title":
-            # Add text under the title
-            if context.title:
-                ax.set_title(f"{context.title}\nSPI Score: 0.75")
-        elif params.show_score == "on axis" and params.axis_text_kw:
-            # Add text on the axis
-            text_kwargs = params.axis_text_kw.copy()
-            ax.text(s="SPI Score: 0.75", transform=ax.transAxes, **text_kwargs)
+            # Show the score
+            if hasattr(spi_params, "show_score") and spi_params.show_score:
+                self.show_score(
+                    spi_score,
+                    show_score=spi_params.show_score,
+                    context=context,
+                    ax=ax,
+                    axis_text_kwargs=spi_params.axis_text_kw or {},
+                )
