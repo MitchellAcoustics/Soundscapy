@@ -59,10 +59,10 @@ class ISOPlotLayersMixin:
         -------
         Any
             The current plot instance for chaining
+
         """
-        raise NotImplementedError(
-            "Classes using ISOPlotLayersMixin must implement add_layer"
-        )
+        msg = "Classes using ISOPlotLayersMixin must implement add_layer"
+        raise NotImplementedError(msg)
 
     def get_single_axes(self, ax_idx: int | tuple[int, int] | None = None) -> Any:
         """
@@ -81,10 +81,10 @@ class ISOPlotLayersMixin:
         -------
         Any
             The requested matplotlib Axes object
+
         """
-        raise NotImplementedError(
-            "Classes using ISOPlotLayersMixin must implement get_single_axes"
-        )
+        msg = "Classes using ISOPlotLayersMixin must implement get_single_axes"
+        raise NotImplementedError(msg)
 
     def add_scatter(
         self,
@@ -116,19 +116,39 @@ class ISOPlotLayersMixin:
 
         Examples
         --------
+        Add a scatter layer to all subplots:
+
         >>> import pandas as pd
         >>> import numpy as np
         >>> from soundscapy.plotting import ISOPlot
         >>> rng = np.random.default_rng(42)
-        >>> data = pd.DataFrame({
-        ...     'ISOPleasant': rng.normal(0, 0.5, 100),
-        ...     'ISOEventful': rng.normal(0, 0.5, 100),
-        ...     'Group': rng.integers(1, 3, 100)
+        >>> data = pd.DataFrame(
+        ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...          rng.integers(1, 3, 100)],
+        ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
+        >>> plot = (ISOPlot(data=data)
+        ...           .create_subplots(nrows=2, ncols=1)
+        ...           .add_scatter(s=50, alpha=0.7, hue='Group')
+        ...           .apply_styling())
+        >>> plot.show() # xdoctest: +SKIP
+        >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
+        True
+        >>> plot.close()  # Clean up
+
+        Add a scatter layer with custom data to a specific subplot:
+
+        >>> custom_data = pd.DataFrame({
+        ...     'ISOPleasant': rng.normal(0.2, 0.1, 50),
+        ...     'ISOEventful': rng.normal(0.15, 0.2, 50),
         ... })
         >>> plot = (ISOPlot(data=data)
-        ...         .add_scatter(hue='Group')
-        ...         .apply_styling())
+        ...            .create_subplots(nrows=2, ncols=1)
+        ...            .add_scatter(hue='Group')
+        ...            .add_scatter(on_axis=0, data=custom_data, color='red')
+        ...            .apply_styling())
         >>> plot.show() # xdoctest: +SKIP
+        >>> plot.subplot_contexts[0].layers[1].custom_data is custom_data
+        True
         >>> plot.close()  # Clean up
 
         """
@@ -172,6 +192,53 @@ class ISOPlotLayersMixin:
         -----
         Either spi_target_data or msn_params must be provided, but not both.
         The test data for SPI calculations will be retrieved from the plot context.
+
+        Examples
+        --------
+        Add a SPI layer to all subplots:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> from soundscapy.spi import DirectParams
+        >>> from soundscapy.plotting import ISOPlot
+        >>> rng = np.random.default_rng(42)
+        >>>    # Create a DataFrame with random data
+        >>> data = pd.DataFrame(
+        ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...    columns=['ISOPleasant', 'ISOEventful']
+        ... )
+        >>>    # Define MSN parameters for the SPI target
+        >>> msn_params = DirectParams(
+        ...     xi=np.array([0.5, 0.7]),
+        ...     omega=np.array([[0.1, 0.05], [0.05, 0.1]]),
+        ...     alpha=np.array([0, -5]),
+        ...     )
+        >>>    # Create the plot with only an SPI layer
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_spi(msn_params=msn_params)
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 2
+        True
+        >>> plot.close()  # Clean up
+
+        Add an SPI layer over top of 'real' data:
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_density()
+        ...     .add_spi(msn_params=msn_params, show_score="on axis")
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 3
+        True
+        >>> plot.close()  # Clean up
 
         """
         # Validate that we have either spi_target_data or msn_params
@@ -232,18 +299,38 @@ class ISOPlotLayersMixin:
 
         Examples
         --------
+        Add a density layer to all subplots:
+
         >>> import pandas as pd
         >>> import numpy as np
         >>> from soundscapy.plotting import ISOPlot
         >>> rng = np.random.default_rng(42)
         >>> data = pd.DataFrame({
-        ...     'ISOPleasant': rng.normal(0, 0.5, 100),
-        ...     'ISOEventful': rng.normal(0, 0.5, 100),
+        ...     'ISOPleasant': rng.normal(0.2, 0.25, 50),
+        ...     'ISOEventful': rng.normal(0.15, 0.4, 50),
         ... })
-        >>> plot = (ISOPlot(data=data)
-        ...         .add_density()
-        ...         .apply_styling())
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_density()
+        ...     .apply_styling()
+        ... )
         >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> plot.close()  # Clean up
+
+        Add a density layer with custom settings:
+
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_density(levels=5, alpha=0.7)
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
         >>> plot.close()  # Clean up
 
         """
@@ -291,19 +378,44 @@ class ISOPlotLayersMixin:
 
         Examples
         --------
+        Add a simple density layer:
+
         >>> import pandas as pd
         >>> import numpy as np
         >>> from soundscapy.plotting import ISOPlot
         >>> rng = np.random.default_rng(42)
         >>> data = pd.DataFrame({
-        ...     'ISOPleasant': rng.normal(0, 0.5, 100),
-        ...     'ISOEventful': rng.normal(0, 0.5, 100),
+        ...     'ISOPleasant': rng.normal(0.2, 0.25, 30),
+        ...     'ISOEventful': rng.normal(0.15, 0.4, 30),
         ... })
-        >>> plot = (ISOPlot(data=data)
-        ...         .add_simple_density()
-        ...         .apply_styling())
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_simple_density()
+        ...     .apply_styling()
+        ... )
         >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 2
+        True
         >>> plot.close()  # Clean up
+
+        Add a simple density with splitting by group:
+        >>> data = pd.DataFrame(
+        ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...          rng.integers(1, 3, 100)],
+        ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
+        >>> plot = (
+        ...     ISOPlot(data=data, hue='Group')
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_simple_density()
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 2
+        True
+        >>> plot.close()
 
         """
         return self.add_layer(
@@ -351,6 +463,7 @@ class ISOPlotLayersMixin:
         ...     'ISOEventful': rng.normal(0, 0.5, 100),
         ... })
         >>> plot = (ISOPlot(data=data)
+        ...         .create_subplots()
         ...         .add_scatter()
         ...         .add_annotation(
         ...             "Interesting point",

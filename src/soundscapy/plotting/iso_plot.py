@@ -19,7 +19,7 @@ Example:
 ...    .add_simple_density(fill=False)
 ...    .apply_styling()
 ... )
->>> isoplot.show() # xdoctest: +SKIP
+>>> isoplot.show()
 
 """
 # ruff: noqa: SLF001, G004
@@ -78,7 +78,38 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
     ...         .add_scatter()
     ...         .add_density()
     ...         .apply_styling())
-    >>> cp.show() # xdoctest: +SKIP
+    >>> cp.show()
+
+    Create a plot with default parameters:
+
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(42)
+    >>> data = pd.DataFrame(
+    ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+    ...    columns=['ISOPleasant', 'ISOEventful']
+    ... )
+    >>> plot = ISOPlot()
+    >>> isinstance(plot, ISOPlot)
+    True
+
+    Create a plot with a DataFrame:
+
+    >>> data = pd.DataFrame(
+    ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+    ...          rng.integers(1, 3, 100)],
+    ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
+    >>> plot = ISOPlot(data=data, hue='Group')
+    >>> plot.hue
+    'Group'
+
+
+    Create a plot directly with arrays:
+
+    >>> x, y = rng.multivariate_normal([0, 0], [[1, 0], [0, 1]], 100).T
+    >>> plot = ISOPlot(x=x, y=y)
+    >>> isinstance(plot, ISOPlot)
+    True
 
     """
 
@@ -114,39 +145,6 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
             Existing figure to plot on, by default None
         axes : Axes | np.ndarray | None, optional
             Existing axes to plot on, by default None
-
-        Examples
-        --------
-        Create a plot with default parameters:
-
-        >>> import pandas as pd
-        >>> import numpy as np
-        >>> rng = np.random.default_rng(42)
-        >>> data = pd.DataFrame(
-        ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
-        ...    columns=['ISOPleasant', 'ISOEventful']
-        ... )
-        >>> plot = ISOPlot()
-        >>> isinstance(plot, ISOPlot)
-        True
-
-        Create a plot with a DataFrame:
-
-        >>> data = pd.DataFrame(
-        ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
-        ...          rng.integers(1, 3, 100)],
-        ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
-        >>> plot = ISOPlot(data=data, hue='Group')
-        >>> plot.hue
-        'Group'
-
-
-        Create a plot directly with arrays:
-
-        >>> x, y = rng.multivariate_normal([0, 0], [[1, 0], [0, 1]], 100).T
-        >>> plot = ISOPlot(x=x, y=y)
-        >>> isinstance(plot, ISOPlot)
-        True
 
         """
         # Process and validate input data and coordinates
@@ -668,7 +666,8 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
             )
             raise ValueError(msg)
 
-    def _allocate_subplot_axes(self, subplot_titles: list[str]) -> tuple[int, int]:
+    @staticmethod
+    def _allocate_subplot_axes(subplot_titles: list[str]) -> tuple[int, int]:
         """Allocate the subplot axes based on the number of data subsets."""
         msg = (
             "This is an experimental feature. "
@@ -924,7 +923,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer)
         ...         .apply_styling())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show()
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
             True
         >>> plot.close()  # Clean up
@@ -935,7 +934,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer, on_axis=0)
         ...         .apply_styling())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> all(len(ctx.layers) == 0 for ctx in plot.subplot_contexts[1:])
@@ -948,7 +947,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
         ...            .create_subplots(nrows=2, ncols=2)
         ...            .add_layer(ScatterLayer, on_axis=[0, 2])
         ...            .apply_styling())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show()
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> len(plot.subplot_contexts[2].layers) == 1
@@ -970,7 +969,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
         ...        # Add a layer with custom data to the second subplot
         ...        .add_layer(ScatterLayer, data=custom_data, on_axis=1)
         ...        .apply_styling())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show()
         >>> plot.close()
 
         """
