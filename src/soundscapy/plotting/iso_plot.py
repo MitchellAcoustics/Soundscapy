@@ -4,7 +4,7 @@ Main module for creating circumplex plots using different backends.
 Example:
 -------
 >>> from soundscapy import isd, surveys
->>> from soundscapy.plotting import ISOPlot
+>>> from soundscapy.plotting.iso_plot_new import ISOPlot
 >>> df = isd.load()
 >>> df = surveys.add_iso_coords(df)
 >>> sub_df = isd.select_location_ids(df, ['CamdenTown', 'RegentsParkJapan'])
@@ -19,7 +19,7 @@ Example:
 ...    .add_simple_density(fill=False)
 ...    .apply_styling()
 ... )
->>> isoplot.show()
+>>> isoplot.show() # xdoctest: +SKIP
 
 """
 # ruff: noqa: SLF001, G004
@@ -30,19 +30,30 @@ import functools
 import warnings
 from typing import TYPE_CHECKING, Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from matplotlib import pyplot as plt
+from matplotlib import ticker
+from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure, SubFigure
 
 from soundscapy.plotting.defaults import (
+    DEFAULT_STYLE_PARAMS,
     DEFAULT_XCOL,
     DEFAULT_YCOL,
     RECOMMENDED_MIN_SAMPLES,
 )
-from soundscapy.plotting.iso_plot_layers import ISOPlotLayersMixin
-from soundscapy.plotting.iso_plot_styling import ISOPlotStylingMixin
+from soundscapy.plotting.layers import (
+    DensityLayer,
+    Layer,
+    ScatterLayer,
+    SimpleDensityLayer,
+    SPIDensityLayer,
+    SPIScatterLayer,
+    SPISimpleLayer,
+)
 from soundscapy.plotting.plot_context import PlotContext
 from soundscapy.plotting.plotting_types import (
     ParamModel,
@@ -54,13 +65,16 @@ from soundscapy.sspylogging import get_logger
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from soundscapy.plotting.layers import Layer
     from soundscapy.plotting.plotting_types import SeabornPaletteType
+    from soundscapy.spi.msn import (
+        CentredParams,
+        DirectParams,
+    )
 
 logger = get_logger()
 
 
-class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
+class ISOPlot:
     """
     A class for creating circumplex plots using different backends.
 
@@ -78,38 +92,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
     ...         .add_scatter()
     ...         .add_density()
     ...         .apply_styling())
-    >>> cp.show()
-
-    Create a plot with default parameters:
-
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> rng = np.random.default_rng(42)
-    >>> data = pd.DataFrame(
-    ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
-    ...    columns=['ISOPleasant', 'ISOEventful']
-    ... )
-    >>> plot = ISOPlot()
-    >>> isinstance(plot, ISOPlot)
-    True
-
-    Create a plot with a DataFrame:
-
-    >>> data = pd.DataFrame(
-    ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
-    ...          rng.integers(1, 3, 100)],
-    ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
-    >>> plot = ISOPlot(data=data, hue='Group')
-    >>> plot.hue
-    'Group'
-
-
-    Create a plot directly with arrays:
-
-    >>> x, y = rng.multivariate_normal([0, 0], [[1, 0], [0, 1]], 100).T
-    >>> plot = ISOPlot(x=x, y=y)
-    >>> isinstance(plot, ISOPlot)
-    True
+    >>> cp.show() # xdoctest: +SKIP
 
     """
 
@@ -145,6 +128,39 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
             Existing figure to plot on, by default None
         axes : Axes | np.ndarray | None, optional
             Existing axes to plot on, by default None
+
+        Examples
+        --------
+        Create a plot with default parameters:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(42)
+        >>> data = pd.DataFrame(
+        ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...    columns=['ISOPleasant', 'ISOEventful']
+        ... )
+        >>> plot = ISOPlot()
+        >>> isinstance(plot, ISOPlot)
+        True
+
+        Create a plot with a DataFrame:
+
+        >>> data = pd.DataFrame(
+        ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...          rng.integers(1, 3, 100)],
+        ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
+        >>> plot = ISOPlot(data=data, hue='Group')
+        >>> plot.hue
+        'Group'
+
+
+        Create a plot directly with arrays:
+
+        >>> x, y = rng.multivariate_normal([0, 0], [[1, 0], [0, 1]], 100).T
+        >>> plot = ISOPlot(x=x, y=y)
+        >>> isinstance(plot, ISOPlot)
+        True
 
         """
         # Process and validate input data and coordinates
@@ -666,8 +682,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
             )
             raise ValueError(msg)
 
-    @staticmethod
-    def _allocate_subplot_axes(subplot_titles: list[str]) -> tuple[int, int]:
+    def _allocate_subplot_axes(self, subplot_titles: list[str]) -> tuple[int, int]:
         """Allocate the subplot axes based on the number of data subsets."""
         msg = (
             "This is an experimental feature. "
@@ -923,7 +938,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer)
         ...         .apply_styling())
-        >>> plot.show()
+        >>> plot.show() # xdoctest: +SKIP
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
             True
         >>> plot.close()  # Clean up
@@ -934,7 +949,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer, on_axis=0)
         ...         .apply_styling())
-        >>> plot.show()
+        >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> all(len(ctx.layers) == 0 for ctx in plot.subplot_contexts[1:])
@@ -947,7 +962,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
         ...            .create_subplots(nrows=2, ncols=2)
         ...            .add_layer(ScatterLayer, on_axis=[0, 2])
         ...            .apply_styling())
-        >>> plot.show()
+        >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> len(plot.subplot_contexts[2].layers) == 1
@@ -969,7 +984,7 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
         ...        # Add a layer with custom data to the second subplot
         ...        .add_layer(ScatterLayer, data=custom_data, on_axis=1)
         ...        .apply_styling())
-        >>> plot.show()
+        >>> plot.show() # xdoctest: +SKIP
         >>> plot.close()
 
         """
@@ -1081,3 +1096,676 @@ class ISOPlot(ISOPlotLayersMixin, ISOPlotStylingMixin):
             return on_axis
         msg = f"Invalid axis specification: {on_axis}"
         raise ValueError(msg)
+
+    def add_scatter(
+        self,
+        data: pd.DataFrame | None = None,
+        *,
+        on_axis: int | tuple[int, int] | list[int] | None = None,
+        **params: Any,
+    ) -> ISOPlot:
+        """
+        Add a scatter layer to specific subplot(s).
+
+        Parameters
+        ----------
+        on_axis : int | tuple[int, int] | list[int] | None, optional
+            Target specific axis/axes
+        data : pd.DataFrame, optional
+            Custom data for this specific scatter plot
+        **params : dict
+            Parameters for the scatter plot
+
+        Returns
+        -------
+        ISOPlot
+            The current plot instance for chaining
+
+        Examples
+        --------
+        Add a scatter layer to all subplots:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(42)
+        >>> data = pd.DataFrame(
+        ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...          rng.integers(1, 3, 100)],
+        ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
+        >>> plot = (ISOPlot(data=data)
+        ...           .create_subplots(nrows=2, ncols=1)
+        ...           .add_scatter(s=50, alpha=0.7, hue='Group')
+        ...           .apply_styling())
+        >>> plot.show() # xdoctest: +SKIP
+        >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
+        True
+        >>> plot.close()  # Clean up
+
+        Add a scatter layer with custom data to a specific subplot:
+
+        >>> custom_data = pd.DataFrame({
+        ...     'ISOPleasant': rng.normal(0.2, 0.1, 50),
+        ...     'ISOEventful': rng.normal(0.15, 0.2, 50),
+        ... })
+        >>> plot = (ISOPlot(data=data)
+        ...            .create_subplots(nrows=2, ncols=1)
+        ...            .add_scatter(hue='Group')
+        ...            .add_scatter(on_axis=0, data=custom_data, color='red')
+        ...            .apply_styling())
+        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.subplot_contexts[0].layers[1].custom_data is custom_data
+        True
+        >>> plot.close()  # Clean up
+
+        """
+        # Merge default scatter parameters with provided ones
+        # Remove data from scatter_params to avoid conflict
+        scatter_params = self._scatter_params.model_copy().drop("data").update(**params)
+
+        return self.add_layer(
+            ScatterLayer, data=data, on_axis=on_axis, **scatter_params.as_dict()
+        )
+
+    def add_spi(
+        self,
+        on_axis: int | tuple[int, int] | list[int] | None = None,
+        spi_target_data: pd.DataFrame | np.ndarray | None = None,
+        msn_params: DirectParams | CentredParams | None = None,
+        *,
+        layer_class: type[Layer] = SPISimpleLayer,
+        **params: Any,
+    ) -> ISOPlot:
+        """
+        Add a SPI layer to specific subplot(s).
+
+        Parameters
+        ----------
+        on_axis : int | tuple[int, int] | list[int] | None, optional
+            Target specific axis/axes
+        spi_target_data : pd.DataFrame | np.ndarray | None, optional
+            Custom data for this specific SPI plot
+        msn_params : DirectParams | CentredParams | None, optional
+            Parameters for the SPI plot
+
+        Returns
+        -------
+        ISOPlot
+            The current plot instance for chaining
+
+        Examples
+        --------
+        Add a SPI layer to all subplots:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> from soundscapy.spi import DirectParams
+        >>> rng = np.random.default_rng(42)
+        >>>    # Create a DataFrame with random data
+        >>> data = pd.DataFrame(
+        ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...    columns=['ISOPleasant', 'ISOEventful']
+        ... )
+        >>>    # Define MSN parameters for the SPI target
+        >>> msn_params = DirectParams(
+        ...     xi=np.array([0.5, 0.7]),
+        ...     omega=np.array([[0.1, 0.05], [0.05, 0.1]]),
+        ...     alpha=np.array([0, -5]),
+        ...     )
+        >>>    # Create the plot with only an SPI layer
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_spi(msn_params=msn_params)
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 2
+        True
+        >>> plot.close()  # Clean up
+
+        Add an SPI layer over top of 'real' data:
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_density()
+        ...     .add_spi(msn_params=msn_params, show_score="on axis")
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 3
+        True
+        >>> plot.close()  # Clean up
+
+        """
+        if layer_class == SPISimpleLayer:
+            spi_simple_params = (
+                self._spi_simple_density_params.model_copy()
+                .drop("data")
+                .update(**params)
+            )
+
+            return self.add_layer(
+                layer_class,
+                on_axis=on_axis,
+                msn_params=msn_params,
+                spi_target_data=spi_target_data,
+                **spi_simple_params.as_dict(),
+            )
+        if layer_class in (SPIDensityLayer, SPIScatterLayer):
+            msg = (
+                "Only the simple density layer type is currently supported for "
+                "SPI plots. Please use SPISimpleLayer"
+            )
+            raise NotImplementedError(msg)
+
+        msg = "Invalid layer class provided. Expected SPISimpleLayer. "
+        raise ValueError(msg)
+
+    def add_density(
+        self,
+        on_axis: int | tuple[int, int] | list[int] | None = None,
+        data: pd.DataFrame | None = None,
+        *,
+        include_outline: bool = False,
+        **params: Any,
+    ) -> ISOPlot:
+        """
+        Add a density layer to specific subplot(s).
+
+        Parameters
+        ----------
+        on_axis : int | tuple[int, int] | list[int] | None, optional
+            Target specific axis/axes
+        data : pd.DataFrame, optional
+            Custom data for this specific density plot
+        include_outline : bool, optional
+            Whether to include an outline around the density plot, by default False
+        **params : dict
+            Parameters for the density plot
+
+        Returns
+        -------
+        ISOPlot
+            The current plot instance for chaining
+
+        Examples
+        --------
+        Add a density layer to all subplots:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(42)
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': rng.normal(0.2, 0.25, 50),
+        ...     'ISOEventful': rng.normal(0.15, 0.4, 50),
+        ... })
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_density()
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> plot.close()  # Clean up
+
+        Add a density layer with custom settings:
+
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_density(levels=5, alpha=0.7)
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 1
+        True
+        >>> plot.close()  # Clean up
+
+        """
+        # Merge default density parameters with provided ones
+        density_params = self._density_params.model_copy().drop("data").update(**params)
+
+        return self.add_layer(
+            DensityLayer,
+            data=data,
+            on_axis=on_axis,
+            include_outline=include_outline,
+            **density_params.as_dict(),
+        )
+
+    def add_simple_density(
+        self,
+        on_axis: int | tuple[int, int] | list[int] | None = None,
+        data: pd.DataFrame | None = None,
+        *,
+        include_outline: bool = True,
+        **params: Any,
+    ) -> ISOPlot:
+        """
+        Add a simple density layer to specific subplot(s).
+
+        Parameters
+        ----------
+        on_axis : int | tuple[int, int] | list[int] | None, optional
+            Target specific axis/axes
+        data : pd.DataFrame, optional
+            Custom data for this specific density plot
+        thresh : float, optional
+            Threshold for density contours, by default 0.5
+        levels : int | Iterable[float], optional
+            Contour levels, by default 2
+        alpha : float, optional
+            Transparency level, by default 0.5
+        include_outline : bool, optional
+            Whether to include an outline around the density plot, by default True
+        **params : dict
+            Additional parameters for the density plot
+
+        Returns
+        -------
+        ISOPlot
+            The current plot instance for chaining
+
+        Examples
+        --------
+        Add a simple density layer:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(42)
+        >>> data = pd.DataFrame({
+        ...     'ISOPleasant': rng.normal(0.2, 0.25, 30),
+        ...     'ISOEventful': rng.normal(0.15, 0.4, 30),
+        ... })
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_simple_density()
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 2
+        True
+        >>> plot.close()  # Clean up
+
+        Add a simple density with splitting by group:
+        >>> data = pd.DataFrame(
+        ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...          rng.integers(1, 3, 100)],
+        ...    columns=['ISOPleasant', 'ISOEventful', 'Group'])
+        >>> plot = (
+        ...     ISOPlot(data=data, hue='Group')
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .add_simple_density()
+        ...     .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> len(plot.subplot_contexts[0].layers) == 2
+        True
+        >>> plot.close()
+        ...
+
+        """
+        # Merge default simple density parameters with provided ones
+        simple_density_params = (
+            self._simple_density_params.model_copy().drop("data").update(**params)
+        )
+
+        return self.add_layer(
+            SimpleDensityLayer,
+            on_axis=on_axis,
+            data=data,
+            include_outline=include_outline,
+            **simple_density_params.as_dict(),
+        )
+
+    def add_annotation(
+        self,
+        text: str,
+        xy: tuple[float, float],
+        xytext: tuple[float, float],
+        arrowprops: dict[str, Any] | None = None,
+    ) -> ISOPlot:
+        """
+        Add an annotation to the plot.
+
+        Parameters
+        ----------
+        text : str
+            The text to display in the annotation.
+        xy : tuple[float, float]
+            The point to annotate.
+        xytext : tuple[float, float]
+            The point at which to place the text.
+        arrowprops : dict[str, Any] | None, optional
+            Properties for the arrow connecting the annotation text to the point.
+
+        Returns
+        -------
+        ISOPlot
+            The current plot instance for chaining
+
+        """
+        msg = "AnnotationLayer is not yet implemented. "
+        raise NotImplementedError(msg)
+        # TODO(MitchellAcoustics): Implement AnnotationLayer  # noqa: TD003
+        return self.add_layer(
+            "AnnotationLayer",
+            text=text,
+            xy=xy,
+            xytext=xytext,
+            arrowprops=arrowprops,
+        )
+
+    def apply_styling(
+        self,
+        **kwargs: Any,
+    ) -> ISOPlot:
+        """
+        Apply styling to the plot.
+
+        Parameters
+        ----------
+        **kwargs: Styling parameters to override defaults
+
+        Returns
+        -------
+        ISOPlot
+            The current plot instance for chaining
+
+        Examples
+        --------
+        Apply styling with default parameters:
+
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(42)
+        >>> # Create simple data for styling example
+        >>> data = pd.DataFrame(
+        ...     np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...             rng.integers(1, 3, 100)],
+        ...     columns=['ISOPleasant', 'ISOEventful', 'Group'])
+        >>> # Create plot with default styling
+        >>> plot = (
+        ...    ISOPlot(data=data)
+        ...       .create_subplots()
+        ...       .add_scatter()
+        ...       .apply_styling()
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.get_figure() is not None
+        True
+        >>> plot.close()  # Clean up
+
+        Apply styling with custom parameters:
+
+        >>> plot = (
+        ...         ISOPlot(data=data)
+        ...         .create_subplots()
+        ...         .add_scatter()
+        ...         .apply_styling(xlim=(-2, 2), ylim=(-2, 2), primary_lines=False)
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.get_figure() is not None
+        True
+        >>> plot.close()  # Clean up
+
+        Demonstrate the fluent interface (method chaining):
+
+        >>> # Create plot with method chaining
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots(nrows=1, ncols=1)
+        ...     .add_scatter(alpha=0.7)
+        ...     .add_density(levels=5)
+        ...     .apply_styling(title_fontsize=14)
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> # Verify results
+        >>> isinstance(plot, ISOPlot)
+        True
+        >>> plot.close()  # Clean up
+
+        """
+        self._style_params.update(**kwargs)
+        self._check_for_axes()
+
+        self._set_style()
+        self._circumplex_grid()
+        self._set_title()
+        self._set_axes_titles()
+        self._primary_labels()
+        if self._style_params.get("primary_lines"):
+            self._primary_lines()
+        if self._style_params.get("diagonal_lines"):
+            self._diagonal_lines_and_labels()
+
+        if self._style_params.get("legend_loc") is not False:
+            self._move_legend()
+
+        return self
+
+    def _set_style(self) -> None:
+        """Set the overall style for the plot."""
+        sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
+
+    def _circumplex_grid(self) -> ISOPlot:
+        """Add the circumplex grid to the plot."""
+        for _, axis in enumerate(self.yield_axes_objects()):
+            axis.set_xlim(self._style_params.get("xlim"))
+            axis.set_ylim(self._style_params.get("ylim"))
+            axis.set_aspect("equal")
+
+            axis.get_yaxis().set_minor_locator(ticker.AutoMinorLocator())
+            axis.get_xaxis().set_minor_locator(ticker.AutoMinorLocator())
+
+            axis.grid(visible=True, which="major", color="grey", alpha=0.5)
+            axis.grid(
+                visible=True,
+                which="minor",
+                color="grey",
+                linestyle="dashed",
+                linewidth=0.5,
+                alpha=0.4,
+                zorder=self._style_params.get("prim_lines_zorder"),
+            )
+
+        return self
+
+    def _set_title(self) -> ISOPlot:
+        """Set the title of the plot."""
+        if self.title and self._has_subplots:
+            figure = self.get_figure()
+            figure.suptitle(
+                self.title, fontsize=self._style_params.get("title_fontsize")
+            )
+        elif self.title and not self._has_subplots:
+            axis = self.get_single_axes()
+            if axis.get_title() == "":
+                axis.set_title(
+                    self.title, fontsize=self._style_params.get("title_fontsize")
+                )
+            else:
+                figure = self.get_figure()
+                figure.suptitle(
+                    self.title, fontsize=self._style_params.get("title_fontsize")
+                )
+        return self
+
+    def _set_axes_titles(self) -> ISOPlot:
+        """Set the titles of the subplots."""
+        for context in self.subplot_contexts:
+            if context.ax and context.title:
+                context.ax.set_title(context.title)
+        return self
+
+    def _primary_lines(self) -> ISOPlot:
+        """Add primary lines to the plot."""
+        for _, axis in enumerate(self.yield_axes_objects()):
+            axis.axhline(
+                y=0,
+                color="grey",
+                linestyle="dashed",
+                alpha=1,
+                lw=self._style_params.get("linewidth"),
+                zorder=self._style_params.get("prim_lines_zorder"),
+            )
+            axis.axvline(
+                x=0,
+                color="grey",
+                linestyle="dashed",
+                alpha=1,
+                lw=self._style_params.get("linewidth"),
+                zorder=self._style_params.get("prim_lines_zorder"),
+            )
+        return self
+
+    def _primary_labels(self) -> ISOPlot:
+        """Handle the default labels for the x and y axes."""
+        xlabel = self._style_params.get("xlabel")
+        ylabel = self._style_params.get("ylabel")
+
+        xlabel = self.x if xlabel is None else xlabel
+        ylabel = self.y if ylabel is None else ylabel
+        fontdict = self._style_params.get("prim_ax_fontdict")
+
+        # BUG: For some reason, this ruins the sharex and sharey
+        #       functionality, but only when a layer is applied
+        #       a specific subplot.
+        for _, axis in enumerate(self.yield_axes_objects()):
+            axis.set_xlabel(
+                xlabel, fontdict=fontdict
+            ) if xlabel is not False else axis.xaxis.label.set_visible(False)
+
+            axis.set_ylabel(
+                ylabel, fontdict=fontdict
+            ) if ylabel is not False else axis.yaxis.label.set_visible(False)
+
+        return self
+
+    def _diagonal_lines_and_labels(self) -> ISOPlot:
+        """
+        Add diagonal lines and labels to the plot.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(42)
+        >>> data = pd.DataFrame(
+        ...    rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
+        ...    columns=['ISOPleasant', 'ISOEventful'])
+        >>> # Create a plot with diagonal lines and labels
+        >>> plot = (
+        ...     ISOPlot(data=data)
+        ...     .create_subplots()
+        ...     .add_scatter()
+        ...     .apply_styling(diagonal_lines=True)
+        ... )
+        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.close('all')
+
+        """
+        for _, axis in enumerate(self.yield_axes_objects()):
+            xlim = self._style_params.get("xlim", DEFAULT_STYLE_PARAMS["xlim"])
+            ylim = self._style_params.get("ylim", DEFAULT_STYLE_PARAMS["ylim"])
+            axis.plot(
+                xlim,
+                ylim,
+                linestyle="dashed",
+                color="grey",
+                alpha=0.5,
+                lw=self._style_params.get("linewidth"),
+                zorder=self._style_params.get("diag_lines_zorder"),
+            )
+            logger.debug("Plotting diagonal line for axis.")
+            axis.plot(
+                xlim,
+                ylim[::-1],
+                linestyle="dashed",
+                color="grey",
+                alpha=0.5,
+                lw=self._style_params.get("linewidth"),
+                zorder=self._style_params.get("diag_lines_zorder"),
+            )
+
+            diag_ax_font = {
+                "fontstyle": "italic",
+                "fontsize": "small",
+                "fontweight": "bold",
+                "color": "black",
+                "alpha": 0.5,
+            }
+            axis.text(
+                xlim[1] / 2,
+                ylim[1] / 2,
+                "(vibrant)",
+                ha="center",
+                va="center",
+                fontdict=diag_ax_font,
+                zorder=self._style_params.get("diag_labels_zorder"),
+            )
+            axis.text(
+                xlim[0] / 2,
+                ylim[1] / 2,
+                "(chaotic)",
+                ha="center",
+                va="center",
+                fontdict=diag_ax_font,
+                zorder=self._style_params.get("diag_labels_zorder"),
+            )
+            axis.text(
+                xlim[0] / 2,
+                ylim[0] / 2,
+                "(monotonous)",
+                ha="center",
+                va="center",
+                fontdict=diag_ax_font,
+                zorder=self._style_params.get("diag_labels_zorder"),
+            )
+            axis.text(
+                xlim[1] / 2,
+                ylim[0] / 2,
+                "(calm)",
+                ha="center",
+                va="center",
+                fontdict=diag_ax_font,
+                zorder=self._style_params.get("diag_labels_zorder"),
+            )
+        return self
+
+    def _move_legend(self) -> ISOPlot:
+        """Move the legend to the specified location."""
+        for i, axis in enumerate(self.yield_axes_objects()):
+            old_legend = axis.get_legend()
+            if old_legend is None:
+                # logger.debug("_move_legend: No legend found for axis %s", i)
+                continue
+
+            # Get handles and filter out None values
+            handles = [
+                h for h in old_legend.legend_handles if isinstance(h, Artist | tuple)
+            ]
+            # Skip if no valid handles remain
+            if not handles:
+                continue
+
+            labels = [t.get_text() for t in old_legend.get_texts()]
+            title = old_legend.get_title().get_text()
+            # Ensure labels and handles match in length
+            if len(handles) != len(labels):
+                labels = labels[: len(handles)]
+
+            axis.legend(
+                handles,
+                labels,
+                loc=self._style_params.get("legend_loc"),
+                title=title,
+            )
+        return self
