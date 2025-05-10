@@ -143,6 +143,25 @@ class BaseParams(BaseModel):
         """
         return self.model_dump(exclude_unset=True)
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Get a parameter value with a default fallback.
+
+        Parameters
+        ----------
+        key : str
+            Name of the parameter
+        default : Any, optional
+            Default value if parameter doesn't exist
+
+        Returns
+        -------
+        Any
+            Parameter value or default
+
+        """
+        return getattr(self, key, default)
+
 
 class AxisParams(BaseParams):
     """Parameters for axis configuration."""

@@ -9,7 +9,7 @@ a PlotContext's axes using parameters provided by the context.
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import numpy as np
 import pandas as pd
@@ -351,7 +351,7 @@ class SimpleDensityLayer(DensityLayer):
             )
 
         # Cast params to the correct type
-        simple_density_params = cast("SimpleDensityParams", params)
+        simple_density_params = params
 
         # Create a copy of the parameters with data
         kwargs = simple_density_params.as_seaborn_kwargs()
@@ -363,7 +363,7 @@ class SimpleDensityLayer(DensityLayer):
 
         # Set specific parameters for simple density
         kwargs["levels"] = simple_density_params.levels
-        kwargs["thresh"] = getattr(simple_density_params, "thresh", 0.05)
+        kwargs["thresh"] = simple_density_params.get("thresh", 0.05)
 
         # Render the simple density plot
         sns.kdeplot(ax=ax, **kwargs)
@@ -379,7 +379,7 @@ class SPILayer(Layer):
         spi_target_data: pd.DataFrame | np.ndarray | None = None,
         *,
         msn_params: DirectParams | CentredParams | None = None,
-        n: int = 10000,
+        n: int = 1000,
         custom_data: pd.DataFrame | None = None,
         **params: Any,
     ) -> None:
@@ -421,6 +421,8 @@ class SPILayer(Layer):
             spi_target_data, msn_params
         )
 
+        # TODO: Should move this into the render stage.
+        # Need to get SPIParams from param_model.
         # Generate the SPI target data
         self.spi_data: pd.DataFrame = self._generate_spi_data(
             spi_target_data, self.spi_params, n
@@ -456,6 +458,9 @@ class SPILayer(Layer):
             msg = "No data available for rendering SPI layer"
             raise ValueError(msg)
 
+        # assign the generated target data to context
+        # context.spi_data = target_data
+
         # Get parameters from context
         params = self._get_params_from_context(context)
 
@@ -484,10 +489,15 @@ class SPILayer(Layer):
             The parameters for this layer
 
         """
-        target_data = data[[context.x, context.y]]
+        target_data = (
+            data[[context.x, context.y]] if data is not None else self.spi_data
+        )
 
         # Get test data from context
-        test_data = context.data
+        test_data = (
+            context.data[[context.x, context.y]] if context.data is not None else None
+        )
+
         if test_data is None:
             warnings.warn(
                 "Cannot find data to test SPI against. Skipping this plot.",
@@ -502,14 +512,10 @@ class SPILayer(Layer):
         # Show the score
         self.show_score(
             spi_score,
-            show_score=params.show_score
-            if hasattr(params, "show_score")
-            else "under title",
+            show_score=params.get("show_score", "under title"),
             context=context,
             ax=ax,
-            axis_text_kwargs=params.axis_text_kw
-            if hasattr(params, "axis_text_kw")
-            else {},
+            axis_text_kwargs=params.get("axis_text_kw", {}),
         )
 
     def show_score(
@@ -734,8 +740,8 @@ class SPILayer(Layer):
 
         """
         params = self._get_params_from_context(context)
-        xcol = getattr(params, "x", context.x)
-        ycol = getattr(params, "y", context.y)
+        xcol = params.get("x", context.x)
+        ycol = params.get("y", context.y)
 
         # DataFrame handling
         if isinstance(spi_data, pd.DataFrame):

@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from matplotlib.axes import Axes
+import seaborn as sns
+from matplotlib import ticker
+from matplotlib.artist import Artist
 
 from soundscapy.plotting.new.layer import (
     DensityLayer,
@@ -22,6 +23,7 @@ from soundscapy.plotting.new.layer import (
     SimpleDensityLayer,
     SPISimpleLayer,
 )
+from soundscapy.plotting.new.parameter_models import MplLegendLocType
 from soundscapy.plotting.new.plot_context import PlotContext
 from soundscapy.sspylogging import get_logger
 
@@ -34,9 +36,10 @@ except ImportError:
     from deprecated import deprecated
 
 if TYPE_CHECKING:
-    from soundscapy.plotting.new import ISOPlot
-    from soundscapy.plotting.new.parameter_models import StyleParams
+    import pandas as pd
+    from matplotlib.axes import Axes
 
+    from soundscapy.plotting.new import ISOPlot, StyleParams
 
 logger = get_logger()
 
@@ -75,40 +78,6 @@ class LayerManager:
 
         """
         self.plot = plot
-
-    # # Pass a fully instantiated layer
-    # @overload
-    # def add_layer(
-    #     self,
-    #     layer_spec: Layer,
-    #     *,
-    #     on_axis: AxisSpec | None = None,
-    #     subplot_by: str | None = None,
-    # ) -> ISOPlot: ...
-    #
-    # # Pass an uninstantiated layer class
-    # @overload
-    # def add_layer(
-    #     self,
-    #     layer_spec: LayerClass,
-    #     data: pd.DataFrame | None = None,
-    #     *,
-    #     on_axis: AxisSpec | None = None,
-    #     subplot_by: str | None = None,
-    #     **params: Any,
-    # ) -> ISOPlot: ...
-    #
-    # # Pass a string of the layer type name
-    # @overload
-    # def add_layer(
-    #     self,
-    #     layer_spec: LayerType,
-    #     data: pd.DataFrame | None = None,
-    #     *,
-    #     on_axis: AxisSpec | None = None,
-    #     subplot_by: str | None = None,
-    #     **params: Any,
-    # ) -> ISOPlot: ...
 
     def add_layer(
         self,
@@ -465,10 +434,7 @@ class LayerManager:
 
 class StyleManager:
     """
-    Manages the style_mgr of plots.
-
-    This class encapsulates the style_mgr-related functionality that was previously
-    implemented as a mixin in the ISOPlot class.
+    Manages the styling of plots.
 
     Attributes
     ----------
@@ -488,6 +454,7 @@ class StyleManager:
 
         """
         self.plot = plot
+        self.param_overrides = {}
 
     def apply_styling(
         self,
@@ -512,28 +479,32 @@ class StyleManager:
 
         """
         # Update style parameters
-        self.plot.main_context.update_params("style", **style_params)
+        self.param_overrides = style_params
+        self._set_sns_style()
+        # TODO: Need to set suptitle at some point
 
         # If no subplots, apply to main context
         if not self.plot.subplot_contexts:
+            self.plot.main_context.update_params("style", **style_params)
             self._apply_styling_to_context(self.plot.main_context)
             return self.plot
 
         # Apply to specified subplots
         target_contexts = PlotContext.get_contexts_by_spec(self.plot, on_axis)
         for context in target_contexts:
+            context.update_params("style", **style_params)
             self._apply_styling_to_context(context)
 
         return self.plot
 
     def _apply_styling_to_context(self, context: PlotContext) -> None:
         """
-        Apply style_mgr to a specific context.
+        Apply styling to a specific context.
 
         Parameters
         ----------
         context : PlotContext
-            The context to apply style_mgr to
+            The context to apply styling to
 
         """
         if context.ax is None:
@@ -541,43 +512,88 @@ class StyleManager:
 
         # Get style parameters
         style_params = cast("StyleParams", context.get_params("style"))
-
         # Apply style_mgr to the axes
         ax = context.ax
 
-        # Set limits
-        if hasattr(style_params, "xlim"):
-            ax.set_xlim(style_params.xlim)
-        if hasattr(style_params, "ylim"):
-            ax.set_ylim(style_params.ylim)
+        self._circumplex_grid(ax, style_params)
 
-        # Set labels
-        if hasattr(style_params, "xlabel") and style_params.xlabel is not False:
-            xlabel = style_params.xlabel or context.x
-            ax.set_xlabel(xlabel, fontdict=style_params.prim_ax_fontdict)
+        self._set_axis_title(ax, context, style_params)
+        # Alternative?
+        # ax.set_title(
+        #   context.title, fontsize=style_params.title_fontsize)
 
-        if hasattr(style_params, "ylabel") and style_params.ylabel is not False:
-            ylabel = style_params.ylabel or context.y
-            ax.set_ylabel(ylabel, fontdict=style_params.prim_ax_fontdict)
+        self._primary_labels(ax, context, style_params)
+        # Alternative?
+        # ax.set_xlabel(xlabel, fontdict=style_params.prim_ax_fontdict)  # noqa: ERA001
+        # ax.set_ylabel(ylabel, fontdict=style_params.prim_ax_fontdict)  # noqa: ERA001
 
-        # Set title
-        if context.title:
-            ax.set_title(context.title, fontsize=style_params.title_fontsize)
-
-        # Add primary axes lines
-        if hasattr(style_params, "primary_lines") and style_params.primary_lines:
+        if style_params.get("primary_lines"):
             self._add_primary_lines(ax, style_params)
-
-        # Add diagonal lines and labels
-        if hasattr(style_params, "diagonal_lines") and style_params.diagonal_lines:
+        if style_params.get("diagonal_lines"):
             self._add_diagonal_lines(ax, style_params)
             self._add_diagonal_labels(ax, style_params)
+        if style_params.get("legend_loc") is not False:
+            # ax.legend(loc=style_params.get("legend_loc"))  # noqa: ERA001
+            self._move_legend(ax, style_params.get("legend_loc"))
 
-        # Add legend if needed
-        if hasattr(style_params, "legend_loc") and style_params.legend_loc:
-            ax.legend(loc=style_params.legend_loc)
+    @staticmethod
+    def _set_sns_style() -> None:
+        """Set the overall style for the plot."""
+        sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
 
-    def _add_primary_lines(self, ax: Axes, style_params: Any) -> None:
+    @staticmethod
+    def _circumplex_grid(axis: Axes, style_params: StyleParams) -> None:
+        """Add the circumplex grid to the plot."""
+        axis.set_xlim(style_params.get("xlim"))
+        axis.set_ylim(style_params.get("ylim"))
+        axis.set_aspect("equal")
+
+        axis.get_yaxis().set_minor_locator(ticker.AutoMinorLocator())
+        axis.get_xaxis().set_minor_locator(ticker.AutoMinorLocator())
+
+        axis.grid(visible=True, which="major", color="grey", alpha=0.5)
+        axis.grid(
+            visible=True,
+            which="minor",
+            color="grey",
+            linestyle="dashed",
+            linewidth=0.5,
+            alpha=0.4,
+            zorder=style_params.get("prim_lines_zorder"),
+        )
+
+    @staticmethod
+    def _set_axis_title(
+        ax: Axes, context: PlotContext, style_params: StyleParams
+    ) -> None:
+        if ax and context.title:
+            ax.set_title(context.title, fontsize=style_params.title_fontsize)
+
+    @staticmethod
+    def _primary_labels(
+        axis: Axes, context: PlotContext, style_params: StyleParams
+    ) -> None:
+        """Handle the default labels for the x and y axes."""
+        xlabel = style_params.get("xlabel")
+        ylabel = style_params.get("ylabel")
+
+        xlabel = context.x if xlabel is None else xlabel
+        ylabel = context.y if ylabel is None else ylabel
+        fontdict = style_params.get("prim_ax_fontdict")
+
+        # BUG: For some reason, this ruins the sharex and sharey
+        #       functionality, but only when a layer is applied
+        #       a specific subplot.
+        axis.set_xlabel(
+            xlabel, fontdict=fontdict
+        ) if xlabel is not False else axis.xaxis.label.set_visible(False)
+
+        axis.set_ylabel(
+            ylabel, fontdict=fontdict
+        ) if ylabel is not False else axis.yaxis.label.set_visible(False)
+
+    @staticmethod
+    def _add_primary_lines(axis: Axes, style_params: StyleParams) -> None:
         """
         Add primary axes lines to the plot.
 
@@ -590,19 +606,21 @@ class StyleManager:
 
         """
         # Add horizontal and vertical lines at 0
-        ax.axhline(
+        axis.axhline(
             y=0,
-            color="black",
-            linestyle="-",
-            linewidth=style_params.linewidth,
-            zorder=style_params.prim_lines_zorder,
+            color="grey",
+            linestyle="dashed",
+            alpha=1,
+            lw=style_params.get("linewidth"),
+            zorder=style_params.get("prim_lines_zorder"),
         )
-        ax.axvline(
+        axis.axvline(
             x=0,
-            color="black",
-            linestyle="-",
-            linewidth=style_params.linewidth,
-            zorder=style_params.prim_lines_zorder,
+            color="grey",
+            linestyle="dashed",
+            alpha=1,
+            lw=style_params.get("linewidth"),
+            zorder=style_params.get("prim_lines_zorder"),
         )
 
     def _add_diagonal_lines(self, ax: Axes, style_params: Any) -> None:
@@ -704,6 +722,35 @@ class StyleManager:
             va="center",
             fontdict=diag_ax_font,
             zorder=style_params.diag_labels_zorder,
+        )
+
+    @staticmethod
+    def _move_legend(axis: Axes, legend_loc: MplLegendLocType) -> None:
+        """Move the legend to the specified location."""
+        old_legend = axis.get_legend()
+        if old_legend is None:
+            # logger.debug("_move_legend: No legend found for axis %s", i)
+            return
+
+        # Get handles and filter out None values
+        handles = [
+            h for h in old_legend.legend_handles if isinstance(h, Artist | tuple)
+        ]
+        # Skip if no valid handles remain
+        if not handles:
+            return
+
+        labels = [t.get_text() for t in old_legend.get_texts()]
+        title = old_legend.get_title().get_text()
+        # Ensure labels and handles match in length
+        if len(handles) != len(labels):
+            labels = labels[: len(handles)]
+
+        axis.legend(
+            handles,
+            labels,
+            loc=legend_loc,
+            title=title,
         )
 
 
@@ -830,11 +877,10 @@ class SubplotManager:
         # Create a context for each axis
         for i, ax in enumerate(axes.flatten()):
             # Create a title for this subplot
-            title = (
-                f"Subplot {i + 1}"
-                if self.plot.main_context.title is None
-                else f"{self.plot.main_context.title} {i + 1}"
-            )
+            if params.subplot_titles is not None:
+                title = params.subplot_titles[i]
+            else:
+                title = None
 
             # Create a child context for this subplot
             context = self.plot.main_context.create_child(

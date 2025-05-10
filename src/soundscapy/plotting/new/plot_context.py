@@ -8,6 +8,8 @@ architecture, owning both custom_data and parameter models for different layer t
 
 from __future__ import annotations
 
+import dataclasses
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
@@ -33,6 +35,42 @@ if TYPE_CHECKING:
 
 
 logger = get_logger()
+
+
+@dataclass
+class ParamModels:
+    """
+    Container for parameter models with methods for retrieval and transformation.
+
+    Attributes
+    ----------
+    scatter : ScatterParams
+    density : DensityParams
+    simple_density : SimpleDensityParams
+    spi_simple_density : SPISimpleDensityParams
+    style : StyleParams
+
+    """
+
+    scatter: ScatterParams = field(default_factory=ScatterParams)
+    density: DensityParams = field(default_factory=DensityParams)
+    simple_density: SimpleDensityParams = field(default_factory=SimpleDensityParams)
+    spi_simple_density: SPISimpleDensityParams = field(
+        default_factory=SPISimpleDensityParams
+    )
+    style: StyleParams = field(default_factory=StyleParams)
+
+    def get(
+        self, model_name: str, default: _ParamModels | None = None
+    ) -> _ParamModels | None:
+        return getattr(self, model_name, default)
+
+    @property
+    def names(self) -> list[str]:
+        return list(self.__dict__.keys())
+
+    def as_dict(self) -> dict[str, _ParamModels]:
+        return self.__dict__
 
 
 class PlotContext:
@@ -103,7 +141,7 @@ class PlotContext:
         self.parent: PlotContext | None = None
 
         # Parameter models for different layer types
-        self._param_models: dict[str, _ParamModels] = {}
+        self._param_models: ParamModels = field(default_factory=ParamModels)
 
         # Initialize default parameter models
         self._init_param_models()
@@ -117,18 +155,12 @@ class PlotContext:
         hue = self.hue
 
         # Create parameter models for different layer types
-        self._param_models["scatter"] = ScatterParams(data=data, x=x, y=y, hue=hue)
-        self._param_models["density"] = DensityParams(data=data, x=x, y=y, hue=hue)
-        self._param_models["simple_density"] = SimpleDensityParams(data=data, x=x, y=y)
-        self._param_models["spi_simple_density"] = SPISimpleDensityParams(
-            data=data, x=x, y=y, hue=hue
-        )
-        self._param_models["style"] = StyleParams(
-            # TODO: Should not be setting defaults here!
-            xlim=(-1, 1),
-            ylim=(-1, 1),
-            xlabel=r"$P_{ISO}$",
-            ylabel=r"$E_{ISO}$",
+        self._param_models = ParamModels(
+            scatter=ScatterParams(data=data, x=x, y=y, hue=hue),
+            density=DensityParams(data=data, x=x, y=y, hue=hue),
+            simple_density=SimpleDensityParams(data=data, x=x, y=y, hue=hue),
+            spi_simple_density=SPISimpleDensityParams(data=data, x=x, y=y, hue=hue),
+            style=StyleParams(),
         )
 
     def get_params(self, param_type: str) -> _ParamModels:
@@ -151,11 +183,11 @@ class PlotContext:
             If the parameter type is unknown
 
         """
-        if param_type not in self._param_models:
-            msg = f"Unknown parameter type: {param_type}"
-            raise ValueError(msg)
-
-        return self._param_models[param_type]
+        model = self._param_models.get(param_type)
+        if model is not None:
+            return model
+        msg = f"Unknown parameter type: {param_type}"
+        raise ValueError(msg)
 
     def get_params_for_layer(self, layer_type: type[Layer]) -> _ParamModels:
         """
@@ -247,17 +279,16 @@ class PlotContext:
             ax=ax,
             title=title,
         )
-
         # Copy parameter models from parent to child
-        for param_type, model in self._param_models.items():
-            child._param_models[param_type] = model.model_copy()
+        child._param_models = dataclasses.replace(self._param_models)
 
         # Set parent reference
         child.parent = self
 
         return child
 
-    def ensure_axes_exist(self, plot: ISOPlot) -> None:
+    @staticmethod
+    def ensure_axes_exist(plot: ISOPlot) -> None:
         """
         Check if we have axes to render on, create if needed.
 
