@@ -55,8 +55,11 @@ from soundscapy.plotting.layers import (
     SPISimpleLayer,
 )
 from soundscapy.plotting.param_models import (
-    ParamModel,
+    DensityParams,
+    ScatterParams,
+    SimpleDensityParams,
     SPISimpleDensityParams,
+    StyleParams,
     SubplotsParams,
 )
 from soundscapy.plotting.plot_context import PlotContext
@@ -198,8 +201,7 @@ class ISOPlot:
         self.subplots_params = SubplotsParams()
 
         # Initialize parameter managers
-        self._scatter_params = ParamModel.create(
-            "scatter",
+        self._scatter_params = ScatterParams(
             data=data,
             x=self.main_context.x,
             y=self.main_context.y,
@@ -207,8 +209,7 @@ class ISOPlot:
             palette=self.palette,
         )
 
-        self._density_params = ParamModel.create(
-            "density",
+        self._density_params = DensityParams(
             data=data,
             x=self.main_context.x,
             y=self.main_context.y,
@@ -216,8 +217,7 @@ class ISOPlot:
             palette=self.palette,
         )
 
-        self._simple_density_params = ParamModel.create(
-            "simple_density",
+        self._simple_density_params = SimpleDensityParams(
             data=data,
             x=self.main_context.x,
             y=self.main_context.y,
@@ -231,7 +231,7 @@ class ISOPlot:
             y=self.main_context.y,
         )
 
-        self._style_params = ParamModel.create("style")
+        self._style_params = StyleParams()
 
         # SPI-related attributes
         self._spi_data = None
