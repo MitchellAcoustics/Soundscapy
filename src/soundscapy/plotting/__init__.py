@@ -17,8 +17,10 @@ from soundscapy.plotting.backends_deprecated import (
 from soundscapy.plotting.iso_plot import ISOPlot
 from soundscapy.plotting.plot_functions import (
     create_circumplex_subplots,
+    create_iso_subplots,
     density,
     density_plot,
+    iso_plot,
     jointplot,
     scatter,
     scatter_plot,
@@ -32,8 +34,10 @@ __all__ = [
     "PlotType",
     "StyleOptions",
     "create_circumplex_subplots",
+    "create_iso_subplots",
     "density",
     "density_plot",
+    "iso_plot",
     "jointplot",
     "likert",
     "scatter",

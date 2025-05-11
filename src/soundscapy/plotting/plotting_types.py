@@ -8,7 +8,6 @@ from typing import (
     Any,
     ClassVar,
     Literal,
-    Self,
     TypeAlias,
 )
 
@@ -143,7 +142,7 @@ class ParamModel(BaseModel):
         extra: Literal["allow", "forbid", "ignore"] = "allow",
         na_rm: bool = True,
         **kwargs: Any,
-    ) -> Self:
+    ) -> None:
         """
         Update parameters with new values.
 
@@ -182,8 +181,6 @@ class ParamModel(BaseModel):
                 setattr(self, key, value)
             except ValueError as e:  # noqa: PERF203
                 logger.warning("Invalid value for %s: %s", key, e)
-
-        return self
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -297,7 +294,7 @@ class ParamModel(BaseModel):
         delattr(self, key)
         return value
 
-    def drop(self, keys: str | Iterable[str], *, ignore_missing: bool = True) -> Self:
+    def drop(self, keys: str | Iterable[str], *, ignore_missing: bool = True) -> None:
         """
         Remove a parameter without returning its value.
 
@@ -321,7 +318,6 @@ class ParamModel(BaseModel):
                 msg = f"Parameter '{k}' does not exist."
                 raise KeyError(msg)
             delattr(self, k)
-        return self
 
     @property
     def field_names(self) -> list[str]:
@@ -426,7 +422,7 @@ class DensityParams(SeabornParams):
         *,
         alpha: float = 1,
         fill: bool = False,
-    ) -> Self:
+    ) -> DensityParams:
         """
         Get parameters for the outline of density plots.
 

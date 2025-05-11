@@ -1,15 +1,17 @@
 """Plotting functions for visualising circumplex data."""
 
 # ruff: noqa: ANN003
-import functools
 import warnings
-from typing import Any, Literal
+from collections.abc import Sequence
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib import pyplot as plt
 from matplotlib.artist import Artist
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from matplotlib.ticker import AutoMinorLocator
 from matplotlib.typing import ColorType
 
@@ -46,20 +48,432 @@ DENSITY_PARAMS = DensityParams()
 SIMPLE_DENSITY_PARAMS = SimpleDensityParams()
 
 
+def iso_plot(
+    data: pd.DataFrame,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    title: str | None = "Soundscapy Plot",
+    plot_layers: Literal["scatter", "density", "simple_density"]
+    | Sequence[Literal["scatter", "density", "simple_density"]] = (
+        "scatter",
+        "density",
+    ),
+    **kwargs,
+) -> Axes:
+    """
+    Plot a soundscape visualization based on the specified metrics using different
+    combinations of layers such as scatter, density, or simple density plots.
+
+    The function generates a 2D plot (via Matplotlib Axes object) based on the `x` and
+    `y` metrics provided. Users can choose between individual layers or specify a
+    combination of the supported plot layers. It supports automatic handling for
+    specific layer combinations, such as "scatter + density". The core plotting
+    functionality is delegated to other helper functions (`scatter` and `density`).
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        The dataset containing the metrics to be plotted. Must include the columns
+        specified for `x` and `y`.
+    x : str, optional
+        The column name within `data` to be used for the x-axis. Defaults to
+        "ISOPleasant".
+    y : str, optional
+        The column name within `data` to be used for the y-axis. Defaults to
+        "ISOEventful".
+    title : str or None, optional
+        The title of the plot. If not specified, defaults to "Soundscapy Plot".
+    plot_layers : {"scatter", "density", "simple_density"}
+        or Sequence[{"scatter", "density", "simple_density"}], optional
+
+        Specifies the type or combination of plot layers to generate. Valid options
+        include:
+         - "scatter": A scatter plot
+         - "density": A density plot (without scatter points, unless combined)
+         - "simple_density": A simplified density plot (without scatter points,
+           unless combined).
+
+        Can be passed as a string (single layer) or as a sequence of strings
+        (combination of layers). Defaults to ("scatter", "density").
+    **kwargs : any
+        Additional keyword arguments to be passed to the underlying plotting
+        functions (`scatter` or `density`). These allow for customization such as
+        marker styles, colors, etc.
+
+    Returns
+    -------
+    Axes : matplotlib.axes._axes.Axes
+        A Matplotlib Axes object corresponding to the generated plot.
+
+    Notes
+    -----
+    This function supports only specific combinations of layers. If an unsupported
+    combination is specified, an exception will be raised. Layer compatibility
+    rules:
+      - Single layers: "scatter", "density", or "simple_density".
+      - Dual layers:
+        - "scatter" + "density"
+        - "scatter" + "simple_density"
+
+    Raises
+    ------
+    TypeError
+        If the `plot_layers` argument is not a string or a sequence of strings.
+    ValueError
+        If the `plot_layers` argument specifies an unsupported plot type or
+        combination of plot layers.
+
+    Examples
+    --------
+    Basic density and scatter plot with default settings:
+
+    >>> import soundscapy as sspy
+    >>> import matplotlib.pyplot as plt
+    >>> data = sspy.isd.load()
+    >>> data = sspy.add_iso_coords(data)
+    >>> ax = sspy.iso_plot(data)
+    >>> plt.show()  # xdoctest: +SKIP
+
+    Basic scatter plot:
+
+    >>> ax = sspy.iso_plot(data, plot_layers="scatter")
+    >>> plt.show()  # xdoctest: +SKIP
+
+    Simple density plot with fewer contour levels:
+
+    >>> ax = sspy.iso_plot(data, plot_layers="simple_density")
+    >>> plt.show() # xdoctest: +SKIP
+
+    Simple density with scatter points
+
+    >>> ax = sspy.iso_plot(data, plot_layers=["scatter", "simple_density"])
+    >>> plt.show() # xdoctest: +SKIP
+
+    Density plot with custom styling:
+
+    >>> sub_data = sspy.isd.select_location_ids(
+    ...    data, ['CamdenTown', 'PancrasLock', 'RegentsParkJapan', 'RegentsParkFields'])
+    >>> ax = sspy.iso_plot(
+    ...     sub_data,
+    ...     hue="SessionID",
+    ...     plot_layers = ["scatter", "simple_density"],
+    ...     legend_loc="upper right",
+    ...     fill = False,
+    ... )
+    >>> plt.show() # xdoctest: +SKIP
+
+    Add density to existing plots:
+
+    >>> fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    >>> sspy.iso_plot(
+    ...     sspy.isd.select_location_ids(data, ['CamdenTown', 'PancrasLock']),
+    ...     ax=ax.flatten()[0], title="CamdenTown and PancrasLock", hue="LocationID",
+    ... )
+    >>> sspy.iso_plot(
+    ...     sspy.isd.select_location_ids(data, ['RegentsParkJapan']),
+    ...     ax=ax.flatten()[1], title="RegentsParkJapan"
+    ... )
+    >>> plt.tight_layout()
+    >>> plt.show()
+
+    """  # noqa: D205
+    if isinstance(plot_layers, str):
+        plot_layers = [plot_layers]
+
+    if not isinstance(plot_layers, Sequence):
+        msg = (
+            "The `plot_layers` argument must be a string or a sequence of strings. "
+            f"Got {type(plot_layers)} instead."
+        )
+        raise TypeError(msg)
+
+    if len(plot_layers) == 1:
+        if plot_layers[0] == "scatter":
+            return scatter(data, x=x, y=y, title=title, **kwargs)
+        if plot_layers[0] == "simple_density":
+            return density(
+                data,
+                x=x,
+                y=y,
+                title=title,
+                density_type="simple",
+                incl_scatter=False,
+                **kwargs,
+            )
+        if plot_layers[0] == "density":
+            return density(data, x=x, y=y, title=title, incl_scatter=False, **kwargs)
+        msg = (
+            "Plot / layer type not understood."
+            "Supported layers are: 'scatter', 'density', 'simple_density'."
+            f"Got: {plot_layers}"
+        )
+        raise ValueError(msg)
+
+    if len(plot_layers) == 2:
+        if "scatter" in plot_layers and "density" in plot_layers:
+            return density(data, x=x, y=y, incl_scatter=True, **kwargs)
+        if "scatter" in plot_layers and "simple_density" in plot_layers:
+            return density(
+                data, x=x, y=y, density_type="simple", incl_scatter=True, **kwargs
+            )
+        return density(data, x=x, y=y, incl_scatter=True, **kwargs)
+
+    msg = (
+        "Sorry, this combination of layers is not supported."
+        "Supported layers are: 'scatter', 'density', 'simple_density'."
+        f"Got: {plot_layers}"
+    )
+    raise ValueError(msg)
+
+
+def create_iso_subplots(
+    data: pd.DataFrame | list[pd.DataFrame] | None = None,
+    x: str = "ISOPleasant",
+    y: str = "ISOEventful",
+    subplot_by: str | None = None,
+    title: str | None = "Soundscapy Plot",
+    plot_layers: Literal["scatter", "density", "simple_density"]
+    | Sequence[Literal["scatter", "density", "simple_density"]] = (
+        "scatter",
+        "density",
+    ),
+    *,
+    subplot_size: tuple[int, int] = (4, 4),
+    subplot_titles: Literal["by_group", "numbered"] | list[str] | None = "by_group",
+    subplot_title_prefix: str = "Plot",  # Only used if subplot_titles = 'numbered'
+    nrows: int | None = None,
+    ncols: int | None = None,
+    **kwargs,
+) -> tuple[Figure, np.ndarray]:
+    """
+    Create a grid of Soundscape Circumplex visualization subplots.
+
+    This function generates subplots based on an input DataFrame or list of DataFrames.
+    All subplots will visualize the data using different available plot layers such as
+    scatter, density, or simple density plots. It is intended to visualize soundscape
+    circumplex data (typically ISOPleasant and ISOEventful perceptual attributes)
+    grouped by categories or directly from multiple datasets.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame or list of pandas.DataFrame, optional
+        The input data to be visualized. It can be a single DataFrame or a list of
+        DataFrames to create subplots. If a single DataFrame is provided, the
+        `subplot_by` parameter must also be specified to group the data.
+
+    x : str, default="ISOPleasant"
+        Column name in the DataFrame(s) to use for the x-axis values.
+
+    y : str, default="ISOEventful"
+        Column name in the DataFrame(s) to use for the y-axis values.
+
+    subplot_by : str or None, optional
+        The column name in the DataFrame(s) to group the data for creating subplots.
+        Required if `data` is a single DataFrame. Not required for lists of
+        DataFrames.
+
+    title : str or None, default="Soundscapy Plot"
+        The overall title for the entire figure containing the subplots.
+
+    plot_layers : {"scatter", "density", "simple_density"} or sequence of such elements
+        , default=("scatter", "density")
+
+        One or multiple plot layers to apply to each subplot. These layers define the
+        visualization style(s) for representing the data.
+
+    subplot_titles : {"by_group", "numbered"} or list of str or None, optional
+       , default = "by_group"
+
+        Specifies how to title each subplot:
+
+        - "by_group": Titles each subplot based on the categories in `subplot_by`.
+        - "numbered": Titles each subplot numerically.
+        - List of str: Custom titles for each subplot.
+        - None: Omits subplot titles.
+
+    nrows : int or None, optional
+        Number of subplot rows. Defaults will be computed automatically based
+        on the number of subplots if not specified.
+
+    ncols : int or None, optional
+        Number of subplot columns. Defaults will be computed automatically based
+        on the number of subplots if not specified.
+
+    **kwargs :
+        Additional keyword arguments to customize the behavior of subplots figure
+        (e.g., figsize) or to pass to the individual plot layers.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - fig : matplotlib.figure.Figure
+            The created matplotlib figure object containing the subplots.
+        - np.ndarray
+            An array of matplotlib.axes.Axes objects corresponding to the subplots.
+
+    Examples
+    --------
+    Basic subplots with default settings:
+    >>> import soundscapy as sspy
+    >>> import matplotlib.pyplot as plt
+    >>> data = sspy.isd.load()
+    >>> data = sspy.add_iso_coords(data)
+    >>> four_locs = sspy.isd.select_location_ids(data,
+    ...     ['CamdenTown', 'PancrasLock', 'RegentsParkJapan', 'RegentsParkFields']
+    ... )
+    >>> fig, axes = sspy.create_iso_subplots(four_locs, subplot_by="LocationID")
+    >>> plt.show()
+
+    """
+    # If subplot_titles is None, will be automatically assigned either
+    # based on subplot_by groups, or by subplot number
+    # To have no subplot titles, pass an empty string or list.
+    if isinstance(data, pd.DataFrame):
+        if subplot_by is None:
+            msg = (
+                "If data is a DataFrame, "
+                "subplot_by must be provided to create subplots."
+            )
+            raise ValueError(msg)
+
+        # Get the number of subplots needed
+        subplot_groups = data[subplot_by].unique()
+        n_subplots = len(subplot_groups)
+        # Split the data into groups based on the subplot_by column
+        data_list = [data[data[subplot_by] == val] for val in subplot_groups]
+
+        # If subplot_titles is "by_group", use the unique values from the subplot_by
+        if subplot_titles == "by_group":
+            subplot_titles = subplot_groups.tolist()
+        else:
+            warnings.warn(
+                "No group provided for titles. Falling back to numbered subplots.",
+                stacklevel=2,
+            )
+            subplot_titles = "numbered"
+
+    elif isinstance(data, list):
+        if not all(isinstance(d, pd.DataFrame) for d in data):
+            msg = "`data_list` should contain only pandas DataFrames."
+            raise TypeError(msg)
+        data_list = data
+        n_subplots = len(data_list)
+    else:
+        msg = (
+            "data must be a DataFrame with a provided `subplot_by` column "
+            "or a list of DataFrames to create subplots."
+        )
+        raise TypeError(msg)
+
+    if isinstance(subplot_titles, list) and len(subplot_titles) < n_subplots:
+        msg = (
+            "Not enough `subplot_titles` provided. "
+            f"Need to provide at least as many titles as subplots: {n_subplots}"
+        )
+        raise ValueError(msg)
+
+    nrows, ncols, n_subplots = allocate_subplot_axes(nrows, ncols, n_subplots)  # type: ignore[reportOperatorIssue]
+    figsize = kwargs.get("figsize")
+    if figsize is None:
+        figsize = (ncols * subplot_size[0], nrows * subplot_size[1])
+
+    subplots_params = SubplotsParams()
+    subplots_params.update(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=figsize,
+        subplot_by=subplot_by,
+        extra="ignore",
+        **kwargs,
+    )
+    fig, axes = plt.subplots(**subplots_params.as_plt_subplots_args())
+
+    for i, d in enumerate(data_list):
+        ax = axes.flatten()[i]
+        if i >= n_subplots:
+            ax.remove()
+            continue
+        if subplot_titles == "numbered":
+            sub_title = f"{subplot_title_prefix} {i + 1}"
+        sub_title = subplot_titles[i] if isinstance(subplot_titles, list) else None
+
+        iso_plot(data=d, x=x, y=y, title=None, plot_layers=plot_layers, ax=ax, **kwargs)
+        ax.set_title(sub_title, fontsize=12)
+
+    if title:
+        fig.suptitle(title, fontsize=16, fontweight="bold")
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.9)
+    return fig, axes
+
+
+def allocate_subplot_axes(
+    nrows: int | None, ncols: int | None, n_subplots: int
+) -> tuple[int, int, int]:
+    """
+    Allocate the subplot axes based on the number of data subsets.
+
+    Parameters
+    ----------
+    nrows : int | None
+        Number of rows for subplots. Can be None to auto-determine.
+    ncols : int | None
+        Number of columns for subplots. Can be None to auto-determine.
+    n_subplots : int
+        Total number of subplots needed.
+
+    Returns
+    -------
+    tuple[int, int]
+        The number of rows and columns for the subplot grid.
+
+    Notes
+    -----
+    Logic for determining subplot layout:
+    - If both nrows and ncols are specified, use those values
+    - If both are None, calculate a grid as close to square as possible
+    - If only one is specified, calculate the other to fit all subplots
+
+    """
+    # If both dimensions are specified, return them as is
+    if nrows is not None and ncols is not None:
+        return nrows, ncols, n_subplots
+
+    # If both dimensions are None, create a grid as close to square as possible
+    if nrows is None and ncols is None:
+        ncols = int(np.ceil(np.sqrt(n_subplots)))
+        nrows = int(np.ceil(n_subplots / ncols))
+    # If only one dimension is specified, calculate the other
+    elif nrows is not None and ncols is None:
+        ncols = int(np.ceil(n_subplots / nrows))
+    elif nrows is None and ncols is not None:
+        nrows = int(np.ceil(n_subplots / ncols))
+    else:
+        msg = (
+            "We should never reach this point - both nrows and ncols are None, "
+            "but were missed in earlier check."
+        )
+        raise ValueError(msg)
+
+    n_subplots = nrows * ncols
+
+    return nrows, ncols, n_subplots
+
+
 def scatter(
     data: pd.DataFrame,
     title: str | None = "Soundscape Scatter Plot",
     ax: Axes | None = None,
     *,
-    x: str | np.ndarray | pd.Series | None = SCATTER_PARAMS.x,
-    y: str | np.ndarray | pd.Series | None = SCATTER_PARAMS.y,
+    x: str | None = "ISOPleasant",
+    y: str | None = "ISOEventful",
     hue: str | None = None,
     palette: SeabornPaletteType | None = "colorblind",
-    return_iso_plot: bool = False,
     legend: Literal["auto", "brief", "full", False] = "auto",
     prim_labels: bool | None = None,  # Alias for primary_labels, deprecated
     **kwargs,
-) -> Axes | np.ndarray | ISOPlot:
+) -> Axes:
     """
     Plot ISOcoordinates as scatter points on a soundscape circumplex grid.
 
@@ -142,7 +556,6 @@ def scatter(
 
     Returns
     -------
-    matplotlib.axes.Axes
         Axes object containing the plot.
 
     Notes
@@ -166,38 +579,13 @@ def scatter(
     >>> ax = sspy.scatter(data, hue="LocationID", diagonal_lines=True)
     >>> plt.show() # xdoctest: +SKIP
 
-    Add scatter to existing plot:
-
-    >>> fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    >>> sspy.scatter(
-    ...     sspy.isd.select_location_ids(data, ['CamdenTown', 'PancrasLock']),
-    ...     ax=ax[0], title="CamdenTown and PancrasLock", hue="LocationID"
-    ... )
-    >>> sspy.scatter(
-    ...     sspy.isd.select_location_ids(data, ['RegentsParkJapan']),
-    ...     ax=ax[1], title="RegentsParkJapan"
-    ... )
-    >>> plt.tight_layout()
-    >>> plt.show()
-
     """
-    style_args = StyleParams().update(**kwargs, extra="ignore", na_rm=False)
-    if prim_labels is not None:
-        warnings.warn(
-            "The `prim_labels` parameter is deprecated. "
-            "Use `xlabel` and `ylabel` instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        style_args.update(xlabel=False, ylabel=False) if prim_labels is False else None
+    style_args, subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
+        x=x, y=y, prim_labels=prim_labels, kwargs=kwargs
+    )
 
-    # Update SubplotsParams with kwargs
-    subplots_args = SubplotsParams().update(**kwargs, extra="ignore", na_rm=False)
-
-    # Remove style and scatter args from kwargs
-    [kwargs.pop(k, None) for k in style_args.field_names + subplots_args.field_names]
-
-    scatter_args = ScatterParams().update(
+    scatter_args = ScatterParams()
+    scatter_args.update(
         data=data,
         x=x,
         y=y,
@@ -208,20 +596,31 @@ def scatter(
         **kwargs,
     )  # pass all the rest to scatter
 
-    p = ISOPlot(data=data, x=x, y=y, hue=hue, title=title, palette=palette)
+    # Removes the palette if no hue is specified
+    scatter_args.crosscheck_palette_hue()
+
     if ax is None:
-        subplots_args.update(adjust_figsize=False)
-        p.create_subplots(**subplots_args.as_dict())
-    else:
-        p.axes = ax
-        p.figure = ax.get_figure()
-    p.add_scatter(**scatter_args.as_dict())
-    p.apply_styling(**style_args.as_dict())
+        _, ax = plt.subplots(1, 1, figsize=subplots_args.figsize)
 
-    if return_iso_plot:
-        return p
+    p = sns.scatterplot(ax=ax, **scatter_args.as_dict())
 
-    return p.get_axes()
+    _set_style()
+    _circumplex_grid(
+        ax=ax,
+        **style_args.get_multiple(
+            ["xlim", "ylim", "xlabel", "ylabel", "diagonal_lines", "prim_ax_fontdict"]
+        ),
+    )
+    if title is not None:
+        _set_circum_title(
+            ax=ax,
+            title=title,
+            xlabel=style_args.get("xlabel"),
+            ylabel=style_args.get("ylabel"),
+        )
+    if legend is not None and hue is not None and style_args.legend_loc is not False:
+        _move_legend(ax=ax, new_loc=style_args.get("legend_loc"))
+    return p
 
 
 def density(
@@ -229,18 +628,17 @@ def density(
     title: str | None = "Soundscape Density Plot",
     ax: Axes | None = None,
     *,
-    x: str | np.ndarray | pd.Series | None = DENSITY_PARAMS.x,
-    y: str | np.ndarray | pd.Series | None = DENSITY_PARAMS.y,
+    x: str | None = "ISOPleasant",
+    y: str | None = "ISOEventful",
     hue: str | None = None,
     incl_scatter: bool = True,
     density_type: str = "full",
     palette: SeabornPaletteType | None = "colorblind",
-    return_iso_plot: bool = False,
-    scatter_kws: dict | None = {"s": 20},
+    scatter_kws: dict | None = None,
     legend: Literal["auto", "brief", "full", False] = "auto",
     prim_labels: bool | None = None,  # Alias for primary_labels, deprecated
     **kwargs,
-) -> Axes | np.ndarray | ISOPlot:
+) -> Axes:
     """
     Plot a density plot of ISOCoordinates.
 
@@ -277,8 +675,6 @@ def density(
         String values are passed to seaborn.color_palette().
         List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping, by default "colorblind"
-    return_iso_plot : bool, optional
-        Whether to return the ISOPlot object instead of the axes, by default False
     scatter_kws : dict | None, optional
         Keyword arguments to pass to `seaborn.scatterplot` if incl_scatter is True,
         by default {"s": 25, "linewidth": 0}
@@ -303,11 +699,12 @@ def density(
         - levels : int | Iterable[float], optional
             Number of contour levels or values to draw contours at, by default 10
         - thresh : float, optional
-            Lowest iso-proportional level at which to draw a contour line, by default 0.05
+            Lowest iso-proportional level at which to draw a contour line,
+            by default 0.05
         - bw_adjust : float, optional
             Factor that multiplicatively scales the bandwidth, by default 1.2
         - xlabel, ylabel : str | Literal[False], optional
-            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$" with math
+            Custom axis labels. By default, "$P_{ISO}$" and "$E_{ISO}$" with math
             rendering.
             If None is passed, the column names (x and y) will be used as labels.
             If a string is provided, it will be used as the label.
@@ -322,14 +719,26 @@ def density(
         - figsize : tuple[int, int], optional
             Size of the figure to return if `ax` is None, by default (5, 5)
         - prim_ax_fontdict : dict, optional
-            Font dictionary for axis labels.
+            Font dictionary for axis labels with these defaults:
+
+            {
+                "family": "sans-serif",
+                "fontstyle": "normal",
+                "fontsize": "large",
+                "fontweight": "medium",
+                "parse_math": True,
+                "c": "black",
+                "alpha": 1,
+            }
         - fontsize, fontweight, fontstyle, family, c, alpha, parse_math:
             Direct parameters for font styling in axis labels
 
+        Also accepts additional keyword arguments for matplotlib's contour and contourf
+        functions.
+
     Returns
     -------
-    matplotlib.axes.Axes | np.ndarray | ISOPlot
-        Axes object containing the plot, or ISOPlot if return_iso_plot=True.
+        Axes object containing the plot.
 
     Notes
     -----
@@ -362,8 +771,6 @@ def density(
     ...     hue="SessionID",
     ...     incl_scatter=True,
     ...     legend_loc="upper right",
-    ...     subplot_by = "LocationID",
-    ...     auto_allocate_axes = True,
     ...     fill = False,
     ...     density_type = "simple",
     ... )
@@ -382,10 +789,144 @@ def density(
     ...     ax=ax[1], title="RegentsParkJapan"
     ... )
     >>> plt.tight_layout()
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show()
 
     """
-    style_args = StyleParams().update(**kwargs, extra="ignore", na_rm=False)
+    style_args, subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
+        x=x, y=y, prim_labels=prim_labels, kwargs=kwargs
+    )
+
+    # Set up density parameters
+    if density_type == "simple":
+        density_args = SimpleDensityParams()
+        density_args.update(
+            data=data,
+            x=x,
+            y=y,
+            palette=palette,
+            legend=legend,
+            extra="allow",
+            na_rm=False,
+            **kwargs,
+        )
+    else:
+        density_args = cast("SimpleDensityParams", DensityParams())
+        density_args.update(
+            data=data,
+            x=x,
+            y=y,
+            palette=palette,
+            legend=legend,
+            extra="allow",
+            na_rm=False,
+            **kwargs,
+        )
+
+    # Check if dataset is large enough for density plots
+    _valid_density(data)
+
+    if ax is None:
+        _, ax = plt.subplots(1, 1, figsize=subplots_args.get("figsize"))
+
+    # Removes the palette if no hue is specified
+    if density_args.get("hue") is None:
+        density_args.update(palette=None)
+
+    # Set up scatter parameters if needed
+    scatter_args = ScatterParams()
+    scatter_args.update(
+        data=data,
+        x=x,
+        y=y,
+        palette=palette,
+        hue=density_args.get("hue"),
+        **(scatter_kws or {}),
+    )
+
+    if incl_scatter:
+        d = sns.scatterplot(ax=ax, **scatter_args.as_seaborn_kwargs())
+
+    if density_type == "simple":
+        d = sns.kdeplot(ax=ax, **density_args.as_seaborn_kwargs())
+        d = sns.kdeplot(ax=ax, **density_args.to_outline().as_seaborn_kwargs())
+
+    elif density_type == "full":
+        d = sns.kdeplot(ax=ax, **density_args.as_seaborn_kwargs())
+    else:
+        raise ValueError
+
+    _set_style()
+    _circumplex_grid(
+        ax=ax,
+        xlim=style_args.get("xlim"),
+        ylim=style_args.get("ylim"),
+        xlabel=style_args.get("xlabel"),
+        ylabel=style_args.get("ylabel"),
+        diagonal_lines=style_args.get("diagonal_lines"),
+        prim_ax_fontdict=style_args.get("prim_ax_fontdict"),
+    )
+    if title is not None:
+        _set_circum_title(
+            ax=ax,
+            title=title,
+            xlabel=style_args.get("xlabel"),
+            ylabel=style_args.get("ylabel"),
+        )
+    if legend is not None and hue is not None:
+        _move_legend(ax=ax, new_loc=style_args.get("legend_loc"))
+
+    return d
+
+
+def _deal_w_default_labels(
+    x: str | None,
+    y: str | list[str] | None,
+    prim_labels: bool | None,
+    style_args: StyleParams,
+) -> StyleParams:
+    """
+    Deal with the default labels for the circumplex plot.
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        Existing axes object to adjust the legend on
+    prim_labels: bool, optional
+        whether to include the custom primary labels ISOPleasant and ISOEventful
+          by default True
+        If using your own x and y names, you should set this to False.
+
+    """
+    xlabel = style_args.get("xlabel", x if x is not None else "")
+    ylabel = style_args.get(
+        "ylabel", y if y is not None and not isinstance(y, list) else ""
+    )
+
+    if prim_labels is not None:
+        warnings.warn(
+            "The `prim_labels` argument is deprecated and will be removed. "
+            "Use `xlabel` and `ylabel` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if prim_labels is False:
+            xlabel = False
+            ylabel = False
+
+    style_args.update(xlabel=xlabel, ylabel=ylabel)
+
+    return style_args
+
+
+def _setup_style_and_subplots_args_from_kwargs(
+    x: str | None, y: str | list[str] | None, prim_labels: bool | None, kwargs: dict
+) -> tuple[StyleParams, SubplotsParams, dict]:
+    style_args = StyleParams()
+    style_args.update(**kwargs, extra="ignore", na_rm=False)
+    style_args = _deal_w_default_labels(
+        x=x, y=y, prim_labels=prim_labels, style_args=style_args
+    )
+
     if prim_labels is not None:
         warnings.warn(
             "The `prim_labels` parameter is deprecated. "
@@ -395,74 +936,14 @@ def density(
         )
         style_args.update(xlabel=False, ylabel=False) if prim_labels is False else None
 
-    subplots_args = SubplotsParams().update(**kwargs, extra="ignore", na_rm=False)
+    # Update SubplotsParams with kwargs
+    subplots_args = SubplotsParams()
+    subplots_args.update(**kwargs, extra="ignore", na_rm=False)
 
-    # Remove style and subplots args from kwargs
+    # Remove style and scatter args from kwargs
     [kwargs.pop(k, None) for k in style_args.field_names + subplots_args.field_names]
 
-    # Set up density parameters
-    if density_type == "simple":
-        density_args = SimpleDensityParams().update(
-            data=data,
-            x=x,
-            y=y,
-            palette=palette,
-            legend=legend,
-            extra="allow",
-            na_rm=False,
-            **kwargs,
-        )
-    else:
-        density_args = DensityParams().update(
-            data=data,
-            x=x,
-            y=y,
-            palette=palette,
-            legend=legend,
-            extra="allow",
-            na_rm=False,
-            **kwargs,
-        )
-
-    # Set up scatter parameters if needed
-    scatter_args = None
-    if incl_scatter:
-        scatter_args = ScatterParams().update(
-            data=data,
-            x=x,
-            y=y,
-            palette=palette,
-            **(scatter_kws or {}),
-        )
-
-    # Create the plot with string-only hue
-    p = ISOPlot(data=data, x=x, y=y, hue=hue, title=title, palette=palette)
-
-    # If we received a pre-existing axis, assign it to the ISOPlot
-    if ax is not None:
-        p.axes = ax
-        p.figure = ax.get_figure()
-    else:
-        subplots_args.adjust_figsize = False
-        logger.debug(f"{subplots_args.get_changed_params()}")
-        p = p.create_subplots(**subplots_args.get_changed_params())
-
-    # Add layers
-    if incl_scatter and scatter_args:
-        p = p.add_scatter(**scatter_args.get_changed_params())
-
-    if density_type == "simple":
-        p = p.add_simple_density(**density_args.get_changed_params())
-    else:
-        p = p.add_density(**density_args.get_changed_params())
-
-    # Apply styling
-    p = p.apply_styling(**style_args.get_changed_params())
-
-    if return_iso_plot:
-        return p
-
-    return p.get_axes()
+    return style_args, subplots_args, kwargs
 
 
 def create_circumplex_subplots(
@@ -531,26 +1012,14 @@ def create_circumplex_subplots(
         Axes object containing the plot or ISOPlot if return_iso_plot=True.
 
     """
-    style_args = StyleParams().update(**kwargs, extra="ignore", na_rm=False)
-    if prim_labels is not None:
-        warnings.warn(
-            "The `prim_labels` parameter is deprecated. "
-            "Use `xlabel` and `ylabel` instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        style_args.update(xlabel=False, ylabel=False) if prim_labels is False else None
-
-    subplots_args = SubplotsParams().update(
-        subplot_by=subplot_by, **kwargs, extra="ignore", na_rm=False
+    style_args, subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
+        x, y, prim_labels, kwargs
     )
-
-    # Remove style and subplots args from kwargs
-    [kwargs.pop(k, None) for k in style_args.field_names + subplots_args.field_names]
 
     # Set up density parameters
     if density_type == "simple":
-        density_args = SimpleDensityParams().update(
+        density_args = SimpleDensityParams()
+        density_args.update(
             data=data,
             x=x,
             y=y,
@@ -561,7 +1030,8 @@ def create_circumplex_subplots(
             **kwargs,
         )
     else:
-        density_args = DensityParams().update(
+        density_args = DensityParams()
+        density_args.update(
             data=data,
             x=x,
             y=y,
@@ -783,16 +1253,17 @@ def jointplot(
     # Check if dataset is large enough for density plots
     _valid_density(data)
 
+    style_args, subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
+        x=x, y=y, prim_labels=prim_labels, kwargs=kwargs
+    )
+
     # Initialize default dicts if None
-    scatter_kws = {} if scatter_kws is None else scatter_kws
+    scatter_args = ScatterParams()
+    scatter_args.update(**scatter_kws) if scatter_kws is not None else None
+
     joint_kws = {} if joint_kws is None else joint_kws
     marginal_kws = (
         {"fill": True, "common_norm": False} if marginal_kws is None else marginal_kws
-    )
-
-    # Get style parameters
-    xlabel, ylabel, xlim, ylim, legend_loc, diagonal_lines, prim_ax_fontdict = (
-        _pop_style_kwargs(kwargs)
     )
 
     if density_type == "simple":
@@ -815,8 +1286,8 @@ def jointplot(
         hue=hue,
         palette=palette,
         # height=figsize[0],  # Use figsize for height
-        xlim=xlim,
-        ylim=ylim,
+        xlim=style_args.xlim,
+        ylim=style_args.ylim,
     )
 
     # Add the density plot to the joint plot area
@@ -833,16 +1304,16 @@ def jointplot(
         color=color,
         scatter_kws=scatter_kws,
         incl_outline=incl_outline,
-        legend_loc=legend_loc,
+        legend_loc=style_args.legend_loc,
         alpha=alpha,
         legend=legend,
         fill=fill,
         levels=levels,
         thresh=thresh,
         bw_adjust=bw_adjust,
-        diagonal_lines=diagonal_lines,
-        xlim=xlim,
-        ylim=ylim,
+        diagonal_lines=style_args.diagonal_lines,
+        xlim=style_args.xlim,
+        ylim=style_args.ylim,
         **joint_kws,
     )
 
@@ -854,7 +1325,7 @@ def jointplot(
             hue=hue,
             palette=palette,
             ax=g.ax_marg_x,
-            binrange=xlim,
+            binrange=style_args.xlim,
             legend=False,
             **marginal_kws,
         )
@@ -864,7 +1335,7 @@ def jointplot(
             hue=hue,
             palette=palette,
             ax=g.ax_marg_y,
-            binrange=ylim,
+            binrange=style_args.ylim,
             legend=False,
             **marginal_kws,
         )
@@ -894,10 +1365,19 @@ def jointplot(
     if title is not None:
         g.ax_marg_x.set_title(title, pad=6.0)
 
-    # Process primary labels (x and y)
-    xlabel, ylabel = _deal_w_default_labels(
-        x=x, y=y, xlabel=xlabel, ylabel=ylabel, prim_labels=prim_labels
+    _set_style()
+    _circumplex_grid(
+        ax=g.ax_joint,
+        xlim=style_args.get("xlim"),
+        ylim=style_args.get("ylim"),
+        xlabel=style_args.get("xlabel"),
+        ylabel=style_args.get("ylabel"),
+        diagonal_lines=style_args.get("diagonal_lines"),
+        prim_ax_fontdict=style_args.get("prim_ax_fontdict"),
     )
+
+    if legend is not None and hue is not None:
+        _move_legend(ax=g.ax_joint, new_loc=style_args.get("legend_loc"))
 
     return g
 
@@ -1044,43 +1524,6 @@ def _set_circum_title(
     """
     title_pad = 30.0 if (xlabel is not False or ylabel is not False) else 6.0
     ax.set_title(title, pad=title_pad, fontsize=DEFAULT_STYLE_PARAMS["title_fontsize"])
-
-
-def _deal_w_default_labels(
-    x: str,
-    y: str,
-    xlabel: str | None | Literal[False],
-    ylabel: str | None | Literal[False],
-    prim_labels: bool | None,
-) -> tuple[str | Literal[False], str | Literal[False]]:
-    """
-    Deal with the default labels for the circumplex plot.
-
-    Parameters
-    ----------
-    ax : plt.Axes
-        Existing axes object to adjust the legend on
-    prim_labels: bool, optional
-        whether to include the custom primary labels ISOPleasant and ISOEventful
-          by default True
-        If using your own x and y names, you should set this to False.
-
-    """
-    xlabel = x if xlabel is None else xlabel  # xlabel = x col name if not provided
-    ylabel = y if ylabel is None else ylabel
-
-    if prim_labels is not None:
-        warnings.warn(
-            "The `prim_labels` argument is deprecated and will be removed. "
-            "Use `xlabel` and `ylabel` instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if prim_labels is False:
-            xlabel = False
-            ylabel = False
-
-    return xlabel, ylabel
 
 
 def _primary_lines_and_labels(
@@ -1268,7 +1711,6 @@ def iso_annotation(
     )
 
 
-@functools.wraps(scatter)
 def scatter_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
     """
     Wrapper for the scatter function to maintain backwards compatibility.
@@ -1311,7 +1753,6 @@ def scatter_plot(*args, **kwargs) -> Axes:  # noqa: ANN002
     return scatter(*args, **kwargs)
 
 
-@functools.wraps(density)
 def density_plot(*args, **kwargs) -> Axes | np.ndarray | ISOPlot:  # noqa: ANN002
     """
     Wrapper for the density function to maintain backwards compatibility.
