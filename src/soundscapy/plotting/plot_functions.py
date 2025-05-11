@@ -191,6 +191,7 @@ def scatter(
         )
         style_args.update(xlabel=False, ylabel=False) if prim_labels is False else None
 
+    # Update SubplotsParams with kwargs
     subplots_args = SubplotsParams().update(**kwargs, extra="ignore", na_rm=False)
 
     # Remove style and scatter args from kwargs
@@ -209,7 +210,8 @@ def scatter(
 
     p = ISOPlot(data=data, x=x, y=y, hue=hue, title=title, palette=palette)
     if ax is None:
-        p.create_subplots(adjust_figsize=False, **subplots_args.as_dict())
+        subplots_args.update(adjust_figsize=False)
+        p.create_subplots(**subplots_args.as_dict())
     else:
         p.axes = ax
         p.figure = ax.get_figure()
@@ -353,8 +355,10 @@ def density(
 
     Density plot with custom styling:
 
+    >>> sub_data = sspy.isd.select_location_ids(
+    ...    data, ['CamdenTown', 'PancrasLock', 'RegentsParkJapan', 'RegentsParkFields'])
     >>> ax = sspy.density(
-    ...     data,
+    ...     sub_data,
     ...     hue="SessionID",
     ...     incl_scatter=True,
     ...     legend_loc="upper right",
@@ -363,7 +367,7 @@ def density(
     ...     fill = False,
     ...     density_type = "simple",
     ... )
-    >>> plt.show()
+    >>> plt.show() # xdoctest: +SKIP
 
     Add density to existing plots:
 
