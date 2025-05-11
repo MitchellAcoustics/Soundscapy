@@ -42,6 +42,13 @@ MplLegendLocType: TypeAlias = (
     | tuple[float, float]
 )
 
+param_model_config = ConfigDict(
+    extra="allow",  # Allow extra fields for flexibility
+    arbitrary_types_allowed=True,  # Allow complex matplotlib types
+    validate_assignment=True,  # Validate when attributes are set
+    alias_generator=to_snake,  # Use snake_case for aliases
+)
+
 
 class ParamModel(BaseModel):
     """
@@ -61,104 +68,35 @@ class ParamModel(BaseModel):
         alias_generator=to_snake,  # Use snake_case for aliases
     )
 
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Register subclasses in the registry."""
-        super().__init_subclass__(**kwargs)
-        cls.__register_class__()
-
-    @classmethod
-    def __register_class__(cls) -> None:
-        """Register this class in the parameter registry."""
-        # Skip registration for the base class
-        if cls is ParamModel:
-            return
-
-        # Extract class name and register (e.g., 'ScatterParams' -> 'scatter')
-        class_name = cls.__name__
-        if class_name.endswith("Params"):
-            param_type = to_snake(class_name[:-6])
-            cls._param_registry[param_type] = cls
-
-    @classmethod
-    def create(cls, param_type: str, **kwargs: Any) -> ParamModel:
-        """
-        Create a parameter instance of the specified type.
-
-        Parameters
-        ----------
-        param_type : str
-            The type of parameters to create ('scatter', 'density', etc.)
-        **kwargs : Any
-            Initial parameter values
-
-        Returns
-        -------
-        ParamModel
-            Instance of the appropriate parameter class
-
-        Raises
-        ------
-        ValueError
-            If the parameter type is unknown
-
-        """
-        # Get the parameter model class
-        model_class = cls.get_param_class(param_type)
-
-        # Create instance and update with kwargs
-        model = model_class()
-        model.update(**kwargs)
-        return model
-
-    @classmethod
-    def get_param_class(cls, param_type: str) -> type[ParamModel]:
-        """
-        Get the parameter model class for a parameter type.
-
-        Parameters
-        ----------
-        param_type : str
-            The type of parameters to get
-
-        Returns
-        -------
-        Type[ParamModel]
-            The parameter model class
-
-        Raises
-        ------
-        ValueError
-            If the parameter type is unknown
-
-        """
-        if param_type not in cls._param_registry:
-            msg = f"Unknown parameter type: {param_type}"
-            raise ValueError(msg)
-
-        return cls._param_registry[param_type]
-
-    # @validate_call
     def update(
         self,
         *,
         extra: Literal["allow", "forbid", "ignore"] = "allow",
-        na_rm: bool = True,
+        ignore_null: bool = True,
         **kwargs: Any,
     ) -> None:
         """
-        Update parameters with new values.
+        Update the attributes of the instance based on the provided parameters.
+
+        The method allows for managing extra fields, removing `None` values, and
+        setting instance attributes dynamically based on the input `kwargs`.
+        Behavior can be adjusted via the `extra` and `na_rm` parameters.
 
         Parameters
         ----------
-        extra : Literal["allow", "forbid", "ignore"], optional
-            Controls how extra fields are handled. Default is "allow".
+        extra : {'allow', 'forbid', 'ignore'}, default='allow'
+            Determines how to handle extra fields in `kwargs`:
+            - 'allow': All fields in `kwargs` are allowed and processed.
+            - 'forbid': Raises a `ValueError` if any key in `kwargs` is not a valid
+              field of the model.
+            - 'ignore': Ignores fields in `kwargs` that are not valid fields of the
+              model.
+        ignore_null : bool, default=True
+            If True, removes `None` values from `kwargs` to avoid overwriting default
+            instance attributes with `None`.
         **kwargs : Any
-            New parameter values
-
-        Returns
-        -------
-        Self
-            The updated parameter instance (for chaining)
+            Arbitrary keyword arguments representing field names and values to be
+            updated for the instance.
 
         """
         if extra == "forbid":
@@ -173,16 +111,22 @@ class ParamModel(BaseModel):
         elif extra != "allow":
             msg = f"Invalid value for 'extra': {extra}"
             raise ValueError(msg)
-        # Remove None values if na_rm is True
-        if na_rm:
+        # Remove None values if ignore_null is True
+        if ignore_null:
             # Filter out None values to avoid overriding defaults with None
             kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
-        for key, value in kwargs.items():
-            try:
-                setattr(self, key, value)
-            except ValueError as e:  # noqa: PERF203
-                logger.warning("Invalid value for %s: %s", key, e)
+        # Use proper Pydantic model update method
+        self.model_validate(kwargs)
+
+        # Update using model_copy to ensure proper field validation
+        updated_model = self.model_copy(update=kwargs)
+        for field_name in kwargs:
+            if field_name in self.model_fields or extra == "allow":
+                try:
+                    setattr(self, field_name, getattr(updated_model, field_name))
+                except ValueError as e:
+                    logger.warning("Invalid value for %s: %s", field_name, e)
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -201,7 +145,8 @@ class ParamModel(BaseModel):
             Parameter value or default
 
         """
-        return getattr(self, key, default)
+        model_dict = self.model_dump()
+        return model_dict.get(key, default)
 
     def __getitem__(self, key: str) -> Any:
         """
@@ -223,10 +168,10 @@ class ParamModel(BaseModel):
             If the parameter doesn't exist
 
         """
-        try:
-            return getattr(self, key)
-        except AttributeError as e:
-            raise KeyError(str(e)) from e
+        if key in self.model_fields:
+            return self.model_dump().get(key)
+        msg = f"Parameter '{key}' does not exist."
+        raise KeyError(msg)
 
     def as_dict(self, **kwargs) -> dict[str, Any]:
         """
@@ -250,7 +195,7 @@ class ParamModel(BaseModel):
             Dictionary of changed parameters
 
         """
-        return self.model_dump(exclude_unset=True)
+        return self.model_dump(exclude_defaults=True)
 
     def get_multiple(self, keys: list[str]) -> dict[str, Any]:
         """
@@ -267,7 +212,8 @@ class ParamModel(BaseModel):
             Dictionary of parameter values
 
         """
-        return {key: getattr(self, key) for key in keys if hasattr(self, key)}
+        model_dict = self.model_dump()
+        return {key: model_dict.get(key) for key in keys if key in model_dict}
 
     def pop(self, key: str) -> Any:
         """
@@ -289,11 +235,26 @@ class ParamModel(BaseModel):
             If the parameter doesn't exist
 
         """
-        if not hasattr(self, key):
+        model_dict = self.model_dump()
+        if key not in model_dict:
             msg = f"Parameter '{key}' does not exist."
             raise KeyError(msg)
-        value = getattr(self, key)
-        delattr(self, key)
+        value = model_dict[key]
+
+        # Create a new dict without the popped key
+        new_data = {k: v for k, v in model_dict.items() if k != key}
+
+        # Clear all current fields and update with new data
+        for k in list(model_dict.keys()):
+            if hasattr(self, k):
+                object.__delattr__(self, k)
+
+        # Update with new data (excluding the popped key)
+        updated_model = self.model_copy(update=new_data)
+        for field_name in new_data:
+            if field_name in self.model_fields or field_name in new_data:
+                setattr(self, field_name, getattr(updated_model, field_name))
+
         return value
 
     def drop(self, keys: str | Iterable[str], *, ignore_missing: bool = True) -> None:
@@ -304,27 +265,25 @@ class ParamModel(BaseModel):
         ----------
         keys : str | Iterable[str]
             Name of the parameter or list of parameters
+        ignore_missing : bool, default=True
+            If True, ignore missing keys. If False, raise KeyError for missing keys.
 
         Raises
         ------
         KeyError
-            If the parameter doesn't exist
+            If the parameter doesn't exist and ignore_missing is False
 
         """
         if isinstance(keys, str):
             keys = [keys]
-        for k in keys:
-            if not hasattr(self, k):
-                if ignore_missing:
-                    continue
-                msg = f"Parameter '{k}' does not exist."
-                raise KeyError(msg)
-            delattr(self, k)
+
+        for key in keys:
+            _ = self.pop(key)
 
     @property
-    def field_names(self) -> list[str]:
+    def defined_field_names(self) -> list[str]:
         """
-        Get the names of all fields in the model.
+        Get the names of all fields defined for the model.
 
         Returns
         -------
@@ -333,6 +292,23 @@ class ParamModel(BaseModel):
 
         """
         return list(self.model_fields.keys())
+
+    @property
+    def current_field_names(self) -> list[str]:
+        """
+        Retrieves the current field names.
+
+        This property method fetches and returns the current set of field names
+        associated with the instance. It provides a read-only interface to
+        access field names as computed or stored in the object.
+
+        Returns
+        -------
+        list[str]
+            A list of strings where each string represents a field name.
+
+        """
+        return list(self.model_dump().keys())
 
 
 class SeabornParams(ParamModel):

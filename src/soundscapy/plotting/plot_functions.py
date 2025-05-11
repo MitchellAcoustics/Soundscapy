@@ -1,4 +1,4 @@
-"""Plotting functions for visualising circumplex data."""
+"""Plotting functions for visualizing circumplex data."""
 
 # ruff: noqa: ANN003
 import warnings
@@ -204,7 +204,8 @@ def iso_plot(
     ...     ax=ax.flatten()[1], title="RegentsParkJapan"
     ... )
     >>> plt.tight_layout()
-    >>> plt.show()
+    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.close('all')
 
     """  # noqa: D205
     if isinstance(plot_layers, str):
@@ -265,7 +266,7 @@ def create_iso_subplots(
     subplot_by: str | None = None,
     title: str | None = "Soundscapy Plot",
     plot_layers: Literal["scatter", "density", "simple_density"]
-    | Sequence[Literal["scatter", "density", "simple_density"]] = (
+    | Sequence[Literal["scatter", "simple_density", "density"]] = (
         "scatter",
         "density",
     ),
@@ -341,13 +342,26 @@ def create_iso_subplots(
     Basic subplots with default settings:
     >>> import soundscapy as sspy
     >>> import matplotlib.pyplot as plt
+    >>> import pandas as pd
     >>> data = sspy.isd.load()
     >>> data = sspy.add_iso_coords(data)
     >>> four_locs = sspy.isd.select_location_ids(data,
     ...     ['CamdenTown', 'PancrasLock', 'RegentsParkJapan', 'RegentsParkFields']
     ... )
     >>> fig, axes = sspy.create_iso_subplots(four_locs, subplot_by="LocationID")
-    >>> plt.show()
+    >>> plt.show() # xdoctest: +SKIP
+
+    Create subplots by specifying a list of data
+    >>> data1 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
+    ...                       'ISOEventful': np.random.uniform(-1, 1, 50)})
+    >>> data2 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
+    ...                       'ISOEventful': np.random.uniform(-1, 1, 50)})
+    >>> fig, axes = create_iso_subplots(
+    ...     [data1, data2], plot_layers="scatter", nrows=1, ncols=2
+    ... )
+    >>> plt.show() # xdoctest: +SKIP
+    >>> assert len(axes) == 2
+    >>> plt.close('all')
 
     """
     # Process input data and prepare for subplot creation
@@ -359,10 +373,7 @@ def create_iso_subplots(
     nrows, ncols, n_subplots = allocate_subplot_axes(nrows, ncols, n_subplots)
 
     # Set up figure and subplots
-    figsize = kwargs.get("figsize") or (
-        ncols * subplot_size[0],
-        nrows * subplot_size[1],
-    )
+    figsize = kwargs.pop("figsize", (ncols * subplot_size[0], nrows * subplot_size[1]))
 
     subplots_params = SubplotsParams()
     subplots_params.update(
@@ -434,10 +445,19 @@ def _prepare_subplot_data(
 
         data_list: list[pd.DataFrame] = data
         n_subplots = len(data_list)
-        subplot_titles_list = subplot_titles
+        if subplot_titles == "by_group":
+            warnings.warn(
+                "No group provided for titles. Falling back to numbered subplots."
+                "Recommended to manually provide subplot titles or explicitly set "
+                "`subplot_titles = 'numbered'` if providing own splits of data.",
+                stacklevel=2,
+            )
+            subplot_titles_list: Literal["numbered"] | list[str] | None = "numbered"
+        else:
+            subplot_titles_list = subplot_titles  # type: ignore[assignment]
 
     # Handle DataFrame input
-    if isinstance(data, pd.DataFrame):
+    elif isinstance(data, pd.DataFrame):
         if subplot_by is None:
             raise ValueError(SUBPLOT_DATA_ERROR)
         if subplot_by not in data.columns:
@@ -474,13 +494,6 @@ def _prepare_subplot_data(
     # Validate subplot titles if provided as a list
     if isinstance(subplot_titles_list, list) and len(subplot_titles_list) < n_subplots:
         raise ValueError(SUBPLOT_TITLES_ERROR.format(n_subplots=n_subplots))
-
-    # Just here to satisfy type checker for return type
-    assert (  # noqa: S101
-        subplot_titles_list == "numbered"
-        or isinstance(subplot_titles_list, list)
-        or subplot_titles_list is None
-    )
 
     return data_list, subplot_titles_list, n_subplots
 
@@ -699,6 +712,7 @@ def scatter(
 
     >>> ax = sspy.scatter(data, hue="LocationID", diagonal_lines=True)
     >>> plt.show() # xdoctest: +SKIP
+    >>> plt.close('all')
 
     """
     style_args, subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
@@ -713,7 +727,7 @@ def scatter(
         palette=palette,
         legend=legend,
         extra="allow",
-        na_rm=False,
+        ignore_null=False,
         **kwargs,
     )  # pass all the rest to scatter
 
@@ -875,12 +889,12 @@ def density(
     >>> import matplotlib.pyplot as plt
     >>> data = sspy.isd.load()
     >>> data = sspy.add_iso_coords(data)
-    >>> ax = sspy.density(data)
+    >>> sspy.density(data)
     >>> plt.show() # xdoctest: +SKIP
 
     Simple density plot with fewer contour levels:
 
-    >>> ax = sspy.density(data, density_type="simple")
+    >>> sspy.density(data, density_type="simple")
     >>> plt.show() # xdoctest: +SKIP
 
     Density plot with custom styling:
@@ -911,6 +925,7 @@ def density(
     ... )
     >>> plt.tight_layout()
     >>> plt.show()
+    >>> plt.close('all')
 
     """
     style_args, subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
@@ -922,6 +937,7 @@ def density(
         data=data,
         x=x,
         y=y,
+        hue=hue,
         density_type=density_type,
         palette=palette,
         legend=legend,
@@ -1028,7 +1044,7 @@ def _deal_w_default_labels(
             ylabel = False
 
     # Update style args with the determined labels
-    style_args.update(xlabel=xlabel, ylabel=ylabel)
+    style_args.update(xlabel=xlabel, ylabel=ylabel, ignore_null=False)
 
     return style_args
 
@@ -1061,7 +1077,7 @@ def _setup_style_and_subplots_args_from_kwargs(
     """
     # Initialize and update style parameters
     style_args = StyleParams()
-    style_args.update(**kwargs, extra="ignore", na_rm=False)
+    style_args.update(**kwargs, extra="ignore", ignore_null=False)
 
     # Handle default labels
     style_args = _deal_w_default_labels(
@@ -1070,18 +1086,20 @@ def _setup_style_and_subplots_args_from_kwargs(
 
     # Initialize and update subplot parameters
     subplots_args = SubplotsParams()
-    subplots_args.update(**kwargs, extra="ignore", na_rm=False)
+    subplots_args.update(**kwargs, extra="ignore", ignore_null=False)
 
     # Remove style and scatter args from kwargs to avoid duplicates
-    kwargs = _pop_style_kwargs(kwargs)
+    for key in subplots_args.defined_field_names + style_args.defined_field_names:
+        if key in kwargs:
+            kwargs.pop(key)
 
     return style_args, subplots_args, kwargs
 
 
 def create_circumplex_subplots(
     data_list: list[pd.DataFrame],
-    plot_type: str = "density",
-    incl_scatter: bool = True,
+    plot_type: Literal["density", "scatter", "simple_density"] = "density",
+    incl_scatter: bool = True,  # noqa: FBT001, FBT002
     subtitles: list[str] | None = None,
     title: str = "Circumplex Subplots",
     nrows: int | None = None,
@@ -1092,11 +1110,16 @@ def create_circumplex_subplots(
     """
     Create a figure with subplots containing circumplex plots.
 
+    .. deprecated:: 0.8.0
+       Use :func:`create_iso_subplots` instead.
+
     Parameters
     ----------
         data_list : List of DataFrames to plot.
         plot_type : Type of plot to create.
         incl_scatter : Whether to include scatter points on density plots.
+        subtitles : List of subtitles for each subplot.
+        title : Title for the entire figure.
         nrows : Number of rows in the subplot grid.
         ncols : Number of columns in the subplot grid.
         figsize : Figure size (width, height) in inches.
@@ -1110,47 +1133,57 @@ def create_circumplex_subplots(
     -------
         >>> import pandas as pd
         >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
         >>> np.random.seed(42)
         >>> data1 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
         ...                       'ISOEventful': np.random.uniform(-1, 1, 50)})
         >>> data2 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
         ...                       'ISOEventful': np.random.uniform(-1, 1, 50)})
-        >>> fig = create_circumplex_subplots([data1, data2], plot_type=PlotType.SCATTER, nrows=1, ncols=2)
+        >>> fig = create_circumplex_subplots(
+        ...     [data1, data2], plot_type="scatter", nrows=1, ncols=2
+        ... )
+        >>> plt.show() # xdoctest: +SKIP
         >>> isinstance(fig, plt.Figure)
         True
+        >>> plt.close('all')
 
     """
-    if nrows is None and ncols is None:
-        nrows = 2
-        ncols = len(data_list) // nrows
-    elif nrows is None:
-        nrows = len(data_list) // ncols
-    elif ncols is None:
-        ncols = len(data_list) // nrows
+    warnings.warn(
+        "The `create_circumplex_subplots` function is deprecated and will be removed "
+        "in a future version. Use `create_iso_subplots` instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-    if subtitles is None:
-        subtitles = [f"({i + 1})" for i in range(len(data_list))]
-    elif len(subtitles) != len(data_list):
-        raise ValueError("Number of subtitles must match number of dataframes")
+    # Map plot_type to plot_layers
+    if plot_type == "scatter":
+        plot_layers = ["scatter"]
+    elif plot_type == "density":
+        plot_layers = ["density"]
+        if incl_scatter:
+            plot_layers.insert(0, "scatter")
+    elif plot_type == "simple_density":
+        plot_layers = ["simple_density"]
+        if incl_scatter:
+            plot_layers.insert(0, "scatter")
+    else:
+        plot_layers = ["scatter", "density"]
 
-    fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
-    axes = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
+    # Map subtitles to subplot_titles
+    subplot_titles = subtitles
 
-    color = kwargs.get("color", sns.color_palette("colorblind", 1)[0])
+    # Call create_iso_subplots with translated parameters
+    fig, _ = create_iso_subplots(
+        data=data_list,
+        subplot_titles=subplot_titles,
+        title=title,
+        nrows=nrows,
+        ncols=ncols,
+        figsize=figsize,
+        plot_layers=plot_layers,  # type: ignore[arg-type]
+        **kwargs,
+    )
 
-    for data, ax, subtitle in zip(data_list, axes, subtitles, strict=False):
-        if plot_type == "scatter" or incl_scatter:
-            scatter_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
-        if plot_type == "density":
-            density_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
-        elif plot_type == "simple_density":
-            density_plot(
-                data, title=subtitle, simple_density=True, ax=ax, color=color, **kwargs
-            )
-
-    plt.suptitle(title)
-
-    plt.tight_layout()
     return fig
 
 
@@ -1322,6 +1355,7 @@ def jointplot(
     ...     title="Grouped Soundscape Analysis"
     ... )
     >>> plt.show() # xdoctest: +SKIP
+    >>> plt.close('all')
 
     """
     # Check if dataset is large enough for density plots
@@ -1773,6 +1807,7 @@ def iso_annotation(
     if arrowprops is None:
         arrowprops = {"arrowstyle": "-", "ec": "black"}
 
+    # noinspection PyTypeChecker
     ax.annotate(
         text=data["LocationID"][location],
         xy=(
@@ -1895,6 +1930,7 @@ def _setup_density_params(
     x: str | None,
     y: str | None,
     density_type: str,
+    hue: str | None,
     palette: SeabornPaletteType | None,
     legend: Literal["auto", "brief", "full", False],
     **kwargs,
@@ -1935,9 +1971,10 @@ def _setup_density_params(
         x=x,
         y=y,
         palette=palette,
+        hue=hue,
         legend=legend,
         extra="allow",
-        na_rm=False,
+        ignore_null=False,
         **kwargs,
     )
 
