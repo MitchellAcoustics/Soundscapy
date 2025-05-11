@@ -17,7 +17,7 @@ Example:
 ...    )
 ...    .add_scatter()
 ...    .add_simple_density(fill=False)
-...    .apply_styling()
+...    .style()
 ... )
 >>> isoplot.show() # xdoctest: +SKIP
 
@@ -54,24 +54,28 @@ from soundscapy.plotting.layers import (
     SPIScatterLayer,
     SPISimpleLayer,
 )
-from soundscapy.plotting.plot_context import PlotContext
-from soundscapy.plotting.plotting_types import (
+from soundscapy.plotting.param_models import (
     ParamModel,
     SPISimpleDensityParams,
     SubplotsParams,
 )
+from soundscapy.plotting.plot_context import PlotContext
 from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from soundscapy.plotting.plotting_types import SeabornPaletteType
+    from soundscapy.plotting.param_models import SeabornPaletteType
     from soundscapy.spi.msn import (
         CentredParams,
         DirectParams,
     )
 
 logger = get_logger()
+
+
+class ExperimentalWarning(Warning):
+    """A warning class to signify experimental features."""
 
 
 class ISOPlot:
@@ -91,7 +95,7 @@ class ISOPlot:
     ...         .create_subplots()
     ...         .add_scatter()
     ...         .add_density()
-    ...         .apply_styling())
+    ...         .style())
     >>> cp.show() # xdoctest: +SKIP
 
     """
@@ -163,6 +167,14 @@ class ISOPlot:
         True
 
         """
+        warnings.warn(
+            "`ISOPlot` is currently under development and should be considered "
+            "experimental. `ISOPlot` implements an experimental API for creating "
+            "layered soundscape circumplex plots. Use with caution.",
+            ExperimentalWarning,
+            stacklevel=2,
+        )
+
         # Process and validate input data and coordinates
         data, x, y = self._check_data_x_y(data, x, y)
         self._check_data_hue(data, hue)
@@ -464,7 +476,7 @@ class ISOPlot:
 
         """
         # Set up subplot params
-        self.subplots_params = self.subplots_params.update(
+        self.subplots_params.update(
             nrows=nrows,
             ncols=ncols,
             figsize=figsize,
@@ -548,7 +560,7 @@ class ISOPlot:
             raise ValueError(msg)
         if self._has_subplots:
             plt.tight_layout()
-        plt.show()
+        self.figure.show()
 
     @functools.wraps(plt.close)
     def close(self, fig: int | str | Figure | None = None) -> None:
@@ -943,7 +955,7 @@ class ISOPlot:
         >>> plot = (ISOPlot(data=data)
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer)
-        ...         .apply_styling())
+        ...         .style())
         >>> plot.show() # xdoctest: +SKIP
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
             True
@@ -954,7 +966,7 @@ class ISOPlot:
         >>> plot = (ISOPlot(data=data)
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer, on_axis=0)
-        ...         .apply_styling())
+        ...         .style())
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
@@ -967,7 +979,7 @@ class ISOPlot:
         >>> plot = (ISOPlot(data=data)
         ...            .create_subplots(nrows=2, ncols=2)
         ...            .add_layer(ScatterLayer, on_axis=[0, 2])
-        ...            .apply_styling())
+        ...            .style())
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
@@ -989,7 +1001,7 @@ class ISOPlot:
         ...        .add_layer(ScatterLayer, data=data.iloc[:50], on_axis=0, color='red')
         ...        # Add a layer with custom data to the second subplot
         ...        .add_layer(ScatterLayer, data=custom_data, on_axis=1)
-        ...        .apply_styling())
+        ...        .style())
         >>> plot.show() # xdoctest: +SKIP
         >>> plot.close()
 
@@ -1141,7 +1153,7 @@ class ISOPlot:
         >>> plot = (ISOPlot(data=data)
         ...           .create_subplots(nrows=2, ncols=1)
         ...           .add_scatter(s=50, alpha=0.7, hue='Group')
-        ...           .apply_styling())
+        ...           .style())
         >>> plot.show() # xdoctest: +SKIP
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
         True
@@ -1157,7 +1169,7 @@ class ISOPlot:
         ...            .create_subplots(nrows=2, ncols=1)
         ...            .add_scatter(hue='Group')
         ...            .add_scatter(on_axis=0, data=custom_data, color='red')
-        ...            .apply_styling())
+        ...            .style())
         >>> plot.show() # xdoctest: +SKIP
         >>> plot.subplot_contexts[0].layers[1].custom_data is custom_data
         True
@@ -1166,7 +1178,9 @@ class ISOPlot:
         """
         # Merge default scatter parameters with provided ones
         # Remove data from scatter_params to avoid conflict
-        scatter_params = self._scatter_params.model_copy().drop("data").update(**params)
+        scatter_params = self._scatter_params.model_copy()
+        scatter_params.drop("data")
+        scatter_params.update(**params)
 
         return self.add_layer(
             ScatterLayer, data=data, on_axis=on_axis, **scatter_params.as_dict()
@@ -1223,7 +1237,7 @@ class ISOPlot:
         ...     .create_subplots()
         ...     .add_scatter()
         ...     .add_spi(msn_params=msn_params)
-        ...     .apply_styling()
+        ...     .style()
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
@@ -1237,7 +1251,7 @@ class ISOPlot:
         ...     .add_scatter()
         ...     .add_density()
         ...     .add_spi(msn_params=msn_params, show_score="on axis")
-        ...     .apply_styling()
+        ...     .style()
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 3
@@ -1246,11 +1260,9 @@ class ISOPlot:
 
         """
         if layer_class == SPISimpleLayer:
-            spi_simple_params = (
-                self._spi_simple_density_params.model_copy()
-                .drop("data")
-                .update(**params)
-            )
+            spi_simple_params = self._spi_simple_density_params.model_copy()
+            spi_simple_params.drop("data")
+            spi_simple_params.update(**params)
 
             return self.add_layer(
                 layer_class,
@@ -1311,7 +1323,7 @@ class ISOPlot:
         ...     ISOPlot(data=data)
         ...     .create_subplots()
         ...     .add_density()
-        ...     .apply_styling()
+        ...     .style()
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
@@ -1324,7 +1336,7 @@ class ISOPlot:
         ...     ISOPlot(data=data)
         ...     .create_subplots()
         ...     .add_density(levels=5, alpha=0.7)
-        ...     .apply_styling()
+        ...     .style()
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
@@ -1333,7 +1345,9 @@ class ISOPlot:
 
         """
         # Merge default density parameters with provided ones
-        density_params = self._density_params.model_copy().drop("data").update(**params)
+        density_params = self._density_params.model_copy()
+        density_params.drop("data")
+        density_params.update(**params)
 
         return self.add_layer(
             DensityLayer,
@@ -1392,7 +1406,7 @@ class ISOPlot:
         ...     .create_subplots()
         ...     .add_scatter()
         ...     .add_simple_density()
-        ...     .apply_styling()
+        ...     .style()
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
@@ -1409,7 +1423,7 @@ class ISOPlot:
         ...     .create_subplots()
         ...     .add_scatter()
         ...     .add_simple_density()
-        ...     .apply_styling()
+        ...     .style()
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
@@ -1419,9 +1433,9 @@ class ISOPlot:
 
         """
         # Merge default simple density parameters with provided ones
-        simple_density_params = (
-            self._simple_density_params.model_copy().drop("data").update(**params)
-        )
+        simple_density_params = self._simple_density_params.model_copy()
+        simple_density_params.drop("data")
+        simple_density_params.update(**params)
 
         return self.add_layer(
             SimpleDensityLayer,
@@ -1469,7 +1483,7 @@ class ISOPlot:
             arrowprops=arrowprops,
         )
 
-    def apply_styling(
+    def style(
         self,
         **kwargs: Any,
     ) -> ISOPlot:
@@ -1502,7 +1516,7 @@ class ISOPlot:
         ...    ISOPlot(data=data)
         ...       .create_subplots()
         ...       .add_scatter()
-        ...       .apply_styling()
+        ...       .style()
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> plot.get_figure() is not None
@@ -1515,7 +1529,7 @@ class ISOPlot:
         ...         ISOPlot(data=data)
         ...         .create_subplots()
         ...         .add_scatter()
-        ...         .apply_styling(xlim=(-2, 2), ylim=(-2, 2), primary_lines=False)
+        ...         .style(xlim=(-2, 2), ylim=(-2, 2), primary_lines=False)
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> plot.get_figure() is not None
@@ -1530,7 +1544,7 @@ class ISOPlot:
         ...     .create_subplots(nrows=1, ncols=1)
         ...     .add_scatter(alpha=0.7)
         ...     .add_density(levels=5)
-        ...     .apply_styling(title_fontsize=14)
+        ...     .style(title_fontsize=14)
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> # Verify results
@@ -1557,11 +1571,12 @@ class ISOPlot:
 
         return self
 
-    def _set_style(self) -> None:
+    @staticmethod
+    def _set_style() -> None:
         """Set the overall style for the plot."""
         sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
 
-    def _circumplex_grid(self) -> ISOPlot:
+    def _circumplex_grid(self) -> None:
         """Add the circumplex grid to the plot."""
         for _, axis in enumerate(self.yield_axes_objects()):
             axis.set_xlim(self._style_params.get("xlim"))
@@ -1582,9 +1597,7 @@ class ISOPlot:
                 zorder=self._style_params.get("prim_lines_zorder"),
             )
 
-        return self
-
-    def _set_title(self) -> ISOPlot:
+    def _set_title(self) -> None:
         """Set the title of the plot."""
         if self.title and self._has_subplots:
             figure = self.get_figure()
@@ -1602,16 +1615,14 @@ class ISOPlot:
                 figure.suptitle(
                     self.title, fontsize=self._style_params.get("title_fontsize")
                 )
-        return self
 
-    def _set_axes_titles(self) -> ISOPlot:
+    def _set_axes_titles(self) -> None:
         """Set the titles of the subplots."""
         for context in self.subplot_contexts:
             if context.ax and context.title:
                 context.ax.set_title(context.title)
-        return self
 
-    def _primary_lines(self) -> ISOPlot:
+    def _primary_lines(self) -> None:
         """Add primary lines to the plot."""
         for _, axis in enumerate(self.yield_axes_objects()):
             axis.axhline(
@@ -1630,9 +1641,8 @@ class ISOPlot:
                 lw=self._style_params.get("linewidth"),
                 zorder=self._style_params.get("prim_lines_zorder"),
             )
-        return self
 
-    def _primary_labels(self) -> ISOPlot:
+    def _primary_labels(self) -> None:
         """Handle the default labels for the x and y axes."""
         xlabel = self._style_params.get("xlabel")
         ylabel = self._style_params.get("ylabel")
@@ -1653,9 +1663,7 @@ class ISOPlot:
                 ylabel, fontdict=fontdict
             ) if ylabel is not False else axis.yaxis.label.set_visible(False)
 
-        return self
-
-    def _diagonal_lines_and_labels(self) -> ISOPlot:
+    def _diagonal_lines_and_labels(self) -> None:
         """
         Add diagonal lines and labels to the plot.
 
@@ -1672,7 +1680,7 @@ class ISOPlot:
         ...     ISOPlot(data=data)
         ...     .create_subplots()
         ...     .add_scatter()
-        ...     .apply_styling(diagonal_lines=True)
+        ...     .style(diagonal_lines=True)
         ... )
         >>> plot.show() # xdoctest: +SKIP
         >>> plot.close('all')
@@ -1744,9 +1752,8 @@ class ISOPlot:
                 fontdict=diag_ax_font,
                 zorder=self._style_params.get("diag_labels_zorder"),
             )
-        return self
 
-    def _move_legend(self) -> ISOPlot:
+    def _move_legend(self) -> None:
         """Move the legend to the specified location."""
         for i, axis in enumerate(self.yield_axes_objects()):
             old_legend = axis.get_legend()
@@ -1774,4 +1781,3 @@ class ISOPlot:
                 loc=self._style_params.get("legend_loc"),
                 title=title,
             )
-        return self

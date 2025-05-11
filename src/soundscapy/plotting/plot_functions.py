@@ -29,7 +29,7 @@ from soundscapy.plotting.defaults import (
     RECOMMENDED_MIN_SAMPLES,
 )
 from soundscapy.plotting.iso_plot import ISOPlot
-from soundscapy.plotting.plotting_types import (
+from soundscapy.plotting.param_models import (
     DensityParams,
     MplLegendLocType,
     ScatterParams,
@@ -39,6 +39,36 @@ from soundscapy.plotting.plotting_types import (
     SubplotsParams,
 )
 from soundscapy.sspylogging import get_logger
+
+# Error messages
+PLOT_LAYER_TYPE_ERROR = (
+    "The `plot_layers` argument must be a string or a sequence of strings. "
+    "Got {type} instead."
+)
+PLOT_LAYER_VALUE_ERROR = (
+    "Plot / layer type not understood. "
+    "Supported layers are: 'scatter', 'density', 'simple_density'. Got: {layers}"
+)
+SUBPLOT_DATA_ERROR = (
+    "If data is a DataFrame, subplot_by must a grouping column in the "
+    "dataframe to create subplots."
+)
+XY_DATA_ERROR = (
+    "If data is a DataFrame, x and y must be column names in the dataframe. "
+    "Got: x: {x}, y: {y}."
+)
+DATA_LIST_TYPE_ERROR = "`data_list` should contain only pandas DataFrames."
+DATA_TYPE_ERROR = (
+    "data must be a DataFrame with a provided `subplot_by` column or a "
+    "list of DataFrames to create subplots."
+)
+SUBPLOT_TITLES_ERROR = (
+    "Not enough `subplot_titles` provided. "
+    "Need to provide at least as many titles as subplots: {n_subplots}"
+)
+PRIM_LABELS_DEPRECATION_WARNING = (
+    "The `prim_labels` parameter is deprecated. Use `xlabel` and `ylabel` instead."
+)
 
 logger = get_logger()
 
@@ -181,16 +211,14 @@ def iso_plot(
         plot_layers = [plot_layers]
 
     if not isinstance(plot_layers, Sequence):
-        msg = (
-            "The `plot_layers` argument must be a string or a sequence of strings. "
-            f"Got {type(plot_layers)} instead."
-        )
-        raise TypeError(msg)
+        raise TypeError(PLOT_LAYER_TYPE_ERROR.format(type=type(plot_layers)))
 
+    # Handle single layer case
     if len(plot_layers) == 1:
-        if plot_layers[0] == "scatter":
+        layer_type = plot_layers[0]
+        if layer_type == "scatter":
             return scatter(data, x=x, y=y, title=title, **kwargs)
-        if plot_layers[0] == "simple_density":
+        if layer_type == "simple_density":
             return density(
                 data,
                 x=x,
@@ -200,30 +228,34 @@ def iso_plot(
                 incl_scatter=False,
                 **kwargs,
             )
-        if plot_layers[0] == "density":
+        if layer_type == "density":
             return density(data, x=x, y=y, title=title, incl_scatter=False, **kwargs)
-        msg = (
-            "Plot / layer type not understood."
-            "Supported layers are: 'scatter', 'density', 'simple_density'."
-            f"Got: {plot_layers}"
-        )
-        raise ValueError(msg)
 
+        raise ValueError(PLOT_LAYER_VALUE_ERROR.format(layers=plot_layers))
+
+    # Handle two layer case
     if len(plot_layers) == 2:
-        if "scatter" in plot_layers and "density" in plot_layers:
-            return density(data, x=x, y=y, incl_scatter=True, **kwargs)
-        if "scatter" in plot_layers and "simple_density" in plot_layers:
-            return density(
-                data, x=x, y=y, density_type="simple", incl_scatter=True, **kwargs
-            )
-        return density(data, x=x, y=y, incl_scatter=True, **kwargs)
+        layers_set = set(plot_layers)
 
-    msg = (
-        "Sorry, this combination of layers is not supported."
-        "Supported layers are: 'scatter', 'density', 'simple_density'."
-        f"Got: {plot_layers}"
-    )
-    raise ValueError(msg)
+        if "scatter" in layers_set and "density" in layers_set:
+            return density(data, x=x, y=y, title=title, incl_scatter=True, **kwargs)
+
+        if "scatter" in layers_set and "simple_density" in layers_set:
+            return density(
+                data,
+                x=x,
+                y=y,
+                title=title,
+                density_type="simple",
+                incl_scatter=True,
+                **kwargs,
+            )
+
+        # Default case for unrecognized but valid length combinations
+        return density(data, x=x, y=y, title=title, incl_scatter=True, **kwargs)
+
+    # More than 2 layers is not supported
+    raise ValueError(PLOT_LAYER_VALUE_ERROR.format(layers=plot_layers))
 
 
 def create_iso_subplots(
@@ -320,7 +352,7 @@ def create_iso_subplots(
     """
     # Process input data and prepare for subplot creation
     data_list, subplot_titles_list, n_subplots = _prepare_subplot_data(
-        data, subplot_by, subplot_titles
+        data=data, x=y, y=y, subplot_by=subplot_by, subplot_titles=subplot_titles
     )
 
     # Calculate subplot layout
@@ -369,58 +401,79 @@ def create_iso_subplots(
 
 def _prepare_subplot_data(
     data: pd.DataFrame | list[pd.DataFrame],
+    x: str,
+    y: str,
     subplot_by: str | None,
     subplot_titles: Literal["by_group", "numbered"] | list[str] | None,
 ) -> tuple[list[pd.DataFrame], list[str] | Literal["numbered"] | None, int]:
-    """Prepare data and title information for subplots."""
+    """
+    Prepare data and title information for subplots.
+
+    Parameters
+    ----------
+    data : pd.DataFrame or list[pd.DataFrame]
+        The data to be plotted, either as a single DataFrame or a list of DataFrames
+    subplot_by : str or None
+        Column name to group data by for subplots (required if data is a DataFrame)
+    subplot_titles : "by_group", "numbered", list[str], or None
+        How to title the subplots
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - data_list: list of DataFrames for each subplot
+        - subplot_titles_list: list of titles or "numbered" or None
+        - n_subplots: number of subplots
+
+    """
+    # Handle list of DataFrames input
+    if isinstance(data, list):
+        if not all(isinstance(d, pd.DataFrame) for d in data):
+            raise TypeError(DATA_LIST_TYPE_ERROR)
+
+        data_list: list[pd.DataFrame] = data
+        n_subplots = len(data_list)
+        subplot_titles_list = subplot_titles
+
+    # Handle DataFrame input
     if isinstance(data, pd.DataFrame):
         if subplot_by is None:
-            msg = (
-                "If data is a DataFrame, "
-                "subplot_by must be provided to create subplots."
-            )
-            raise ValueError(msg)
+            raise ValueError(SUBPLOT_DATA_ERROR)
+        if subplot_by not in data.columns:
+            raise ValueError(SUBPLOT_DATA_ERROR)
+        if x not in data.columns and y not in data.columns:
+            raise ValueError(SUBPLOT_DATA_ERROR)
 
         # Get the number of subplots needed
         subplot_groups = data[subplot_by].unique()
         n_subplots = len(subplot_groups)
 
         # Split the data into groups based on the subplot_by column
-        data_list = [data[data[subplot_by] == val] for val in subplot_groups]
+        data_list = [
+            cast("pd.DataFrame", data[data[subplot_by] == val])
+            for val in subplot_groups
+        ]
 
         # Set subplot titles based on groups if requested
         if subplot_titles == "by_group":
             subplot_titles_list = subplot_groups.tolist()
         else:
             warnings.warn(
-                "No group provided for titles. Falling back to numbered subplots.",
+                "No group provided for titles. Falling back to numbered subplots."
+                "Recommended to manually provide subplot titles or explicitly set "
+                "`subplot_titles = 'numbered'` if providing own splits of data.",
                 stacklevel=2,
             )
             subplot_titles_list = "numbered"
 
-    elif isinstance(data, list):
-        if not all(isinstance(d, pd.DataFrame) for d in data):
-            msg = "`data_list` should contain only pandas DataFrames."
-            raise TypeError(msg)
-
-        data_list = data
-        n_subplots = len(data_list)
-        subplot_titles_list = subplot_titles
-
+    # Handle invalid input type
     else:
-        msg = (
-            "data must be a DataFrame with a provided `subplot_by` column "
-            "or a list of DataFrames to create subplots."
-        )
-        raise TypeError(msg)
+        raise TypeError(DATA_TYPE_ERROR)
 
     # Validate subplot titles if provided as a list
     if isinstance(subplot_titles_list, list) and len(subplot_titles_list) < n_subplots:
-        msg = (
-            "Not enough `subplot_titles` provided. "
-            f"Need to provide at least as many titles as subplots: {n_subplots}"
-        )
-        raise ValueError(msg)
+        raise ValueError(SUBPLOT_TITLES_ERROR.format(n_subplots=n_subplots))
 
     # Just here to satisfy type checker for return type
     assert (  # noqa: S101
@@ -865,30 +918,15 @@ def density(
     )
 
     # Set up density parameters
-    if density_type == "simple":
-        density_args = SimpleDensityParams()
-        density_args.update(
-            data=data,
-            x=x,
-            y=y,
-            palette=palette,
-            legend=legend,
-            extra="allow",
-            na_rm=False,
-            **kwargs,
-        )
-    else:
-        density_args = cast("SimpleDensityParams", DensityParams())
-        density_args.update(
-            data=data,
-            x=x,
-            y=y,
-            palette=palette,
-            legend=legend,
-            extra="allow",
-            na_rm=False,
-            **kwargs,
-        )
+    density_args = _setup_density_params(
+        data=data,
+        x=x,
+        y=y,
+        density_type=density_type,
+        palette=palette,
+        legend=legend,
+        **kwargs,
+    )
 
     # Check if dataset is large enough for density plots
     _valid_density(data)
@@ -953,27 +991,35 @@ def _deal_w_default_labels(
     style_args: StyleParams,
 ) -> StyleParams:
     """
-    Deal with the default labels for the circumplex plot.
+    Handle the default labels for the circumplex plot.
 
     Parameters
     ----------
-    ax : plt.Axes
-        Existing axes object to adjust the legend on
-    prim_labels: bool, optional
-        whether to include the custom primary labels ISOPleasant and ISOEventful
-          by default True
-        If using your own x and y names, you should set this to False.
+    x : str or None
+        Column name for x variable
+    y : str, list[str], or None
+        Column name for y variable
+    prim_labels : bool or None
+        Whether to include the custom primary labels (deprecated)
+    style_args : StyleParams
+        Style parameters object to update
+
+    Returns
+    -------
+    StyleParams
+        Updated style parameters with appropriate label settings
 
     """
+    # Set default labels based on column names if not already specified
     xlabel = style_args.get("xlabel", x if x is not None else "")
     ylabel = style_args.get(
         "ylabel", y if y is not None and not isinstance(y, list) else ""
     )
 
+    # Handle deprecated prim_labels parameter
     if prim_labels is not None:
         warnings.warn(
-            "The `prim_labels` argument is deprecated and will be removed. "
-            "Use `xlabel` and `ylabel` instead.",
+            PRIM_LABELS_DEPRECATION_WARNING,
             DeprecationWarning,
             stacklevel=2,
         )
@@ -981,6 +1027,7 @@ def _deal_w_default_labels(
             xlabel = False
             ylabel = False
 
+    # Update style args with the determined labels
     style_args.update(xlabel=xlabel, ylabel=ylabel)
 
     return style_args
@@ -989,27 +1036,44 @@ def _deal_w_default_labels(
 def _setup_style_and_subplots_args_from_kwargs(
     x: str | None, y: str | list[str] | None, prim_labels: bool | None, kwargs: dict
 ) -> tuple[StyleParams, SubplotsParams, dict]:
+    """
+    Set up style and subplot parameters from keyword arguments.
+
+    Parameters
+    ----------
+    x : str or None
+        Column name for x variable
+    y : str, list[str], or None
+        Column name for y variable
+    prim_labels : bool or None
+        Whether to include the custom primary labels (deprecated)
+    kwargs : dict
+        Keyword arguments to process
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - style_args: StyleParams object with style settings
+        - subplots_args: SubplotsParams object with subplot settings
+        - kwargs: remaining keyword arguments with style parameters removed
+
+    """
+    # Initialize and update style parameters
     style_args = StyleParams()
     style_args.update(**kwargs, extra="ignore", na_rm=False)
+
+    # Handle default labels
     style_args = _deal_w_default_labels(
         x=x, y=y, prim_labels=prim_labels, style_args=style_args
     )
 
-    if prim_labels is not None:
-        warnings.warn(
-            "The `prim_labels` parameter is deprecated. "
-            "Use `xlabel` and `ylabel` instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        style_args.update(xlabel=False, ylabel=False) if prim_labels is False else None
-
-    # Update SubplotsParams with kwargs
+    # Initialize and update subplot parameters
     subplots_args = SubplotsParams()
     subplots_args.update(**kwargs, extra="ignore", na_rm=False)
 
-    # Remove style and scatter args from kwargs
-    [kwargs.pop(k, None) for k in style_args.field_names + subplots_args.field_names]
+    # Remove style and scatter args from kwargs to avoid duplicates
+    kwargs = _pop_style_kwargs(kwargs)
 
     return style_args, subplots_args, kwargs
 
@@ -1140,7 +1204,7 @@ def create_circumplex_subplots(
         p = p.add_density(**density_args.get_changed_params())
 
     # Apply styling
-    p = p.apply_styling(**style_args.get_changed_params())
+    p = p.style(**style_args.get_changed_params())
 
     if return_iso_plot:
         return p
@@ -1450,29 +1514,36 @@ def jointplot(
     return g
 
 
-def _pop_style_kwargs(kwargs: dict[str, Any]) -> tuple:
+def _pop_style_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """
+    Remove style parameters from kwargs dictionary.
+
+    Parameters
+    ----------
+    kwargs : dict[str, Any]
+        Dictionary of keyword arguments
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary with style parameters removed
+
+    """
     # Get style params / kwargs
-    xlabel: str | None | Literal[False] = kwargs.pop(
-        "xlabel", DEFAULT_STYLE_PARAMS["xlabel"]
-    )
-    ylabel: str | None | Literal[False] = kwargs.pop(
-        "ylabel", DEFAULT_STYLE_PARAMS["ylabel"]
-    )
-    xlim: tuple[float, float] = kwargs.pop("xlim", DEFAULT_STYLE_PARAMS["xlim"])
-    ylim: tuple[float, float] = kwargs.pop("ylim", DEFAULT_STYLE_PARAMS["ylim"])
-    legend_loc: MplLegendLocType = kwargs.pop(
-        "legend_loc", DEFAULT_STYLE_PARAMS["legend_loc"]
-    )
-    diagonal_lines: bool = kwargs.pop(
-        "diagonal_lines", DEFAULT_STYLE_PARAMS["diagonal_lines"]
-    )
+    kwargs.pop("xlabel", DEFAULT_STYLE_PARAMS["xlabel"])
+    kwargs.pop("ylabel", DEFAULT_STYLE_PARAMS["ylabel"])
+    kwargs.pop("xlim", DEFAULT_STYLE_PARAMS["xlim"])
+    kwargs.pop("ylim", DEFAULT_STYLE_PARAMS["ylim"])
+    kwargs.pop("legend_loc", DEFAULT_STYLE_PARAMS["legend_loc"])
+    kwargs.pop("diagonal_lines", DEFAULT_STYLE_PARAMS["diagonal_lines"])
 
     # Pull out any fontdict options which might be loose in the kwargs
-    prim_ax_fontdict = kwargs.pop("prim_ax_fontdict", DEFAULT_XY_LABEL_FONTDICT.copy())
+    kwargs.pop("prim_ax_fontdict", DEFAULT_XY_LABEL_FONTDICT.copy())
     for key in DEFAULT_XY_LABEL_FONTDICT:
         if key in kwargs:
-            prim_ax_fontdict[key] = kwargs.pop(key)
-    return xlabel, ylabel, xlim, ylim, legend_loc, diagonal_lines, prim_ax_fontdict
+            kwargs.pop(key)
+
+    return kwargs
 
 
 def _move_legend(
@@ -1875,6 +1946,60 @@ def density_plot(*args, **kwargs) -> Axes | np.ndarray | ISOPlot:  # noqa: ANN00
         kwargs["density_type"] = "simple"
 
     return density(*filtered_args, **kwargs)
+
+
+def _setup_density_params(
+    data: pd.DataFrame,
+    x: str | None,
+    y: str | None,
+    density_type: str,
+    palette: SeabornPaletteType | None,
+    legend: Literal["auto", "brief", "full", False],
+    **kwargs,
+) -> DensityParams:
+    """
+    Set up density parameters based on density type.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The data to be plotted
+    x : str or None
+        Column name for x variable
+    y : str or None
+        Column name for y variable
+    density_type : str
+        Type of density plot ("simple" or "full")
+    palette : SeabornPaletteType or None
+        Color palette for the plot
+    legend : "auto", "brief", "full", or False
+        How to draw the legend
+    **kwargs : dict
+        Additional keyword arguments
+
+    Returns
+    -------
+    SimpleDensityParams
+        Parameter object with density settings
+
+    """
+    if density_type == "simple":
+        density_args = cast("DensityParams", SimpleDensityParams())
+    else:
+        density_args = DensityParams()
+
+    density_args.update(
+        data=data,
+        x=x,
+        y=y,
+        palette=palette,
+        legend=legend,
+        extra="allow",
+        na_rm=False,
+        **kwargs,
+    )
+
+    return density_args
 
 
 def _valid_density(data: pd.DataFrame) -> None:
