@@ -374,7 +374,7 @@ class ISOPlot:
         if data is None:
             return
 
-        if isinstance(hue, str) and hue not in data.columns:
+        if isinstance(hue, str) and not (hue in data.columns or hue in data.index.name):
             msg = (
                 f"Invalid hue column '{hue}'. "
                 f"Available columns are: {data.columns.tolist()}"
