@@ -227,7 +227,7 @@ def iso_plot(
 
 
 def create_iso_subplots(
-    data: pd.DataFrame | list[pd.DataFrame] | None = None,
+    data: pd.DataFrame | list[pd.DataFrame],
     x: str = "ISOPleasant",
     y: str = "ISOEventful",
     subplot_by: str | None = None,
@@ -246,62 +246,54 @@ def create_iso_subplots(
     **kwargs,
 ) -> tuple[Figure, np.ndarray]:
     """
-    Create a grid of Soundscape Circumplex visualization subplots.
+    Create a set of subplots displaying data visualizations for soundscape analysis.
 
-    This function generates subplots based on an input DataFrame or list of DataFrames.
-    All subplots will visualize the data using different available plot layers such as
-    scatter, density, or simple density plots. It is intended to visualize soundscape
-    circumplex data (typically ISOPleasant and ISOEventful perceptual attributes)
-    grouped by categories or directly from multiple datasets.
+    This function generates a collection of subplots, where each subplot corresponds
+    to a subset of the input data. The subplots can display scatter plots, density
+    plots, or simplified density plots, and can be organized by specific grouping
+    criteria. Users can specify titles, overall size, row and column layout, and
+    layering of plot types.
 
     Parameters
     ----------
-    data : pandas.DataFrame or list of pandas.DataFrame, optional
-        The input data to be visualized. It can be a single DataFrame or a list of
-        DataFrames to create subplots. If a single DataFrame is provided, the
-        `subplot_by` parameter must also be specified to group the data.
-
-    x : str, default="ISOPleasant"
-        Column name in the DataFrame(s) to use for the x-axis values.
-
-    y : str, default="ISOEventful"
-        Column name in the DataFrame(s) to use for the y-axis values.
-
+    data : pandas.DataFrame or list of pandas.DataFrame
+        Input data to be visualized. Can be a single data frame or a list of data
+        frames for use in multiple subplots.
+    x : str, optional
+        The name of the column in the data to be used for the x-axis. Default is
+        "ISOPleasant".
+    y : str, optional
+        The name of the column in the data to be used for the y-axis. Default is
+        "ISOEventful".
     subplot_by : str or None, optional
-        The column name in the DataFrame(s) to group the data for creating subplots.
-        Required if `data` is a single DataFrame. Not required for lists of
-        DataFrames.
-
-    title : str or None, default="Soundscapy Plot"
-        The overall title for the entire figure containing the subplots.
-
-    plot_layers : {"scatter", "density", "simple_density"} or sequence of such elements
-        , default=("scatter", "density")
-
-        One or multiple plot layers to apply to each subplot. These layers define the
-        visualization style(s) for representing the data.
-
-    subplot_titles : {"by_group", "numbered"} or list of str or None, optional
-       , default = "by_group"
-
-        Specifies how to title each subplot:
-
-        - "by_group": Titles each subplot based on the categories in `subplot_by`.
-        - "numbered": Titles each subplot numerically.
-        - List of str: Custom titles for each subplot.
-        - None: Omits subplot titles.
-
+        The column name by which to group data into subplots. If None, data is not
+        grouped and plotted in a single set of axes. Default is None.
+    title : str or None, optional
+        The overarching title of the figure. If None, no overall title is added.
+        Default is "Soundscapy Plot".
+    plot_layers : Literal["scatter", "density", "simple_density"] or Sequence of
+        such Literals, optional
+        Type(s) of plot layers to include in each subplot. Can be a single type
+        or a sequence of types. Default is ("scatter", "density").
+    subplot_size : tuple of int, optional
+        Size of each subplot in inches as (width, height). Default is (4, 4).
+    subplot_titles : Literal["by_group", "numbered"], list of str, or None,
+        optional
+        Determines how subplot titles are assigned. Options are "by_group" (titles
+        derived from group names), "numbered" (titles as indices), or a list of
+        custom titles. If None, no titles are added. Default is "by_group".
+    subplot_title_prefix : str, optional
+        Prefix for subplot titles if "numbered" is selected as `subplot_titles`.
+        Default is "Plot".
     nrows : int or None, optional
-        Number of subplot rows. Defaults will be computed automatically based
-        on the number of subplots if not specified.
-
+        Number of rows for the subplot grid. If None, automatically calculated
+        based on the number of subplots. Default is None.
     ncols : int or None, optional
-        Number of subplot columns. Defaults will be computed automatically based
-        on the number of subplots if not specified.
-
-    **kwargs :
-        Additional keyword arguments to customize the behavior of subplots figure
-        (e.g., figsize) or to pass to the individual plot layers.
+        Number of columns for the subplot grid. If None, automatically calculated
+        based on the number of subplots. Default is None.
+    **kwargs
+        Additional keyword arguments to pass to matplotlib's `plt.subplots` or for
+        customizing the figure and subplots.
 
     Returns
     -------
@@ -326,9 +318,61 @@ def create_iso_subplots(
     >>> plt.show()
 
     """
-    # If subplot_titles is None, will be automatically assigned either
-    # based on subplot_by groups, or by subplot number
-    # To have no subplot titles, pass an empty string or list.
+    # Process input data and prepare for subplot creation
+    data_list, subplot_titles_list, n_subplots = _prepare_subplot_data(
+        data, subplot_by, subplot_titles
+    )
+
+    # Calculate subplot layout
+    nrows, ncols, n_subplots = allocate_subplot_axes(nrows, ncols, n_subplots)
+
+    # Set up figure and subplots
+    figsize = kwargs.get("figsize") or (
+        ncols * subplot_size[0],
+        nrows * subplot_size[1],
+    )
+
+    subplots_params = SubplotsParams()
+    subplots_params.update(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=figsize,
+        subplot_by=subplot_by,
+        extra="ignore",
+        **kwargs,
+    )
+
+    fig, axes = plt.subplots(**subplots_params.as_plt_subplots_args())
+
+    # Create each subplot
+    _create_subplots(
+        data_list,
+        axes,
+        n_subplots,
+        subplot_titles_list,
+        x,
+        y,
+        plot_layers,
+        subplot_title_prefix,
+        **kwargs,
+    )
+
+    # Add overall title and adjust layout
+    if title:
+        fig.suptitle(title, fontsize=DEFAULT_STYLE_PARAMS["title_fontsize"])
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.9)
+
+    return fig, axes
+
+
+def _prepare_subplot_data(
+    data: pd.DataFrame | list[pd.DataFrame],
+    subplot_by: str | None,
+    subplot_titles: Literal["by_group", "numbered"] | list[str] | None,
+) -> tuple[list[pd.DataFrame], list[str] | Literal["numbered"] | None, int]:
+    """Prepare data and title information for subplots."""
     if isinstance(data, pd.DataFrame):
         if subplot_by is None:
             msg = (
@@ -340,25 +384,29 @@ def create_iso_subplots(
         # Get the number of subplots needed
         subplot_groups = data[subplot_by].unique()
         n_subplots = len(subplot_groups)
+
         # Split the data into groups based on the subplot_by column
         data_list = [data[data[subplot_by] == val] for val in subplot_groups]
 
-        # If subplot_titles is "by_group", use the unique values from the subplot_by
+        # Set subplot titles based on groups if requested
         if subplot_titles == "by_group":
-            subplot_titles = subplot_groups.tolist()
+            subplot_titles_list = subplot_groups.tolist()
         else:
             warnings.warn(
                 "No group provided for titles. Falling back to numbered subplots.",
                 stacklevel=2,
             )
-            subplot_titles = "numbered"
+            subplot_titles_list = "numbered"
 
     elif isinstance(data, list):
         if not all(isinstance(d, pd.DataFrame) for d in data):
             msg = "`data_list` should contain only pandas DataFrames."
             raise TypeError(msg)
+
         data_list = data
         n_subplots = len(data_list)
+        subplot_titles_list = subplot_titles
+
     else:
         msg = (
             "data must be a DataFrame with a provided `subplot_by` column "
@@ -366,46 +414,66 @@ def create_iso_subplots(
         )
         raise TypeError(msg)
 
-    if isinstance(subplot_titles, list) and len(subplot_titles) < n_subplots:
+    # Validate subplot titles if provided as a list
+    if isinstance(subplot_titles_list, list) and len(subplot_titles_list) < n_subplots:
         msg = (
             "Not enough `subplot_titles` provided. "
             f"Need to provide at least as many titles as subplots: {n_subplots}"
         )
         raise ValueError(msg)
 
-    nrows, ncols, n_subplots = allocate_subplot_axes(nrows, ncols, n_subplots)  # type: ignore[reportOperatorIssue]
-    figsize = kwargs.get("figsize")
-    if figsize is None:
-        figsize = (ncols * subplot_size[0], nrows * subplot_size[1])
-
-    subplots_params = SubplotsParams()
-    subplots_params.update(
-        nrows=nrows,
-        ncols=ncols,
-        figsize=figsize,
-        subplot_by=subplot_by,
-        extra="ignore",
-        **kwargs,
+    # Just here to satisfy type checker for return type
+    assert (  # noqa: S101
+        subplot_titles_list == "numbered"
+        or isinstance(subplot_titles_list, list)
+        or subplot_titles_list is None
     )
-    fig, axes = plt.subplots(**subplots_params.as_plt_subplots_args())
 
-    for i, d in enumerate(data_list):
-        ax = axes.flatten()[i]
+    return data_list, subplot_titles_list, n_subplots
+
+
+def _create_subplots(
+    data_list: list[pd.DataFrame],
+    axes: np.ndarray,
+    n_subplots: int,
+    subplot_titles: list[str] | Literal["numbered"] | None,
+    x: str,
+    y: str,
+    plot_layers: Literal["scatter", "density", "simple_density"]
+    | Sequence[Literal["scatter", "density", "simple_density"]],
+    subplot_title_prefix: str,
+    **kwargs,
+) -> None:
+    """Create individual subplots from the data."""
+    for i, dataframe in enumerate(data_list):
+        ax = cast("Axes", axes.flatten()[i])
+
+        # Skip if we're beyond the number of subplots
         if i >= n_subplots:
             ax.remove()
             continue
+
+        # Determine subplot title
         if subplot_titles == "numbered":
             sub_title = f"{subplot_title_prefix} {i + 1}"
-        sub_title = subplot_titles[i] if isinstance(subplot_titles, list) else None
+        elif isinstance(subplot_titles, list):
+            sub_title = subplot_titles[i]
+        else:
+            sub_title = None
 
-        iso_plot(data=d, x=x, y=y, title=None, plot_layers=plot_layers, ax=ax, **kwargs)
-        ax.set_title(sub_title, fontsize=12)
+        # Create the plot
+        iso_plot(
+            data=dataframe,
+            x=x,
+            y=y,
+            title=None,
+            plot_layers=plot_layers,
+            ax=ax,
+            **kwargs,
+        )
 
-    if title:
-        fig.suptitle(title, fontsize=16, fontweight="bold")
-    fig.tight_layout()
-    fig.subplots_adjust(top=0.9)
-    return fig, axes
+        if sub_title:
+            ax.set_title(sub_title, fontsize=12)
 
 
 def allocate_subplot_axes(
