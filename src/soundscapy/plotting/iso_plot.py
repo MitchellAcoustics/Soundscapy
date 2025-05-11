@@ -463,31 +463,40 @@ class ISOPlot:
         >>> plot.close()  # Clean up
 
         """
-        # Create a list of dataframes and titles for each subplot
-        # based on the unique values in the specified column
-        if subplot_by:
-            logger.debug(f"Creating subplots by unique values in {subplot_by}.")
-            subplot_datas, subplot_titles, n_subplots_by = self._setup_subplot_by(
-                subplot_by, subplot_datas, subplot_titles
-            )
-        else:
-            n_subplots_by = -1
-
-        if subplot_titles and auto_allocate_axes:
-            # Attempt to allocate axes based on the number of subplots
-            nrows, ncols = self._allocate_subplot_axes(subplot_titles)
-
-        if adjust_figsize:
-            figsize = (ncols * figsize[0], nrows * figsize[1])
-
-            # Set up subplot parameters
+        # Set up subplot params
         self.subplots_params = self.subplots_params.update(
             nrows=nrows,
             ncols=ncols,
             figsize=figsize,
-            n_subplots_by=n_subplots_by,
+            subplot_by=subplot_by,
+            adjust_figsize=adjust_figsize,
+            auto_allocate_axes=auto_allocate_axes,
             **kwargs,
         )
+        # Create a list of dataframes and titles for each subplot
+        # based on the unique values in the specified column
+        if self.subplots_params.subplot_by:
+            logger.debug(
+                f"Creating subplots by unique values in {self.subplots_params.subplot_by}."
+            )
+            subplot_datas, subplot_titles, n_subplots_by = self._setup_subplot_by(
+                self.subplots_params.subplot_by, subplot_datas, subplot_titles
+            )
+        else:
+            n_subplots_by = -1
+
+        if subplot_titles and self.subplots_params.auto_allocate_axes:
+            # Attempt to allocate axes based on the number of subplots
+            self.subplots_params.nrows, self.subplots_params.ncols = (
+                self._allocate_subplot_axes(subplot_titles)
+            )
+
+        if adjust_figsize:
+            self.subplots_params.figsize = (
+                self.subplots_params.ncols * self.subplots_params.figsize[0],
+                self.subplots_params.nrows * self.subplots_params.figsize[1],
+            )
+
         logger.debug(f"Subplot parameters: {self.subplots_params}")
 
         # Create the figure and axes

@@ -99,7 +99,7 @@ def paq_radar_plot(
     >>>
     >>> # Create radar plot with the "Location" column as index
     >>> ax = paq_radar_plot(data, index="Location", title="PAQ Comparison")
-    >>> plt.show()
+    >>> plt.show() # xdoctest: +SKIP
 
     """
     # Input validation
