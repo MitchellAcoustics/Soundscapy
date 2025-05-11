@@ -6,6 +6,9 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Tuple
 
 import matplotlib as mpl
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
+from matplotlib.ticker import AutoMinorLocator
 import seaborn as sns
 
 from .plotting_utils import DEFAULT_FIGSIZE
@@ -31,8 +34,8 @@ class StyleOptions:
     prim_lines_zorder: int = 2
     data_zorder: int = 3
     bw_adjust: float = 1.2
-    figsize: Tuple[int, int] = DEFAULT_FIGSIZE
-    simple_density: Dict[str, Any] = field(
+    figsize: tuple[int, int] = DEFAULT_FIGSIZE
+    simple_density: dict[str, Any] = field(
         default_factory=lambda: {
             "thresh": 0.5,
             "levels": 2,
@@ -51,9 +54,7 @@ class SeabornStyler:
         self.params = params
         self.style_options = style_options
 
-    def apply_styling(
-        self, fig: mpl.figure.Figure, ax: mpl.axes.Axes
-    ) -> Tuple[mpl.figure.Figure, mpl.axes.Axes]:
+    def apply_styling(self, fig: Figure, ax: Axes) -> Tuple[Figure, Axes]:
         """
         Apply styling to the plot.
 
@@ -78,13 +79,13 @@ class SeabornStyler:
         """Set the overall style for the plot."""
         sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
 
-    def circumplex_grid(self, ax: mpl.axes.Axes) -> None:
+    def circumplex_grid(self, ax: Axes) -> None:
         """Add the circumplex grid to the plot."""
         ax.set_xlim(self.params.xlim)
         ax.set_ylim(self.params.ylim)
 
-        ax.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-        ax.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+        ax.get_xaxis().set_minor_locator(AutoMinorLocator())
+        ax.get_yaxis().set_minor_locator(AutoMinorLocator())
 
         ax.grid(visible=True, which="major", color="grey", alpha=0.5)
         ax.grid(
@@ -101,12 +102,12 @@ class SeabornStyler:
         if self.params.diagonal_lines:
             self.diagonal_lines_and_labels(ax)
 
-    def set_circum_title(self, ax: mpl.axes.Axes) -> None:
+    def set_circum_title(self, ax: Axes) -> None:
         """Set the title for the circumplex plot."""
         title_pad = 6.0
         ax.set_title(self.params.title, pad=title_pad)
 
-    def deal_w_default_labels(self, ax: mpl.axes.Axes) -> None:
+    def deal_w_default_labels(self, ax: Axes) -> None:
         """Handle the default labels for the axes."""
         if not self.params.show_labels:
             ax.set_xlabel("")
@@ -115,15 +116,35 @@ class SeabornStyler:
             ax.set_xlabel(self.params.x)
             ax.set_ylabel(self.params.y)
 
-    def move_legend(self, ax: mpl.axes.Axes) -> None:
+    def move_legend(self, axis: Axes) -> None:
         """Move the legend to the specified location."""
-        old_legend = ax.get_legend()
-        handles = old_legend.legend_handles
+        old_legend = axis.get_legend()
+        if old_legend is None:
+            # logger.debug("_move_legend: No legend found for axis %s", i)
+            continue
+
+        # Get handles and filter out None values
+        handles = [
+            h for h in old_legend.legend_handles if isinstance(h, Artist | tuple)
+        ]
+        # Skip if no valid handles remain
+        if not handles:
+            continue
+
         labels = [t.get_text() for t in old_legend.get_texts()]
         title = old_legend.get_title().get_text()
-        ax.legend(handles, labels, loc=self.params.legend_location, title=title)
+        # Ensure labels and handles match in length
+        if len(handles) != len(labels):
+            labels = labels[: len(handles)]
 
-    def primary_lines_and_labels(self, ax: mpl.axes.Axes) -> None:
+        axis.legend(
+            handles,
+            labels,
+            loc=self._style_params.get("legend_loc"),
+            title=title,
+        )
+
+    def primary_lines_and_labels(self, ax: Axes) -> None:
         """Add primary lines to the plot."""
         line_weights = 1.5
 
@@ -144,7 +165,7 @@ class SeabornStyler:
             zorder=self.style_options.prim_lines_zorder,
         )
 
-    def diagonal_lines_and_labels(self, ax: mpl.axes.Axes) -> None:
+    def diagonal_lines_and_labels(self, ax: Axes) -> None:
         """Add diagonal lines and labels to the plot."""
         x_lim, y_lim = ax.get_xlim(), ax.get_ylim()
         line_weights = 1.5
