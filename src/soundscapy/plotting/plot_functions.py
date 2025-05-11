@@ -178,7 +178,7 @@ def scatter(
     ...     ax=ax[1], title="RegentsParkJapan"
     ... )
     >>> plt.tight_layout()
-    >>> plt.show()
+    >>> plt.show() # xdoctest: +SKIP
 
     """
     style_args = StyleParams().update(**kwargs, extra="ignore", na_rm=False)

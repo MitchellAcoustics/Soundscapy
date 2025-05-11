@@ -13,6 +13,7 @@ dev = [
     "setuptools-scm>=8.3.1",
     "tox>=4.25.0",
     "twine>=6.1.0",
+    "types-deprecated>=1.2.15.20250304",
     "types-pyyaml>=6.0.12.20250402",
     "types-seaborn>=0.13.2.20250111",
 ]
@@ -53,10 +54,13 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 dependencies = [
+    "coverage==7.8.0",
+    "deprecated>=1.2.18",
     "loguru>=0.7.2",
     "numpy!=1.26",
     "pandas[excel]>=2.2.2",
     "pydantic>=2.8.2",
+    "pytest-cov==6.1.1",
     "pyyaml>=6.0.2",
     "scipy>=1.14.1",
     "seaborn>=0.13.2",
