@@ -2,7 +2,7 @@
 Tests for the ParamModel class and its subclasses.
 """
 
-from soundscapy.plotting.plotting_types import ParamModel
+from soundscapy.plotting.param_models import ParamModel
 
 
 def test_param_model_creation():

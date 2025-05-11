@@ -16,7 +16,7 @@ import pandas as pd
 import seaborn as sns
 
 from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
-from soundscapy.plotting.plotting_types import (
+from soundscapy.plotting.param_models import (
     DensityParams,
     ScatterParams,
     SeabornParams,
@@ -156,7 +156,7 @@ class ScatterLayer(Layer):
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
         plot_params = self.params.model_copy()
-        plot_params = plot_params.drop(["x", "y", "data"])
+        plot_params.drop(["x", "y", "data"])
 
         # Apply palette only if hue is used
         plot_params.crosscheck_palette_hue()
@@ -218,7 +218,7 @@ class DensityLayer(Layer):
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
         plot_params = self.params.model_copy()
-        plot_params = plot_params.drop(["x", "y", "data"])
+        plot_params.drop(["x", "y", "data"])
 
         # Apply palette only if hue is used
         plot_params.crosscheck_palette_hue()

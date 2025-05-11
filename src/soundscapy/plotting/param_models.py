@@ -106,7 +106,9 @@ class ParamModel(BaseModel):
         model_class = cls.get_param_class(param_type)
 
         # Create instance and update with kwargs
-        return model_class().update(**kwargs)
+        model = model_class()
+        model.update(**kwargs)
+        return model
 
     @classmethod
     def get_param_class(cls, param_type: str) -> type[ParamModel]:
