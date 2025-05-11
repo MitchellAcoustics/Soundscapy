@@ -1079,137 +1079,79 @@ def _setup_style_and_subplots_args_from_kwargs(
 
 
 def create_circumplex_subplots(
-    data: pd.DataFrame | None = None,
-    x: str = DEFAULT_XCOL,
-    y: str = DEFAULT_YCOL,
-    subplot_by: str | None = None,
-    title: str | None = "Soundscape Circumplex",
-    hue: str | None = None,
+    data_list: list[pd.DataFrame],
+    plot_type: str = "density",
     incl_scatter: bool = True,
-    density_type: str = "full",
-    subplot_datas: list[pd.DataFrame] | None = None,
-    subplot_titles: list[str] | None = None,
-    return_iso_plot: bool = False,
-    legend: Literal["auto", "brief", "full", False] = "auto",
-    palette: SeabornPaletteType | None = "colorblind",
-    scatter_kws: dict | None = {"s": 20},
-    prim_labels: bool | None = None,  # Alias for primary_labels, deprecated
-    **kwargs,
-) -> Axes | np.ndarray | ISOPlot:
+    subtitles: list[str] | None = None,
+    title: str = "Circumplex Subplots",
+    nrows: int | None = None,
+    ncols: int | None = None,
+    figsize: tuple[int, int] = (10, 10),
+    **kwargs: Any,
+) -> plt.Figure:
     """
-    Create a grid of circumplex subplots.
-
-    Creates a grid of circumplex plots, each showing the distribution of data
-    in a specific subset of the data. Each subplot can be customized with its own
-    title and styling.
+    Create a figure with subplots containing circumplex plots.
 
     Parameters
     ----------
-    data : pd.DataFrame
-        Input data structure containing coordinate data, typically with ISOPleasant
-        and ISOEventful columns.
-    x : str, optional
-        Column name for x variable, by default "ISOPleasant"
-    y : str, optional
-        Column name for y variable, by default "ISOEventful"
-    subplot_by : str | None, optional
-        Column name to use for creating subplots, by default None
-    title : str | None, optional
-        Title to add to circumplex plot, by default "Soundscape Circumplex"
-    hue : str | np.ndarray | pd.Series | None, optional
-        Grouping variable that will produce density contours with different colors.
-        Can be either categorical or numeric, although color mapping will behave
-        differently in latter case, by default None
-    incl_scatter : bool, optional
-        Whether to include a scatter plot of the data points in each subplot,
-        by default True
-    density_type : {"full", "simple"}, optional
-        Type of density plot to draw. "full" uses default parameters, "simple"
-        uses a lower number of levels (2), higher threshold (0.5), and lower alpha (0.5)
-        for a cleaner visualization, by default "full"
-    subplots_data : list[pd.DataFrame] | None, optional
-        List of DataFrames to use for each subplot. If None is provided,
-        the function will create subplots based on the unique values in the `subplot_by`
-        column of the main DataFrame.
-    subplot_titles : list[str] | None, optional
-        List of titles for each subplot. If None is provided,
-        the function will use the unique values from the `subplot_by` column.
-    return_iso_plot : bool, optional
-        Whether to return the ISOPlot object instead of the axes,
-        by default False
+        data_list : List of DataFrames to plot.
+        plot_type : Type of plot to create.
+        incl_scatter : Whether to include scatter points on density plots.
+        nrows : Number of rows in the subplot grid.
+        ncols : Number of columns in the subplot grid.
+        figsize : Figure size (width, height) in inches.
+        **kwargs: Additional keyword arguments to pass to scatter_plot or density_plot.
 
     Returns
     -------
-    tuple[Axes, np.ndarray] | ISOPlot
-        Axes object containing the plot or ISOPlot if return_iso_plot=True.
+        matplotlib.figure.Figure: A figure containing the subplots.
+
+    Example
+    -------
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> np.random.seed(42)
+        >>> data1 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
+        ...                       'ISOEventful': np.random.uniform(-1, 1, 50)})
+        >>> data2 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
+        ...                       'ISOEventful': np.random.uniform(-1, 1, 50)})
+        >>> fig = create_circumplex_subplots([data1, data2], plot_type=PlotType.SCATTER, nrows=1, ncols=2)
+        >>> isinstance(fig, plt.Figure)
+        True
 
     """
-    style_args, subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
-        x, y, prim_labels, kwargs
-    )
+    if nrows is None and ncols is None:
+        nrows = 2
+        ncols = len(data_list) // nrows
+    elif nrows is None:
+        nrows = len(data_list) // ncols
+    elif ncols is None:
+        ncols = len(data_list) // nrows
 
-    # Set up density parameters
-    if density_type == "simple":
-        density_args = SimpleDensityParams()
-        density_args.update(
-            data=data,
-            x=x,
-            y=y,
-            palette=palette,
-            legend=legend,
-            extra="allow",
-            na_rm=False,
-            **kwargs,
-        )
-    else:
-        density_args = DensityParams()
-        density_args.update(
-            data=data,
-            x=x,
-            y=y,
-            palette=palette,
-            legend=legend,
-            extra="allow",
-            na_rm=False,
-            **kwargs,
-        )
+    if subtitles is None:
+        subtitles = [f"({i + 1})" for i in range(len(data_list))]
+    elif len(subtitles) != len(data_list):
+        raise ValueError("Number of subtitles must match number of dataframes")
 
-    # Set up scatter parameters if needed
-    scatter_args = None
-    if incl_scatter:
-        scatter_args = ScatterParams().update(
-            data=data,
-            x=x,
-            y=y,
-            palette=palette,
-            **(scatter_kws or {}),
-        )
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
+    axes = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
 
-    # Create the plot with string-only hue
-    p = ISOPlot(data=data, x=x, y=y, hue=hue, title=title, palette=palette)
+    color = kwargs.get("color", sns.color_palette("colorblind", 1)[0])
 
-    p = p.create_subplots(
-        subplot_datas=subplot_datas,
-        subplot_titles=subplot_titles,
-        **subplots_args.get_changed_params(),
-    )
+    for data, ax, subtitle in zip(data_list, axes, subtitles, strict=False):
+        if plot_type == "scatter" or incl_scatter:
+            scatter_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
+        if plot_type == "density":
+            density_plot(data, title=subtitle, ax=ax, color=color, **kwargs)
+        elif plot_type == "simple_density":
+            density_plot(
+                data, title=subtitle, simple_density=True, ax=ax, color=color, **kwargs
+            )
 
-    # Add layers
-    if incl_scatter and scatter_args:
-        p = p.add_scatter(**scatter_args.get_changed_params())
+    plt.suptitle(title)
 
-    if density_type == "simple":
-        p = p.add_simple_density(**density_args.get_changed_params())
-    else:
-        p = p.add_density(**density_args.get_changed_params())
-
-    # Apply styling
-    p = p.style(**style_args.get_changed_params())
-
-    if return_iso_plot:
-        return p
-
-    return p.get_axes()
+    plt.tight_layout()
+    return fig
 
 
 def jointplot(
