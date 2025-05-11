@@ -4,7 +4,7 @@ Main module for creating circumplex plots using different backends.
 Example:
 -------
 >>> from soundscapy import isd, surveys
->>> from soundscapy.plotting.iso_plot_new import ISOPlot
+>>> from soundscapy.plotting.iso_plot import ISOPlot
 >>> df = isd.load()
 >>> df = surveys.add_iso_coords(df)
 >>> sub_df = isd.select_location_ids(df, ['CamdenTown', 'RegentsParkJapan'])
@@ -339,10 +339,7 @@ class ISOPlot:
             )
 
             data = pd.DataFrame({xcol: x, ycol: y})
-            x = xcol
-            y = ycol
-
-            return data, x, y
+            return data, xcol, ycol
 
         # If data is None, and x and y are strings:
         if isinstance(x, str) and isinstance(y, str):
