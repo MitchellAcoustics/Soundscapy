@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New **Soundscape Perception Indices (SPI)** module
+
   - Provides tools for calculating Soundscape Perception Indices
   - Implements Multi-dimensional Skewed Normal (MSN) distribution for soundscape analysis
   - Includes R wrapper for core statistical functionality

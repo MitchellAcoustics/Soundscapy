@@ -188,7 +188,7 @@ def mosqito_metric_1ch(
         Name of the metric to calculate. Options are "loudness_zwtv",
         "roughness_dw", "sharpness_din_from_loudness", "sharpness_din_perseg",
         or "sharpness_din_tv".
-    statistics : Tuple[Union[int, str], ...], optional
+    statistics : tuple[int | str, ...], optional
         Statistics to calculate on the metric results.
     label : str, optional
         Label to use for the metric in the results. If None, uses a default label.
@@ -573,6 +573,43 @@ def pyacoustics_metric_2ch(
         "skew",
     ),
     label: str = None,
+    channel_names: tuple[str, str] = ("Left", "Right"),
+    as_df: bool = False,
+    return_time_series: bool = False,
+    func_args={},
+):
+    warnings.warn(
+        "pyacoustics is deprecated. Use acoustics_metric_2ch instead.",
+        DeprecationWarning,
+    )
+    return acoustics_metric_2ch(
+        b,
+        metric,
+        statistics,
+        label,
+        channel_names,
+        as_df,
+        return_time_series,
+        func_args,
+    )
+
+
+def acoustics_metric_2ch(
+    b,
+    metric: str,
+    statistics: tuple | list = (
+        5,
+        10,
+        50,
+        90,
+        95,
+        "avg",
+        "max",
+        "min",
+        "kurt",
+        "skew",
+    ),
+    label: str | None = None,
     channel_names: tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
     return_time_series: bool = False,
