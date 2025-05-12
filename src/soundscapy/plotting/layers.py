@@ -15,8 +15,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
-from soundscapy.plotting.param_models import (
+from soundscapy.plotting.dataclass_param_models import (
     DensityParams,
     ScatterParams,
     SeabornParams,
@@ -24,6 +23,7 @@ from soundscapy.plotting.param_models import (
     SPISeabornParams,
     SPISimpleDensityParams,
 )
+from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
 from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
@@ -156,13 +156,18 @@ class ScatterLayer(Layer):
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
         plot_params = self.params.model_copy()
-        plot_params.drop(["x", "y", "data"])
 
         # Apply palette only if hue is used
         plot_params.crosscheck_palette_hue()
 
         # Render scatter plot
-        sns.scatterplot(data=data, x=x, y=y, ax=ax, **plot_params.as_seaborn_kwargs())
+        sns.scatterplot(
+            data=data,
+            x=x,
+            y=y,
+            ax=ax,
+            **plot_params.as_seaborn_kwargs(drop=["x", "y", "data"]),
+        )
 
 
 class DensityLayer(Layer):
@@ -218,13 +223,18 @@ class DensityLayer(Layer):
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
         plot_params = self.params.model_copy()
-        plot_params.drop(["x", "y", "data"])
 
         # Apply palette only if hue is used
         plot_params.crosscheck_palette_hue()
 
         # Render density plot
-        sns.kdeplot(data=data, x=x, y=y, ax=ax, **plot_params.as_seaborn_kwargs())
+        sns.kdeplot(
+            data=data,
+            x=x,
+            y=y,
+            ax=ax,
+            **plot_params.as_seaborn_kwargs(drop=["x", "y", "data"]),
+        )
 
         # If requested, add an outline around the density plot
         if self.include_outline:
@@ -233,7 +243,7 @@ class DensityLayer(Layer):
                 x=x,
                 y=y,
                 ax=ax,
-                **plot_params.to_outline().as_seaborn_kwargs(),
+                **plot_params.to_outline().as_seaborn_kwargs(drop=["x", "y", "data"]),
             )
 
     @staticmethod

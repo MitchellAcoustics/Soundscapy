@@ -16,6 +16,15 @@ from matplotlib.ticker import AutoMinorLocator
 from matplotlib.typing import ColorType
 
 from soundscapy.plotting.backends_deprecated import Backend
+from soundscapy.plotting.dataclass_param_models import (
+    DensityParams,
+    MplLegendLocType,
+    ScatterParams,
+    SeabornPaletteType,
+    SimpleDensityParams,
+    StyleParams,
+    SubplotsParams,
+)
 from soundscapy.plotting.defaults import (
     DEFAULT_BW_ADJUST,
     DEFAULT_COLOR,
@@ -29,15 +38,6 @@ from soundscapy.plotting.defaults import (
     RECOMMENDED_MIN_SAMPLES,
 )
 from soundscapy.plotting.iso_plot import ISOPlot
-from soundscapy.plotting.param_models import (
-    DensityParams,
-    MplLegendLocType,
-    ScatterParams,
-    SeabornPaletteType,
-    SimpleDensityParams,
-    StyleParams,
-    SubplotsParams,
-)
 from soundscapy.sspylogging import get_logger
 
 # Error messages
@@ -194,14 +194,14 @@ def iso_plot(
 
     Add density to existing plots:
 
-    >>> fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    >>> sspy.iso_plot(
+    >>> fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    >>> axes[0] = sspy.iso_plot(
     ...     sspy.isd.select_location_ids(data, ['CamdenTown', 'PancrasLock']),
-    ...     ax=ax.flatten()[0], title="CamdenTown and PancrasLock", hue="LocationID",
+    ...     ax=axes.flatten()[0], title="CamdenTown and PancrasLock", hue="LocationID",
     ... )
-    >>> sspy.iso_plot(
+    >>> axes[1] = sspy.iso_plot(
     ...     sspy.isd.select_location_ids(data, ['RegentsParkJapan']),
-    ...     ax=ax.flatten()[1], title="RegentsParkJapan"
+    ...     ax=axes.flatten()[1], title="RegentsParkJapan"
     ... )
     >>> plt.tight_layout()
     >>> plt.show() # xdoctest: +SKIP
@@ -889,12 +889,12 @@ def density(
     >>> import matplotlib.pyplot as plt
     >>> data = sspy.isd.load()
     >>> data = sspy.add_iso_coords(data)
-    >>> sspy.density(data)
+    >>> ax = sspy.density(data)
     >>> plt.show() # xdoctest: +SKIP
 
     Simple density plot with fewer contour levels:
 
-    >>> sspy.density(data, density_type="simple")
+    >>> ax = sspy.density(data, density_type="simple")
     >>> plt.show() # xdoctest: +SKIP
 
     Density plot with custom styling:
@@ -913,15 +913,15 @@ def density(
 
     Add density to existing plots:
 
-    >>> fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    >>> sspy.density(
+    >>> fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    >>> axes[0] = sspy.density(
     ...     sspy.isd.select_location_ids(data, ['CamdenTown', 'PancrasLock']),
-    ...     ax=ax[0], title="CamdenTown and PancrasLock", hue="LocationID",
+    ...     ax=axes[0], title="CamdenTown and PancrasLock", hue="LocationID",
     ...     density_type="simple"
     ... )
-    >>> sspy.density(
+    >>> axes[1] = sspy.density(
     ...     sspy.isd.select_location_ids(data, ['RegentsParkJapan']),
-    ...     ax=ax[1], title="RegentsParkJapan"
+    ...     ax=axes[1], title="RegentsParkJapan"
     ... )
     >>> plt.tight_layout()
     >>> plt.show()

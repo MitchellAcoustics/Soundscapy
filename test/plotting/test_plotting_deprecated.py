@@ -13,7 +13,7 @@ from soundscapy.plotting import (
     Backend,
     CircumplexPlot,
     PlotType,
-    # create_circumplex_subplots,
+    create_circumplex_subplots,
     density_plot,
     scatter,
     scatter_plot,
