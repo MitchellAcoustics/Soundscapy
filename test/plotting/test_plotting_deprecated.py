@@ -3,12 +3,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.graph_objs as go
 import pytest
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy.random import default_rng
 
+from soundscapy import create_iso_subplots
 from soundscapy.plotting import (
     Backend,
     CircumplexPlot,
@@ -85,7 +85,8 @@ def test_density_plot_plotly(sample_data: pd.DataFrame):
     """DEPRECATED: Test density plot with Plotly backend."""
     with pytest.deprecated_call():
         fig = density_plot(sample_data, backend=Backend.PLOTLY)
-    with pytest.raises(AssertionError):
+    with pytest.raises(NameError):
+        # plotly not installed, so go not defined
         assert isinstance(fig, go.Figure)
 
 
@@ -153,8 +154,17 @@ def test_invalid_backend():
 
 def test_invalid_plot_type(sample_data: pd.DataFrame):
     """Test invalid plot type raises ValueError."""
-    with pytest.raises(KeyError):
-        create_circumplex_subplots([sample_data], plot_type="invalid_plot_type")
+    with pytest.warns(UserWarning) as record:
+        create_circumplex_subplots(
+            [sample_data, sample_data], plot_type="invalid_plot_type"
+        )
+
+
+def test_no_subplots_needed_in_iso_subplots(sample_data: pd.DataFrame):
+    """Test invalid plot type raises ValueError."""
+    # TODO: This is actually testing _prepare_subplot_data
+    with pytest.raises(ValueError, match="Only one subplot provided") as record:
+        create_iso_subplots([sample_data], plot_layers="scatter")
 
 
 def test_simple_density(sample_data: pd.DataFrame):

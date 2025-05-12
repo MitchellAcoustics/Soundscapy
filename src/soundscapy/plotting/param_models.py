@@ -1,22 +1,17 @@
-"""Utility functions and constants for the soundscapy plotting module."""
-
-# ruff: noqa: ANN401, TC002, TC003
 from __future__ import annotations
 
+import copy
+import warnings
 from collections.abc import Iterable
-from typing import (
-    Any,
-    ClassVar,
-    Literal,
-    TypeAlias,
-)
+from dataclasses import field, fields
+from typing import Any, ClassVar, Literal, TypeAlias, TypeVar
 
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Colormap
 from matplotlib.typing import ColorType
-from pydantic import BaseModel, ConfigDict
-from pydantic.alias_generators import to_snake
+from pydantic import validate_call
+from pydantic.dataclasses import dataclass as pydantic_dataclass
 
 from soundscapy.sspylogging import get_logger
 
@@ -42,17 +37,13 @@ MplLegendLocType: TypeAlias = (
     | tuple[float, float]
 )
 
-param_model_config = ConfigDict(
-    extra="allow",  # Allow extra fields for flexibility
-    arbitrary_types_allowed=True,  # Allow complex matplotlib types
-    validate_assignment=True,  # Validate when attributes are set
-    alias_generator=to_snake,  # Use snake_case for aliases
-)
+T = TypeVar("T", bound="ParamModel")
 
 
-class ParamModel(BaseModel):
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
+class ParamModel:
     """
-    Base model for parameter validation.
+    Base model for parameter validation using dataclasses.
 
     This class provides the foundation for all parameter models with
     common configuration settings and utility methods.
@@ -61,13 +52,16 @@ class ParamModel(BaseModel):
     # Registry for parameter model classes
     _param_registry: ClassVar[dict[str, type[ParamModel]]] = {}
 
-    model_config = ConfigDict(
-        extra="allow",  # Allow extra fields for flexibility
-        arbitrary_types_allowed=True,  # Allow complex matplotlib types
-        validate_assignment=True,  # Validate when attributes are set
-        alias_generator=to_snake,  # Use snake_case for aliases
-    )
+    # Dictionary to store extra fields
 
+    def __post_init__(self) -> None:
+        """Process extra fields after initialization."""
+        # Move any extra fields to _extra_fields
+        for key, value in list(self.__dict__.items()):
+            if key not in self.defined_field_names:
+                setattr(self, key, value)
+
+    @validate_call
     def update(
         self,
         *,
@@ -78,55 +72,52 @@ class ParamModel(BaseModel):
         """
         Update the attributes of the instance based on the provided parameters.
 
-        The method allows for managing extra fields, removing `None` values, and
-        setting instance attributes dynamically based on the input `kwargs`.
-        Behavior can be adjusted via the `extra` and `na_rm` parameters.
-
         Parameters
         ----------
         extra : {'allow', 'forbid', 'ignore'}, default='allow'
-            Determines how to handle extra fields in `kwargs`:
-            - 'allow': All fields in `kwargs` are allowed and processed.
-            - 'forbid': Raises a `ValueError` if any key in `kwargs` is not a valid
-              field of the model.
-            - 'ignore': Ignores fields in `kwargs` that are not valid fields of the
-              model.
+            Determines how to handle extra fields in `kwargs`.
         ignore_null : bool, default=True
-            If True, removes `None` values from `kwargs` to avoid overwriting default
-            instance attributes with `None`.
+            If True, removes `None` values from `kwargs`.
         **kwargs : Any
-            Arbitrary keyword arguments representing field names and values to be
-            updated for the instance.
+            Field names and values to be updated.
 
         """
+        # Create a copy of kwargs to avoid modifying it during iteration
+        update_kwargs = kwargs.copy()
+
         if extra == "forbid":
             # Forbid extra fields
-            unknown_keys = set(kwargs) - set(self.model_fields)
+            unknown_keys = set(update_kwargs) - set(self.defined_field_names)
             if unknown_keys:
                 msg = f"Unknown parameters: {unknown_keys}"
                 raise ValueError(msg)
         elif extra == "ignore":
             # Ignore extra fields
-            kwargs = {k: v for k, v in kwargs.items() if k in self.model_fields}
-        elif extra != "allow":
-            msg = f"Invalid value for 'extra': {extra}"
-            raise ValueError(msg)
+            update_kwargs = {
+                k: v for k, v in update_kwargs.items() if k in self.defined_field_names
+            }
+
         # Remove None values if ignore_null is True
         if ignore_null:
-            # Filter out None values to avoid overriding defaults with None
-            kwargs = {k: v for k, v in kwargs.items() if v is not None}
+            update_kwargs = {k: v for k, v in update_kwargs.items() if v is not None}
 
-        # Use proper Pydantic model update method
-        self.model_validate(kwargs)
+        # Update fields
+        for key, value in update_kwargs.items():
+            if key in self.defined_field_names or extra == "allow":
+                setattr(self, key, value)
 
-        # Update using model_copy to ensure proper field validation
-        updated_model = self.model_copy(update=kwargs)
-        for field_name in kwargs:
-            if field_name in self.model_fields or extra == "allow":
-                try:
-                    setattr(self, field_name, getattr(updated_model, field_name))
-                except ValueError as e:
-                    logger.warning("Invalid value for %s: %s", field_name, e)
+    def get_defaults(self) -> dict[str, Any]:
+        return {
+            fld.name: fld.default for fld in fields(self) if fld.name != "_extra_fields"
+        }
+
+    @property
+    def defaults(self):
+        return self.get_defaults()
+
+    @property
+    def _extra_fields(self) -> dict[str, Any]:
+        return {k: v for k, v in self.__dict__.items() if k not in self.get_defaults()}
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -145,8 +136,9 @@ class ParamModel(BaseModel):
             Parameter value or default
 
         """
-        model_dict = self.model_dump()
-        return model_dict.get(key, default)
+        if key in self.current_field_names:
+            return getattr(self, key)
+        return default
 
     def __getitem__(self, key: str) -> Any:
         """
@@ -168,12 +160,12 @@ class ParamModel(BaseModel):
             If the parameter doesn't exist
 
         """
-        if key in self.model_fields:
-            return self.model_dump().get(key)
+        if key in self.current_field_names:
+            return getattr(self, key)
         msg = f"Parameter '{key}' does not exist."
         raise KeyError(msg)
 
-    def as_dict(self, **kwargs) -> dict[str, Any]:
+    def as_dict(self, drop: list[str] | None = None) -> dict[str, Any]:
         """
         Get all parameters as a dictionary.
 
@@ -183,19 +175,49 @@ class ParamModel(BaseModel):
             Dictionary of parameter values
 
         """
-        return self.model_dump(**kwargs)
+        dictionary = self.__dict__.copy()
+        if drop is not None:
+            for key in drop:
+                dictionary.pop(key, None)
+        return dictionary
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def model_copy(self):
+        warnings.warn(
+            "model_copy is deprecated. Use copy instead."
+            "Kept only for backwards compatibility with Pydantic.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.copy()
 
     def get_changed_params(self) -> dict[str, Any]:
         """
         Get parameters that have been changed from their defaults.
 
+        This method compares the current parameter values against the default values
+        and returns a dictionary containing only the parameters that differ from
+        their defaults.
+
         Returns
         -------
-        Dict[str, Any]
-            Dictionary of changed parameters
+        dict[str, Any]
+            Dictionary of parameters that differ from defaults, with keys as parameter names
+            and values as their current values (not default values).
 
         """
-        return self.model_dump(exclude_defaults=True)
+        default_values = self.get_defaults()
+        current_values = self.as_dict()
+
+        # Use dictionary comprehension to identify and collect changed parameters
+        # Return the current values (not default values) for the changed parameters
+        return {
+            param_name: current_values[param_name]
+            for param_name, default_value in default_values.items()
+            if current_values[param_name] != default_value
+        }
 
     def get_multiple(self, keys: list[str]) -> dict[str, Any]:
         """
@@ -212,12 +234,13 @@ class ParamModel(BaseModel):
             Dictionary of parameter values
 
         """
-        model_dict = self.model_dump()
-        return {key: model_dict.get(key) for key in keys if key in model_dict}
+        return {key: self[key] for key in keys if key in self.current_field_names}
 
     def pop(self, key: str) -> Any:
         """
         Remove a parameter and return its value.
+
+        For fields defined in the model, the value is reset to its default.
 
         Parameters
         ----------
@@ -235,27 +258,16 @@ class ParamModel(BaseModel):
             If the parameter doesn't exist
 
         """
-        model_dict = self.model_dump()
-        if key not in model_dict:
-            msg = f"Parameter '{key}' does not exist."
-            raise KeyError(msg)
-        value = model_dict[key]
-
-        # Create a new dict without the popped key
-        new_data = {k: v for k, v in model_dict.items() if k != key}
-
-        # Clear all current fields and update with new data
-        for k in list(model_dict.keys()):
-            if hasattr(self, k):
-                object.__delattr__(self, k)
-
-        # Update with new data (excluding the popped key)
-        updated_model = self.model_copy(update=new_data)
-        for field_name in new_data:
-            if field_name in self.model_fields or field_name in new_data:
-                setattr(self, field_name, getattr(updated_model, field_name))
-
-        return value
+        if key in self.defaults:
+            value = getattr(self, key)
+            setattr(self, key, self.defaults[key])  # Reset to default/None
+            return value
+        if key in self.current_field_names:
+            value = self.get(key)
+            delattr(self, key)
+            return value
+        msg = f"Parameter '{key}' does not exist."
+        raise KeyError(msg)
 
     def drop(self, keys: str | Iterable[str], *, ignore_missing: bool = True) -> None:
         """
@@ -268,17 +280,19 @@ class ParamModel(BaseModel):
         ignore_missing : bool, default=True
             If True, ignore missing keys. If False, raise KeyError for missing keys.
 
-        Raises
-        ------
-        KeyError
-            If the parameter doesn't exist and ignore_missing is False
-
         """
         if isinstance(keys, str):
             keys = [keys]
 
         for key in keys:
-            _ = self.pop(key)
+            try:
+                delattr(self, key)
+            except (KeyError, AttributeError) as e:  # noqa: PERF203
+                if not ignore_missing:
+                    if isinstance(e, AttributeError):
+                        msg = f"Parameter '{key}' does not exist."
+                        raise KeyError(msg) from e
+                    raise
 
     @property
     def defined_field_names(self) -> list[str]:
@@ -291,26 +305,23 @@ class ParamModel(BaseModel):
             List of field names
 
         """
-        return list(self.model_fields.keys())
+        return list(self.defaults.keys())
 
     @property
     def current_field_names(self) -> list[str]:
         """
-        Retrieves the current field names.
-
-        This property method fetches and returns the current set of field names
-        associated with the instance. It provides a read-only interface to
-        access field names as computed or stored in the object.
+        Get the names of all current fields.
 
         Returns
         -------
-        list[str]
-            A list of strings where each string represents a field name.
+        List[str]
+            List of field names
 
         """
-        return list(self.model_dump().keys())
+        return list(self.as_dict().keys())
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class SeabornParams(ParamModel):
     """Base parameters for seaborn plotting functions."""
 
@@ -327,27 +338,11 @@ class SeabornParams(ParamModel):
         """
         Check if the palette is valid for the given hue.
 
-        Parameters
-        ----------
-        palette : SeabornPaletteType
-            The color palette to use.
-        hue : str | np.ndarray | pd.Series | None
-            The column name for color encoding.
-
-        Returns
-        -------
-        SeabornPaletteType
-            The validated color palette.
-
-        Raises
-        ------
-        ValueError
-            If the palette is not valid for the given hue.
-
+        This method ensures that palette is only used when hue is provided.
         """
         self.palette = self.palette if self.hue is not None else None
 
-    def as_seaborn_kwargs(self) -> dict[str, Any]:
+    def as_seaborn_kwargs(self, drop: list[str] | None = None) -> dict[str, Any]:
         """
         Convert parameters to kwargs compatible with seaborn functions.
 
@@ -357,16 +352,17 @@ class SeabornParams(ParamModel):
             Dictionary of parameter values suitable for seaborn plotting functions.
 
         """
-        new = self.model_copy()
-        return new.as_dict()
+        return self.as_dict(drop=drop)
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class ScatterParams(SeabornParams):
     """Parameters for scatter plot functions."""
 
     s: float | None = 20  # DEFAULT_POINT_SIZE
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class DensityParams(SeabornParams):
     """Parameters for density plot functions."""
 
@@ -382,7 +378,7 @@ class DensityParams(SeabornParams):
     # NOTE: Would like to add include_outline here, but would need to refactor
     #       throughout the code.
 
-    def as_seaborn_kwargs(self) -> dict[str, Any]:
+    def as_seaborn_kwargs(self, drop: list[str] | None = None) -> dict[str, Any]:
         """
         Convert parameters to kwargs compatible with seaborn functions.
 
@@ -393,36 +389,38 @@ class DensityParams(SeabornParams):
 
         """
         # None to drop yet
-        return super().as_seaborn_kwargs()
+        return super().as_seaborn_kwargs(drop=drop)
 
-    def to_outline(
-        self,
-        *,
-        alpha: float = 1,
-        fill: bool = False,
-    ) -> DensityParams:
+    def to_outline(self, *, alpha: float = 1, fill: bool = False) -> DensityParams:
         """
-        Get parameters for the outline of density plots.
+        Convert to outline parameters.
 
         Parameters
         ----------
-        levels : int | tuple[float, float], optional
-            The levels for the outline. Default is (0, 0.5).
-        alpha : float, optional
-            The alpha value for the outline. Default is 1.
+        alpha : float, default=1
+            Alpha value for the outline.
+        fill : bool, default=False
+            Whether to fill the outline.
 
         Returns
         -------
-        dict[str, Any]
-            The parameters for the outline of density plots.
+        DensityParams
+            New instance with outline parameters.
 
         """
-        # Set levels and alpha for simple density plots
-        return self.model_copy(update={"alpha": alpha, "fill": fill, "legend": False})
+        # Create a copy of the parameters
+        params_dict = self.as_dict()
+
+        # Update parameters for outline
+        params_dict.update(alpha=alpha, fill=fill, legend=False)
+
+        # Create a new instance with the updated parameters
+        return DensityParams(**params_dict)
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class SimpleDensityParams(DensityParams):
-    """Parameters for simple density plots."""
+    """Parameters for simple density plot functions."""
 
     # Override default levels for simple density plots
     thresh: float = 0.5
@@ -430,8 +428,9 @@ class SimpleDensityParams(DensityParams):
     alpha: float = 0.5
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class SPISeabornParams(SeabornParams):
-    """Base parameters for seaborn plotting functions for SPI data."""
+    """Base parameters for SPI seaborn plotting functions."""
 
     color: ColorType | None = "red"
     hue: str | np.ndarray | pd.Series | None = None
@@ -439,20 +438,24 @@ class SPISeabornParams(SeabornParams):
     label: str = "SPI"
     n: int = 1000
     show_score: Literal["on axis", "under title"] = "under title"
-    axis_text_kw: dict[str, Any] | None = {
-        "x": 0,
-        "y": -0.85,
-        "fontsize": 10,
-        "bbox": {
-            "facecolor": "white",
-            "edgecolor": "black",
-            "boxstyle": "round,pad=0.3",
-        },
-        "ha": "center",
-        "va": "center",
-    }
+    axis_text_kw: dict[str, Any] | None = field(
+        default_factory=lambda: (
+            {
+                "x": 0,
+                "y": -0.85,
+                "fontsize": 10,
+                "bbox": {
+                    "facecolor": "white",
+                    "edgecolor": "black",
+                    "boxstyle": "round,pad=0.3",
+                },
+                "ha": "center",
+                "va": "center",
+            }
+        )
+    )
 
-    def as_seaborn_kwargs(self) -> dict[str, Any]:
+    def as_seaborn_kwargs(self, drop: list[str] | None = None) -> dict[str, Any]:
         """
         Convert parameters to kwargs compatible with seaborn functions.
 
@@ -462,17 +465,20 @@ class SPISeabornParams(SeabornParams):
             Dictionary of parameter values suitable for seaborn plotting functions.
 
         """
-        new = self.model_copy()
-        new.drop(["n", "show_score", "axis_text_kw"])
-        return new.as_dict()
+        droplist = ["n", "show_score", "axis_text_kw"]
+        if isinstance(drop, list):
+            droplist.extend(drop)
+        return self.as_dict(drop=droplist)
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class SPISimpleDensityParams(SPISeabornParams, SimpleDensityParams):
-    """Parameters for simple density plotting of SPI data."""
+    """Parameters for SPI simple density plot functions."""
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class JointPlotParams(ParamModel):
-    """Parameters for jointplot functions."""
+    """Parameters for joint plot functions."""
 
     data: pd.DataFrame | None = None
     x: str | np.ndarray | pd.Series | None = "ISOPleasant"
@@ -484,42 +490,9 @@ class JointPlotParams(ParamModel):
     marginal_ticks: bool | None = None
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class StyleParams(ParamModel):
-    """
-    Configuration options for styling circumplex plots.
-
-    Attributes
-    ----------
-    xlim : tuple[float, float] | None
-        X-axis limits.
-    ylim : tuple[float, float] | None
-        Y-axis limits.
-    xlabel : str | None
-        X-axis label. If None, use column name.
-    ylabel : str | None
-        Y-axis label. If None, use column name.
-    diag_lines_zorder : int | None
-        Z-order for diagonal lines.
-    diag_labels_zorder : int | None
-        Z-order for diagonal labels.
-    prim_lines_zorder : int | None
-        Z-order for primary lines.
-    data_zorder : int | None
-        Z-order for plotted data.
-    legend_loc : MplLegendLocType | None
-        Legend location.
-    linewidth : float | None
-        Line width for plot elements.
-    primary_lines : bool | None
-        Whether to show primary axes lines.
-    diagonal_lines : bool | None
-        Whether to show diagonal lines.
-    title_fontsize : int | None
-        Font size for the title.
-    prim_ax_fontdict : dict[str, Any] | None
-        Font settings for primary axes labels.
-
-    """
+    """Parameters for plot styling."""
 
     xlim: tuple[float, float] = (-1, 1)  # DEFAULT_XLIM
     ylim: tuple[float, float] = (-1, 1)  # DEFAULT_YLIM
@@ -535,20 +508,26 @@ class StyleParams(ParamModel):
     primary_lines: bool = True
     diagonal_lines: bool = False
     title_fontsize: int = 14
+
     # This should be properly defined with its own Pydantic model in a future iteration
-    prim_ax_fontdict: dict[str, Any] = {
-        "family": "sans-serif",
-        "fontstyle": "normal",
-        "fontsize": "large",
-        "fontweight": "medium",
-        "parse_math": True,
-        "c": "black",
-        "alpha": 1,
-    }
+    prim_ax_fontdict: dict[str, Any] = field(
+        default_factory=lambda: (
+            {
+                "family": "sans-serif",
+                "fontstyle": "normal",
+                "fontsize": "large",
+                "fontweight": "medium",
+                "parse_math": True,
+                "c": "black",
+                "alpha": 1,
+            }
+        )
+    )
 
 
+@pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
 class SubplotsParams(ParamModel):
-    """Parameters for subplot configuration."""
+    """Parameters for subplots."""
 
     nrows: int = 1
     ncols: int = 1
@@ -565,12 +544,12 @@ class SubplotsParams(ParamModel):
     @property
     def n_subplots(self) -> int:
         """
-        Calculate the total number of subplots.
+        Get the number of subplots.
 
         Returns
         -------
         int
-            Total number of subplots.
+            Number of subplots
 
         """
         return self.nrows * self.ncols
@@ -590,8 +569,12 @@ class SubplotsParams(ParamModel):
             Dictionary of subplot parameters.
 
         """
-        new = self.model_copy()
-        new.drop(
-            ["subplot_by", "n_subplots_by", "auto_allocate_axes", "adjust_figsize"]
-        )
-        return new.as_dict()
+        kwargs = self.as_dict()
+        for key in [
+            "subplot_by",
+            "n_subplots_by",
+            "auto_allocate_axes",
+            "adjust_figsize",
+        ]:
+            kwargs.pop(key, None)
+        return kwargs

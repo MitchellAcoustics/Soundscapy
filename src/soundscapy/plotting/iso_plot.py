@@ -39,14 +39,6 @@ from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure, SubFigure
 
-from soundscapy.plotting.dataclass_param_models import (
-    DensityParams,
-    ScatterParams,
-    SimpleDensityParams,
-    SPISimpleDensityParams,
-    StyleParams,
-    SubplotsParams,
-)
 from soundscapy.plotting.defaults import (
     DEFAULT_STYLE_PARAMS,
     DEFAULT_XCOL,
@@ -61,6 +53,14 @@ from soundscapy.plotting.layers import (
     SPIDensityLayer,
     SPIScatterLayer,
     SPISimpleLayer,
+)
+from soundscapy.plotting.param_models import (
+    DensityParams,
+    ScatterParams,
+    SimpleDensityParams,
+    SPISimpleDensityParams,
+    StyleParams,
+    SubplotsParams,
 )
 from soundscapy.plotting.plot_context import PlotContext
 from soundscapy.sspylogging import get_logger

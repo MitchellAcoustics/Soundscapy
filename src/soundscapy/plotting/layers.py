@@ -15,7 +15,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from soundscapy.plotting.dataclass_param_models import (
+from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
+from soundscapy.plotting.param_models import (
     DensityParams,
     ScatterParams,
     SeabornParams,
@@ -23,7 +24,6 @@ from soundscapy.plotting.dataclass_param_models import (
     SPISeabornParams,
     SPISimpleDensityParams,
 )
-from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
 from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
