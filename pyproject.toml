@@ -39,7 +39,7 @@ test = [
 
 [project]
 authors = [
-    { email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell" },
+    {email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell"},
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -64,7 +64,7 @@ dependencies = [
 description = "A python library for analysing and visualising soundscape assessments."
 dynamic = ["version"]
 keywords = ["acoustics", "audio analysis", "psychoacoustics", "soundscape"]
-license = { file = "LICENSE.md" }
+license = {file = "LICENSE.md"}
 name = "soundscapy"
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -85,8 +85,8 @@ documentation = "https://soundscapy.readthedocs.io/en/latest/"
 repository = "https://github.com/MitchellAcoustics/Soundscapy"
 
 [tool.coverage]
-report = { sort = "cover" }
-run = { branch = true, parallel = true, source = ["soundscapy"] }
+report = {sort = "cover"}
+run = {branch = true, parallel = true, source = ["soundscapy"]}
 paths.source = ["src", ".tox*/*/lib/python*/site-packages"]
 
 [tool.mypy]
@@ -116,23 +116,23 @@ lint.ignore = [
     "ANN003",
     # missing kwarg type hinting:
     "ANN401",
-    "COM812",  # trailing commas (ruff-format recommended)
-    "D203",    # no-blank-line-before-class
-    "D212",    # multi-line-summary-first-line
-    "D407",    # removed dashes lines under sections
-    "D417",    # argument description in docstring (unreliable)
-    "FIX002",  # fixme (ruff-format recommended)
-    "ISC001",  # simplify implicit str concatenation (ruff-format recommended)
+    "COM812", # trailing commas (ruff-format recommended)
+    "D203", # no-blank-line-before-class
+    "D212", # multi-line-summary-first-line
+    "D407", # removed dashes lines under sections
+    "D417", # argument description in docstring (unreliable)
+    "FIX002", # fixme (ruff-format recommended)
+    "ISC001", # simplify implicit str concatenation (ruff-format recommended)
     "PLR0913", # too many arguments
 ]
-lint.per-file-ignores = { "test*" = [
+lint.per-file-ignores = {"test*" = [
     "ANN201", # Suppress return type warning for test functions
-    "D100",   # Missing docstring in public module
-    "D101",   # Missing docstring in public class
-    "D103",   # Missing docstring in public function
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D103", # Missing docstring in public function
     "INP001", # File is part of an implicit namespace package.
-    "S101",   # Use of `assert` detected
-] }
+    "S101", # Use of `assert` detected
+]}
 lint.select = ["ALL"]
 lint.isort.known-first-party = ["soundscapy"]
 lint.mccabe.max-complexity = 18
