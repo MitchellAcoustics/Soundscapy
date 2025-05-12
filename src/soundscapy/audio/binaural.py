@@ -423,10 +423,10 @@ class Binaural(Signal):
             statistics,
             label,
             channel,
-            as_df,
-            return_time_series,
-            metric_settings,
-            func_args,
+            as_df=as_df,
+            return_time_series=return_time_series,
+            metric_settings=metric_settings,
+            func_args=func_args,
         )
 
     def acoustics_metric(
@@ -446,10 +446,11 @@ class Binaural(Signal):
         ),
         label: str | None = None,
         channel: str | int | list | tuple = ("Left", "Right"),
-        as_df: bool = True,
-        return_time_series: bool = False,
         metric_settings: MetricSettings | None = None,
         func_args: dict | None = None,
+        *,
+        as_df: bool = True,
+        return_time_series: bool = False,
     ) -> dict | pd.DataFrame | None:
         """
         Run a metric from the acoustic_toolbox library.

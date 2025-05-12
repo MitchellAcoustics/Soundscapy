@@ -10,6 +10,7 @@ from soundscapy.surveys.processing import (
     add_iso_coords,
     calculate_iso_coords,
     return_paqs,
+    simulation,
 )
 from soundscapy.surveys.survey_utils import (
     LANGUAGE_ANGLES,
@@ -27,5 +28,6 @@ __all__ = [
     "processing",
     "rename_paqs",
     "return_paqs",
+    "simulation",
     "survey_utils",
 ]

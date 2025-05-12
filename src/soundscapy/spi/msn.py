@@ -6,15 +6,16 @@ MSN distributions, often used in soundscape analysis for modeling ISOPleasant
 and ISOEventful ratings.
 """
 
+import warnings
 from typing import Literal
 
 import numpy as np
 import pandas as pd
 
-from soundscapy import get_logger
-from soundscapy.plotting import density_plot
+from soundscapy.plotting.plot_functions import scatter
 from soundscapy.spi import _rsn_wrapper as rsn
 from soundscapy.spi.ks2d import ks2d2s
+from soundscapy.sspylogging import get_logger
 
 logger = get_logger()
 
@@ -101,6 +102,31 @@ class DirectParams:
         if not self._omega_is_symmetric():
             msg = "Omega must be symmetric"
             raise ValueError(msg)
+
+    @classmethod
+    def from_cp(cls, cp: "CentredParams") -> "DirectParams":
+        """
+        Convert a CentredParams object to a DirectParams object.
+
+        Parameters
+        ----------
+        cp : CentredParams
+            The CentredParams object to convert.
+
+        Returns
+        -------
+        DirectParams
+            A new DirectParams object with the converted parameters.
+
+        """
+        warnings.warn(
+            "Converting from Centred Parameters to Direct Parameters "
+            "is not guaranteed.",
+            UserWarning,
+            stacklevel=2,
+        )  # TODO(MitchellAcoustics): Add a more specific warning message  # noqa: TD003
+        dp = cp2dp(cp)
+        return cls(dp.xi, dp.omega, dp.alpha)
 
 
 class CentredParams:
@@ -336,6 +362,68 @@ class MultiSkewNorm:
         self.cp = CentredParams.from_dp(self.dp)
         return self
 
+    @classmethod
+    def from_params(
+        cls,
+        params: DirectParams | CentredParams | None = None,
+        *,
+        xi: np.ndarray | None = None,
+        omega: np.ndarray | None = None,
+        alpha: np.ndarray | None = None,
+        mean: np.ndarray | None = None,
+        sigma: np.ndarray | None = None,
+        skew: np.ndarray | None = None,
+    ) -> "MultiSkewNorm":
+        """
+        Create a MultiSkewNorm instance from direct parameters.
+
+        Parameters
+        ----------
+        params : DirectParams
+            The direct parameters to initialize the model.
+
+        Returns
+        -------
+        MultiSkewNorm
+            A new instance of MultiSkewNorm initialized with the provided parameters.
+
+        """
+        instance = cls()
+
+        if params is None:
+            if (xi is None or omega is None or alpha is None) and (
+                mean is None or sigma is None or skew is None
+            ):
+                msg = "Either params object or xi, omega, and alpha must be provided."
+                raise ValueError(msg)
+            if xi is not None and omega is not None and alpha is not None:
+                # If xi, omega, and alpha are provided, create DirectParams
+                instance.dp = DirectParams(xi, omega, alpha)
+            elif mean is not None and sigma is not None and skew is not None:
+                # If mean, sigma, and skew are provided, create CentredParams
+                cp = CentredParams(mean, sigma, skew)
+                dp = DirectParams.from_cp(cp)
+                instance.dp = dp
+                instance.cp = cp
+            return instance
+        if isinstance(params, DirectParams):
+            # If params is a DirectParams object, set it directly
+            instance.dp = params
+            instance.cp = CentredParams.from_dp(params)
+            return instance
+        if isinstance(params, CentredParams):
+            # If params is a CentredParams object, convert it to DirectParams
+            instance.cp = params
+            dp = DirectParams.from_cp(params)
+            instance.dp = dp
+            return instance
+        # If params is neither DirectParams nor CentredParams, raise an error
+        msg = (
+            "Either params or xi, omega, and alpha must be provided."
+            "Or mean, sigma, and skew must be provided."
+        )
+        raise ValueError(msg)
+
     def sample(
         self, n: int = 1000, *, return_sample: bool = False
     ) -> None | np.ndarray:
@@ -451,9 +539,9 @@ class MultiSkewNorm:
 
         data = pd.DataFrame(self.sample_data, columns=["ISOPleasant", "ISOEventful"])
         plot_title = title if title is not None else "Soundscapy Density Plot"
-        density_plot(data, color=color, title=plot_title)
+        scatter(data, color=color, title=plot_title)
 
-    def ks2d2s(self, test_data: pd.DataFrame | np.ndarray) -> tuple[float, float]:
+    def ks2d2s(self, test: pd.DataFrame | np.ndarray) -> tuple[float, float]:
         """
         Compute the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
 
@@ -468,18 +556,6 @@ class MultiSkewNorm:
             The KS2D statistic and p-value.
 
         """
-        # Ensure test_data is a numpy array
-        if isinstance(test_data, pd.DataFrame):
-            if test_data.shape[1] != 2:  # noqa: PLR2004
-                msg = "Test data must have two columns."
-                raise ValueError(msg)
-            test_data_np = test_data.to_numpy()
-        elif isinstance(test_data, np.ndarray):
-            test_data_np = test_data
-        else:
-            msg = "test_data must be a pandas DataFrame or numpy array."
-            raise TypeError(msg)
-
         # Ensure sample_data exists, generate if needed and possible
         if self.sample_data is None:
             logger.info("Sample data not found, generating default sample (n=1000).")
@@ -493,11 +569,9 @@ class MultiSkewNorm:
 
         # Perform the 2-sample KS test using ks2d2s
         # Note: ks2d2s expects data1, data2
-        ks_statistic, p_value = ks2d2s(self.sample_data, test_data_np)
+        return ks2d(self.sample_data, test)
 
-        return ks_statistic, p_value
-
-    def spi(self, test: pd.DataFrame | np.ndarray) -> int:
+    def spi_score(self, test: pd.DataFrame | np.ndarray) -> int:
         """
         Compute the Soundscape Perception Index (SPI).
 
@@ -515,7 +589,92 @@ class MultiSkewNorm:
             The Soundscape Perception Index (SPI), ranging from 0 to 100.
 
         """
-        return int((1 - self.ks2d2s(test)[0]) * 100)
+        # Ensure sample_data exists, generate if needed and possible
+        if self.sample_data is None:
+            logger.info("Sample data not found, generating default sample (n=1000).")
+            self.sample(n=1000, return_sample=False)  # Generate sample if missing
+            if self.sample_data is None:  # Check again in case sample failed
+                msg = (
+                    "Could not generate sample data. "
+                    "Ensure model is defined (fit or define_dp)."
+                )
+                raise ValueError(msg)
+        return spi_score(self.sample_data, test)
+
+
+def spi_score(
+    target: pd.DataFrame | np.ndarray, test: pd.DataFrame | np.ndarray
+) -> int:
+    """
+    Compute the Soundscape Perception Index (SPI).
+
+    Calculates the SPI for the test data against the target distribution
+    represented by the sample data.
+
+    Parameters
+    ----------
+    target : np.ndarray
+        The sample data representing the target distribution.
+    test : pd.DataFrame or np.ndarray
+        The test data.
+
+    Returns
+    -------
+    int
+        The Soundscape Perception Index (SPI), ranging from 0 to 100.
+
+    """
+    return int((1 - ks2d(target, test)[0]) * 100)
+
+
+def ks2d(
+    target: pd.DataFrame | np.ndarray, test: pd.DataFrame | np.ndarray
+) -> tuple[float, float]:
+    """
+    Compute the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
+
+    Parameters
+    ----------
+    target : pd.DataFrame or np.ndarray
+        The sample data representing the target distribution.
+    test : pd.DataFrame or np.ndarray
+        The test data.
+
+    Returns
+    -------
+    tuple
+        The KS2D statistic and p-value.
+
+    """
+    # Ensure target is a numpy array
+    if isinstance(target, pd.DataFrame):
+        if target.shape[1] != 2:  # noqa: PLR2004
+            msg = "Test data must have two columns."
+            raise ValueError(msg)
+        target_np = target.to_numpy()
+    elif isinstance(target, np.ndarray):
+        target_np = target
+    else:
+        msg = "target must be a pandas DataFrame or numpy array."
+        raise TypeError(msg)
+
+    # Ensure test_data is a numpy array
+    if isinstance(test, pd.DataFrame):
+        if test.shape[1] != 2:  # noqa: PLR2004
+            msg = "Test data must have two columns."
+            raise ValueError(msg)
+        test_np = test.to_numpy()
+    elif isinstance(test, np.ndarray):
+        test_np = test
+    else:
+        msg = "test_data must be a pandas DataFrame or numpy array."
+        raise TypeError(msg)
+
+    # Perform the 2-sample KS test using ks2d2s
+    # Note: ks2d2s expects data1, data2
+    ks_statistic, p_value = ks2d2s(target_np, test_np)
+
+    return ks_statistic, p_value
 
 
 def cp2dp(

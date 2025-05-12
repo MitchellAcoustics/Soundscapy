@@ -7,23 +7,39 @@ of use.
 """
 
 from soundscapy.plotting import likert
-from soundscapy.plotting.circumplex_plot import CircumplexPlot, CircumplexPlotParams
+from soundscapy.plotting.backends_deprecated import (
+    Backend,
+    CircumplexPlot,
+    CircumplexPlotParams,
+    PlotType,
+    StyleOptions,
+)
+from soundscapy.plotting.iso_plot import ISOPlot
 from soundscapy.plotting.plot_functions import (
     create_circumplex_subplots,
+    create_iso_subplots,
+    density,
     density_plot,
+    iso_plot,
+    jointplot,
+    scatter,
     scatter_plot,
 )
-from soundscapy.plotting.plotting_utils import Backend, PlotType
-from soundscapy.plotting.stylers import StyleOptions
 
 __all__ = [
     "Backend",
     "CircumplexPlot",
     "CircumplexPlotParams",
+    "ISOPlot",
     "PlotType",
     "StyleOptions",
     "create_circumplex_subplots",
+    "create_iso_subplots",
+    "density",
     "density_plot",
+    "iso_plot",
+    "jointplot",
     "likert",
+    "scatter",
     "scatter_plot",
 ]

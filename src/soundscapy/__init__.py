@@ -10,26 +10,41 @@ logger.disable("soundscapy")
 from soundscapy import databases, plotting, surveys
 from soundscapy._version import __version__  # noqa: F401
 from soundscapy.databases import isd, satp
-from soundscapy.plotting import density_plot, scatter_plot
+from soundscapy.plotting import (
+    ISOPlot,
+    create_iso_subplots,
+    density,
+    iso_plot,
+    jointplot,
+    likert,
+    scatter,
+)
 from soundscapy.sspylogging import (
     disable_logging,
     enable_debug,
     get_logger,
     setup_logging,
 )
-from soundscapy.surveys import processing
+from soundscapy.surveys import add_iso_coords, processing, rename_paqs
 
 __all__ = [
+    "ISOPlot",
+    "add_iso_coords",
+    "create_iso_subplots",
     "databases",
-    "density_plot",
+    "density",
     "disable_logging",
     "enable_debug",
     "get_logger",
     "isd",
+    "iso_plot",
+    "jointplot",
+    "likert",
     "plotting",
     "processing",
+    "rename_paqs",
     "satp",
-    "scatter_plot",
+    "scatter",
     # Logging functions
     "setup_logging",
     # Core modules

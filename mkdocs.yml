@@ -28,7 +28,8 @@ nav:
       - "Survey Analysis": reference/surveys.md
       - "Plotting":
           - reference/plotting.md
-          - reference/plotting/backends.md
+          - reference/plotting/plot_functions.md
+          - reference/plotting/iso_plot.md
       - "Soundscape Perception Index (SPI)": reference/spi.md
       - "Binaural Analysis": reference/audio.md
       - "Databases": reference/databases.md

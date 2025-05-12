@@ -161,6 +161,9 @@ def _adj_iso_pl(values: pd.Series, angles: tuple[int, ...], scale: float) -> flo
         Adjusted ISOPleasant value
 
     """
+    scale_midpoint = (max(values) + min(values)) / 2
+    values = values - scale_midpoint
+
     iso_pl = np.sum(
         [
             np.cos(np.deg2rad(angle)) * value
@@ -193,6 +196,9 @@ def _adj_iso_ev(values: pd.Series, angles: tuple[int, ...], scale: float) -> flo
         Adjusted ISOEventful value
 
     """
+    scale_midpoint = (max(values) + min(values)) / 2
+    values = values - scale_midpoint
+
     iso_ev = np.sum(
         [
             np.sin(np.deg2rad(angle)) * value
