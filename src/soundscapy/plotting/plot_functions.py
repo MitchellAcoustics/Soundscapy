@@ -373,7 +373,13 @@ def create_iso_subplots(
     nrows, ncols, n_subplots = allocate_subplot_axes(nrows, ncols, n_subplots)
 
     # Set up figure and subplots
-    figsize = kwargs.pop("figsize", (ncols * subplot_size[0], nrows * subplot_size[1]))
+    if title:
+        vert_adjust = 1.2
+    else:
+        vert_adjust = 1.0
+    figsize = kwargs.pop(
+        "figsize", (ncols * subplot_size[0], nrows * (vert_adjust * subplot_size[1]))
+    )
 
     subplots_params = SubplotsParams()
     subplots_params.update(
@@ -405,7 +411,6 @@ def create_iso_subplots(
         fig.suptitle(title, fontsize=DEFAULT_STYLE_PARAMS["title_fontsize"])
 
     fig.tight_layout()
-    fig.subplots_adjust(top=0.9)
 
     return fig, axes
 
