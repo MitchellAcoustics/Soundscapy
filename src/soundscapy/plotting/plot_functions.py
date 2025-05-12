@@ -714,7 +714,7 @@ def scatter(
 
     Scatter plot with grouping by location:
 
-    >>> ax = sspy.scatter(data, hue="LocationID", diagonal_lines=True)
+    >>> ax = sspy.scatter(data, hue="LocationID", diagonal_lines=True, legend=False)
     >>> plt.show() # xdoctest: +SKIP
     >>> plt.close('all')
 
@@ -729,6 +729,7 @@ def scatter(
         x=x,
         y=y,
         palette=palette,
+        hue=hue,
         legend=legend,
         extra="allow",
         ignore_null=False,
@@ -928,7 +929,7 @@ def density(
     ...     ax=axes[1], title="RegentsParkJapan"
     ... )
     >>> plt.tight_layout()
-    >>> plt.show()
+    >>> plt.show() # xdoctest: +SKIP
     >>> plt.close('all')
 
     """
@@ -968,6 +969,9 @@ def density(
         hue=density_args.get("hue"),
         **(scatter_kws or {}),
     )
+
+    scatter_args.crosscheck_palette_hue()
+    density_args.crosscheck_palette_hue()
 
     if incl_scatter:
         d = sns.scatterplot(ax=ax, **scatter_args.as_seaborn_kwargs())
@@ -1110,7 +1114,7 @@ def create_circumplex_subplots(
     ncols: int | None = None,
     figsize: tuple[int, int] = (10, 10),
     **kwargs: Any,
-) -> plt.Figure:
+) -> Figure:
     """
     Create a figure with subplots containing circumplex plots.
 
