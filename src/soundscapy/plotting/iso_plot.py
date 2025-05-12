@@ -39,6 +39,14 @@ from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure, SubFigure
 
+from soundscapy.plotting.dataclass_param_models import (
+    DensityParams,
+    ScatterParams,
+    SimpleDensityParams,
+    SPISimpleDensityParams,
+    StyleParams,
+    SubplotsParams,
+)
 from soundscapy.plotting.defaults import (
     DEFAULT_STYLE_PARAMS,
     DEFAULT_XCOL,
@@ -53,14 +61,6 @@ from soundscapy.plotting.layers import (
     SPIDensityLayer,
     SPIScatterLayer,
     SPISimpleLayer,
-)
-from soundscapy.plotting.param_models import (
-    DensityParams,
-    ScatterParams,
-    SimpleDensityParams,
-    SPISimpleDensityParams,
-    StyleParams,
-    SubplotsParams,
 )
 from soundscapy.plotting.plot_context import PlotContext
 from soundscapy.sspylogging import get_logger
@@ -1183,7 +1183,10 @@ class ISOPlot:
         scatter_params.update(**params)
 
         return self.add_layer(
-            ScatterLayer, data=data, on_axis=on_axis, **scatter_params.as_dict()
+            ScatterLayer,
+            data=data,
+            on_axis=on_axis,
+            **scatter_params.as_dict(drop=["data"]),
         )
 
     def add_spi(
@@ -1269,7 +1272,7 @@ class ISOPlot:
                 on_axis=on_axis,
                 msn_params=msn_params,
                 spi_target_data=spi_target_data,
-                **spi_simple_params.as_dict(),
+                **spi_simple_params.as_dict(drop=["data"]),
             )
         if layer_class in (SPIDensityLayer, SPIScatterLayer):
             msg = (
@@ -1354,7 +1357,7 @@ class ISOPlot:
             data=data,
             on_axis=on_axis,
             include_outline=include_outline,
-            **density_params.as_dict(),
+            **density_params.as_dict(drop=["data"]),
         )
 
     def add_simple_density(
@@ -1442,7 +1445,7 @@ class ISOPlot:
             on_axis=on_axis,
             data=data,
             include_outline=include_outline,
-            **simple_density_params.as_dict(),
+            **simple_density_params.as_dict(drop=["data"]),
         )
 
     def add_annotation(
