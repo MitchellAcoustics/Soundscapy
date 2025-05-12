@@ -78,7 +78,7 @@ DEFAULT_STYLE_PARAMS: dict[str, Any] = {
     "diag_labels_zorder": 4,
     "prim_lines_zorder": 2,
     "data_zorder": 3,
-    "title_fontsize": 14,
+    "title_fontsize": 16,
     "legend_loc": "best",
     "linewidth": 1.5,
     "primary_lines": True,

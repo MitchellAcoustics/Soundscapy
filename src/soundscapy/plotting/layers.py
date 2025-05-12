@@ -155,7 +155,7 @@ class ScatterLayer(Layer):
         y = self.params.get("y", context.y)
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
-        plot_params = self.params.model_copy()
+        plot_params = self.params.copy()
 
         # Apply palette only if hue is used
         plot_params.crosscheck_palette_hue()
@@ -222,7 +222,7 @@ class DensityLayer(Layer):
         y = self.params.get("y", context.y)
 
         # Filter out x, y, hue and data parameters to avoid duplicate kwargs
-        plot_params = self.params.model_copy()
+        plot_params = self.params.copy()
 
         # Apply palette only if hue is used
         plot_params.crosscheck_palette_hue()
@@ -233,7 +233,12 @@ class DensityLayer(Layer):
             x=x,
             y=y,
             ax=ax,
-            **plot_params.as_seaborn_kwargs(drop=["x", "y", "data"]),
+            **plot_params.as_seaborn_kwargs(
+                # BUG: This should have been handled by SPISeabornParams
+                #  but it seems to be ignored in the SeabornParams,
+                #  so filtering brute force here.
+                drop=["x", "y", "data", "n", "show_score", "axis_text_kw"]
+            ),
         )
 
         # If requested, add an outline around the density plot
@@ -243,7 +248,12 @@ class DensityLayer(Layer):
                 x=x,
                 y=y,
                 ax=ax,
-                **plot_params.to_outline().as_seaborn_kwargs(drop=["x", "y", "data"]),
+                **plot_params.to_outline().as_seaborn_kwargs(
+                    # BUG: This should have been handled by SPISeabornParams
+                    #  but it seems to be ignored in the SeabornParams,
+                    #  so filtering brute force here.
+                    drop=["x", "y", "data", "n", "show_score", "axis_text_kw"]
+                ),
             )
 
     @staticmethod
@@ -397,6 +407,7 @@ class SPILayer(Layer):
                 stacklevel=2,
             )
             return
+        test_data = test_data[[context.x, context.y]]
 
         # Process spi_data then pass to DensityLayer method
         spi_sc = self._calc_context_spi_score(target_data, test_data)

@@ -389,6 +389,10 @@ class DensityParams(SeabornParams):
 
         """
         # None to drop yet
+        if drop is None:
+            drop = []
+        # Add common parameters to drop list
+        drop.extend(["incl_outline"])
         return super().as_seaborn_kwargs(drop=drop)
 
     def to_outline(self, *, alpha: float = 1, fill: bool = False) -> DensityParams:

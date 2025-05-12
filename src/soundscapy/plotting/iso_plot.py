@@ -560,7 +560,7 @@ class ISOPlot:
             raise ValueError(msg)
         if self._has_subplots:
             plt.tight_layout()
-        self.figure.show()
+        plt.show()
 
     @functools.wraps(plt.close)
     def close(self, fig: int | str | Figure | None = None) -> None:
@@ -1178,7 +1178,7 @@ class ISOPlot:
         """
         # Merge default scatter parameters with provided ones
         # Remove data from scatter_params to avoid conflict
-        scatter_params = self._scatter_params.model_copy()
+        scatter_params = self._scatter_params.copy()
         scatter_params.drop("data")
         scatter_params.update(**params)
 
@@ -1259,11 +1259,44 @@ class ISOPlot:
         >>> plot.show() # xdoctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 3
         True
+
+        Add a SPI layer from spi data:
+        >>> # Create a custom distribution
+        >>> from soundscapy.spi import MultiSkewNorm
+        >>> import soundscapy as sspy
+        >>> spi_msn = MultiSkewNorm.from_params(msn_params)
+        >>> # Generate random samples
+        >>> spi_msn.sample(1000)
+        >>> data = sspy.add_iso_coords(sspy.isd.load())
+        >>> data = sspy.isd.select_location_ids(
+        ...     data,
+        ...     ['CamdenTown', 'PancrasLock', 'RussellSq', 'RegentsParkJapan']
+        ... )
+
+        >>> mp3 = (
+        ...     ISOPlot(
+        ...         data=data,
+        ...         title="Soundscape Density Plots with corrected ISO coordinates",
+        ...         hue="SessionID",
+        ...     )
+        ...     .create_subplots(
+        ...         subplot_by="LocationID",
+        ...         figsize=(4, 4),
+        ...         auto_allocate_axes=True,
+        ...     )
+        ...     .add_scatter()
+        ...     .add_simple_density(fill=False)
+        ...     .add_spi(spi_target_data=spi_msn.sample_data, show_score="under title")
+        ...     .style()
+        ... )
+        >>> mp3.show() # xdoctest: +SKIP
         >>> plot.close()  # Clean up
+
+        # BUG: This last doctest doesn't show the spi score under the title
 
         """
         if layer_class == SPISimpleLayer:
-            spi_simple_params = self._spi_simple_density_params.model_copy()
+            spi_simple_params = self._spi_simple_density_params.copy()
             spi_simple_params.drop("data")
             spi_simple_params.update(**params)
 
@@ -1348,7 +1381,7 @@ class ISOPlot:
 
         """
         # Merge default density parameters with provided ones
-        density_params = self._density_params.model_copy()
+        density_params = self._density_params.copy()
         density_params.drop("data")
         density_params.update(**params)
 
@@ -1436,7 +1469,7 @@ class ISOPlot:
 
         """
         # Merge default simple density parameters with provided ones
-        simple_density_params = self._simple_density_params.model_copy()
+        simple_density_params = self._simple_density_params.copy()
         simple_density_params.drop("data")
         simple_density_params.update(**params)
 

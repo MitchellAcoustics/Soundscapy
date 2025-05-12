@@ -13,7 +13,7 @@ from soundscapy.plotting.param_models import (
 
 
 @pydantic_dataclass(config={"extra": "allow", "arbitrary_types_allowed": True})
-class TestParamModel(ParamModel):
+class TstParamModel(ParamModel):
     """A minimal subclass of ParamModel for testing with defined fields."""
 
     field1: str | None = None
@@ -21,6 +21,7 @@ class TestParamModel(ParamModel):
     field3: float | None = None
 
 
+# Basic ParamModel functionality tests
 def test_create_instance_with_known_type():
     """Test that ParamModel.create correctly creates an instance with known type."""
     instance = ScatterParams(param1=42)
@@ -72,47 +73,7 @@ def test_getitem_behavior():
         _ = model["missing"]
 
 
-def test_pop_behavior():
-    """Test pop method removes and returns the parameter value."""
-    model = ParamModel(param1=42)
-    value = model.pop("param1")
-
-    assert value == 42
-    assert "param1" not in model.get_changed_params()
-
-
-def test_drop_behavior_with_existing_key():
-    """
-    Test drop method removes an existing key.
-
-    If dropping a defined field, drop resets to default
-    """
-    model = ParamModel(param1=42, param2="example")
-    model.drop("param1")
-
-    assert "param1" not in model.get_changed_params()
-    assert model.get("param1") is None
-
-
-def test_drop_behavior_ignore_missing():
-    """Test drop method ignores a missing key when ignore_missing=True."""
-    model = ParamModel(param1=42)
-    model.drop("missing_key", ignore_missing=True)
-
-    assert model.get("param1") == 42
-
-
-def test_field_names_property():
-    """Test that defined_field_names property returns all field names."""
-    # Note: defined_field_names refers to the predefined attributes of the model
-    # Extra params do not count
-    model = ScatterParams(s=42, param2="example")
-    assert model["s"] == 42
-    assert model.get("s") == 42
-    assert "s" in model.defined_field_names
-    assert "param2" not in model.defined_field_names
-
-
+# Tests for specific parameter model types
 def test_param_models_instantiation():
     """Test creating parameter models using the factory method."""
     # Test creating various parameter types
@@ -178,68 +139,6 @@ def test_scatter_params_as_dict():
     assert params_dict["s"] == 50
 
 
-def test_update_valid_fields():
-    """Test updating valid fields in the model."""
-    model = TestParamModel()
-    model.update(field1="value1", field2=123, extra="allow")
-    assert model.get("field1") == "value1"
-    assert model.get("field2") == 123
-
-
-def test_update_ignore_null_functionality():
-    """Test that None values are removed when ignore_null is True."""
-    model = TestParamModel()
-    model.update(field3=456, field2=None, ignore_null=True)
-    assert model.get("field3") == 456
-    assert model.get("field2") == 10
-
-    model.update(field2=None, ignore_null=False)
-    assert model.get("field2") is None
-
-
-def test_update_overwrites_default():
-    """Test that a default value is overwritten during update."""
-    model = TestParamModel()
-    assert model.get("field2") == 10  # Default value
-    model.update(field2=99)
-    assert model.get("field2") == 99  # Updated value
-
-
-def test_get_with_default():
-    """Test retrieving a field with a default fallback value."""
-    model = TestParamModel()
-    assert model.get("missing_field", default="default_value") == "default_value"
-
-
-def test_getitem_existing_field():
-    """Test dictionary-style access for existing fields."""
-    model = TestParamModel(field1="value1")
-    assert model["field1"] == "value1"
-
-
-def test_getitem_nonexistent_field():
-    """Test dictionary-style access raises KeyError for nonexistent fields."""
-    model = TestParamModel()
-    with pytest.raises(KeyError):
-        _ = model["nonexistent"]
-
-
-def test_as_dict_method():
-    """Test that as_dict outputs the expected dictionary."""
-    model = TestParamModel(field2=42, field3=3.14)
-    result = model.as_dict()
-    assert result["field2"] == 42
-    assert result["field3"] == 3.14
-
-
-def test_get_changed_params():
-    """Test that changed parameters are returned correctly."""
-    model = TestParamModel(field2=42)
-    model.update(field2=99)
-    changed_params = model.get_changed_params()
-    assert changed_params["field2"] == 99
-
-
 def test_get_changed_seaborn_params():
     """Test that changed parameters are properly returned."""
     model = SeabornParams(alpha=42, x="ISOPleasant")
@@ -251,84 +150,10 @@ def test_get_changed_seaborn_params():
     assert "x" not in changed_params
 
 
-def test_get_multiple_fields():
-    """Test retrieval of multiple fields as a dictionary."""
-    model = TestParamModel(field1="value1", field2=99)
-    multiple_fields = model.get_multiple(["field1", "field2", "nonexistent"])
-    assert multiple_fields["field1"] == "value1"
-    assert multiple_fields["field2"] == 99
-    assert "nonexistent" not in multiple_fields
-
-
-def test_pop_existing_field():
-    """Test popping an existing field."""
-    model = TestParamModel(field3=3.14)
-    value = model.pop("field3")
-    assert value == 3.14
-    # pop resets to default for defined fields
-    assert "field3" in model.as_dict()
-
-    model.update(field4=20)
-    value = model.pop("field4")
-    assert value == 20
-    with pytest.raises(KeyError):
-        _ = model["field4"]
-
-
-def test_pop_nonexistent_field():
-    """Test popping a nonexistent field raises KeyError."""
-    model = TestParamModel()
-    with pytest.raises(KeyError):
-        model.pop("nonexistent")
-
-
-def test_drop_single_field():
-    """Test dropping a single field."""
-    model = TestParamModel(field1="value1")
-    model.drop("field1")
-    assert "field1" not in model.as_dict()
-
-
-def test_drop_multiple_fields():
-    """Test dropping multiple fields."""
-    model = TestParamModel(field2=42, field3=3.14)
-    model.drop(["field2", "field3"])
-    assert "field2" not in model.as_dict()
-    assert "field3" not in model.as_dict()
-
-
-def test_drop_nonexistent_field_ignore():
-    """Test dropping nonexistent fields with ignore_missing=True."""
-    model = TestParamModel()
-    model.drop("nonexistent", ignore_missing=True)  # Should not raise any exception
-
-
-def test_drop_nonexistent_field_error():
-    """Test dropping nonexistent fields with ignore_missing=False raises KeyError."""
-    model = TestParamModel()
-    with pytest.raises(KeyError):
-        model.drop("nonexistent", ignore_missing=False)
-
-
-def test_defined_field_names_property():
-    """Test the defined_field_names property."""
-    model = TestParamModel()
-    defined_fields = model.defined_field_names
-    assert "field1" in defined_fields
-    assert "field2" in defined_fields
-    assert "field3" in defined_fields
-
-
-def test_current_field_names_property():
-    """Test the current_field_names property."""
-    model = TestParamModel(field1="value1")
-    current_fields = model.current_field_names
-    assert "field1" in current_fields
-
-
+# Tests for update functionality
 def test_update_valid_fields():
     """Test updating valid fields in the model."""
-    model = TestParamModel()
+    model = TstParamModel()
     model.update(field1="value1", field2=123, extra="allow")
     assert model.get("field1") == "value1"
     assert model.get("field2") == 123
@@ -336,45 +161,54 @@ def test_update_valid_fields():
 
 def test_update_ignore_null_functionality():
     """Test that None values are removed when ignore_null is True."""
-    model = TestParamModel()
+    model = TstParamModel()
+    # Test with ignore_null=True (default)
     model.update(field3=456, field2=None)
     assert model.get("field3") == 456
-    assert model.get("field2") == 10
+    assert model.get("field2") == 10  # Default value preserved
 
+    # Test with ignore_null=False
     model.update(field2=None, ignore_null=False)
-    assert model.get("field2") is None
+    assert model.get("field2") is None  # None value applied
+
+    # Test with explicit ignore_null=True
+    model = TstParamModel()
+    model.update(field3=456, field2=None, ignore_null=True)
+    assert model.get("field3") == 456
+    assert model.get("field2") == 10  # Default value preserved
 
 
 def test_update_overwrites_default():
     """Test that a default value is overwritten during update."""
-    model = TestParamModel()
+    model = TstParamModel()
     assert model.get("field2") == 10  # Default value
     model.update(field2=99)
     assert model.get("field2") == 99  # Updated value
 
 
+# Tests for get functionality
 def test_get_with_default():
     """Test retrieving a field with a default fallback value."""
-    model = TestParamModel()
+    model = TstParamModel()
     assert model.get("missing_field", default="default_value") == "default_value"
 
 
 def test_getitem_existing_field():
     """Test dictionary-style access for existing fields."""
-    model = TestParamModel(field1="value1")
+    model = TstParamModel(field1="value1")
     assert model["field1"] == "value1"
 
 
 def test_getitem_nonexistent_field():
     """Test dictionary-style access raises KeyError for nonexistent fields."""
-    model = TestParamModel()
+    model = TstParamModel()
     with pytest.raises(KeyError):
         _ = model["nonexistent"]
 
 
 def test_as_dict_method():
     """Test that as_dict outputs the expected dictionary."""
-    model = TestParamModel(field2=42, field3=3.14)
+    model = TstParamModel(field2=42, field3=3.14)
     result = model.as_dict()
     assert result["field2"] == 42
     assert result["field3"] == 3.14
@@ -382,7 +216,7 @@ def test_as_dict_method():
 
 def test_get_changed_params():
     """Test that changed parameters are returned correctly."""
-    model = TestParamModel(field2=42)
+    model = TstParamModel(field2=42)
     model.update(field2=99)
     changed_params = model.get_changed_params()
     assert changed_params["field2"] == 99
@@ -390,41 +224,84 @@ def test_get_changed_params():
 
 def test_get_multiple_fields():
     """Test retrieval of multiple fields as a dictionary."""
-    model = TestParamModel(field1="value1", field2=99)
+    model = TstParamModel(field1="value1", field2=99)
     multiple_fields = model.get_multiple(["field1", "field2", "nonexistent"])
     assert multiple_fields["field1"] == "value1"
     assert multiple_fields["field2"] == 99
     assert "nonexistent" not in multiple_fields
 
 
+# Tests for pop functionality
+def test_pop_behavior():
+    """Test pop method removes and returns the parameter value."""
+    model = ParamModel(param1=42)
+    value = model.pop("param1")
+
+    assert value == 42
+    assert "param1" not in model.get_changed_params()
+
+
 def test_pop_existing_field():
     """Test popping an existing field."""
-    model = TestParamModel(field2=20)
-    value = model.pop("field2")
-    assert value == 20
-    assert model["field2"] == 10  # .pop Resets to default
+    # Test popping a defined field
+    model = TstParamModel(field3=3.14)
+    value = model.pop("field3")
+    assert value == 3.14
+    # pop resets to default for defined fields
+    assert "field3" in model.as_dict()
 
-    model1 = TestParamModel(field4="value4")
-    value = model1.pop("field4")
-    assert value == "value4"
+    # Test popping a custom field
+    model.update(field4=20)
+    value = model.pop("field4")
+    assert value == 20
     with pytest.raises(KeyError):
-        _ = model1["field4"]
+        _ = model["field4"]
+
+    # Test popping a defined field with default value
+    model2 = TstParamModel(field2=20)
+    value = model2.pop("field2")
+    assert value == 20
+    assert model2["field2"] == 10  # .pop Resets to default
 
 
 def test_pop_nonexistent_field():
     """Test popping a nonexistent field raises KeyError."""
-    model = TestParamModel()
+    model = TstParamModel()
     with pytest.raises(KeyError):
         model.pop("nonexistent")
 
 
+# Tests for drop functionality
+def test_drop_behavior_with_existing_key():
+    """
+    Test drop method removes an existing key.
+
+    If dropping a defined field, drop resets to default
+    """
+    model = ParamModel(param1=42, param2="example")
+    model.drop("param1")
+
+    assert "param1" not in model.get_changed_params()
+    assert model.get("param1") is None
+
+
+def test_drop_behavior_ignore_missing():
+    """Test drop method ignores a missing key when ignore_missing=True."""
+    model = ParamModel(param1=42)
+    model.drop("missing_key", ignore_missing=True)
+
+    assert model.get("param1") == 42
+
+
 def test_drop_single_field():
     """Test dropping a single field."""
-    model = TestParamModel(field1="value1")
+    # Test dropping a defined field
+    model = TstParamModel(field1="value1")
     model.drop("field1")
     with pytest.raises(KeyError):
-        assert model["field1"] is None
+        _ = model["field1"]
 
+    # Test dropping a custom field
     model.field4 = "value4"
     assert model.field4 == "value4"
     model.drop("field4")
@@ -433,28 +310,47 @@ def test_drop_single_field():
 
 def test_drop_multiple_fields():
     """Test dropping multiple fields."""
-    model = TestParamModel(field4=42, field5=3.14)
-    model.drop(["field4", "field5"])
-    assert "field4" not in model.as_dict()
-    assert "field5" not in model.as_dict()
+    # Test dropping defined fields
+    model1 = TstParamModel(field2=42, field3=3.14)
+    model1.drop(["field2", "field3"])
+    assert "field2" not in model1.as_dict()
+    assert "field3" not in model1.as_dict()
+
+    # Test dropping custom fields
+    model2 = TstParamModel(field4=42, field5=3.14)
+    model2.drop(["field4", "field5"])
+    assert "field4" not in model2.as_dict()
+    assert "field5" not in model2.as_dict()
 
 
 def test_drop_nonexistent_field_ignore():
     """Test dropping nonexistent fields with ignore_missing=True."""
-    model = TestParamModel()
+    model = TstParamModel()
     model.drop("nonexistent", ignore_missing=True)  # Should not raise any exception
 
 
 def test_drop_nonexistent_field_error():
     """Test dropping nonexistent fields with ignore_missing=False raises KeyError."""
-    model = TestParamModel()
+    model = TstParamModel()
     with pytest.raises(KeyError):
         model.drop("nonexistent", ignore_missing=False)
 
 
+# Tests for field name properties
+def test_field_names_property():
+    """Test that defined_field_names property returns all field names."""
+    # Note: defined_field_names refers to the predefined attributes of the model
+    # Extra params do not count
+    model = ScatterParams(s=42, param2="example")
+    assert model["s"] == 42
+    assert model.get("s") == 42
+    assert "s" in model.defined_field_names
+    assert "param2" not in model.defined_field_names
+
+
 def test_defined_field_names_property():
     """Test the defined_field_names property."""
-    model = TestParamModel()
+    model = TstParamModel()
     defined_fields = model.defined_field_names
     assert "field1" in defined_fields
     assert "field2" in defined_fields
@@ -463,10 +359,5 @@ def test_defined_field_names_property():
 
 def test_current_field_names_property():
     """Test the current_field_names property."""
-    model = TestParamModel(field1="value1")
+    model = TstParamModel(field1="value1")
     model.extra_field = "extra_value"
-    current_fields = model.current_field_names
-    assert "field1" in current_fields
-    assert "field2" in current_fields
-    assert "field3" in current_fields
-    assert "extra_field" in current_fields
