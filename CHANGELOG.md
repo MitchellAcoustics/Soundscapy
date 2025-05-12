@@ -5,6 +5,40 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 0.8.0
+
+### Added
+
+- New **Soundscape Perception Indices (SPI)** module
+  - Provides tools for calculating Soundscape Perception Indices
+  - Implements Multi-dimensional Skewed Normal (MSN) distribution for soundscape analysis
+  - Includes R wrapper for core statistical functionality
+  - Adds SPI score calculation and visualization
+
+- Completely redesigned **ISOPlot API** with layered plotting approach
+  - New flexible and extensible plotting interface
+  - Layered architecture for combining different plot types
+  - Enhanced subplot support for comparing multiple conditions
+  - Improved parameter handling for consistent styling
+  - Added SPI visualization integration
+
+### Changed
+
+- Replaced CircumplexPlot with the new ISOPlot interface
+- Removed Pydantic ParamModels in favor of dataclass-based parameter handling
+- Improved logging system with new sspylogging module
+- Enhanced plotting documentation, testing, and configuration
+- Refactored subplot creation with improved code organization
+- Removed Plotly dependency to simplify installation
+- Updated notebook tutorials to demonstrate new interfaces
+
+### Developer Experience
+
+- Added pre-commit hooks and improved CI/CD pipeline
+- Enhanced type hints and documentation throughout the codebase
+- Updated GitHub issue templates and workflow configurations
+- Improved test coverage for core functionality
+
 ## [0.7.6] - 2024-11-06
 
 ### Changed

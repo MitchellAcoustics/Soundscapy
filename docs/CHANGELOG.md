@@ -5,6 +5,98 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 0.8.0
+
+### Added
+
+- New **Soundscape Perception Indices (SPI)** module
+  - Provides tools for calculating Soundscape Perception Indices
+  - Implements Multi-dimensional Skewed Normal (MSN) distribution for soundscape analysis
+  - Includes R wrapper for core statistical functionality
+  - Adds SPI score calculation and visualization
+
+- Completely redesigned **ISOPlot API** with layered plotting approach
+  - New flexible and extensible plotting interface
+  - Layered architecture for combining different plot types
+  - Enhanced subplot support for comparing multiple conditions
+  - Improved parameter handling for consistent styling
+  - Added SPI visualization integration
+
+### Changed
+
+- Replaced CircumplexPlot with the new ISOPlot interface
+- Removed Pydantic ParamModels in favor of dataclass-based parameter handling
+- Improved logging system with new sspylogging module
+- Enhanced plotting documentation, testing, and configuration
+- Refactored subplot creation with improved code organization
+- Removed Plotly dependency to simplify installation
+- Updated notebook tutorials to demonstrate new interfaces
+
+### Developer Experience
+
+- Added pre-commit hooks and improved CI/CD pipeline
+- Enhanced type hints and documentation throughout the codebase
+- Updated GitHub issue templates and workflow configurations
+- Improved test coverage for core functionality
+
+## [0.7.6] - 2024-11-06
+
+### Changed
+
+- Improved handling of optional dependencies to provide better error messages and IDE support
+- Audio components (like `Binaural`) can now be imported directly from the top-level package
+  (`from soundscapy import Binaural`) while maintaining helpful error messages when
+  dependencies are missing
+- Centralized optional dependency configuration in `_optionals.py` for better maintainability
+
+### Developer Notes
+
+- No changes required to existing code using audio components
+- The new system provides better IDE completion support while maintaining the same runtime behavior
+- Optional components can still be imported from their original location
+  (`from soundscapy.audio import Binaural`) or from the top level
+  (`from soundscapy import Binaural`)
+
+## [0.7.5]
+
+### Added
+
+#### Support for Optional Dependencies
+
+Soundscapy splits its functionality into optional modules to reduce the number of dependencies required for basic functionality. By default, Soundscapy includes the survey data processing and plotting functionality.
+
+If you would like to use the binaural audio processing and psychoacoustics functionality, you will need to install the optional `audio` dependency:
+
+```bash
+pip install soundscapy[audio]
+```
+
+To install all optional dependencies, use the following command:
+
+```bash
+pip install soundscapy[all]
+```
+
+### Developer notes
+
+#### Dev Container Configuration
+
+- Added a new `devcontainer.json` file to configure the development container with specific features and VSCode extensions. (`.devcontainer/devcontainer.json` [.devcontainer/devcontainer.jsonR1-R69](diffhunk://#diff-24ad71c8613ddcf6fd23818cb3bb477a1fb6d83af4550b0bad43099813088686R1-R69))
+- Updated `.dockerignore` to exclude the virtual environment directory. (`.devcontainer/.dockerignore` [.devcontainer/.dockerignoreR1](diffhunk://#diff-7691e653179b9ed2292151d962426f76e6f5378e4989e741859bdfcbcef16b97R1))
+
+#### GitHub Workflows
+
+- Removed old CI, release, and test-release workflows. (`.github/workflows/ci.yml` [[1]](diffhunk://#diff-b803fcb7f17ed9235f1e5cb1fcd2f5d3b2838429d4368ae4c57ce4436577f03fL1-L40) `.github/workflows/release.yml` [[2]](diffhunk://#diff-87db21a973eed4fef5f32b267aa60fcee5cbdf03c67fafdc2a9b553bb0b15f34L1-L33) `.github/workflows/test-release.yml` [[3]](diffhunk://#diff-191bb5b4e97db48c9d0bdb945dd00e17b53249422f60a642e9e8d73250b5913aL1-L53)
+- Added a new workflow for tagged releases to automate the release process, including building and publishing to PyPI and TestPyPI. (`.github/workflows/tag-release.yml` [.github/workflows/tag-release.ymlR1-R138](diffhunk://#diff-21e1251c1676ed10064d2d98ab1a8f6471a9718058bd316970abe934169f2b60R1-R138))
+- Added a new workflow for testing tagged releases, including installation from TestPyPI and running tests. (`.github/workflows/test-tag-release.yml` [.github/workflows/test-tag-release.ymlR1-R114](diffhunk://#diff-11b7dedbf7b09ab5a0bd90aa70d8a2eda1918dab64a511c82104706cfa09f3b7R1-R114))
+- Added new workflows for running tests on the main codebase and tutorial notebooks. (`.github/workflows/test.yml` [[1]](diffhunk://#diff-faff1af3d8ff408964a57b2e475f69a6b7c7b71c9978cccc8f471798caac2c88R1-R52) `.github/workflows/test-tutorials.yml` [[2]](diffhunk://#diff-01bd86ab14c3e8d7d1382e5ed2172404eb7d3c46bbffeffe09fc11431885e2a0R1-R42)
+
+## [0.7.3]
+
+### Improved
+
+- Allowed the user to request files to be resampled upon loading. This is necessary for Mosqito metrics, which requires (and will itself resample) the audio files to be 48 kHz. The user can specify the desired sample rate in `Binaural.from_wav()` and higher level functions like `AudioAnalysis.analyse_file`, `AudioAnalysis.analyse_folder`.
+
 ## [0.7.0]
 
 Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surveys`, `databases`, `audio`, `plotting`), and improving the overall structure and functionality of the package. Also added more comprehensive documentation and test coverage.
