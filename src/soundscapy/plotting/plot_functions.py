@@ -16,15 +16,6 @@ from matplotlib.ticker import AutoMinorLocator
 from matplotlib.typing import ColorType
 
 from soundscapy.plotting.backends_deprecated import Backend
-from soundscapy.plotting.dataclass_param_models import (
-    DensityParams,
-    MplLegendLocType,
-    ScatterParams,
-    SeabornPaletteType,
-    SimpleDensityParams,
-    StyleParams,
-    SubplotsParams,
-)
 from soundscapy.plotting.defaults import (
     DEFAULT_BW_ADJUST,
     DEFAULT_COLOR,
@@ -38,6 +29,15 @@ from soundscapy.plotting.defaults import (
     RECOMMENDED_MIN_SAMPLES,
 )
 from soundscapy.plotting.iso_plot import ISOPlot
+from soundscapy.plotting.param_models import (
+    DensityParams,
+    MplLegendLocType,
+    ScatterParams,
+    SeabornPaletteType,
+    SimpleDensityParams,
+    StyleParams,
+    SubplotsParams,
+)
 from soundscapy.sspylogging import get_logger
 
 # Error messages
@@ -50,7 +50,7 @@ PLOT_LAYER_VALUE_ERROR = (
     "Supported layers are: 'scatter', 'density', 'simple_density'. Got: {layers}"
 )
 SUBPLOT_DATA_ERROR = (
-    "If data is a DataFrame, subplot_by must a grouping column in the "
+    "If data is a DataFrame, subplot_by must be a grouping column in the "
     "dataframe to create subplots."
 )
 XY_DATA_ERROR = (
@@ -494,6 +494,10 @@ def _prepare_subplot_data(
     # Validate subplot titles if provided as a list
     if isinstance(subplot_titles_list, list) and len(subplot_titles_list) < n_subplots:
         raise ValueError(SUBPLOT_TITLES_ERROR.format(n_subplots=n_subplots))
+
+    if n_subplots <= 1:
+        msg = "Only one subplot provided. Use `iso_plot` for a single plot. "
+        raise ValueError(msg)
 
     return data_list, subplot_titles_list, n_subplots
 
@@ -1167,6 +1171,11 @@ def create_circumplex_subplots(
         if incl_scatter:
             plot_layers.insert(0, "scatter")
     else:
+        warnings.warn(
+            "Can't recognize plot type. Using default 'density' plot type with scatter.",
+            UserWarning,
+            stacklevel=2,
+        )
         plot_layers = ["scatter", "density"]
 
     # Map subtitles to subplot_titles
