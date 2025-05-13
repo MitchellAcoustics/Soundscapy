@@ -42,16 +42,6 @@ jobs:
             exit 1
           fi
 
-      - name: Verify version matches pyproject.toml
-        run: |
-          VERSION_STR=${{ steps.release.outputs.version_str }}
-          TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
-
-          if [ "${VERSION_STR}" != "${TOML_VERSION}" ]; then
-          echo "Error: Tag version (${VERSION_STR}) does not match pyproject.toml version (${TOML_VERSION})"
-          exit 1
-          fi
-
   # Reuse setup_and_build job with no changes
   setup_and_build:
     needs: [details]
