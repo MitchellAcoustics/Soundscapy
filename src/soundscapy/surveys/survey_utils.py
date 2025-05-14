@@ -5,7 +5,6 @@ This module contains fundamental functions and constants used across
 the soundscapy package for handling and analyzing soundscape survey data.
 """
 
-# %%
 from dataclasses import dataclass, field
 from enum import Enum
 
