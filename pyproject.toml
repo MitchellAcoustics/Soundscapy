@@ -56,6 +56,7 @@ dependencies = [
     "loguru>=0.7.2",
     "numpy!=1.26",
     "pandas[excel]>=2.2.2",
+    "plot-likert>=0.5.0",
     "pydantic>=2.8.2",
     "pyyaml>=6.0.2",
     "scipy>=1.14.1",

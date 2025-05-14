@@ -2469,6 +2469,20 @@ wheels = [
 ]
 
 [[package]]
+name = "plot-likert"
+version = "0.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/61/a3/adf66dbc61cce5cc2286c5c85289782a0d9b71f47cedfd2266a8a215d430/plot-likert-0.5.0.tar.gz", hash = "sha256:9315b840e3c54c99af57a414fdde477eac56014b19958480f40e896c501959bb", size = 11184, upload-time = "2023-08-11T03:15:27.109Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9a/f8/6d7742dec2f0ee5bbaab5242080139b4bb278aafaaaac36050e383e14ccd/plot_likert-0.5.0-py3-none-any.whl", hash = "sha256:970f033eed10f0a10aea56320577a98fb15bcb0c8e04f3802d36e0caf67f4c85", size = 11184, upload-time = "2023-08-11T03:12:45.053Z" },
+]
+
+[[package]]
 name = "plotly"
 version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3608,6 +3622,7 @@ dependencies = [
     { name = "loguru" },
     { name = "numpy" },
     { name = "pandas", extra = ["excel"] },
+    { name = "plot-likert" },
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "scipy" },
@@ -3677,6 +3692,7 @@ requires-dist = [
     { name = "numba", marker = "extra == 'audio'", specifier = ">=0.59" },
     { name = "numpy", specifier = "!=1.26" },
     { name = "pandas", extras = ["excel"], specifier = ">=2.2.2" },
+    { name = "plot-likert", specifier = ">=0.5.0" },
     { name = "pydantic", specifier = ">=2.8.2" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "rpy2", marker = "extra == 'spi'", specifier = ">=3.5.0" },

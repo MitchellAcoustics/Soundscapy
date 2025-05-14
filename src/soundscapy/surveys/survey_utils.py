@@ -5,10 +5,13 @@ This module contains fundamental functions and constants used across
 the soundscapy package for handling and analyzing soundscape survey data.
 """
 
+# %%
+from dataclasses import dataclass, field
 from enum import Enum
 
 import pandas as pd
 from loguru import logger
+from plot_likert.scales import Scale
 
 
 class PAQ(Enum):
@@ -41,6 +44,93 @@ class PAQ(Enum):
 
 PAQ_LABELS = [paq.label for paq in PAQ]
 PAQ_IDS = [paq.id for paq in PAQ]
+
+
+@dataclass
+class LikertScale:
+    """
+    Contains different Likert scale options for survey questions.
+
+    This class provides standardized 5-point Likert scales questions commonly used
+    in acoustic and soundscape surveys.
+
+    Attributes:
+        PAQ: Agreement scale from "Strongly disagree" to "Strongly agree"
+        SOURCE: Source perception scale from "Not at all" to "Dominates completely"
+        OVERALL: Quality assessment scale from "Very bad" to "Very good"
+        APPROPRIATE: Appropriateness scale from "Not at all" to "Perfectly"
+        LOUD: Loudness perception scale from "Not at all" to "Extremely"
+        OFTEN: Frequency scale with first-time option from "Never / This is my first time here" to "Very often"
+        VISIT: Standard frequency scale from "Never" to "Very often"
+
+    """  # noqa: E501
+
+    paq: Scale = field(
+        default_factory=lambda: [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neutral",
+            "Somewhat agree",
+            "Strongly agree",
+        ]
+    )
+    source: Scale = field(
+        default_factory=lambda: [
+            "Not at all",
+            "A little",
+            "Moderately",
+            "A lot",
+            "Dominates completely",
+        ]
+    )
+    overall: Scale = field(
+        default_factory=lambda: [
+            "Very bad",
+            "Bad",
+            "Neither bad nor good",
+            "Good",
+            "Very good",
+        ]
+    )
+    appropriate: Scale = field(
+        default_factory=lambda: [
+            "Not at all",
+            "A little",
+            "Moderately",
+            "A lot",
+            "Perfectly",
+        ]
+    )
+    loud: Scale = field(
+        default_factory=lambda: [
+            "Not at all",
+            "A little",
+            "Moderately",
+            "Very",
+            "Extremely",
+        ]
+    )
+    often: Scale = field(
+        default_factory=lambda: [
+            "Never / This is my first time here",
+            "Rarely",
+            "Sometimes",
+            "Often",
+            "Very often",
+        ]
+    )
+    visit: Scale = field(
+        default_factory=lambda: [
+            "Never",
+            "Rarely",
+            "Sometimes",
+            "Often",
+            "Very often",
+        ]
+    )
+
+
+LIKERT_SCALES = LikertScale()
 
 EQUAL_ANGLES = (0, 45, 90, 135, 180, 225, 270, 315)
 
@@ -212,3 +302,5 @@ def mean_responses(df: pd.DataFrame, group: str) -> pd.DataFrame:
 
 
 # Add other utility functions here as needed
+
+# %%

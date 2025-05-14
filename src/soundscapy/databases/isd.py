@@ -26,12 +26,19 @@ from importlib import resources
 
 import pandas as pd
 from loguru import logger
+from pandas import CategoricalDtype
+from plot_likert.scales import Scale
 
 from soundscapy.surveys.processing import (
     calculate_iso_coords,
     likert_data_quality,
 )
-from soundscapy.surveys.survey_utils import rename_paqs
+from soundscapy.surveys.survey_utils import (
+    LIKERT_SCALES,
+    PAQ_IDS,
+    PAQ_LABELS,
+    rename_paqs,
+)
 
 # ISD-specific PAQ aliases
 _PAQ_ALIASES = {
@@ -46,7 +53,7 @@ _PAQ_ALIASES = {
 }
 
 
-def load() -> pd.DataFrame:
+def load(locations: list[str] | None = None) -> pd.DataFrame:
     """
     Load the example "ISD" csv file to a DataFrame.
 
@@ -83,6 +90,10 @@ def load() -> pd.DataFrame:
         data = pd.read_csv(f)
     data = rename_paqs(data, _PAQ_ALIASES)
     logger.info("Loaded ISD data from Soundscapy's included CSV file.")
+
+    if locations is not None:
+        data = select_location_ids(data, locations)
+
     return data
 
 
@@ -214,6 +225,77 @@ def validate(
         logger.info("All PAQ data passed quality checks")
 
     return data, excl_data
+
+
+def _match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
+    """
+    Match a column in the DataFrame to the Likert scale.
+
+    Parameters
+    ----------
+    col : str
+        Column name to match.
+    likert_scale : LikertScale
+        Likert scale to match against.
+
+    Returns
+    -------
+    Scale
+        Likert scale object.
+
+    """
+    if col in PAQ_IDS or col in PAQ_LABELS:
+        return LIKERT_SCALES.paq
+    if col in ["traffic_noise", "other_noise", "human_sounds", "natural_sounds"]:
+        return LIKERT_SCALES.source
+    if col in ["overall_sound_environment"]:
+        return LIKERT_SCALES.overall
+    if col in ["appropriate"]:
+        return LIKERT_SCALES.appropriate
+    if col in ["perceived_loud"]:
+        return LIKERT_SCALES.loud
+    if col in ["visit_often"]:
+        return LIKERT_SCALES.often
+    if col in ["like_to_visit"]:
+        return LIKERT_SCALES.visit
+
+    msg = f"Column {col} does not match any known Likert scale."
+    raise ValueError(msg)
+
+
+def likert_categorical_from_data(
+    data: pd.Series,
+) -> pd.Categorical:
+    """
+    Get the Likert labels for a specific column in the DataFrame.
+
+    Parameters
+    ----------
+    data : pd.Series
+        Series containing the data.
+
+    Returns
+    -------
+    pd.Series
+        Series with Likert labels.
+
+    Raises
+    ------
+    ValueError
+        If the column does not match any known Likert scale.
+
+    """
+    likert_scale = _match_col_to_likert_scale(str(data.name))
+    if isinstance(data, pd.Categorical):
+        return data
+
+    data = data.astype("int") - 1  # Convert to zero-based index
+    codes = data.to_list()
+
+    return pd.Categorical.from_codes(
+        codes,
+        dtype=CategoricalDtype(categories=likert_scale, ordered=True),
+    )
 
 
 def _isd_select(

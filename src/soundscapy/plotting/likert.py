@@ -5,12 +5,19 @@ from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
+import plot_likert
 import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
+from soundscapy.databases.isd import likert_categorical_from_data
 from soundscapy.surveys import rename_paqs, return_paqs
-from soundscapy.surveys.survey_utils import EQUAL_ANGLES, PAQ_LABELS
+from soundscapy.surveys.survey_utils import (
+    EQUAL_ANGLES,
+    LIKERT_SCALES,
+    PAQ_IDS,
+    PAQ_LABELS,
+)
 
 
 def paq_radar_plot(
@@ -178,3 +185,67 @@ def paq_radar_plot(
     plt.tight_layout()
 
     return ax
+
+
+def paq_likert(
+    data: pd.DataFrame,
+    title: str = "Stacked Likert Plot",
+    paq_cols: list[str] = PAQ_IDS,
+    *,
+    legend: bool = True,
+    ax: Axes | None = None,
+    plot_percentage: bool = False,
+    bar_labels: bool = True,
+    **kwargs,
+) -> None:
+    """
+    Create a Likert scale plot for PAQ (Perceived Affective Quality) data.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        DataFrame containing PAQ values.
+    paq_cols : list[str], optional
+        List of column names containing PAQ data, by default PAQ_IDS.
+    title : str, optional
+        Plot title, by default "Stacked Likert Plot".
+    legend : bool, optional
+        Whether to show the legend, by default True.
+    ax : Axes, optional
+        Matplotlib axes to plot on, by default None.
+    plot_percentage : bool, optional
+        Whether to show percentages instead of absolute values, by default False.
+    bar_labels : bool, optional
+        Whether to show bar labels, by default True.
+    **kwargs
+        Additional keyword arguments passed to plot_likert.plot_likert.
+
+    Returns
+    -------
+    None
+        This function does not return anything, it plots directly to the given axes.
+
+    Examples
+    --------
+    >>> import soundscapy as sspy
+    >>> data = sspy.isd.load(['CamdenTown'])
+    >>> paq_likert(data, "Camden Town Likert data")
+    >>> plt.show() # xdoctest: +SKIP
+
+    """
+    new_data = data[paq_cols].copy()
+    new_data = new_data.apply(likert_categorical_from_data, axis=0)  # type: ignore
+
+    if ax is None:
+        _, ax = plt.subplots(figsize=(8, 6))
+
+    plot_likert.plot_likert(
+        new_data,
+        LIKERT_SCALES.paq,
+        plot_percentage=plot_percentage,
+        ax=ax,
+        legend=legend,
+        bar_labels=bar_labels,  # show the bar labels
+        title=title,
+        **kwargs,
+    )
