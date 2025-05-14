@@ -6,6 +6,7 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+" # v1.2.3-dev1
       - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+" # v1.2.3dev1
       - "v[0-9]+.[0-9]+.[0-9]+.dev[0-9]+" # v1.2.3.dev1
+  workflow_dispatch:
 
 jobs:
   # Reuse the details job with no changes
