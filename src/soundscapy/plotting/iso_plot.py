@@ -1,8 +1,8 @@
 """
 Main module for creating circumplex plots using different backends.
 
-Example:
--------
+Examples
+--------
 >>> from soundscapy import isd, surveys
 >>> from soundscapy.plotting.iso_plot import ISOPlot
 >>> df = isd.load()
@@ -87,8 +87,8 @@ class ISOPlot:
     This class provides methods for creating scatter plots and density plots
     based on the circumplex model of soundscape perception.
 
-    Example:
-    -------
+    Examples
+    --------
     >>> from soundscapy import isd, surveys
     >>> df = isd.load()
     >>> df = surveys.add_iso_coords(df)

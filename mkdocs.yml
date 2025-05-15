@@ -21,9 +21,9 @@ nav:
       - tutorials/index.md
       - "Quick Start": tutorials/QuickStart.ipynb
       - "Quick Start pt. 2": tutorials/0_QuickStart_for_Beginners.ipynb
-      - "Understanding Soundscape Analysis": 1_Understanding_Soundscape_Analysis.ipynb
-      - "Working with Soundscape Survey Data": 2_Working_with_Soundscape_Survey_Data.ipynb
-      - "Advanced Visualization Techniques": 3_Advanced_Visualization_Techniques.ipynb
+      - "Understanding Soundscape Analysis": tutorials/1_Understanding_Soundscape_Analysis.ipynb
+      - "Working with Soundscape Survey Data": tutorials/2_Working_with_Soundscape_Survey_Data.ipynb
+      - "Advanced Visualization Techniques": tutorials/3_Advanced_Visualization_Techniques.ipynb
       - "The Soundscape Perception Index (SPI)": tutorials/SoundscapePerceptionIndex-SPI.ipynb
       - "Using Soundscapy for Binaural Recording Analysis": tutorials/BinauralAnalysis.ipynb
       - "How To Analyse and Represent Soundscape Perception": tutorials/HowToAnalyseAndRepresentSoundscapes.ipynb
@@ -34,7 +34,14 @@ nav:
           - reference/plotting.md
           - reference/plotting/plot_functions.md
           - reference/plotting/iso_plot.md
-      - "Soundscape Perception Index (SPI)": reference/spi.md
+          - reference/plotting/likert.md
+          - reference/plotting/param_models.md
+          - reference/plotting/layers.md
+          - reference/plotting/plot_context.md
+          - reference/plotting/defaults.md
+      - "Soundscape Perception Index (SPI)":
+          - reference/spi.md
+          - reference/spi/msn.md
       - "Binaural Analysis": reference/audio.md
       - "Databases": reference/databases.md
   - "News":

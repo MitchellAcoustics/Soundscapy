@@ -4,6 +4,8 @@ This section provides an overview of the tools for using the Soundscape Percepti
 
 ::: soundscapy.spi
 options:
-show_root_heading: false
-show_root_toc_entry: false
-show_submodules: true
+    show_root_heading: false
+    show_root_toc_entry: false
+    show_submodules: true
+    members:
+    - msn
