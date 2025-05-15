@@ -1,125 +1,164 @@
-[project]
-name = "soundscapy"
-version = "0.7.8"
-description = "A python library for analysing and visualising soundscape assessments."
-authors = [{ name = "Andrew Mitchell", email = "a.j.mitchell@ucl.ac.uk" }]
-dependencies = [
-    "pandas[excel]>=2.2.2",
-    "seaborn>=0.13.2",
-    "plotly>=5.23.0",
-    "scipy>=1.14.1",
-    "pyyaml>=6.0.2",
-    "pydantic>=2.8.2",
-    "loguru>=0.7.2",
-    "numpy!=1.26",
-]
-readme = "README.md"
-requires-python = ">= 3.10"
-license = { text = "BSD-3-Clause" }
-keywords = ["soundscape", "psychoacoustics", "acoustics", "audio analysis"]
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-    "License :: OSI Approved :: BSD License",
-]
-
-[project.urls]
-repository = "https://github.com/MitchellAcoustics/Soundscapy"
-documentation = "https://soundscapy.readthedocs.io/en/latest/"
-
-[project.optional-dependencies]
-all = ["soundscapy[audio]"]
-audio = [
-    "mosqito>=1.2.1",
-    "scikit-maad>=1.4.3",
-    "tqdm>=4.66.5",
-    "numba>=0.59",
-    "acoustic-toolbox>=0.1.2",
-]
-
-[tool.uv]
-default-groups = ["dev", "test", "docs"]
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools-scm>=8", "setuptools>=64"]
 
 [dependency-groups]
-dev = ["bumpver>=2024.1130", "ruff>=0.7.2"]
-test = [
-    "pytest>=8.3.3",
-    "setuptools>=72.1.0",
-    "nbmake>=1.5.4",
-    "pytest-xdist>=3.6.1",
-    "xdoctest[all]>=1.1.6",
-    "pytest-mpl>=0.17.0",
-    "pytest-cov>=6.0.0",
+dev = [
+    "build>=1.2.2.post1",
+    "mypy>=1.15.0",
+    "pandas-stubs>=2.2.3.250308",
+    "pre-commit>=4.2.0",
+    "ruff>=0.7.2",
+    "scipy-stubs>=1.15.2.2",
+    "setuptools-scm>=8.3.1",
+    "tox>=4.25.0",
+    "twine>=6.1.0",
+    "types-pyyaml>=6.0.12.20250402",
+    "types-seaborn>=0.13.2.20250111",
 ]
 docs = [
-    "jupyter>=1.1.1",
-    "mkdocs>=1.6.0",
-    "mkdocs-material>=9.5.31",
-    "mkdocs-jupyter>=0.24.8",
-    "mkdocstrings[python]>=0.25.2",
-    "pymdown-extensions>=10.9",
     "ipywidgets>=8.1.3",
     "jupyter-dash>=0.4.2",
+    "jupyter>=1.1.1",
+    "mkdocs-include-markdown-plugin>=7.1.5",
+    "mkdocs-jupyter>=0.24.8",
+    "mkdocs-material>=9.5.31",
+    "mkdocs>=1.6.0",
+    "mkdocstrings[python]>=0.25.2",
+    "pymdown-extensions>=10.9",
+]
+test = [
+    "nbmake>=1.5.4",
+    "pytest-cov>=6.0.0",
+    "pytest-mpl>=0.17.0",
+    "pytest-xdist>=3.6.1",
+    "pytest>=8.3.3",
+    "setuptools>=72.1.0",
+    "xdoctest[all]>=1.1.6",
 ]
 
-[tool.uv.pip]
-universal = true
+[project]
+authors = [
+    {email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "loguru>=0.7.2",
+    "numpy!=1.26",
+    "pandas[excel]>=2.2.2",
+    "plot-likert>=0.5.0",
+    "pydantic>=2.8.2",
+    "pyyaml>=6.0.2",
+    "scipy>=1.14.1",
+    "seaborn>=0.13.2",
+]
+description = "A python library for analysing and visualising soundscape assessments."
+dynamic = ["version"]
+keywords = ["acoustics", "audio analysis", "psychoacoustics", "soundscape"]
+license = "BSD-3-Clause"
+name = "soundscapy"
+readme = "README.md"
+requires-python = ">= 3.10"
+
+[project.optional-dependencies]
+all = ["soundscapy[audio]", "soundscapy[spi]"]
+audio = [
+    "acoustic-toolbox>=0.1.2",
+    "mosqito>=1.2.1",
+    "numba>=0.59",
+    "scikit-maad>=1.4.3",
+    "tqdm>=4.66.5",
+]
+spi = ["rpy2>=3.5.0"]
+
+[project.urls]
+documentation = "https://soundscapy.readthedocs.io/en/latest/"
+repository = "https://github.com/MitchellAcoustics/Soundscapy"
+
+[tool.coverage]
+report = {sort = "cover"}
+run = {branch = true, parallel = true, source = ["soundscapy"]}
+paths.source = ["src", ".tox*/*/lib/python*/site-packages"]
+
+[tool.mypy]
+explicit_package_bases = true
+plugins = ["numpy.typing.mypy_plugin"]
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=short --durations=5 --xdoctest -n 6 --cov=src/soundscapy --cov-report=term"
-testpaths = ["test", "src/soundscapy"]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-console_output_style = "count"
+addopts = ["--color=yes", "--import-mode=importlib", "--verbose", "--xdoctest"]
 doctest_optionflags = "NUMBER NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL"
 markers = [
     "optional_deps(group): mark tests that depend on optional dependencies. group can be 'audio', etc.",
-    "slow: mark test as slow",
+    "parametrize: mark test as parametrized",
     "skip: mark test as skipped",
     "skipif: mark test as skipped if condition is met",
+    "slow: mark test as slow",
     "xfail: mark test as expected to fail",
-    "parametrize: mark test as parametrized",
 ]
+python_classes = "Test*"
+python_files = "test_*.py"
+python_functions = "test_*"
+testpaths = ["src/soundscapy", "test"]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/soundscapy"]
-exclude = [
-    "test/data",
-    "test/test_audio_files",
-    "*.wav",
-    "test/baseline",
-    "docs/tutorials",
-    "docs/img",
+[tool.ruff]
+fix = true
+force-exclude = true
+lint.ignore = [
+    "ANN003",
+    # missing kwarg type hinting:
+    "ANN401",
+    "COM812", # trailing commas (ruff-format recommended)
+    "D203", # no-blank-line-before-class
+    "D212", # multi-line-summary-first-line
+    "D407", # removed dashes lines under sections
+    "D417", # argument description in docstring (unreliable)
+    "FIX002", # fixme (ruff-format recommended)
+    "ISC001", # simplify implicit str concatenation (ruff-format recommended)
+    "PLR0913", # too many arguments
 ]
+lint.per-file-ignores = {"*.ipynb" = ["T201"], "test*" = [
+    "ANN201", # Suppress return type warning for test functions
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D103", # Missing docstring in public function
+    "INP001", # File is part of an implicit namespace package.
+    "S101", # Use of `assert` detected
+]}
+lint.select = ["ALL"]
+lint.isort.known-first-party = ["soundscapy"]
+lint.mccabe.max-complexity = 18
+lint.pep8-naming.classmethod-decorators = ["classmethod"]
 
-[tool.hatch.build.targets.sdist]
-exclude = [
-    "test/test_audio_files",
-    "test/data",
-    "*.wav",
-    "docs/tutorials",
-    "docs/img",
-]
+[tool.setuptools.package-data]
+soundscapy = ["*.csv", "*.yaml", "py.typed"]
 
-[tool.bumpver]
-current_version = "v0.7.8rc1"
-version_pattern = "vMAJOR.MINOR.PATCH[[-]PYTAGNUM]"
-commit_message = "bump version {old_version} -> {new_version}"
-tag_message = "{new_version}"
-commit = true
-tag = true
-push = true
+[tool.setuptools.packages.find]
+where = ["src"]
 
-[tool.bumpver.file_patterns]
-"pyproject.toml" = [
-    '^current_version = "{version}"',
-    '^version = "{pep440_version}"',
-]
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+write_to = "src/soundscapy/_version.py"
+
+[tool.tomlsort]
+all = true
+spaces_indent_inline_array = 4
+trailing_comma_inline_array = true
+overrides."project.classifiers".inline_arrays = false
+overrides."tool.coverage.paths.source".inline_arrays = false
+overrides."tool.tox.env.docs.commands".inline_arrays = false
+overrides."tool.tox.env_run_base.commands".inline_arrays = false
+
+[tool.uv]
+default-groups = ["dev", "docs", "test"]
+
+[tool.uv.pip]
+universal = true

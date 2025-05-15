@@ -3,8 +3,8 @@
 ## International Soundscape Database (ISD)
 
 ::: soundscapy.databases.isd
-    options:
-        filters: ["!ISDAccessor", "!_"]
+options:
+filters: ["!ISDAccessor", "!_"]
 
 ## Soundscape Attributes Translation Project (SATP)
 

@@ -1,8 +1,18 @@
+"""
+Module for managing audio analysis settings using Pydantic models.
+
+This module defines Pydantic models for configuring analysis settings for different
+audio processing libraries (AcousticToolbox, MoSQITo, scikit-maad).
+It includes classes for individual metric settings, library settings, and overall
+analysis settings. It also provides a ConfigManager class for loading, saving,
+merging, and managing configurations from YAML files or dictionaries.
+"""
+
 from __future__ import annotations
 
 from importlib import resources
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 from loguru import logger
@@ -15,6 +25,13 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
+
+def _ensure_path(value: str | Path) -> Path:
+    """Ensure the value is a Path object."""
+    if isinstance(value, str):
+        return Path(value)
+    return value
 
 
 class MetricSettings(BaseModel):
@@ -37,6 +54,7 @@ class MetricSettings(BaseModel):
         Whether to run the metric in parallel.
     func_args : dict[str, Any]
         Additional arguments for the metric function.
+
     """
 
     run: bool = True
@@ -49,7 +67,7 @@ class MetricSettings(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def check_main_in_statistics(cls, values):
+    def check_main_in_statistics(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Check that the main statistic is in the statistics list."""
         main = values.get("main")
         statistics = values.get("statistics", [])
@@ -82,11 +100,13 @@ class LibrarySettings(RootModel):
         ------
         KeyError
             If the specified metric is not found.
+
         """
         if metric in self.root:
             return self.root[metric]
         logger.error(f"Metric '{metric}' not found in library")
-        raise KeyError(f"Metric '{metric}' not found in library")
+        msg = f"Metric '{metric}' not found in library"
+        raise KeyError(msg)
 
 
 class AnalysisSettings(BaseModel):
@@ -103,6 +123,7 @@ class AnalysisSettings(BaseModel):
         Settings for MoSQITo metrics.
     scikit_maad : LibrarySettings | None
         Settings for scikit-maad metrics.
+
     """
 
     version: str = "1.0"
@@ -110,13 +131,15 @@ class AnalysisSettings(BaseModel):
         None, validation_alias=AliasChoices("AcousticToolbox", "PythonAcoustics")
     )
     MoSQITo: LibrarySettings | None = None
-    scikit_maad: LibrarySettings | None = Field(None, alias="scikit-maad")
+    scikit_maad: LibrarySettings | None = Field(
+        None, validation_alias=AliasChoices("scikit-maad", "scikit_maad")
+    )
 
     model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
     @field_validator("*", mode="before")
     @classmethod
-    def validate_library_settings(cls, v):
+    def validate_library_settings(cls, v: dict | LibrarySettings) -> LibrarySettings:
         """Validate library settings."""
         if isinstance(v, dict):
             return LibrarySettings(root=v)
@@ -136,21 +159,24 @@ class AnalysisSettings(BaseModel):
         -------
         AnalysisSettings
             An instance of AnalysisSettings.
+
         """
+        filepath = _ensure_path(filepath)
         logger.info(f"Loading configuration from {filepath}")
-        with open(filepath, "r") as f:
+        with Path.open(filepath) as f:
             config_dict = yaml.safe_load(f)
         return cls(**config_dict)
 
     @classmethod
     def default(cls) -> AnalysisSettings:
         """
-        Create a default AnalysisSettings object using the package's default configuration file.
+        Create a default AnalysisSettings using the package default configuration file.
 
         Returns
         -------
         AnalysisSettings
             An instance of AnalysisSettings with default settings.
+
         """
         config_resource = resources.files("soundscapy.data").joinpath(
             "default_settings.yaml"
@@ -173,6 +199,7 @@ class AnalysisSettings(BaseModel):
         -------
         AnalysisSettings
             An instance of AnalysisSettings.
+
         """
         return cls(**d)
 
@@ -184,12 +211,14 @@ class AnalysisSettings(BaseModel):
         ----------
         filepath : str | Path
             Path to save the YAML file.
+
         """
+        filepath = _ensure_path(filepath)
         logger.info(f"Saving configuration to {filepath}")
-        with open(filepath, "w") as f:
+        with Path.open(filepath, "w") as f:
             yaml.dump(self.model_dump(by_alias=True), f)
 
-    def update_setting(self, library: str, metric: str, **kwargs) -> None:
+    def update_setting(self, library: str, metric: str, **kwargs: dict) -> None:
         """
         Update the settings for a specific metric.
 
@@ -206,6 +235,7 @@ class AnalysisSettings(BaseModel):
         ------
         KeyError
             If the specified library or metric is not found.
+
         """
         library_settings = getattr(self, library)
         if library_settings and metric in library_settings.root:
@@ -217,7 +247,8 @@ class AnalysisSettings(BaseModel):
                     logger.error(f"Invalid setting '{key}' for metric '{metric}'")
         else:
             logger.error(f"Metric '{metric}' not found in library '{library}'")
-            raise KeyError(f"Metric '{metric}' not found in library '{library}'")
+            msg = f"Metric '{metric}' not found in library '{library}'"
+            raise KeyError(msg)
 
     def get_metric_settings(self, library: str, metric: str) -> MetricSettings:
         """
@@ -239,12 +270,14 @@ class AnalysisSettings(BaseModel):
         ------
         KeyError
             If the specified library or metric is not found.
+
         """
         library_settings = getattr(self, library)
         if library_settings and metric in library_settings.root:
             return library_settings.root[metric]
         logger.error(f"Metric '{metric}' not found in library '{library}'")
-        raise KeyError(f"Metric '{metric}' not found in library '{library}'")
+        msg = f"Metric '{metric}' not found in library '{library}'"
+        raise KeyError(msg)
 
     def get_enabled_metrics(self) -> dict[str, dict[str, MetricSettings]]:
         """
@@ -254,6 +287,7 @@ class AnalysisSettings(BaseModel):
         -------
         dict[str, dict[str, MetricSettings]]
             A dictionary of enabled metrics grouped by library.
+
         """
         enabled_metrics = {}
         for library in ["AcousticToolbox", "MoSQITo", "scikit_maad"]:
@@ -276,10 +310,11 @@ class ConfigManager:
     ----------
     default_config_path : str | Path | None
         Path to the default configuration file.
+
     """
 
-    def __init__(self, config_path: str | Path | None = None):
-        self.config_path = Path(config_path) if config_path else None
+    def __init__(self, config_path: str | Path | None = None) -> None:  # noqa: D107
+        self.config_path = _ensure_path(config_path) if config_path else None
         self.current_config: AnalysisSettings | None = None
 
     def load_config(self, config_path: str | Path | None = None) -> AnalysisSettings:
@@ -295,6 +330,7 @@ class ConfigManager:
         -------
         AnalysisSettings
             The loaded configuration.
+
         """
         if config_path:
             logger.info(f"Loading configuration from {config_path}")
@@ -320,17 +356,19 @@ class ConfigManager:
         ------
         ValueError
             If no current configuration is loaded.
+
         """
         if self.current_config:
             logger.info(f"Saving configuration to {filepath}")
             self.current_config.to_yaml(filepath)
         else:
             logger.error("No current configuration to save")
-            raise ValueError("No current configuration to save.")
+            msg = "No current configuration to save."
+            raise ValueError(msg)
 
-    def merge_configs(self, override_config: Dict) -> AnalysisSettings:
+    def merge_configs(self, override_config: dict) -> AnalysisSettings:
         """
-        Merge the current configuration with override values and update the current_config.
+        Merge the current config with override values and update the current_config.
 
         Parameters
         ----------
@@ -346,10 +384,12 @@ class ConfigManager:
         ------
         ValueError
             If no base configuration is loaded.
+
         """
         if not self.current_config:
             logger.error("No base configuration loaded")
-            raise ValueError("No base configuration loaded.")
+            msg = "No base configuration loaded."
+            raise ValueError(msg)
         logger.info("Merging configurations")
         merged_dict = self.current_config.model_dump()
         self._deep_update(merged_dict, override_config)
@@ -357,7 +397,7 @@ class ConfigManager:
         self.current_config = merged_config  # Update the current_config
         return merged_config
 
-    def _deep_update(self, base_dict: Dict, update_dict: Dict) -> None:
+    def _deep_update(self, base_dict: dict, update_dict: dict) -> None:
         """Recursively update a nested dictionary."""
         for key, value in update_dict.items():
             if (
@@ -382,9 +422,11 @@ class ConfigManager:
         ------
         ValueError
             If no current configuration is loaded.
+
         """
         if not self.current_config:
-            raise ValueError("No current configuration loaded.")
+            msg = "No current configuration loaded."
+            raise ValueError(msg)
         default_config = AnalysisSettings.default()
         current_dict = self.current_config.model_dump()
         default_dict = default_config.model_dump()
@@ -490,12 +532,12 @@ if __name__ == "__main__":
     )
 
     # Print the created configuration
-    print(analysis_settings.model_dump_json(indent=2))
+    print(analysis_settings.model_dump_json(indent=2))  # noqa: T201
 
     # Save the configuration to a YAML file
     output_path = Path("my_custom_config.yaml")
     analysis_settings.to_yaml(output_path)
-    print(f"Configuration saved to {output_path}")
+    print(f"Configuration saved to {output_path}")  # noqa: T201
 
     # To use this configuration:
 

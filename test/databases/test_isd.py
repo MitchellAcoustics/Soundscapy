@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pytest import raises
 
-import soundscapy.databases.isd as isd
+from soundscapy.databases import isd
 from soundscapy.surveys.processing import add_iso_coords
 
 
@@ -30,7 +29,7 @@ class TestISDLoading:
     @pytest.mark.slow
     def test_load_zenodo(self):
         """Test loading of ISD data from Zenodo."""
-        with raises(ValueError, match="Version .* not recognised"):
+        with pytest.raises(ValueError, match="Version .* not recognised"):
             isd.load_zenodo(version="invalid_version")
 
         df_latest = isd.load_zenodo()
@@ -72,7 +71,9 @@ class TestISDSelection:
         assert len(result) > 0
         assert all(result["GroupID"].isin(["CT101", "CT102"]))
 
-        with raises(TypeError, match="Should be either a str, int, list, or tuple"):
+        with pytest.raises(
+            TypeError, match="Should be either a str, int, list, or tuple"
+        ):
             isd._isd_select(isd_data, "LocationID", {"invalid": "type"})
 
     def test_select_record_ids(self, isd_data):

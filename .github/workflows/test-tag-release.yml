@@ -3,9 +3,10 @@ name: Test Tagged Release
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+"         # v1.2.3-dev1
-      - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+"          # v1.2.3dev1
-
+      - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+" # v1.2.3-dev1
+      - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+" # v1.2.3dev1
+      - "v[0-9]+.[0-9]+.[0-9]+.dev[0-9]+" # v1.2.3.dev1
+  workflow_dispatch:
 
 jobs:
   # Reuse the details job with no changes
@@ -34,7 +35,7 @@ jobs:
             echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
             echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
             echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
-          
+
             echo "Version is $VERSION_STR"
             echo "Suffix is $SUFFIX"
             echo "Tag name is $TAG_NAME"
@@ -43,25 +44,16 @@ jobs:
             exit 1
           fi
 
-      - name: Verify version matches pyproject.toml
-        run: |    
-            VERSION_STR=${{ steps.release.outputs.version_str }}
-            TOML_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
-        
-            if [ "${VERSION_STR}" != "${TOML_VERSION}" ]; then
-            echo "Error: Tag version (${VERSION_STR}) does not match pyproject.toml version (${TOML_VERSION})"
-            exit 1
-            fi
-
   # Reuse setup_and_build job with no changes
   setup_and_build:
     needs: [details]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: "0.4.29"
+          version: "0.7.2"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
       - run: uv python install 3.12
@@ -75,15 +67,15 @@ jobs:
   tests-pass:
     needs: [details]
     uses: ./.github/workflows/test.yml
-  
-  tutorial-tests-pass:
+
+  docs-pass:
     needs: [details]
-    uses: ./.github/workflows/test-tutorials.yml  
+    uses: ./.github/workflows/docs.yml
 
   # Modified to publish to TestPyPI
   testpypi_publish:
     name: Upload release to TestPyPI
-    needs: [setup_and_build, details, tests-pass, tutorial-tests-pass]
+    needs: [setup_and_build, details, tests-pass, docs-pass]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -103,7 +95,7 @@ jobs:
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12' 
+          python-version: "3.12"
       - name: Install soundscapy from TestPyPI
         uses: nick-fields/retry@v3
         with:

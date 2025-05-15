@@ -1,28 +1,13 @@
 # Plotting
 
-::: soundscapy.plotting.plot_functions
+This section provides an overview of the plotting functionality in Soundscapy. It includes tools for creating various types of plots, including ISO plots, Likert scale plots, and more.
 
-## Circumplex Plotting
-
-::: soundscapy.plotting.circumplex_plot
-    show_submodules: true
-
-## Backends
-
-::: soundscapy.plotting.backends
-    show_submodules: true
-
-## Stylers
-
-::: soundscapy.plotting.stylers
-    show_submodules: true
-
-## Plotting Utilities
-
-::: soundscapy.plotting.plotting_utils
-    show_submodules: true
-
-## Likert Scale Plotting
-
-::: soundscapy.plotting.likert
-    show_submodules: true
+::: soundscapy.plotting
+    options:
+        members:
+        - likert
+        - plotting_utils
+        - param_models
+        - layers
+        - plot_context
+        - defaults

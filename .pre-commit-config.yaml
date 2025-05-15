@@ -1,0 +1,59 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.9
+    hooks:
+      # TODO(MitchellAcoustics): Enable linting pre-commit hooks
+      # https://github.com/MitchellAcoustics/Soundscapy/issues/114
+      # - id: ruff
+      #   exclude: ^test/.*\.py$
+      - id: ruff-format
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint-fix
+        args:
+          - --dot
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: forbid-tabs
+  - repo: https://github.com/pappasam/toml-sort
+    rev: v0.24.2
+    hooks:
+      - id: toml-sort-fix
+  # TODO(MitchellAcoustics): Enable linting pre-commit hooks
+  # https://github.com/MitchellAcoustics/Soundscapy/issues/114
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.15.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies:
+  #         - "numpy"
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.5.3
+    hooks:
+      - id: prettier
+        args:
+          - --quote-props=as-needed
+        exclude: ^docs/.*\.md$
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args:
+          - --fix=lf
+      - id: trailing-whitespace
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.33.0
+    hooks:
+      # Schemas taken from https://www.schemastore.org/json/
+      - id: check-jsonschema
+        name: "Validate GitHub issue templates"
+        files: ^\.github/ISSUE_TEMPLATE/.*\.yml$
+        exclude: ^\.github/ISSUE_TEMPLATE/config\.yml$
+        args: ["--verbose", "--schemafile", "schemas/github-issue-forms.json"]
