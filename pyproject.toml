@@ -139,7 +139,7 @@ lint.mccabe.max-complexity = 18
 lint.pep8-naming.classmethod-decorators = ["classmethod"]
 
 [tool.setuptools]
-include-package-data = false
+include-package-data = true
 
 [tool.setuptools.package-data]
 soundscapy = ["*.csv", "*.yaml", "py.typed"]
