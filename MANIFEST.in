@@ -1,5 +1,8 @@
+recursive-include included *
 include pyproject.toml
 include MANIFEST.in
+include src/soundscapy/data/*
+
 recursive-exclude excluded *
 exclude test/test_audio_files/trimmed_CT101.wav
 exclude test/test_audio_files/trimmed_CT102.wav
