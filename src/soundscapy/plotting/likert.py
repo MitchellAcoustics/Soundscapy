@@ -10,7 +10,11 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from soundscapy.databases.isd import likert_categorical_from_data
+from soundscapy.databases.isd import (
+    likert_categorical_from_data,
+    match_col_to_likert_scale,
+)
+from soundscapy.plotting.iso_plot import ExperimentalWarning
 from soundscapy.surveys import rename_paqs, return_paqs
 from soundscapy.surveys.survey_utils import (
     EQUAL_ANGLES,
@@ -233,6 +237,12 @@ def paq_likert(
     >>> plt.show() # xdoctest: +SKIP
 
     """
+    warnings.warn(
+        "This is an experimental function. It may change in the future. ",
+        ExperimentalWarning,
+        stacklevel=2,
+    )
+
     new_data = data[paq_cols].copy()
     new_data = new_data.apply(likert_categorical_from_data, axis=0)  # type: ignore
 
@@ -246,6 +256,44 @@ def paq_likert(
         ax=ax,
         legend=legend,
         bar_labels=bar_labels,  # show the bar labels
+        title=title,
+        **kwargs,
+    )
+
+
+def stacked_likert(
+    data: pd.DataFrame,
+    column: str = "appropriate",
+    title: str = "Stacked Likert Plot",
+    *,
+    legend: bool = True,
+    ax: Axes | None = None,
+    plot_percentage: bool = False,
+    bar_labels: bool = True,
+    **kwargs,
+) -> None:
+    warnings.warn(
+        "This is an experimental function. It may change in the future. "
+        "Currently, this functio applies brute data cleaning, use with caution. ",
+        ExperimentalWarning,
+        stacklevel=2,
+    )
+
+    new_data = data[column].copy()
+    new_data = new_data.dropna()
+
+    new_data = likert_categorical_from_data(new_data)  # type: ignore
+
+    if ax is None:
+        _, ax = plt.subplots(figsize=(8, 6))
+
+    plot_likert.plot_likert(
+        pd.Series(new_data),
+        match_col_to_likert_scale(column),
+        plot_percentage=plot_percentage,
+        ax=ax,
+        legend=legend,
+        bar_labels=bar_labels,
         title=title,
         **kwargs,
     )

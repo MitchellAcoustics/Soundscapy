@@ -15,6 +15,7 @@ from soundscapy.plotting.backends_deprecated import (
     StyleOptions,
 )
 from soundscapy.plotting.iso_plot import ISOPlot
+from soundscapy.plotting.likert import paq_likert, paq_radar_plot, stacked_likert
 from soundscapy.plotting.plot_functions import (
     create_circumplex_subplots,
     create_iso_subplots,
@@ -40,6 +41,9 @@ __all__ = [
     "iso_plot",
     "jointplot",
     "likert",
+    "paq_likert",
+    "paq_radar_plot",
     "scatter",
     "scatter_plot",
+    "stacked_likert",
 ]

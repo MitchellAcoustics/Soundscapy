@@ -125,7 +125,7 @@ lint.ignore = [
     "ISC001", # simplify implicit str concatenation (ruff-format recommended)
     "PLR0913", # too many arguments
 ]
-lint.per-file-ignores = {"test*" = [
+lint.per-file-ignores = {"*.ipynb" = ["T201"], "test*" = [
     "ANN201", # Suppress return type warning for test functions
     "D100", # Missing docstring in public module
     "D101", # Missing docstring in public class

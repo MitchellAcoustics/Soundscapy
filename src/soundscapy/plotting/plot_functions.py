@@ -972,6 +972,7 @@ def density(
         y=y,
         palette=palette,
         hue=density_args.get("hue"),
+        color=density_args.get("color"),
         **(scatter_kws or {}),
     )
 

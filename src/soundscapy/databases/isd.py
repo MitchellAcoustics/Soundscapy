@@ -227,7 +227,7 @@ def validate(
     return data, excl_data
 
 
-def _match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
+def match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
     """
     Match a column in the DataFrame to the Likert scale.
 
@@ -285,7 +285,7 @@ def likert_categorical_from_data(
         If the column does not match any known Likert scale.
 
     """
-    likert_scale = _match_col_to_likert_scale(str(data.name))
+    likert_scale = match_col_to_likert_scale(str(data.name))
     if isinstance(data, pd.Categorical):
         return data
 

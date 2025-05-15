@@ -26,7 +26,6 @@ Example:
 
 from __future__ import annotations
 
-import functools
 import warnings
 from typing import TYPE_CHECKING, Any
 
@@ -544,7 +543,6 @@ class ISOPlot:
 
         return self
 
-    @functools.wraps(plt.show)
     def show(self) -> None:
         """
         Show the figure.
@@ -562,7 +560,6 @@ class ISOPlot:
             plt.tight_layout()
         plt.show()
 
-    @functools.wraps(plt.close)
     def close(self, fig: int | str | Figure | None = None) -> None:
         """
         Close the figure.
@@ -580,7 +577,6 @@ class ISOPlot:
                 raise ValueError(msg)
         plt.close(fig)
 
-    @functools.wraps(Figure.savefig)
     def savefig(self, *args: Any, **kwargs: Any) -> None:
         """
         Save the figure.

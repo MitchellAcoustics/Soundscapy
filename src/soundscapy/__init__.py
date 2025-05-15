@@ -19,6 +19,7 @@ from soundscapy.plotting import (
     likert,
     scatter,
 )
+from soundscapy.plotting.likert import paq_likert, paq_radar_plot, stacked_likert
 from soundscapy.sspylogging import (
     disable_logging,
     enable_debug,
@@ -26,8 +27,11 @@ from soundscapy.sspylogging import (
     setup_logging,
 )
 from soundscapy.surveys import add_iso_coords, processing, rename_paqs
+from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
 
 __all__ = [
+    "PAQ_IDS",
+    "PAQ_LABELS",
     "ISOPlot",
     "add_iso_coords",
     "create_iso_subplots",
@@ -40,6 +44,8 @@ __all__ = [
     "iso_plot",
     "jointplot",
     "likert",
+    "paq_likert",
+    "paq_radar_plot",
     "plotting",
     "processing",
     "rename_paqs",
@@ -47,6 +53,7 @@ __all__ = [
     "scatter",
     # Logging functions
     "setup_logging",
+    "stacked_likert",
     # Core modules
     "surveys",
 ]
