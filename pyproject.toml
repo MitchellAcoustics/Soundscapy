@@ -138,10 +138,15 @@ lint.isort.known-first-party = ["soundscapy"]
 lint.mccabe.max-complexity = 18
 lint.pep8-naming.classmethod-decorators = ["classmethod"]
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.package-data]
 soundscapy = ["*.csv", "*.yaml", "py.typed"]
 
 [tool.setuptools.packages.find]
+exclude = ["*.wav", "docs*", "test*"]
+include = ["soundscapy*"]
 where = ["src"]
 
 [tool.setuptools_scm]
