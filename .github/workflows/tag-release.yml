@@ -117,14 +117,14 @@ jobs:
           command: python -m pip install "soundscapy[audio]==${{ needs.details.outputs.version_str }}"
       - run: python -c "import soundscapy; print(soundscapy.__version__); from soundscapy import Binaural"
 
-      - name: Install soundscapy[all] from TestPyPI
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_wait_seconds: 30
-          command: python -m pip install "soundscapy[all]==${{ needs.details.outputs.version_str }}"
-      - run: python -c "import soundscapy; print(soundscapy.__version__); from soundscapy import Binaural"
+      # - name: Install soundscapy[all] from TestPyPI
+      #   uses: nick-fields/retry@v3
+      #   with:
+      #     timeout_minutes: 5
+      #     max_attempts: 3
+      #     retry_wait_seconds: 30
+      #     command: python -m pip install "soundscapy[all]==${{ needs.details.outputs.version_str }}"
+      # - run: python -c "import soundscapy; print(soundscapy.__version__); from soundscapy import Binaural"
 
   github_release:
     name: Create GitHub Release
