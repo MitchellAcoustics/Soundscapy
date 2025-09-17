@@ -231,7 +231,6 @@ def add_iso_coords(
         Names for new coordinate columns, by default ("ISOPleasant", "ISOEventful")
     angles : Tuple[int, ...], optional
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
-    *
     overwrite : bool, optional
         Whether to overwrite existing ISO coordinate columns, by default False
 

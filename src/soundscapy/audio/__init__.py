@@ -2,25 +2,27 @@
 Provides tools for working with audio signals, particularly binaural recordings.
 
 Key Components:
+
 - Binaural: A class for processing and analyzing binaural audio signals.
 - Various metric calculation functions for audio analysis.
 
 The module integrates with external libraries such as mosqito, maad,
 and acoustic_toolbox to provide a comprehensive suite of audio analysis tools.
 
-Example:
+Examples
+--------
     >>> # xdoctest: +SKIP
     >>> from soundscapy.audio import Binaural
     >>> signal = Binaural.from_wav("audio.wav")
     >>> results = signal.process_all_metrics(analysis_settings)
 
-See Also:
-    soundscapy.audio.binaural: For detailed Binaural class documentation.
-    soundscapy.audio.metrics: For individual metric calculation functions.
+See Also
+--------
+    `soundscapy.audio.binaural`: For detailed Binaural class documentation.
+    `soundscapy.audio.metrics`: For individual metric calculation functions.
 
 """
 
-# ruff: noqa: E402
 # ignore module level import order because we need to check dependencies first
 
 # Check for required dependencies directly
