@@ -90,3 +90,20 @@ class TestRWrapper:
 
             assert "R package 'sn'" in str(excinfo.value)
             assert "install.packages('sn')" in str(excinfo.value)
+
+    def test_check_circe_package(self):
+        """Test that the R 'circe' package availability is checked."""
+        # Skip if dependencies are actually installed
+        if os.environ.get("SPI_DEPS") == "1":
+            from soundscapy.spi import _r_wrapper
+
+            _r_wrapper.check_circe_package()
+
+        else:
+            with pytest.raises(ImportError) as excinfo:
+                from soundscapy.spi import _r_wrapper
+
+                _r_wrapper.check_circe_package()
+
+            assert "R package 'circe'" in str(excinfo.value)
+            assert "install.packages('circe')" in str(excinfo.value)

@@ -10,7 +10,7 @@ from soundscapy.sspylogging import get_logger
 
 logger = get_logger()
 
-_, sn, _, _ = get_r_session()
+_, sn, _, _, _ = get_r_session()
 logger.debug("R session and packages retrieved successfully.")
 
 
