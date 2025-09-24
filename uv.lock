@@ -3270,6 +3270,14 @@ dependencies = [
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/65/85/f3bf48052106fd93e74bea512a43d3de48617953cba7e6dd40e8626f27f5/rpy2-3.5.17.tar.gz", hash = "sha256:dbff08c30f3d79161922623858a5b3b68a3fba8ee1747d6af41bc4ba68f3d582", size = 220963, upload-time = "2024-11-28T16:15:16.557Z" }
 
+[package.optional-dependencies]
+all = [
+    { name = "ipython" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pytest" },
+]
+
 [[package]]
 name = "ruff"
 version = "0.9.7"
@@ -3515,7 +3523,7 @@ all = [
     { name = "acoustic-toolbox" },
     { name = "mosqito" },
     { name = "numba" },
-    { name = "rpy2" },
+    { name = "rpy2", extra = ["all"] },
     { name = "scikit-maad" },
     { name = "tqdm" },
 ]
@@ -3527,7 +3535,7 @@ audio = [
     { name = "tqdm" },
 ]
 spi = [
-    { name = "rpy2" },
+    { name = "rpy2", extra = ["all"] },
 ]
 
 [package.dev-dependencies]
@@ -3577,7 +3585,7 @@ requires-dist = [
     { name = "plot-likert", specifier = ">=0.5.0" },
     { name = "pydantic", specifier = ">=2.8.2" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "rpy2", marker = "extra == 'spi'", specifier = ">=3.5.0" },
+    { name = "rpy2", extras = ["all"], marker = "extra == 'spi'", specifier = ">=3.5.0" },
     { name = "scikit-maad", marker = "extra == 'audio'", specifier = ">=1.4.3" },
     { name = "scipy", specifier = ">=1.14.1" },
     { name = "seaborn", specifier = ">=0.13.2" },

@@ -27,7 +27,7 @@ from soundscapy.sspylogging import (
     setup_logging,
 )
 from soundscapy.surveys import add_iso_coords, processing, rename_paqs
-from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
+from soundscapy.surveys.survey_utils import EQUAL_ANGLES, PAQ_IDS, PAQ_LABELS
 
 __all__ = [
     "PAQ_IDS",

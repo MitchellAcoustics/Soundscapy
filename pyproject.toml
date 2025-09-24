@@ -80,7 +80,9 @@ audio = [
     "scikit-maad>=1.4.3",
     "tqdm>=4.66.5",
 ]
-spi = ["rpy2>=3.5.0"]
+spi = [
+    "rpy2[all]>=3.5.0",
+]
 
 [project.urls]
 documentation = "https://soundscapy.readthedocs.io/en/latest/"
