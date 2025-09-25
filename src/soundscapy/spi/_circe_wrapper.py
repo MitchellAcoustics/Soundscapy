@@ -42,6 +42,48 @@ class ModelType:
         return self.name in {CircModelE.EQUAL_COM, CircModelE.CIRCUMPLEX}
 
 
+def extract_bfgs_fit(bfgs_model: RS4) -> dict:
+    """
+    Extract fit statistics from a fitted BFGS model object.
+
+    Parameters
+    ----------
+        bfgs_model (RS4): Fitted model object from the circe package.
+
+    Returns
+    -------
+        dict: Dictionary containing fit statistics.
+
+    Examples
+    --------
+        >>> import soundscapy as sspy
+        >>> data = sspy.isd.load()
+        >>> data_paqs = data[PAQ_IDS]
+        >>> data_paqs = data_paqs.dropna()
+        >>> data_cor = data_paqs.corr()
+        >>> n = data_paqs.shape[0]
+        >>> model_type = ModelType(name=CircModelE.CIRCUMPLEX)
+        >>> circe_res = sspy.spi.bfgs(
+        ... data_cor=data_cor,
+        ... scales=PAQ_IDS,
+        ... m_val=3,
+        ... equal_ang=model_type.equal_ang,
+        ... equal_com=model_type.equal_com,
+        ... )
+        >>> fit_stats = sspy.spi.extract_bfgs_fit(circe_res)
+
+    """
+    py_res = {}
+    with (ro.default_converter + pandas2ri.converter).context():
+        for i, name in enumerate(bfgs_model.names):
+            val = ro.conversion.get_conversion().rpy2py(bfgs_model[i])
+            if len(val) == 1:
+                val = val[0]
+            py_res[name] = val
+
+    return py_res
+
+
 def bfgs(
     data_cor: pd.DataFrame,
     scales: list[str] = PAQ_IDS,
