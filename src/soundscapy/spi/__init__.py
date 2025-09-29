@@ -19,7 +19,7 @@ except ImportError as e:
 
 # Now we can import our modules that depend on the optional packages
 from soundscapy.spi import msn
-from soundscapy.spi._circe_wrapper import CircEResult, ModelType, bfgs
+from soundscapy.spi._circe_wrapper import bfgs
 from soundscapy.spi.msn import (
     CentredParams,
     DirectParams,
@@ -31,9 +31,7 @@ from soundscapy.spi.msn import (
 
 __all__ = [
     "CentredParams",
-    "CircEResult",
     "DirectParams",
-    "ModelType",
     "MultiSkewNorm",
     "bfgs",
     "cp2dp",

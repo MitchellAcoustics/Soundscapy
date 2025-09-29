@@ -7,10 +7,16 @@ the soundscapy package for handling and analyzing soundscape survey data.
 
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import partial
+from typing import Optional
 
 import pandas as pd
+import pandera.pandas as pa
 from loguru import logger
+from pandera.typing.pandas import DataFrame, Series
 from plot_likert.scales import Scale
+
+AllowNan = partial(pa.Field, nullable=True)
 
 
 class PAQ(Enum):
@@ -43,6 +49,36 @@ class PAQ(Enum):
 
 PAQ_LABELS = [paq.label for paq in PAQ]
 PAQ_IDS = [paq.id for paq in PAQ]
+
+
+class PAQDfSchema(pa.DataFrameModel):
+    PAQ1: Series[float] = AllowNan()
+    PAQ2: Series[float] = AllowNan()
+    PAQ3: Series[float] = AllowNan()
+    PAQ4: Series[float] = AllowNan()
+    PAQ5: Series[float] = AllowNan()
+    PAQ6: Series[float] = AllowNan()
+    PAQ7: Series[float] = AllowNan()
+    PAQ8: Series[float] = AllowNan()
+
+    language: Optional[Series[str]] = AllowNan()  # noqa: UP045
+    location_id: Optional[Series[str]] = AllowNan()  # noqa: UP045
+    session_id: Optional[Series[str]] = AllowNan()  # noqa: UP045
+    group_id: Optional[Series[str]] = AllowNan()  # noqa: UP045
+    record_id: Optional[Series[str]] = AllowNan()  # noqa: UP045
+
+    @pa.dataframe_parser
+    def column_name_coercion(cls, df: DataFrame) -> DataFrame:
+        rename_dict = dict(zip(PAQ_LABELS, PAQ_IDS, strict=False))
+        rename_dict.update(
+            {
+                "LocationID": "location_id",
+                "SessionID": "session_id",
+                "GroupID": "group_id",
+                "RecordID": "record_id",
+            }
+        )
+        return df.rename(columns=rename_dict)
 
 
 @dataclass
