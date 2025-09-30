@@ -190,7 +190,7 @@ class SATP:
     ):
         self._ipsatized = False
         self._raw_data = data
-        self.data = SATPSchema.validate(data, lazy=True)
+        self.data: DataFrame = SATPSchema.validate(data, lazy=True)
 
         if ipsatize_data:
             self.ipsatize()
@@ -214,7 +214,7 @@ class SATP:
         self._ipsatized = True
 
     @staticmethod
-    def _ipsatize_df(df: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
+    def _ipsatize_df(df: DataFrame, by: str = "participant") -> DataFrame:
         return df.groupby(by).transform(lambda x: x - x.mean())
 
     def run(self, circ_model: CircModelE | None = None) -> None:
