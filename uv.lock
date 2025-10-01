@@ -3693,6 +3693,12 @@ audio = [
     { name = "scikit-maad" },
     { name = "tqdm" },
 ]
+r = [
+    { name = "rpy2", extra = ["all"] },
+]
+satp = [
+    { name = "rpy2", extra = ["all"] },
+]
 spi = [
     { name = "rpy2", extra = ["all"] },
 ]
@@ -3745,15 +3751,18 @@ requires-dist = [
     { name = "plot-likert", specifier = ">=0.5.0" },
     { name = "pydantic", specifier = ">=2.8.2" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "rpy2", extras = ["all"], marker = "extra == 'spi'", specifier = ">=3.5.0" },
+    { name = "rpy2", extras = ["all"], marker = "extra == 'r'", specifier = ">=3.5.0" },
     { name = "scikit-maad", marker = "extra == 'audio'", specifier = ">=1.4.3" },
     { name = "scipy", specifier = ">=1.14.1" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "soundscapy", extras = ["audio"], marker = "extra == 'all'" },
+    { name = "soundscapy", extras = ["r"], marker = "extra == 'satp'" },
+    { name = "soundscapy", extras = ["r"], marker = "extra == 'spi'" },
+    { name = "soundscapy", extras = ["satp"], marker = "extra == 'all'" },
     { name = "soundscapy", extras = ["spi"], marker = "extra == 'all'" },
     { name = "tqdm", marker = "extra == 'audio'", specifier = ">=4.66.5" },
 ]
-provides-extras = ["all", "audio", "spi"]
+provides-extras = ["all", "audio", "r", "spi", "satp"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -8,8 +8,9 @@ logger.disable("soundscapy")
 
 # Always available core modules
 from soundscapy import databases, plotting, surveys
+from soundscapy import databases as db
 from soundscapy._version import __version__  # noqa: F401
-from soundscapy.databases import isd, satp
+from soundscapy.databases import isd
 from soundscapy.plotting import (
     ISOPlot,
     create_iso_subplots,
@@ -27,7 +28,7 @@ from soundscapy.sspylogging import (
     setup_logging,
 )
 from soundscapy.surveys import add_iso_coords, processing, rename_paqs
-from soundscapy.surveys.survey_utils import EQUAL_ANGLES, PAQ_IDS, PAQ_LABELS
+from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
 
 __all__ = [
     "PAQ_IDS",
@@ -36,6 +37,7 @@ __all__ = [
     "add_iso_coords",
     "create_iso_subplots",
     "databases",
+    "db",
     "density",
     "disable_logging",
     "enable_debug",
@@ -49,7 +51,6 @@ __all__ = [
     "plotting",
     "processing",
     "rename_paqs",
-    "satp",
     "scatter",
     # Logging functions
     "setup_logging",
@@ -109,7 +110,16 @@ try:
         "msn",
         "spi",
     ]
-
 except ImportError:
     # SPI module not available
+    pass
+
+try:
+    from soundscapy import satp
+    from soundscapy.satp import SATP, CircModelE
+
+    __all__ += ["SATP", "CircModelE", "satp"]
+
+except ImportError:
+    # SATP module not available
     pass

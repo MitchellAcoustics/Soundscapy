@@ -19,7 +19,6 @@ except ImportError as e:
 
 # Now we can import our modules that depend on the optional packages
 from soundscapy.spi import msn
-from soundscapy.spi._circe_wrapper import bfgs
 from soundscapy.spi.msn import (
     CentredParams,
     DirectParams,
@@ -33,7 +32,6 @@ __all__ = [
     "CentredParams",
     "DirectParams",
     "MultiSkewNorm",
-    "bfgs",
     "cp2dp",
     "dp2cp",
     "msn",

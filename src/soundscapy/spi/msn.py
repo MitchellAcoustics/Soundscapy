@@ -12,8 +12,8 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
+import soundscapy.r_wrapper as sspyr
 from soundscapy.plotting.plot_functions import scatter
-from soundscapy.spi import _rsn_wrapper as rsn
 from soundscapy.spi.ks2d import ks2d2s
 from soundscapy.sspylogging import get_logger
 
@@ -247,27 +247,26 @@ class MultiSkewNorm:
             return "MultiSkewNorm() (unfitted)"
         return f"MultiSkewNorm(dp={self.dp})"
 
-    def summary(self) -> str | None:
+    def summary(self) -> str:
         """
         Provide a summary of the fitted MultiSkewNorm model.
 
         Returns
         -------
-        str or None
-            A string summarizing the model parameters and data, or a message
-            indicating the model is not fitted. Returns None if fitted but
-            summary logic is not fully implemented yet.
+        A string summarizing the model parameters and data, or a message
+            indicating the model is not fitted.
 
         """
         if self.cp is None and self.dp is None and self.selm_model is None:
             return "MultiSkewNorm is not fitted."
+        lines = []
         if self.data is not None:
-            print(f"Fitted from data. n = {len(self.data)}")  # noqa: T201
+            lines.append(f"Fitted from data. n = {len(self.data)}")
         else:
-            print("Fitted from direct parameters.")  # noqa: T201
-        print(self.dp)  # noqa: T201
-        print("\n")  # noqa: T201
-        print(self.cp)  # noqa: RET503, T201
+            lines.append("Fitted from direct parameters.")
+        lines.append(str(self.dp))
+        lines.append(str(self.cp))
+        return "\n".join(lines)
 
     def fit(
         self,
@@ -327,11 +326,11 @@ class MultiSkewNorm:
             raise ValueError(msg)
 
         # Fit the model
-        m = rsn.selm("x", "y", data)
+        m = sspyr.selm("x", "y", data)
 
         # Extract the parameters
-        cp = rsn.extract_cp(m)
-        dp = rsn.extract_dp(m)
+        cp = sspyr.extract_cp(m)
+        dp = sspyr.extract_dp(m)
 
         self.cp = CentredParams(*cp)
         self.dp = DirectParams(*dp)
@@ -450,9 +449,9 @@ class MultiSkewNorm:
 
         """
         if self.selm_model is not None:
-            sample = rsn.sample_msn(selm_model=self.selm_model, n=n)
+            sample = sspyr.sample_msn(selm_model=self.selm_model, n=n)
         elif self.dp is not None:
-            sample = rsn.sample_msn(
+            sample = sspyr.sample_msn(
                 xi=self.dp.xi, omega=self.dp.omega, alpha=self.dp.alpha, n=n
             )
         else:
@@ -492,14 +491,14 @@ class MultiSkewNorm:
 
         """
         if self.selm_model is not None:
-            sample = rsn.sample_mtsn(
+            sample = sspyr.sample_mtsn(
                 selm_model=self.selm_model,
                 n=n,
                 a=a,
                 b=b,
             )
         elif self.dp is not None:
-            sample = rsn.sample_mtsn(
+            sample = sspyr.sample_mtsn(
                 xi=self.dp.xi,
                 omega=self.dp.omega,
                 alpha=self.dp.alpha,
@@ -696,7 +695,7 @@ def cp2dp(
         The corresponding direct parameters object.
 
     """
-    dp_r = rsn.cp2dp(cp.mean, cp.sigma, cp.skew, family=family)
+    dp_r = sspyr.cp2dp(cp.mean, cp.sigma, cp.skew, family=family)
 
     return DirectParams(*dp_r)
 
@@ -720,6 +719,6 @@ def dp2cp(
         The corresponding centred parameters object.
 
     """
-    cp_r = rsn.dp2cp(dp.xi, dp.omega, dp.alpha, family=family)
+    cp_r = sspyr.dp2cp(dp.xi, dp.omega, dp.alpha, family=family)
 
     return CentredParams(*cp_r)

@@ -12,9 +12,8 @@ from pydantic import BeforeValidator, ConfigDict
 from pydantic.dataclasses import dataclass
 from rpy2 import robjects as ro
 
+import soundscapy.r_wrapper as sspyr
 from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
-from soundscapy.spi import bfgs
-from soundscapy.spi._circe_wrapper import extract_bfgs_fit
 
 logger = get_logger()
 
@@ -117,7 +116,7 @@ class CircE:
         n: int,
     ) -> "CircE":
         """Create a CircE instance from a fitted BFGS model."""
-        fit_stats = extract_bfgs_fit(bfgs_model)
+        fit_stats = sspyr.extract_bfgs_fit(bfgs_model)
         polar_angles = None
         if model_type in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
             polar_angles = pd.DataFrame(fit_stats.get("polar_angles", None)).T
@@ -169,7 +168,7 @@ class CircE:
         """
         n = data_cor.shape[0]
         model_type = ModelType(name=circ_model)
-        bfgs_model = bfgs(
+        bfgs_model = sspyr.bfgs(
             data_cor=data_cor,
             scales=PAQ_IDS,
             m_val=3,

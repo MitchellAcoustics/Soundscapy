@@ -2,9 +2,10 @@ import pandas as pd
 from rpy2 import robjects as ro
 from rpy2.robjects import pandas2ri
 
-from soundscapy.spi._r_wrapper import get_r_session
 from soundscapy.sspylogging import get_logger
 from soundscapy.surveys.survey_utils import PAQ_IDS
+
+from ._r_wrapper import get_r_session
 
 logger = get_logger()
 
@@ -41,7 +42,7 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
         ... equal_ang=circ_model.equal_ang,
         ... equal_com=circ_model.equal_com,
         ... )
-        >>> fit_stats = sspy.spi.extract_bfgs_fit(circe_res)
+        >>> fit_stats = sspy.r_wrapper.extract_bfgs_fit(circe_res)
 
     """
     py_res = {}

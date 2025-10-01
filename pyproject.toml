@@ -73,7 +73,7 @@ readme = "README.md"
 requires-python = ">= 3.10"
 
 [project.optional-dependencies]
-all = ["soundscapy[audio]", "soundscapy[spi]"]
+all = ["soundscapy[audio]", "soundscapy[spi]", "soundscapy[satp]"]
 audio = [
     "acoustic-toolbox>=0.1.2",
     "mosqito>=1.2.1",
@@ -81,9 +81,11 @@ audio = [
     "scikit-maad>=1.4.3",
     "tqdm>=4.66.5",
 ]
-spi = [
+r = [
     "rpy2[all]>=3.5.0",
 ]
+spi = ["soundscapy[r]"]
+satp = ["soundscapy[r]"]
 
 [project.urls]
 documentation = "https://soundscapy.readthedocs.io/en/latest/"

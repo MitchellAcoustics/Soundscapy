@@ -5,8 +5,9 @@ import pandas as pd
 from rpy2 import robjects
 from rpy2.robjects.methods import RS4
 
-from soundscapy.spi._r_wrapper import get_r_session
 from soundscapy.sspylogging import get_logger
+
+from ._r_wrapper import get_r_session
 
 logger = get_logger()
 
