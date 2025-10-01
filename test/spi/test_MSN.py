@@ -224,23 +224,21 @@ class TestMultiSkewNorm:
         """Test summary when the model is fitted from data."""
         msn = MultiSkewNorm()
         msn.fit(data=MOCK_DF.copy())
-        msn.summary()
-        captured = capsys.readouterr()
-        assert f"Fitted from data. n = {len(MOCK_DF)}" in captured.out
-        assert "Direct Parameters:" in captured.out
-        assert "Centred Parameters:" in captured.out
-        assert "xi:" in captured.out
-        assert "mean:" in captured.out
+        summary = msn.summary()
+        assert f"Fitted from data. n = {len(MOCK_DF)}" in summary
+        assert "Direct Parameters:" in summary
+        assert "Centred Parameters:" in summary
+        assert "xi:" in summary
+        assert "mean:" in summary
 
     def test_summary_fitted_from_dp(self, capsys):
         """Test summary when the model is fitted from direct parameters."""
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)  # This calculates CP
-        msn.summary()
-        captured = capsys.readouterr()
-        assert "Fitted from direct parameters." in captured.out
-        assert str(msn.dp) in captured.out
-        assert str(msn.cp) in captured.out
+        summary = msn.summary()
+        assert "Fitted from direct parameters." in summary
+        assert str(msn.dp) in summary
+        assert str(msn.cp) in summary
 
     def test_fit_with_dataframe(self):
         """Test fit method with pandas DataFrame."""

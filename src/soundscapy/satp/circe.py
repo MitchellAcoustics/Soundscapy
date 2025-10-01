@@ -160,8 +160,8 @@ class CircE:
         >>> data_paqs = data[PAQ_IDS]
         >>> data_paqs = data_paqs.dropna()
         >>> data_cor = data_paqs.corr()
-        >>> model_type = ModelType(name=CircModelE.CIRCUMPLEX)
-        >>> circe_res = sspy.spi.CircE.compute_bfgs_fit(
+        >>> circ_model = sspy.satp.CircModelE.CIRCUMPLEX
+        >>> circe_res = sspy.satp.CircE.compute_bfgs_fit(
         ... data_cor, "ISD", "EN", circ_model)
         ...
 

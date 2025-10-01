@@ -16,7 +16,7 @@ def test_initialize_r_session_fails():
     if os.environ.get("SPI_DEPS") == "1":
         pytest.skip("SPI dependencies are installed")
 
-    from soundscapy.spi._r_wrapper import initialize_r_session
+    from soundscapy.r_wrapper._r_wrapper import initialize_r_session  # noqa: PLC0415
 
     # Simulate R not being available
     with pytest.raises(ImportError) as excinfo:
@@ -31,16 +31,11 @@ def test_initialize_r_session_fails():
 class TestRWrapper:
     """Test the R wrapper functionality."""
 
-    def test_module_structure(self):
-        """Test that the module structure exists."""
-        import soundscapy.spi._r_wrapper
-
-        # Module should exist but functions will be implemented later
-        assert soundscapy.spi._r_wrapper is not None
-
     def test_initialize_r_session(self):
         """Test R session initialization."""
-        from soundscapy.spi._r_wrapper import initialize_r_session
+        from soundscapy.r_wrapper._r_wrapper import (  # noqa: PLC0415
+            initialize_r_session,
+        )
 
         # This should not raise if R is available
         res = initialize_r_session()
@@ -50,7 +45,7 @@ class TestRWrapper:
 
     def test_shutdown_r_session(self):
         """Test R session cleanup."""
-        from soundscapy.spi._r_wrapper import shutdown_r_session
+        from soundscapy.r_wrapper._r_wrapper import shutdown_r_session  # noqa: PLC0415
 
         # This should not raise if R session is active
         res = shutdown_r_session()
@@ -59,7 +54,10 @@ class TestRWrapper:
 
     def test_r_session_reinitialization(self):
         """Test that the R session can be reinitialized after shutdown."""
-        from soundscapy.spi._r_wrapper import initialize_r_session, shutdown_r_session
+        from soundscapy.r_wrapper._r_wrapper import (  # noqa: PLC0415
+            initialize_r_session,
+            shutdown_r_session,
+        )
 
         # First initialize the R session
         res = initialize_r_session()
@@ -78,15 +76,15 @@ class TestRWrapper:
         # Skip if dependencies are actually installed
 
         if os.environ.get("SPI_DEPS") == "1":
-            from soundscapy.spi import _r_wrapper
+            import soundscapy.r_wrapper as sspyr  # noqa: PLC0415
 
-            _r_wrapper.check_sn_package()
+            sspyr._r_wrapper.check_sn_package()  # noqa: SLF001
 
         else:
-            with pytest.raises(ImportError) as excinfo:
-                from soundscapy.spi import _r_wrapper
+            with pytest.raises(ImportError) as excinfo:  # noqa: PT012
+                import soundscapy.r_wrapper as sspyr  # noqa: PLC0415
 
-                _r_wrapper.check_sn_package()
+                sspyr._r_wrapper.check_sn_package()  # noqa: SLF001
 
             assert "R package 'sn'" in str(excinfo.value)
             assert "install.packages('sn')" in str(excinfo.value)
@@ -95,15 +93,15 @@ class TestRWrapper:
         """Test that the R 'circe' package availability is checked."""
         # Skip if dependencies are actually installed
         if os.environ.get("SPI_DEPS") == "1":
-            from soundscapy.spi import _r_wrapper
+            import soundscapy.r_wrapper as sspyr  # noqa: PLC0415
 
-            _r_wrapper.check_circe_package()
+            sspyr._r_wrapper.check_circe_package()
 
         else:
-            with pytest.raises(ImportError) as excinfo:
-                from soundscapy.spi import _r_wrapper
+            with pytest.raises(ImportError) as excinfo:  # noqa: PT012
+                import soundscapy.r_wrapper as sspyr  # noqa: PLC0415
 
-                _r_wrapper.check_circe_package()
+                sspyr._r_wrapper.check_circe_package()  # noqa: SLF001
 
             assert "R package 'circe'" in str(excinfo.value)
             assert "install.packages('circe')" in str(excinfo.value)

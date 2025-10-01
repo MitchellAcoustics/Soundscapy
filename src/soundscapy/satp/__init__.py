@@ -19,6 +19,6 @@ except ImportError as e:
 
 # Now we can import our modules that depend on the optional packages
 from soundscapy.satp import circe
-from soundscapy.satp.circe import SATP, CircModelE
+from soundscapy.satp.circe import SATP, CircE, CircModelE, ModelType
 
-__all__ = ["SATP", "CircModelE", "circe"]
+__all__ = ["SATP", "CircE", "CircModelE", "ModelType", "circe"]

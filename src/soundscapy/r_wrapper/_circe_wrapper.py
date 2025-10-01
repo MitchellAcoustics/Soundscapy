@@ -82,6 +82,7 @@ def bfgs(
     Examples
     --------
         >>> import soundscapy as sspy
+        >>> from soundscapy.satp import CircModelE, ModelType
         >>> data = sspy.isd.load()
         >>> data_paqs = data[PAQ_IDS]
         >>> data_paqs = data_paqs.dropna()
