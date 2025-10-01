@@ -306,7 +306,7 @@ class SPILayer(Layer):
         self,
         spi_target_data: pd.DataFrame | np.ndarray | None = None,
         *,
-        # TODO(MitchellAcoustics): Allow passing raw param values,  # noqa: TD003
+        # TODO(MitchellAcoustics): Allow passing raw param values,
         #  not just Param objects
         msn_params: DirectParams | CentredParams | None = None,
         n: int = 10000,

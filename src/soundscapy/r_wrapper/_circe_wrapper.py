@@ -72,8 +72,10 @@ def bfgs(
         data_cor (pd.DataFrame): Correlation matrix of the data.
         scales (list[str], optional): List of scale names. Defaults to PAQ_IDS.
         m_val (int, optional): Number of dimensions. Defaults to 3.
-        equal_ang (bool, optional): Whether to enforce equal angles constraint. Defaults to True.
-        equal_com (bool, optional): Whether to enforce equal communalities constraint. Defaults to True.
+        equal_ang (bool, optional): Whether to enforce equal angles constraint.
+            Defaults to True.
+        equal_com (bool, optional): Whether to enforce equal communalities constraint.
+            Defaults to True.
 
     Returns
     -------

@@ -1,6 +1,5 @@
 """Plotting functions for visualizing circumplex data."""
 
-# ruff: noqa: ANN003
 import warnings
 from collections.abc import Sequence
 from typing import Any, Literal, cast
@@ -19,7 +18,6 @@ from soundscapy.plotting.backends_deprecated import Backend
 from soundscapy.plotting.defaults import (
     DEFAULT_BW_ADJUST,
     DEFAULT_COLOR,
-    DEFAULT_FIGSIZE,
     DEFAULT_SEABORN_PARAMS,
     DEFAULT_SIMPLE_DENSITY_PARAMS,
     DEFAULT_STYLE_PARAMS,
@@ -235,7 +233,7 @@ def iso_plot(
         raise ValueError(PLOT_LAYER_VALUE_ERROR.format(layers=plot_layers))
 
     # Handle two layer case
-    if len(plot_layers) == 2:
+    if len(plot_layers) == 2:  # noqa: PLR2004
         layers_set = set(plot_layers)
 
         if "scatter" in layers_set and "density" in layers_set:
@@ -373,10 +371,7 @@ def create_iso_subplots(
     nrows, ncols, n_subplots = allocate_subplot_axes(nrows, ncols, n_subplots)
 
     # Set up figure and subplots
-    if title:
-        vert_adjust = 1.2
-    else:
-        vert_adjust = 1.0
+    vert_adjust = 1.2 if title else 1.0
     figsize = kwargs.pop(
         "figsize", (ncols * subplot_size[0], nrows * (vert_adjust * subplot_size[1]))
     )
@@ -1182,7 +1177,8 @@ def create_circumplex_subplots(
             plot_layers.insert(0, "scatter")
     else:
         warnings.warn(
-            "Can't recognize plot type. Using default 'density' plot type with scatter.",
+            "Can't recognize plot type. "
+            "Using default 'density' plot type with scatter.",
             UserWarning,
             stacklevel=2,
         )
@@ -1217,7 +1213,6 @@ def jointplot(
     density_type: str = "full",
     palette: SeabornPaletteType | None = "colorblind",
     color: ColorType | None = DEFAULT_COLOR,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
     scatter_kws: dict[str, Any] | None = None,
     incl_outline: bool = False,
     alpha: float = DEFAULT_SEABORN_PARAMS["alpha"],
@@ -1412,7 +1407,6 @@ def jointplot(
         y=y,
         hue=hue,
         palette=palette,
-        # height=figsize[0],  # Use figsize for height
         xlim=style_args.xlim,
         ylim=style_args.ylim,
     )

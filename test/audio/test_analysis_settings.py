@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 import yaml
 from pydantic import ValidationError
@@ -44,7 +46,7 @@ def sample_config():
 @pytest.fixture
 def temp_config_file(tmp_path, sample_config):
     config_file = tmp_path / "test_config.yaml"
-    with open(config_file, "w") as f:
+    with Path.open(config_file, "w") as f:
         yaml.dump(sample_config, f)
     return config_file
 
@@ -61,7 +63,8 @@ class TestMetricSettings:
         )
         assert settings.run is True
         assert settings.main == "avg"
-        assert "Left" in settings.channel and "Right" in settings.channel
+        assert "Left" in settings.channel
+        assert "Right" in settings.channel
 
     def test_invalid_metric_settings(self):
         with pytest.raises(ValidationError):
@@ -107,7 +110,7 @@ class TestAnalysisSettings:
         assert output_file.exists()
 
         # Read back and verify
-        with open(output_file) as f:
+        with Path.open(output_file) as f:
             loaded_config = yaml.safe_load(f)
         assert loaded_config["version"] == "1.1"
         assert "LAeq" in loaded_config["AcousticToolbox"]

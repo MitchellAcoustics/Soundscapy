@@ -8,7 +8,6 @@ the soundscapy package for handling and analyzing soundscape survey data.
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
-from typing import Optional
 
 import pandas as pd
 import pandera.pandas as pa
@@ -52,24 +51,73 @@ PAQ_IDS = [paq.id for paq in PAQ]
 
 
 class PAQDfSchema(pa.DataFrameModel):
-    PAQ1: Series[float] = AllowNan()
-    PAQ2: Series[float] = AllowNan()
-    PAQ3: Series[float] = AllowNan()
-    PAQ4: Series[float] = AllowNan()
-    PAQ5: Series[float] = AllowNan()
-    PAQ6: Series[float] = AllowNan()
-    PAQ7: Series[float] = AllowNan()
-    PAQ8: Series[float] = AllowNan()
+    """
+    Pandera schema for validating PAQ (Perceptual Attribute Questions) DataFrames.
 
-    language: Optional[Series[str]] = AllowNan()  # noqa: UP045
-    location_id: Optional[Series[str]] = AllowNan()  # noqa: UP045
-    session_id: Optional[Series[str]] = AllowNan()  # noqa: UP045
-    group_id: Optional[Series[str]] = AllowNan()  # noqa: UP045
-    record_id: Optional[Series[str]] = AllowNan()  # noqa: UP045
+    This schema defines the expected structure and data types for DataFrames containing
+    soundscape survey data with PAQ responses and associated metadata. It includes
+    automatic column name coercion to standardize various input formats.
+
+    Attributes
+    ----------
+    PAQ1-PAQ8 : Series[float]
+        Perceptual Attribute Question responses (1-8) on a Likert scale.
+        Nullable to allow for missing responses.
+    language : Series[str] | None
+        Language code for the survey responses. Optional field.
+    location_id : Series[str] | None
+        Identifier for the survey location. Optional field.
+    session_id : Series[str] | None
+        Identifier for the survey session. Optional field.
+    group_id : Series[str] | None
+        Identifier for the survey group. Optional field.
+    record_id : Series[str] | None
+        Unique identifier for each survey record. Optional field.
+
+    """
+
+    # PAQ response columns - float values representing Likert scale responses
+    PAQ1: Series[float] = AllowNan()  # Pleasant
+    PAQ2: Series[float] = AllowNan()  # Vibrant
+    PAQ3: Series[float] = AllowNan()  # Eventful
+    PAQ4: Series[float] = AllowNan()  # Chaotic
+    PAQ5: Series[float] = AllowNan()  # Annoying
+    PAQ6: Series[float] = AllowNan()  # Monotonous
+    PAQ7: Series[float] = AllowNan()  # Uneventful
+    PAQ8: Series[float] = AllowNan()  # Calm
+
+    # Metadata columns - all optional string identifiers
+    language: Series[str] | None = AllowNan()  # Survey language code
+    location_id: Series[str] | None = AllowNan()  # Location identifier
+    session_id: Series[str] | None = AllowNan()  # Session identifier
+    group_id: Series[str] | None = AllowNan()  # Group identifier
+    record_id: Series[str] | None = AllowNan()  # Record identifier
 
     @pa.dataframe_parser
-    def column_name_coercion(cls, df: DataFrame) -> DataFrame:
+    def column_name_coercion(cls, df: DataFrame) -> DataFrame:  # noqa: N805
+        """
+        Coerce column names to standardized format for PAQ data.
+
+        This parser automatically renames columns to match the expected schema:
+        - PAQ label names (e.g., 'pleasant') to PAQ IDs (e.g., 'PAQ1')
+        - Legacy ID column names to lowercase snake_case format
+
+        Parameters
+        ----------
+        cls : type
+            The schema class (automatically passed by pandera).
+        df : DataFrame
+            Input DataFrame with potentially non-standard column names.
+
+        Returns
+        -------
+        DataFrame with standardized column names.
+
+        """
+        # Create mapping from PAQ labels to standard PAQ IDs
         rename_dict = dict(zip(PAQ_LABELS, PAQ_IDS, strict=False))
+
+        # Add mappings for legacy ID column names to snake_case format
         rename_dict.update(
             {
                 "LocationID": "location_id",

@@ -124,7 +124,7 @@ class DirectParams:
             "is not guaranteed.",
             UserWarning,
             stacklevel=2,
-        )  # TODO(MitchellAcoustics): Add a more specific warning message  # noqa: TD003
+        )  # TODO(MitchellAcoustics): Add a more specific warning message
         dp = cp2dp(cp)
         return cls(dp.xi, dp.omega, dp.alpha)
 

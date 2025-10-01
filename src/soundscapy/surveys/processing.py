@@ -447,7 +447,7 @@ def ssm_metrics(
     1       1.21   20.63       0.01          3.11       0.39
 
     """
-    # TODO(MitchellAcoustics): Replace with a call to circumplex package  # noqa: TD003
+    # TODO(MitchellAcoustics): Replace with a call to circumplex package
     warnings.warn(
         "This function is not yet fully implemented."
         "See https://github.com/MitchellAcoustics/circumplex for a "

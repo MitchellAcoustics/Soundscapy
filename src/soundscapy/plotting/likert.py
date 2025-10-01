@@ -244,7 +244,7 @@ def paq_likert(
     )
 
     new_data = data[paq_cols].copy()
-    new_data = new_data.apply(likert_categorical_from_data, axis=0)  # type: ignore
+    new_data = new_data.apply(likert_categorical_from_data, axis=0)
 
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 6))
@@ -272,6 +272,60 @@ def stacked_likert(
     bar_labels: bool = True,
     **kwargs,
 ) -> None:
+    """
+    Create a stacked Likert scale plot for a single column of survey data.
+
+    This function creates a horizontal stacked bar chart showing the distribution
+    of responses across Likert scale categories for a specified column. The data
+    is automatically cleaned by removing NaN values and converted to categorical
+    format for plotting.
+
+    Parameters
+    ----------
+    data
+        DataFrame containing survey response data.
+    column
+        Name of the column to plot, by default "appropriate".
+    title
+        Plot title, by default "Stacked Likert Plot".
+    legend
+        Whether to show the legend, by default True.
+    ax
+        Matplotlib axes to plot on. If None, new axes will be created,
+        by default None.
+    plot_percentage
+        Whether to show percentages instead of absolute values, by default False.
+    bar_labels
+        Whether to show bar labels, by default True.
+    **kwargs
+        Additional keyword arguments passed to plot_likert.plot_likert.
+
+    Returns
+    -------
+    None
+        This function does not return anything, it plots directly to the given axes.
+
+    Warnings
+    --------
+    This is an experimental function that applies brute force data cleaning.
+    Use with caution as it may change in future versions.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import matplotlib.pyplot as plt
+    >>> from soundscapy.plotting.likert import stacked_likert
+    >>>
+    >>> # Sample survey data
+    >>> data = pd.DataFrame({
+    ...     "appropriate": [1, 2, 3, 4, 5, 3, 4, 2, 5, 1]
+    ... })
+    >>>
+    >>> # Create stacked Likert plot
+    >>> stacked_likert(data, column="appropriate", title="Appropriateness Ratings")
+    >>> plt.show() # xdoctest: +SKIP
+
+    """
     warnings.warn(
         "This is an experimental function. It may change in the future. "
         "Currently, this functio applies brute data cleaning, use with caution. ",
@@ -279,14 +333,18 @@ def stacked_likert(
         stacklevel=2,
     )
 
+    # Extract and clean the specified column
     new_data = data[column].copy()
     new_data = new_data.dropna()
 
-    new_data = likert_categorical_from_data(new_data)  # type: ignore
+    # Convert to categorical format for Likert plotting
+    new_data = likert_categorical_from_data(new_data)
 
+    # Create new axes if none provided
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 6))
 
+    # Create the stacked Likert plot
     plot_likert.plot_likert(
         pd.Series(new_data),
         match_col_to_likert_scale(column),

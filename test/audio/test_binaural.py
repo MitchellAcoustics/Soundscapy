@@ -158,7 +158,8 @@ def test_mosqito_metric_parallel_false(test_binaural_signal):
 
 
 def test_fs_resample_to_different_frequency():
-    original_data = np.random.rand(2, 1000)
+    rng = np.random.default_rng(42)
+    original_data = rng.random((2, 1000))
     original_fs = 44100
     new_fs = 48000
     binaural_signal = Binaural(original_data, original_fs)
@@ -172,7 +173,8 @@ def test_fs_resample_to_different_frequency():
 
 
 def test_fs_resample_to_same_frequency():
-    original_data = np.random.rand(2, 1000)
+    rng = np.random.default_rng(42)
+    original_data = rng.random((2, 1000))
     original_fs = 44100
     binaural_signal = Binaural(original_data, original_fs)
     resampled_signal = binaural_signal.fs_resample(original_fs)
@@ -182,10 +184,11 @@ def test_fs_resample_to_same_frequency():
 
 
 def test_fs_resample_with_invalid_frequency():
-    original_data = np.random.rand(2, 1000)
+    rng = np.random.default_rng(42)
+    original_data = rng.random((2, 1000))
     original_fs = 44100
     binaural_signal = Binaural(original_data, original_fs)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="negative dimensions are not allowed"):
         binaural_signal.fs_resample(-1000)
 
 

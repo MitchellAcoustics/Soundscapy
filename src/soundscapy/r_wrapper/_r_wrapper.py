@@ -180,8 +180,9 @@ def check_circe_package() -> None:
     ------
     ImportError
         If the 'CircE' package is not installed.
+
     """
-    global _circe_checked
+    global _circe_checked  # noqa: PLW0603
 
     def _raise_circe_not_installed_error() -> NoReturn:
         msg = (
@@ -310,7 +311,7 @@ def initialize_r_session() -> dict[str, Any]:
         If session initialization fails.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: PLW0603
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0603
 
     # If session is already active, just return the state
     if _session_active:
@@ -396,7 +397,7 @@ def shutdown_r_session() -> bool:
         True if successful, False otherwise.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: PLW0603
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0603
 
     if not _session_active:
         logger.debug("No active R session to shutdown")
@@ -445,7 +446,7 @@ def get_r_session() -> tuple[Any, Any, Any, Any, Any]:
         If session initialization fails.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: PLW0602
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0602
 
     if not _session_active:
         logger.debug("R session not active, initializing")

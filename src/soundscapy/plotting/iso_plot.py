@@ -22,7 +22,7 @@ Examples
 >>> isoplot.show() # xdoctest: +SKIP
 
 """
-# ruff: noqa: SLF001, G004
+# ruff: noqa: G004
 
 from __future__ import annotations
 
@@ -488,7 +488,8 @@ class ISOPlot:
         # based on the unique values in the specified column
         if self.subplots_params.subplot_by:
             logger.debug(
-                f"Creating subplots by unique values in {self.subplots_params.subplot_by}."
+                "Creating subplots by unique values "
+                f"in {self.subplots_params.subplot_by}."
             )
             subplot_datas, subplot_titles, n_subplots_by = self._setup_subplot_by(
                 self.subplots_params.subplot_by, subplot_datas, subplot_titles
@@ -696,7 +697,8 @@ class ISOPlot:
             )
             raise ValueError(msg)
 
-    def _allocate_subplot_axes(self, subplot_titles: list[str]) -> tuple[int, int]:
+    @staticmethod
+    def _allocate_subplot_axes(subplot_titles: list[str]) -> tuple[int, int]:
         """Allocate the subplot axes based on the number of data subsets."""
         msg = (
             "This is an experimental feature. "
@@ -1002,7 +1004,7 @@ class ISOPlot:
         >>> plot.close()
 
         """
-        # TODO(MitchellAcoustics): Need to handle legend/label creation   # noqa: TD003
+        # TODO(MitchellAcoustics): Need to handle legend/label creation
         #                          for new data added to a specific subplot
         # Create the layer instance
         layer = layer_class(custom_data=data, **params)
@@ -1506,7 +1508,7 @@ class ISOPlot:
         """
         msg = "AnnotationLayer is not yet implemented. "
         raise NotImplementedError(msg)
-        # TODO(MitchellAcoustics): Implement AnnotationLayer  # noqa: TD003
+        # TODO(MitchellAcoustics): Implement AnnotationLayer
         return self.add_layer(
             "AnnotationLayer",
             text=text,
@@ -1787,10 +1789,9 @@ class ISOPlot:
 
     def _move_legend(self) -> None:
         """Move the legend to the specified location."""
-        for i, axis in enumerate(self.yield_axes_objects()):
+        for _, axis in enumerate(self.yield_axes_objects()):
             old_legend = axis.get_legend()
             if old_legend is None:
-                # logger.debug("_move_legend: No legend found for axis %s", i)
                 continue
 
             # Get handles and filter out None values

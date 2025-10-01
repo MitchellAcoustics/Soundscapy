@@ -21,15 +21,15 @@ def isd_data_with_iso(isd_data):
 class TestISDLoading:
     def test_load(self):
         """Test loading of ISD data from local file."""
-        df = isd.load()
-        assert isinstance(df, pd.DataFrame)
-        assert df.shape == (3589, 142)  # Adjust these numbers if they change
-        assert all(col in df.columns for col in isd._PAQ_ALIASES.values())
+        data = isd.load()
+        assert isinstance(data, pd.DataFrame)
+        assert data.shape == (3589, 142)  # Adjust these numbers if they change
+        assert all(col in data.columns for col in isd._PAQ_ALIASES.values())
 
     @pytest.mark.slow
     def test_load_zenodo(self):
         """Test loading of ISD data from Zenodo."""
-        with pytest.raises(ValueError, match="Version .* not recognised"):
+        with pytest.raises(ValueError, match=r"Version .* not recognised"):
             isd.load_zenodo(version="invalid_version")
 
         df_latest = isd.load_zenodo()
@@ -119,7 +119,7 @@ class TestISDDescription:
         result_count = isd.describe_location(
             isd_data_with_iso, location, calc_type="count"
         )
-        assert isinstance(result_count["pleasant"], (int, np.integer))
+        assert isinstance(result_count["pleasant"], int | np.integer)
 
     @pytest.mark.slow
     def test_soundscapy_describe(self, isd_data_with_iso):
@@ -132,7 +132,7 @@ class TestISDDescription:
 
         result_count = isd.soundscapy_describe(isd_data_with_iso, calc_type="count")
         assert isinstance(
-            result_count.loc[result_count.index[0], "pleasant"], (int, np.integer)
+            result_count.loc[result_count.index[0], "pleasant"], int | np.integer
         )
 
 

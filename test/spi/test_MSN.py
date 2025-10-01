@@ -21,14 +21,11 @@ try:
 except ImportError:
     r_sn_available = False
 
-needs_r_sn = pytest.mark.skipif(
-    not r_sn_available,
-    reason="Requires R, rpy2, and the R 'sn' package to be installed.",
-)
 
 rng = default_rng(42)  # Set a random seed for reproducibility
 
 
+@pytest.mark.optional_deps("spi")
 class TestDirectParams:
     def test_direct_params_init_valid(self):
         """Test initialization with valid parameters."""
@@ -102,6 +99,7 @@ class TestDirectParams:
         assert not dp._xi_is_in_range((0.2, 1.0))
 
 
+@pytest.mark.optional_deps("spi")
 class TestCentredParams:
     def test_centred_params_init(self):
         """Test initialization of CentredParams."""
@@ -142,7 +140,6 @@ class TestCentredParams:
         )
         assert str(cp) == expected_str
 
-    @needs_r_sn
     def test_centred_params_from_dp(self):
         """Test the from_dp class method."""
         # Create a dummy DirectParams object
@@ -190,7 +187,7 @@ MOCK_Y = MOCK_DF["y"].to_numpy()
 MOCK_SAMPLE_SIZE = 100
 
 
-@needs_r_sn
+@pytest.mark.optional_deps("spi")
 class TestMultiSkewNorm:
     def test_init(self):
         """Test initialization of MultiSkewNorm."""
@@ -219,8 +216,7 @@ class TestMultiSkewNorm:
         msn = MultiSkewNorm()
         assert msn.summary() == "MultiSkewNorm is not fitted."
 
-    @needs_r_sn  # Needs fit -> R
-    def test_summary_fitted_from_data(self, capsys):
+    def test_summary_fitted_from_data(self):
         """Test summary when the model is fitted from data."""
         msn = MultiSkewNorm()
         msn.fit(data=MOCK_DF.copy())
@@ -231,7 +227,7 @@ class TestMultiSkewNorm:
         assert "xi:" in summary
         assert "mean:" in summary
 
-    def test_summary_fitted_from_dp(self, capsys):
+    def test_summary_fitted_from_dp(self):
         """Test summary when the model is fitted from direct parameters."""
         msn = MultiSkewNorm()
         msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)  # This calculates CP
@@ -259,7 +255,7 @@ class TestMultiSkewNorm:
     def test_fit_with_numpy_array(self):
         """Test fit method with numpy array."""
         msn = MultiSkewNorm()
-        numpy_data = MOCK_DF.values
+        numpy_data = MOCK_DF.to_numpy()
         msn.fit(data=numpy_data)
 
         expected_df = pd.DataFrame(numpy_data, columns=["x", "y"])
@@ -428,9 +424,7 @@ class TestMultiSkewNorm:
 
         # Check sample was called implicitly and data was generated
         assert isinstance(msn.sample_data, np.ndarray)
-        assert (
-            msn.sample_data.shape[1] == 2  # noqa: PLR2004
-        )  # Check sample data has 2 columns
+        assert msn.sample_data.shape[1] == 2  # Check sample data has 2 columns
 
         assert isinstance(result, tuple)
         assert isinstance(result[0], float)
@@ -496,7 +490,7 @@ class TestMultiSkewNorm:
         assert isinstance(spi_value, int)
 
 
-@needs_r_sn
+@pytest.mark.optional_deps("spi")
 @pytest.mark.skip(
     reason="Cannot directly convert cp to dp. Need to come up with a reasonable test."
 )
@@ -514,7 +508,7 @@ def test_cp2dp():
     np.testing.assert_allclose(dp_output.alpha, MOCK_ALPHA, atol=1e-5)
 
 
-@needs_r_sn  # Needs R for conversion
+@pytest.mark.optional_deps("spi")
 def test_dp2cp():
     """Test dp2cp function."""
     # Use the known DP values
