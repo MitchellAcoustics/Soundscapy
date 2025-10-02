@@ -14,7 +14,7 @@ except ImportError as e:
 
 # Now we can import our modules that depend on the optional packages
 from ._circe_wrapper import bfgs, extract_bfgs_fit
-from ._r_wrapper import get_r_session
+from ._r_wrapper import PKG_SRC, get_r_session
 from ._rsn_wrapper import (
     cp2dp,
     dp2cp,
@@ -26,6 +26,7 @@ from ._rsn_wrapper import (
 )
 
 __all__ = [
+    "PKG_SRC",
     "bfgs",
     "cp2dp",
     "dp2cp",

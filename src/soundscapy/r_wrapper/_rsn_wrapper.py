@@ -11,7 +11,7 @@ from ._r_wrapper import get_r_session
 
 logger = get_logger()
 
-_, sn, _, _, _ = get_r_session()
+_, sn, _, _, _, _ = get_r_session()
 logger.debug("R session and packages retrieved successfully.")
 
 

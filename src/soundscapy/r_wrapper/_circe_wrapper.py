@@ -9,7 +9,7 @@ from ._r_wrapper import get_r_session
 
 logger = get_logger()
 
-_, _, _stats_package, _base_package, circe = get_r_session()
+_, _, _stats_package, _base_package, circe, _ = get_r_session()
 logger.debug("R session and packages retrieved successfully.")
 
 
