@@ -11,7 +11,7 @@ and acoustic_toolbox to provide a comprehensive suite of audio analysis tools.
 
 Examples
 --------
->>> # xdoctest: +SKIP
+>>> # doctest: +SKIP
 >>> from soundscapy.audio import Binaural
 >>> signal = Binaural.from_wav("audio.wav")
 >>> results = signal.process_all_metrics(analysis_settings)
@@ -20,6 +20,10 @@ See Also
 --------
 - `soundscapy.audio.binaural`: For detailed Binaural class documentation.
 - `soundscapy.audio.metrics`: For individual metric calculation functions.
+
+Notes
+-----
+This module requires the `soundscapy[audio]` optional dependencies.
 
 """
 

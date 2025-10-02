@@ -435,7 +435,7 @@ def ssm_metrics(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> import pandas as pd
     >>> data = pd.DataFrame({
     ...     'PAQ1': [4, 2], 'PAQ2': [3, 5], 'PAQ3': [2, 4], 'PAQ4': [1, 3],
@@ -517,7 +517,7 @@ def ssm_cosine_fit(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> import pandas as pd
     >>> y = pd.Series([4, 3, 2, 1, 5, 3, 4, 2])
     >>> metrics = ssm_cosine_fit(y)

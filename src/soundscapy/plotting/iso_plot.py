@@ -19,7 +19,7 @@ Examples
 ...    .add_simple_density(fill=False)
 ...    .style()
 ... )
->>> isoplot.show() # xdoctest: +SKIP
+>>> isoplot.show() # doctest: +SKIP
 
 """
 # ruff: noqa: G004
@@ -98,7 +98,7 @@ class ISOPlot:
     ...         .add_scatter()
     ...         .add_density()
     ...         .style())
-    >>> cp.show() # xdoctest: +SKIP
+    >>> cp.show() # doctest: +SKIP
 
     """
 
@@ -954,7 +954,7 @@ class ISOPlot:
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer)
         ...         .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
             True
         >>> plot.close()  # Clean up
@@ -965,7 +965,7 @@ class ISOPlot:
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer, on_axis=0)
         ...         .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> all(len(ctx.layers) == 0 for ctx in plot.subplot_contexts[1:])
@@ -978,7 +978,7 @@ class ISOPlot:
         ...            .create_subplots(nrows=2, ncols=2)
         ...            .add_layer(ScatterLayer, on_axis=[0, 2])
         ...            .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> len(plot.subplot_contexts[2].layers) == 1
@@ -1000,7 +1000,7 @@ class ISOPlot:
         ...        # Add a layer with custom data to the second subplot
         ...        .add_layer(ScatterLayer, data=custom_data, on_axis=1)
         ...        .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.close()
 
         """
@@ -1152,7 +1152,7 @@ class ISOPlot:
         ...           .create_subplots(nrows=2, ncols=1)
         ...           .add_scatter(s=50, alpha=0.7, hue='Group')
         ...           .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
         True
         >>> plot.close()  # Clean up
@@ -1168,7 +1168,7 @@ class ISOPlot:
         ...            .add_scatter(hue='Group')
         ...            .add_scatter(on_axis=0, data=custom_data, color='red')
         ...            .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.subplot_contexts[0].layers[1].custom_data is custom_data
         True
         >>> plot.close()  # Clean up
@@ -1240,7 +1240,7 @@ class ISOPlot:
         ...     .add_spi(msn_params=msn_params)
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
         True
         >>> plot.close()  # Clean up
@@ -1254,7 +1254,7 @@ class ISOPlot:
         ...     .add_spi(msn_params=msn_params, show_score="on axis")
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 3
         True
 
@@ -1287,7 +1287,7 @@ class ISOPlot:
         ...     .add_spi(spi_target_data=spi_msn.sample_data, show_score="under title")
         ...     .style()
         ... )
-        >>> mp3.show() # xdoctest: +SKIP
+        >>> mp3.show() # doctest: +SKIP
         >>> plot.close()  # Clean up
 
         # BUG: This last doctest doesn't show the spi score under the title
@@ -1359,7 +1359,7 @@ class ISOPlot:
         ...     .add_density()
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> plot.close()  # Clean up
@@ -1372,7 +1372,7 @@ class ISOPlot:
         ...     .add_density(levels=5, alpha=0.7)
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> plot.close()  # Clean up
@@ -1442,7 +1442,7 @@ class ISOPlot:
         ...     .add_simple_density()
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
         True
         >>> plot.close()  # Clean up
@@ -1459,7 +1459,7 @@ class ISOPlot:
         ...     .add_simple_density()
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
         True
         >>> plot.close()
@@ -1552,7 +1552,7 @@ class ISOPlot:
         ...       .add_scatter()
         ...       .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.get_figure() is not None
         True
         >>> plot.close()  # Clean up
@@ -1565,7 +1565,7 @@ class ISOPlot:
         ...         .add_scatter()
         ...         .style(xlim=(-2, 2), ylim=(-2, 2), primary_lines=False)
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.get_figure() is not None
         True
         >>> plot.close()  # Clean up
@@ -1580,7 +1580,7 @@ class ISOPlot:
         ...     .add_density(levels=5)
         ...     .style(title_fontsize=14)
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> # Verify results
         >>> isinstance(plot, ISOPlot)
         True
@@ -1716,7 +1716,7 @@ class ISOPlot:
         ...     .add_scatter()
         ...     .style(diagonal_lines=True)
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.close('all')
 
         """

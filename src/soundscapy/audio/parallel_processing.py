@@ -4,14 +4,6 @@ Functions for parallel processing of binaural audio files.
 It includes functions to load and analyze binaural files, as well as to process
 multiple files in parallel using concurrent.futures.
 
-Functions:
-    load_analyse_binaural: Load and analyze a single binaural file.
-    parallel_process: Process multiple binaural files in parallel.
-
-Note:
-    This module requires the tqdm library for progress bars and concurrent.futures
-    for parallel processing. It uses loguru for logging.
-
 """
 
 import concurrent.futures

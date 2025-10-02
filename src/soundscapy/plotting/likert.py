@@ -110,7 +110,7 @@ def paq_radar_plot(
     >>>
     >>> # Create radar plot with the "Location" column as index
     >>> ax = paq_radar_plot(data, index="Location", title="PAQ Comparison")
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     """
     # Input validation
@@ -234,7 +234,7 @@ def paq_likert(
     >>> import soundscapy as sspy
     >>> data = sspy.isd.load(['CamdenTown'])
     >>> paq_likert(data, "Camden Town Likert data")
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     """
     warnings.warn(
@@ -323,7 +323,7 @@ def stacked_likert(
     >>>
     >>> # Create stacked Likert plot
     >>> stacked_likert(data, column="appropriate", title="Appropriateness Ratings")
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     """
     warnings.warn(

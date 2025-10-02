@@ -1,26 +1,14 @@
 """
 Provides tools for working with binaural audio signals.
 
-The main class, Binaural, extends the Signal class from the Acoustic Toolbox library
+The main class, `Binaural`, extends the Signal class from the Acoustic Toolbox library
 to provide specialized functionality for binaural recordings. It supports
 various psychoacoustic metrics and analysis techniques using libraries such
-as mosqito, maad, and acoustic_toolbox.
-
-Classes
--------
-Binaural : A class for processing and analyzing binaural audio signals.
-
-Notes
------
-This module requires the following external libraries:
-- acoustics
-- mosqito
-- maad
-- acoustic_toolbox
+as `mosqito`, `maad`, and `acoustic_toolbox`.
 
 Examples
 --------
->>> # xdoctest: +SKIP
+>>> # doctest: +SKIP
 >>> from soundscapy.audio import Binaural
 >>> signal = Binaural.from_wav("audio.wav")
 >>> results = signal.process_all_metrics(analysis_settings)
@@ -58,10 +46,10 @@ class Binaural(Signal):
     """
     A class for processing and analyzing binaural audio signals.
 
-    This class extends the Signal class from the acoustic_toolbox library to provide
+    This class extends the Signal class from the `acoustic_toolbox` library to provide
     specialized functionality for binaural recordings. It supports various
     psychoacoustic metrics and analysis techniques using libraries such as
-    mosqito, maad, and acoustic_toolbox.
+    `mosqito`, `maad`, and `acoustic_toolbox`.
 
     Attributes
     ----------
@@ -166,7 +154,7 @@ class Binaural(Signal):
 
         Examples
         --------
-        >>> # xdoctest: +SKIP
+        >>> # doctest: +SKIP
         >>> signal = Binaural.from_wav("audio.wav")
         >>> # Calibrate left channel to 60 dB and right to 62 dB
         >>> calibrated_signal = signal.calibrate_to([60, 62])
@@ -740,7 +728,7 @@ class Binaural(Signal):
 
         Examples
         --------
-        >>> # xdoctest: +SKIP
+        >>> # doctest: +SKIP
         >>> signal = Binaural.from_wav("audio.wav")
         >>> settings = AnalysisSettings.from_yaml("settings.yaml")
         >>> results = signal.process_all_metrics(settings)

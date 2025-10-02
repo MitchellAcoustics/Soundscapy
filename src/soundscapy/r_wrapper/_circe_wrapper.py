@@ -27,7 +27,7 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
 
     Examples
     --------
-        >>> # xdoctest: +SKIP
+        >>> # doctest: +SKIP
         >>> import soundscapy as sspy
         >>> data = sspy.isd.load()
         >>> data_paqs = data[PAQ_IDS]

@@ -5,33 +5,6 @@ It includes implementations for single-channel and two-channel signals,
 as well as wrapper functions for different libraries such as Acoustic Toolbox, MoSQITo,
 and scikit-maad.
 
-Functions
----------
-_stat_calcs : Calculate various statistics for a time series array.
-mosqito_metric_1ch : Calculate a MoSQITo psychoacoustic metric for a single channel
-    signal.
-maad_metric_1ch : Run a metric from the scikit-maad library on a single channel signal.
-acoustics_metric_1ch : Run a metric from the Acoustic Toolbox on a single channel
-    object.
-acoustics_metric_2ch : Run a metric from the Acoustic Toolbox on a Binaural object.
-pyacoustics_metric_1ch: Deprecated function for running a metric from the PyAcoustics
-    library
-pyacoustics_metric_2ch: Deprecated function for running a metric from the PyAcoustics
-    library (replaced with `acoustics_metric_2ch`).
-pyacoustics_metric_2ch: Deprecated function for running a metric from the PyAcoustics
-    library (replaced with `acoustics_metric_2ch`).
-mosqito_metric_2ch : Calculate metrics from MoSQITo for a two-channel signal.
-maad_metric_2ch : Run a metric from the scikit-maad library on a binaural signal.
-prep_multiindex_df : Prepare a MultiIndex dataframe from a dictionary of results.
-add_results : Add results to a MultiIndex dataframe.
-process_all_metrics : Process all metrics specified in the analysis settings for a
-    binaural signal.
-
-Notes
------
-This module relies on external libraries such as numpy, pandas, maad, mosqito,
-and scipy. Ensure these dependencies are installed before using this module.
-
 """
 
 from __future__ import annotations
@@ -110,7 +83,7 @@ def _stat_calcs(
 
     Examples
     --------
-    >>> # xdoctest: +REQUIRES(env:AUDIO_DEPS='1')
+    >>> # doctest: +REQUIRES(env:AUDIO_DEPS='1')
     >>> ts = np.array([1, 2, 3, 4, 5])
     >>> res = {}
     >>> updated_res = _stat_calcs("metric", ts, res, [50, "avg", "max"])
@@ -215,7 +188,7 @@ def mosqito_metric_1ch(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> from soundscapy.audio import Binaural
     >>> signal = Binaural.from_wav("audio.wav", resample=480000)
     >>> results = mosqito_metric_1ch(signal[0], "loudness_zwtv", as_df=True)
@@ -1166,7 +1139,7 @@ def process_all_metrics(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> from soundscapy.audio import Binaural
     >>> from soundscapy import AnalysisSettings
     >>> signal = Binaural.from_wav("audio.wav", resample=480000)
