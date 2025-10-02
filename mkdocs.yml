@@ -92,25 +92,24 @@ plugins:
   - mkdocs-jupyter:
       include_source: true
       theme: default
-#  - mkdocs-autoapi:
-#      autoapi_add_nav_entry: Reference
-#      autoapi_file_patterns:
-#        - "src/soundscapy/**/*.py"
-#      autoapi_ignore:
-#        - "**/dist/**/"
-#        - "**/.*/**/"
-#        - "**/test/**/"
-#        - "**/.venv/**/"
-#        - "*.ipynb"
+  #  - mkdocs-autoapi:
+  #      autoapi_add_nav_entry: Reference
+  #      autoapi_file_patterns:
+  #        - "src/soundscapy/**/*.py"
+  #      autoapi_ignore:
+  #        - "**/dist/**/"
+  #        - "**/.*/**/"
+  #        - "**/test/**/"
+  #        - "**/.venv/**/"
+  #        - "*.ipynb"
   - api-autonav:
-      modules: ['src/soundscapy']
+      modules: ["src/soundscapy"]
       module_options:
         ".*":
           merge_init_into_class: true
           show_symbol_type_heading: true # waiting for general release
           show_symbol_type_toc: true
       exclude: ["re:^soundscapy$"] # Ends up double-documenting top level imports, so don't auto generate things exported from soundscapy.__init__.py
-
 
 markdown_extensions:
   - admonition

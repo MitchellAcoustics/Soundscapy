@@ -18,16 +18,16 @@ dev = [
 ]
 docs = [
     "ipywidgets>=8.1.3",
-#    "jupyter-dash>=0.4.2",
+    # "jupyter-dash>=0.4.2",
     "jupyter>=1.1.1",
+    "mkdocs-api-autonav>=0.4.0",
+    "mkdocs-autoapi>=0.4.1",
     "mkdocs-include-markdown-plugin>=7.1.5",
     "mkdocs-jupyter>=0.24.8",
     "mkdocs-material>=9.5.31",
     "mkdocs>=1.6.0",
     "mkdocstrings[python]>=0.25.2",
     "pymdown-extensions>=10.9",
-    "mkdocs-autoapi>=0.4.1",
-    "mkdocs-api-autonav>=0.4.0",
 ]
 test = [
     "nbmake>=1.5.4",
@@ -73,7 +73,7 @@ readme = "README.md"
 requires-python = ">= 3.10"
 
 [project.optional-dependencies]
-all = ["soundscapy[audio]", "soundscapy[spi]", "soundscapy[satp]"]
+all = ["soundscapy[audio]", "soundscapy[satp]", "soundscapy[spi]"]
 audio = [
     "acoustic-toolbox>=0.1.2",
     "mosqito>=1.2.1",
@@ -84,8 +84,8 @@ audio = [
 r = [
     "rpy2[all]>=3.5.0",
 ]
-spi = ["soundscapy[r]"]
 satp = ["soundscapy[r]"]
+spi = ["soundscapy[r]"]
 
 [project.urls]
 documentation = "https://soundscapy.readthedocs.io/en/latest/"
@@ -131,25 +131,25 @@ lint.ignore = [
     "FIX002", # fixme (ruff-format recommended)
     "ISC001", # simplify implicit str concatenation (ruff-format recommended)
     "PLR0913", # too many arguments
-    "TD003", # Missing issue link
     "TD002", # Missing author in TODO
+    "TD003", # Missing issue link
 ]
-lint.per-file-ignores = {"*.ipynb" = ["T201", "ANN001", "D103", 'ANN201', 'ERA001', 'PLR2004'], "*test*.py" = [
+lint.per-file-ignores = {"*.ipynb" = ["ANN001", "D103", "T201", 'ANN201', 'ERA001', 'PLR2004'], "*test*.py" = [
     "ANN001", # Missing type annotation for function argument
+    "ANN001", # Missing type annotation
     "ANN201", # Missing return type annotation for public function
     "D100", # Missing docstring in public module
     "D101", # Missing docstring in public class
     "D102", # Missing docstring
     "D103", # Missing docstring in public function
     "D104", # Missing docstring in public package
-    "INP001", # File is part of an implicit namespace package.
-    "S101", # Use of `assert` detected
     "ERA001", # Remove commented-out code
-    "ANN001", # Missing type annotation
+    "INP001", # File is part of an implicit namespace package.
     "PGH003", # Use specific rule codes
-    "PLR2004", # Hardcoded values
-    "SLF001", # Private member/module acces
     "PLC0415", # Import not at top of file
+    "PLR2004", # Hardcoded values
+    "S101", # Use of `assert` detected
+    "SLF001", # Private member/module acces
 ]}
 lint.select = ["ALL"]
 lint.isort.known-first-party = ["soundscapy"]
