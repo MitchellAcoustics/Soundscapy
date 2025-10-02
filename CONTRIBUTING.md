@@ -250,7 +250,7 @@ Each environment is configured to run the appropriate tests:
 
 Test selection is implemented using pytest's keyword-based filtering to precisely target the right tests:
 
-```python
+```bash
 # Core tests only
 pytest -k "not optional_deps"
 

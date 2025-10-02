@@ -1,6 +1,5 @@
 """Plotting functions for visualizing circumplex data."""
 
-# ruff: noqa: ANN003
 import warnings
 from collections.abc import Sequence
 from typing import Any, Literal, cast
@@ -19,7 +18,6 @@ from soundscapy.plotting.backends_deprecated import Backend
 from soundscapy.plotting.defaults import (
     DEFAULT_BW_ADJUST,
     DEFAULT_COLOR,
-    DEFAULT_FIGSIZE,
     DEFAULT_SEABORN_PARAMS,
     DEFAULT_SIMPLE_DENSITY_PARAMS,
     DEFAULT_STYLE_PARAMS,
@@ -162,22 +160,22 @@ def iso_plot(
     >>> data = sspy.isd.load()
     >>> data = sspy.add_iso_coords(data)
     >>> ax = sspy.iso_plot(data)
-    >>> plt.show()  # xdoctest: +SKIP
+    >>> plt.show()  # doctest: +SKIP
 
     Basic scatter plot:
 
     >>> ax = sspy.iso_plot(data, plot_layers="scatter")
-    >>> plt.show()  # xdoctest: +SKIP
+    >>> plt.show()  # doctest: +SKIP
 
     Simple density plot with fewer contour levels:
 
     >>> ax = sspy.iso_plot(data, plot_layers="simple_density")
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Simple density with scatter points
 
     >>> ax = sspy.iso_plot(data, plot_layers=["scatter", "simple_density"])
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Density plot with custom styling:
 
@@ -190,7 +188,7 @@ def iso_plot(
     ...     legend_loc="upper right",
     ...     fill = False,
     ... )
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Add density to existing plots:
 
@@ -204,7 +202,7 @@ def iso_plot(
     ...     ax=axes.flatten()[1], title="RegentsParkJapan"
     ... )
     >>> plt.tight_layout()
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
     >>> plt.close('all')
 
     """  # noqa: D205
@@ -235,7 +233,7 @@ def iso_plot(
         raise ValueError(PLOT_LAYER_VALUE_ERROR.format(layers=plot_layers))
 
     # Handle two layer case
-    if len(plot_layers) == 2:
+    if len(plot_layers) == 2:  # noqa: PLR2004
         layers_set = set(plot_layers)
 
         if "scatter" in layers_set and "density" in layers_set:
@@ -349,7 +347,7 @@ def create_iso_subplots(
     ...     ['CamdenTown', 'PancrasLock', 'RegentsParkJapan', 'RegentsParkFields']
     ... )
     >>> fig, axes = sspy.create_iso_subplots(four_locs, subplot_by="LocationID")
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Create subplots by specifying a list of data
     >>> data1 = pd.DataFrame({'ISOPleasant': np.random.uniform(-1, 1, 50),
@@ -359,7 +357,7 @@ def create_iso_subplots(
     >>> fig, axes = create_iso_subplots(
     ...     [data1, data2], plot_layers="scatter", nrows=1, ncols=2
     ... )
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
     >>> assert len(axes) == 2
     >>> plt.close('all')
 
@@ -373,10 +371,7 @@ def create_iso_subplots(
     nrows, ncols, n_subplots = allocate_subplot_axes(nrows, ncols, n_subplots)
 
     # Set up figure and subplots
-    if title:
-        vert_adjust = 1.2
-    else:
-        vert_adjust = 1.0
+    vert_adjust = 1.2 if title else 1.0
     figsize = kwargs.pop(
         "figsize", (ncols * subplot_size[0], nrows * (vert_adjust * subplot_size[1]))
     )
@@ -715,12 +710,12 @@ def scatter(
     >>> data = sspy.isd.load()
     >>> data = sspy.add_iso_coords(data)
     >>> ax = sspy.scatter(data)
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Scatter plot with grouping by location:
 
     >>> ax = sspy.scatter(data, hue="LocationID", diagonal_lines=True, legend=False)
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
     >>> plt.close('all')
 
     """
@@ -900,12 +895,12 @@ def density(
     >>> data = sspy.isd.load()
     >>> data = sspy.add_iso_coords(data)
     >>> ax = sspy.density(data)
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Simple density plot with fewer contour levels:
 
     >>> ax = sspy.density(data, density_type="simple")
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Density plot with custom styling:
 
@@ -919,7 +914,7 @@ def density(
     ...     fill = False,
     ...     density_type = "simple",
     ... )
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Add density to existing plots:
 
@@ -934,7 +929,7 @@ def density(
     ...     ax=axes[1], title="RegentsParkJapan"
     ... )
     >>> plt.tight_layout()
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
     >>> plt.close('all')
 
     """
@@ -1156,7 +1151,7 @@ def create_circumplex_subplots(
         >>> fig = create_circumplex_subplots(
         ...     [data1, data2], plot_type="scatter", nrows=1, ncols=2
         ... )
-        >>> plt.show() # xdoctest: +SKIP
+        >>> plt.show() # doctest: +SKIP
         >>> isinstance(fig, plt.Figure)
         True
         >>> plt.close('all')
@@ -1182,7 +1177,8 @@ def create_circumplex_subplots(
             plot_layers.insert(0, "scatter")
     else:
         warnings.warn(
-            "Can't recognize plot type. Using default 'density' plot type with scatter.",
+            "Can't recognize plot type. "
+            "Using default 'density' plot type with scatter.",
             UserWarning,
             stacklevel=2,
         )
@@ -1217,7 +1213,6 @@ def jointplot(
     density_type: str = "full",
     palette: SeabornPaletteType | None = "colorblind",
     color: ColorType | None = DEFAULT_COLOR,
-    figsize: tuple[int, int] = DEFAULT_FIGSIZE,
     scatter_kws: dict[str, Any] | None = None,
     incl_outline: bool = False,
     alpha: float = DEFAULT_SEABORN_PARAMS["alpha"],
@@ -1355,12 +1350,12 @@ def jointplot(
     >>> data = sspy.isd.load()
     >>> data = sspy.add_iso_coords(data)
     >>> g = sspy.jointplot(data)
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Jointplot with histogram marginals:
 
     >>> g = sspy.jointplot(data, marginal_kind="hist")
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
 
     Jointplot with custom styling and grouping:
 
@@ -1373,7 +1368,7 @@ def jointplot(
     ...     figsize=(6, 6),
     ...     title="Grouped Soundscape Analysis"
     ... )
-    >>> plt.show() # xdoctest: +SKIP
+    >>> plt.show() # doctest: +SKIP
     >>> plt.close('all')
 
     """
@@ -1412,7 +1407,6 @@ def jointplot(
         y=y,
         hue=hue,
         palette=palette,
-        # height=figsize[0],  # Use figsize for height
         xlim=style_args.xlim,
         ylim=style_args.ylim,
     )

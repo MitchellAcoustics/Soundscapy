@@ -1,5 +1,6 @@
 """Configure pytest for soundscapy testing."""
 
+import importlib
 import os
 
 import pytest
@@ -15,8 +16,8 @@ def _check_dependencies(group: str) -> bool:
     if group not in _dependency_cache:
         try:
             if group == "audio":
-                # Try importing audio-related modules using importlib.util for availability check
-                import importlib.util
+                # Try importing audio-related modules
+                # using importlib.util for availability check
 
                 deps = ["mosqito", "maad", "tqdm", "acoustic_toolbox"]
                 all_available = all(
@@ -27,13 +28,11 @@ def _check_dependencies(group: str) -> bool:
                     logger.debug(f"{group} dependencies found")
                 else:
                     logger.debug(f"{group} dependencies missing")
-            elif group == "spi":
-                # Check SPI dependencies
-                import importlib.util
-
-                spi_available = importlib.util.find_spec("rpy2") is not None
-                _dependency_cache[group] = spi_available
-                if spi_available:
+            elif group in {"r", "spi", "satp"}:
+                # Check R dependencies
+                r_available = importlib.util.find_spec("rpy2") is not None
+                _dependency_cache[group] = r_available
+                if r_available:
                     logger.debug(f"{group} dependencies found")
                 else:
                     logger.debug(f"{group} dependencies missing")
@@ -53,7 +52,9 @@ def pytest_ignore_collect(collection_path):
     # Map module paths to their dependency groups
     module_deps = {
         "audio/": "audio",
+        "r_wrapper/": "r",
         "spi/": "spi",
+        "satp/": "satp",
         # Add new optional module paths here
     }
 
@@ -77,7 +78,7 @@ def pytest_configure(config):
     )
 
     # Define known dependency groups
-    dependency_groups = ["audio", "spi"]
+    dependency_groups = ["audio", "r", "spi", "satp"]
     for group in dependency_groups:
         env_var = f"{group.upper()}_DEPS"
         os.environ[env_var] = "1" if _check_dependencies(group) else "0"

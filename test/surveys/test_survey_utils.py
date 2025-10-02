@@ -74,7 +74,7 @@ def sample_df_with_likert_labels():
     }
 
     # Create DataFrame with numeric values
-    df = pd.DataFrame(
+    data = pd.DataFrame(
         {
             "RecordID": [1, 2, 3, 4],
             "GroupID": ["A", "A", "B", "B"],
@@ -92,9 +92,9 @@ def sample_df_with_likert_labels():
 
     # Replace numeric values with Likert labels
     for col in PAQ_IDS:
-        df[col] = df[col].map(likert_map)
+        data[col] = data[col].map(likert_map)
 
-    return df
+    return data
 
 
 @pytest.fixture
@@ -279,21 +279,21 @@ class TestConstants:
             assert lang in LANGUAGE_ANGLES
 
         # Check that each language has 8 angles
-        for lang, angles in LANGUAGE_ANGLES.items():
+        for angles in LANGUAGE_ANGLES.values():
             assert len(angles) == 8
 
             # Check that angles are numeric
             for angle in angles:
-                assert isinstance(angle, (int, float))
+                assert isinstance(angle, int | float)
 
 
 class TestFixtures:
     """Tests for the fixtures."""
 
     def test_sample_df_with_likert_labels(self, sample_df_with_likert_labels):
-        """Test that sample_df_with_likert_labels has string Likert labels instead of numeric values."""
+        """Test that sample_df_with_likert_labels has string Likert labels instead of numeric values."""  # noqa: E501
         # Check that the DataFrame has the expected columns
-        expected_cols = ["RecordID", "GroupID"] + PAQ_IDS + ["OtherCol"]
+        expected_cols = ["RecordID", "GroupID", *PAQ_IDS, "OtherCol"]
         assert list(sample_df_with_likert_labels.columns) == expected_cols
 
         # Check that PAQ columns contain string values, not numeric
@@ -310,7 +310,7 @@ class TestFixtures:
 
             # Check that there are no numeric values
             assert not any(
-                isinstance(val, (int, float))
+                isinstance(val, int | float)
                 for val in sample_df_with_likert_labels[col]
             )
 
@@ -323,7 +323,7 @@ class TestReturnPAQs:
         result = return_paqs(sample_df)
 
         # Check that result has the expected columns
-        expected_cols = ["RecordID", "GroupID"] + PAQ_IDS
+        expected_cols = ["RecordID", "GroupID", *PAQ_IDS]
         assert list(result.columns) == expected_cols
 
         # Check that result has the same number of rows as input
@@ -352,7 +352,7 @@ class TestReturnPAQs:
         result = return_paqs(sample_df, other_cols=["OtherCol"])
 
         # Check that result has the expected columns
-        expected_cols = ["RecordID", "GroupID"] + PAQ_IDS + ["OtherCol"]
+        expected_cols = ["RecordID", "GroupID", *PAQ_IDS, "OtherCol"]
         assert list(result.columns) == expected_cols
 
         # Check that result has the same number of rows as input
@@ -367,7 +367,7 @@ class TestReturnPAQs:
         result = return_paqs(sample_df, other_cols=["OtherCol"], incl_ids=False)
 
         # Check that result has the expected columns
-        expected_cols = PAQ_IDS + ["OtherCol"]
+        expected_cols = [*PAQ_IDS, "OtherCol"]
         assert list(result.columns) == expected_cols
 
         # Check that result has the same number of rows as input
@@ -382,11 +382,11 @@ class TestRenamePAQs:
     """Tests for the rename_paqs function."""
 
     def test_rename_paqs_with_paq_names(self, sample_df_with_paq_names):
-        """Test rename_paqs with default parameters on a DataFrame with PAQ attribute names as column names."""
+        """Test rename_paqs with default parameters on a DataFrame with PAQ attribute names as column names."""  # noqa: E501
         result = rename_paqs(sample_df_with_paq_names)
 
         # Check that PAQ labels have been renamed to PAQ IDs
-        expected_cols = ["RecordID"] + PAQ_IDS + ["OtherCol"]
+        expected_cols = ["RecordID", *PAQ_IDS, "OtherCol"]
         assert list(result.columns) == expected_cols
 
         # Check that the data is preserved
@@ -414,7 +414,7 @@ class TestRenamePAQs:
         result = rename_paqs(sample_df_custom_names, paq_aliases=custom_names)
 
         # Check that custom names have been renamed to PAQ IDs
-        expected_cols = ["RecordID"] + PAQ_IDS + ["OtherCol"]
+        expected_cols = ["RecordID", *PAQ_IDS, "OtherCol"]
         assert list(result.columns) == expected_cols
 
         # Check that the data is preserved
@@ -442,7 +442,7 @@ class TestRenamePAQs:
         result = rename_paqs(sample_df_custom_names, paq_aliases=custom_mapping)
 
         # Check that custom names have been renamed to PAQ IDs
-        expected_cols = ["RecordID"] + PAQ_IDS + ["OtherCol"]
+        expected_cols = ["RecordID"] + PAQ_IDS + ["OtherCol"]  # noqa: RUF005
         assert list(result.columns) == expected_cols
 
         # Check that the data is preserved
@@ -482,7 +482,7 @@ class TestMeanResponses:
         result = mean_responses(sample_df, group="GroupID")
 
         # Check that result has the expected columns
-        expected_cols = ["GroupID"] + PAQ_IDS
+        expected_cols = ["GroupID", *PAQ_IDS]
         assert list(result.columns) == expected_cols
 
         # Check that result has the expected number of rows (one per group)

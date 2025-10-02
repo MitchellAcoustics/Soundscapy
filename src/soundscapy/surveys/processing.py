@@ -231,7 +231,6 @@ def add_iso_coords(
         Names for new coordinate columns, by default ("ISOPleasant", "ISOEventful")
     angles : Tuple[int, ...], optional
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
-    *
     overwrite : bool, optional
         Whether to overwrite existing ISO coordinate columns, by default False
 
@@ -436,7 +435,7 @@ def ssm_metrics(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> import pandas as pd
     >>> data = pd.DataFrame({
     ...     'PAQ1': [4, 2], 'PAQ2': [3, 5], 'PAQ3': [2, 4], 'PAQ4': [1, 3],
@@ -448,7 +447,7 @@ def ssm_metrics(
     1       1.21   20.63       0.01          3.11       0.39
 
     """
-    # TODO(MitchellAcoustics): Replace with a call to circumplex package  # noqa: TD003
+    # TODO(MitchellAcoustics): Replace with a call to circumplex package
     warnings.warn(
         "This function is not yet fully implemented."
         "See https://github.com/MitchellAcoustics/circumplex for a "
@@ -518,7 +517,7 @@ def ssm_cosine_fit(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> import pandas as pd
     >>> y = pd.Series([4, 3, 2, 1, 5, 3, 4, 2])
     >>> metrics = ssm_cosine_fit(y)

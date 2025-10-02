@@ -1,26 +1,14 @@
 """
 Provides tools for working with binaural audio signals.
 
-The main class, Binaural, extends the Signal class from the Acoustic Toolbox library
+The main class, `Binaural`, extends the Signal class from the Acoustic Toolbox library
 to provide specialized functionality for binaural recordings. It supports
 various psychoacoustic metrics and analysis techniques using libraries such
-as mosqito, maad, and acoustic_toolbox.
-
-Classes
--------
-Binaural : A class for processing and analyzing binaural audio signals.
-
-Notes
------
-This module requires the following external libraries:
-- acoustics
-- mosqito
-- maad
-- acoustic_toolbox
+as `mosqito`, `maad`, and `acoustic_toolbox`.
 
 Examples
 --------
->>> # xdoctest: +SKIP
+>>> # doctest: +SKIP
 >>> from soundscapy.audio import Binaural
 >>> signal = Binaural.from_wav("audio.wav")
 >>> results = signal.process_all_metrics(analysis_settings)
@@ -29,7 +17,7 @@ Examples
 
 import warnings
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -51,16 +39,17 @@ from soundscapy.audio.metrics import (
 )
 
 ALLOWED_BINAURAL_CHANNELS = 2
+DEFAULT_SETTINGS = AnalysisSettings.default()
 
 
 class Binaural(Signal):
     """
     A class for processing and analyzing binaural audio signals.
 
-    This class extends the Signal class from the acoustic_toolbox library to provide
+    This class extends the Signal class from the `acoustic_toolbox` library to provide
     specialized functionality for binaural recordings. It supports various
     psychoacoustic metrics and analysis techniques using libraries such as
-    mosqito, maad, and acoustic_toolbox.
+    `mosqito`, `maad`, and `acoustic_toolbox`.
 
     Attributes
     ----------
@@ -165,7 +154,7 @@ class Binaural(Signal):
 
         Examples
         --------
-        >>> # xdoctest: +SKIP
+        >>> # doctest: +SKIP
         >>> signal = Binaural.from_wav("audio.wav")
         >>> # Calibrate left channel to 60 dB and right to 62 dB
         >>> calibrated_signal = signal.calibrate_to([60, 62])
@@ -228,11 +217,12 @@ class Binaural(Signal):
             Whether to normalize the signal. Default is False.
         resample : int, optional
             New sampling frequency to resample the signal to. Default is None
+        recording
+            Name of the recording.
 
         Returns
         -------
-        Binaural
-            Binaural signal object of wav recording.
+        Binaural signal object of wav recording.
 
         See Also
         --------
@@ -280,8 +270,7 @@ class Binaural(Signal):
 
         Returns
         -------
-        Binaural
-            Resampled Binaural signal. If inplace is True, returns self.
+        Resampled Binaural signal. If inplace is True, returns self.
 
         See Also
         --------
@@ -339,13 +328,12 @@ class Binaural(Signal):
         if channel in ["Right", 1, "R"]:
             logger.debug("Returning right channel")
             return self[1]
-        logger.warning(
-            f"Unrecognized channel specification: {channel}."
-            "Returning full Binaural object."
+        msg = (
+            f"Unrecognized channel specification: {channel}"
+            "Returning full Binaural object"
         )
-        warnings.warn(
-            "Channel not recognised. Returning Binaural object as is.", stacklevel=2
-        )
+        logger.warning(msg)
+        warnings.warn(msg, stacklevel=2)
         return self
 
     def pyacoustics_metric(
@@ -518,6 +506,7 @@ class Binaural(Signal):
                 s, metric, statistics, label, as_df, return_time_series, func_args
             )
         logger.debug("Processing both channels")
+        s = cast("Binaural", s)
         return acoustics_metric_2ch(
             s,
             metric,
@@ -531,7 +520,13 @@ class Binaural(Signal):
 
     def mosqito_metric(
         self,
-        metric: str,
+        metric: Literal[
+            "loudness_zwtv",
+            "roughness_dw",
+            "sharpness_din_from_loudness",
+            "sharpness_din_perseg",
+            "sharpness_din_tv",
+        ],
         statistics: tuple | list = (
             5,
             10,
@@ -550,25 +545,27 @@ class Binaural(Signal):
         return_time_series: bool = False,
         parallel: bool = True,
         metric_settings: MetricSettings | None = None,
-        func_args: dict = {},
+        func_args: dict | None = None,
     ) -> dict | pd.DataFrame:
         """
         Run a metric from the mosqito library.
 
         Parameters
         ----------
-        metric : {"loudness_zwtv", "sharpness_din_from_loudness", "sharpness_din_perseg", "sharpness_tv", "roughness_dw"}
+        metric
             Metric to run from mosqito library.
         statistics : tuple or list, optional
             List of level statistics to calculate (e.g. L_5, L_90, etc.).
             Default is (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew").
         label : str, optional
-            Label to use for the metric. If None, will pull from default label for that metric.
+            Label to use for the metric.
+            If None, will pull from default label for that metric.
         channel : tuple or list of str or str, optional
             Which channels to process. Default is ("Left", "Right").
         as_df : bool, optional
             Whether to return a dataframe or not. Default is True.
-            If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
+            If True, returns a MultiIndex Dataframe
+            with ("Recording", "Channel") as the index.
         return_time_series : bool, optional
             Whether to return the time series of the metric. Default is False.
             Cannot return time series if as_df is True.
@@ -597,7 +594,6 @@ class Binaural(Signal):
             logger.debug("Using provided analysis settings")
             if not metric_settings.run:
                 logger.info(f"Metric {metric} is disabled in analysis settings")
-                return None
 
             channel = metric_settings.channel
             statistics = metric_settings.statistics
@@ -620,6 +616,7 @@ class Binaural(Signal):
                 **func_args,
             )
         logger.debug("Processing both channels")
+        s = cast("Binaural", s)
         return mosqito_metric_2ch(
             s,
             metric,
@@ -634,16 +631,16 @@ class Binaural(Signal):
 
     def maad_metric(
         self,
-        metric: str,
+        metric: Literal["all_temporal_alpha_indices", "all_spectral_alpha_indices"],
         channel: int | tuple | list | str = ("Left", "Right"),
         as_df: bool = True,
         metric_settings: MetricSettings | None = None,
-        func_args: dict = {},
+        func_args: dict | None = None,
     ) -> dict | pd.DataFrame:
         """
         Run a metric from the scikit-maad library.
 
-        Currently only supports running all of the alpha indices at once.
+        Currently only supports running all the alpha indices at once.
 
         Parameters
         ----------
@@ -653,7 +650,8 @@ class Binaural(Signal):
             Which channels to process. Default is ("Left", "Right").
         as_df : bool, optional
             Whether to return a dataframe or not. Default is True.
-            If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
+            If True, returns a MultiIndex Dataframe
+            with ("Recording", "Channel") as the index.
         metric_settings : MetricSettings, optional
             Settings for metric analysis. Default is None.
         func_args : dict, optional
@@ -667,7 +665,7 @@ class Binaural(Signal):
         Raises
         ------
         ValueError
-            If metric name is not recognised.
+            If metric name is not recognized.
 
         See Also
         --------
@@ -682,12 +680,12 @@ class Binaural(Signal):
                 "all_temporal_alpha_indices",
                 "all_spectral_alpha_indices",
             }:
-                logger.error(f"Invalid maad metric: {metric}")
-                raise ValueError(f"Metric {metric} not recognised")
+                msg = f"Metric {metric} is not recognised."
+                logger.error(msg)
+                raise ValueError(msg)
 
             if not metric_settings.run:
                 logger.info(f"Metric {metric} is disabled in analysis settings")
-                return None
 
             channel = metric_settings.channel
         channel = ("Left", "Right") if channel is None else channel
@@ -696,11 +694,12 @@ class Binaural(Signal):
             logger.debug("Processing single channel")
             return maad_metric_1ch(s, metric, as_df)
         logger.debug("Processing both channels")
+        s = cast("Binaural", s)
         return maad_metric_2ch(s, metric, channel, as_df, func_args)
 
     def process_all_metrics(
         self,
-        analysis_settings: AnalysisSettings = AnalysisSettings.default(),
+        analysis_settings: AnalysisSettings = DEFAULT_SETTINGS,
         parallel: bool = True,
     ) -> pd.DataFrame:
         """
@@ -724,13 +723,12 @@ class Binaural(Signal):
 
         Notes
         -----
-        The parallel option primarily affects the MoSQITo metrics. Other metrics may not benefit from parallelization.
-
-        TODO: Provide default settings to analysis_settings to make it optional.
+        The parallel option primarily affects the MoSQITo metrics.
+        Other metrics may not benefit from parallelization.
 
         Examples
         --------
-        >>> # xdoctest: +SKIP
+        >>> # doctest: +SKIP
         >>> signal = Binaural.from_wav("audio.wav")
         >>> settings = AnalysisSettings.from_yaml("settings.yaml")
         >>> results = signal.process_all_metrics(settings)

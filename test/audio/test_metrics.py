@@ -13,33 +13,29 @@ class TestMetricsUnit(unittest.TestCase):
         ts = np.array([1, 2, 3, 4, 5])
         res = {}
         updated_res = _stat_calcs("metric", ts, res, ["avg"])
-        self.assertEqual(
-            updated_res["metric_avg"], 3.0, "Average calculation is incorrect"
-        )
+        assert updated_res["metric_avg"] == 3.0, "Average calculation is incorrect"
 
     def test_stat_calcs_percentile(self):
         ts = np.array([1, 2, 3, 4, 5])
         res = {}
         updated_res = _stat_calcs("metric", ts, res, [50])
-        self.assertEqual(
-            updated_res["metric_50"], 3.0, "50th percentile calculation is incorrect"
+        assert updated_res["metric_50"] == 3.0, (
+            "50th percentile calculation is incorrect"
         )
 
     def test_stat_calcs_max(self):
         ts = np.array([1, 2, 3, 4, 5])
         res = {}
         updated_res = _stat_calcs("metric", ts, res, ["max"])
-        self.assertEqual(
-            updated_res["metric_max"], 5, "Max value calculation is incorrect"
-        )
+        assert updated_res["metric_max"] == 5, "Max value calculation is incorrect"
 
     def test_stat_calcs_multiple_stats(self):
         ts = np.array([1, 2, 3, 4, 5])
         res = {}
         updated_res = _stat_calcs("metric", ts, res, [50, "avg", "max"])
         expected_res = {"metric_50": 3.0, "metric_avg": 3.0, "metric_max": 5}
-        self.assertEqual(
-            updated_res, expected_res, "Multiple statistics calculation is incorrect"
+        assert updated_res == expected_res, (
+            "Multiple statistics calculation is incorrect"
         )
 
     @pytest.mark.filterwarnings("ignore:Mean of empty slice")
@@ -48,7 +44,6 @@ class TestMetricsUnit(unittest.TestCase):
         ts = np.array([])
         res = {}
         updated_res = _stat_calcs("metric", ts, res, ["avg"])
-        self.assertTrue(
-            np.isnan(updated_res.get("metric_avg")),
-            "Average for empty array should be np.nan",
+        assert np.isnan(updated_res.get("metric_avg")), (
+            "Average for empty array should be np.nan"
         )
