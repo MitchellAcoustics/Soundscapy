@@ -105,20 +105,3 @@ class TestRWrapper:
 
             assert "R package 'CircE'" in str(excinfo.value)
             assert sspyr.PKG_SRC.CIRCE in str(excinfo.value)
-
-    def test_check_rthorr_package(self):
-        """Test that the R 'RTHORR' package availability is checked."""
-        # Skip if dependencies are actually installed
-        if os.environ.get("SPI_DEPS") == "1":
-            import soundscapy.r_wrapper as sspyr
-
-            sspyr._r_wrapper.check_rthorr_package()
-
-        else:
-            with pytest.raises(ImportError) as excinfo:  # noqa: PT012
-                import soundscapy.r_wrapper as sspyr
-
-                sspyr._r_wrapper.check_rthorr_package()
-
-            assert "R package 'RTHORR'" in str(excinfo.value)
-            assert sspyr.PKG_SRC.RTHORR in str(excinfo.value)

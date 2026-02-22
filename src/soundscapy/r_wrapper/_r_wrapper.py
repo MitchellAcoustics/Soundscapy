@@ -28,13 +28,11 @@ logger = get_logger()
 _r_checked = False
 _sn_checked = False
 _circe_checked = False
-_rthorr_checked = False
 
 # Session state
 _r_session = None
 _sn_package = None
 _circe_package = None
-_rthorr_package = None
 _stats_package = None
 _base_package = None
 _session_active = False
@@ -44,7 +42,6 @@ REQUIRED_R_VERSION = 3.6
 
 class PKG_SRC(str, Enum):
     CIRCE = "'MitchellAcoustics/CircE-R'"
-    RTHORR = "'michaellynnmorris/RTHORR'"
 
 
 def check_r_availability() -> None:
@@ -252,64 +249,6 @@ def check_circe_package() -> None:
         _raise_sn_check_error(e)
 
 
-def check_rthorr_package() -> None:
-    """
-    Check if the R 'RTHORR' package is installed.
-
-    Raises
-    ------
-    ImportError
-        If the 'RTHORR' package is not installed.
-
-    """
-    global _rthorr_checked
-
-    def _raise_rthorr_not_installed_error() -> NoReturn:
-        msg = (
-            "R package 'RTHORR' is not installed. "
-            f"Please install it by running in R: devtools::install_github({PKG_SRC.RTHORR.value})"  # noqa: E501
-        )
-        raise ImportError(msg)
-
-    def _raise_rthorr_check_error(e: Exception) -> NoReturn:
-        msg = (
-            f"Error checking for R 'RTHORR' package: {e!s}. "
-            f"Please ensure the package is installed by running in R: devtools::install_github({PKG_SRC.RTHORR.value})"  # noqa: E501
-        )
-        raise ImportError(msg)
-
-    if _rthorr_checked:
-        return
-
-    # First ensure R is available
-    check_r_availability()
-
-    try:
-        import rpy2.robjects.packages as rpackages
-
-        # Check if 'CircE' package is installed
-        try:
-            # Just importing to verify it exists
-            _ = rpackages.importr("RTHORR")
-
-            # Get package version using R to verify compatibility
-            from rpy2 import robjects
-
-            # Use R code to get the package version
-            version = robjects.r('as.character(packageVersion("RTHORR"))')[0]  # type: ignore[index]
-            logger.debug("R 'RTHORR' package version: %s", version)
-
-            _rthorr_checked = True
-
-        except rpackages.PackageNotInstalledError:
-            _raise_rthorr_not_installed_error()
-
-    except Exception as e:
-        if "RTHORR" in str(e):
-            raise  # Re-raising is okay here
-        _raise_rthorr_check_error(e)
-
-
 def check_dependencies() -> dict[str, Any]:
     """
     Check all required R dependencies for the SPI module.
@@ -340,9 +279,6 @@ def check_dependencies() -> dict[str, Any]:
     # Then check for the CircE package
     check_circe_package()
 
-    # Then check for the RTHORR package
-    check_rthorr_package()
-
     # If we get here, all dependencies are available
 
     # Return information about the dependencies
@@ -351,7 +287,6 @@ def check_dependencies() -> dict[str, Any]:
         "r_version": robjects.r("R.version.string")[0],  # type: ignore[index]
         "sn_version": robjects.r('as.character(packageVersion("sn"))')[0],  # type: ignore[index]
         "circe_version": robjects.r('as.character(packageVersion("CircE"))')[0],  # type: ignore[index]
-        "rthorr_version": robjects.r('as.character(packageVersion("RTHORR"))')[0],  # type: ignore[index]
     }
 
 
@@ -381,7 +316,7 @@ def initialize_r_session() -> dict[str, Any]:
         If session initialization fails.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package, _rthorr_package  # noqa: E501, PLW0603
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0603
 
     # If session is already active, just return the state
     if _session_active:
@@ -392,7 +327,6 @@ def initialize_r_session() -> dict[str, Any]:
             "stats_package": "loaded",
             "base_package": "loaded",
             "circe_package": "loaded",
-            "rthorr_package": "loaded",
         }
 
     # First check all dependencies
@@ -406,10 +340,9 @@ def initialize_r_session() -> dict[str, Any]:
         # Import required packages
         _sn_package = rpackages.importr("sn")
         _circe_package = rpackages.importr("CircE")
-        _rthorr_package = rpackages.importr("RTHORR")
         _stats_package = rpackages.importr("stats")
         _base_package = rpackages.importr("base")
-        logger.debug("Imported R packages: sn, CircE, RTHORR, stats, base")
+        logger.debug("Imported R packages: sn, CircE, stats, base")
 
         # Set R random seed for reproducibility
         robjects.r("set.seed(42)")
@@ -439,7 +372,6 @@ def initialize_r_session() -> dict[str, Any]:
             "stats_package": str(_stats_package),
             "base_package": str(_base_package),
             "circe_package": str(_circe_package),
-            "rthorr_package": str(_rthorr_package),
             **dep_info,
         }
 
@@ -451,7 +383,6 @@ def initialize_r_session() -> dict[str, Any]:
         _stats_package = None
         _base_package = None
         _circe_package = None
-        _rthorr_package = None
         msg = f"Failed to initialize R session: {e!s}"
         raise RuntimeError(msg) from e
 
@@ -471,7 +402,7 @@ def shutdown_r_session() -> bool:
         True if successful, False otherwise.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package, _rthorr_package  # noqa: E501, PLW0603
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0603
 
     if not _session_active:
         logger.debug("No active R session to shutdown")
@@ -486,7 +417,6 @@ def shutdown_r_session() -> bool:
         _stats_package = None
         _base_package = None
         _circe_package = None
-        _rthorr_package = None
 
         # Update session state
         _session_active = False
@@ -502,7 +432,7 @@ def shutdown_r_session() -> bool:
         return True
 
 
-def get_r_session() -> tuple[Any, Any, Any, Any, Any, Any]:
+def get_r_session() -> tuple[Any, Any, Any, Any, Any]:
     """
     Get the current R session and package objects.
 
@@ -512,8 +442,8 @@ def get_r_session() -> tuple[Any, Any, Any, Any, Any, Any]:
 
     Returns
     -------
-    tuple[Any, Any, Any, Any]
-        (r_session, sn_package, stats_package, base_package)
+    tuple[Any, Any, Any, Any, Any]
+        (r_session, sn_package, stats_package, base_package, circe_package)
 
     Raises
     ------
@@ -521,7 +451,7 @@ def get_r_session() -> tuple[Any, Any, Any, Any, Any, Any]:
         If session initialization fails.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package, _rthorr_package  # noqa: E501, PLW0602
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0602
 
     if not _session_active:
         logger.debug("R session not active, initializing")
@@ -534,7 +464,6 @@ def get_r_session() -> tuple[Any, Any, Any, Any, Any, Any]:
         or not _stats_package
         or not _base_package
         or not _circe_package
-        or not _rthorr_package
     ):
         msg = "Failed to initialize R session"
         raise RuntimeError(msg)
@@ -545,7 +474,6 @@ def get_r_session() -> tuple[Any, Any, Any, Any, Any, Any]:
         _stats_package,
         _base_package,
         _circe_package,
-        _rthorr_package,
     )
 
 
@@ -565,7 +493,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
 
     """
     if packages is None:
-        packages = ["sn", "tvtnorm", "CircE", "RTHORR"]
+        packages = ["sn", "tvtnorm", "CircE"]
 
     check_r_availability()
 
@@ -588,11 +516,6 @@ def install_r_packages(packages: list[str] | None = None) -> None:
                 devtools.install_github(PKG_SRC.CIRCE)
                 packnames_to_install.remove("CircE")
                 logger.info("Installed R package 'CircE' from GitHub")
-            if "RTHORR" in packnames_to_install:
-                devtools = rpackages.importr("devtools")
-                devtools.install_github(PKG_SRC.RTHORR)
-                packnames_to_install.remove("RTHORR")
-                logger.info("Installed R package 'RTHORR' from GitHub")
 
             utils.install_packages(StrVector(packnames_to_install))
             logger.info("Installed missing R packages: %s", packnames_to_install)
