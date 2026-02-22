@@ -535,7 +535,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
             if "CircE" in packnames_to_install:
                 # CircE and RTHORR are only available from GitHub
                 devtools = rpackages.importr("devtools")
-                devtools.install_github(PKG_SRC.CIRCE)
+                devtools.install_github(PKG_SRC.CIRCE.value)
                 packnames_to_install.remove("CircE")
                 logger.info("Installed R package 'CircE' from GitHub")
 
