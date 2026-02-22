@@ -10,7 +10,7 @@ This module provides functions for:
 It is not intended to be used directly by end users.
 """
 
-import sys
+import importlib.metadata
 import warnings
 from enum import Enum
 from typing import Any, NoReturn
@@ -38,10 +38,11 @@ _base_package = None
 _session_active = False
 
 REQUIRED_R_VERSION = 3.6
+AUTO_INSTALL_R_PACKAGES = True
 
 
 class PKG_SRC(str, Enum):
-    CIRCE = "'MitchellAcoustics/CircE-R'"
+    CIRCE = "MitchellAcoustics/CircE-R"
 
 
 def check_r_availability() -> None:
@@ -273,17 +274,38 @@ def check_dependencies() -> dict[str, Any]:
     # Check R availability first
     check_r_availability()
 
-    # Then check for the sn package
-    check_sn_package()
+    try:
+        # Then check for the sn package
+        check_sn_package()
 
-    # Then check for the CircE package
-    check_circe_package()
+        # Then check for the CircE package
+        check_circe_package()
+
+    except ImportError:
+        if AUTO_INSTALL_R_PACKAGES:
+            logger.warning(
+                "One or more R dependencies are missing. Attempting to auto-install required R packages..."  # noqa: E501
+            )
+            try:
+                install_r_packages()
+                # After installation, check again to confirm everything is now available
+                check_r_availability()
+                check_sn_package()
+                check_circe_package()
+            except Exception as install_e:
+                msg = (
+                    f"Auto-installation of R packages failed: {install_e!s}. "
+                    "Please install the required R packages manually and ensure they are accessible."  # noqa: E501
+                )
+                raise ImportError(msg) from install_e
+        else:
+            raise  # Re-raise the original ImportError if auto-install is not enabled
 
     # If we get here, all dependencies are available
 
     # Return information about the dependencies
     return {
-        "rpy2_version": sys.modules["rpy2"].__version__,
+        "rpy2_version": importlib.metadata.version("rpy2"),
         "r_version": robjects.r("R.version.string")[0],  # type: ignore[index]
         "sn_version": robjects.r('as.character(packageVersion("sn"))')[0],  # type: ignore[index]
         "circe_version": robjects.r('as.character(packageVersion("CircE"))')[0],  # type: ignore[index]
