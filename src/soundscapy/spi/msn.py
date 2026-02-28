@@ -423,8 +423,9 @@ class MultiSkewNorm:
                 msg = "Either params object or xi, omega, and alpha must be provided."
                 raise ValueError(msg)
             if xi is not None and omega is not None and alpha is not None:
-                # If xi, omega, and alpha are provided, create DirectParams
+                # If xi, omega, and alpha are provided, create DirectParams and derive CP
                 instance.dp = DirectParams(xi, omega, alpha)
+                instance.cp = CentredParams.from_dp(instance.dp)
             elif mean is not None and sigma is not None and skew is not None:
                 # If mean, sigma, and skew are provided, create CentredParams
                 cp = CentredParams(mean, sigma, skew)

@@ -111,4 +111,4 @@ class TestRWrapper:
                 sspyr._r_wrapper.check_circe_package()
 
             assert "R package 'CircE'" in str(excinfo.value)
-            assert sspyr.PKG_SRC.CIRCE in str(excinfo.value)
+            assert sspyr.PKG_SRC.CIRCE.value in str(excinfo.value)

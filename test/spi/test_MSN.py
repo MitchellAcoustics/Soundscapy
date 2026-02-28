@@ -290,11 +290,15 @@ class TestMultiSkewNorm:
         assert msn.dp.xi.shape == (2,)
 
     def test_fit_does_not_mutate_input_dataframe(self):
-        """fit() must not rename columns on the caller's DataFrame."""
-        original_cols = list(MOCK_DF.columns)
+        """fit() must not rename columns on the caller's DataFrame.
+
+        Uses non-default column names so a regression would be visible —
+        MOCK_DF already has columns ["x", "y"] and would pass trivially.
+        """
+        df = pd.DataFrame(MOCK_DF.values, columns=["ISOPleasant", "ISOEventful"])
         msn = MultiSkewNorm()
-        msn.fit(data=MOCK_DF)
-        assert list(MOCK_DF.columns) == original_cols, (
+        msn.fit(data=df)
+        assert list(df.columns) == ["ISOPleasant", "ISOEventful"], (
             "fit() must not modify the caller's DataFrame columns"
         )
 
@@ -417,6 +421,15 @@ class TestMultiSkewNorm:
         msn = MultiSkewNorm.from_params(params=cp)
         assert isinstance(msn.cp, CentredParams)
         assert isinstance(msn.dp, DirectParams)
+
+    def test_from_params_with_xi_omega_alpha_kwargs_sets_cp(self):
+        """from_params(xi=..., omega=..., alpha=...) must populate both dp and cp."""
+        msn = MultiSkewNorm.from_params(xi=MOCK_XI, omega=MOCK_OMEGA, alpha=MOCK_ALPHA)
+        assert isinstance(msn.dp, DirectParams)
+        assert isinstance(msn.cp, CentredParams), (
+            "cp must not be None when from_params is called with DP kwargs"
+        )
+        np.testing.assert_allclose(msn.cp.mean, EXPECTED_MEAN, atol=1e-5)
 
     def test_from_params_with_mean_sigma_skew_kwargs(self):
         """from_params(mean=..., sigma=..., skew=...) creates instance from CP kwargs."""
