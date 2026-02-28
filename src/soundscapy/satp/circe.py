@@ -38,7 +38,7 @@ import pandas as pd
 import pandera.pandas as pa
 from pandera import Field
 from pandera.typing.pandas import DataFrame, Series
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, ConfigDict
 from pydantic.dataclasses import dataclass
 
 import soundscapy.r_wrapper as sspyr
@@ -159,7 +159,7 @@ def length_1_array_to_number(v: np.ndarray | float | None) -> float | None:
     raise ValueError(msg)
 
 
-@dataclass
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class CircE:
     """A data class to hold the results of a CircE model fitting."""
 

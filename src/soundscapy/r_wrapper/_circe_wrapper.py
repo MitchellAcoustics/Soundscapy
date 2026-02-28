@@ -1,6 +1,7 @@
 import pandas as pd
 from rpy2 import robjects as ro
 from rpy2.robjects import pandas2ri
+from scipy.stats import chi2 as scipy_chi2
 
 from soundscapy.sspylogging import get_logger
 from soundscapy.surveys.survey_utils import PAQ_IDS
@@ -43,13 +44,17 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
         >>> fit_stats = sspy.r_wrapper.extract_bfgs_fit(circe_res)
 
     """
-    _, _, stats_package, _, _ = get_r_session()
+    _, _, _, _, _ = get_r_session()
     with (ro.default_converter + pandas2ri.converter).context():
         py_res = {
             key.lower(): ro.conversion.get_conversion().rpy2py(val)
             for key, val in bfgs_model.items()
         }
-    py_res["p"] = 1 - stats_package.pchisq(py_res["chisq"], py_res["dfnull"]).item()
+
+    # Use scipy instead of R's pchisq to avoid py2rpy conversion of pandas
+    # Series objects produced by the pandas2ri context above.
+    # scipy.chi2.sf(x, df) == 1 - pchisq(x, df) by definition.
+    py_res["p"] = float(scipy_chi2.sf(py_res["chisq"].item(), py_res["dfnull"].item()))
 
     return py_res
 
