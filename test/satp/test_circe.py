@@ -142,7 +142,7 @@ class TestBfgsWrapper:
             bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
                  equal_ang=False, equal_com=False)
         )
-        assert pytest.approx(fit["chisq"].item(), abs=0.01) == 11.598
+        assert pytest.approx(fit["chisq"], abs=0.01) == 11.598
 
     def test_bfgs_unconstrained_model_df(self):
         """Model degrees of freedom must be 5 (not 21 = dfnull)."""
@@ -152,7 +152,7 @@ class TestBfgsWrapper:
             bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
                  equal_ang=False, equal_com=False)
         )
-        assert int(fit["d"].item()) == 5
+        assert int(fit["d"]) == 5
 
     def test_bfgs_unconstrained_p_value(self):
         """p-value must be computed against model df (d=5), not null df (dfnull=21).
@@ -177,7 +177,7 @@ class TestBfgsWrapper:
             bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
                  equal_ang=False, equal_com=False)
         )
-        expected_p = scipy_chi2.sf(fit["chisq"].item(), fit["d"].item())
+        expected_p = scipy_chi2.sf(fit["chisq"], fit["d"])
         assert pytest.approx(fit["p"], rel=1e-6) == expected_p
 
     def test_bfgs_unconstrained_fit_indices(self):
@@ -209,8 +209,8 @@ class TestBfgsWrapper:
             bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
                  equal_ang=False, equal_com=True)
         )
-        assert pytest.approx(fit["chisq"].item(), abs=0.01) == 50.409
-        assert int(fit["d"].item()) == 11
+        assert pytest.approx(fit["chisq"], abs=0.01) == 50.409
+        assert int(fit["d"]) == 11
         assert pytest.approx(float(fit["rmsea"]), abs=0.001) == 0.143
         assert pytest.approx(float(fit["cfi"]),   abs=0.001) == 0.946
         assert pytest.approx(float(fit["srmr"]),  abs=0.001) == 0.060
@@ -285,6 +285,29 @@ class TestCircEDataclass:
         assert 0.0 <= result.cfi <= 1.0
         assert 0.0 <= result.gfi <= 1.0
         assert result.srmr >= 0
+
+    def test_polar_angles_present_for_free_angle_models(self, isd_cor, isd_n):
+        """polar_angles must be a DataFrame for UNCONSTRAINED and EQUAL_COM models."""
+        from soundscapy.satp.circe import CircE, CircModelE
+
+        for model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
+            result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
+            assert isinstance(result.polar_angles, pd.DataFrame), (
+                f"{model.value}: polar_angles should be a DataFrame, got {type(result.polar_angles)}"
+            )
+            assert result.polar_angles.shape[1] == 8, (
+                f"{model.value}: expected 8 variables in polar_angles columns"
+            )
+
+    def test_polar_angles_none_for_constrained_angle_models(self, isd_cor, isd_n):
+        """polar_angles must be None for EQUAL_ANG and CIRCUMPLEX models."""
+        from soundscapy.satp.circe import CircE, CircModelE
+
+        for model in (CircModelE.EQUAL_ANG, CircModelE.CIRCUMPLEX):
+            result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
+            assert result.polar_angles is None, (
+                f"{model.value}: polar_angles should be None for constrained-angle models"
+            )
 
 
 # ---------------------------------------------------------------------------

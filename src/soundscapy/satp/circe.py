@@ -193,9 +193,14 @@ class CircE:
         """Create a CircE instance from a fitted BFGS model."""
         fit_stats = sspyr.extract_bfgs_fit(bfgs_model)
         polar_angles = None
-        # Only extract polar angles for models that support angular parameters
-        if model_type in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
-            polar_angles = pd.DataFrame(fit_stats.get("polar_angles", None)).T
+        # Only extract polar angles for models where angles are free parameters.
+        # model_type.name is the CircModelE enum; compare against that, not the
+        # ModelType dataclass wrapper (which would never compare equal to an enum).
+        # The R key is "polar.angles" (dot), not "polar_angles" (underscore).
+        if model_type.name in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
+            raw_pa = fit_stats.get("polar.angles")
+            if raw_pa is not None:
+                polar_angles = pd.DataFrame(raw_pa).T
 
         return cls(
             model_type=model_type,

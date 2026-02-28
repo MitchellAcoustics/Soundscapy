@@ -43,6 +43,10 @@ _session_active = False
 REQUIRED_R_VERSION = 3.6
 
 
+class PKG_SRC(str, Enum):
+    CIRCE = "MitchellAcoustics/CircE-R"
+
+
 def _confirm_install_r_packages() -> bool:
     """Determine whether to auto-install missing R packages.
 
@@ -96,10 +100,6 @@ def _ver(v: str) -> tuple[int, ...]:
     Avoids lexicographic pitfalls where ``"1.10" < "1.2"`` is True.
     """
     return tuple(int(x) for x in v.split("."))
-
-
-class PKG_SRC(str, Enum):
-    CIRCE = "MitchellAcoustics/CircE-R"
 
 
 def check_r_availability() -> None:
