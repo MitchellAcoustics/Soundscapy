@@ -119,12 +119,22 @@ class ModelType:
 
     @property
     def equal_ang(self) -> bool:
-        """Check if the model uses equal angles constraint."""
-        return self.name in {CircModelE.EQUAL_ANG, CircModelE.EQUAL_COM}
+        """
+        Check if the model uses equal angles constraint.
+
+        True for EQUAL_ANG (angles only) and CIRCUMPLEX (both constraints).
+        EQUAL_COM has free angles (False); UNCONSTRAINED has neither (False).
+        """
+        return self.name in {CircModelE.EQUAL_ANG, CircModelE.CIRCUMPLEX}
 
     @property
     def equal_com(self) -> bool:
-        """Check if the model uses equal communalities constraint."""
+        """
+        Check if the model uses equal communalities constraint.
+
+        True for EQUAL_COM (communalities only) and CIRCUMPLEX (both).
+        EQUAL_ANG has free communalities (False); UNCONSTRAINED neither (False).
+        """
         return self.name in {CircModelE.EQUAL_COM, CircModelE.CIRCUMPLEX}
 
 
@@ -381,7 +391,15 @@ class SATP:
         Ipsatization centers each participant's responses around their mean,
         removing individual response style differences while preserving
         relative response patterns.
+
+        Calling this method a second time is a no-op (guarded by
+        ``_ipsatized``): after the first call the ``participant`` column is
+        dropped by ``groupby.transform``, so a second call would raise
+        ``KeyError``.
         """
+        if self._ipsatized:
+            logger.warning("Data has already been ipsatized; skipping.")
+            return
         # Apply ipsatization transformation and update flag
         self.data = self._ipsatize_df(self.data, by="participant")
         self._ipsatized = True

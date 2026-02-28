@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from rpy2 import robjects as ro
 from rpy2.robjects import pandas2ri
@@ -58,8 +59,6 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
     # never need to call .item() themselves.  Vectors/matrices are kept
     # as-is.  This also avoids DeprecationWarning from numpy >= 1.25 when
     # float() or int() is applied to an ndarray with ndim > 0.
-    import numpy as np
-
     py_res = {
         k: (v.item() if isinstance(v, np.ndarray) and v.shape == (1,) else v)
         for k, v in py_res.items()

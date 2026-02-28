@@ -125,9 +125,9 @@ def check_r_availability() -> None:
     """
     global _r_checked  # noqa: PLW0603
 
-    def _raise_r_version_too_old_error(r_version_num: float) -> NoReturn:
+    def _raise_r_version_too_old_error(r_version_str: str) -> NoReturn:
         msg = (
-            f"R version {r_version_num} is too old. "
+            f"R version {r_version_str} is too old. "
             f"The 'sn' package requires R >= {REQUIRED_R_VERSION}. "
             "Please upgrade your R installation."
         )
@@ -147,16 +147,20 @@ def check_r_availability() -> None:
         r_version = robjects.r("R.version.string")[0]  # type: ignore[index]
         logger.debug("R version: %s", r_version)
 
-        # Check if minimum R version requirements are met
-        # The 'sn' package requires R >= 3.6.0
-        r_version_num = robjects.r(
-            "as.numeric(R.version$major) + as.numeric(R.version$minor)/10"
-        )[0]  # type: ignore[index]
+        # Check if minimum R version requirements are met.
+        # Use _ver() tuple comparison to avoid float pitfalls (e.g. "2.1" minor
+        # parsed as 2.1/10 = 0.21 instead of the intended major.minor.patch).
+        # R's $minor field is like "6.0" for R 4.6.0 or "2.1" for R 4.2.1.
+        r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[
+            0
+        ]  # type: ignore[index]
 
-        if r_version_num < REQUIRED_R_VERSION:
-            _raise_r_version_too_old_error(r_version_num)
+        if _ver(r_version_str) < _ver(str(REQUIRED_R_VERSION)):
+            _raise_r_version_too_old_error(r_version_str)
 
         _r_checked = True
+    except ImportError:
+        raise  # from _raise_r_version_too_old_error — don't wrap it
     except Exception as e:  # noqa: BLE001
         _raise_r_access_error(e)
 
