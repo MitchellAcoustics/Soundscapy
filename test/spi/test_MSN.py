@@ -192,7 +192,6 @@ class TestMultiSkewNorm:
     def test_init(self):
         """Test initialization of MultiSkewNorm."""
         msn = MultiSkewNorm()
-        assert msn.selm_model is None
         assert msn.cp is None
         assert msn.dp is None
         assert msn.sample_data is None
@@ -241,7 +240,6 @@ class TestMultiSkewNorm:
         msn = MultiSkewNorm()
         msn.fit(data=MOCK_DF.copy())
 
-        assert msn.selm_model is not None  # Check R model object exists
         assert isinstance(msn.cp, CentredParams)
         assert isinstance(msn.dp, DirectParams)
         assert msn.data is not None  # Add assertion for type checker
@@ -260,7 +258,6 @@ class TestMultiSkewNorm:
 
         expected_df = pd.DataFrame(numpy_data, columns=["x", "y"])
 
-        assert msn.selm_model is not None
         assert isinstance(msn.cp, CentredParams)
         assert isinstance(msn.dp, DirectParams)
         assert msn.data is not None  # Add assertion for type checker
@@ -285,7 +282,6 @@ class TestMultiSkewNorm:
 
         expected_df = pd.DataFrame({"x": MOCK_X, "y": MOCK_Y})
 
-        assert msn.selm_model is not None
         assert isinstance(msn.cp, CentredParams)
         assert isinstance(msn.dp, DirectParams)
         assert msn.data is not None  # Add assertion for type checker
@@ -353,7 +349,7 @@ class TestMultiSkewNorm:
         msn = MultiSkewNorm()
         with pytest.raises(
             ValueError,
-            match="Either selm_model or xi, omega, and alpha must be provided.",
+            match="Model is not fitted. Call fit\\(\\) or define_dp\\(\\) first.",
         ):
             msn.sample()
 
