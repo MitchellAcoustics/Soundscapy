@@ -110,8 +110,7 @@ def bfgs(
     _, _, _, base_package, circe_package = get_r_session()
     with (ro.default_converter + pandas2ri.converter).context():
         r_data_cor = ro.conversion.get_conversion().py2rpy(data_cor)
-
-    r_cor_mat = base_package.as_matrix(r_data_cor)
+        r_cor_mat = base_package.as_matrix(r_data_cor)
 
     r_scales = ro.StrVector(scales)
 

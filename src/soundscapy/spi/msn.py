@@ -203,8 +203,6 @@ class MultiSkewNorm:
 
     Attributes
     ----------
-    selm_model
-        The fitted SELM model.
     cp : CentredParams
         The centred parameters of the fitted model.
     dp : DirectParams
@@ -235,7 +233,6 @@ class MultiSkewNorm:
 
     def __init__(self) -> None:
         """Initialize the MultiSkewNorm object."""
-        self.selm_model = None
         self.cp = None
         self.dp = None
         self.sample_data = None
@@ -243,7 +240,7 @@ class MultiSkewNorm:
 
     def __repr__(self) -> str:
         """Return a string representation of the MultiSkewNorm object."""
-        if self.cp is None and self.dp is None and self.selm_model is None:
+        if self.cp is None and self.dp is None:
             return "MultiSkewNorm() (unfitted)"
         return f"MultiSkewNorm(dp={self.dp})"
 
@@ -257,7 +254,7 @@ class MultiSkewNorm:
             indicating the model is not fitted.
 
         """
-        if self.cp is None and self.dp is None and self.selm_model is None:
+        if self.cp is None and self.dp is None:
             return "MultiSkewNorm is not fitted."
         lines = []
         if self.data is not None:
@@ -325,17 +322,16 @@ class MultiSkewNorm:
             msg = "Either data or x and y must be provided"
             raise ValueError(msg)
 
-        # Fit the model
+        # Fit the model, extract parameters immediately, then discard the R object.
+        # Storing rpy2 objects (RS4) beyond the function boundary creates a
+        # persistent reference into R's heap that can outlive the session.
         m = sspyr.selm("x", "y", data)
-
-        # Extract the parameters
         cp = sspyr.extract_cp(m)
         dp = sspyr.extract_dp(m)
 
         self.cp = CentredParams(*cp)
         self.dp = DirectParams(*dp)
         self.data = data
-        self.selm_model = m
 
     def define_dp(
         self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray
@@ -448,14 +444,12 @@ class MultiSkewNorm:
             parameters (`dp`) are also not defined.
 
         """
-        if self.selm_model is not None:
-            sample = sspyr.sample_msn(selm_model=self.selm_model, n=n)
-        elif self.dp is not None:
+        if self.dp is not None:
             sample = sspyr.sample_msn(
                 xi=self.dp.xi, omega=self.dp.omega, alpha=self.dp.alpha, n=n
             )
         else:
-            msg = "Either selm_model or xi, omega, and alpha must be provided."
+            msg = "Model is not fitted. Call fit() or define_dp() first."
             raise ValueError(msg)
 
         self.sample_data = sample
@@ -490,14 +484,7 @@ class MultiSkewNorm:
             The generated sample if `return_sample` is True, otherwise None.
 
         """
-        if self.selm_model is not None:
-            sample = sspyr.sample_mtsn(
-                selm_model=self.selm_model,
-                n=n,
-                a=a,
-                b=b,
-            )
-        elif self.dp is not None:
+        if self.dp is not None:
             sample = sspyr.sample_mtsn(
                 xi=self.dp.xi,
                 omega=self.dp.omega,
@@ -507,7 +494,7 @@ class MultiSkewNorm:
                 b=b,
             )
         else:
-            msg = "Either selm_model or xi, omega, and alpha must be provided."
+            msg = "Model is not fitted. Call fit() or define_dp() first."
             raise ValueError(msg)
 
         # Store the sample data
