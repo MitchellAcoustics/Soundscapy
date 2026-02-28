@@ -12,4 +12,4 @@ Imports:
     CircE (>= 1.1),
     sn
 Remotes:
-    MitchellAcoustics/CircE-R
+    CircE=MitchellAcoustics/CircE-R
