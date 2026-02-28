@@ -204,7 +204,7 @@ class CircE:
             n=n,
             m=fit_stats.get("m", None),
             chisq=fit_stats.get("chisq", None),
-            df=fit_stats.get("dfnull", None),
+            df=fit_stats.get("d", None),
             p=fit_stats.get("p", None),
             cfi=fit_stats.get("cfi", None),
             gfi=fit_stats.get("gfi", None),

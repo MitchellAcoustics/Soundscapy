@@ -43,29 +43,29 @@ class TestRWrapper:
         assert res is not None, "R session should be initialized successfully"
         assert res["r_session"] == "active", "R session should be active"
 
-    def test_shutdown_r_session(self):
-        """Test R session cleanup."""
-        from soundscapy.r_wrapper._r_wrapper import shutdown_r_session
+    def test_reset_r_session(self):
+        """Test R session package unloading."""
+        from soundscapy.r_wrapper._r_wrapper import reset_r_session
 
         # This should not raise if R session is active
-        res = shutdown_r_session()
+        res = reset_r_session()
 
-        assert res, "R session should be shut down successfully"
+        assert res, "R session packages should be unloaded successfully"
 
     def test_r_session_reinitialization(self):
-        """Test that the R session can be reinitialized after shutdown."""
+        """Test that the R session can be reinitialized after reset."""
         from soundscapy.r_wrapper._r_wrapper import (
             initialize_r_session,
-            shutdown_r_session,
+            reset_r_session,
         )
 
         # First initialize the R session
         res = initialize_r_session()
         assert res is not None, "R session should be initialized successfully"
 
-        # Now shut it down
-        shutdown_res = shutdown_r_session()
-        assert shutdown_res, "R session should be shut down successfully"
+        # Now reset it (unload packages; R process keeps running)
+        reset_res = reset_r_session()
+        assert reset_res, "R session packages should be unloaded successfully"
 
         # Reinitialize the R session
         reinit_res = initialize_r_session()

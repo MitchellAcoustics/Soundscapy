@@ -57,7 +57,9 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
     # Use scipy instead of R's pchisq to avoid py2rpy conversion of pandas
     # Series objects produced by the pandas2ri context above.
     # scipy.chi2.sf(x, df) == 1 - pchisq(x, df) by definition.
-    py_res["p"] = float(scipy_chi2.sf(py_res["chisq"].item(), py_res["dfnull"].item()))
+    # Use the model's own degrees of freedom ("d"), NOT the null-model df
+    # ("dfnull" = k*(k-1)/2).  Using dfnull gives a wildly wrong p-value.
+    py_res["p"] = float(scipy_chi2.sf(py_res["chisq"].item(), py_res["d"].item()))
 
     return py_res
 

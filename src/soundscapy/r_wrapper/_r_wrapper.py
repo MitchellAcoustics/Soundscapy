@@ -65,38 +65,35 @@ class PKG_SRC(str, Enum):
 
 def check_r_availability() -> None:
     """
-    Check if R is installed and accessible through rpy2.
+    Check that R is accessible and meets the minimum version requirement.
+
+    Note: importing this module (or any rpy2-dependent module) already starts
+    the R process via ``from rpy2 import robjects``.  This function therefore
+    cannot test whether R is *installed* — R is always already running by the
+    time it is called.  Its purpose is to verify the R *version* and to cache
+    that result so the version query runs at most once per session.
 
     Raises
     ------
     ImportError
-        If R is not installed or cannot be accessed.
+        If the running R version is older than :data:`REQUIRED_R_VERSION`, or
+        if the R version cannot be queried for any reason.
 
     """
     global _r_checked  # noqa: PLW0603
 
-    def _raise_r_not_found_error() -> NoReturn:
+    def _raise_r_version_too_old_error(r_version_num: float) -> NoReturn:
         msg = (
-            "rpy2 is installed but it cannot find an R installation. "
-            "Please ensure R is installed and correctly configured. "
-            "On Linux: Install R with your package manager (e.g., apt-get install r-base)."  # noqa: E501
-            "On macOS: Install R from CRAN (https://cran.r-project.org/bin/macosx/). "
-            "On Windows: Install R from CRAN (https://cran.r-project.org/bin/windows/base/)."
+            f"R version {r_version_num} is too old. "
+            f"The 'sn' package requires R >= {REQUIRED_R_VERSION}. "
+            "Please upgrade your R installation."
         )
         raise ImportError(msg)
 
     def _raise_r_access_error(e: Exception) -> NoReturn:
         msg = (
-            f"Error accessing R installation: {e!s}. "
+            f"Error querying R version: {e!s}. "
             "Please ensure R is installed and correctly configured."
-        )
-        raise ImportError(msg)
-
-    def _raise_r_version_too_old_error(r_version_num: float) -> NoReturn:
-        msg = (
-            f"R version {r_version_num} is too old."
-            f"The 'sn' package requires R >= {REQUIRED_R_VERSION}."
-            "Please upgrade your R installation."
         )
         raise ImportError(msg)
 
@@ -104,9 +101,6 @@ def check_r_availability() -> None:
         return
 
     try:
-        from rpy2 import robjects
-
-        # Basic check to ensure R is running by getting R version
         r_version = robjects.r("R.version.string")[0]  # type: ignore[index]
         logger.debug("R version: %s", r_version)
 
@@ -120,10 +114,8 @@ def check_r_availability() -> None:
             _raise_r_version_too_old_error(r_version_num)
 
         _r_checked = True
-    except ImportError:
-        _raise_r_not_found_error()  # Call the handler
     except Exception as e:  # noqa: BLE001
-        _raise_r_access_error(e)  # Call the handler
+        _raise_r_access_error(e)
 
 
 def check_sn_package() -> None:
@@ -414,24 +406,27 @@ def initialize_r_session() -> dict[str, Any]:
         raise RuntimeError(msg) from e
 
 
-def shutdown_r_session() -> bool:
+def reset_r_session() -> bool:
     """
-    Shutdown the R session and clean up resources.
+    Unload R packages and reset session state.
 
-    This function:
-    1. Resets global session state
-    2. Performs garbage collection
+    Clears all Python references to the loaded R package objects (``sn``,
+    ``CircE``, ``stats``, ``base``) and resets :data:`_session_active` to
+    ``False``.  The *R process itself continues running* — rpy2 does not
+    support terminating the embedded R interpreter.  After calling this
+    function the next call to :func:`get_r_session` will re-import the
+    packages.
 
     Returns
     -------
     bool
-        True if successful, False otherwise.
+        ``True`` if successful, ``False`` if an error occurred.
 
     """
     global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0603
 
     if not _session_active:
-        logger.debug("No active R session to shutdown")
+        logger.debug("No active R session to reset")
         return True
 
     try:
@@ -449,10 +444,10 @@ def shutdown_r_session() -> bool:
 
         # Force garbage collection to release R resources
         gc.collect()
-        logger.info("R session successfully shutdown")
+        logger.info("R session packages successfully unloaded")
 
     except Exception:
-        logger.exception("Error during R session shutdown")
+        logger.exception("Error during R session reset")
         return False
     else:
         return True

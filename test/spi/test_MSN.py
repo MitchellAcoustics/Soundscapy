@@ -487,21 +487,23 @@ class TestMultiSkewNorm:
 
 
 @pytest.mark.optional_deps("spi")
-@pytest.mark.skip(
-    reason="Cannot directly convert cp to dp. Need to come up with a reasonable test."
-)
 def test_cp2dp():
-    """Test cp2dp function."""
-    cp_input = CentredParams(EXPECTED_MEAN, EXPECTED_SIGMA_COV, EXPECTED_SKEW)
+    """Test cp2dp via a round-trip: dp → cp → dp2cp(dp) should reproduce the same CP."""
+    # Convert known DP to CP
+    dp_input = DirectParams(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
+    cp = dp2cp(dp_input)
 
-    # Perform the conversion
-    dp_output = cp2dp(cp_input)
+    # Convert CP back to DP
+    dp_recovered = cp2dp(cp)
+    assert isinstance(dp_recovered, DirectParams)
 
-    assert isinstance(dp_output, DirectParams)
-    # Check if the output DP matches the original MOCK_DP used to generate the CPs
-    np.testing.assert_allclose(dp_output.xi, MOCK_XI, atol=1e-5)
-    np.testing.assert_allclose(dp_output.omega, MOCK_OMEGA, atol=1e-5)
-    np.testing.assert_allclose(dp_output.alpha, MOCK_ALPHA, atol=1e-5)
+    # Convert the recovered DP back to CP again; it must match the original CP.
+    # (The cp2dp→dp2cp round-trip is the numerically stable direction to test.)
+    cp_roundtrip = dp2cp(dp_recovered)
+    assert isinstance(cp_roundtrip, CentredParams)
+    np.testing.assert_allclose(cp_roundtrip.mean, cp.mean, atol=1e-4)
+    np.testing.assert_allclose(cp_roundtrip.sigma, cp.sigma, atol=1e-4)
+    np.testing.assert_allclose(cp_roundtrip.skew, cp.skew, atol=1e-4)
 
 
 @pytest.mark.optional_deps("spi")
