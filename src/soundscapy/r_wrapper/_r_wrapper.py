@@ -246,7 +246,7 @@ def check_circe_package() -> None:
     def _raise_circe_not_installed_error() -> NoReturn:
         msg = (
             "R package 'CircE' is not installed. "
-            f"Please install it by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please install it by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
         )
         raise ImportError(msg)
 
@@ -254,14 +254,14 @@ def check_circe_package() -> None:
         msg = (
             f"R 'CircE' package version {version} is too old. "
             "The SPI feature requires 'CircE' >= 1.1. "
-            f"Please upgrade the package by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please upgrade the package by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
         )
         raise ImportError(msg)
 
     def _raise_circe_check_error(e: Exception) -> NoReturn:
         msg = (
             f"Error checking for R 'CircE' package: {e!s}. "
-            f"Please ensure the package is installed by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please ensure the package is installed by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
         )
         raise ImportError(msg)
 
@@ -449,11 +449,13 @@ def reset_r_session() -> bool:
     Unload R packages and reset session state.
 
     Clears all Python references to the loaded R package objects (``sn``,
-    ``CircE``, ``stats``, ``base``) and resets :data:`_session_active` to
-    ``False``.  The *R process itself continues running* — rpy2 does not
-    support terminating the embedded R interpreter.  After calling this
-    function the next call to :func:`get_r_session` will re-import the
-    packages.
+    ``CircE``, ``stats``, ``base``), resets :data:`_session_active` to
+    ``False``, and clears the package-installation check cache so that the
+    next call to :func:`get_r_session` will re-verify and re-import the
+    packages from scratch.
+
+    Note: the *R process itself continues running* — rpy2 does not support
+    terminating the embedded R interpreter.
 
     Returns
     -------
@@ -461,7 +463,7 @@ def reset_r_session() -> bool:
         ``True`` if successful, ``False`` if an error occurred.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0603
+    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package, _sn_checked, _circe_checked  # noqa: E501, PLW0603
 
     if not _session_active:
         logger.debug("No active R session to reset")
@@ -476,6 +478,12 @@ def reset_r_session() -> bool:
         _stats_package = None
         _base_package = None
         _circe_package = None
+
+        # Reset package-check flags so the next get_r_session() call
+        # re-verifies installation (guards against mid-session uninstalls
+        # and ensures a clean state in tests).
+        _sn_checked = False
+        _circe_checked = False
 
         # Update session state
         _session_active = False
@@ -541,7 +549,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
     Parameters
     ----------
     packages : list[str] | None, optional
-        List of R package names to install. Defaults to ["sn", "tvtnorm"].
+        List of R package names to install. Defaults to ["sn", "CircE"].
 
     Raises
     ------
@@ -550,7 +558,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
 
     """
     if packages is None:
-        packages = ["sn", "tvtnorm", "CircE"]
+        packages = ["sn", "CircE"]
 
     check_r_availability()
 

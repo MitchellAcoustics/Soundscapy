@@ -354,7 +354,7 @@ class SATP:
         self._ipsatized = False
         self._raw_data = data
         # Validate input data against schema requirements
-        self.data: DataFrame = SATPSchema.validate(data, lazy=True)
+        self.data: pd.DataFrame = SATPSchema.validate(data, lazy=True)
 
         # Apply ipsatization if requested
         if ipsatize_data:

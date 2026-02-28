@@ -80,6 +80,7 @@ def sample_mtsn(
     a: float = -1,
     b: float = 1,
     n: int = 1000,
+    max_iter: int = 100_000,
 ) -> np.ndarray:
     """
     Sample from a multivariate truncated skew-normal distribution.
@@ -104,6 +105,10 @@ def sample_mtsn(
         Upper truncation bound for both dimensions, by default 1.
     n : int, optional
         Number of samples to generate, by default 1000.
+    max_iter : int, optional
+        Maximum total candidate draws before raising ``RuntimeError``.
+        Guards against an infinite loop when the distribution has negligible
+        probability mass inside ``[a, b]``.  Default: 100 000.
 
     Returns
     -------
@@ -114,11 +119,24 @@ def sample_mtsn(
     ------
     ValueError
         If neither `selm_model` nor all of `xi`, `omega`, and `alpha` are provided.
+    RuntimeError
+        If ``max_iter`` candidate draws are exhausted before ``n`` accepted
+        samples are collected, which indicates the distribution is largely
+        outside ``[a, b]``.
 
     """
     samples = np.array([[0, 0]])
     n_samples = 0
+    n_iter = 0
     while n_samples < n:
+        if n_iter >= max_iter:
+            msg = (
+                f"sample_mtsn: reached max_iter={max_iter} without collecting "
+                f"{n} accepted samples (got {n_samples}). "
+                "The distribution may have negligible mass inside "
+                f"[{a}, {b}]. Adjust the bounds or increase max_iter."
+            )
+            raise RuntimeError(msg)
         if selm_model is not None:
             sample = sample_msn(selm_model, n=1)
         elif xi is not None and omega is not None and alpha is not None:
@@ -126,6 +144,7 @@ def sample_mtsn(
         else:
             msg = "Either selm_model or xi, omega, and alpha must be provided."
             raise ValueError(msg)
+        n_iter += 1
         if a <= sample[0][0] <= b and a <= sample[0][1] <= b:
             samples = np.append(samples, sample, axis=0)
             if n_samples == 0:
