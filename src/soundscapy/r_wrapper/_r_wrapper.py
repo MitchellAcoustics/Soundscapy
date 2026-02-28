@@ -43,12 +43,13 @@ _session_active = False
 REQUIRED_R_VERSION = 3.6
 
 
-class PKG_SRC(str, Enum):
+class PKG_SRC(str, Enum):  # noqa: N801
     CIRCE = "MitchellAcoustics/CircE-R"
 
 
 def _confirm_install_r_packages() -> bool:
-    """Determine whether to auto-install missing R packages.
+    """
+    Determine whether to auto-install missing R packages.
 
     Checks the ``SOUNDSCAPY_AUTO_INSTALL_R`` environment variable first:
 
@@ -73,15 +74,17 @@ def _confirm_install_r_packages() -> bool:
                 f"  CircE  → remotes::install_github('{PKG_SRC.CIRCE.value}')\n"
             )
             response = input("Install them now via soundscapy? [y/N] ").strip().lower()
-            return response in ("y", "yes")
         except EOFError:
             pass
+        else:
+            return response in ("y", "yes")
 
     return False
 
 
 class RSession(NamedTuple):
-    """Typed container for the active R session and loaded package references.
+    """
+    Typed container for the active R session and loaded package references.
 
     Returned by :func:`get_r_session`.  Named-field access (``r.sn``,
     ``r.circe`` …) is preferred over positional unpacking.
@@ -95,7 +98,8 @@ class RSession(NamedTuple):
 
 
 def _ver(v: str) -> tuple[int, ...]:
-    """Parse a dotted version string into a comparable integer tuple.
+    """
+    Parse a dotted version string into a comparable integer tuple.
 
     Avoids lexicographic pitfalls where ``"1.10" < "1.2"`` is True.
     """
@@ -219,7 +223,7 @@ def check_sn_package() -> None:
             _raise_sn_not_installed_error()
     except ImportError:
         raise  # Already a specific ImportError from our helpers — re-raise as-is
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _raise_sn_check_error(e)
 
 
@@ -286,7 +290,7 @@ def check_circe_package() -> None:
 
     except ImportError:
         raise  # Already a specific ImportError from our helpers — re-raise as-is
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _raise_circe_check_error(e)
 
 

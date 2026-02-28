@@ -36,12 +36,12 @@ _V_NAMES = [
 
 _R_LOWER = np.array(
     [
-        [1,     0,     0,     0,     0,     0,     0],
-        [0.654, 1,     0,     0,     0,     0,     0],
-        [0.453, 0.644, 1,     0,     0,     0,     0],
-        [0.251, 0.440, 0.757, 1,     0,     0,     0],
-        [0.122, 0.158, 0.551, 0.493, 1,     0,     0],
-        [0.218, 0.210, 0.570, 0.463, 0.754, 1,     0],
+        [1, 0, 0, 0, 0, 0, 0],
+        [0.654, 1, 0, 0, 0, 0, 0],
+        [0.453, 0.644, 1, 0, 0, 0, 0],
+        [0.251, 0.440, 0.757, 1, 0, 0, 0],
+        [0.122, 0.158, 0.551, 0.493, 1, 0, 0],
+        [0.218, 0.210, 0.570, 0.463, 0.754, 1, 0],
         [0.496, 0.264, 0.366, 0.202, 0.471, 0.650, 1],
     ]
 )
@@ -83,7 +83,8 @@ def isd_n(isd_paqs):
 
 @pytest.mark.optional_deps("satp")
 class TestBfgsWrapper:
-    """Direct tests of the bfgs() and extract_bfgs_fit() wrappers.
+    """
+    Direct tests of the bfgs() and extract_bfgs_fit() wrappers.
 
     All reference values come from running CircE.BFGS(R, v.names, m=3, N=175)
     in R and reading the printed output.
@@ -96,8 +97,12 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs
 
         result = bfgs(
-            VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-            equal_ang=False, equal_com=False,
+            VOCATIONAL_COR,
+            n=VOCATIONAL_N,
+            scales=_V_NAMES,
+            m_val=3,
+            equal_ang=False,
+            equal_com=False,
         )
         assert isinstance(result, ListVector)
 
@@ -106,8 +111,14 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
 
         fit = extract_bfgs_fit(
-            bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-                 equal_ang=False, equal_com=False)
+            bfgs(
+                VOCATIONAL_COR,
+                n=VOCATIONAL_N,
+                scales=_V_NAMES,
+                m_val=3,
+                equal_ang=False,
+                equal_com=False,
+            )
         )
         assert isinstance(fit, dict)
 
@@ -116,11 +127,30 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
 
         fit = extract_bfgs_fit(
-            bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-                 equal_ang=False, equal_com=False)
+            bfgs(
+                VOCATIONAL_COR,
+                n=VOCATIONAL_N,
+                scales=_V_NAMES,
+                m_val=3,
+                equal_ang=False,
+                equal_com=False,
+            )
         )
-        required = {"chisq", "d", "dfnull", "p", "rmsea", "rmsea.l", "rmsea.u",
-                    "cfi", "gfi", "agfi", "srmr", "mcsc", "m"}
+        required = {
+            "chisq",
+            "d",
+            "dfnull",
+            "p",
+            "rmsea",
+            "rmsea.l",
+            "rmsea.u",
+            "cfi",
+            "gfi",
+            "agfi",
+            "srmr",
+            "mcsc",
+            "m",
+        }
         assert required.issubset(fit.keys())
 
     # ------------------------------------------------------------------
@@ -139,8 +169,14 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
 
         fit = extract_bfgs_fit(
-            bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-                 equal_ang=False, equal_com=False)
+            bfgs(
+                VOCATIONAL_COR,
+                n=VOCATIONAL_N,
+                scales=_V_NAMES,
+                m_val=3,
+                equal_ang=False,
+                equal_com=False,
+            )
         )
         assert pytest.approx(fit["chisq"], abs=0.01) == 11.598
 
@@ -149,13 +185,20 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
 
         fit = extract_bfgs_fit(
-            bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-                 equal_ang=False, equal_com=False)
+            bfgs(
+                VOCATIONAL_COR,
+                n=VOCATIONAL_N,
+                scales=_V_NAMES,
+                m_val=3,
+                equal_ang=False,
+                equal_com=False,
+            )
         )
         assert int(fit["d"]) == 5
 
     def test_bfgs_unconstrained_p_value(self):
-        """p-value must be computed against model df (d=5), not null df (dfnull=21).
+        """
+        p-value must be computed against model df (d=5), not null df (dfnull=21).
 
         R reference: p = 0.041.
         If dfnull=21 were (wrongly) used the result would be ~0.95.
@@ -163,8 +206,14 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
 
         fit = extract_bfgs_fit(
-            bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-                 equal_ang=False, equal_com=False)
+            bfgs(
+                VOCATIONAL_COR,
+                n=VOCATIONAL_N,
+                scales=_V_NAMES,
+                m_val=3,
+                equal_ang=False,
+                equal_com=False,
+            )
         )
         assert pytest.approx(fit["p"], abs=0.005) == 0.041
         assert fit["p"] < 0.1, "p ≈ 0.95 suggests wrong df was used"
@@ -174,8 +223,14 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
 
         fit = extract_bfgs_fit(
-            bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-                 equal_ang=False, equal_com=False)
+            bfgs(
+                VOCATIONAL_COR,
+                n=VOCATIONAL_N,
+                scales=_V_NAMES,
+                m_val=3,
+                equal_ang=False,
+                equal_com=False,
+            )
         )
         expected_p = scipy_chi2.sf(fit["chisq"], fit["d"])
         assert pytest.approx(fit["p"], rel=1e-6) == expected_p
@@ -185,20 +240,27 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
 
         fit = extract_bfgs_fit(
-            bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-                 equal_ang=False, equal_com=False)
+            bfgs(
+                VOCATIONAL_COR,
+                n=VOCATIONAL_N,
+                scales=_V_NAMES,
+                m_val=3,
+                equal_ang=False,
+                equal_com=False,
+            )
         )
-        assert pytest.approx(float(fit["rmsea"]),   abs=0.001) == 0.087
+        assert pytest.approx(float(fit["rmsea"]), abs=0.001) == 0.087
         assert pytest.approx(float(fit["rmsea.l"]), abs=0.001) == 0.017
         assert pytest.approx(float(fit["rmsea.u"]), abs=0.001) == 0.154
-        assert pytest.approx(float(fit["cfi"]),     abs=0.001) == 0.991
-        assert pytest.approx(float(fit["gfi"]),     abs=0.001) == 0.989
-        assert pytest.approx(float(fit["agfi"]),    abs=0.001) == 0.938
-        assert pytest.approx(float(fit["srmr"]),    abs=0.001) == 0.038
-        assert pytest.approx(float(fit["mcsc"]),    abs=0.001) == 0.290
+        assert pytest.approx(float(fit["cfi"]), abs=0.001) == 0.991
+        assert pytest.approx(float(fit["gfi"]), abs=0.001) == 0.989
+        assert pytest.approx(float(fit["agfi"]), abs=0.001) == 0.938
+        assert pytest.approx(float(fit["srmr"]), abs=0.001) == 0.038
+        assert pytest.approx(float(fit["mcsc"]), abs=0.001) == 0.290
 
     def test_bfgs_equal_com_reference(self):
-        """Equal-communalities model must match R package output.
+        """
+        Equal-communalities model must match R package output.
 
         R reference (equal_ang=False, equal_com=True):
           chi-sq = 50.409, Model df = 11, RMSEA = 0.143, CFI = 0.946, SRMR = 0.060
@@ -206,14 +268,20 @@ class TestBfgsWrapper:
         from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
 
         fit = extract_bfgs_fit(
-            bfgs(VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3,
-                 equal_ang=False, equal_com=True)
+            bfgs(
+                VOCATIONAL_COR,
+                n=VOCATIONAL_N,
+                scales=_V_NAMES,
+                m_val=3,
+                equal_ang=False,
+                equal_com=True,
+            )
         )
         assert pytest.approx(fit["chisq"], abs=0.01) == 50.409
         assert int(fit["d"]) == 11
         assert pytest.approx(float(fit["rmsea"]), abs=0.001) == 0.143
-        assert pytest.approx(float(fit["cfi"]),   abs=0.001) == 0.946
-        assert pytest.approx(float(fit["srmr"]),  abs=0.001) == 0.060
+        assert pytest.approx(float(fit["cfi"]), abs=0.001) == 0.946
+        assert pytest.approx(float(fit["srmr"]), abs=0.001) == 0.060
         # p-value must be very small for this over-constrained model
         assert fit["p"] < 0.001
 
@@ -246,7 +314,8 @@ class TestCircEDataclass:
         assert result.n == isd_n
 
     def test_circe_df_is_model_df_not_null_df(self, isd_cor, isd_n):
-        """CircE.df must be the model degrees of freedom, not dfnull=28 (8-var null).
+        """
+        CircE.df must be the model degrees of freedom, not dfnull=28 (8-var null).
 
         For 8 variables, dfnull = 8*7/2 = 28.  The unconstrained model df is
         much smaller.
@@ -292,8 +361,9 @@ class TestCircEDataclass:
 
         for model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
             result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
+            got = type(result.polar_angles)
             assert isinstance(result.polar_angles, pd.DataFrame), (
-                f"{model.value}: polar_angles should be a DataFrame, got {type(result.polar_angles)}"
+                f"{model.value}: polar_angles should be a DataFrame, got {got}"
             )
             assert result.polar_angles.shape[1] == 8, (
                 f"{model.value}: expected 8 variables in polar_angles columns"
@@ -306,7 +376,7 @@ class TestCircEDataclass:
         for model in (CircModelE.EQUAL_ANG, CircModelE.CIRCUMPLEX):
             result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
             assert result.polar_angles is None, (
-                f"{model.value}: polar_angles should be None for constrained-angle models"
+                f"{model.value}: polar_angles should be None for constrained models"
             )
 
 
@@ -321,7 +391,8 @@ class TestSATP:
 
     @pytest.fixture
     def satp_data(self):
-        """PAQ data from ISD using SessionID as participant grouper.
+        """
+        PAQ data from ISD using SessionID as participant grouper.
 
         The ISD dataset has 66 sessions, each with ~54 rows.  Using SessionID
         ensures every participant has many rows so ipsatization produces a
@@ -331,9 +402,12 @@ class TestSATP:
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
         raw = sspy.isd.load()
-        data = raw[PAQ_IDS + ["SessionID"]].dropna(subset=PAQ_IDS).copy()
-        data = data.rename(columns={"SessionID": "participant"})
-        return data
+        return (
+            raw[[*PAQ_IDS, "SessionID"]]
+            .dropna(subset=PAQ_IDS)
+            .copy()
+            .rename(columns={"SessionID": "participant"})
+        )
 
     def test_satp_init_validates_schema(self, satp_data):
         """SATP.__init__ must accept valid SATP-format data without raising."""
@@ -343,7 +417,8 @@ class TestSATP:
         assert satp is not None
 
     def test_satp_ipsatize(self, satp_data):
-        """After ipsatization, each PAQ column must have zero mean within every participant group.
+        """
+        After ipsatization each PAQ column must have zero mean per participant.
 
         The implementation uses groupby.transform, which centers each *column*
         within each participant group, not each row across columns.  The correct
@@ -363,19 +438,22 @@ class TestSATP:
 
     def test_satp_run_single_model(self, satp_data):
         """SATP.run(circ_model=...) must populate exactly that model slot."""
-        from soundscapy.satp.circe import CircE, CircModelE, SATP
+        from soundscapy.satp.circe import SATP, CircE, CircModelE
 
         satp = SATP(satp_data, language="EN", datasource="ISD")
         satp.run(circ_model=CircModelE.UNCONSTRAINED)
 
         assert isinstance(satp.model_results[CircModelE.UNCONSTRAINED], CircE)
-        for model in [CircModelE.EQUAL_ANG, CircModelE.EQUAL_COM,
-                      CircModelE.CIRCUMPLEX]:
+        for model in [
+            CircModelE.EQUAL_ANG,
+            CircModelE.EQUAL_COM,
+            CircModelE.CIRCUMPLEX,
+        ]:
             assert satp.model_results[model] is None
 
     def test_satp_run_captures_n_correctly(self, satp_data):
         """The n stored on the CircE result must equal len(satp.data)."""
-        from soundscapy.satp.circe import CircModelE, SATP
+        from soundscapy.satp.circe import SATP, CircModelE
 
         satp = SATP(satp_data, language="EN", datasource="ISD")
         n_data = len(satp.data)
@@ -387,7 +465,7 @@ class TestSATP:
 
     def test_satp_run_p_value_formula(self, satp_data):
         """CircE.p from a full SATP run must equal scipy_chi2.sf(chisq, df)."""
-        from soundscapy.satp.circe import CircModelE, SATP
+        from soundscapy.satp.circe import SATP, CircModelE
 
         satp = SATP(satp_data, language="EN", datasource="ISD")
         satp.run(circ_model=CircModelE.UNCONSTRAINED)
@@ -398,13 +476,16 @@ class TestSATP:
         assert pytest.approx(result.p, rel=1e-6) == expected_p
 
     def test_satp_run_all_models_errors_captured(self, satp_data):
-        """SATP.run() without arguments runs all models; convergence failures
-        are captured in _errors and never propagate as exceptions."""
+        """
+        SATP.run() runs all models; convergence failures are captured.
+
+        Failures are stored in _errors and never propagate as exceptions.
+        """
         from soundscapy.satp.circe import SATP
 
         satp = SATP(satp_data, language="EN", datasource="ISD")
-        satp.run()   # must not raise
+        satp.run()  # must not raise
 
         n_results = sum(v is not None for v in satp.model_results.values())
-        n_errors  = len(satp._errors)
+        n_errors = len(satp._errors)
         assert n_results + n_errors == 4

@@ -290,15 +290,16 @@ class TestMultiSkewNorm:
         assert msn.dp.xi.shape == (2,)
 
     def test_fit_does_not_mutate_input_dataframe(self):
-        """fit() must not rename columns on the caller's DataFrame.
+        """
+        fit() must not rename columns on the caller's DataFrame.
 
         Uses non-default column names so a regression would be visible —
         MOCK_DF already has columns ["x", "y"] and would pass trivially.
         """
-        df = pd.DataFrame(MOCK_DF.values, columns=["ISOPleasant", "ISOEventful"])
+        input_df = pd.DataFrame(MOCK_DF.values, columns=["ISOPleasant", "ISOEventful"])
         msn = MultiSkewNorm()
-        msn.fit(data=df)
-        assert list(df.columns) == ["ISOPleasant", "ISOEventful"], (
+        msn.fit(data=input_df)
+        assert list(input_df.columns) == ["ISOPleasant", "ISOEventful"], (
             "fit() must not modify the caller's DataFrame columns"
         )
 
@@ -432,7 +433,7 @@ class TestMultiSkewNorm:
         np.testing.assert_allclose(msn.cp.mean, EXPECTED_MEAN, atol=1e-5)
 
     def test_from_params_with_mean_sigma_skew_kwargs(self):
-        """from_params(mean=..., sigma=..., skew=...) creates instance from CP kwargs."""
+        """from_params(mean=..., sigma=..., skew=...) creates MultiSkewNorm from CP."""
         msn = MultiSkewNorm.from_params(
             mean=EXPECTED_MEAN, sigma=EXPECTED_SIGMA_COV, skew=EXPECTED_SKEW
         )
@@ -441,7 +442,7 @@ class TestMultiSkewNorm:
 
     def test_from_params_no_args_raises(self):
         """from_params() with no arguments raises ValueError."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Either params object"):
             MultiSkewNorm.from_params()
 
     @patch("soundscapy.spi.msn.scatter")  # Keep mocking the plotting call
