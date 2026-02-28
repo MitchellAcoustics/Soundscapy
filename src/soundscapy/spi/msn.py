@@ -20,8 +20,6 @@ dp2cp(dp, family="SN")
     Convert a :class:`DirectParams` object to a :class:`CentredParams` object via R.
 cp2dp(cp, family="SN")
     Convert a :class:`CentredParams` object to a :class:`DirectParams` object via R.
-ks2d(target, test)
-    Two-sample, two-dimensional Kolmogorov-Smirnov statistic.
 spi_score(target, test)
     Soundscape Perception Index: ``int((1 - KS_statistic) * 100)``.
 """

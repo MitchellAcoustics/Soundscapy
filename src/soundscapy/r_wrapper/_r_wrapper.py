@@ -40,7 +40,7 @@ _stats_package = None
 _base_package = None
 _session_active = False
 
-REQUIRED_R_VERSION = 3.6
+REQUIRED_R_VERSION: str = "3.6"
 
 
 class PKG_SRC(str, Enum):  # noqa: N801
@@ -155,7 +155,7 @@ def check_r_availability() -> None:
             0
         ]  # type: ignore[index]
 
-        if _ver(r_version_str) < _ver(str(REQUIRED_R_VERSION)):
+        if _ver(r_version_str) < _ver(REQUIRED_R_VERSION):
             _raise_r_version_too_old_error(r_version_str)
 
         _r_checked = True

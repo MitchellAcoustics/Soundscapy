@@ -125,14 +125,13 @@ def sample_mtsn(
         outside ``[a, b]``.
 
     """
-    samples = np.array([[0, 0]])
-    n_samples = 0
+    accepted: list[np.ndarray] = []
     n_iter = 0
-    while n_samples < n:
+    while len(accepted) < n:
         if n_iter >= max_iter:
             msg = (
                 f"sample_mtsn: reached max_iter={max_iter} without collecting "
-                f"{n} accepted samples (got {n_samples}). "
+                f"{n} accepted samples (got {len(accepted)}). "
                 "The distribution may have negligible mass inside "
                 f"[{a}, {b}]. Adjust the bounds or increase max_iter."
             )
@@ -146,19 +145,9 @@ def sample_mtsn(
             raise ValueError(msg)
         n_iter += 1
         if a <= sample[0][0] <= b and a <= sample[0][1] <= b:
-            samples = np.append(samples, sample, axis=0)
-            if n_samples == 0:
-                samples = samples[1:]
-            n_samples += 1
+            accepted.append(sample)
 
-    # Ensure the sample is within the bounds [a, b] for both dimensions
-    if not np.all((a <= samples[:, 0]) & (samples[:, 0] <= b)):
-        msg = f"Sample x-values are out of bounds: [{a}, {b}]"
-        raise ValueError(msg)
-    if not np.all((a <= samples[:, 1]) & (samples[:, 1] <= b)):
-        msg = f"Sample y-values are out of bounds: [{a}, {b}]"
-        raise ValueError(msg)
-    return samples
+    return np.vstack(accepted)
 
 
 def dp2cp(

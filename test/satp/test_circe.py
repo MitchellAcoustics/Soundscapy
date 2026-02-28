@@ -313,9 +313,9 @@ class TestCircEDataclass:
         )
         assert result.n == isd_n
 
-    def test_circe_df_is_model_df_not_null_df(self, isd_cor, isd_n):
+    def test_circe_d_is_model_df_not_null_df(self, isd_cor, isd_n):
         """
-        CircE.df must be the model degrees of freedom, not dfnull=28 (8-var null).
+        CircE.d must be the model degrees of freedom, not dfnull=28 (8-var null).
 
         For 8 variables, dfnull = 8*7/2 = 28.  The unconstrained model df is
         much smaller.
@@ -326,10 +326,10 @@ class TestCircEDataclass:
             isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
         )
         # Model df must be strictly less than null df (28 for 8 variables)
-        assert result.df < 28, (
-            f"CircE.df = {result.df} — looks like dfnull was used instead of d."
+        assert result.d < 28, (
+            f"CircE.d = {result.d} — looks like dfnull was used instead of d."
         )
-        assert result.df > 0
+        assert result.d > 0
 
     def test_circe_p_value_formula(self, isd_cor, isd_n):
         """CircE.p must equal scipy_chi2.sf(chisq, df) exactly."""
@@ -338,7 +338,7 @@ class TestCircEDataclass:
         result = CircE.compute_bfgs_fit(
             isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
         )
-        expected_p = scipy_chi2.sf(result.chisq, result.df)
+        expected_p = scipy_chi2.sf(result.chisq, result.d)
         assert pytest.approx(result.p, rel=1e-6) == expected_p
 
     def test_circe_fit_stats_plausible(self, isd_cor, isd_n):
@@ -472,7 +472,7 @@ class TestSATP:
 
         result = satp.model_results[CircModelE.UNCONSTRAINED]
         assert result is not None
-        expected_p = scipy_chi2.sf(result.chisq, result.df)
+        expected_p = scipy_chi2.sf(result.chisq, result.d)
         assert pytest.approx(result.p, rel=1e-6) == expected_p
 
     def test_satp_run_all_models_errors_captured(self, satp_data):

@@ -5,8 +5,6 @@ These tests check the R session management and data conversion functions.
 They are skipped if rpy2 is not installed.
 """
 
-import os
-
 import pytest
 
 # === Pure-Python tests (no R required) ===
@@ -78,36 +76,17 @@ class TestRWrapper:
         assert reinit_res is not None, "R session should be reinitialized successfully"
 
     def test_check_sn_package(self):
-        """Test that the R 'sn' package availability is checked."""
-        # Skip if dependencies are actually installed
+        """Test that the R 'sn' package is available when R deps are installed."""
+        import soundscapy.r_wrapper as sspyr
 
-        if os.environ.get("SPI_DEPS") == "1":
-            import soundscapy.r_wrapper as sspyr
-
-            sspyr._r_wrapper.check_sn_package()
-
-        else:
-            with pytest.raises(ImportError) as excinfo:  # noqa: PT012
-                import soundscapy.r_wrapper as sspyr
-
-                sspyr._r_wrapper.check_sn_package()
-
-            assert "R package 'sn'" in str(excinfo.value)
-            assert "install.packages('sn')" in str(excinfo.value)
+        # Should not raise — this test only runs (via optional_deps("r")) when
+        # rpy2 is present and the tox commands_pre has installed sn.
+        sspyr._r_wrapper.check_sn_package()
 
     def test_check_circe_package(self):
-        """Test that the R 'circe' package availability is checked."""
-        # Skip if dependencies are actually installed
-        if os.environ.get("SPI_DEPS") == "1":
-            import soundscapy.r_wrapper as sspyr
+        """Test that the R 'CircE' package is available when R deps are installed."""
+        import soundscapy.r_wrapper as sspyr
 
-            sspyr._r_wrapper.check_circe_package()
-
-        else:
-            with pytest.raises(ImportError) as excinfo:  # noqa: PT012
-                import soundscapy.r_wrapper as sspyr
-
-                sspyr._r_wrapper.check_circe_package()
-
-            assert "R package 'CircE'" in str(excinfo.value)
-            assert sspyr.PKG_SRC.CIRCE.value in str(excinfo.value)
+        # Should not raise — this test only runs (via optional_deps("r")) when
+        # rpy2 is present and the tox commands_pre has installed CircE.
+        sspyr._r_wrapper.check_circe_package()

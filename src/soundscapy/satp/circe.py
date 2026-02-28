@@ -179,7 +179,7 @@ class CircE:
     n: Annotated[int, BeforeValidator(length_1_array_to_number)]
     m: Annotated[int, BeforeValidator(length_1_array_to_number)]
     chisq: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    df: Annotated[int, BeforeValidator(length_1_array_to_number)]
+    d: Annotated[int, BeforeValidator(length_1_array_to_number)]
     p: Annotated[float, BeforeValidator(length_1_array_to_number)]
     cfi: Annotated[float, BeforeValidator(length_1_array_to_number)]
     gfi: Annotated[float, BeforeValidator(length_1_array_to_number)]
@@ -219,7 +219,7 @@ class CircE:
             n=n,
             m=fit_stats.get("m", None),
             chisq=fit_stats.get("chisq", None),
-            df=fit_stats.get("d", None),
+            d=fit_stats.get("d", None),
             p=fit_stats.get("p", None),
             cfi=fit_stats.get("cfi", None),
             gfi=fit_stats.get("gfi", None),
