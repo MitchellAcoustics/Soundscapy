@@ -3,6 +3,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 from rpy2 import robjects
+from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.methods import RS4
 
 from soundscapy.sspylogging import get_logger
@@ -11,13 +12,19 @@ from ._r_wrapper import get_r_session
 
 logger = get_logger()
 
-_, sn, _, _, _ = get_r_session()
-logger.debug("R session and packages retrieved successfully.")
+
+def _r2np(r_obj: object) -> np.ndarray:
+    """Convert a single R numeric object to a numpy array via an explicit converter."""
+    with (robjects.default_converter + numpy2ri.converter).context():
+        return robjects.conversion.get_conversion().rpy2py(r_obj)
 
 
 def selm(x: str, y: str, data: pd.DataFrame) -> RS4:
+    _, sn, _, _, _ = get_r_session()
     formula = f"cbind({x}, {y}) ~ 1"
-    return sn.selm(formula, data=data, family="SN")
+    with (robjects.default_converter + pandas2ri.converter).context():
+        r_data = robjects.conversion.get_conversion().py2rpy(data)
+    return sn.selm(formula, data=r_data, family="SN")
 
 
 def calc_cp(x: str, y: str, data: pd.DataFrame) -> tuple:
@@ -31,13 +38,21 @@ def calc_dp(x: str, y: str, data: pd.DataFrame) -> tuple:
 
 
 def extract_cp(selm_model: RS4) -> tuple:
-    cp = tuple(selm_model.slots["param"][1])
-    return (cp[0].flatten(), cp[1], cp[2].flatten())
+    # param[[1]] in R (0-indexed in rpy2) is the CP list: {mean, Sigma, skew}
+    cp_r = selm_model.slots["param"][1]
+    mean = _r2np(cp_r[0]).flatten()
+    sigma = _r2np(cp_r[1])
+    skew = _r2np(cp_r[2]).flatten()
+    return (mean, sigma, skew)
 
 
 def extract_dp(selm_model: RS4) -> tuple:
-    dp = tuple(selm_model.slots["param"][0])
-    return (dp[0].flatten(), dp[1], dp[2].flatten())
+    # param[[0]] in R (0-indexed in rpy2) is the DP list: {xi, Omega, alpha}
+    dp_r = selm_model.slots["param"][0]
+    xi = _r2np(dp_r[0]).flatten()
+    omega = _r2np(dp_r[1])
+    alpha = _r2np(dp_r[2]).flatten()
+    return (xi, omega, alpha)
 
 
 def sample_msn(
@@ -47,19 +62,22 @@ def sample_msn(
     alpha: np.ndarray | None = None,
     n: int = 1000,
 ) -> np.ndarray:
+    _, sn, _, _, _ = get_r_session()
     if selm_model is not None:
-        return sn.rmsn(n, dp=selm_model.slots["param"][0])
-    if xi is not None and omega is not None and alpha is not None:
+        r_result = sn.rmsn(n, dp=selm_model.slots["param"][0])
+    elif xi is not None and omega is not None and alpha is not None:
         r_xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
         r_omega = robjects.r.matrix(
             robjects.FloatVector(omega.flatten()),
             nrow=omega.shape[0],
             ncol=omega.shape[1],
         )  # type: ignore[reportCallIssue]
-        r_alpha = robjects.FloatVector(alpha)  # Transpose to make it a column vector
-        return sn.rmsn(n, xi=r_xi, Omega=r_omega, alpha=r_alpha)
-    msg = "Either selm_model or xi, omega, and alpha must be provided."
-    raise ValueError(msg)
+        r_alpha = robjects.FloatVector(alpha)
+        r_result = sn.rmsn(n, xi=r_xi, Omega=r_omega, alpha=r_alpha)
+    else:
+        msg = "Either selm_model or xi, omega, and alpha must be provided."
+        raise ValueError(msg)
+    return _r2np(r_result)
 
 
 def sample_mtsn(
@@ -158,13 +176,14 @@ def dp2cp(
         Tuple containing the centred parameters (mean, sigma, skew).
 
     """
+    _, sn, _, _, _ = get_r_session()
     r_xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
     r_omega = robjects.r.matrix(
         robjects.FloatVector(omega.flatten()),
         nrow=omega.shape[0],
         ncol=omega.shape[1],
     )  # type: ignore[reportCallIssue]
-    r_alpha = robjects.FloatVector(alpha)  # Transpose to make it a column vector
+    r_alpha = robjects.FloatVector(alpha)
 
     dp_r = robjects.ListVector(
         {
@@ -175,8 +194,7 @@ def dp2cp(
     )
 
     cp_r = sn.dp2cp(dp_r, family=family)
-
-    return tuple(cp_r)
+    return tuple(_r2np(cp_r[i]) for i in range(len(cp_r)))
 
 
 def cp2dp(
@@ -205,13 +223,14 @@ def cp2dp(
         Tuple containing the direct parameters (xi, omega, alpha).
 
     """
+    _, sn, _, _, _ = get_r_session()
     r_mean = robjects.FloatVector(mean.T)  # Transpose to make it a column vector
     r_sigma = robjects.r.matrix(
         robjects.FloatVector(sigma.flatten()),
         nrow=sigma.shape[0],
         ncol=sigma.shape[1],
     )  # type: ignore[reportCallIssue]
-    r_skew = robjects.FloatVector(skew)  # Transpose to make it a column vector
+    r_skew = robjects.FloatVector(skew)
     cp_r = robjects.ListVector(
         {
             "mean": r_mean,
@@ -220,4 +239,4 @@ def cp2dp(
         }
     )
     dp_r = sn.cp2dp(cp_r, family=family)
-    return tuple(dp_r)
+    return tuple(_r2np(dp_r[i]) for i in range(len(dp_r)))

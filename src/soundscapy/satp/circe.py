@@ -31,16 +31,15 @@ length_1_array_to_number : function
 import warnings
 from enum import Enum
 from functools import partial
-from typing import Annotated
+from typing import Annotated, Any
 
 import numpy as np
 import pandas as pd
 import pandera.pandas as pa
 from pandera import Field
 from pandera.typing.pandas import DataFrame, Series
-from pydantic import BeforeValidator, ConfigDict
+from pydantic import BeforeValidator
 from pydantic.dataclasses import dataclass
-from rpy2 import robjects as ro
 
 import soundscapy.r_wrapper as sspyr
 from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
@@ -160,11 +159,10 @@ def length_1_array_to_number(v: np.ndarray | float | None) -> float | None:
     raise ValueError(msg)
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+@dataclass
 class CircE:
     """A data class to hold the results of a CircE model fitting."""
 
-    _raw_bfgs_fit: ro.ListVector
     model_type: ModelType
     datasource: str
     language: str
@@ -186,7 +184,7 @@ class CircE:
     @classmethod
     def from_bfgs(
         cls,
-        bfgs_model: ro.ListVector,
+        bfgs_model: Any,
         datasource: str,
         language: str,
         model_type: ModelType,
@@ -200,7 +198,6 @@ class CircE:
             polar_angles = pd.DataFrame(fit_stats.get("polar_angles", None)).T
 
         return cls(
-            _raw_bfgs_fit=bfgs_model,
             model_type=model_type,
             datasource=datasource,
             language=language,
@@ -224,12 +221,29 @@ class CircE:
     def compute_bfgs_fit(
         cls,
         data_cor: pd.DataFrame,
+        n: int,
         datasource: str,
         language: str,
         circ_model: CircModelE,
     ) -> "CircE":
         """
         Compute and return a CircEResult from the given data correlation matrix.
+
+        Parameters
+        ----------
+        data_cor
+            Correlation matrix of the PAQ data (8x8).
+        n
+            Number of observations (participants) used to compute ``data_cor``.
+            This is used by ``CircE_BFGS`` for chi-square and RMSEA calculations
+            and must be the row count of the *original* data, not of the
+            correlation matrix.
+        datasource
+            Source identifier for the dataset.
+        language
+            Language code for the dataset.
+        circ_model
+            Circumplex model type to fit.
 
         Examples
         --------
@@ -238,17 +252,17 @@ class CircE:
         >>> data_paqs = data[PAQ_IDS]
         >>> data_paqs = data_paqs.dropna()
         >>> data_cor = data_paqs.corr()
+        >>> n = len(data_paqs)
         >>> circ_model = sspy.satp.CircModelE.CIRCUMPLEX
         >>> circe_res = sspy.satp.CircE.compute_bfgs_fit(
-        ... data_cor, "ISD", "EN", circ_model)
+        ... data_cor, n, "ISD", "EN", circ_model)
         ...
 
         """
-        # Get matrix dimensions for model fitting
-        n = data_cor.shape[0]
         model_type = ModelType(name=circ_model)
         bfgs_model = sspyr.bfgs(
             data_cor=data_cor,
+            n=n,
             scales=PAQ_IDS,
             m_val=3,
             equal_ang=model_type.equal_ang,
@@ -399,11 +413,12 @@ class SATP:
         """
         # Determine which models to fit
         circ_models_to_run = [*CircModelE] if circ_model is None else [circ_model]
+        n = len(self.data)
         # Fit each requested model, capturing any errors
         for model in circ_models_to_run:
             try:
                 self.model_results[model] = CircE.compute_bfgs_fit(
-                    self.data_corr, self.datasource, self.language, model
+                    self.data_corr, n, self.datasource, self.language, model
                 )
             except Exception as e:  # noqa: BLE001, PERF203
                 # Log fitting errors but continue with other models

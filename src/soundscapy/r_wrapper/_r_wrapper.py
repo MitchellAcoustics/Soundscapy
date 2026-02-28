@@ -11,12 +11,10 @@ It is not intended to be used directly by end users.
 """
 
 import importlib.metadata
-import warnings
 from enum import Enum
 from typing import Any, NoReturn
 
 from rpy2 import robjects
-from rpy2.robjects import numpy2ri, pandas2ri
 
 # These are used in the docstring examples but not in the code
 # They will be used by code that imports and uses this module
@@ -376,18 +374,6 @@ def initialize_r_session() -> dict[str, Any]:
         _session_active = True
         logger.info("R session successfully initialized")
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # Activate numpy and pandas conversion
-            logger.debug("Activating numpy and pandas conversion")
-            logger.info(
-                "rpy2 throws a DeprecationWarning about global activation, which we're ignoring for now."  # noqa: E501
-            )
-            # TODO(MitchellAcoustics): Remove global conversion, as recommended by rpy2
-            # https://github.com/MitchellAcoustics/Soundscapy/issues/111
-            numpy2ri.activate()
-            pandas2ri.activate()
-
         return {
             "r_session": "active",
             "sn_package": str(_sn_package),
@@ -414,9 +400,8 @@ def shutdown_r_session() -> bool:
     Shutdown the R session and clean up resources.
 
     This function:
-    1. Deactivates numpy conversion
-    2. Resets global session state
-    3. Performs garbage collection
+    1. Resets global session state
+    2. Performs garbage collection
 
     Returns
     -------
