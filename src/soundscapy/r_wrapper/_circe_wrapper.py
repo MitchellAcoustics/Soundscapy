@@ -45,12 +45,11 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
         >>> fit_stats = sspy.r_wrapper.extract_bfgs_fit(circe_res)
 
     """
-    py_res = {}
     with (ro.default_converter + pandas2ri.converter).context():
-        for i, name in enumerate(bfgs_model.names):
-            val = ro.conversion.get_conversion().rpy2py(bfgs_model[i])
-            py_res[name.lower()] = val
-
+        py_res = {
+            key.lower(): ro.conversion.get_conversion().rpy2py(val)
+            for key, val in bfgs_model.items()
+        }
     py_res["p"] = 1 - _stats_package.pchisq(py_res["chisq"], py_res["dfnull"]).item()
 
     return py_res

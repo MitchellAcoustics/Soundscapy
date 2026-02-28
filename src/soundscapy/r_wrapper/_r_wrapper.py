@@ -193,7 +193,7 @@ def check_circe_package() -> None:
     def _raise_circe_not_installed_error() -> NoReturn:
         msg = (
             "R package 'CircE' is not installed. "
-            f"Please install it by running in R: devtools::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please install it by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
         )
         raise ImportError(msg)
 
@@ -201,14 +201,14 @@ def check_circe_package() -> None:
         msg = (
             f"R 'CircE' package version {version} is too old. "
             "The SPI feature requires 'CircE' >= 1.1. "
-            f"Please upgrade the package by running in R: devtools::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please upgrade the package by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
         )
         raise ImportError(msg)
 
     def _raise_sn_check_error(e: Exception) -> NoReturn:
         msg = (
             f"Error checking for R 'CircE' package: {e!s}. "
-            f"Please ensure the package is installed by running in R: devtools::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please ensure the package is installed by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
         )
         raise ImportError(msg)
 
@@ -534,8 +534,8 @@ def install_r_packages(packages: list[str] | None = None) -> None:
         if len(packnames_to_install) > 0:
             if "CircE" in packnames_to_install:
                 # CircE and RTHORR are only available from GitHub
-                devtools = rpackages.importr("devtools")
-                devtools.install_github(PKG_SRC.CIRCE.value)
+                remotes = rpackages.importr("remotes")
+                remotes.install_github(PKG_SRC.CIRCE.value)
                 packnames_to_install.remove("CircE")
                 logger.info("Installed R package 'CircE' from GitHub")
 
