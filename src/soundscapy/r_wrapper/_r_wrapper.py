@@ -205,9 +205,6 @@ def check_sn_package() -> None:
             # Just importing to verify it exists
             _ = rpackages.importr("sn")
 
-            # Get package version using R to verify compatibility
-            from rpy2 import robjects
-
             # Use R code to get the package version
             version = robjects.r('as.character(packageVersion("sn"))')[0]  # type: ignore[index]
             logger.debug("R 'sn' package version: %s", version)
@@ -220,10 +217,9 @@ def check_sn_package() -> None:
             _sn_checked = True
         except rpackages.PackageNotInstalledError:
             _raise_sn_not_installed_error()
+    except ImportError:
+        raise  # Already a specific ImportError from our helpers — re-raise as-is
     except Exception as e:
-        if "sn" in str(e):
-            # Already a more specific error about the sn package
-            raise  # Re-raising is okay here
         _raise_sn_check_error(e)
 
 
@@ -275,9 +271,6 @@ def check_circe_package() -> None:
             # Just importing to verify it exists
             _ = rpackages.importr("CircE")
 
-            # Get package version using R to verify compatibility
-            from rpy2 import robjects
-
             # Use R code to get the package version
             version = robjects.r('as.character(packageVersion("CircE"))')[0]  # type: ignore[index]
             logger.debug("R 'CircE' package version: %s", version)
@@ -291,10 +284,9 @@ def check_circe_package() -> None:
         except rpackages.PackageNotInstalledError:
             _raise_circe_not_installed_error()
 
+    except ImportError:
+        raise  # Already a specific ImportError from our helpers — re-raise as-is
     except Exception as e:
-        if "CircE" in str(e):
-            # Already a more specific error about the CircE package
-            raise  # Re-raising is okay here
         _raise_circe_check_error(e)
 
 
@@ -405,7 +397,6 @@ def initialize_r_session() -> dict[str, Any]:
 
     try:
         import rpy2.robjects.packages as rpackages
-        from rpy2 import robjects
 
         # Import required packages
         _sn_package = rpackages.importr("sn")

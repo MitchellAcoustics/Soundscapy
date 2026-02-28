@@ -4,6 +4,26 @@ Module for handling Multi-dimensional Skewed Normal (MSN) distributions.
 Provides classes and functions for defining, fitting, sampling, and analyzing
 MSN distributions, often used in soundscape analysis for modeling ISOPleasant
 and ISOEventful ratings.
+
+Classes
+-------
+DirectParams
+    Container for direct parameters (xi, omega, alpha) of a skew-normal distribution.
+CentredParams
+    Container for centred parameters (mean, sigma, skew) of a skew-normal distribution.
+MultiSkewNorm
+    High-level interface for fitting, sampling, and scoring a 2-D skew-normal model.
+
+Functions
+---------
+dp2cp(dp, family="SN")
+    Convert a :class:`DirectParams` object to a :class:`CentredParams` object via R.
+cp2dp(cp, family="SN")
+    Convert a :class:`CentredParams` object to a :class:`DirectParams` object via R.
+ks2d(target, test)
+    Two-sample, two-dimensional Kolmogorov-Smirnov statistic.
+spi_score(target, test)
+    Soundscape Perception Index: ``int((1 - KS_statistic) * 100)``.
 """
 
 import warnings
@@ -121,10 +141,12 @@ class DirectParams:
         """
         warnings.warn(
             "Converting from Centred Parameters to Direct Parameters "
-            "is not guaranteed.",
+            "is not guaranteed to produce a unique result. "
+            "Prefer constructing from Direct Parameters (xi, omega, alpha) "
+            "directly when possible.",
             UserWarning,
             stacklevel=2,
-        )  # TODO(MitchellAcoustics): Add a more specific warning message
+        )
         dp = cp2dp(cp)
         return cls(dp.xi, dp.omega, dp.alpha)
 
@@ -221,13 +243,15 @@ class MultiSkewNorm:
     define_dp(xi, omega, alpha)
         Defines the direct parameters of the model.
     sample(n=1000, return_sample=False)
-        Generates a sample from the fitted model.
+        Generates an unrestricted sample from the fitted model.
+    sample_mtsn(n=1000, a=-1, b=1, return_sample=False)
+        Generates a truncated sample (rejection sampling within [a, b]).
     sspy_plot(color='blue', title=None, n=1000)
         Plots the joint distribution of the generated sample.
-    ks2ds(test)
-        Computes the two-sample Kolmogorov-Smirnov statistic.
-    spi(test)
-        Computes the similarity percentage index.
+    ks2d2s(test)
+        Computes the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
+    spi_score(test)
+        Computes the Soundscape Perception Index (SPI).
 
     """
 
@@ -302,7 +326,9 @@ class MultiSkewNorm:
         if data is not None:
             # If data is provided, convert it to a pandas DataFrame
             if isinstance(data, pd.DataFrame):
-                # If data is already a DataFrame, no need to convert
+                # Rename columns to "x"/"y" on a copy so we don't mutate the
+                # caller's DataFrame.
+                data = data.copy()
                 data.columns = ["x", "y"]
 
             elif isinstance(data, np.ndarray):

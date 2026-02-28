@@ -289,6 +289,15 @@ class TestMultiSkewNorm:
         assert msn.cp.mean.shape == (2,)
         assert msn.dp.xi.shape == (2,)
 
+    def test_fit_does_not_mutate_input_dataframe(self):
+        """fit() must not rename columns on the caller's DataFrame."""
+        original_cols = list(MOCK_DF.columns)
+        msn = MultiSkewNorm()
+        msn.fit(data=MOCK_DF)
+        assert list(MOCK_DF.columns) == original_cols, (
+            "fit() must not modify the caller's DataFrame columns"
+        )
+
     def test_fit_no_data(self):
         """Test fit method raises ValueError when no data is provided."""
         msn = MultiSkewNorm()
@@ -353,6 +362,75 @@ class TestMultiSkewNorm:
         ):
             msn.sample()
 
+    # --- sample_mtsn tests ---
+
+    def test_sample_mtsn_shape(self):
+        """sample_mtsn returns an (n, 2) array."""
+        msn = MultiSkewNorm()
+        msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
+        result = msn.sample_mtsn(n=5, return_sample=True)
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (5, 2)
+
+    def test_sample_mtsn_within_bounds(self):
+        """All samples returned by sample_mtsn are within [a, b]."""
+        msn = MultiSkewNorm()
+        msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
+        result = msn.sample_mtsn(n=10, a=-1, b=1, return_sample=True)
+        assert result is not None
+        assert np.all(result >= -1), "Some samples are below the lower bound"
+        assert np.all(result <= 1), "Some samples are above the upper bound"
+
+    def test_sample_mtsn_stores_sample(self):
+        """sample_mtsn stores the result in sample_data when return_sample=False."""
+        msn = MultiSkewNorm()
+        msn.define_dp(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
+        assert msn.sample_data is None
+        retval = msn.sample_mtsn(n=5, return_sample=False)
+        assert retval is None
+        assert isinstance(msn.sample_data, np.ndarray)
+        assert msn.sample_data.shape == (5, 2)
+
+    def test_sample_mtsn_not_fitted(self):
+        """sample_mtsn raises ValueError when the model has no parameters."""
+        msn = MultiSkewNorm()
+        with pytest.raises(
+            ValueError,
+            match="Model is not fitted. Call fit\\(\\) or define_dp\\(\\) first.",
+        ):
+            msn.sample_mtsn()
+
+    # --- from_params branch tests ---
+
+    def test_from_params_with_direct_params_object(self):
+        """from_params(params=DirectParams(...)) sets dp and computes cp."""
+        dp = DirectParams(MOCK_XI, MOCK_OMEGA, MOCK_ALPHA)
+        msn = MultiSkewNorm.from_params(params=dp)
+        assert isinstance(msn.dp, DirectParams)
+        np.testing.assert_array_equal(msn.dp.xi, MOCK_XI)
+        assert isinstance(msn.cp, CentredParams)
+        np.testing.assert_allclose(msn.cp.mean, EXPECTED_MEAN, atol=1e-5)
+
+    def test_from_params_with_centred_params_object(self):
+        """from_params(params=CentredParams(...)) sets cp and converts to dp."""
+        cp = CentredParams(EXPECTED_MEAN, EXPECTED_SIGMA_COV, EXPECTED_SKEW)
+        msn = MultiSkewNorm.from_params(params=cp)
+        assert isinstance(msn.cp, CentredParams)
+        assert isinstance(msn.dp, DirectParams)
+
+    def test_from_params_with_mean_sigma_skew_kwargs(self):
+        """from_params(mean=..., sigma=..., skew=...) creates instance from CP kwargs."""
+        msn = MultiSkewNorm.from_params(
+            mean=EXPECTED_MEAN, sigma=EXPECTED_SIGMA_COV, skew=EXPECTED_SKEW
+        )
+        assert isinstance(msn.cp, CentredParams)
+        assert isinstance(msn.dp, DirectParams)
+
+    def test_from_params_no_args_raises(self):
+        """from_params() with no arguments raises ValueError."""
+        with pytest.raises(ValueError):
+            MultiSkewNorm.from_params()
+
     @patch("soundscapy.spi.msn.scatter")  # Keep mocking the plotting call
     def test_sspy_plot_calls_sample_if_needed(self, mock_scatter):
         """Test sspy_plot calls sample if sample_data is None."""
@@ -416,15 +494,17 @@ class TestMultiSkewNorm:
         test_data_df = pd.DataFrame(rng.random((40, 2)), columns=["col1", "col2"])
 
         result = msn.ks2d2s(test_data_df)
-        # TODO: still need to implement check for actual result values
 
         # Check sample was called implicitly and data was generated
         assert isinstance(msn.sample_data, np.ndarray)
         assert msn.sample_data.shape[1] == 2  # Check sample data has 2 columns
 
         assert isinstance(result, tuple)
-        assert isinstance(result[0], float)
-        assert isinstance(result[1], float)
+        ks_stat, p_value = result
+        assert isinstance(ks_stat, float)
+        assert isinstance(p_value, float)
+        assert 0.0 <= ks_stat <= 1.0, "KS statistic must be in [0, 1]"
+        assert 0.0 <= p_value <= 1.0, "p-value must be in [0, 1]"
 
     def test_ks2d2s(self):
         """Test ks2d2s converts DataFrame input to numpy array."""
@@ -437,7 +517,6 @@ class TestMultiSkewNorm:
 
         df_result = msn.ks2d2s(test_data_df)
         np_result = msn.ks2d2s(test_data_np)
-        # TODO(MitchellAcoustics): still need to implement check for actual result values  # noqa: E501
 
         assert df_result == np_result, (
             "Results from DataFrame and numpy array should match."
@@ -470,9 +549,8 @@ class TestMultiSkewNorm:
 
         spi_value = msn.spi_score(test_data)
 
-        # Check the SPI calculation
-        # TODO(MitchellAcoustics): Implement actual SPI calculation check
         assert isinstance(spi_value, int)
+        assert 0 <= spi_value <= 100, "SPI score must be in [0, 100]"
 
     def test_spi_with_dataframe(self):
         """Test spi method with DataFrame input."""
@@ -481,9 +559,8 @@ class TestMultiSkewNorm:
 
         spi_value = msn.spi_score(test_data_df)
 
-        # Check the SPI calculation
-        # TODO(MitchellAcoustics): Implement actual SPI calculation check
         assert isinstance(spi_value, int)
+        assert 0 <= spi_value <= 100, "SPI score must be in [0, 100]"
 
 
 @pytest.mark.optional_deps("spi")

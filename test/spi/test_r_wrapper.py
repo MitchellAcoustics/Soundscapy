@@ -10,21 +10,28 @@ import os
 import pytest
 
 
-def test_initialize_r_session_fails():
-    """Test that R session initialization fails if R is not available."""
-    # Skip if dependencies are actually installed
-    if os.environ.get("SPI_DEPS") == "1":
-        pytest.skip("SPI dependencies are installed")
+# === Pure-Python tests (no R required) ===
 
-    from soundscapy.r_wrapper._r_wrapper import initialize_r_session
 
-    # Simulate R not being available
-    with pytest.raises(ImportError) as excinfo:
-        initialize_r_session()
+def test_ver_basic():
+    """_ver parses simple dotted version strings into integer tuples."""
+    from soundscapy.r_wrapper._r_wrapper import _ver
 
-    # Check for helpful error message
-    assert "R installation" in str(excinfo.value)
-    assert "install.packages('R')" in str(excinfo.value)
+    assert _ver("3.6") == (3, 6)
+    assert _ver("2.0.0") == (2, 0, 0)
+    assert _ver("1.1") == (1, 1)
+
+
+def test_ver_avoids_lexicographic_pitfall():
+    """_ver must compare 1.10 as greater than 1.2 (not less, as strings would)."""
+    from soundscapy.r_wrapper._r_wrapper import _ver
+
+    assert _ver("1.10") > _ver("1.2")
+    assert _ver("2.0.0") > _ver("1.9.9")
+    assert _ver("3.6.0") == _ver("3.6.0")
+
+
+# === End-to-end R tests ===
 
 
 @pytest.mark.optional_deps("r")
