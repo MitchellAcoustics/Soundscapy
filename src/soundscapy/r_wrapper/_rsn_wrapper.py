@@ -28,16 +28,6 @@ def selm(x: str, y: str, data: pd.DataFrame) -> RS4:
     return r.sn.selm(formula, data=r_data, family="SN")
 
 
-def calc_cp(x: str, y: str, data: pd.DataFrame) -> tuple:
-    selm_model = selm(x, y, data)
-    return extract_cp(selm_model)
-
-
-def calc_dp(x: str, y: str, data: pd.DataFrame) -> tuple:
-    selm_model = selm(x, y, data)
-    return extract_dp(selm_model)
-
-
 def extract_cp(selm_model: RS4) -> tuple:
     # param[[1]] in R (0-indexed in rpy2) is the CP list: {mean, Sigma, skew}
     cp_r = selm_model.slots["param"][1]
