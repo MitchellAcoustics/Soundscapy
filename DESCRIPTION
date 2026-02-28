@@ -9,7 +9,7 @@ License: BSD 3-Clause
 Encoding: UTF-8
 LazyData: true
 Imports:
-    sn,
-    CircE
+    CircE (>= 1.1),
+    sn
 Remotes:
     MitchellAcoustics/CircE-R
