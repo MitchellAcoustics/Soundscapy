@@ -44,7 +44,10 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
         >>> fit_stats = sspy.r_wrapper.extract_bfgs_fit(circe_res)
 
     """
-    _, _, _, _, _ = get_r_session()
+    # Session must already be active (bfgs_model was produced by bfgs()), but
+    # calling get_r_session() here ensures a clean error if somehow called in
+    # isolation.
+    get_r_session()
     with (ro.default_converter + pandas2ri.converter).context():
         py_res = {
             key.lower(): ro.conversion.get_conversion().rpy2py(val)
@@ -107,14 +110,18 @@ def bfgs(
         ... )
 
     """
-    _, _, _, base_package, circe_package = get_r_session()
+    r = get_r_session()
     with (ro.default_converter + pandas2ri.converter).context():
+        # Only the Python→R conversion needs the pandas2ri context.
+        # Calling as_matrix() inside the context would cause its R-matrix
+        # return value to be auto-converted back to numpy by the active
+        # converter, producing a numpy array instead of an R matrix.
         r_data_cor = ro.conversion.get_conversion().py2rpy(data_cor)
-        r_cor_mat = base_package.as_matrix(r_data_cor)
 
+    r_cor_mat = r.base.as_matrix(r_data_cor)
     r_scales = ro.StrVector(scales)
 
-    return circe_package.CircE_BFGS(
+    return r.circe.CircE_BFGS(
         r_cor_mat,
         v_names=r_scales,
         m=m_val,

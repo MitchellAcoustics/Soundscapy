@@ -20,11 +20,11 @@ def _r2np(r_obj: object) -> np.ndarray:
 
 
 def selm(x: str, y: str, data: pd.DataFrame) -> RS4:
-    _, sn, _, _, _ = get_r_session()
+    r = get_r_session()
     formula = f"cbind({x}, {y}) ~ 1"
     with (robjects.default_converter + pandas2ri.converter).context():
         r_data = robjects.conversion.get_conversion().py2rpy(data)
-    return sn.selm(formula, data=r_data, family="SN")
+    return r.sn.selm(formula, data=r_data, family="SN")
 
 
 def calc_cp(x: str, y: str, data: pd.DataFrame) -> tuple:
@@ -62,9 +62,9 @@ def sample_msn(
     alpha: np.ndarray | None = None,
     n: int = 1000,
 ) -> np.ndarray:
-    _, sn, _, _, _ = get_r_session()
+    r = get_r_session()
     if selm_model is not None:
-        r_result = sn.rmsn(n, dp=selm_model.slots["param"][0])
+        r_result = r.sn.rmsn(n, dp=selm_model.slots["param"][0])
     elif xi is not None and omega is not None and alpha is not None:
         r_xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
         r_omega = robjects.r.matrix(
@@ -73,7 +73,7 @@ def sample_msn(
             ncol=omega.shape[1],
         )  # type: ignore[reportCallIssue]
         r_alpha = robjects.FloatVector(alpha)
-        r_result = sn.rmsn(n, xi=r_xi, Omega=r_omega, alpha=r_alpha)
+        r_result = r.sn.rmsn(n, xi=r_xi, Omega=r_omega, alpha=r_alpha)
     else:
         msg = "Either selm_model or xi, omega, and alpha must be provided."
         raise ValueError(msg)
@@ -176,7 +176,7 @@ def dp2cp(
         Tuple containing the centred parameters (mean, sigma, skew).
 
     """
-    _, sn, _, _, _ = get_r_session()
+    r = get_r_session()
     r_xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
     r_omega = robjects.r.matrix(
         robjects.FloatVector(omega.flatten()),
@@ -193,7 +193,7 @@ def dp2cp(
         }
     )
 
-    cp_r = sn.dp2cp(dp_r, family=family)
+    cp_r = r.sn.dp2cp(dp_r, family=family)
     return tuple(_r2np(cp_r[i]) for i in range(len(cp_r)))
 
 
@@ -223,7 +223,7 @@ def cp2dp(
         Tuple containing the direct parameters (xi, omega, alpha).
 
     """
-    _, sn, _, _, _ = get_r_session()
+    r = get_r_session()
     r_mean = robjects.FloatVector(mean.T)  # Transpose to make it a column vector
     r_sigma = robjects.r.matrix(
         robjects.FloatVector(sigma.flatten()),
@@ -238,5 +238,5 @@ def cp2dp(
             "skew": r_skew,
         }
     )
-    dp_r = sn.cp2dp(cp_r, family=family)
+    dp_r = r.sn.cp2dp(cp_r, family=family)
     return tuple(_r2np(dp_r[i]) for i in range(len(dp_r)))

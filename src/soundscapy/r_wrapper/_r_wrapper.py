@@ -12,12 +12,10 @@ It is not intended to be used directly by end users.
 
 import importlib.metadata
 from enum import Enum
-from typing import Any, NoReturn
+from typing import Any, NamedTuple, NoReturn
 
 from rpy2 import robjects
 
-# These are used in the docstring examples but not in the code
-# They will be used by code that imports and uses this module
 from soundscapy.sspylogging import get_logger
 
 logger = get_logger()
@@ -37,6 +35,28 @@ _session_active = False
 
 REQUIRED_R_VERSION = 3.6
 AUTO_INSTALL_R_PACKAGES = True
+
+
+class RSession(NamedTuple):
+    """Typed container for the active R session and loaded package references.
+
+    Returned by :func:`get_r_session`.  Named-field access (``r.sn``,
+    ``r.circe`` …) is preferred over positional unpacking.
+    """
+
+    session: Any
+    sn: Any
+    stats: Any
+    base: Any
+    circe: Any
+
+
+def _ver(v: str) -> tuple[int, ...]:
+    """Parse a dotted version string into a comparable integer tuple.
+
+    Avoids lexicographic pitfalls where ``"1.10" < "1.2"`` is True.
+    """
+    return tuple(int(x) for x in v.split("."))
 
 
 class PKG_SRC(str, Enum):
@@ -163,7 +183,7 @@ def check_sn_package() -> None:
 
             # Check if package version meets requirements
             # The SPI implementation requires 'sn' >= 2.0.0
-            if version < "2.0.0":
+            if _ver(version) < (2, 0, 0):
                 _raise_sn_version_too_old_error(version)
 
             _sn_checked = True
@@ -203,7 +223,7 @@ def check_circe_package() -> None:
         )
         raise ImportError(msg)
 
-    def _raise_sn_check_error(e: Exception) -> NoReturn:
+    def _raise_circe_check_error(e: Exception) -> NoReturn:
         msg = (
             f"Error checking for R 'CircE' package: {e!s}. "
             f"Please ensure the package is installed by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
@@ -231,9 +251,8 @@ def check_circe_package() -> None:
             version = robjects.r('as.character(packageVersion("CircE"))')[0]  # type: ignore[index]
             logger.debug("R 'CircE' package version: %s", version)
 
-            # Check if package version meets requirements
-            # The SPI implementation requires 'sn' >= 2.0.0
-            if version < "1.1":
+            # Tuple comparison avoids lexicographic pitfalls ("1.10" > "1.2")
+            if _ver(version) < (1, 1):
                 _raise_circe_version_too_old_error(version)
 
             _circe_checked = True
@@ -243,9 +262,9 @@ def check_circe_package() -> None:
 
     except Exception as e:
         if "CircE" in str(e):
-            # Already a more specific error about the sn package
+            # Already a more specific error about the CircE package
             raise  # Re-raising is okay here
-        _raise_sn_check_error(e)
+        _raise_circe_check_error(e)
 
 
 def check_dependencies() -> dict[str, Any]:
@@ -439,23 +458,21 @@ def shutdown_r_session() -> bool:
         return True
 
 
-def get_r_session() -> tuple[Any, Any, Any, Any, Any]:
+def get_r_session() -> RSession:
     """
-    Get the current R session and package objects.
-
-    This function:
-    1. Initializes the session if not already active
-    2. Returns the session and package references
+    Get the current R session and package objects, initialising lazily if needed.
 
     Returns
     -------
-    tuple[Any, Any, Any, Any, Any]
-        (r_session, sn_package, stats_package, base_package, circe_package)
+    RSession
+        Named tuple with fields ``session``, ``sn``, ``stats``, ``base``,
+        ``circe``.  Access by name (``r.sn``, ``r.circe`` …) rather than
+        position.
 
     Raises
     ------
     RuntimeError
-        If session initialization fails.
+        If session initialisation fails.
 
     """
     global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0602
@@ -475,12 +492,12 @@ def get_r_session() -> tuple[Any, Any, Any, Any, Any]:
         msg = "Failed to initialize R session"
         raise RuntimeError(msg)
 
-    return (
-        _r_session,
-        _sn_package,
-        _stats_package,
-        _base_package,
-        _circe_package,
+    return RSession(
+        session=_r_session,
+        sn=_sn_package,
+        stats=_stats_package,
+        base=_base_package,
+        circe=_circe_package,
     )
 
 
