@@ -330,6 +330,11 @@ class SATP:
             If data doesn't conform to SATPSchema requirements
 
         """
+        warnings.warn(
+            "The SATP analysis module is experimental. Use with caution.",
+            UserWarning,
+            stacklevel=2,
+        )
         # Initialize processing flags and store raw data
         self._ipsatized = False
         self._raw_data = data

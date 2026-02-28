@@ -2,6 +2,7 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
+# NOTE: importing rpy2 here starts the embedded R process (see _r_wrapper.py).
 from rpy2 import robjects
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.methods import RS4

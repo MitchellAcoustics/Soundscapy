@@ -233,6 +233,11 @@ class MultiSkewNorm:
 
     def __init__(self) -> None:
         """Initialize the MultiSkewNorm object."""
+        warnings.warn(
+            "The SPI analysis module is experimental. Use with caution.",
+            UserWarning,
+            stacklevel=2,
+        )
         self.cp = None
         self.dp = None
         self.sample_data = None

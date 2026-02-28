@@ -95,7 +95,8 @@ except ImportError:
 # that `import soundscapy` does not start the R process.  R only starts when
 # the user explicitly accesses one of these names.
 _SPI_ATTRS: frozenset[str] = frozenset(
-    {"spi", "CentredParams", "DirectParams", "MultiSkewNorm", "cp2dp", "dp2cp", "msn"}
+    {"spi", "CentredParams", "DirectParams", "MultiSkewNorm", "cp2dp", "dp2cp", "msn",
+     "spi_score"}
 )
 _SATP_ATTRS: frozenset[str] = frozenset({"satp", "SATP", "CircModelE"})
 

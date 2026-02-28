@@ -11,9 +11,16 @@ It is not intended to be used directly by end users.
 """
 
 import importlib.metadata
+import os
+import sys
 from enum import Enum
 from typing import Any, NamedTuple, NoReturn
 
+# NOTE: importing rpy2.robjects here unconditionally starts the embedded R
+# process.  There is no way to defer this further — R begins as soon as this
+# module is loaded.  The lazy __getattr__ in soundscapy/__init__.py ensures
+# this module (and therefore R) is only loaded when the user first accesses
+# soundscapy.spi or soundscapy.satp, not on a plain ``import soundscapy``.
 from rpy2 import robjects
 
 from soundscapy.sspylogging import get_logger
@@ -34,7 +41,39 @@ _base_package = None
 _session_active = False
 
 REQUIRED_R_VERSION = 3.6
-AUTO_INSTALL_R_PACKAGES = True
+
+
+def _confirm_install_r_packages() -> bool:
+    """Determine whether to auto-install missing R packages.
+
+    Checks the ``SOUNDSCAPY_AUTO_INSTALL_R`` environment variable first:
+
+    - ``"1"``, ``"true"``, or ``"yes"``  →  install without prompting (CI / scripts)
+    - ``"0"``, ``"false"``, or ``"no"``  →  never install
+
+    If the variable is unset the user is prompted interactively when stdin is a
+    TTY.  In non-interactive environments the default is *not* to install.
+    """
+    env_val = os.environ.get("SOUNDSCAPY_AUTO_INSTALL_R", "").lower()
+    if env_val in ("1", "true", "yes"):
+        return True
+    if env_val in ("0", "false", "no"):
+        return False
+
+    if sys.stdin.isatty():
+        try:
+            print(  # noqa: T201
+                "\nsoundscapy: One or more R packages required for this feature "
+                "are not installed.\n"
+                "  sn     → install.packages('sn')\n"
+                f"  CircE  → remotes::install_github('{PKG_SRC.CIRCE.value}')\n"
+            )
+            response = input("Install them now via soundscapy? [y/N] ").strip().lower()
+            return response in ("y", "yes")
+        except EOFError:
+            pass
+
+    return False
 
 
 class RSession(NamedTuple):
@@ -291,24 +330,24 @@ def check_dependencies() -> dict[str, Any]:
         check_circe_package()
 
     except ImportError:
-        if AUTO_INSTALL_R_PACKAGES:
-            logger.warning(
-                "One or more R dependencies are missing. Attempting to auto-install required R packages..."  # noqa: E501
-            )
+        if _confirm_install_r_packages():
+            logger.info("User confirmed: installing missing R packages...")
             try:
                 install_r_packages()
-                # After installation, check again to confirm everything is now available
+                # Re-check to confirm everything is now available
                 check_r_availability()
                 check_sn_package()
                 check_circe_package()
             except Exception as install_e:
                 msg = (
                     f"Auto-installation of R packages failed: {install_e!s}. "
-                    "Please install the required R packages manually and ensure they are accessible."  # noqa: E501
+                    "Please install the required R packages manually.\n"
+                    "  sn     → install.packages('sn')\n"
+                    f"  CircE  → remotes::install_github('{PKG_SRC.CIRCE.value}')"
                 )
                 raise ImportError(msg) from install_e
         else:
-            raise  # Re-raise the original ImportError if auto-install is not enabled
+            raise  # User declined or non-interactive; re-raise the original ImportError
 
     # If we get here, all dependencies are available
 

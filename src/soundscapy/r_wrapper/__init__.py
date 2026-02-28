@@ -25,16 +25,7 @@ from ._rsn_wrapper import (
     selm,
 )
 
-__all__ = [
-    "PKG_SRC",
-    "bfgs",
-    "cp2dp",
-    "dp2cp",
-    "extract_bfgs_fit",
-    "extract_cp",
-    "extract_dp",
-    "get_r_session",
-    "sample_msn",
-    "sample_mtsn",
-    "selm",
-]
+# r_wrapper is an internal implementation package.  All user-facing names are
+# re-exported from soundscapy.spi and soundscapy.satp.  Nothing is in __all__
+# so that ``from soundscapy.r_wrapper import *`` imports nothing.
+__all__: list[str] = []
