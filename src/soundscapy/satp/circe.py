@@ -169,6 +169,12 @@ def length_1_array_to_number(v: np.ndarray | float | None) -> float | None:
     raise ValueError(msg)
 
 
+# Ideal 45°-spaced circumplex positions (degrees), used for GDIFF calculation.
+# Two orderings handle datasets where PAQ1 is anchored near 0° vs near 315°.
+_IDEAL_ANGLES = np.array([0, 45, 90, 135, 180, 225, 270, 315])
+_IDEAL_ANGLES_REV = np.array([0, 315, 270, 225, 180, 135, 90, 45])
+
+
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class CircE:
     """A data class to hold the results of a CircE model fitting."""
@@ -284,6 +290,31 @@ class CircE:
             equal_com=model_type.equal_com,
         )
         return cls.from_bfgs(bfgs_model, datasource, language, model_type, n)
+
+    @property
+    def gdiff(self) -> float | None:
+        """
+        RMSD between fitted polar angles and ideal circumplex spacing.
+
+        Measures how closely the unconstrained angle estimates match perfect
+        45°-spaced circumplex positions.  Only defined for models with free
+        angles (UNCONSTRAINED, EQUAL_COM); returns ``None`` for EQUAL_ANG and
+        CIRCUMPLEX (where ``polar_angles`` is ``None``).
+
+        A smaller value indicates better agreement with circumplex structure.
+
+        Returns
+        -------
+        float or None
+            Rounded RMSD value (2 decimal places), or ``None`` if angles are
+            fixed by the model.
+        """
+        if self.polar_angles is None:
+            return None
+        obs = self.polar_angles.iloc[0].to_numpy()
+        # Choose reference based on whether PAQ1 is anchored near 315° or 0°.
+        reference = _IDEAL_ANGLES_REV if obs[:3].sum() > 300 else _IDEAL_ANGLES
+        return round(float(np.sqrt(np.mean((obs - reference) ** 2))), 2)
 
 
 class SATP:
