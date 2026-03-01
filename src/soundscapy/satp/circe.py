@@ -7,7 +7,16 @@ classes, and analysis workflows for the Soundscape Attributes Translation Projec
 
 The module supports various circumplex model types (unconstrained, equal angles,
 equal communalities, and full circumplex) and provides automated data preprocessing
-including ipsatization (participant-wise centering).
+including within-person centering (column-wise centering per participant).
+
+Functions
+---------
+normalize_polar_angles : function
+    Correct reflected polar-angle solutions to canonical orientation
+person_center : function
+    Column-wise within-participant centering of PAQ ratings
+fit_circe : function
+    Fit circumplex SEM models and return a tidy DataFrame
 
 Classes
 -------
@@ -15,39 +24,42 @@ CircModelE : Enum
     Enumeration of available circumplex model types
 SATPSchema : DataFrameModel
     Pandera schema for validating SATP data format
-ModelType : dataclass
-    Wrapper for circumplex model properties
 CircE : dataclass
-    Results container for fitted circumplex models
-SATP : class
-    Main analysis class for SATP workflow
-
-Functions
----------
-length_1_array_to_number : function
-    Validator for converting single-element arrays to scalars
+    Results container for a fitted circumplex model
 """
 
+import dataclasses
 import warnings
 from enum import Enum
-from functools import partial
-from typing import Annotated, Any
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import pandera.pandas as pa
 from pandera import Field
 from pandera.typing.pandas import DataFrame, Series
-from pydantic import BeforeValidator, ConfigDict
-from pydantic.dataclasses import dataclass
+
+from rpy2.rinterface_lib.embedded import RRuntimeError
 
 import soundscapy.r_wrapper as sspyr
 from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
 
 logger = get_logger()
 
-# Create a partial Field function that allows NaN values for optional data columns
-AllowNan = partial(pa.Field, nullable=True)
+# ---------------------------------------------------------------------------
+# Column alias lookup — built once at module load.
+# Maps any lowercase column name to its canonical schema name.
+# Covers: PAQ label names (e.g. "pleasant" → "PAQ1"), PAQ IDs in any case
+# (e.g. "paq1" → "PAQ1"), and the participant field ("PARTICIPANT" → "participant").
+# ---------------------------------------------------------------------------
+_COLUMN_ALIASES: dict[str, str] = {
+    **{
+        label.lower(): paq_id
+        for label, paq_id in zip(PAQ_LABELS, PAQ_IDS, strict=False)
+    },
+    **{paq_id.lower(): paq_id for paq_id in PAQ_IDS},
+    "participant": "participant",
+}
 
 
 class CircModelE(str, Enum):
@@ -57,6 +69,24 @@ class CircModelE(str, Enum):
     EQUAL_ANG = "equal_ang"
     EQUAL_COM = "equal_com"
     CIRCUMPLEX = "circumplex"
+
+    @property
+    def equal_ang(self) -> bool:
+        """
+        Whether this model constrains all angles to be equally spaced.
+
+        True for EQUAL_ANG and CIRCUMPLEX; False for UNCONSTRAINED and EQUAL_COM.
+        """
+        return self in {CircModelE.EQUAL_ANG, CircModelE.CIRCUMPLEX}
+
+    @property
+    def equal_com(self) -> bool:
+        """
+        Whether this model constrains all communalities to be equal.
+
+        True for EQUAL_COM and CIRCUMPLEX; False for UNCONSTRAINED and EQUAL_ANG.
+        """
+        return self in {CircModelE.EQUAL_COM, CircModelE.CIRCUMPLEX}
 
 
 class SATPSchema(pa.DataFrameModel):
@@ -76,7 +106,9 @@ class SATPSchema(pa.DataFrameModel):
     PAQ7: Series[float] = Field(ge=0, le=100)
     PAQ8: Series[float] = Field(ge=0, le=100)
 
-    participant: Series[str]
+    # `| None` makes the column optional (absent is allowed);
+    # `nullable=True` permits null *values* within the column when present.
+    participant: Series[str] | None = Field(nullable=True)
 
     class Config:
         """Configuration for the schema validation behavior."""
@@ -89,8 +121,11 @@ class SATPSchema(pa.DataFrameModel):
         """
         Parse and rename DataFrame columns to match the schema.
 
-        Maps PAQ label names to standardized PAQ IDs and converts
-        'Participant' column to lowercase 'participant'.
+        Uses ``_COLUMN_ALIASES`` (module-level constant) for a single-pass
+        case-insensitive lookup.  Handles PAQ label names (e.g. ``"pleasant"``
+        or ``"Pleasant"`` → ``"PAQ1"``), PAQ IDs in any case (``"paq1"`` →
+        ``"PAQ1"``), and the participant field in any capitalisation
+        (``"PARTICIPANT"`` → ``"participant"``).
 
         Parameters
         ----------
@@ -102,94 +137,131 @@ class SATPSchema(pa.DataFrameModel):
         DataFrame with renamed columns matching the schema
 
         """
-        rename_dict = dict(zip(PAQ_LABELS, PAQ_IDS, strict=False))
-        rename_dict.update(
-            {
-                "Participant": "participant",
-            }
-        )
+        rename_dict = {
+            col: _COLUMN_ALIASES[col.lower()]
+            for col in df.columns
+            if col.lower() in _COLUMN_ALIASES
+        }
         return df.rename(columns=rename_dict)
 
 
-@dataclass
-class ModelType:
-    """A data class representing a circumplex model type with its properties."""
-
-    name: CircModelE
-
-    @property
-    def equal_ang(self) -> bool:
-        """
-        Check if the model uses equal angles constraint.
-
-        True for EQUAL_ANG (angles only) and CIRCUMPLEX (both constraints).
-        EQUAL_COM has free angles (False); UNCONSTRAINED has neither (False).
-        """
-        return self.name in {CircModelE.EQUAL_ANG, CircModelE.CIRCUMPLEX}
-
-    @property
-    def equal_com(self) -> bool:
-        """
-        Check if the model uses equal communalities constraint.
-
-        True for EQUAL_COM (communalities only) and CIRCUMPLEX (both).
-        EQUAL_ANG has free communalities (False); UNCONSTRAINED neither (False).
-        """
-        return self.name in {CircModelE.EQUAL_COM, CircModelE.CIRCUMPLEX}
+# Ideal 45°-spaced circumplex positions (degrees) in canonical counter-clockwise
+# order, used for GDIFF calculation after angles have been normalised.
+_IDEAL_ANGLES = np.array([0, 45, 90, 135, 180, 225, 270, 315])
 
 
-def length_1_array_to_number(v: np.ndarray | float | None) -> float | None:
+def normalize_polar_angles(angles: pd.Series) -> pd.Series:
     """
-    Convert a single-element numpy array to a scalar number.
+    Return polar angles in canonical (counter-clockwise) orientation.
 
-    This validator function is used with Pydantic to handle R-returned values
-    that come as single-element arrays but should be treated as scalars.
+    CircE's BFGS optimisation may converge to a mathematically equivalent
+    *reflected* solution in which the PAQ attributes are arranged in clockwise
+    (decreasing) order rather than the canonical counter-clockwise (increasing)
+    order.  Both solutions fit the correlation data equally well, but the
+    reflected form is inconsistent with the standard circumplex ordering
+    (pleasant → vibrant → eventful → …) and will produce incorrect GDIFF values
+    if compared against the ideal equally-spaced angles.
+
+    Detection uses a monotonicity check on the first three angles after PAQ1:
+    if the angle for PAQ2 exceeds PAQ3, or PAQ3 exceeds PAQ4, the solution is
+    reflected.  This is more robust than a threshold-on-sum heuristic because
+    it tests the structural property of the orientation directly.
+
+    When reflection is detected, ``360 - angle`` is applied to PAQ2-PAQ8.
+    PAQ1 is anchored at 0° and is left unchanged.
 
     Parameters
     ----------
-    v
-        Input value that may be a single-element array, scalar, or None
+    angles
+        Series of polar angle estimates (degrees) with PAQ_IDS as the index.
+        Typically the ``polar_angles`` attribute of a :class:`CircE` instance.
 
     Returns
     -------
-    Converted scalar value or None if input was None
+    pd.Series
+        Polar angles in canonical (counter-clockwise) orientation, with the
+        same index as the input.
 
-    Raises
-    ------
-    ValueError
-        If input is an array with more than one element
+    Examples
+    --------
+    >>> from soundscapy.surveys.survey_utils import PAQ_IDS
+    >>> import pandas as pd
+    >>> reflected = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
+    >>> normalize_polar_angles(reflected).tolist()
+    [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
 
     """
-    """Validate a length-1 numpy array to a float."""
-    if v is None or isinstance(v, float | int):
-        return v
-    if isinstance(v, np.ndarray) and v.size == 1:
-        return float(v.item())
-    msg = "Value must be a numpy array with a single element."
-    raise ValueError(msg)
+    # Monotonicity check (positional): canonical ordering has PAQ2 < PAQ3 < PAQ4.
+    if angles.iloc[1] > angles.iloc[2] or angles.iloc[2] > angles.iloc[3]:
+        corrected = angles.copy()
+        corrected.iloc[1:] = 360 - corrected.iloc[1:]
+        return corrected
+    return angles
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+@dataclasses.dataclass
 class CircE:
-    """A data class to hold the results of a CircE model fitting."""
+    """
+    Results container for a fitted CircE (circumplex SEM) model.
 
-    model_type: ModelType
+    Attributes
+    ----------
+    model
+        The circumplex model type that was fitted.
+    datasource
+        Source identifier for the dataset.
+    language
+        Language code for the dataset.
+    n
+        Number of observations (complete cases) used to fit the model.
+    m
+        Number of common factors.
+    chisq
+        Chi-squared fit statistic.
+    d
+        Model degrees of freedom.
+    p
+        p-value for the chi-squared statistic.
+    cfi
+        Comparative Fit Index.
+    gfi
+        Goodness of Fit Index.
+    agfi
+        Adjusted Goodness of Fit Index.
+    srmr
+        Standardised Root Mean Square Residual.
+    mcsc
+        Mean Communality Squared Cosines.
+    rmsea
+        Root Mean Square Error of Approximation.
+    rmsea_l
+        Lower bound of the 90% confidence interval for RMSEA.
+    rmsea_u
+        Upper bound of the 90% confidence interval for RMSEA.
+    polar_angles
+        Estimated polar angles (degrees) for each PAQ item, with PAQ_IDS as
+        the index. Only available for models with free angle parameters
+        (UNCONSTRAINED, EQUAL_COM). ``None`` for EQUAL_ANG and CIRCUMPLEX.
+
+    """
+
+    model: CircModelE
     datasource: str
     language: str
-    n: Annotated[int, BeforeValidator(length_1_array_to_number)]
-    m: Annotated[int, BeforeValidator(length_1_array_to_number)]
-    chisq: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    d: Annotated[int, BeforeValidator(length_1_array_to_number)]
-    p: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    cfi: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    gfi: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    agfi: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    srmr: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    mcsc: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    rmsea: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    rmsea_l: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    rmsea_u: Annotated[float, BeforeValidator(length_1_array_to_number)]
-    polar_angles: pd.DataFrame | None = None
+    n: int
+    m: int | None
+    chisq: float | None
+    d: int | None
+    p: float | None
+    cfi: float | None
+    gfi: float | None
+    agfi: float | None
+    srmr: float | None
+    mcsc: float | None
+    rmsea: float | None
+    rmsea_l: float | None
+    rmsea_u: float | None
+    polar_angles: pd.Series | None = None  # PAQ_IDS index, angle estimates
 
     @classmethod
     def from_bfgs(
@@ -197,23 +269,32 @@ class CircE:
         bfgs_model: Any,
         datasource: str,
         language: str,
-        model_type: ModelType,
+        circ_model: CircModelE,
         n: int,
     ) -> "CircE":
         """Create a CircE instance from a fitted BFGS model."""
         fit_stats = sspyr.extract_bfgs_fit(bfgs_model)
         polar_angles = None
         # Only extract polar angles for models where angles are free parameters.
-        # model_type.name is the CircModelE enum; compare against that, not the
-        # ModelType dataclass wrapper (which would never compare equal to an enum).
         # The R key is "polar.angles" (dot), not "polar_angles" (underscore).
-        if model_type.name in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
+        if circ_model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
             raw_pa = fit_stats.get("polar.angles")
             if raw_pa is not None:
-                polar_angles = pd.DataFrame(raw_pa).T
+                # raw_pa is a DataFrame with index=PAQ_IDS and columns from
+                # CircE_BFGS: ["estimates", "(L;", "U)"].  Use the label
+                # "estimates" directly; fall back to first column if the
+                # CircE API ever changes its output names.
+                pa_df = pd.DataFrame(raw_pa)
+                if "estimates" in pa_df.columns:
+                    estimates = pa_df["estimates"].to_numpy()
+                else:
+                    estimates = pa_df.iloc[:, 0].to_numpy()
+                polar_angles = normalize_polar_angles(
+                    pd.Series(estimates, index=PAQ_IDS)
+                )
 
         return cls(
-            model_type=model_type,
+            model=circ_model,
             datasource=datasource,
             language=language,
             n=n,
@@ -242,17 +323,16 @@ class CircE:
         circ_model: CircModelE,
     ) -> "CircE":
         """
-        Compute and return a CircEResult from the given data correlation matrix.
+        Compute and return a CircE from the given correlation matrix.
 
         Parameters
         ----------
         data_cor
             Correlation matrix of the PAQ data (8x8).
         n
-            Number of observations (participants) used to compute ``data_cor``.
+            Number of observations used to compute ``data_cor``.
             This is used by ``CircE_BFGS`` for chi-square and RMSEA calculations
-            and must be the row count of the *original* data, not of the
-            correlation matrix.
+            and must be the row count of the *complete-case* data.
         datasource
             Source identifier for the dataset.
         language
@@ -274,181 +354,263 @@ class CircE:
         ...
 
         """
-        model_type = ModelType(name=circ_model)
         bfgs_model = sspyr.bfgs(
             data_cor=data_cor,
             n=n,
             scales=PAQ_IDS,
             m_val=3,
-            equal_ang=model_type.equal_ang,
-            equal_com=model_type.equal_com,
+            equal_ang=circ_model.equal_ang,
+            equal_com=circ_model.equal_com,
         )
-        return cls.from_bfgs(bfgs_model, datasource, language, model_type, n)
+        return cls.from_bfgs(bfgs_model, datasource, language, circ_model, n)
+
+    @property
+    def gdiff(self) -> float | None:
+        """
+        RMSD between fitted polar angles and ideal circumplex spacing.
+
+        Measures how closely the unconstrained angle estimates match perfect
+        45°-spaced circumplex positions.  Only defined for models with free
+        angles (UNCONSTRAINED, EQUAL_COM); returns ``None`` for EQUAL_ANG and
+        CIRCUMPLEX (where ``polar_angles`` is ``None``).
+
+        A smaller value indicates better agreement with circumplex structure.
+
+        Returns
+        -------
+        float or None
+            Rounded RMSD value (2 decimal places), or ``None`` if angles are
+            fixed by the model.
+
+        """
+        if self.polar_angles is None:
+            return None
+        obs = self.polar_angles.to_numpy()
+        # Angles are always in canonical orientation (normalised in from_bfgs),
+        # so we compare directly against the ideal 45°-spaced positions.
+        return round(float(np.sqrt(np.mean((obs - _IDEAL_ANGLES) ** 2))), 2)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Return all model fit statistics as a flat dictionary.
+
+        Polar angle columns (PAQ1-PAQ8) are expanded as individual keys.
+        For models with fixed angles (EQUAL_ANG, CIRCUMPLEX), PAQ values
+        are ``None``.
+
+        Returns
+        -------
+        dict
+            Flat dictionary suitable for constructing a pandas DataFrame row.
+
+        """
+        base = {
+            "datasource": self.datasource,
+            "language": self.language,
+            "model": self.model.value,
+            "n": self.n,
+            "m": self.m,
+            "chisq": self.chisq,
+            "d": self.d,
+            "p": self.p,
+            "cfi": self.cfi,
+            "gfi": self.gfi,
+            "agfi": self.agfi,
+            "srmr": self.srmr,
+            "mcsc": self.mcsc,
+            "rmsea": self.rmsea,
+            "rmsea_l": self.rmsea_l,
+            "rmsea_u": self.rmsea_u,
+            "gdiff": self.gdiff,
+        }
+        if self.polar_angles is not None:
+            base.update(self.polar_angles.to_dict())
+        else:
+            base.update(dict.fromkeys(PAQ_IDS))
+        return base
 
 
-class SATP:
+def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
     """
-    Soundscape Attributes Translation Project (SATP) analysis class.
+    Center PAQ ratings within each participant (column-wise within-person centering).
 
-    This class handles the analysis of soundscape perception data using
-    circumplex SEM models. It validates input data, performs ipsatization (centering),
-    and fits various circumplex model types to correlation matrices.
+    **Psychometric background**
 
-    Attributes
+    In cross-cultural and multi-lingual soundscape studies, participants from
+    different language groups may use rating scales differently — some cultures
+    favour extreme responses; others cluster near the midpoint.  These
+    *response-style biases* inflate between-person variance and can distort the
+    correlation structure that circumplex SEM models depend on.
+
+    Within-person centering addresses this by removing each participant's
+    *scale-specific* mean: for every PAQ column independently, the participant's
+    mean across all their soundscape observations is subtracted.  The result is
+    that every participant has a zero mean on every PAQ scale, so the residual
+    variance reflects genuine perceptual variation across soundscapes rather
+    than individual scale-use tendencies.
+
+    This is the form of centering recommended for the SATP circumplex analysis
+    (Aletta et al., 2024) and corresponds to the ``ipsatize`` preprocessing step
+    in the original R implementation.
+
+    .. note::
+
+        This is **column-wise** within-participant centering.  It is distinct
+        from *row-wise* ipsatization (e.g. ``circumplex.ipsatize()``), which
+        subtracts the mean across all PAQ items within a single observation.
+        Row-wise centering removes the general impression of each soundscape;
+        column-wise centering removes the participant's personal use of each
+        scale.  Use this function when participants have multiple observations
+        (one per soundscape) and the goal is to remove person-level scale-use
+        biases before computing a correlation matrix.
+
+    Parameters
     ----------
     data
-        Validated DataFrame containing PAQ ratings and participant identifiers
+        DataFrame containing PAQ columns and a participant grouping column.
+    by
+        Column to group by for centering. Default is ``"participant"``.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing only the PAQ columns (not ``by``), with
+        participant-centred values.  The ``by`` column is excluded from the
+        result because arithmetic centering is undefined for string identifiers.
+
+    """
+    paq_cols = [c for c in data.columns if c != by]
+    means = data.groupby(by)[paq_cols].transform("mean")
+    return data[paq_cols] - means
+
+
+def fit_circe(
+    data: pd.DataFrame,
+    language: str,
+    datasource: str,
+    *,
+    models: list[CircModelE] | None = None,
+    center_by_participant: bool = True,
+) -> pd.DataFrame:
+    """
+    Fit circumplex SEM models to PAQ data and return a tidy DataFrame.
+
+    Validates input data, optionally applies within-person centering, computes a
+    complete-case correlation matrix, and fits the requested circumplex
+    model types using Browne's BFGS optimisation via the R ``CircE`` package.
+
+    Parameters
+    ----------
+    data
+        DataFrame with PAQ1-PAQ8 and a ``participant`` column.
+        Column aliases (e.g. PAQ label names, ``Participant``) are accepted
+        and renamed automatically by the schema validator.
     language
-        Language code for the dataset
+        Language code for the dataset (e.g. ``"eng"``, ``"fra"``).
+        Stored in the results; not used for computation.
     datasource
-        Source identifier for the dataset
-    model_results
-        Dictionary storing fitted CircE models for each model type
+        Dataset identifier (e.g. ``"SATP"``, ``"ISD"``).
+        Stored in the results; not used for computation.
+    models
+        List of model types to fit. Default: all four ``CircModelE`` variants.
+        Passing ``[]`` returns an empty DataFrame with no columns.
+    center_by_participant
+        Whether to apply within-person centering (via :func:`person_center`)
+        before fitting.  Set to ``False`` if the data is already centered.
+
+    Returns
+    -------
+    pd.DataFrame
+        One row per fitted model. Columns: ``datasource``, ``language``,
+        ``model``, ``n``, ``m``, ``chisq``, ``d``, ``p``, ``cfi``, ``gfi``,
+        ``agfi``, ``srmr``, ``mcsc``, ``rmsea``, ``rmsea_l``, ``rmsea_u``,
+        ``gdiff``, ``PAQ1``-``PAQ8``.
+        ``PAQ1``-``PAQ8`` contain fitted polar angle estimates for free-angle
+        models (UNCONSTRAINED, EQUAL_COM); ``None`` for constrained models.
+        Rows for models that fail to converge contain an ``error`` column.
 
     Examples
     --------
-    >>> import pandas as pd
-    >>> data = pd.DataFrame(
-    ... {'PAQ1': [50.0, 60.0], 'PAQ2': [40.0, 70.0], 'PAQ3': [20.0, 10.0],
-    ... 'PAQ4': [50.0, 50.0], 'PAQ5': [100.0, 0.0], 'PAQ6': [10.0, 10.0],
-    ... 'PAQ7': [50.0, 50.0], 'PAQ8': [45.0, 24.0], 'participant': ['A', 'B']})
-    >>> satp = SATP(data, language='EN', datasource='test')
-    >>> satp.run()
+    >>> import soundscapy as sspy
+    >>> from soundscapy.satp import fit_circe
+    >>> data = sspy.isd.load()
+    >>> data = data.rename(columns={'SessionID': 'participant'})
+    >>> results = fit_circe(data, language='eng', datasource='ISD')  # center_by_participant=True by default
+    >>> results.shape[0]
+    4
 
     """
-
-    def __init__(
-        self,
-        data: pd.DataFrame,
-        language: str | None,
-        datasource: str | None,
-        *,
-        ipsatize_data: bool = True,
-    ) -> None:
-        """
-        Initialize SATP analysis with input data.
-
-        Parameters
-        ----------
-        data
-            DataFrame containing PAQ ratings and participant identifiers
-        language
-            Language code for the dataset (e.g., 'EN', 'FR')
-        datasource
-            Source identifier for the dataset
-        ipsatize_data
-            Whether to apply ipsatization (participant-wise centering)
-
-        Raises
-        ------
-        ValidationError
-            If data doesn't conform to SATPSchema requirements
-
-        """
-        warnings.warn(
-            "The SATP analysis module is experimental. Use with caution.",
-            UserWarning,
-            stacklevel=2,
+    warnings.warn(
+        "The SATP analysis module is experimental. Use with caution.",
+        UserWarning,
+        stacklevel=2,
+    )
+    if len(data) == 0:
+        msg = (
+            "No complete cases found: input DataFrame is empty. "
+            "Check that data contains valid rows with PAQ1-PAQ8 columns."
         )
-        # Initialize processing flags and store raw data
-        self._ipsatized = False
-        self._raw_data = data
-        # Validate input data against schema requirements
-        self.data: pd.DataFrame = SATPSchema.validate(data, lazy=True)
+        raise ValueError(msg)
+    validated = SATPSchema.validate(data, lazy=True)
+    if center_by_participant and "participant" not in validated.columns:
+        msg = (
+            "center_by_participant=True requires a 'participant' column. "
+            "Pass center_by_participant=False if your data is already centered."
+        )
+        raise ValueError(msg)
+    processed = person_center(validated) if center_by_participant else validated
 
-        # Apply ipsatization if requested
-        if ipsatize_data:
-            self.ipsatize()
+    # Use listwise deletion (complete cases only) — consistent with R's na.omit().
+    complete = processed[PAQ_IDS].dropna()
+    n = len(complete)
+    if n == 0:
+        msg = (
+            "No complete cases found after validation and ipsatization. "
+            "Check that PAQ1-PAQ8 are not all NaN and participant column is present."
+        )
+        raise ValueError(msg)
+    corr = complete.corr()
 
-        # Store metadata for model results
-        self.language = language
-        self.datasource = datasource
-        # Initialize containers for model results and any errors
-        self.model_results: dict[CircModelE, CircE | None] = {
-            CircModelE.UNCONSTRAINED: None,
-            CircModelE.EQUAL_COM: None,
-            CircModelE.EQUAL_ANG: None,
-            CircModelE.CIRCUMPLEX: None,
-        }
-        self._errors: dict[CircModelE, Exception] = {}
+    circ_models = models if models is not None else list(CircModelE)
+    rows: list[dict] = []
+    fit_exceptions = (ValueError, np.linalg.LinAlgError, RuntimeError, RRuntimeError)
+    for model in circ_models:
+        try:
+            circe = CircE.compute_bfgs_fit(corr, n, datasource, language, model)
+            rows.append(circe.to_dict())
+        except fit_exceptions as e:  # noqa: PERF203
+            warnings.warn(f"{model.value} raised {e}", stacklevel=2)
+            # Populate all expected columns with None so that pandas does not
+            # promote numeric columns (e.g. n, d) to float64 across all rows
+            # when mixing sparse error dicts with full success dicts.
+            rows.append(
+                {
+                    "language": language,
+                    "datasource": datasource,
+                    "model": model.value,
+                    "n": n,
+                    "m": None,
+                    "chisq": None,
+                    "d": None,
+                    "p": None,
+                    "cfi": None,
+                    "gfi": None,
+                    "agfi": None,
+                    "srmr": None,
+                    "mcsc": None,
+                    "rmsea": None,
+                    "rmsea_l": None,
+                    "rmsea_u": None,
+                    "gdiff": None,
+                    **dict.fromkeys(PAQ_IDS),
+                    "error": str(e),
+                }
+            )
 
-    @property
-    def data_corr(self) -> pd.DataFrame:
-        """
-        Compute and return the correlation matrix of PAQ ratings.
-
-        Returns
-        -------
-        Correlation matrix of the validated PAQ data
-
-        """
-        return self.data.corr()
-
-    def ipsatize(self) -> None:
-        """
-        Apply ipsatization (participant-wise centering) to the data.
-
-        Ipsatization centers each participant's responses around their mean,
-        removing individual response style differences while preserving
-        relative response patterns.
-
-        Calling this method a second time is a no-op (guarded by
-        ``_ipsatized``): after the first call the ``participant`` column is
-        dropped by ``groupby.transform``, so a second call would raise
-        ``KeyError``.
-        """
-        if self._ipsatized:
-            logger.warning("Data has already been ipsatized; skipping.")
-            return
-        # Apply ipsatization transformation and update flag
-        self.data = self._ipsatize_df(self.data, by="participant")
-        self._ipsatized = True
-
-    @staticmethod
-    def _ipsatize_df(df: DataFrame, by: str = "participant") -> DataFrame:
-        """
-        Apply ipsatization transformation to a DataFrame.
-
-        Parameters
-        ----------
-        df
-            Input DataFrame to transform
-        by
-            Column name to group by for centering (default: "participant")
-
-        Returns
-        -------
-        DataFrame with participant-centered values
-
-        """
-        # Group by specified column and center each group around its mean
-        return df.groupby(by).transform(lambda x: x - x.mean())
-
-    def run(self, circ_model: CircModelE | None = None) -> None:
-        """
-        Fit circumplex models to the correlation matrix.
-
-        Parameters
-        ----------
-        circ_model
-            Specific model type to fit. If None, fits all model types.
-
-        Notes
-        -----
-        Results are stored in self.model_results. Any fitting errors are
-        captured in self._errors and warnings are issued.
-
-        """
-        # Determine which models to fit
-        circ_models_to_run = [*CircModelE] if circ_model is None else [circ_model]
-        n = len(self.data)
-        # Fit each requested model, capturing any errors
-        for model in circ_models_to_run:
-            try:
-                self.model_results[model] = CircE.compute_bfgs_fit(
-                    self.data_corr, n, self.datasource, self.language, model
-                )
-            except Exception as e:  # noqa: BLE001, PERF203
-                # Log fitting errors but continue with other models
-                warnings.warn(f"{model.value} raised {e}", stacklevel=2)
-                self._errors[model] = e
+    result = pd.DataFrame(rows)
+    # Use pandas nullable integer dtype for degree-of-freedom columns so that
+    # None in error rows does not promote the whole column to float64.
+    for _int_col in ("n", "d", "m"):
+        if _int_col in result.columns:
+            result[_int_col] = result[_int_col].astype(pd.Int64Dtype())
+    return result

@@ -19,6 +19,7 @@ dev = [
 docs = [
     "ipywidgets>=8.1.3",
     # "jupyter-dash>=0.4.2",
+    "jupyter-cache>=1.0.1",
     "jupyter>=1.1.1",
     "mkdocs-api-autonav>=0.4.0",
     "mkdocs-autoapi>=0.4.1",
@@ -81,9 +82,7 @@ audio = [
     "scikit-maad>=1.4.3",
     "tqdm>=4.66.5",
 ]
-r = [
-    "rpy2[all]>=3.5.0",
-]
+r = ["rpy2[all]>=3.5.0"]
 satp = ["soundscapy[r]"]
 spi = ["soundscapy[r]"]
 
@@ -134,7 +133,15 @@ lint.ignore = [
     "TD002", # Missing author in TODO
     "TD003", # Missing issue link
 ]
-lint.per-file-ignores = {"*.ipynb" = ["ANN001", "D103", "T201", 'ANN201', 'ERA001', 'PLR2004'], "*test*.py" = [
+lint.per-file-ignores = {"*.ipynb" = [
+    "ANN001",
+    "D103",
+    "E501", # line too long
+    "T201",
+    'ANN201',
+    'ERA001',
+    'PLR2004',
+], "*test*.py" = [
     "ANN001", # Missing type annotation for function argument
     "ANN001", # Missing type annotation
     "ANN201", # Missing return type annotation for public function

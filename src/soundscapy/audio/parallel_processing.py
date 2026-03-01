@@ -179,7 +179,8 @@ if __name__ == "__main__":
     data = parallel_process(files[:4], data, lvls, settings)
 
     output_file = base_path.joinpath(
-        "test", f"ParallelTest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        "test",
+        f"ParallelTest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",  # noqa: DTZ005
     )
     data.to_excel(output_file)
     logger.info(f"Results saved to {output_file}")

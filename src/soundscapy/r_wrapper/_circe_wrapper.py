@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from rpy2 import robjects as ro
@@ -12,37 +14,40 @@ from ._r_wrapper import get_r_session
 logger = get_logger()
 
 
-def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
+def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
     """
     Extract fit statistics from a fitted BFGS model object.
 
     Parameters
     ----------
-        bfgs_model (RS4): Fitted model object from the circe package.
+    bfgs_model : ro.ListVector
+        Fitted model object from the circe package.
 
     Returns
     -------
-        dict: Dictionary containing fit statistics.
+    dict
+        Dictionary containing fit statistics.
 
     Examples
     --------
-        >>> # doctest: +SKIP
-        >>> import soundscapy as sspy
-        >>> data = sspy.isd.load()
-        >>> data_paqs = data[PAQ_IDS]
-        >>> data_paqs = data_paqs.dropna()
-        >>> data_cor = data_paqs.corr()
-        >>> n = len(data_paqs)
-        >>> circ_model = ModelType(name=CircModelE.CIRCUMPLEX)
-        >>> circe_res = sspy.spi.bfgs(
-        ... data_cor=data_cor,
-        ... n=n,
-        ... scales=PAQ_IDS,
-        ... m_val=3,
-        ... equal_ang=circ_model.equal_ang,
-        ... equal_com=circ_model.equal_com,
-        ... )
-        >>> fit_stats = sspy.r_wrapper.extract_bfgs_fit(circe_res)
+    >>> # doctest: +SKIP
+    >>> import soundscapy as sspy
+    >>> from soundscapy.satp import CircModelE
+    >>> data = sspy.isd.load()
+    >>> data_paqs = data[PAQ_IDS]
+    >>> data_paqs = data_paqs.dropna()
+    >>> data_cor = data_paqs.corr()
+    >>> n = len(data_paqs)
+    >>> circ_model = CircModelE.CIRCUMPLEX
+    >>> circe_res = sspyr.bfgs(
+    ...     data_cor=data_cor,
+    ...     n=n,
+    ...     scales=PAQ_IDS,
+    ...     m_val=3,
+    ...     equal_ang=circ_model.equal_ang,
+    ...     equal_com=circ_model.equal_com,
+    ... )
+    >>> fit_stats = sspy.r_wrapper.extract_bfgs_fit(circe_res)
 
     """
     # Session must already be active (bfgs_model was produced by bfgs()), but
@@ -64,12 +69,25 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
         for k, v in py_res.items()
     }
 
+    # Guarantee integer types for degree-of-freedom stats.  rpy2 may deliver
+    # these as numpy floats if the R object is stored as numeric rather than
+    # integer; explicit int() casts here ensures the annotation holds.
+    for _int_key in ("m", "d", "dfnull"):
+        if _int_key in py_res and py_res[_int_key] is not None:
+            py_res[_int_key] = int(py_res[_int_key])
+
     # Use scipy instead of R's pchisq to avoid py2rpy conversion of pandas
     # Series objects produced by the pandas2ri context above.
     # scipy.chi2.sf(x, df) == 1 - pchisq(x, df) by definition.
     # Use the model's own degrees of freedom ("d"), NOT the null-model df
     # ("dfnull" = k*(k-1)/2).  Using dfnull gives a wildly wrong p-value.
-    py_res["p"] = float(scipy_chi2.sf(py_res["chisq"], py_res["d"]))
+    _chisq = py_res.get("chisq")
+    _d = py_res.get("d")
+    py_res["p"] = (
+        float(scipy_chi2.sf(_chisq, _d))
+        if _chisq is not None and _d is not None
+        else None
+    )
 
     return py_res
 
@@ -88,38 +106,43 @@ def bfgs(
 
     Parameters
     ----------
-        data_cor (pd.DataFrame): Correlation matrix of the data.
-        n (int): Number of observations (participants) used to compute the correlation
-            matrix. Used by CircE_BFGS for chi-square and RMSEA calculations.
-        scales (list[str], optional): List of scale names. Defaults to PAQ_IDS.
-        m_val (int, optional): Number of dimensions. Defaults to 3.
-        equal_ang (bool, optional): Whether to enforce equal angles constraint.
-            Defaults to True.
-        equal_com (bool, optional): Whether to enforce equal communalities constraint.
-            Defaults to True.
+    data_cor : pd.DataFrame
+        Correlation matrix of the data.
+    n : int
+        Number of observations (participants) used to compute the correlation
+        matrix. Used by CircE_BFGS for chi-square and RMSEA calculations.
+    scales : list[str], optional
+        List of scale names. Defaults to PAQ_IDS.
+    m_val : int, optional
+        Number of dimensions. Defaults to 3.
+    equal_ang : bool, optional
+        Whether to enforce equal angles constraint. Defaults to True.
+    equal_com : bool, optional
+        Whether to enforce equal communalities constraint. Defaults to True.
 
     Returns
     -------
-        RS4: Fitted model object from the circe package.
+    ro.ListVector
+        Fitted model object from the circe package.
 
     Examples
     --------
-        >>> import soundscapy as sspy
-        >>> from soundscapy.satp import CircModelE, ModelType
-        >>> data = sspy.isd.load()
-        >>> data_paqs = data[PAQ_IDS]
-        >>> data_paqs = data_paqs.dropna()
-        >>> data_cor = data_paqs.corr()
-        >>> n = data_paqs.shape[0]
-        >>> circ_model = ModelType(name=CircModelE.CIRCUMPLEX)
-        >>> circe_res = bfgs(
-        ... data_cor=data_cor,
-        ... n=n,
-        ... scales=PAQ_IDS,
-        ... m_val=3,
-        ... equal_ang=circ_model.equal_ang,
-        ... equal_com=circ_model.equal_com,
-        ... )
+    >>> import soundscapy as sspy
+    >>> from soundscapy.satp import CircModelE
+    >>> data = sspy.isd.load()
+    >>> data_paqs = data[PAQ_IDS]
+    >>> data_paqs = data_paqs.dropna()
+    >>> data_cor = data_paqs.corr()
+    >>> n = data_paqs.shape[0]
+    >>> circ_model = CircModelE.CIRCUMPLEX
+    >>> circe_res = bfgs(
+    ...     data_cor=data_cor,
+    ...     n=n,
+    ...     scales=PAQ_IDS,
+    ...     m_val=3,
+    ...     equal_ang=circ_model.equal_ang,
+    ...     equal_com=circ_model.equal_com,
+    ... )
 
     """
     r = get_r_session()
