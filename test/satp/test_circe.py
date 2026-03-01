@@ -757,7 +757,9 @@ class TestFitCirce:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             with pytest.raises(ValueError, match="participant"):
-                fit_circe(data, language="EN", datasource="ISD", center_by_participant=True)
+                fit_circe(
+                    data, language="EN", datasource="ISD", center_by_participant=True
+                )
 
     def test_fit_circe_error_row_preserves_numeric_dtypes(self, isd_with_participant):
         """Numeric col dtypes must not be promoted to float64 when one model fails."""
@@ -801,7 +803,9 @@ class TestNormalizePolarAngles:
         from soundscapy.satp.circe import normalize_polar_angles
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        canonical = pd.Series([0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0], index=PAQ_IDS)
+        canonical = pd.Series(
+            [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0], index=PAQ_IDS
+        )
         result = normalize_polar_angles(canonical)
         pd.testing.assert_series_equal(result, canonical)
 
@@ -810,8 +814,12 @@ class TestNormalizePolarAngles:
         from soundscapy.satp.circe import normalize_polar_angles
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        reflected = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
-        expected = pd.Series([0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0], index=PAQ_IDS)
+        reflected = pd.Series(
+            [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS
+        )
+        expected = pd.Series(
+            [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0], index=PAQ_IDS
+        )
         result = normalize_polar_angles(reflected)
         pd.testing.assert_series_equal(result, expected)
 
@@ -820,7 +828,9 @@ class TestNormalizePolarAngles:
         from soundscapy.satp.circe import normalize_polar_angles
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        reflected = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
+        reflected = pd.Series(
+            [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS
+        )
         result = normalize_polar_angles(reflected)
         assert result["PAQ1"] == 0.0
 
@@ -829,7 +839,9 @@ class TestNormalizePolarAngles:
         from soundscapy.satp.circe import normalize_polar_angles
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        angles = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
+        angles = pd.Series(
+            [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS
+        )
         result = normalize_polar_angles(angles)
         assert list(result.index) == PAQ_IDS
 
