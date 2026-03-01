@@ -713,6 +713,59 @@ class TestFitCirce:
         for label in title_labels:
             assert label not in validated.columns, f"Original '{label}' still present"
 
+    def test_fit_circe_ipsatize_false_no_participant(self):
+        """fit_circe(ipsatize_data=False) must work without a participant column."""
+        import warnings
+
+        import soundscapy as sspy
+        from soundscapy.satp.circe import fit_circe
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        data = sspy.isd.load()[PAQ_IDS].dropna()  # no participant column
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            result = fit_circe(data, language="EN", datasource="ISD", ipsatize_data=False)
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 4
+
+    def test_fit_circe_ipsatize_true_no_participant_raises(self):
+        """fit_circe(ipsatize_data=True) must raise ValueError when participant is absent."""
+        import warnings
+
+        import soundscapy as sspy
+        from soundscapy.satp.circe import fit_circe
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        data = sspy.isd.load()[PAQ_IDS].dropna()  # no participant column
+        with pytest.raises(ValueError, match="participant"):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                fit_circe(data, language="EN", datasource="ISD", ipsatize_data=True)
+
+    def test_fit_circe_error_row_preserves_numeric_dtypes(self, isd_with_participant):
+        """Numeric column dtypes must not be promoted to float64 when one model fails."""
+        from unittest.mock import patch
+
+        import soundscapy as sspy
+        from soundscapy.satp.circe import CircE, CircModelE, fit_circe
+
+        original = CircE.compute_bfgs_fit
+
+        def failing_fit(data_cor, n, datasource, language, circ_model):
+            if circ_model is CircModelE.UNCONSTRAINED:
+                raise RuntimeError("simulated failure")
+            return original(data_cor, n, datasource, language, circ_model)
+
+        with patch.object(CircE, "compute_bfgs_fit", staticmethod(failing_fit)):
+            result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
+
+        # n must be integer in success rows even when one row is an error row.
+        success_rows = result[result["model"] != CircModelE.UNCONSTRAINED.value]
+        for _, row in success_rows.iterrows():
+            assert isinstance(row["n"], (int, np.integer)), (
+                f"n should be int in success row, got {type(row['n'])}"
+            )
+
 
 # ---------------------------------------------------------------------------
 # Tests for gdiff property

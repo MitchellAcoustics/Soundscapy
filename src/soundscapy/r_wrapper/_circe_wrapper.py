@@ -67,6 +67,13 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
         for k, v in py_res.items()
     }
 
+    # Guarantee integer types for degree-of-freedom stats.  rpy2 may deliver
+    # these as numpy floats if the R object is stored as numeric rather than
+    # integer; explicit int() casts here ensures the annotation holds.
+    for _int_key in ("m", "d", "dfnull"):
+        if _int_key in py_res and py_res[_int_key] is not None:
+            py_res[_int_key] = int(py_res[_int_key])
+
     # Use scipy instead of R's pchisq to avoid py2rpy conversion of pandas
     # Series objects produced by the pandas2ri context above.
     # scipy.chi2.sf(x, df) == 1 - pchisq(x, df) by definition.

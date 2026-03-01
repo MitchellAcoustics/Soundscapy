@@ -29,7 +29,7 @@ CircE : dataclass
 import dataclasses
 import warnings
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -99,7 +99,7 @@ class SATPSchema(pa.DataFrameModel):
     PAQ7: Series[float] = Field(ge=0, le=100)
     PAQ8: Series[float] = Field(ge=0, le=100)
 
-    participant: Series[str]
+    participant: Optional[Series[str]] = Field(nullable=True)
 
     class Config:
         """Configuration for the schema validation behavior."""
@@ -222,10 +222,15 @@ class CircE:
         if circ_model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
             raw_pa = fit_stats.get("polar.angles")
             if raw_pa is not None:
-                # raw_pa is an R matrix (variables × stats).  Wrapping in
-                # DataFrame and transposing replicates the old extraction:
-                #   DataFrame(raw_pa).T → (stats × variables), iloc[0] = estimates row.
-                estimates = pd.DataFrame(raw_pa).T.iloc[0].to_numpy()
+                # raw_pa is a DataFrame with index=PAQ_IDS and columns from
+                # CircE_BFGS: ["estimates", "(L;", "U)"].  Use the label
+                # "estimates" directly; fall back to first column if the
+                # CircE API ever changes its output names.
+                pa_df = pd.DataFrame(raw_pa)
+                if "estimates" in pa_df.columns:
+                    estimates = pa_df["estimates"].to_numpy()
+                else:
+                    estimates = pa_df.iloc[:, 0].to_numpy()
                 polar_angles = pd.Series(estimates, index=PAQ_IDS)
 
         return cls(
@@ -453,6 +458,11 @@ def fit_circe(
             "Check that data contains valid rows with PAQ1–PAQ8 and a participant column."
         )
     validated = SATPSchema.validate(data, lazy=True)
+    if ipsatize_data and "participant" not in validated.columns:
+        raise ValueError(
+            "ipsatize_data=True requires a 'participant' column. "
+            "Pass ipsatize_data=False if your data is already ipsatized."
+        )
     processed = ipsatize(validated) if ipsatize_data else validated
 
     # Use listwise deletion (complete cases only) — consistent with R's na.omit().
@@ -473,11 +483,29 @@ def fit_circe(
             rows.append(circe.to_dict())
         except Exception as e:  # noqa: BLE001
             warnings.warn(f"{model.value} raised {e}", stacklevel=2)
+            # Populate all expected columns with None so that pandas does not
+            # promote numeric columns (e.g. n, d) to float64 across all rows
+            # when mixing sparse error dicts with full success dicts.
             rows.append(
                 {
                     "language": language,
                     "datasource": datasource,
                     "model": model.value,
+                    "n": n,
+                    "m": None,
+                    "chisq": None,
+                    "d": None,
+                    "p": None,
+                    "cfi": None,
+                    "gfi": None,
+                    "agfi": None,
+                    "srmr": None,
+                    "mcsc": None,
+                    "rmsea": None,
+                    "rmsea_l": None,
+                    "rmsea_u": None,
+                    "gdiff": None,
+                    **{paq: None for paq in PAQ_IDS},
                     "error": str(e),
                 }
             )
