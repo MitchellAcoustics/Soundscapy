@@ -186,7 +186,7 @@ def normalize_polar_angles(angles: pd.Series) -> pd.Series:
     --------
     >>> from soundscapy.surveys.survey_utils import PAQ_IDS
     >>> import pandas as pd
-    >>> reflected = pd.Series([0, 315, 270, 225, 180, 135, 90, 45], index=PAQ_IDS)
+    >>> reflected = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
     >>> normalize_polar_angles(reflected).tolist()
     [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
 
