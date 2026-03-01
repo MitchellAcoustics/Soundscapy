@@ -7,105 +7,218 @@ This module provides functions for:
 3. Converting data between R and Python
 4. Executing R functions for skew-normal calculations
 
+Session state is held in a single module-level :class:`RSession` dataclass
+instance (``_state``) rather than nine scattered globals.  Functions that read
+or write session fields do so directly — no ``global`` declarations are needed,
+since mutating an object's attributes does not rebind the module-level name.
+The sole exception is :func:`reset_r_session`, which creates a fresh
+``RSession()`` and therefore does rebind ``_state``.
+
 It is not intended to be used directly by end users.
 """
 
 import importlib.metadata
-import warnings
+import os
+import sys
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, NoReturn
 
+# NOTE: importing rpy2.robjects here unconditionally starts the embedded R
+# process.  There is no way to defer this further — R begins as soon as this
+# module is loaded.  The lazy __getattr__ in soundscapy/__init__.py ensures
+# this module (and therefore R) is only loaded when the user first accesses
+# soundscapy.spi or soundscapy.satp, not on a plain ``import soundscapy``.
 from rpy2 import robjects
-from rpy2.robjects import numpy2ri, pandas2ri
 
-# These are used in the docstring examples but not in the code
-# They will be used by code that imports and uses this module
 from soundscapy.sspylogging import get_logger
 
 logger = get_logger()
 
-# Cached values to avoid repeated checks
-_r_checked = False
-_sn_checked = False
-_circe_checked = False
-
-# Session state
-_r_session = None
-_sn_package = None
-_circe_package = None
-_stats_package = None
-_base_package = None
-_session_active = False
-
-REQUIRED_R_VERSION = 3.6
-AUTO_INSTALL_R_PACKAGES = True
+REQUIRED_R_VERSION: str = "3.6"
 
 
-class PKG_SRC(str, Enum):
+class PKG_SRC(str, Enum):  # noqa: N801
     CIRCE = "MitchellAcoustics/CircE-R"
+
+
+@dataclass
+class RSession:
+    """
+    Unified state container for the R session, loaded packages, and check flags.
+
+    A single module-level instance (``_state``) replaces the previous nine
+    module-level globals.  Module functions read and write its fields directly —
+    no ``global`` declarations are needed except in :func:`reset_r_session`,
+    which rebinds the name.
+
+    :func:`get_r_session` returns ``_state`` directly once the session is
+    ready; callers access package objects via named fields
+    (``r.sn``, ``r.circe``, …).
+
+    Attributes
+    ----------
+    session : any
+        Reference to ``rpy2.robjects`` (populated by
+        :func:`initialize_r_session`).
+    sn : any
+        Loaded ``sn`` R package object.
+    stats : any
+        Loaded ``stats`` R package object.
+    base : any
+        Loaded ``base`` R package object.
+    circe : any
+        Loaded ``CircE`` R package object.
+    active : bool
+        ``True`` once :func:`initialize_r_session` completes successfully.
+    r_checked : bool
+        ``True`` once :func:`check_r_availability` has passed (cached to avoid
+        re-querying the R version on every call).
+    sn_checked : bool
+        ``True`` once :func:`check_sn_package` has passed (cached).
+    circe_checked : bool
+        ``True`` once :func:`check_circe_package` has passed (cached).
+
+    All fields are reset to their defaults when :func:`reset_r_session` is
+    called, ensuring a clean re-verification on the next
+    :func:`get_r_session` call.
+
+    """
+
+    # Package references (populated by initialize_r_session)
+    session: Any = None
+    sn: Any = None
+    stats: Any = None
+    base: Any = None
+    circe: Any = None
+
+    # Session status
+    active: bool = False
+
+    # One-time check flags (cleared on reset so the next call re-verifies)
+    r_checked: bool = False
+    sn_checked: bool = False
+    circe_checked: bool = False
+
+    @property
+    def is_ready(self) -> bool:
+        """``True`` when the session is active and all package refs are loaded."""
+        return bool(
+            self.active
+            and self.session
+            and self.sn
+            and self.stats
+            and self.base
+            and self.circe
+        )
+
+
+# Single module-level state instance.  All session functions operate on this
+# object; only reset_r_session() rebinds the name (via ``global _state``).
+_state = RSession()
+
+
+def _confirm_install_r_packages() -> bool:
+    """
+    Determine whether to auto-install missing R packages.
+
+    Checks the ``SOUNDSCAPY_AUTO_INSTALL_R`` environment variable first:
+
+    - ``"1"``, ``"true"``, or ``"yes"``  →  install without prompting (CI / scripts)
+    - ``"0"``, ``"false"``, or ``"no"``  →  never install
+
+    If the variable is unset the user is prompted interactively when stdin is a
+    TTY.  In non-interactive environments the default is *not* to install.
+    """
+    env_val = os.environ.get("SOUNDSCAPY_AUTO_INSTALL_R", "").lower()
+    if env_val in ("1", "true", "yes"):
+        return True
+    if env_val in ("0", "false", "no"):
+        return False
+
+    if sys.stdin.isatty():
+        try:
+            print(  # noqa: T201
+                "\nsoundscapy: One or more R packages required for this feature "
+                "are not installed.\n"
+                "  sn     → install.packages('sn')\n"
+                f"  CircE  → remotes::install_github('{PKG_SRC.CIRCE.value}')\n"
+            )
+            response = input("Install them now via soundscapy? [y/N] ").strip().lower()
+        except EOFError:
+            pass
+        else:
+            return response in ("y", "yes")
+
+    return False
+
+
+def _ver(v: str) -> tuple[int, ...]:
+    """
+    Parse a dotted version string into a comparable integer tuple.
+
+    Avoids lexicographic pitfalls where ``"1.10" < "1.2"`` is True.
+    """
+    return tuple(int(x) for x in v.split("."))
 
 
 def check_r_availability() -> None:
     """
-    Check if R is installed and accessible through rpy2.
+    Check that R is accessible and meets the minimum version requirement.
+
+    Note: importing this module (or any rpy2-dependent module) already starts
+    the R process via ``from rpy2 import robjects``.  This function therefore
+    cannot test whether R is *installed* — R is always already running by the
+    time it is called.  Its purpose is to verify the R *version* and to cache
+    that result (``_state.r_checked``) so the version query runs at most once
+    per session.
 
     Raises
     ------
     ImportError
-        If R is not installed or cannot be accessed.
+        If the running R version is older than :data:`REQUIRED_R_VERSION`, or
+        if the R version cannot be queried for any reason.
 
     """
-    global _r_checked  # noqa: PLW0603
 
-    def _raise_r_not_found_error() -> NoReturn:
+    def _raise_r_version_too_old_error(r_version_str: str) -> NoReturn:
         msg = (
-            "rpy2 is installed but it cannot find an R installation. "
-            "Please ensure R is installed and correctly configured. "
-            "On Linux: Install R with your package manager (e.g., apt-get install r-base)."  # noqa: E501
-            "On macOS: Install R from CRAN (https://cran.r-project.org/bin/macosx/). "
-            "On Windows: Install R from CRAN (https://cran.r-project.org/bin/windows/base/)."
+            f"R version {r_version_str} is too old. "
+            f"The 'sn' package requires R >= {REQUIRED_R_VERSION}. "
+            "Please upgrade your R installation."
         )
         raise ImportError(msg)
 
     def _raise_r_access_error(e: Exception) -> NoReturn:
         msg = (
-            f"Error accessing R installation: {e!s}. "
+            f"Error querying R version: {e!s}. "
             "Please ensure R is installed and correctly configured."
         )
         raise ImportError(msg)
 
-    def _raise_r_version_too_old_error(r_version_num: float) -> NoReturn:
-        msg = (
-            f"R version {r_version_num} is too old."
-            f"The 'sn' package requires R >= {REQUIRED_R_VERSION}."
-            "Please upgrade your R installation."
-        )
-        raise ImportError(msg)
-
-    if _r_checked:
+    if _state.r_checked:
         return
 
     try:
-        from rpy2 import robjects
-
-        # Basic check to ensure R is running by getting R version
         r_version = robjects.r("R.version.string")[0]  # type: ignore[index]
         logger.debug("R version: %s", r_version)
 
-        # Check if minimum R version requirements are met
-        # The 'sn' package requires R >= 3.6.0
-        r_version_num = robjects.r(
-            "as.numeric(R.version$major) + as.numeric(R.version$minor)/10"
-        )[0]  # type: ignore[index]
+        # Check if minimum R version requirements are met.
+        # Use _ver() tuple comparison to avoid float pitfalls (e.g. "2.1" minor
+        # parsed as 2.1/10 = 0.21 instead of the intended major.minor.patch).
+        # R's $minor field is like "6.0" for R 4.6.0 or "2.1" for R 4.2.1.
+        r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[
+            0
+        ]  # type: ignore[index]
 
-        if r_version_num < REQUIRED_R_VERSION:
-            _raise_r_version_too_old_error(r_version_num)
+        if _ver(r_version_str) < _ver(REQUIRED_R_VERSION):
+            _raise_r_version_too_old_error(r_version_str)
 
-        _r_checked = True
+        _state.r_checked = True
     except ImportError:
-        _raise_r_not_found_error()  # Call the handler
+        raise  # from _raise_r_version_too_old_error — don't wrap it
     except Exception as e:  # noqa: BLE001
-        _raise_r_access_error(e)  # Call the handler
+        _raise_r_access_error(e)
 
 
 def check_sn_package() -> None:
@@ -118,7 +231,6 @@ def check_sn_package() -> None:
         If the 'sn' package is not installed.
 
     """
-    global _sn_checked  # noqa: PLW0603
 
     def _raise_sn_version_too_old_error(version: str) -> NoReturn:
         msg = (
@@ -142,7 +254,7 @@ def check_sn_package() -> None:
         )
         raise ImportError(msg)
 
-    if _sn_checked:
+    if _state.sn_checked:
         return
 
     # First ensure R is available
@@ -156,25 +268,21 @@ def check_sn_package() -> None:
             # Just importing to verify it exists
             _ = rpackages.importr("sn")
 
-            # Get package version using R to verify compatibility
-            from rpy2 import robjects
-
             # Use R code to get the package version
             version = robjects.r('as.character(packageVersion("sn"))')[0]  # type: ignore[index]
             logger.debug("R 'sn' package version: %s", version)
 
             # Check if package version meets requirements
             # The SPI implementation requires 'sn' >= 2.0.0
-            if version < "2.0.0":
+            if _ver(version) < (2, 0, 0):
                 _raise_sn_version_too_old_error(version)
 
-            _sn_checked = True
+            _state.sn_checked = True
         except rpackages.PackageNotInstalledError:
             _raise_sn_not_installed_error()
-    except Exception as e:
-        if "sn" in str(e):
-            # Already a more specific error about the sn package
-            raise  # Re-raising is okay here
+    except ImportError:
+        raise  # Already a specific ImportError from our helpers — re-raise as-is
+    except Exception as e:  # noqa: BLE001
         _raise_sn_check_error(e)
 
 
@@ -188,12 +296,11 @@ def check_circe_package() -> None:
         If the 'CircE' package is not installed.
 
     """
-    global _circe_checked  # noqa: PLW0603
 
     def _raise_circe_not_installed_error() -> NoReturn:
         msg = (
             "R package 'CircE' is not installed. "
-            f"Please install it by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please install it by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
         )
         raise ImportError(msg)
 
@@ -201,18 +308,18 @@ def check_circe_package() -> None:
         msg = (
             f"R 'CircE' package version {version} is too old. "
             "The SPI feature requires 'CircE' >= 1.1. "
-            f"Please upgrade the package by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please upgrade the package by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
         )
         raise ImportError(msg)
 
-    def _raise_sn_check_error(e: Exception) -> NoReturn:
+    def _raise_circe_check_error(e: Exception) -> NoReturn:
         msg = (
             f"Error checking for R 'CircE' package: {e!s}. "
-            f"Please ensure the package is installed by running in R: remotes::install_github({PKG_SRC.CIRCE.value})"  # noqa: E501
+            f"Please ensure the package is installed by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
         )
         raise ImportError(msg)
 
-    if _circe_checked:
+    if _state.circe_checked:
         return
 
     # First ensure R is available
@@ -226,28 +333,23 @@ def check_circe_package() -> None:
             # Just importing to verify it exists
             _ = rpackages.importr("CircE")
 
-            # Get package version using R to verify compatibility
-            from rpy2 import robjects
-
             # Use R code to get the package version
             version = robjects.r('as.character(packageVersion("CircE"))')[0]  # type: ignore[index]
             logger.debug("R 'CircE' package version: %s", version)
 
-            # Check if package version meets requirements
-            # The SPI implementation requires 'sn' >= 2.0.0
-            if version < "1.1":
+            # Tuple comparison avoids lexicographic pitfalls ("1.10" > "1.2")
+            if _ver(version) < (1, 1):
                 _raise_circe_version_too_old_error(version)
 
-            _circe_checked = True
+            _state.circe_checked = True
 
         except rpackages.PackageNotInstalledError:
             _raise_circe_not_installed_error()
 
-    except Exception as e:
-        if "CircE" in str(e):
-            # Already a more specific error about the sn package
-            raise  # Re-raising is okay here
-        _raise_sn_check_error(e)
+    except ImportError:
+        raise  # Already a specific ImportError from our helpers — re-raise as-is
+    except Exception as e:  # noqa: BLE001
+        _raise_circe_check_error(e)
 
 
 def check_dependencies() -> dict[str, Any]:
@@ -282,24 +384,24 @@ def check_dependencies() -> dict[str, Any]:
         check_circe_package()
 
     except ImportError:
-        if AUTO_INSTALL_R_PACKAGES:
-            logger.warning(
-                "One or more R dependencies are missing. Attempting to auto-install required R packages..."  # noqa: E501
-            )
+        if _confirm_install_r_packages():
+            logger.info("User confirmed: installing missing R packages...")
             try:
                 install_r_packages()
-                # After installation, check again to confirm everything is now available
+                # Re-check to confirm everything is now available
                 check_r_availability()
                 check_sn_package()
                 check_circe_package()
             except Exception as install_e:
                 msg = (
                     f"Auto-installation of R packages failed: {install_e!s}. "
-                    "Please install the required R packages manually and ensure they are accessible."  # noqa: E501
+                    "Please install the required R packages manually.\n"
+                    "  sn     → install.packages('sn')\n"
+                    f"  CircE  → remotes::install_github('{PKG_SRC.CIRCE.value}')"
                 )
                 raise ImportError(msg) from install_e
         else:
-            raise  # Re-raise the original ImportError if auto-install is not enabled
+            raise  # User declined or non-interactive; re-raise the original ImportError
 
     # If we get here, all dependencies are available
 
@@ -323,7 +425,7 @@ def initialize_r_session() -> dict[str, Any]:
     1. Checks for R and package dependencies
     2. Imports required R packages
     3. Sets up the R environment
-    4. Updates global session state
+    4. Updates the ``_state`` singleton
 
     Returns
     -------
@@ -338,10 +440,8 @@ def initialize_r_session() -> dict[str, Any]:
         If session initialization fails.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0603
-
     # If session is already active, just return the state
-    if _session_active:
+    if _state.active:
         logger.debug("R session already initialized")
         return {
             "r_session": "active",
@@ -357,146 +457,106 @@ def initialize_r_session() -> dict[str, Any]:
 
     try:
         import rpy2.robjects.packages as rpackages
-        from rpy2 import robjects
 
         # Import required packages
-        _sn_package = rpackages.importr("sn")
-        _circe_package = rpackages.importr("CircE")
-        _stats_package = rpackages.importr("stats")
-        _base_package = rpackages.importr("base")
+        _state.sn = rpackages.importr("sn")
+        _state.circe = rpackages.importr("CircE")
+        _state.stats = rpackages.importr("stats")
+        _state.base = rpackages.importr("base")
         logger.debug("Imported R packages: sn, CircE, stats, base")
 
         # Set R random seed for reproducibility
         robjects.r("set.seed(42)")
 
-        # Store R session
-        _r_session = robjects
+        # Store R session reference
+        _state.session = robjects
 
-        # Update session state
-        _session_active = True
+        # Mark session as active
+        _state.active = True
         logger.info("R session successfully initialized")
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # Activate numpy and pandas conversion
-            logger.debug("Activating numpy and pandas conversion")
-            logger.info(
-                "rpy2 throws a DeprecationWarning about global activation, which we're ignoring for now."  # noqa: E501
-            )
-            # TODO(MitchellAcoustics): Remove global conversion, as recommended by rpy2
-            # https://github.com/MitchellAcoustics/Soundscapy/issues/111
-            numpy2ri.activate()
-            pandas2ri.activate()
 
         return {
             "r_session": "active",
-            "sn_package": str(_sn_package),
-            "stats_package": str(_stats_package),
-            "base_package": str(_base_package),
-            "circe_package": str(_circe_package),
+            "sn_package": str(_state.sn),
+            "stats_package": str(_state.stats),
+            "base_package": str(_state.base),
+            "circe_package": str(_state.circe),
             **dep_info,
         }
 
     except Exception as e:
         logger.exception("Failed to initialize R session")
-        _session_active = False
-        _r_session = None
-        _sn_package = None
-        _stats_package = None
-        _base_package = None
-        _circe_package = None
+        # Reset to a clean state so the next call can retry from scratch.
+        # reset_r_session() always clears _state regardless of active flag.
+        reset_r_session()
         msg = f"Failed to initialize R session: {e!s}"
         raise RuntimeError(msg) from e
 
 
-def shutdown_r_session() -> bool:
+def reset_r_session() -> bool:
     """
-    Shutdown the R session and clean up resources.
+    Unload R packages and reset all session state.
 
-    This function:
-    1. Deactivates numpy conversion
-    2. Resets global session state
-    3. Performs garbage collection
+    Replaces ``_state`` with a fresh :class:`RSession` instance, clearing all
+    package references, the active flag, and the package-check caches.  The
+    next call to :func:`get_r_session` will therefore re-verify package
+    availability and re-import everything from scratch.
+
+    Note: the *R process itself continues running* — rpy2 does not support
+    terminating the embedded R interpreter.
 
     Returns
     -------
     bool
-        True if successful, False otherwise.
+        ``True`` if successful, ``False`` if an error occurred.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0603
-
-    if not _session_active:
-        logger.debug("No active R session to shutdown")
-        return True
+    global _state  # noqa: PLW0603
 
     try:
         import gc
 
-        # Clear references to R objects
-        _r_session = None
-        _sn_package = None
-        _stats_package = None
-        _base_package = None
-        _circe_package = None
-
-        # Update session state
-        _session_active = False
-
-        # Force garbage collection to release R resources
+        was_active = _state.active
+        _state = RSession()
         gc.collect()
-        logger.info("R session successfully shutdown")
+
+        if was_active:
+            logger.info("R session packages successfully unloaded")
+        else:
+            logger.debug("R session state cleared")
 
     except Exception:
-        logger.exception("Error during R session shutdown")
+        logger.exception("Error during R session reset")
         return False
     else:
         return True
 
 
-def get_r_session() -> tuple[Any, Any, Any, Any, Any]:
+def get_r_session() -> RSession:
     """
-    Get the current R session and package objects.
-
-    This function:
-    1. Initializes the session if not already active
-    2. Returns the session and package references
+    Get the current R session and package objects, initialising lazily if needed.
 
     Returns
     -------
-    tuple[Any, Any, Any, Any, Any]
-        (r_session, sn_package, stats_package, base_package, circe_package)
+    RSession
+        The module-level ``_state`` instance once fully initialised.  Access
+        package objects by name: ``r.sn``, ``r.circe``, ``r.base``, etc.
 
     Raises
     ------
     RuntimeError
-        If session initialization fails.
+        If session initialisation fails.
 
     """
-    global _r_session, _sn_package, _stats_package, _base_package, _session_active, _circe_package  # noqa: E501, PLW0602
-
-    if not _session_active:
+    if not _state.active:
         logger.debug("R session not active, initializing")
         initialize_r_session()
 
-    if (
-        not _session_active
-        or not _r_session
-        or not _sn_package
-        or not _stats_package
-        or not _base_package
-        or not _circe_package
-    ):
+    if not _state.is_ready:
         msg = "Failed to initialize R session"
         raise RuntimeError(msg)
 
-    return (
-        _r_session,
-        _sn_package,
-        _stats_package,
-        _base_package,
-        _circe_package,
-    )
+    return _state
 
 
 def install_r_packages(packages: list[str] | None = None) -> None:
@@ -506,7 +566,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
     Parameters
     ----------
     packages : list[str] | None, optional
-        List of R package names to install. Defaults to ["sn", "tvtnorm"].
+        List of R package names to install. Defaults to ["sn", "CircE"].
 
     Raises
     ------
@@ -515,7 +575,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
 
     """
     if packages is None:
-        packages = ["sn", "tvtnorm", "CircE"]
+        packages = ["sn", "CircE"]
 
     check_r_availability()
 
@@ -533,7 +593,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
         # Install missing packages
         if len(packnames_to_install) > 0:
             if "CircE" in packnames_to_install:
-                # CircE and RTHORR are only available from GitHub
+                # CircE is only available from GitHub
                 remotes = rpackages.importr("remotes")
                 remotes.install_github(PKG_SRC.CIRCE.value)
                 packnames_to_install.remove("CircE")
@@ -559,5 +619,4 @@ def is_session_active() -> bool:
         True if the session is active, False otherwise.
 
     """
-    global _session_active  # noqa: PLW0602
-    return _session_active
+    return _state.active

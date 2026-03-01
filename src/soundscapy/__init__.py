@@ -1,6 +1,8 @@
 """Soundscapy is a Python library for soundscape analysis and visualisation."""
 
 # ruff: noqa: E402
+import importlib
+
 from loguru import logger
 
 # https://loguru.readthedocs.io/en/latest/resources/recipes.html#configuring-loguru-to-be-used-by-a-library-or-an-application
@@ -89,37 +91,68 @@ except ImportError:
     # Audio module not available - this is expected if dependencies aren't installed
     pass
 
-# Try to import optional SPI module
-try:
-    from soundscapy import spi
-    from soundscapy.spi import (
-        CentredParams,
-        DirectParams,
-        MultiSkewNorm,
-        cp2dp,
-        dp2cp,
-        msn,
-    )
-
-    __all__ += [
+# Optional R-backed modules (spi, satp) are loaded lazily via __getattr__ so
+# that `import soundscapy` does not start the R process.  R only starts when
+# the user explicitly accesses one of these names.
+_SPI_ATTRS: frozenset[str] = frozenset(
+    {
+        "spi",
         "CentredParams",
         "DirectParams",
         "MultiSkewNorm",
         "cp2dp",
         "dp2cp",
         "msn",
-        "spi",
-    ]
-except ImportError:
-    # SPI module not available
-    pass
+        "spi_score",
+    }
+)
+_SATP_ATTRS: frozenset[str] = frozenset({"satp", "SATP", "CircModelE"})
 
-try:
-    from soundscapy import satp
-    from soundscapy.satp import SATP, CircModelE
 
-    __all__ += ["SATP", "CircModelE", "satp"]
+def __getattr__(name: str):  # noqa: ANN202
+    """
+    Lazily import optional R-backed sub-modules on first access.
 
-except ImportError:
-    # SATP module not available
-    pass
+    R is not started until one of these names is explicitly accessed.
+    After the first access each name is stored in the module's ``__dict__``,
+    so subsequent lookups skip this function entirely.
+    """
+    if name in _SPI_ATTRS:
+        try:
+            _spi = importlib.import_module("soundscapy.spi")
+            _g = globals()
+            _g["spi"] = _spi
+            # Pull the individual public names from the sub-module so callers
+            # can do ``sspy.MultiSkewNorm`` as well as ``sspy.spi.MultiSkewNorm``.
+            for _attr in _SPI_ATTRS - {"spi"}:
+                _g[_attr] = getattr(_spi, _attr)
+            return _g[name]
+        except ImportError as e:
+            msg = (
+                f"soundscapy.{name} requires optional SPI dependencies. "
+                "Install with: pip install 'soundscapy[spi]'"
+            )
+            raise ImportError(msg) from e
+
+    if name in _SATP_ATTRS:
+        try:
+            _satp = importlib.import_module("soundscapy.satp")
+            _g = globals()
+            _g["satp"] = _satp
+            for _attr in _SATP_ATTRS - {"satp"}:
+                _g[_attr] = getattr(_satp, _attr)
+            return _g[name]
+        except ImportError as e:
+            msg = (
+                f"soundscapy.{name} requires optional SATP dependencies. "
+                "Install with: pip install 'soundscapy[satp]'"
+            )
+            raise ImportError(msg) from e
+
+    msg = f"module 'soundscapy' has no attribute {name!r}"
+    raise AttributeError(msg)
+
+
+def __dir__() -> list[str]:
+    """Extend dir() to include lazily-loaded optional names (PEP 562)."""
+    return sorted(list(globals()) + list(_SPI_ATTRS) + list(_SATP_ATTRS))

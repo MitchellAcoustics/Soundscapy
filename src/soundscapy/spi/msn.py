@@ -4,6 +4,24 @@ Module for handling Multi-dimensional Skewed Normal (MSN) distributions.
 Provides classes and functions for defining, fitting, sampling, and analyzing
 MSN distributions, often used in soundscape analysis for modeling ISOPleasant
 and ISOEventful ratings.
+
+Classes
+-------
+DirectParams
+    Container for direct parameters (xi, omega, alpha) of a skew-normal distribution.
+CentredParams
+    Container for centred parameters (mean, sigma, skew) of a skew-normal distribution.
+MultiSkewNorm
+    High-level interface for fitting, sampling, and scoring a 2-D skew-normal model.
+
+Functions
+---------
+dp2cp(dp, family="SN")
+    Convert a :class:`DirectParams` object to a :class:`CentredParams` object via R.
+cp2dp(cp, family="SN")
+    Convert a :class:`CentredParams` object to a :class:`DirectParams` object via R.
+spi_score(target, test)
+    Soundscape Perception Index: ``int((1 - KS_statistic) * 100)``.
 """
 
 import warnings
@@ -121,10 +139,12 @@ class DirectParams:
         """
         warnings.warn(
             "Converting from Centred Parameters to Direct Parameters "
-            "is not guaranteed.",
+            "is not guaranteed to produce a unique result. "
+            "Prefer constructing from Direct Parameters (xi, omega, alpha) "
+            "directly when possible.",
             UserWarning,
             stacklevel=2,
-        )  # TODO(MitchellAcoustics): Add a more specific warning message
+        )
         dp = cp2dp(cp)
         return cls(dp.xi, dp.omega, dp.alpha)
 
@@ -203,8 +223,6 @@ class MultiSkewNorm:
 
     Attributes
     ----------
-    selm_model
-        The fitted SELM model.
     cp : CentredParams
         The centred parameters of the fitted model.
     dp : DirectParams
@@ -223,19 +241,25 @@ class MultiSkewNorm:
     define_dp(xi, omega, alpha)
         Defines the direct parameters of the model.
     sample(n=1000, return_sample=False)
-        Generates a sample from the fitted model.
+        Generates an unrestricted sample from the fitted model.
+    sample_mtsn(n=1000, a=-1, b=1, return_sample=False)
+        Generates a truncated sample (rejection sampling within [a, b]).
     sspy_plot(color='blue', title=None, n=1000)
         Plots the joint distribution of the generated sample.
-    ks2ds(test)
-        Computes the two-sample Kolmogorov-Smirnov statistic.
-    spi(test)
-        Computes the similarity percentage index.
+    ks2d2s(test)
+        Computes the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
+    spi_score(test)
+        Computes the Soundscape Perception Index (SPI).
 
     """
 
     def __init__(self) -> None:
         """Initialize the MultiSkewNorm object."""
-        self.selm_model = None
+        warnings.warn(
+            "The SPI analysis module is experimental. Use with caution.",
+            UserWarning,
+            stacklevel=2,
+        )
         self.cp = None
         self.dp = None
         self.sample_data = None
@@ -243,7 +267,7 @@ class MultiSkewNorm:
 
     def __repr__(self) -> str:
         """Return a string representation of the MultiSkewNorm object."""
-        if self.cp is None and self.dp is None and self.selm_model is None:
+        if self.cp is None and self.dp is None:
             return "MultiSkewNorm() (unfitted)"
         return f"MultiSkewNorm(dp={self.dp})"
 
@@ -257,7 +281,7 @@ class MultiSkewNorm:
             indicating the model is not fitted.
 
         """
-        if self.cp is None and self.dp is None and self.selm_model is None:
+        if self.cp is None and self.dp is None:
             return "MultiSkewNorm is not fitted."
         lines = []
         if self.data is not None:
@@ -300,7 +324,9 @@ class MultiSkewNorm:
         if data is not None:
             # If data is provided, convert it to a pandas DataFrame
             if isinstance(data, pd.DataFrame):
-                # If data is already a DataFrame, no need to convert
+                # Rename columns to "x"/"y" on a copy so we don't mutate the
+                # caller's DataFrame.
+                data = data.copy()
                 data.columns = ["x", "y"]
 
             elif isinstance(data, np.ndarray):
@@ -325,17 +351,16 @@ class MultiSkewNorm:
             msg = "Either data or x and y must be provided"
             raise ValueError(msg)
 
-        # Fit the model
+        # Fit the model, extract parameters immediately, then discard the R object.
+        # Storing rpy2 objects (RS4) beyond the function boundary creates a
+        # persistent reference into R's heap that can outlive the session.
         m = sspyr.selm("x", "y", data)
-
-        # Extract the parameters
         cp = sspyr.extract_cp(m)
         dp = sspyr.extract_dp(m)
 
         self.cp = CentredParams(*cp)
         self.dp = DirectParams(*dp)
         self.data = data
-        self.selm_model = m
 
     def define_dp(
         self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray
@@ -396,8 +421,9 @@ class MultiSkewNorm:
                 msg = "Either params object or xi, omega, and alpha must be provided."
                 raise ValueError(msg)
             if xi is not None and omega is not None and alpha is not None:
-                # If xi, omega, and alpha are provided, create DirectParams
+                # xi/omega/alpha provided — create DirectParams and derive CP
                 instance.dp = DirectParams(xi, omega, alpha)
+                instance.cp = CentredParams.from_dp(instance.dp)
             elif mean is not None and sigma is not None and skew is not None:
                 # If mean, sigma, and skew are provided, create CentredParams
                 cp = CentredParams(mean, sigma, skew)
@@ -448,14 +474,12 @@ class MultiSkewNorm:
             parameters (`dp`) are also not defined.
 
         """
-        if self.selm_model is not None:
-            sample = sspyr.sample_msn(selm_model=self.selm_model, n=n)
-        elif self.dp is not None:
+        if self.dp is not None:
             sample = sspyr.sample_msn(
                 xi=self.dp.xi, omega=self.dp.omega, alpha=self.dp.alpha, n=n
             )
         else:
-            msg = "Either selm_model or xi, omega, and alpha must be provided."
+            msg = "Model is not fitted. Call fit() or define_dp() first."
             raise ValueError(msg)
 
         self.sample_data = sample
@@ -490,14 +514,7 @@ class MultiSkewNorm:
             The generated sample if `return_sample` is True, otherwise None.
 
         """
-        if self.selm_model is not None:
-            sample = sspyr.sample_mtsn(
-                selm_model=self.selm_model,
-                n=n,
-                a=a,
-                b=b,
-            )
-        elif self.dp is not None:
+        if self.dp is not None:
             sample = sspyr.sample_mtsn(
                 xi=self.dp.xi,
                 omega=self.dp.omega,
@@ -507,7 +524,7 @@ class MultiSkewNorm:
                 b=b,
             )
         else:
-            msg = "Either selm_model or xi, omega, and alpha must be provided."
+            msg = "Model is not fitted. Call fit() or define_dp() first."
             raise ValueError(msg)
 
         # Store the sample data

@@ -32,10 +32,15 @@ def test_soundscapy_spi_module():
     # Test top-level imports
     assert hasattr(soundscapy, "MultiSkewNorm"), "MultiSkewNorm should be available"
     assert hasattr(soundscapy, "dp2cp"), "dp2cp should be available"
-    # assert hasattr(soundscapy, "calculate_spi"), "calculate_spi should be available"
-    # assert hasattr(soundscapy, "calculate_spi_from_data"), (
-    #     "calculate_spi_from_data should be available"
-    # )
+    assert hasattr(soundscapy, "spi_score"), "spi_score should be available"
+
+
+@pytest.mark.optional_deps("satp")
+def test_soundscapy_satp_module():
+    """Test that the SATP module can be imported when dependencies are available."""
+    assert hasattr(soundscapy, "satp"), "Soundscapy should have a satp module"
+    assert hasattr(soundscapy, "SATP"), "SATP should be available"
+    assert hasattr(soundscapy, "CircModelE"), "CircModelE should be available"
 
 
 def test_spi_import_error():
@@ -44,11 +49,20 @@ def test_spi_import_error():
     if os.environ.get("SPI_DEPS") == "1":
         pytest.skip("SPI dependencies are installed")
 
-    # Since direct imports are now used instead of __getattr__, we need to test
-    # through direct access to the module which would trigger ImportError
     with pytest.raises(ImportError) as excinfo:
         import soundscapy.spi  # noqa: F401
 
-    # Check error message contains helpful instructions
     assert "SPI functionality requires" in str(excinfo.value)
     assert "soundscapy[spi]" in str(excinfo.value)
+
+
+def test_satp_import_error():
+    """Test that helpful error message is shown when SATP dependencies are missing."""
+    if os.environ.get("SATP_DEPS") == "1":
+        pytest.skip("SATP dependencies are installed")
+
+    with pytest.raises(ImportError) as excinfo:
+        import soundscapy.satp  # noqa: F401
+
+    assert "SATP functionality requires" in str(excinfo.value)
+    assert "soundscapy[satp]" in str(excinfo.value)

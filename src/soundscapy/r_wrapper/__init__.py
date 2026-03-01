@@ -13,9 +13,9 @@ except ImportError as e:
     raise ImportError(msg) from e
 
 # Now we can import our modules that depend on the optional packages
-from ._circe_wrapper import bfgs, extract_bfgs_fit
-from ._r_wrapper import PKG_SRC, get_r_session
-from ._rsn_wrapper import (
+from ._circe_wrapper import bfgs, extract_bfgs_fit  # noqa: F401
+from ._r_wrapper import PKG_SRC, get_r_session  # noqa: F401
+from ._rsn_wrapper import (  # noqa: F401
     cp2dp,
     dp2cp,
     extract_cp,
@@ -25,16 +25,7 @@ from ._rsn_wrapper import (
     selm,
 )
 
-__all__ = [
-    "PKG_SRC",
-    "bfgs",
-    "cp2dp",
-    "dp2cp",
-    "extract_bfgs_fit",
-    "extract_cp",
-    "extract_dp",
-    "get_r_session",
-    "sample_msn",
-    "sample_mtsn",
-    "selm",
-]
+# r_wrapper is an internal implementation package.  All user-facing names are
+# re-exported from soundscapy.spi and soundscapy.satp.  Nothing is in __all__
+# so that ``from soundscapy.r_wrapper import *`` imports nothing.
+__all__: list[str] = []
