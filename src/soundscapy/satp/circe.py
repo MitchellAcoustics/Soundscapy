@@ -42,6 +42,18 @@ from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
 
 logger = get_logger()
 
+# ---------------------------------------------------------------------------
+# Column alias lookup — built once at module load.
+# Maps any lowercase column name to its canonical schema name.
+# Covers: PAQ label names (e.g. "pleasant" → "PAQ1"), PAQ IDs in any case
+# (e.g. "paq1" → "PAQ1"), and the participant field ("PARTICIPANT" → "participant").
+# ---------------------------------------------------------------------------
+_COLUMN_ALIASES: dict[str, str] = {
+    **{label.lower(): paq_id for label, paq_id in zip(PAQ_LABELS, PAQ_IDS)},
+    **{paq_id.lower(): paq_id for paq_id in PAQ_IDS},
+    "participant": "participant",
+}
+
 
 class CircModelE(str, Enum):
     """Enumeration of circumplex model types."""
@@ -100,14 +112,11 @@ class SATPSchema(pa.DataFrameModel):
         """
         Parse and rename DataFrame columns to match the schema.
 
-        Applies two normalisation passes:
-
-        1. PAQ label aliases: maps human-readable names (e.g. ``"pleasant"``)
-           to standardised IDs (``"PAQ1"``).
-        2. Case-insensitive schema field normalisation: any column whose
-           lowercased name matches a schema field is renamed to its canonical
-           form (e.g. ``"PARTICIPANT"`` → ``"participant"``,
-           ``"paq1"`` → ``"PAQ1"``).
+        Uses ``_COLUMN_ALIASES`` (module-level constant) for a single-pass
+        case-insensitive lookup.  Handles PAQ label names (e.g. ``"pleasant"``
+        or ``"Pleasant"`` → ``"PAQ1"``), PAQ IDs in any case (``"paq1"`` →
+        ``"PAQ1"``), and the participant field in any capitalisation
+        (``"PARTICIPANT"`` → ``"participant"``).
 
         Parameters
         ----------
@@ -119,16 +128,11 @@ class SATPSchema(pa.DataFrameModel):
         DataFrame with renamed columns matching the schema
 
         """
-        # Canonical schema fields: maps lowercase → canonical name.
-        _schema_fields: dict[str, str] = {f.lower(): f for f in (*PAQ_IDS, "participant")}
-
-        rename_dict = dict(zip(PAQ_LABELS, PAQ_IDS, strict=False))
-        # Case-insensitive pass: any column that lowercases to a schema field
-        # name is normalised to its canonical form.
-        for col in df.columns:
-            canonical = _schema_fields.get(col.lower())
-            if canonical is not None:
-                rename_dict[col] = canonical
+        rename_dict = {
+            col: _COLUMN_ALIASES[col.lower()]
+            for col in df.columns
+            if col.lower() in _COLUMN_ALIASES
+        }
         return df.rename(columns=rename_dict)
 
 
@@ -187,18 +191,18 @@ class CircE:
     datasource: str
     language: str
     n: int
-    m: int
-    chisq: float
-    d: int
-    p: float
-    cfi: float
-    gfi: float
-    agfi: float
-    srmr: float
-    mcsc: float
-    rmsea: float
-    rmsea_l: float
-    rmsea_u: float
+    m: int | None
+    chisq: float | None
+    d: int | None
+    p: float | None
+    cfi: float | None
+    gfi: float | None
+    agfi: float | None
+    srmr: float | None
+    mcsc: float | None
+    rmsea: float | None
+    rmsea_l: float | None
+    rmsea_u: float | None
     polar_angles: pd.Series | None = None  # PAQ_IDS index, angle estimates
 
     @classmethod

@@ -696,6 +696,23 @@ class TestFitCirce:
         assert "participant" in validated.columns
         assert "PARTICIPANT" not in validated.columns
 
+    def test_satp_schema_paq_label_case_insensitive(self):
+        """SATPSchema must accept PAQ labels in any case ('Pleasant' → 'PAQ1')."""
+        from soundscapy.satp.circe import SATPSchema
+        from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
+
+        rng = np.random.default_rng(1)
+        # Build DataFrame using title-cased label names (e.g. 'Pleasant').
+        title_labels = [label.title() for label in PAQ_LABELS]
+        df = pd.DataFrame(rng.uniform(0, 100, size=(4, 8)), columns=title_labels)
+        df["participant"] = ["A", "A", "B", "B"]
+
+        validated = SATPSchema.validate(df, lazy=True)
+        for paq_id in PAQ_IDS:
+            assert paq_id in validated.columns, f"{paq_id} missing after normalization"
+        for label in title_labels:
+            assert label not in validated.columns, f"Original '{label}' still present"
+
 
 # ---------------------------------------------------------------------------
 # Tests for gdiff property
