@@ -11,7 +11,7 @@ Two datasets are used:
   package docs — used for low-level ``bfgs()`` / ``extract_bfgs_fit()`` tests
   where we have exact reference values.
 - ISD data: 8-PAQ SATP-format data — used for ``CircE.compute_bfgs_fit()``
-  and ``SATP`` tests (which require PAQ_IDS columns).
+  and ``fit_circe()`` tests (which require PAQ_IDS columns).
 """
 
 import numpy as np
@@ -51,7 +51,7 @@ VOCATIONAL_N = 175
 
 
 # ---------------------------------------------------------------------------
-# ISD data fixture (8-PAQ format required by compute_bfgs_fit / SATP)
+# ISD data fixture (8-PAQ format required by compute_bfgs_fit / fit_circe)
 # ---------------------------------------------------------------------------
 
 
@@ -76,8 +76,30 @@ def isd_n(isd_paqs):
     return len(isd_paqs)
 
 
+@pytest.fixture(scope="module")
+def isd_with_participant():
+    """
+    ISD PAQ data with SessionID as participant grouper.
+
+    The ISD dataset has 66 sessions, each with ~54 rows.  Using SessionID
+    ensures every participant has many rows so ipsatization produces a
+    valid (non-degenerate) correlation matrix.
+    """
+    import soundscapy as sspy
+    from soundscapy.surveys.survey_utils import PAQ_IDS
+
+    raw = sspy.isd.load()
+    return (
+        raw[[*PAQ_IDS, "SessionID"]]
+        .dropna(subset=PAQ_IDS)
+        .copy()
+        .rename(columns={"SessionID": "participant"})
+    )
+
+
 # ---------------------------------------------------------------------------
-# Tests for bfgs() / extract_bfgs_fit() wrappers
+# Tests for bfgs() / extract_bfgs_fit() wrappers  ← NUMERICAL REGRESSION ANCHORS
+# These tests must not be weakened or removed — they verify the actual R computation.
 # ---------------------------------------------------------------------------
 
 
@@ -304,6 +326,15 @@ class TestCircEDataclass:
         )
         assert isinstance(result, CircE)
 
+    def test_circe_model_field_is_enum(self, isd_cor, isd_n):
+        """CircE.model must be a CircModelE enum value."""
+        from soundscapy.satp.circe import CircE, CircModelE
+
+        result = CircE.compute_bfgs_fit(
+            isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
+        )
+        assert result.model is CircModelE.UNCONSTRAINED
+
     def test_circe_n_matches_input(self, isd_cor, isd_n):
         """CircE.n must equal the n passed to compute_bfgs_fit, not N-1 from R."""
         from soundscapy.satp.circe import CircE, CircModelE
@@ -332,7 +363,7 @@ class TestCircEDataclass:
         assert result.d > 0
 
     def test_circe_p_value_formula(self, isd_cor, isd_n):
-        """CircE.p must equal scipy_chi2.sf(chisq, df) exactly."""
+        """CircE.p must equal scipy_chi2.sf(chisq, d) exactly."""
         from soundscapy.satp.circe import CircE, CircModelE
 
         result = CircE.compute_bfgs_fit(
@@ -355,19 +386,20 @@ class TestCircEDataclass:
         assert 0.0 <= result.gfi <= 1.0
         assert result.srmr >= 0
 
-    def test_polar_angles_present_for_free_angle_models(self, isd_cor, isd_n):
-        """polar_angles must be a DataFrame for UNCONSTRAINED and EQUAL_COM models."""
+    def test_polar_angles_is_series_for_free_angle_models(self, isd_cor, isd_n):
+        """polar_angles must be a pd.Series with PAQ_IDS index for UNCONSTRAINED and EQUAL_COM."""
         from soundscapy.satp.circe import CircE, CircModelE
+        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         for model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
             result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
-            got = type(result.polar_angles)
-            assert isinstance(result.polar_angles, pd.DataFrame), (
-                f"{model.value}: polar_angles should be a DataFrame, got {got}"
+            assert isinstance(result.polar_angles, pd.Series), (
+                f"{model.value}: polar_angles should be a Series, got {type(result.polar_angles)}"
             )
-            assert result.polar_angles.shape[1] == 8, (
-                f"{model.value}: expected 8 variables in polar_angles columns"
+            assert list(result.polar_angles.index) == PAQ_IDS, (
+                f"{model.value}: polar_angles index should be PAQ_IDS"
             )
+            assert len(result.polar_angles) == 8
 
     def test_polar_angles_none_for_constrained_angle_models(self, isd_cor, isd_n):
         """polar_angles must be None for EQUAL_ANG and CIRCUMPLEX models."""
@@ -379,113 +411,190 @@ class TestCircEDataclass:
                 f"{model.value}: polar_angles should be None for constrained models"
             )
 
+    def test_circe_to_dict_has_expected_keys(self, isd_cor, isd_n):
+        """to_dict() must include all fit statistics and PAQ1-PAQ8 columns."""
+        from soundscapy.satp.circe import CircE, CircModelE
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        result = CircE.compute_bfgs_fit(
+            isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
+        )
+        d = result.to_dict()
+        expected_keys = {
+            "datasource", "language", "model", "n", "m", "chisq", "d", "p",
+            "cfi", "gfi", "agfi", "srmr", "mcsc", "rmsea", "rmsea_l", "rmsea_u",
+            "gdiff", *PAQ_IDS,
+        }
+        assert expected_keys.issubset(d.keys())
+
+    def test_circe_to_dict_paq_values_match_polar_angles(self, isd_cor, isd_n):
+        """PAQ values in to_dict() must match the polar_angles Series."""
+        from soundscapy.satp.circe import CircE, CircModelE
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        result = CircE.compute_bfgs_fit(
+            isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
+        )
+        d = result.to_dict()
+        for paq in PAQ_IDS:
+            assert d[paq] == pytest.approx(result.polar_angles[paq])
+
+    def test_circe_to_dict_paq_none_for_constrained(self, isd_cor, isd_n):
+        """PAQ1-PAQ8 must be None in to_dict() for constrained-angle models."""
+        from soundscapy.satp.circe import CircE, CircModelE
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        for model in (CircModelE.EQUAL_ANG, CircModelE.CIRCUMPLEX):
+            result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
+            d = result.to_dict()
+            for paq in PAQ_IDS:
+                assert d[paq] is None, (
+                    f"{model.value}: {paq} should be None in to_dict()"
+                )
+
 
 # ---------------------------------------------------------------------------
-# Tests for SATP class
+# Tests for CircModelE enum properties
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.optional_deps("satp")
-class TestSATP:
-    """Integration tests for the full SATP analysis pipeline."""
+class TestCircModelEProperties:
+    """Tests for the equal_ang / equal_com properties on CircModelE."""
 
-    @pytest.fixture
-    def satp_data(self):
-        """
-        PAQ data from ISD using SessionID as participant grouper.
+    def test_unconstrained_has_no_constraints(self):
+        from soundscapy.satp.circe import CircModelE
 
-        The ISD dataset has 66 sessions, each with ~54 rows.  Using SessionID
-        ensures every participant has many rows so ipsatization produces a
-        valid (non-degenerate) correlation matrix.
-        """
-        import soundscapy as sspy
-        from soundscapy.surveys.survey_utils import PAQ_IDS
+        assert CircModelE.UNCONSTRAINED.equal_ang is False
+        assert CircModelE.UNCONSTRAINED.equal_com is False
 
-        raw = sspy.isd.load()
-        return (
-            raw[[*PAQ_IDS, "SessionID"]]
-            .dropna(subset=PAQ_IDS)
-            .copy()
-            .rename(columns={"SessionID": "participant"})
-        )
+    def test_equal_ang_constrains_angles_only(self):
+        from soundscapy.satp.circe import CircModelE
 
-    def test_satp_init_validates_schema(self, satp_data):
-        """SATP.__init__ must accept valid SATP-format data without raising."""
-        from soundscapy.satp.circe import SATP
+        assert CircModelE.EQUAL_ANG.equal_ang is True
+        assert CircModelE.EQUAL_ANG.equal_com is False
 
-        satp = SATP(satp_data, language="EN", datasource="ISD")
-        assert satp is not None
+    def test_equal_com_constrains_communalities_only(self):
+        from soundscapy.satp.circe import CircModelE
 
-    def test_satp_ipsatize(self, satp_data):
+        assert CircModelE.EQUAL_COM.equal_ang is False
+        assert CircModelE.EQUAL_COM.equal_com is True
+
+    def test_circumplex_constrains_both(self):
+        from soundscapy.satp.circe import CircModelE
+
+        assert CircModelE.CIRCUMPLEX.equal_ang is True
+        assert CircModelE.CIRCUMPLEX.equal_com is True
+
+
+# ---------------------------------------------------------------------------
+# Tests for fit_circe() function and ipsatize()
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.optional_deps("satp")
+class TestFitCirce:
+    """Integration tests for fit_circe() and ipsatize()."""
+
+    def test_ipsatize_per_participant_mean_zero(self, isd_with_participant):
         """
         After ipsatization each PAQ column must have zero mean per participant.
 
-        The implementation uses groupby.transform, which centers each *column*
-        within each participant group, not each row across columns.  The correct
-        invariant is therefore: for every (participant, PAQ_col) pair, the mean
-        of that column across the participant's rows is zero.
+        The implementation uses groupby.transform, which centers each column
+        within each participant group.  The invariant is: for every
+        (participant, PAQ_col) pair, the mean across the participant's rows is zero.
         """
-        from soundscapy.satp.circe import SATP
+        from soundscapy.satp.circe import ipsatize
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        # Test _ipsatize_df directly so we can still access the participant labels
-        # (satp.data loses the participant column after the transform).
-        ipsatized = SATP._ipsatize_df(satp_data, by="participant")
+        ipsatized = ipsatize(isd_with_participant, by="participant")
         # groupby.transform preserves the original index, so joining back is safe.
-        check = ipsatized[PAQ_IDS].assign(participant=satp_data["participant"])
+        check = ipsatized[PAQ_IDS].assign(
+            participant=isd_with_participant["participant"]
+        )
         group_means = check.groupby("participant")[PAQ_IDS].mean()
         np.testing.assert_allclose(group_means.to_numpy(), 0.0, atol=1e-10)
 
-    def test_satp_run_single_model(self, satp_data):
-        """SATP.run(circ_model=...) must populate exactly that model slot."""
-        from soundscapy.satp.circe import SATP, CircE, CircModelE
+    def test_fit_circe_returns_dataframe(self, isd_with_participant):
+        """fit_circe() must return a pd.DataFrame."""
+        from soundscapy.satp.circe import fit_circe
 
-        satp = SATP(satp_data, language="EN", datasource="ISD")
-        satp.run(circ_model=CircModelE.UNCONSTRAINED)
+        result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
+        assert isinstance(result, pd.DataFrame)
 
-        assert isinstance(satp.model_results[CircModelE.UNCONSTRAINED], CircE)
-        for model in [
-            CircModelE.EQUAL_ANG,
-            CircModelE.EQUAL_COM,
-            CircModelE.CIRCUMPLEX,
-        ]:
-            assert satp.model_results[model] is None
+    def test_fit_circe_returns_four_rows(self, isd_with_participant):
+        """fit_circe() with default models must return 4 rows (one per model)."""
+        from soundscapy.satp.circe import fit_circe
 
-    def test_satp_run_captures_n_correctly(self, satp_data):
-        """The n stored on the CircE result must equal len(satp.data)."""
-        from soundscapy.satp.circe import SATP, CircModelE
+        result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
+        assert len(result) == 4
 
-        satp = SATP(satp_data, language="EN", datasource="ISD")
-        n_data = len(satp.data)
-        satp.run(circ_model=CircModelE.UNCONSTRAINED)
+    def test_fit_circe_model_column_contains_all_variants(self, isd_with_participant):
+        """The 'model' column must contain all four CircModelE string values."""
+        from soundscapy.satp.circe import CircModelE, fit_circe
 
-        result = satp.model_results[CircModelE.UNCONSTRAINED]
-        assert result is not None
-        assert result.n == n_data
+        result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
+        expected = {m.value for m in CircModelE}
+        assert set(result["model"]) == expected
 
-    def test_satp_run_p_value_formula(self, satp_data):
-        """CircE.p from a full SATP run must equal scipy_chi2.sf(chisq, df)."""
-        from soundscapy.satp.circe import SATP, CircModelE
+    def test_fit_circe_numeric_fit_indices(self, isd_with_participant):
+        """chisq, cfi, rmsea must be numeric floats (not None or NaN) in all rows."""
+        from soundscapy.satp.circe import fit_circe
 
-        satp = SATP(satp_data, language="EN", datasource="ISD")
-        satp.run(circ_model=CircModelE.UNCONSTRAINED)
+        result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
+        for col in ("chisq", "cfi", "rmsea", "d"):
+            assert result[col].notna().all(), f"Column '{col}' has NaN values"
+            assert pd.api.types.is_numeric_dtype(result[col]), (
+                f"Column '{col}' is not numeric"
+            )
 
-        result = satp.model_results[CircModelE.UNCONSTRAINED]
-        assert result is not None
-        expected_p = scipy_chi2.sf(result.chisq, result.d)
-        assert pytest.approx(result.p, rel=1e-6) == expected_p
+    def test_fit_circe_p_value_formula(self, isd_with_participant):
+        """p in the results must equal scipy_chi2.sf(chisq, d) for each row."""
+        from soundscapy.satp.circe import fit_circe
 
-    def test_satp_run_all_models_errors_captured(self, satp_data):
+        result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
+        for _, row in result.iterrows():
+            expected_p = scipy_chi2.sf(row["chisq"], row["d"])
+            assert pytest.approx(row["p"], rel=1e-6) == expected_p
+
+    def test_fit_circe_n_uses_listwise_deletion(self, isd_with_participant):
         """
-        SATP.run() runs all models; convergence failures are captured.
+        n in results must equal len(data[PAQ_IDS].dropna()) after ipsatization.
 
-        Failures are stored in _errors and never propagate as exceptions.
+        Introducing NaN rows verifies listwise deletion is applied.
         """
-        from soundscapy.satp.circe import SATP
+        from soundscapy.satp.circe import fit_circe, ipsatize
+        from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        satp = SATP(satp_data, language="EN", datasource="ISD")
-        satp.run()  # must not raise
+        # Introduce NaN in one PAQ column for a single participant's rows
+        data_with_nan = isd_with_participant.copy()
+        first_participant = data_with_nan["participant"].iloc[0]
+        mask = data_with_nan["participant"] == first_participant
+        data_with_nan.loc[mask, "PAQ1"] = np.nan
 
-        n_results = sum(v is not None for v in satp.model_results.values())
-        n_errors = len(satp._errors)
-        assert n_results + n_errors == 4
+        result = fit_circe(data_with_nan, language="EN", datasource="ISD")
+
+        # Manually compute expected n
+        ipsatized = ipsatize(data_with_nan, by="participant")
+        expected_n = len(ipsatized[PAQ_IDS].dropna())
+
+        # All rows should report the same n
+        assert (result["n"] == expected_n).all(), (
+            f"n={result['n'].unique()} but expected {expected_n}"
+        )
+
+    def test_fit_circe_subset_of_models(self, isd_with_participant):
+        """fit_circe() with models=[...] must fit only those models."""
+        from soundscapy.satp.circe import CircModelE, fit_circe
+
+        result = fit_circe(
+            isd_with_participant,
+            language="EN",
+            datasource="ISD",
+            models=[CircModelE.UNCONSTRAINED, CircModelE.CIRCUMPLEX],
+        )
+        assert len(result) == 2
+        assert set(result["model"]) == {
+            CircModelE.UNCONSTRAINED.value,
+            CircModelE.CIRCUMPLEX.value,
+        }

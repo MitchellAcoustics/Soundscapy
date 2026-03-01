@@ -28,12 +28,13 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
     --------
         >>> # doctest: +SKIP
         >>> import soundscapy as sspy
+        >>> from soundscapy.satp import CircModelE
         >>> data = sspy.isd.load()
         >>> data_paqs = data[PAQ_IDS]
         >>> data_paqs = data_paqs.dropna()
         >>> data_cor = data_paqs.corr()
         >>> n = len(data_paqs)
-        >>> circ_model = ModelType(name=CircModelE.CIRCUMPLEX)
+        >>> circ_model = CircModelE.CIRCUMPLEX
         >>> circe_res = sspy.spi.bfgs(
         ... data_cor=data_cor,
         ... n=n,
@@ -105,13 +106,13 @@ def bfgs(
     Examples
     --------
         >>> import soundscapy as sspy
-        >>> from soundscapy.satp import CircModelE, ModelType
+        >>> from soundscapy.satp import CircModelE
         >>> data = sspy.isd.load()
         >>> data_paqs = data[PAQ_IDS]
         >>> data_paqs = data_paqs.dropna()
         >>> data_cor = data_paqs.corr()
         >>> n = data_paqs.shape[0]
-        >>> circ_model = ModelType(name=CircModelE.CIRCUMPLEX)
+        >>> circ_model = CircModelE.CIRCUMPLEX
         >>> circe_res = bfgs(
         ... data_cor=data_cor,
         ... n=n,

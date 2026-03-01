@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New **SATP** (Soundscape Attributes Translation Project) circumplex SEM module
+
+  - `fit_circe(data, language, datasource)` — primary API; validates, ipsatizes, fits
+    all four circumplex model types, and returns a tidy DataFrame directly
+  - `ipsatize(data, by="participant")` — public participant-wise centering function
+  - `CircE` dataclass — typed result container with `to_dict()` and `gdiff` property
+  - `CircModelE` enum with `equal_ang` / `equal_com` constraint properties
+  - Uses listwise deletion (complete cases) consistent with R's `na.omit`
+
 - New **Soundscape Perception Indices (SPI)** module
 
   - Provides tools for calculating Soundscape Perception Indices
