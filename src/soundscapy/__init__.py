@@ -106,7 +106,9 @@ _SPI_ATTRS: frozenset[str] = frozenset(
         "spi_score",
     }
 )
-_SATP_ATTRS: frozenset[str] = frozenset({"satp", "fit_circe", "CircModelE"})
+_SATP_ATTRS: frozenset[str] = frozenset(
+    {"satp", "fit_circe", "CircModelE", "normalize_polar_angles"}
+)
 
 
 def __getattr__(name: str):  # noqa: ANN202

@@ -788,6 +788,72 @@ class TestFitCirce:
 
 
 # ---------------------------------------------------------------------------
+# Tests for normalize_polar_angles
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.optional_deps("satp")
+class TestNormalizePolarAngles:
+    """Tests for normalize_polar_angles()."""
+
+    def test_canonical_angles_unchanged(self):
+        """Canonical (counter-clockwise) angles must be returned unchanged."""
+        from soundscapy.satp.circe import normalize_polar_angles
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        canonical = pd.Series([0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0], index=PAQ_IDS)
+        result = normalize_polar_angles(canonical)
+        pd.testing.assert_series_equal(result, canonical)
+
+    def test_reflected_angles_corrected(self):
+        """Reflected (clockwise) angles must be converted to canonical form."""
+        from soundscapy.satp.circe import normalize_polar_angles
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        reflected = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
+        expected = pd.Series([0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0], index=PAQ_IDS)
+        result = normalize_polar_angles(reflected)
+        pd.testing.assert_series_equal(result, expected)
+
+    def test_paq1_always_zero_after_correction(self):
+        """PAQ1 must remain at 0° when a reflected solution is corrected."""
+        from soundscapy.satp.circe import normalize_polar_angles
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        reflected = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
+        result = normalize_polar_angles(reflected)
+        assert result["PAQ1"] == 0.0
+
+    def test_index_preserved(self):
+        """The output Series must have the same PAQ_IDS index as the input."""
+        from soundscapy.satp.circe import normalize_polar_angles
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        angles = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
+        result = normalize_polar_angles(angles)
+        assert list(result.index) == PAQ_IDS
+
+    def test_circe_polar_angles_canonical_after_fit(self, isd_cor, isd_n):
+        """
+        CircE.polar_angles must satisfy the canonical monotonicity criterion.
+
+        Regardless of which direction the raw BFGS solution converges in, the
+        stored polar_angles must have PAQ2 ≤ PAQ3 ≤ PAQ4 (counter-clockwise).
+        """
+        from soundscapy.satp.circe import CircE, CircModelE
+
+        for model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
+            result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
+            angles = result.polar_angles.to_numpy()
+            assert angles[1] <= angles[2], (
+                f"{model.value}: PAQ2 ({angles[1]:.1f}°) > PAQ3 ({angles[2]:.1f}°) — not canonical"
+            )
+            assert angles[2] <= angles[3], (
+                f"{model.value}: PAQ3 ({angles[2]:.1f}°) > PAQ4 ({angles[3]:.1f}°) — not canonical"
+            )
+
+
+# ---------------------------------------------------------------------------
 # Tests for gdiff property
 # ---------------------------------------------------------------------------
 

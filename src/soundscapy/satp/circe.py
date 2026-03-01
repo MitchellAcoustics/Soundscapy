@@ -11,6 +11,8 @@ including within-person centering (column-wise centering per participant).
 
 Functions
 ---------
+normalize_polar_angles : function
+    Correct reflected polar-angle solutions to canonical orientation
 person_center : function
     Column-wise within-participant centering of PAQ ratings
 fit_circe : function
@@ -143,15 +145,58 @@ class SATPSchema(pa.DataFrameModel):
         return df.rename(columns=rename_dict)
 
 
-# Ideal 45°-spaced circumplex positions (degrees), used for GDIFF calculation.
-# Two orderings handle datasets where PAQ1 is anchored near 0° vs near 315°.
+# Ideal 45°-spaced circumplex positions (degrees) in canonical counter-clockwise
+# order, used for GDIFF calculation after angles have been normalised.
 _IDEAL_ANGLES = np.array([0, 45, 90, 135, 180, 225, 270, 315])
-_IDEAL_ANGLES_REV = np.array([0, 315, 270, 225, 180, 135, 90, 45])
 
-# Threshold for the sum of the first three angles (PAQ1-PAQ3).
-# If sum > 300, it indicates the angles are likely in the reversed orientation
-# (e.g., 0 + 315 + 270 = 585) rather than standard (0 + 45 + 90 = 135).
-_ANGLE_REV_THRESHOLD = 300
+
+def normalize_polar_angles(angles: pd.Series) -> pd.Series:
+    """
+    Return polar angles in canonical (counter-clockwise) orientation.
+
+    CircE's BFGS optimisation may converge to a mathematically equivalent
+    *reflected* solution in which the PAQ attributes are arranged in clockwise
+    (decreasing) order rather than the canonical counter-clockwise (increasing)
+    order.  Both solutions fit the correlation data equally well, but the
+    reflected form is inconsistent with the standard circumplex ordering
+    (pleasant → vibrant → eventful → …) and will produce incorrect GDIFF values
+    if compared against the ideal equally-spaced angles.
+
+    Detection uses a monotonicity check on the first three angles after PAQ1:
+    if the angle for PAQ2 exceeds PAQ3, or PAQ3 exceeds PAQ4, the solution is
+    reflected.  This is more robust than a threshold-on-sum heuristic because
+    it tests the structural property of the orientation directly.
+
+    When reflection is detected, ``360 - angle`` is applied to PAQ2-PAQ8.
+    PAQ1 is anchored at 0° and is left unchanged.
+
+    Parameters
+    ----------
+    angles
+        Series of polar angle estimates (degrees) with PAQ_IDS as the index.
+        Typically the ``polar_angles`` attribute of a :class:`CircE` instance.
+
+    Returns
+    -------
+    pd.Series
+        Polar angles in canonical (counter-clockwise) orientation, with the
+        same index as the input.
+
+    Examples
+    --------
+    >>> from soundscapy.surveys.survey_utils import PAQ_IDS
+    >>> import pandas as pd
+    >>> reflected = pd.Series([0, 315, 270, 225, 180, 135, 90, 45], index=PAQ_IDS)
+    >>> normalize_polar_angles(reflected).tolist()
+    [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
+
+    """
+    # Monotonicity check (positional): canonical ordering has PAQ2 < PAQ3 < PAQ4.
+    if angles.iloc[1] > angles.iloc[2] or angles.iloc[2] > angles.iloc[3]:
+        corrected = angles.copy()
+        corrected.iloc[1:] = 360 - corrected.iloc[1:]
+        return corrected
+    return angles
 
 
 @dataclasses.dataclass
@@ -244,7 +289,9 @@ class CircE:
                     estimates = pa_df["estimates"].to_numpy()
                 else:
                     estimates = pa_df.iloc[:, 0].to_numpy()
-                polar_angles = pd.Series(estimates, index=PAQ_IDS)
+                polar_angles = normalize_polar_angles(
+                    pd.Series(estimates, index=PAQ_IDS)
+                )
 
         return cls(
             model=circ_model,
@@ -339,11 +386,9 @@ class CircE:
         if self.polar_angles is None:
             return None
         obs = self.polar_angles.to_numpy()
-        # Choose reference based on whether PAQ1 is anchored near 315° or 0°.
-        reference = (
-            _IDEAL_ANGLES_REV if obs[:3].sum() > _ANGLE_REV_THRESHOLD else _IDEAL_ANGLES
-        )
-        return round(float(np.sqrt(np.mean((obs - reference) ** 2))), 2)
+        # Angles are always in canonical orientation (normalised in from_bfgs),
+        # so we compare directly against the ideal 45°-spaced positions.
+        return round(float(np.sqrt(np.mean((obs - _IDEAL_ANGLES) ** 2))), 2)
 
     def to_dict(self) -> dict[str, Any]:
         """
