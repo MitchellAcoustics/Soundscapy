@@ -21,4 +21,4 @@ except ImportError as e:
 from soundscapy.satp import circe
 from soundscapy.satp.circe import CircE, CircModelE, fit_circe, ipsatize
 
-__all__ = ["CircE", "CircModelE", "fit_circe", "ipsatize", "circe"]
+__all__ = ["CircE", "CircModelE", "circe", "fit_circe", "ipsatize"]

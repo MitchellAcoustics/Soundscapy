@@ -387,14 +387,14 @@ class TestCircEDataclass:
         assert result.srmr >= 0
 
     def test_polar_angles_is_series_for_free_angle_models(self, isd_cor, isd_n):
-        """polar_angles must be a pd.Series with PAQ_IDS index for UNCONSTRAINED and EQUAL_COM."""
+        """polar_angles must be a pd.Series with PAQ_IDS index for UNCONSTRAINED and EQUAL_COM."""  # noqa: E501
         from soundscapy.satp.circe import CircE, CircModelE
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
         for model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
             result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
             assert isinstance(result.polar_angles, pd.Series), (
-                f"{model.value}: polar_angles should be a Series, got {type(result.polar_angles)}"
+                f"{model.value}: polar_angles should be a Series, got {type(result.polar_angles)}"  # noqa: E501
             )
             assert list(result.polar_angles.index) == PAQ_IDS, (
                 f"{model.value}: polar_angles index should be PAQ_IDS"
@@ -421,9 +421,24 @@ class TestCircEDataclass:
         )
         d = result.to_dict()
         expected_keys = {
-            "datasource", "language", "model", "n", "m", "chisq", "d", "p",
-            "cfi", "gfi", "agfi", "srmr", "mcsc", "rmsea", "rmsea_l", "rmsea_u",
-            "gdiff", *PAQ_IDS,
+            "datasource",
+            "language",
+            "model",
+            "n",
+            "m",
+            "chisq",
+            "d",
+            "p",
+            "cfi",
+            "gfi",
+            "agfi",
+            "srmr",
+            "mcsc",
+            "rmsea",
+            "rmsea_l",
+            "rmsea_u",
+            "gdiff",
+            *PAQ_IDS,
         }
         assert expected_keys.issubset(d.keys())
 
@@ -549,7 +564,7 @@ class TestFitCirce:
             )
 
     def test_fit_circe_p_value_formula(self, isd_with_participant):
-        """p in the results must equal scipy_chi2.sf(chisq, d) for each row."""
+        """P in the results must equal scipy_chi2.sf(chisq, d) for each row."""
         from soundscapy.satp.circe import fit_circe
 
         result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
@@ -559,7 +574,7 @@ class TestFitCirce:
 
     def test_fit_circe_n_uses_listwise_deletion(self, isd_with_participant):
         """
-        n in results must equal len(data[PAQ_IDS].dropna()) after ipsatization.
+        N in results must equal len(data[PAQ_IDS].dropna()) after ipsatization.
 
         Introducing NaN rows verifies listwise deletion is applied.
         """
@@ -644,9 +659,10 @@ class TestFitCirce:
         # Patch compute_bfgs_fit for one specific model to simulate convergence failure.
         original = CircE.compute_bfgs_fit
 
-        def failing_fit(data_cor, n, datasource, language, circ_model):
+        def failing_fit(data_cor, n, datasource, language, circ_model) -> CircE:
             if circ_model is CircModelE.UNCONSTRAINED:
-                raise RuntimeError("simulated convergence failure")
+                msg = "simulated convergence failure"
+                raise RuntimeError(msg)
             return original(data_cor, n, datasource, language, circ_model)
 
         with patch.object(CircE, "compute_bfgs_fit", staticmethod(failing_fit)):
@@ -662,7 +678,8 @@ class TestFitCirce:
         assert "convergence failure" in row["error"]
 
     def test_fit_circe_n_zero_raises(self):
-        """fit_circe() must raise ValueError when no complete cases remain.
+        """
+        fit_circe() must raise ValueError when no complete cases remain.
 
         Uses a 0-row slice of valid ISD data, which passes schema validation
         but yields n=0 after listwise deletion.
@@ -675,9 +692,9 @@ class TestFitCirce:
         data = sspy.isd.load().rename(columns={"SessionID": "participant"})
         empty_data = data.iloc[0:0].copy()  # 0 rows, correct column structure
 
-        with pytest.raises(ValueError, match="No complete cases"):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", UserWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            with pytest.raises(ValueError, match="No complete cases"):
                 fit_circe(empty_data, language="EN", datasource="ISD")
 
     def test_satp_schema_participant_case_insensitive(self):
@@ -687,12 +704,10 @@ class TestFitCirce:
 
         # Build a tiny valid DataFrame with an ALL-CAPS participant column.
         rng = np.random.default_rng(0)
-        df = pd.DataFrame(
-            rng.uniform(0, 100, size=(4, 8)), columns=PAQ_IDS
-        )
-        df["PARTICIPANT"] = ["A", "A", "B", "B"]
+        data = pd.DataFrame(rng.uniform(0, 100, size=(4, 8)), columns=PAQ_IDS)
+        data["PARTICIPANT"] = ["A", "A", "B", "B"]
 
-        validated = SATPSchema.validate(df, lazy=True)
+        validated = SATPSchema.validate(data, lazy=True)
         assert "participant" in validated.columns
         assert "PARTICIPANT" not in validated.columns
 
@@ -704,10 +719,10 @@ class TestFitCirce:
         rng = np.random.default_rng(1)
         # Build DataFrame using title-cased label names (e.g. 'Pleasant').
         title_labels = [label.title() for label in PAQ_LABELS]
-        df = pd.DataFrame(rng.uniform(0, 100, size=(4, 8)), columns=title_labels)
-        df["participant"] = ["A", "A", "B", "B"]
+        data = pd.DataFrame(rng.uniform(0, 100, size=(4, 8)), columns=title_labels)
+        data["participant"] = ["A", "A", "B", "B"]
 
-        validated = SATPSchema.validate(df, lazy=True)
+        validated = SATPSchema.validate(data, lazy=True)
         for paq_id in PAQ_IDS:
             assert paq_id in validated.columns, f"{paq_id} missing after normalization"
         for label in title_labels:
@@ -724,12 +739,14 @@ class TestFitCirce:
         data = sspy.isd.load()[PAQ_IDS].dropna()  # no participant column
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
-            result = fit_circe(data, language="EN", datasource="ISD", ipsatize_data=False)
+            result = fit_circe(
+                data, language="EN", datasource="ISD", ipsatize_data=False
+            )
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 4
 
     def test_fit_circe_ipsatize_true_no_participant_raises(self):
-        """fit_circe(ipsatize_data=True) must raise ValueError when participant is absent."""
+        """fit_circe(ipsatize_data=True) must raise ValueError when participant is absent."""  # noqa: E501
         import warnings
 
         import soundscapy as sspy
@@ -737,23 +754,23 @@ class TestFitCirce:
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
         data = sspy.isd.load()[PAQ_IDS].dropna()  # no participant column
-        with pytest.raises(ValueError, match="participant"):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", UserWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            with pytest.raises(ValueError, match="participant"):
                 fit_circe(data, language="EN", datasource="ISD", ipsatize_data=True)
 
     def test_fit_circe_error_row_preserves_numeric_dtypes(self, isd_with_participant):
-        """Numeric column dtypes must not be promoted to float64 when one model fails."""
+        """Numeric col dtypes must not be promoted to float64 when one model fails."""
         from unittest.mock import patch
 
-        import soundscapy as sspy
         from soundscapy.satp.circe import CircE, CircModelE, fit_circe
 
         original = CircE.compute_bfgs_fit
 
-        def failing_fit(data_cor, n, datasource, language, circ_model):
+        def failing_fit(data_cor, n, datasource, language, circ_model) -> CircE:
             if circ_model is CircModelE.UNCONSTRAINED:
-                raise RuntimeError("simulated failure")
+                msg = "simulated failure"
+                raise RuntimeError(msg)
             return original(data_cor, n, datasource, language, circ_model)
 
         with patch.object(CircE, "compute_bfgs_fit", staticmethod(failing_fit)):
@@ -762,7 +779,7 @@ class TestFitCirce:
         # n must be integer in success rows even when one row is an error row.
         success_rows = result[result["model"] != CircModelE.UNCONSTRAINED.value]
         for _, row in success_rows.iterrows():
-            assert isinstance(row["n"], (int, np.integer)), (
+            assert isinstance(row["n"], int | np.integer), (
                 f"n should be int in success row, got {type(row['n'])}"
             )
 
@@ -777,7 +794,7 @@ class TestGdiff:
     """Tests for CircE.gdiff property."""
 
     def test_gdiff_is_none_for_constrained_models(self, isd_cor, isd_n):
-        """gdiff must be None for EQUAL_ANG and CIRCUMPLEX (no free angles)."""
+        """Gdiff must be None for EQUAL_ANG and CIRCUMPLEX (no free angles)."""
         from soundscapy.satp.circe import CircE, CircModelE
 
         for model in (CircModelE.EQUAL_ANG, CircModelE.CIRCUMPLEX):
@@ -787,7 +804,7 @@ class TestGdiff:
             )
 
     def test_gdiff_is_float_for_free_angle_models(self, isd_cor, isd_n):
-        """gdiff must be a non-negative float for UNCONSTRAINED and EQUAL_COM."""
+        """Gdiff must be a non-negative float for UNCONSTRAINED and EQUAL_COM."""
         from soundscapy.satp.circe import CircE, CircModelE
 
         for model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):

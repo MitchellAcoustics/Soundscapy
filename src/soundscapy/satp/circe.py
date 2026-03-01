@@ -29,7 +29,7 @@ CircE : dataclass
 import dataclasses
 import warnings
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -49,7 +49,10 @@ logger = get_logger()
 # (e.g. "paq1" → "PAQ1"), and the participant field ("PARTICIPANT" → "participant").
 # ---------------------------------------------------------------------------
 _COLUMN_ALIASES: dict[str, str] = {
-    **{label.lower(): paq_id for label, paq_id in zip(PAQ_LABELS, PAQ_IDS)},
+    **{
+        label.lower(): paq_id
+        for label, paq_id in zip(PAQ_LABELS, PAQ_IDS, strict=False)
+    },
     **{paq_id.lower(): paq_id for paq_id in PAQ_IDS},
     "participant": "participant",
 }
@@ -99,7 +102,7 @@ class SATPSchema(pa.DataFrameModel):
     PAQ7: Series[float] = Field(ge=0, le=100)
     PAQ8: Series[float] = Field(ge=0, le=100)
 
-    participant: Optional[Series[str]] = Field(nullable=True)
+    participant: Series[str] | None = Field(nullable=True)
 
     class Config:
         """Configuration for the schema validation behavior."""
@@ -140,6 +143,11 @@ class SATPSchema(pa.DataFrameModel):
 # Two orderings handle datasets where PAQ1 is anchored near 0° vs near 315°.
 _IDEAL_ANGLES = np.array([0, 45, 90, 135, 180, 225, 270, 315])
 _IDEAL_ANGLES_REV = np.array([0, 315, 270, 225, 180, 135, 90, 45])
+
+# Threshold for the sum of the first three angles (PAQ1-PAQ3).
+# If sum > 300, it indicates the angles are likely in the reversed orientation
+# (e.g., 0 + 315 + 270 = 585) rather than standard (0 + 45 + 90 = 135).
+_ANGLE_REV_THRESHOLD = 300
 
 
 @dataclasses.dataclass
@@ -185,6 +193,7 @@ class CircE:
         Estimated polar angles (degrees) for each PAQ item, with PAQ_IDS as
         the index. Only available for models with free angle parameters
         (UNCONSTRAINED, EQUAL_COM). ``None`` for EQUAL_ANG and CIRCUMPLEX.
+
     """
 
     model: CircModelE
@@ -321,19 +330,22 @@ class CircE:
         float or None
             Rounded RMSD value (2 decimal places), or ``None`` if angles are
             fixed by the model.
+
         """
         if self.polar_angles is None:
             return None
         obs = self.polar_angles.to_numpy()
         # Choose reference based on whether PAQ1 is anchored near 315° or 0°.
-        reference = _IDEAL_ANGLES_REV if obs[:3].sum() > 300 else _IDEAL_ANGLES
+        reference = (
+            _IDEAL_ANGLES_REV if obs[:3].sum() > _ANGLE_REV_THRESHOLD else _IDEAL_ANGLES
+        )
         return round(float(np.sqrt(np.mean((obs - reference) ** 2))), 2)
 
     def to_dict(self) -> dict[str, Any]:
         """
         Return all model fit statistics as a flat dictionary.
 
-        Polar angle columns (PAQ1–PAQ8) are expanded as individual keys.
+        Polar angle columns (PAQ1-PAQ8) are expanded as individual keys.
         For models with fixed angles (EQUAL_ANG, CIRCUMPLEX), PAQ values
         are ``None``.
 
@@ -341,6 +353,7 @@ class CircE:
         -------
         dict
             Flat dictionary suitable for constructing a pandas DataFrame row.
+
         """
         base = {
             "datasource": self.datasource,
@@ -388,6 +401,7 @@ def ipsatize(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
     pd.DataFrame
         DataFrame with participant-centered PAQ values.
         The ``by`` column is consumed by the groupby and dropped from the result.
+
     """
     return data.groupby(by).transform(lambda x: x - x.mean())
 
@@ -410,7 +424,7 @@ def fit_circe(
     Parameters
     ----------
     data
-        DataFrame with PAQ1–PAQ8 and a ``participant`` column.
+        DataFrame with PAQ1-PAQ8 and a ``participant`` column.
         Column aliases (e.g. PAQ label names, ``Participant``) are accepted
         and renamed automatically by the schema validator.
     language
@@ -431,8 +445,8 @@ def fit_circe(
         One row per fitted model. Columns: ``datasource``, ``language``,
         ``model``, ``n``, ``m``, ``chisq``, ``d``, ``p``, ``cfi``, ``gfi``,
         ``agfi``, ``srmr``, ``mcsc``, ``rmsea``, ``rmsea_l``, ``rmsea_u``,
-        ``gdiff``, ``PAQ1``–``PAQ8``.
-        ``PAQ1``–``PAQ8`` contain fitted polar angle estimates for free-angle
+        ``gdiff``, ``PAQ1``-``PAQ8``.
+        ``PAQ1``-``PAQ8`` contain fitted polar angle estimates for free-angle
         models (UNCONSTRAINED, EQUAL_COM); ``None`` for constrained models.
         Rows for models that fail to converge contain an ``error`` column.
 
@@ -453,35 +467,39 @@ def fit_circe(
         stacklevel=2,
     )
     if len(data) == 0:
-        raise ValueError(
+        msg = (
             "No complete cases found: input DataFrame is empty. "
-            "Check that data contains valid rows with PAQ1–PAQ8 and a participant column."
+            "Check that data contains valid rows with PAQ1-PAQ8 and participant column."
         )
+        raise ValueError(msg)
     validated = SATPSchema.validate(data, lazy=True)
     if ipsatize_data and "participant" not in validated.columns:
-        raise ValueError(
+        msg = (
             "ipsatize_data=True requires a 'participant' column. "
             "Pass ipsatize_data=False if your data is already ipsatized."
         )
+        raise ValueError(msg)
     processed = ipsatize(validated) if ipsatize_data else validated
 
     # Use listwise deletion (complete cases only) — consistent with R's na.omit().
     complete = processed[PAQ_IDS].dropna()
     n = len(complete)
     if n == 0:
-        raise ValueError(
+        msg = (
             "No complete cases found after validation and ipsatization. "
-            "Check that PAQ1–PAQ8 are not all NaN and the participant column is present."
+            "Check that PAQ1-PAQ8 are not all NaN and participant column is present."
         )
+        raise ValueError(msg)
     corr = complete.corr()
 
     circ_models = models if models is not None else list(CircModelE)
     rows: list[dict] = []
+    fit_exceptions = (ValueError, np.linalg.LinAlgError, RuntimeError)
     for model in circ_models:
         try:
             circe = CircE.compute_bfgs_fit(corr, n, datasource, language, model)
             rows.append(circe.to_dict())
-        except Exception as e:  # noqa: BLE001
+        except fit_exceptions as e:  # noqa: PERF203
             warnings.warn(f"{model.value} raised {e}", stacklevel=2)
             # Populate all expected columns with None so that pandas does not
             # promote numeric columns (e.g. n, d) to float64 across all rows

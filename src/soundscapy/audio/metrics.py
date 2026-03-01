@@ -388,8 +388,7 @@ def maad_metric_1ch(
         return res.to_dict("records")[0]
     try:
         res["Recording"] = s.recording
-        res.set_index(["Recording"], inplace=True)
-        return res
+        return res.set_index(["Recording"])
     except AttributeError:
         return res
 
@@ -697,11 +696,15 @@ def acoustics_metric_2ch(
         rec = b.recording
     except AttributeError:
         rec = 0
+    else:
+        data = pd.DataFrame.from_dict(res, orient="index")
+        data["Recording"] = rec
+        data["Channel"] = data.index
+        return data.set_index(["Recording", "Channel"])
     data = pd.DataFrame.from_dict(res, orient="index")
     data["Recording"] = rec
     data["Channel"] = data.index
-    data.set_index(["Recording", "Channel"], inplace=True)
-    return data
+    return data.set_index(["Recording", "Channel"])
 
 
 def _parallel_mosqito_metric_2ch(
@@ -930,11 +933,15 @@ def mosqito_metric_2ch(
         rec = b.recording
     except AttributeError:
         rec = 0
+    else:
+        data = pd.DataFrame.from_dict(res, orient="index")
+        data["Recording"] = rec
+        data["Channel"] = data.index
+        return data.set_index(["Recording", "Channel"])
     data = pd.DataFrame.from_dict(res, orient="index")
     data["Recording"] = rec
     data["Channel"] = data.index
-    data.set_index(["Recording", "Channel"], inplace=True)
-    return data
+    return data.set_index(["Recording", "Channel"])
 
 
 def maad_metric_2ch(
@@ -1009,8 +1016,7 @@ def maad_metric_2ch(
     data = pd.DataFrame.from_dict(res, orient="index")
     data["Recording"] = rec
     data["Channel"] = data.index
-    data.set_index(["Recording", "Channel"], inplace=True)
-    return data
+    return data.set_index(["Recording", "Channel"])
 
 
 # Analysis dataframe functions
