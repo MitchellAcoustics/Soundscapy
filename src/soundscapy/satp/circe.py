@@ -7,12 +7,12 @@ classes, and analysis workflows for the Soundscape Attributes Translation Projec
 
 The module supports various circumplex model types (unconstrained, equal angles,
 equal communalities, and full circumplex) and provides automated data preprocessing
-including ipsatization (participant-wise centering).
+including within-person centering (column-wise centering per participant).
 
 Functions
 ---------
-ipsatize : function
-    Participant-wise centering of PAQ ratings
+person_center : function
+    Column-wise within-participant centering of PAQ ratings
 fit_circe : function
     Fit circumplex SEM models and return a tidy DataFrame
 
@@ -381,29 +381,58 @@ class CircE:
         return base
 
 
-def ipsatize(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
+def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
     """
-    Ipsatize (participant-wise center) PAQ ratings.
+    Center PAQ ratings within each participant (column-wise within-person centering).
 
-    Each participant's responses are centered around their own mean for each
-    PAQ column. This removes individual response style differences (e.g., a
-    tendency to rate everything high or low) while preserving relative patterns.
+    **Psychometric background**
+
+    In cross-cultural and multi-lingual soundscape studies, participants from
+    different language groups may use rating scales differently — some cultures
+    favour extreme responses; others cluster near the midpoint.  These
+    *response-style biases* inflate between-person variance and can distort the
+    correlation structure that circumplex SEM models depend on.
+
+    Within-person centering addresses this by removing each participant's
+    *scale-specific* mean: for every PAQ column independently, the participant's
+    mean across all their soundscape observations is subtracted.  The result is
+    that every participant has a zero mean on every PAQ scale, so the residual
+    variance reflects genuine perceptual variation across soundscapes rather
+    than individual scale-use tendencies.
+
+    This is the form of centering recommended for the SATP circumplex analysis
+    (Aletta et al., 2024) and corresponds to the ``ipsatize`` preprocessing step
+    in the original R implementation.
+
+    .. note::
+
+        This is **column-wise** within-participant centering.  It is distinct
+        from *row-wise* ipsatization (e.g. ``circumplex.ipsatize()``), which
+        subtracts the mean across all PAQ items within a single observation.
+        Row-wise centering removes the general impression of each soundscape;
+        column-wise centering removes the participant's personal use of each
+        scale.  Use this function when participants have multiple observations
+        (one per soundscape) and the goal is to remove person-level scale-use
+        biases before computing a correlation matrix.
 
     Parameters
     ----------
     data
-        DataFrame containing PAQ columns and a grouping column.
+        DataFrame containing PAQ columns and a participant grouping column.
     by
-        Column name to group by for centering. Default is ``"participant"``.
+        Column to group by for centering. Default is ``"participant"``.
 
     Returns
     -------
     pd.DataFrame
-        DataFrame with participant-centered PAQ values.
-        The ``by`` column is consumed by the groupby and dropped from the result.
+        DataFrame containing only the PAQ columns (not ``by``), with
+        participant-centred values.  The ``by`` column is excluded from the
+        result because arithmetic centering is undefined for string identifiers.
 
     """
-    return data.groupby(by).transform(lambda x: x - x.mean())
+    paq_cols = [c for c in data.columns if c != by]
+    means = data.groupby(by)[paq_cols].transform("mean")
+    return data[paq_cols] - means
 
 
 def fit_circe(
@@ -412,12 +441,12 @@ def fit_circe(
     datasource: str,
     *,
     models: list[CircModelE] | None = None,
-    ipsatize_data: bool = True,
+    center_by_participant: bool = True,
 ) -> pd.DataFrame:
     """
     Fit circumplex SEM models to PAQ data and return a tidy DataFrame.
 
-    Validates input data, optionally ipsatizes responses, computes a
+    Validates input data, optionally applies within-person centering, computes a
     complete-case correlation matrix, and fits the requested circumplex
     model types using Browne's BFGS optimisation via the R ``CircE`` package.
 
@@ -435,9 +464,9 @@ def fit_circe(
         Stored in the results; not used for computation.
     models
         List of model types to fit. Default: all four ``CircModelE`` variants.
-    ipsatize_data
-        Whether to apply participant-wise centering before fitting.
-        Set to ``False`` if the data is already ipsatized.
+    center_by_participant
+        Whether to apply within-person centering (via :func:`person_center`)
+        before fitting.  Set to ``False`` if the data is already centered.
 
     Returns
     -------
@@ -456,7 +485,7 @@ def fit_circe(
     >>> from soundscapy.satp import fit_circe
     >>> data = sspy.isd.load()
     >>> data = data.rename(columns={'SessionID': 'participant'})
-    >>> results = fit_circe(data, language='eng', datasource='ISD')
+    >>> results = fit_circe(data, language='eng', datasource='ISD')  # center_by_participant=True by default
     >>> results.shape[0]
     4
 
@@ -473,13 +502,13 @@ def fit_circe(
         )
         raise ValueError(msg)
     validated = SATPSchema.validate(data, lazy=True)
-    if ipsatize_data and "participant" not in validated.columns:
+    if center_by_participant and "participant" not in validated.columns:
         msg = (
-            "ipsatize_data=True requires a 'participant' column. "
-            "Pass ipsatize_data=False if your data is already ipsatized."
+            "center_by_participant=True requires a 'participant' column. "
+            "Pass center_by_participant=False if your data is already centered."
         )
         raise ValueError(msg)
-    processed = ipsatize(validated) if ipsatize_data else validated
+    processed = person_center(validated) if center_by_participant else validated
 
     # Use listwise deletion (complete cases only) — consistent with R's na.omit().
     complete = processed[PAQ_IDS].dropna()

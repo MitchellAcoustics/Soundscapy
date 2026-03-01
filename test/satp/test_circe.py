@@ -503,28 +503,28 @@ class TestCircModelEProperties:
 
 
 # ---------------------------------------------------------------------------
-# Tests for fit_circe() function and ipsatize()
+# Tests for fit_circe() function and person_center()
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.optional_deps("satp")
 class TestFitCirce:
-    """Integration tests for fit_circe() and ipsatize()."""
+    """Integration tests for fit_circe() and person_center()."""
 
-    def test_ipsatize_per_participant_mean_zero(self, isd_with_participant):
+    def test_person_center_per_participant_mean_zero(self, isd_with_participant):
         """
-        After ipsatization each PAQ column must have zero mean per participant.
+        After person-centering each PAQ column must have zero mean per participant.
 
-        The implementation uses groupby.transform, which centers each column
-        within each participant group.  The invariant is: for every
+        The implementation uses groupby[paq_cols].transform("mean"), which centers
+        each column within each participant group.  The invariant is: for every
         (participant, PAQ_col) pair, the mean across the participant's rows is zero.
         """
-        from soundscapy.satp.circe import ipsatize
+        from soundscapy.satp.circe import person_center
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        ipsatized = ipsatize(isd_with_participant, by="participant")
-        # groupby.transform preserves the original index, so joining back is safe.
-        check = ipsatized[PAQ_IDS].assign(
+        centered = person_center(isd_with_participant, by="participant")
+        # person_center returns only PAQ columns; re-attach participant for groupby.
+        check = centered[PAQ_IDS].assign(
             participant=isd_with_participant["participant"]
         )
         group_means = check.groupby("participant")[PAQ_IDS].mean()
@@ -574,11 +574,11 @@ class TestFitCirce:
 
     def test_fit_circe_n_uses_listwise_deletion(self, isd_with_participant):
         """
-        N in results must equal len(data[PAQ_IDS].dropna()) after ipsatization.
+        N in results must equal len(data[PAQ_IDS].dropna()) after person-centering.
 
         Introducing NaN rows verifies listwise deletion is applied.
         """
-        from soundscapy.satp.circe import fit_circe, ipsatize
+        from soundscapy.satp.circe import fit_circe, person_center
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
         # Introduce NaN in one PAQ column for a single participant's rows
@@ -590,8 +590,8 @@ class TestFitCirce:
         result = fit_circe(data_with_nan, language="EN", datasource="ISD")
 
         # Manually compute expected n
-        ipsatized = ipsatize(data_with_nan, by="participant")
-        expected_n = len(ipsatized[PAQ_IDS].dropna())
+        centered = person_center(data_with_nan, by="participant")
+        expected_n = len(centered[PAQ_IDS].dropna())
 
         # All rows should report the same n
         assert (result["n"] == expected_n).all(), (
@@ -627,15 +627,15 @@ class TestFitCirce:
                 f"{row['model']}: rmsea ({row['rmsea']}) > rmsea_u ({row['rmsea_u']})"
             )
 
-    def test_fit_circe_ipsatize_false(self, isd_with_participant):
-        """ipsatize_data=False must run without error and return a 4-row DataFrame."""
+    def test_fit_circe_no_person_centering(self, isd_with_participant):
+        """center_by_participant=False must run without error and return a 4-row DataFrame."""
         from soundscapy.satp.circe import fit_circe
 
         result = fit_circe(
             isd_with_participant,
             language="EN",
             datasource="ISD",
-            ipsatize_data=False,
+            center_by_participant=False,
         )
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 4
@@ -728,8 +728,8 @@ class TestFitCirce:
         for label in title_labels:
             assert label not in validated.columns, f"Original '{label}' still present"
 
-    def test_fit_circe_ipsatize_false_no_participant(self):
-        """fit_circe(ipsatize_data=False) must work without a participant column."""
+    def test_fit_circe_no_person_centering_no_participant(self):
+        """fit_circe(center_by_participant=False) must work without a participant column."""
         import warnings
 
         import soundscapy as sspy
@@ -740,13 +740,13 @@ class TestFitCirce:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             result = fit_circe(
-                data, language="EN", datasource="ISD", ipsatize_data=False
+                data, language="EN", datasource="ISD", center_by_participant=False
             )
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 4
 
-    def test_fit_circe_ipsatize_true_no_participant_raises(self):
-        """fit_circe(ipsatize_data=True) must raise ValueError when participant is absent."""  # noqa: E501
+    def test_fit_circe_person_centering_no_participant_raises(self):
+        """fit_circe(center_by_participant=True) must raise ValueError when participant is absent."""  # noqa: E501
         import warnings
 
         import soundscapy as sspy
@@ -757,7 +757,7 @@ class TestFitCirce:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             with pytest.raises(ValueError, match="participant"):
-                fit_circe(data, language="EN", datasource="ISD", ipsatize_data=True)
+                fit_circe(data, language="EN", datasource="ISD", center_by_participant=True)
 
     def test_fit_circe_error_row_preserves_numeric_dtypes(self, isd_with_participant):
         """Numeric col dtypes must not be promoted to float64 when one model fails."""
