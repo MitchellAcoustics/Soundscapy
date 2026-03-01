@@ -42,7 +42,7 @@ test = [
 
 [project]
 authors = [
-    { email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell" },
+    {email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell"},
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -91,8 +91,8 @@ documentation = "https://soundscapy.readthedocs.io/en/latest/"
 repository = "https://github.com/MitchellAcoustics/Soundscapy"
 
 [tool.coverage]
-report = { sort = "cover" }
-run = { branch = true, parallel = true, source = ["soundscapy"] }
+report = {sort = "cover"}
+run = {branch = true, parallel = true, source = ["soundscapy"]}
 paths.source = ["src", ".tox*/*/lib/python*/site-packages"]
 
 [tool.mypy]
@@ -122,42 +122,42 @@ lint.ignore = [
     "ANN003",
     # missing kwarg type hinting:
     "ANN401",
-    "COM812",  # trailing commas (ruff-format recommended)
-    "D203",    # no-blank-line-before-class
-    "D212",    # multi-line-summary-first-line
-    "D407",    # removed dashes lines under sections
-    "D417",    # argument description in docstring (unreliable)
-    "FIX002",  # fixme (ruff-format recommended)
-    "ISC001",  # simplify implicit str concatenation (ruff-format recommended)
+    "COM812", # trailing commas (ruff-format recommended)
+    "D203", # no-blank-line-before-class
+    "D212", # multi-line-summary-first-line
+    "D407", # removed dashes lines under sections
+    "D417", # argument description in docstring (unreliable)
+    "FIX002", # fixme (ruff-format recommended)
+    "ISC001", # simplify implicit str concatenation (ruff-format recommended)
     "PLR0913", # too many arguments
-    "TD002",   # Missing author in TODO
-    "TD003",   # Missing issue link
+    "TD002", # Missing author in TODO
+    "TD003", # Missing issue link
 ]
-lint.per-file-ignores = { "*.ipynb" = [
+lint.per-file-ignores = {"*.ipynb" = [
     "ANN001",
     "D103",
-    "E501",    # line too long
+    "E501", # line too long
     "T201",
     'ANN201',
     'ERA001',
     'PLR2004',
 ], "*test*.py" = [
-    "ANN001",  # Missing type annotation for function argument
-    "ANN001",  # Missing type annotation
-    "ANN201",  # Missing return type annotation for public function
-    "D100",    # Missing docstring in public module
-    "D101",    # Missing docstring in public class
-    "D102",    # Missing docstring
-    "D103",    # Missing docstring in public function
-    "D104",    # Missing docstring in public package
-    "ERA001",  # Remove commented-out code
-    "INP001",  # File is part of an implicit namespace package.
-    "PGH003",  # Use specific rule codes
+    "ANN001", # Missing type annotation for function argument
+    "ANN001", # Missing type annotation
+    "ANN201", # Missing return type annotation for public function
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "ERA001", # Remove commented-out code
+    "INP001", # File is part of an implicit namespace package.
+    "PGH003", # Use specific rule codes
     "PLC0415", # Import not at top of file
     "PLR2004", # Hardcoded values
-    "S101",    # Use of `assert` detected
-    "SLF001",  # Private member/module acces
-] }
+    "S101", # Use of `assert` detected
+    "SLF001", # Private member/module acces
+]}
 lint.select = ["ALL"]
 lint.isort.known-first-party = ["soundscapy"]
 lint.mccabe.max-complexity = 18
