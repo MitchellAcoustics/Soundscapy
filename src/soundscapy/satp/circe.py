@@ -37,6 +37,8 @@ import pandera.pandas as pa
 from pandera import Field
 from pandera.typing.pandas import DataFrame, Series
 
+from rpy2.rinterface_lib.embedded import RRuntimeError
+
 import soundscapy.r_wrapper as sspyr
 from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
 
@@ -102,6 +104,8 @@ class SATPSchema(pa.DataFrameModel):
     PAQ7: Series[float] = Field(ge=0, le=100)
     PAQ8: Series[float] = Field(ge=0, le=100)
 
+    # `| None` makes the column optional (absent is allowed);
+    # `nullable=True` permits null *values* within the column when present.
     participant: Series[str] | None = Field(nullable=True)
 
     class Config:
@@ -464,6 +468,7 @@ def fit_circe(
         Stored in the results; not used for computation.
     models
         List of model types to fit. Default: all four ``CircModelE`` variants.
+        Passing ``[]`` returns an empty DataFrame with no columns.
     center_by_participant
         Whether to apply within-person centering (via :func:`person_center`)
         before fitting.  Set to ``False`` if the data is already centered.
@@ -523,7 +528,7 @@ def fit_circe(
 
     circ_models = models if models is not None else list(CircModelE)
     rows: list[dict] = []
-    fit_exceptions = (ValueError, np.linalg.LinAlgError, RuntimeError)
+    fit_exceptions = (ValueError, np.linalg.LinAlgError, RuntimeError, RRuntimeError)
     for model in circ_models:
         try:
             circe = CircE.compute_bfgs_fit(corr, n, datasource, language, model)
@@ -557,4 +562,10 @@ def fit_circe(
                 }
             )
 
-    return pd.DataFrame(rows)
+    result = pd.DataFrame(rows)
+    # Use pandas nullable integer dtype for degree-of-freedom columns so that
+    # None in error rows does not promote the whole column to float64.
+    for _int_col in ("n", "d", "m"):
+        if _int_col in result.columns:
+            result[_int_col] = result[_int_col].astype(pd.Int64Dtype())
+    return result

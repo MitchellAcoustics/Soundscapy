@@ -776,12 +776,15 @@ class TestFitCirce:
         with patch.object(CircE, "compute_bfgs_fit", staticmethod(failing_fit)):
             result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
 
-        # n must be integer in success rows even when one row is an error row.
+        # n, d, m must remain integer in success rows even when one row is an
+        # error row (which pads those columns with None).  pandas must not
+        # promote the whole column to float64.
         success_rows = result[result["model"] != CircModelE.UNCONSTRAINED.value]
         for _, row in success_rows.iterrows():
-            assert isinstance(row["n"], int | np.integer), (
-                f"n should be int in success row, got {type(row['n'])}"
-            )
+            for col in ("n", "d", "m"):
+                assert isinstance(row[col], int | np.integer), (
+                    f"{col} should be int in success row, got {type(row[col])}"
+                )
 
 
 # ---------------------------------------------------------------------------

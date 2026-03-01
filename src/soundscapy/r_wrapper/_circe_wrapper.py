@@ -81,7 +81,13 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
     # scipy.chi2.sf(x, df) == 1 - pchisq(x, df) by definition.
     # Use the model's own degrees of freedom ("d"), NOT the null-model df
     # ("dfnull" = k*(k-1)/2).  Using dfnull gives a wildly wrong p-value.
-    py_res["p"] = float(scipy_chi2.sf(py_res["chisq"], py_res["d"]))
+    _chisq = py_res.get("chisq")
+    _d = py_res.get("d")
+    py_res["p"] = (
+        float(scipy_chi2.sf(_chisq, _d))
+        if _chisq is not None and _d is not None
+        else None
+    )
 
     return py_res
 
