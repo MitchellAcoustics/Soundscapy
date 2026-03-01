@@ -100,8 +100,14 @@ class SATPSchema(pa.DataFrameModel):
         """
         Parse and rename DataFrame columns to match the schema.
 
-        Maps PAQ label names to standardized PAQ IDs and converts
-        'Participant' column to lowercase 'participant'.
+        Applies two normalisation passes:
+
+        1. PAQ label aliases: maps human-readable names (e.g. ``"pleasant"``)
+           to standardised IDs (``"PAQ1"``).
+        2. Case-insensitive schema field normalisation: any column whose
+           lowercased name matches a schema field is renamed to its canonical
+           form (e.g. ``"PARTICIPANT"`` → ``"participant"``,
+           ``"paq1"`` → ``"PAQ1"``).
 
         Parameters
         ----------
@@ -113,8 +119,16 @@ class SATPSchema(pa.DataFrameModel):
         DataFrame with renamed columns matching the schema
 
         """
+        # Canonical schema fields: maps lowercase → canonical name.
+        _schema_fields: dict[str, str] = {f.lower(): f for f in (*PAQ_IDS, "participant")}
+
         rename_dict = dict(zip(PAQ_LABELS, PAQ_IDS, strict=False))
-        rename_dict.update({"Participant": "participant"})
+        # Case-insensitive pass: any column that lowercases to a schema field
+        # name is normalised to its canonical form.
+        for col in df.columns:
+            canonical = _schema_fields.get(col.lower())
+            if canonical is not None:
+                rename_dict[col] = canonical
         return df.rename(columns=rename_dict)
 
 
@@ -306,7 +320,7 @@ class CircE:
         reference = _IDEAL_ANGLES_REV if obs[:3].sum() > 300 else _IDEAL_ANGLES
         return round(float(np.sqrt(np.mean((obs - reference) ** 2))), 2)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Return all model fit statistics as a flat dictionary.
 
@@ -429,12 +443,22 @@ def fit_circe(
         UserWarning,
         stacklevel=2,
     )
+    if len(data) == 0:
+        raise ValueError(
+            "No complete cases found: input DataFrame is empty. "
+            "Check that data contains valid rows with PAQ1–PAQ8 and a participant column."
+        )
     validated = SATPSchema.validate(data, lazy=True)
     processed = ipsatize(validated) if ipsatize_data else validated
 
     # Use listwise deletion (complete cases only) — consistent with R's na.omit().
     complete = processed[PAQ_IDS].dropna()
     n = len(complete)
+    if n == 0:
+        raise ValueError(
+            "No complete cases found after validation and ipsatization. "
+            "Check that PAQ1–PAQ8 are not all NaN and the participant column is present."
+        )
     corr = complete.corr()
 
     circ_models = models if models is not None else list(CircModelE)

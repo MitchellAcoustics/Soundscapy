@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from rpy2 import robjects as ro
@@ -12,7 +14,7 @@ from ._r_wrapper import get_r_session
 logger = get_logger()
 
 
-def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
+def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
     """
     Extract fit statistics from a fitted BFGS model object.
 
@@ -35,7 +37,7 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict:
         >>> data_cor = data_paqs.corr()
         >>> n = len(data_paqs)
         >>> circ_model = CircModelE.CIRCUMPLEX
-        >>> circe_res = sspy.spi.bfgs(
+        >>> circe_res = sspyr.bfgs(
         ... data_cor=data_cor,
         ... n=n,
         ... scales=PAQ_IDS,
