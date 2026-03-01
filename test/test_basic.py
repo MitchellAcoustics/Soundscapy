@@ -39,7 +39,7 @@ def test_soundscapy_spi_module():
 def test_soundscapy_satp_module():
     """Test that the SATP module can be imported when dependencies are available."""
     assert hasattr(soundscapy, "satp"), "Soundscapy should have a satp module"
-    assert hasattr(soundscapy, "SATP"), "SATP should be available"
+    assert hasattr(soundscapy, "fit_circe"), "fit_circe should be available"
     assert hasattr(soundscapy, "CircModelE"), "CircModelE should be available"
 
 
