@@ -599,8 +599,9 @@ def install_r_packages(packages: list[str] | None = None) -> None:
                 packnames_to_install.remove("CircE")
                 logger.info("Installed R package 'CircE' from GitHub")
 
-            utils.install_packages(StrVector(packnames_to_install))
-            logger.info("Installed missing R packages: %s", packnames_to_install)
+            if packnames_to_install:
+                utils.install_packages(StrVector(packnames_to_install))
+                logger.info("Installed missing R packages: %s", packnames_to_install)
         else:
             logger.debug("All required R packages are already installed")
 

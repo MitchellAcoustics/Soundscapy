@@ -377,7 +377,7 @@ class CircE:
         if self.polar_angles is not None:
             base.update(self.polar_angles.to_dict())
         else:
-            base.update({paq: None for paq in PAQ_IDS})
+            base.update(dict.fromkeys(PAQ_IDS))
         return base
 
 
@@ -469,7 +469,7 @@ def fit_circe(
     if len(data) == 0:
         msg = (
             "No complete cases found: input DataFrame is empty. "
-            "Check that data contains valid rows with PAQ1-PAQ8 and participant column."
+            "Check that data contains valid rows with PAQ1-PAQ8 columns."
         )
         raise ValueError(msg)
     validated = SATPSchema.validate(data, lazy=True)
@@ -523,7 +523,7 @@ def fit_circe(
                     "rmsea_l": None,
                     "rmsea_u": None,
                     "gdiff": None,
-                    **{paq: None for paq in PAQ_IDS},
+                    **dict.fromkeys(PAQ_IDS),
                     "error": str(e),
                 }
             )
