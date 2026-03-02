@@ -696,9 +696,13 @@ def ipsatize(
 
     if method == "grand_mean":
         # Compute a single scalar per participant: mean across all PAQ values
-        # and all observations for that participant.
+        # and all observations for that participant.  Use nanmean so that
+        # participants with partial NaN data still get a valid grand mean
+        # computed from their non-NaN values; NaN rows are then removed by
+        # downstream listwise deletion rather than silently expanding data loss
+        # to the whole participant.
         grand_means = data.groupby(participant_col)[_scales].apply(
-            lambda df: float(df.values.mean())
+            lambda df: float(np.nanmean(df.values))
         )
         grand_mean_per_row = data[participant_col].map(grand_means)
         return data[_scales].subtract(grand_mean_per_row, axis=0)

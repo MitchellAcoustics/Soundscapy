@@ -529,7 +529,8 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
     .. deprecated::
         Use :func:`soundscapy.surveys.ipsatize` with ``method="column_wise"``
         instead.  For the centering that matches the published SATP analysis,
-        use ``method="grand_mean"`` (the default).
+        use ``method="grand_mean"`` (the default of
+        :func:`~soundscapy.surveys.ipsatize`).
 
     This function applies **column-wise** centering: for every PAQ column
     independently, each participant's mean across their observations is
@@ -591,7 +592,8 @@ def fit_circe(
         Stored in the results; not used for computation.
     models
         List of model types to fit. Default: all four ``CircModelE`` variants.
-        Passing ``[]`` returns an empty DataFrame with no columns.
+        Passing ``[]`` returns an empty :class:`CircEResults`
+        (``len(result) == 0``).
     center_by_participant
         Whether to apply grand-mean within-person centering (via
         :func:`~soundscapy.surveys.ipsatize` with ``method="grand_mean"``)
@@ -650,14 +652,21 @@ def fit_circe(
         if errors == "raise":
             raise
         bad_idx = exc.failure_cases["index"].dropna().unique()
+        clean = data.loc[~data.index.isin(bad_idx)]
         warnings.warn(
-            f"Dropping {len(bad_idx)} rows that failed schema validation "
-            f"({len(data) - len(bad_idx)} rows remain). "
+            f"Dropping {len(data) - len(clean)} rows that failed schema validation "
+            f"({len(clean)} rows remain). "
             "Pass errors='raise' to raise an error instead.",
             UserWarning,
             stacklevel=2,
         )
-        validated = SATPSchema.validate(data.drop(index=bad_idx), lazy=True)
+        try:
+            validated = SATPSchema.validate(clean, lazy=True)
+        except SchemaErrors as exc2:
+            raise SchemaErrors(
+                schema_errors=exc2.schema_errors,
+                data=exc2.data,
+            ) from exc2
 
     if center_by_participant and "participant" not in validated.columns:
         msg = (
