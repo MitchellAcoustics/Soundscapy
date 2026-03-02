@@ -31,18 +31,19 @@ CircE : dataclass
 import dataclasses
 import warnings
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
 import pandera.pandas as pa
 from pandera import Field
+from pandera.errors import SchemaErrors
 from pandera.typing.pandas import DataFrame, Series
-
 from rpy2.rinterface_lib.embedded import RRuntimeError
 
 import soundscapy.r_wrapper as sspyr
 from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
+from soundscapy.surveys.processing import ipsatize
 
 logger = get_logger()
 
@@ -113,7 +114,7 @@ class SATPSchema(pa.DataFrameModel):
     class Config:
         """Configuration for the schema validation behavior."""
 
-        drop_invalid_rows = True
+        drop_invalid_rows = False
         strict = "filter"
 
     @pa.dataframe_parser
@@ -430,39 +431,117 @@ class CircE:
         return base
 
 
+@dataclasses.dataclass
+class CircEResults:
+    """
+    Collection of fitted CircE models returned by :func:`fit_circe`.
+
+    Holds both successfully-fitted :class:`CircE` instances and any error rows
+    from models that failed to converge.  Access the full tidy DataFrame via
+    :attr:`table`; access individual model results via :meth:`for_model`.
+
+    Attributes
+    ----------
+    models
+        Successfully-fitted :class:`CircE` results, in fitting order.
+    language
+        Language code passed to :func:`fit_circe`.
+    datasource
+        Dataset identifier passed to :func:`fit_circe`.
+    error_rows
+        Dicts for model runs that raised an exception during fitting.
+        Each dict contains ``language``, ``datasource``, ``model``, ``n``,
+        and an ``error`` key with the exception message.
+
+    """
+
+    models: list[CircE]
+    language: str
+    datasource: str
+    error_rows: list[dict] = dataclasses.field(default_factory=list)
+
+    def __len__(self) -> int:
+        """Total number of model runs (successful + failed)."""
+        return len(self.models) + len(self.error_rows)
+
+    @property
+    def table(self) -> pd.DataFrame:
+        """
+        Full tidy DataFrame of all model fit statistics.
+
+        One row per model (including error rows).  Columns match those
+        described in :func:`fit_circe`.  Integer columns (``n``, ``d``, ``m``)
+        use pandas nullable ``Int64`` dtype so that ``None`` in error rows does
+        not promote the whole column to ``float64``.
+        """
+        _order = {m.value: i for i, m in enumerate(CircModelE)}
+        rows = [m.to_dict() for m in self.models] + self.error_rows
+        result = pd.DataFrame(rows)
+        if "model" in result.columns:
+            result = (
+                result.assign(_ord=result["model"].map(_order))
+                .sort_values("_ord")
+                .drop("_ord", axis=1)
+                .reset_index(drop=True)
+            )
+        for _int_col in ("n", "d", "m"):
+            if _int_col in result.columns:
+                result[_int_col] = result[_int_col].astype(pd.Int64Dtype())
+        return result
+
+    def for_model(self, model: CircModelE) -> CircE:
+        """
+        Return the fitted :class:`CircE` result for a specific model type.
+
+        Parameters
+        ----------
+        model
+            The :class:`CircModelE` variant to retrieve.
+
+        Raises
+        ------
+        KeyError
+            If no successful result exists for the requested model (e.g. it
+            failed to converge).
+
+        """
+        for m in self.models:
+            if m.model is model:
+                return m
+        msg = f"No successful result for model {model.value!r}"
+        raise KeyError(msg)
+
+    def _repr_html_(self) -> str:
+        return self.table._repr_html_()
+
+    def __repr__(self) -> str:
+        return (
+            f"CircEResults(language={self.language!r}, "
+            f"datasource={self.datasource!r}, "
+            f"{len(self.models)} fitted, {len(self.error_rows)} failed)"
+        )
+
+
 def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
     """
     Center PAQ ratings within each participant (column-wise within-person centering).
 
-    **Psychometric background**
+    .. deprecated::
+        Use :func:`soundscapy.surveys.ipsatize` with ``method="column_wise"``
+        instead.  For the centering that matches the published SATP analysis,
+        use ``method="grand_mean"`` (the default).
 
-    In cross-cultural and multi-lingual soundscape studies, participants from
-    different language groups may use rating scales differently — some cultures
-    favour extreme responses; others cluster near the midpoint.  These
-    *response-style biases* inflate between-person variance and can distort the
-    correlation structure that circumplex SEM models depend on.
-
-    Within-person centering addresses this by removing each participant's
-    *scale-specific* mean: for every PAQ column independently, the participant's
-    mean across all their soundscape observations is subtracted.  The result is
-    that every participant has a zero mean on every PAQ scale, so the residual
-    variance reflects genuine perceptual variation across soundscapes rather
-    than individual scale-use tendencies.
-
-    This is the form of centering recommended for the SATP circumplex analysis
-    (Aletta et al., 2024) and corresponds to the ``ipsatize`` preprocessing step
-    in the original R implementation.
+    This function applies **column-wise** centering: for every PAQ column
+    independently, each participant's mean across their observations is
+    subtracted (8 centering scalars per participant).
 
     .. note::
 
-        This is **column-wise** within-participant centering.  It is distinct
-        from *row-wise* ipsatization (e.g. ``circumplex.ipsatize()``), which
-        subtracts the mean across all PAQ items within a single observation.
-        Row-wise centering removes the general impression of each soundscape;
-        column-wise centering removes the participant's personal use of each
-        scale.  Use this function when participants have multiple observations
-        (one per soundscape) and the goal is to remove person-level scale-use
-        biases before computing a correlation matrix.
+        This is *not* the centering described in the original SATP R
+        implementation (Aletta et al., 2024), which applies grand-mean
+        centering (one scalar per participant across all PAQ columns and
+        observations).  Use :func:`~soundscapy.surveys.ipsatize` with
+        ``method="grand_mean"`` to match the R reference implementation.
 
     Parameters
     ----------
@@ -475,13 +554,10 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
     -------
     pd.DataFrame
         DataFrame containing only the PAQ columns (not ``by``), with
-        participant-centred values.  The ``by`` column is excluded from the
-        result because arithmetic centering is undefined for string identifiers.
+        column-wise participant-centred values.
 
     """
-    paq_cols = [c for c in data.columns if c != by]
-    means = data.groupby(by)[paq_cols].transform("mean")
-    return data[paq_cols] - means
+    return ipsatize(data, method="column_wise", participant_col=by)
 
 
 def fit_circe(
@@ -491,13 +567,15 @@ def fit_circe(
     *,
     models: list[CircModelE] | None = None,
     center_by_participant: bool = True,
-) -> pd.DataFrame:
+    errors: Literal["raise", "warn"] = "raise",
+) -> "CircEResults":
     """
     Fit circumplex SEM models to PAQ data and return a tidy DataFrame.
 
-    Validates input data, optionally applies within-person centering, computes a
-    complete-case correlation matrix, and fits the requested circumplex
-    model types using Browne's BFGS optimisation via the R ``CircE`` package.
+    Validates input data, optionally applies grand-mean within-person centering
+    (matching the published SATP analysis), computes a complete-case correlation
+    matrix, and fits the requested circumplex model types using Browne's BFGS
+    optimisation via the R ``CircE`` package.
 
     Parameters
     ----------
@@ -515,19 +593,33 @@ def fit_circe(
         List of model types to fit. Default: all four ``CircModelE`` variants.
         Passing ``[]`` returns an empty DataFrame with no columns.
     center_by_participant
-        Whether to apply within-person centering (via :func:`person_center`)
-        before fitting.  Set to ``False`` if the data is already centered.
+        Whether to apply grand-mean within-person centering (via
+        :func:`~soundscapy.surveys.ipsatize` with ``method="grand_mean"``)
+        before fitting.  Set to ``False`` if the data is already centered or
+        if no centering is desired.
+    errors
+        How to handle rows that fail schema validation (PAQ values outside
+        ``[0, 100]``, missing required columns, etc.):
+
+        ``"raise"`` *(default)* — raise a :class:`pandera.errors.SchemaErrors`
+        immediately, listing every failing row and constraint.
+
+        ``"warn"`` — emit a :class:`UserWarning` describing the failing rows
+        and continue with the valid rows only.
+
+        .. note::
+            Do **not** pass pre-centered data with ``errors="raise"``; centered
+            values are negative and will fail the ``[0, 100]`` range check.
+            Either set ``center_by_participant=False`` (data already centered)
+            or pass raw data and let centering happen inside this function.
 
     Returns
     -------
-    pd.DataFrame
-        One row per fitted model. Columns: ``datasource``, ``language``,
-        ``model``, ``n``, ``m``, ``chisq``, ``d``, ``p``, ``cfi``, ``gfi``,
-        ``agfi``, ``srmr``, ``mcsc``, ``rmsea``, ``rmsea_l``, ``rmsea_u``,
-        ``gdiff``, ``PAQ1``-``PAQ8``.
-        ``PAQ1``-``PAQ8`` contain fitted polar angle estimates for free-angle
-        models (UNCONSTRAINED, EQUAL_COM); ``None`` for constrained models.
-        Rows for models that fail to converge contain an ``error`` column.
+    CircEResults
+        Collection of fitted models.  Access the tidy DataFrame via
+        ``.table``; access individual model results via ``.for_model()``.
+        Failed models are stored in ``.error_rows`` and included in
+        ``.table``.
 
     Examples
     --------
@@ -535,8 +627,8 @@ def fit_circe(
     >>> from soundscapy.satp import fit_circe
     >>> data = sspy.isd.load()
     >>> data = data.rename(columns={'SessionID': 'participant'})
-    >>> results = fit_circe(data, language='eng', datasource='ISD')  # center_by_participant=True by default
-    >>> results.shape[0]
+    >>> results = fit_circe(data, language='eng', datasource='ISD', errors='warn')
+    >>> len(results)
     4
 
     """
@@ -551,14 +643,33 @@ def fit_circe(
             "Check that data contains valid rows with PAQ1-PAQ8 columns."
         )
         raise ValueError(msg)
-    validated = SATPSchema.validate(data, lazy=True)
+
+    try:
+        validated = SATPSchema.validate(data, lazy=True)
+    except SchemaErrors as exc:
+        if errors == "raise":
+            raise
+        bad_idx = exc.failure_cases["index"].dropna().unique()
+        warnings.warn(
+            f"Dropping {len(bad_idx)} rows that failed schema validation "
+            f"({len(data) - len(bad_idx)} rows remain). "
+            "Pass errors='raise' to raise an error instead.",
+            UserWarning,
+            stacklevel=2,
+        )
+        validated = SATPSchema.validate(data.drop(index=bad_idx), lazy=True)
+
     if center_by_participant and "participant" not in validated.columns:
         msg = (
             "center_by_participant=True requires a 'participant' column. "
             "Pass center_by_participant=False if your data is already centered."
         )
         raise ValueError(msg)
-    processed = person_center(validated) if center_by_participant else validated
+    processed = (
+        ipsatize(validated, method="grand_mean", participant_col="participant")
+        if center_by_participant
+        else validated
+    )
 
     # Use listwise deletion (complete cases only) — consistent with R's na.omit().
     complete = processed[PAQ_IDS].dropna()
@@ -572,18 +683,19 @@ def fit_circe(
     corr = complete.corr()
 
     circ_models = models if models is not None else list(CircModelE)
-    rows: list[dict] = []
+    fitted: list[CircE] = []
+    error_rows: list[dict] = []
     fit_exceptions = (ValueError, np.linalg.LinAlgError, RuntimeError, RRuntimeError)
     for model in circ_models:
         try:
             circe = CircE.compute_bfgs_fit(corr, n, datasource, language, model)
-            rows.append(circe.to_dict())
+            fitted.append(circe)
         except fit_exceptions as e:  # noqa: PERF203
             warnings.warn(f"{model.value} raised {e}", stacklevel=2)
             # Populate all expected columns with None so that pandas does not
             # promote numeric columns (e.g. n, d) to float64 across all rows
             # when mixing sparse error dicts with full success dicts.
-            rows.append(
+            error_rows.append(
                 {
                     "language": language,
                     "datasource": datasource,
@@ -607,10 +719,9 @@ def fit_circe(
                 }
             )
 
-    result = pd.DataFrame(rows)
-    # Use pandas nullable integer dtype for degree-of-freedom columns so that
-    # None in error rows does not promote the whole column to float64.
-    for _int_col in ("n", "d", "m"):
-        if _int_col in result.columns:
-            result[_int_col] = result[_int_col].astype(pd.Int64Dtype())
-    return result
+    return CircEResults(
+        models=fitted,
+        language=language,
+        datasource=datasource,
+        error_rows=error_rows,
+    )

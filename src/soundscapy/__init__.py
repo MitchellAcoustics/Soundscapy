@@ -107,7 +107,7 @@ _SPI_ATTRS: frozenset[str] = frozenset(
     }
 )
 _SATP_ATTRS: frozenset[str] = frozenset(
-    {"satp", "fit_circe", "CircModelE", "normalize_polar_angles"}
+    {"satp", "fit_circe", "CircModelE", "CircEResults", "normalize_polar_angles"}
 )
 
 

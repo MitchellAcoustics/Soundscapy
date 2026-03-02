@@ -264,5 +264,83 @@ class TestIntegration:
         assert not ssm_result.isna().any().any()
 
 
+class TestIpsatize:
+    """Tests for soundscapy.surveys.ipsatize()."""
+
+    @pytest.fixture
+    def sample_data(self):
+        """Small DataFrame with known values for centering checks."""
+        return pd.DataFrame({
+            "PAQ1": [50., 60., 40., 30.],
+            "PAQ2": [50., 60., 40., 30.],
+            "PAQ3": [50., 60., 40., 30.],
+            "PAQ4": [50., 60., 40., 30.],
+            "PAQ5": [50., 60., 40., 30.],
+            "PAQ6": [50., 60., 40., 30.],
+            "PAQ7": [50., 60., 40., 30.],
+            "PAQ8": [50., 60., 40., 30.],
+            "participant": ["A", "A", "B", "B"],
+        })
+
+    def test_grand_mean_one_scalar_per_participant(self, sample_data):
+        """Grand-mean centering must produce zero grand mean per participant."""
+        from soundscapy.surveys import ipsatize
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        result = ipsatize(sample_data, method="grand_mean", participant_col="participant")
+        check = result[PAQ_IDS].assign(participant=sample_data["participant"].values)
+        flat_means = check.groupby("participant")[PAQ_IDS].apply(
+            lambda df: float(df.values.mean())
+        )
+        np.testing.assert_allclose(flat_means.to_numpy(), 0.0, atol=1e-10)
+
+    def test_column_wise_zero_per_scale_per_participant(self, sample_data):
+        """Column-wise centering must produce zero mean per scale per participant."""
+        from soundscapy.surveys import ipsatize
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        result = ipsatize(sample_data, method="column_wise", participant_col="participant")
+        check = result[PAQ_IDS].assign(participant=sample_data["participant"].values)
+        group_means = check.groupby("participant")[PAQ_IDS].mean()
+        np.testing.assert_allclose(group_means.to_numpy(), 0.0, atol=1e-10)
+
+    def test_row_wise_zero_per_observation(self, sample_data):
+        """Row-wise centering must produce zero mean across scales per row."""
+        from soundscapy.surveys import ipsatize
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        result = ipsatize(sample_data, method="row_wise")
+        row_means = result[PAQ_IDS].mean(axis=1)
+        np.testing.assert_allclose(row_means.to_numpy(), 0.0, atol=1e-10)
+
+    def test_returns_only_scale_columns(self, sample_data):
+        """ipsatize must return only the PAQ scale columns, not participant."""
+        from soundscapy.surveys import ipsatize
+        from soundscapy.surveys.survey_utils import PAQ_IDS
+
+        result = ipsatize(sample_data, method="grand_mean", participant_col="participant")
+        assert set(result.columns) == set(PAQ_IDS)
+        assert "participant" not in result.columns
+
+    def test_invalid_method_raises(self, sample_data):
+        """ipsatize must raise ValueError for an unknown method string."""
+        from soundscapy.surveys import ipsatize
+        with pytest.raises(ValueError, match="method"):
+            ipsatize(sample_data, method="bad_method")
+
+    def test_grand_mean_differs_from_column_wise(self, sample_data):
+        """Grand-mean and column-wise results must differ for asymmetric data."""
+        from soundscapy.surveys import ipsatize
+
+        # Make data asymmetric: A has different values across scales
+        asym = sample_data.copy()
+        asym.loc[asym["participant"] == "A", "PAQ1"] = 80.0
+
+        gm = ipsatize(asym, method="grand_mean", participant_col="participant")
+        cw = ipsatize(asym, method="column_wise", participant_col="participant")
+        # Results should differ
+        assert not gm.equals(cw)
+
+
 if __name__ == "__main__":
     pytest.main()
