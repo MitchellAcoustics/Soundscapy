@@ -591,7 +591,9 @@ class TestFitCirce:
         result = fit_circe(data_with_nan, language="EN", datasource="ISD")
 
         # Manually compute expected n
-        centered = ipsatize(data_with_nan, method="grand_mean", participant_col="participant")
+        centered = ipsatize(
+            data_with_nan, method="grand_mean", participant_col="participant"
+        )
         expected_n = len(centered[PAQ_IDS].dropna())
 
         # All rows should report the same n
@@ -669,7 +671,9 @@ class TestFitCirce:
         with patch.object(CircE, "compute_bfgs_fit", staticmethod(failing_fit)):
             result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
 
-        error_rows = result.table[result.table["model"] == CircModelE.UNCONSTRAINED.value]
+        error_rows = result.table[
+            result.table["model"] == CircModelE.UNCONSTRAINED.value
+        ]
         assert len(error_rows) == 1
         row = error_rows.iloc[0]
         assert "error" in row.index
@@ -782,7 +786,9 @@ class TestFitCirce:
         # n, d, m must remain integer in success rows even when one row is an
         # error row (which pads those columns with None).  pandas must not
         # promote the whole column to float64.
-        success_rows = result.table[result.table["model"] != CircModelE.UNCONSTRAINED.value]
+        success_rows = result.table[
+            result.table["model"] != CircModelE.UNCONSTRAINED.value
+        ]
         for _, row in success_rows.iterrows():
             for col in ("n", "d", "m"):
                 assert isinstance(row[col], int | np.integer), (
@@ -792,12 +798,14 @@ class TestFitCirce:
     def test_fit_circe_returns_circe_results(self, isd_with_participant):
         """fit_circe() must return a CircEResults instance."""
         from soundscapy.satp.circe import CircEResults, fit_circe
+
         result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
         assert isinstance(result, CircEResults)
 
     def test_fit_circe_table_is_dataframe(self, isd_with_participant):
         """CircEResults.table must be a pd.DataFrame with 4 rows."""
         from soundscapy.satp.circe import fit_circe
+
         result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
         assert isinstance(result.table, pd.DataFrame)
         assert len(result.table) == 4
@@ -805,6 +813,7 @@ class TestFitCirce:
     def test_fit_circe_for_model(self, isd_with_participant):
         """CircEResults.for_model() must return the correct CircE instance."""
         from soundscapy.satp.circe import CircE, CircModelE, fit_circe
+
         result = fit_circe(isd_with_participant, language="EN", datasource="ISD")
         circe = result.for_model(CircModelE.UNCONSTRAINED)
         assert isinstance(circe, CircE)
@@ -840,9 +849,13 @@ class TestFitCirce:
 
         # Grand-mean centering: for each participant, all PAQ values sum to zero
         # (the grand mean across all scales × all rows is zero).
-        centered = ipsatize(isd_with_participant, method="grand_mean", participant_col="participant")
+        centered = ipsatize(
+            isd_with_participant, method="grand_mean", participant_col="participant"
+        )
         # The mean of ALL values per participant should be zero
-        check = centered[PAQ_IDS].assign(participant=isd_with_participant["participant"].values)
+        check = centered[PAQ_IDS].assign(
+            participant=isd_with_participant["participant"].values
+        )
         flat_means = check.groupby("participant")[PAQ_IDS].apply(
             lambda df: float(df.values.mean())
         )

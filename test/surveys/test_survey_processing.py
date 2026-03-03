@@ -270,24 +270,28 @@ class TestIpsatize:
     @pytest.fixture
     def sample_data(self):
         """Small DataFrame with known values for centering checks."""
-        return pd.DataFrame({
-            "PAQ1": [50., 60., 40., 30.],
-            "PAQ2": [50., 60., 40., 30.],
-            "PAQ3": [50., 60., 40., 30.],
-            "PAQ4": [50., 60., 40., 30.],
-            "PAQ5": [50., 60., 40., 30.],
-            "PAQ6": [50., 60., 40., 30.],
-            "PAQ7": [50., 60., 40., 30.],
-            "PAQ8": [50., 60., 40., 30.],
-            "participant": ["A", "A", "B", "B"],
-        })
+        return pd.DataFrame(
+            {
+                "PAQ1": [50.0, 60.0, 40.0, 30.0],
+                "PAQ2": [50.0, 60.0, 40.0, 30.0],
+                "PAQ3": [50.0, 60.0, 40.0, 30.0],
+                "PAQ4": [50.0, 60.0, 40.0, 30.0],
+                "PAQ5": [50.0, 60.0, 40.0, 30.0],
+                "PAQ6": [50.0, 60.0, 40.0, 30.0],
+                "PAQ7": [50.0, 60.0, 40.0, 30.0],
+                "PAQ8": [50.0, 60.0, 40.0, 30.0],
+                "participant": ["A", "A", "B", "B"],
+            }
+        )
 
     def test_grand_mean_one_scalar_per_participant(self, sample_data):
         """Grand-mean centering must produce zero grand mean per participant."""
         from soundscapy.surveys import ipsatize
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        result = ipsatize(sample_data, method="grand_mean", participant_col="participant")
+        result = ipsatize(
+            sample_data, method="grand_mean", participant_col="participant"
+        )
         check = result[PAQ_IDS].assign(participant=sample_data["participant"].values)
         flat_means = check.groupby("participant")[PAQ_IDS].apply(
             lambda df: float(df.values.mean())
@@ -299,7 +303,9 @@ class TestIpsatize:
         from soundscapy.surveys import ipsatize
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        result = ipsatize(sample_data, method="column_wise", participant_col="participant")
+        result = ipsatize(
+            sample_data, method="column_wise", participant_col="participant"
+        )
         check = result[PAQ_IDS].assign(participant=sample_data["participant"].values)
         group_means = check.groupby("participant")[PAQ_IDS].mean()
         np.testing.assert_allclose(group_means.to_numpy(), 0.0, atol=1e-10)
@@ -318,13 +324,16 @@ class TestIpsatize:
         from soundscapy.surveys import ipsatize
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        result = ipsatize(sample_data, method="grand_mean", participant_col="participant")
+        result = ipsatize(
+            sample_data, method="grand_mean", participant_col="participant"
+        )
         assert set(result.columns) == set(PAQ_IDS)
         assert "participant" not in result.columns
 
     def test_invalid_method_raises(self, sample_data):
         """ipsatize must raise ValueError for an unknown method string."""
         from soundscapy.surveys import ipsatize
+
         with pytest.raises(ValueError, match="method"):
             ipsatize(sample_data, method="bad_method")
 
