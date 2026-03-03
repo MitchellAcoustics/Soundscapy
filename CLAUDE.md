@@ -9,6 +9,7 @@ Soundscapy is a Python library for analysing and visualising soundscape assessme
 ## Commands
 
 ### Setup
+
 ```bash
 uv sync --all-extras          # Install all dependencies (core + audio + r/satp/spi)
 uv sync                       # Core dependencies only (uses default groups: dev, docs, test)
@@ -17,6 +18,7 @@ uv sync --extra r             # Core + R integration (rpy2)
 ```
 
 ### Testing
+
 ```bash
 uv run pytest                             # Run all available tests (auto-skips missing dep modules)
 uv run pytest test/test_surveys.py        # Run a single test file
@@ -31,6 +33,7 @@ uv run tox -e py312-all                  # All extras
 ```
 
 ### Linting & Formatting
+
 ```bash
 uv run ruff check .                      # Lint
 uv run ruff check . --fix                # Lint and auto-fix
@@ -38,6 +41,7 @@ uv run ruff format .                     # Format
 ```
 
 ### Docs
+
 ```bash
 uv run mkdocs build                      # Build documentation
 uv run mkdocs serve                      # Serve docs locally
