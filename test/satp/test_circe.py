@@ -590,7 +590,9 @@ class TestFitCirce:
 
         # errors="warn" so NaN rows are dropped rather than raising SchemaErrors;
         # this test is specifically about listwise deletion, not schema validation.
-        result = fit_circe(data_with_nan, language="EN", datasource="ISD", errors="warn")
+        result = fit_circe(
+            data_with_nan, language="EN", datasource="ISD", errors="warn"
+        )
 
         # Manually compute expected n
         centered = ipsatize(
