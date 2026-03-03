@@ -17,10 +17,7 @@ repos:
     rev: v1.5.5
     hooks:
       - id: forbid-tabs
-  - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.3
-    hooks:
-      - id: toml-sort-fix
+
   # TODO(MitchellAcoustics): Enable linting pre-commit hooks
   # https://github.com/MitchellAcoustics/Soundscapy/issues/114
   # - repo: https://github.com/pre-commit/mirrors-mypy
