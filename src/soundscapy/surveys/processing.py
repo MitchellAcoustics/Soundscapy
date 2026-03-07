@@ -23,7 +23,7 @@ modules under `soundscape.databases`.
 
 import warnings
 from dataclasses import dataclass
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 try:
     from typing import Unpack
@@ -616,6 +616,103 @@ def _r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     ss_residual = np.sum((y_true - y_pred) ** 2)
     # Ensure the return type matches the annotation
     return float(1 - (ss_residual / ss_total))
+
+
+def ipsatize(
+    data: pd.DataFrame,
+    method: Literal["grand_mean", "column_wise", "row_wise"] = "grand_mean",
+    participant_col: str = "participant",
+    scales: list[str] | None = None,
+) -> pd.DataFrame:
+    """
+    Participant-level ipsatization for circumplex analysis.
+
+    Removes systematic response biases before computing a correlation matrix.
+    The choice of method depends on the study design and the type of bias
+    being corrected.
+
+    Parameters
+    ----------
+    data
+        DataFrame containing PAQ scale columns and (for participant-level
+        methods) a grouping column.
+    method
+        Centering strategy:
+
+        ``"grand_mean"`` *(default)* — one scalar per participant: the mean
+        across *all* PAQ values and *all* observations for that participant.
+        Removes overall response-level differences between participants.
+        **Matches the published SATP analysis (Aletta et al., 2024) and the
+        original R implementation.**
+
+        ``"column_wise"`` — eight scalars per participant: the per-scale mean
+        across that participant's observations.  Removes scale-specific
+        response biases.  This is the behaviour of the legacy
+        :func:`person_center` function.
+
+        ``"row_wise"`` — one scalar per observation: the mean across all PAQ
+        scales within that observation.  Removes the general impression of
+        each individual soundscape stimulus.  Equivalent to
+        ``circumplex.ipsatize()``.
+    participant_col
+        Column used to group observations by participant.  Required for
+        ``"grand_mean"`` and ``"column_wise"``; ignored for ``"row_wise"``.
+    scales
+        PAQ column names to centre.  Defaults to :data:`PAQ_IDS` when
+        ``None``.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing only the scale columns with centred values.
+        The ``participant_col`` grouping column is excluded from the result.
+
+    Raises
+    ------
+    KeyError
+        If ``participant_col`` is not present in ``data`` when
+        ``method`` is ``"grand_mean"`` or ``"column_wise"``.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> data = pd.DataFrame({
+    ...     'PAQ1': [50., 60., 40., 30.], 'PAQ2': [50., 60., 40., 30.],
+    ...     'PAQ3': [50., 60., 40., 30.], 'PAQ4': [50., 60., 40., 30.],
+    ...     'PAQ5': [50., 60., 40., 30.], 'PAQ6': [50., 60., 40., 30.],
+    ...     'PAQ7': [50., 60., 40., 30.], 'PAQ8': [50., 60., 40., 30.],
+    ...     'participant': ['A', 'A', 'B', 'B'],
+    ... })
+    >>> result = ipsatize(data, method="grand_mean")
+    >>> result['PAQ1'].tolist()
+    [-5.0, 5.0, 5.0, -5.0]
+
+    """
+    _scales = scales if scales is not None else PAQ_IDS
+
+    if method == "column_wise":
+        means = data.groupby(participant_col)[_scales].transform("mean")
+        return data[_scales] - means
+
+    if method == "grand_mean":
+        # Compute a single scalar per participant: mean across all PAQ values
+        # and all observations for that participant.  Use nanmean so that
+        # participants with partial NaN data still get a valid grand mean
+        # computed from their non-NaN values; NaN rows are then removed by
+        # downstream listwise deletion rather than silently expanding data loss
+        # to the whole participant.
+        grand_means = data.groupby(participant_col)[_scales].apply(
+            lambda df: float(np.nanmean(df.values))
+        )
+        grand_mean_per_row = data[participant_col].map(grand_means)
+        return data[_scales].subtract(grand_mean_per_row, axis=0)
+
+    if method == "row_wise":
+        row_means = data[_scales].mean(axis=1)
+        return data[_scales].sub(row_means, axis=0)
+
+    msg = f"method must be 'grand_mean', 'column_wise', or 'row_wise'; got {method!r}"
+    raise ValueError(msg)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@ except ImportError as e:
 from soundscapy.satp import circe
 from soundscapy.satp.circe import (
     CircE,
+    CircEResults,
     CircModelE,
     fit_circe,
     normalize_polar_angles,
@@ -29,6 +30,7 @@ from soundscapy.satp.circe import (
 
 __all__ = [
     "CircE",
+    "CircEResults",
     "CircModelE",
     "circe",
     "fit_circe",

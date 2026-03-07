@@ -9,6 +9,7 @@ from soundscapy.surveys import processing, survey_utils
 from soundscapy.surveys.processing import (
     add_iso_coords,
     calculate_iso_coords,
+    ipsatize,
     return_paqs,
     simulation,
 )
@@ -25,6 +26,7 @@ __all__ = [
     "PAQ_LABELS",
     "add_iso_coords",
     "calculate_iso_coords",
+    "ipsatize",
     "processing",
     "rename_paqs",
     "return_paqs",
