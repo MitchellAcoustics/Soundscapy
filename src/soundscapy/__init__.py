@@ -29,7 +29,7 @@ from soundscapy.sspylogging import (
     get_logger,
     setup_logging,
 )
-from soundscapy.surveys import add_iso_coords, processing, rename_paqs
+from soundscapy.surveys import add_iso_coords, ipsatize, processing, rename_paqs
 from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
 
 __all__ = [
@@ -44,6 +44,7 @@ __all__ = [
     "disable_logging",
     "enable_debug",
     "get_logger",
+    "ipsatize",
     "isd",
     "iso_plot",
     "jointplot",
@@ -107,7 +108,14 @@ _SPI_ATTRS: frozenset[str] = frozenset(
     }
 )
 _SATP_ATTRS: frozenset[str] = frozenset(
-    {"satp", "fit_circe", "CircModelE", "CircEResults", "normalize_polar_angles"}
+    {
+        "satp",
+        "CircE",
+        "CircEResults",
+        "CircModelE",
+        "fit_circe",
+        "normalize_polar_angles",
+    }
 )
 
 

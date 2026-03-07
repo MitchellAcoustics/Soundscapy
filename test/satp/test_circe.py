@@ -522,7 +522,8 @@ class TestFitCirce:
         from soundscapy.satp.circe import person_center
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
-        centered = person_center(isd_with_participant, by="participant")
+        with pytest.warns(DeprecationWarning, match="person_center"):
+            centered = person_center(isd_with_participant, by="participant")
         # person_center returns only PAQ columns; re-attach participant for groupby.
         check = centered[PAQ_IDS].assign(
             participant=isd_with_participant["participant"]
@@ -594,10 +595,12 @@ class TestFitCirce:
             data_with_nan, language="EN", datasource="ISD", errors="warn"
         )
 
-        # Manually compute expected n
-        centered = ipsatize(
-            data_with_nan, method="grand_mean", participant_col="participant"
-        )
+        # Manually compute expected n — mirror the production path: schema
+        # validation drops NaN rows first, then ipsatize is called on the
+        # valid subset.  Using the unfiltered data would give a different
+        # grand-mean scalar and diverge from what fit_circe actually computes.
+        valid = data_with_nan.dropna(subset=PAQ_IDS)
+        centered = ipsatize(valid, method="grand_mean", participant_col="participant")
         expected_n = len(centered[PAQ_IDS].dropna())
 
         # All rows should report the same n
@@ -826,8 +829,8 @@ class TestFitCirce:
     def test_fit_circe_errors_warn_drops_invalid(self, isd_with_participant):
         """errors='warn' must drop out-of-range rows and emit a warning."""
         import warnings as _warnings
+
         from soundscapy.satp.circe import fit_circe
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         # Inject rows with out-of-range PAQ values (negative = post-centered)
         data = isd_with_participant.copy()

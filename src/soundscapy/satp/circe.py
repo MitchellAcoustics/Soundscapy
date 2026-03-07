@@ -558,6 +558,13 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
         column-wise participant-centred values.
 
     """
+    import warnings
+
+    warnings.warn(
+        "person_center() is deprecated; use ipsatize(method='column_wise') instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return ipsatize(data, method="column_wise", participant_col=by)
 
 
@@ -610,10 +617,12 @@ def fit_circe(
         and continue with the valid rows only.
 
         .. note::
-            Do **not** pass pre-centered data with ``errors="raise"``; centered
-            values are negative and will fail the ``[0, 100]`` range check.
-            Either set ``center_by_participant=False`` (data already centered)
-            or pass raw data and let centering happen inside this function.
+            If you pass *already-centered* data, set
+            ``center_by_participant=False`` to skip the internal centering step;
+            otherwise pass raw ``[0, 100]``-range data and use the default
+            ``center_by_participant=True``.  Passing pre-centered data without
+            disabling centering will cause schema validation to reject the
+            negative values.
 
     Returns
     -------
