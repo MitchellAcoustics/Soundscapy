@@ -7,16 +7,20 @@ for data retrieval from Zenodo and basic data loading operations.
 
 Examples
 --------
->>> import soundscapy.databases.satp as satp  # doctest: +SKIP
->>> df = satp.load_zenodo()  # doctest: +SKIP
->>> isinstance(df, pd.DataFrame)  # doctest: +SKIP
+>>> import soundscapy.databases.satp as satp
+>>> df = satp.load_zenodo()
+>>> isinstance(df, pd.DataFrame)
 True
->>> 'Language' in df.columns  # doctest: +SKIP
+>>> 'Language' in df.columns
 True
->>> participants = satp.load_participants()  # doctest: +SKIP
->>> isinstance(participants, pd.DataFrame)  # doctest: +SKIP
+>>> satp.load_participants()
+Traceback (most recent call last):
+    ...
+ValueError: Participant data is only available for SATP versions up to v1.2.1.
+>>> participants = satp.load_participants(version="v1.2")
+>>> isinstance(participants, pd.DataFrame)
 True
->>> 'Country' in participants.columns  # doctest: +SKIP
+>>> 'Age' in participants.columns
 True
 
 """
@@ -24,14 +28,17 @@ True
 from __future__ import annotations
 
 from enum import Enum
+from functools import total_ordering
 
 import pandas as pd
 from loguru import logger
+from packaging.version import Version
 from typing_extensions import Self
 
 _ZENODO_BASE = "https://zenodo.org/record/{record}/files/SATP%20Dataset%20{label}.xlsx"
 
 
+@total_ordering
 class SATPVersion(Enum):
     """
     Versioned SATP dataset releases on Zenodo.
@@ -96,6 +103,12 @@ class SATPVersion(Enum):
         """Return the most recent released version (first declared member)."""
         return next(iter(cls))
 
+    def __lt__(self, other: object) -> bool:
+        """Return True if this version is older than other."""
+        if not isinstance(other, SATPVersion):
+            return NotImplemented
+        return Version(str(self)) < Version(str(other))
+
     def __str__(self) -> str:
         """Return the canonical version string."""
         return self.value
@@ -139,6 +152,9 @@ def load_participants(version: str = "latest") -> pd.DataFrame:
 
     """
     resolved = SATPVersion(version)
+    if SATPVersion(version) > SATPVersion.V1_2_1:
+        msg = "Participant data is only available for SATP versions up to v1.2.1."
+        raise ValueError(msg)
     logger.debug(f"Fetching SATP dataset URL for version: {resolved}")
     data = pd.read_excel(resolved.url, engine="openpyxl", sheet_name="Participants")
     data = data.drop(columns=["Unnamed: 3", "Unnamed: 4"])
