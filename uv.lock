@@ -3747,6 +3747,7 @@ source = { editable = "." }
 dependencies = [
     { name = "loguru" },
     { name = "numpy" },
+    { name = "packaging" },
     { name = "pandas", extra = ["excel"] },
     { name = "pandera", extra = ["io", "mypy", "pandas"] },
     { name = "plot-likert" },
@@ -3826,6 +3827,7 @@ requires-dist = [
     { name = "mosqito", marker = "extra == 'audio'", specifier = ">=1.2.1" },
     { name = "numba", marker = "extra == 'audio'", specifier = ">=0.59" },
     { name = "numpy", specifier = "!=1.26" },
+    { name = "packaging", specifier = ">=24.2" },
     { name = "pandas", extras = ["excel"], specifier = ">=2.2.2" },
     { name = "pandera", extras = ["io", "mypy", "pandas"], specifier = ">=0.26.1" },
     { name = "plot-likert", specifier = ">=0.5.0" },
