@@ -166,4 +166,6 @@ def bfgs(
         equal_com=equal_com,
         iterlim=1000,
         try_refit_BFGS=True,
+        print_level=0,
+        file=ro.NULL,
     )

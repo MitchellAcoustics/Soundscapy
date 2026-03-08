@@ -264,37 +264,6 @@ class CircE:
     rmsea_u: float | None
     polar_angles: pd.Series | None = None  # PAQ_IDS index, angle estimates
 
-    def __post_init__(self) -> None:
-        """Capture R console output for this model fit."""
-        self.capture_r_output()
-
-    def capture_r_output(self) -> None:
-        """Capture all output that normally goes to the R console in a python list."""
-        # Import module
-        import rpy2.rinterface_lib.callbacks
-
-        # Record output
-        self.stdout = []
-        self.stderr = []
-
-        # Dummy functions
-        def add_to_stdout(line: str) -> None:
-            self.stdout.append(line)
-
-        def add_to_stderr(line: str) -> None:
-            self.stderr.append(line)
-
-        # Keep the old functions
-        self.stdout_orig = rpy2.rinterface_lib.callbacks.consolewrite_print
-        self.stderr_orig = rpy2.rinterface_lib.callbacks.consolewrite_warnerror
-        # Set the call backs
-        rpy2.rinterface_lib.callbacks.consolewrite_print = (  # ty:ignore[invalid-assignment]
-            add_to_stdout
-        )
-        rpy2.rinterface_lib.callbacks.consolewrite_warnerror = (  # ty:ignore[invalid-assignment]
-            add_to_stderr
-        )
-
     @classmethod
     def from_bfgs(
         cls,

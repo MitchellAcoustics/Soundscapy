@@ -320,7 +320,7 @@ class TestIpsatize:
         np.testing.assert_allclose(row_means.to_numpy(), 0.0, atol=1e-10)
 
     def test_returns_only_scale_columns(self, sample_data):
-        """ipsatize must return only the PAQ scale columns, not participant."""
+        """Ipsatize must return only the PAQ scale columns, not participant."""
         from soundscapy.surveys import ipsatize
         from soundscapy.surveys.survey_utils import PAQ_IDS
 
@@ -331,11 +331,14 @@ class TestIpsatize:
         assert "participant" not in result.columns
 
     def test_invalid_method_raises(self, sample_data):
-        """ipsatize must raise ValueError for an unknown method string."""
+        """Ipsatize must raise ValueError for an unknown method string."""
         from soundscapy.surveys import ipsatize
 
         with pytest.raises(ValueError, match="method"):
-            ipsatize(sample_data, method="bad_method")
+            ipsatize(
+                sample_data,
+                method="bad_method",  # ty:ignore[invalid-argument-type]
+            )
 
     def test_grand_mean_differs_from_column_wise(self, sample_data):
         """Grand-mean and column-wise results must differ for asymmetric data."""
