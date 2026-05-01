@@ -182,3 +182,5 @@ CLAUDE.local.md
 *_version.py
 /docs/tutorials/SoundscapyResults.xlsx
 CLAUDE.md
+.claude/settings.local.json
+.zed/settings.json
