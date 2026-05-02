@@ -38,7 +38,7 @@ readme = "README.md"
 requires-python = ">= 3.10"
 
 [project.optional-dependencies]
-# all = ["soundscapy[audio]", "soundscapy[r]"]
+all = ["soundscapy[audio]", "soundscapy[r]"]
 audio = [
     "acoustic-toolbox>=0.1.2",
     "mosqito>=1.2.1",
@@ -46,9 +46,9 @@ audio = [
     "scikit-maad>=1.4.3",
     "tqdm>=4.66.5",
 ]
-# r = ["rpy2[all]>=3.5.0"]
-# satp = ["soundscapy[r]"]
-# spi = ["soundscapy[r]"]
+r = ["rpy2>=3.5.0"]
+satp = ["soundscapy[r]"]
+spi = ["soundscapy[r]"]
 
 [dependency-groups]
 dev = [
@@ -75,7 +75,7 @@ docs = [
     "mkdocs-jupyter>=0.24.8",
     "mkdocs-material>=9.5.31",
     "mkdocs>=1.6.0",
-    "mkdocstrings[python]>=0.25.2",
+    "mkdocstrings>=0.25.2",
     "pymdown-extensions>=10.9",
 ]
 test = [
@@ -85,7 +85,7 @@ test = [
     "pytest-xdist>=3.6.1",
     "pytest>=8.3.3",
     "setuptools>=72.1.0",
-    "xdoctest[all]>=1.1.6",
+    "xdoctest>=1.1.6",
 ]
 
 [project.urls]
@@ -113,23 +113,22 @@ platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.dependencies]
 python = "3.12.*"
-pandas = ">=2.2.2,<3"
-openpyxl = ">=3.1.5,<4"
-loguru = ">=0.7.2"
 numpy = "!=1.26"
-packaging = ">=24.2"
-pandera = ">=0.26.1"
-pydantic = ">=2.8.2"
-pyyaml = ">=6.0.2"
 scipy = ">=1.14.1"
-seaborn = ">=0.13.2"
+pandas = ">=2.2.2,<3"
 
 [tool.pixi.pypi-dependencies]
 soundscapy = { path = ".", editable = true }
+pandera = { version = ">=0.26.1", extras = ["io", "mypy", "pandas"] }
 
 [tool.pixi.feature.audio.dependencies]
 numba = ">=0.59"
 tqdm = ">=4.66.5"
+
+[tool.pixi.feature.audio.pypi-dependencies]
+acoustic-toolbox = ">=0.1.2"
+mosqito = ">=1.2.1"
+scikit-maad = ">=1.4.3"
 
 [tool.pixi.feature.dev.dependencies]
 mypy = ">=1.15.0"
@@ -155,10 +154,13 @@ mkdocstrings = ">=0.25.2"
 mkdocstrings-python = ">=0.25.2"
 pymdown-extensions = ">=10.9"
 
+[tool.pixi.feature.docs.pypi-dependencies]
+mkdocs-api-autonav = ">=0.4.0"
+mkdocs-autoapi = ">=0.4.1"
+
 [tool.pixi.feature.r.dependencies]
-r-sn = ">=2.1.3,<3"
-r-essentials = ">=4.5,<5"
 r-base = ">=4.5.3,<4.6"
+r-sn = ">=2.1.3,<3"
 r-remotes = ">=2.5.0,<3"
 rpy2 = ">=3.6.7,<4"
 
@@ -178,6 +180,26 @@ docs = { features = ["docs"], solve-group = "default" }
 r = { features = ["r"], solve-group = "default" }
 test = { features = ["test", "r", "audio"], solve-group = "default" }
 dev = { features = ["dev", "test", "docs", "r", "audio"], solve-group = "default" }
+
+[tool.pixi.tasks.test]
+cmd = "pytest"
+description = "Run the test suite"
+default-environment = "test"
+
+[tool.pixi.tasks.lint]
+cmd = "ruff check ."
+description = "Lint the codebase"
+default-environment = "dev"
+
+[tool.pixi.tasks.fmt]
+cmd = "ruff check . --fix && ruff format ."
+description = "Fix lint issues and format code"
+default-environment = "dev"
+
+[tool.pixi.tasks.docs-serve]
+cmd = "mkdocs serve"
+description = "Serve docs locally"
+default-environment = "docs"
 
 [tool.pixi.tasks.install-r-circe]
 args = [{ "arg" = "package", "default" = "'MitchellAcoustics/CircE-R'" }]
