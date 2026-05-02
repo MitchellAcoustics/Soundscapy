@@ -3,13 +3,6 @@
 These wrappers back the optional R-powered functionality exposed through
 `soundscapy.spi` and `soundscapy.satp`.
 
-## Package overview
-
-::: soundscapy.r_wrapper
-    options:
-      heading_level: 3
-      show_submodules: false
-
 ## Session management
 
 ::: soundscapy.r_wrapper._r_wrapper

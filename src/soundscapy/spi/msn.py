@@ -111,7 +111,7 @@ class DirectParams:
 
         Returns
         -------
-        None
+        :
 
         """
         if not self._omega_is_pos_def():
@@ -128,12 +128,12 @@ class DirectParams:
 
         Parameters
         ----------
-        cp : CentredParams
+        cp
             The CentredParams object to convert.
 
         Returns
         -------
-        DirectParams
+        :
             A new DirectParams object with the converted parameters.
 
         """
@@ -155,20 +155,20 @@ class CentredParams:
 
     Parameters
     ----------
-    mean : float
+    mean
         The mean of the distribution.
-    sigma : float
+    sigma
         The standard deviation of the distribution.
-    skew : float
+    skew
         The skewness of the distribution.
 
     Attributes
     ----------
-    mean : float
+    mean
         The mean of the distribution.
-    sigma : float
+    sigma
         The standard deviation of the distribution.
-    skew : float
+    skew
         The skewness of the distribution.
 
     Methods
@@ -204,12 +204,12 @@ class CentredParams:
 
         Parameters
         ----------
-        dp : DirectParams
+        dp
             The DirectParams object to convert.
 
         Returns
         -------
-        CentredParams
+        :
             A new CentredParams object with the converted parameters.
 
         """
@@ -223,32 +223,32 @@ class MultiSkewNorm:
 
     Attributes
     ----------
-    cp : CentredParams
+    cp
         The centred parameters of the fitted model.
-    dp : DirectParams
+    dp
         The direct parameters of the fitted model.
-    sample_data : np.ndarray | None
+    sample_data
         The generated sample data from the fitted model.
-    data : pd.DataFrame | None
+    data
         The input data used for fitting the model.
 
     Methods
     -------
-    summary()
+    summary
         Prints a summary of the fitted model.
-    fit(data=None, x=None, y=None)
+    fit
         Fits the model to the provided data.
-    define_dp(xi, omega, alpha)
+    define_dp
         Defines the direct parameters of the model.
-    sample(n=1000, return_sample=False)
+    sample
         Generates an unrestricted sample from the fitted model.
-    sample_mtsn(n=1000, a=-1, b=1, return_sample=False)
+    sample_mtsn
         Generates a truncated sample (rejection sampling within [a, b]).
-    sspy_plot(color='blue', title=None, n=1000)
+    sspy_plot
         Plots the joint distribution of the generated sample.
-    ks2d2s(test)
+    ks2d2s
         Computes the two-sample, two-dimensional Kolmogorov-Smirnov statistic.
-    spi_score(test)
+    spi_score
         Computes the Soundscape Perception Index (SPI).
 
     """
@@ -277,7 +277,7 @@ class MultiSkewNorm:
 
         Returns
         -------
-        A string summarizing the model parameters and data, or a message
+        :
             indicating the model is not fitted.
 
         """
@@ -303,11 +303,11 @@ class MultiSkewNorm:
 
         Parameters
         ----------
-        data : pd.DataFrame or np.ndarray, optional
+        data
             The input data as a pandas DataFrame or numpy array.
-        x : np.ndarray or pd.Series, optional
+        x
             The x-values of the input data as a numpy array or pandas Series.
-        y : np.ndarray or pd.Series, optional
+        y
             The y-values of the input data as a numpy array or pandas Series.
 
         Raises
@@ -370,16 +370,16 @@ class MultiSkewNorm:
 
         Parameters
         ----------
-        xi : np.ndarray
+        xi
             The xi values of the direct parameters.
-        omega : np.ndarray
+        omega
             The omega values of the direct parameters.
-        alpha : np.ndarray
+        alpha
             The alpha values of the direct parameters.
 
         Returns
         -------
-        self
+        :
 
         """
         self.dp = DirectParams(xi, omega, alpha)
@@ -403,12 +403,12 @@ class MultiSkewNorm:
 
         Parameters
         ----------
-        params : DirectParams
+        params
             The direct parameters to initialize the model.
 
         Returns
         -------
-        MultiSkewNorm
+        :
             A new instance of MultiSkewNorm initialized with the provided parameters.
 
         """
@@ -457,14 +457,14 @@ class MultiSkewNorm:
 
         Parameters
         ----------
-        n : int, optional
+        n
             The number of samples to generate, by default 1000.
-        return_sample : bool, optional
+        return_sample
             Whether to return the generated sample as an np.ndarray, by default False.
 
         Returns
         -------
-        None or np.ndarray
+        :
             The generated sample if `return_sample` is True, otherwise None.
 
         Raises
@@ -499,18 +499,18 @@ class MultiSkewNorm:
 
         Parameters
         ----------
-        n : int, optional
+        n
             The number of samples to generate, by default 1000.
-        a : float, optional
+        a
             Lower truncation bound for both dimensions, by default -1.
-        b : float, optional
+        b
             Upper truncation bound for both dimensions, by default 1.
-        return_sample : bool, optional
+        return_sample
             Whether to return the generated sample as an np.ndarray, by default False.
 
         Returns
         -------
-        None or np.ndarray
+        :
             The generated sample if `return_sample` is True, otherwise None.
 
         """
@@ -542,11 +542,11 @@ class MultiSkewNorm:
 
         Parameters
         ----------
-        color : str, optional
+        color
             Color for the density plot, by default "blue".
-        title : str, optional
+        title
             Title for the plot, by default None.
-        n : int, optional
+        n
             Number of samples to generate if `sample_data` is None, by default 1000.
 
         """
@@ -563,12 +563,12 @@ class MultiSkewNorm:
 
         Parameters
         ----------
-        test : pd.DataFrame or np.ndarray
+        test
             The test data.
 
         Returns
         -------
-        tuple
+        :
             The KS2D statistic and p-value.
 
         """
@@ -596,12 +596,12 @@ class MultiSkewNorm:
 
         Parameters
         ----------
-        test : pd.DataFrame or np.ndarray
+        test
             The test data.
 
         Returns
         -------
-        int
+        :
             The Soundscape Perception Index (SPI), ranging from 0 to 100.
 
         """
@@ -629,14 +629,14 @@ def spi_score(
 
     Parameters
     ----------
-    target : np.ndarray
+    target
         The sample data representing the target distribution.
-    test : pd.DataFrame or np.ndarray
+    test
         The test data.
 
     Returns
     -------
-    int
+    :
         The Soundscape Perception Index (SPI), ranging from 0 to 100.
 
     """
@@ -651,14 +651,14 @@ def ks2d(
 
     Parameters
     ----------
-    target : pd.DataFrame or np.ndarray
+    target
         The sample data representing the target distribution.
-    test : pd.DataFrame or np.ndarray
+    test
         The test data.
 
     Returns
     -------
-    tuple
+    :
         The KS2D statistic and p-value.
 
     """
@@ -701,14 +701,14 @@ def cp2dp(
 
     Parameters
     ----------
-    cp : CentredParams
+    cp
         The centred parameters object.
-    family : str, optional
+    family
         The distribution family, by default "SN" (Skew Normal).
 
     Returns
     -------
-    DirectParams
+    :
         The corresponding direct parameters object.
 
     """
@@ -725,14 +725,14 @@ def dp2cp(
 
     Parameters
     ----------
-    dp : DirectParams
+    dp
         The direct parameters object.
-    family : str, optional
+    family
         The distribution family, by default "SN" (Skew Normal).
 
     Returns
     -------
-    CentredParams
+    :
         The corresponding centred parameters object.
 
     """

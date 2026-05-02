@@ -33,17 +33,18 @@ def CountQuads(
 
     Parameters
     ----------
-    Arr2D : np.ndarray
+    Arr2D
         Array of 2D points (shape N x 2) to be counted.
-    point : np.ndarray
+    point
         A 1D array or list with 2 elements representing the center (x, y)
         of the 4 quadrants.
 
     Returns
     -------
-    tuple[float, float, float, float]
+    :
         A tuple containing four floats (fpp, fnp, fpn, fnn), representing the
         normalized fractions (probabilities) of points in each quadrant:
+
         - fpp: Fraction in the positive-x, positive-y quadrant.
         - fnp: Fraction in the negative-x, positive-y quadrant.
         - fpn: Fraction in the positive-x, negative-y quadrant.
@@ -121,6 +122,7 @@ def FuncQuads(func2D, point, xlim, ylim, rounddig=4):
     tuple[float, float, float, float]
         A tuple containing four floats (fpp, fnp, fpn, fnn), representing the
         integrated probabilities in each quadrant, normalized by the total integral:
+
         - fpp: Probability in the positive-x, positive-y quadrant.
         - fnp: Probability in the negative-x, positive-y quadrant.
         - fpn: Probability in the positive-x, negative-y quadrant.
@@ -261,7 +263,7 @@ def ks2d2s(Arr2D1: np.ndarray, Arr2D2: np.ndarray) -> tuple[float, float]:
 
     Returns
     -------
-    tuple[float, float]
+    :
         d : float
             The 2D KS statistic, representing the maximum difference found
             between the cumulative distributions in any of the four quadrants,

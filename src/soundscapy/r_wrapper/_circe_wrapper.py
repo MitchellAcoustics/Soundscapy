@@ -20,12 +20,12 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
 
     Parameters
     ----------
-    bfgs_model : ro.ListVector
+    bfgs_model
         Fitted model object from the circe package.
 
     Returns
     -------
-    dict
+    :
         Dictionary containing fit statistics.
 
     Examples
@@ -106,23 +106,23 @@ def bfgs(
 
     Parameters
     ----------
-    data_cor : pd.DataFrame
+    data_cor
         Correlation matrix of the data.
-    n : int
+    n
         Number of observations (participants) used to compute the correlation
         matrix. Used by CircE_BFGS for chi-square and RMSEA calculations.
-    scales : list[str], optional
+    scales
         List of scale names. Defaults to PAQ_IDS.
-    m_val : int, optional
+    m_val
         Number of dimensions. Defaults to 3.
-    equal_ang : bool, optional
+    equal_ang
         Whether to enforce equal angles constraint. Defaults to True.
-    equal_com : bool, optional
+    equal_com
         Whether to enforce equal communalities constraint. Defaults to True.
 
     Returns
     -------
-    ro.ListVector
+    :
         Fitted model object from the circe package.
 
     Examples
