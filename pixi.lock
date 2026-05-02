@@ -11715,7 +11715,7 @@ packages:
   timestamp: 1762941572482
 - pypi: ./
   name: soundscapy
-  version: 0.8.0rc11.dev17
+  version: 0.8.0rc11.dev18
   sha256: 542d4c7c14d0864304dc995b37a1096ac469afc18335f9b4a59f151549e7907e
   requires_dist:
   - loguru>=0.7.2

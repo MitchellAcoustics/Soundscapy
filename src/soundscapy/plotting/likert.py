@@ -60,7 +60,7 @@ def paq_radar_plot(
     figsize
         Figure size (width, height) in inches, by default (8, 8).
         Only used when creating new axes.
-    colors
+    palette
         Colors for the plot lines and fills. Can be:
 
         - List of color names/values for each data row
@@ -79,8 +79,8 @@ def paq_radar_plot(
         Y-axis limits (min, max), by default (1, 5) for standard Likert scale
     title
         Plot title, by default None
-    text_padding
-        Padding for category labels, by default auto-generated
+    label_pad
+        Padding for category labels, by default 15
     legend_loc
         Legend location, by default "upper right"
     legend_bbox_to_anchor

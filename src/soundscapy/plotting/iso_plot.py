@@ -1416,16 +1416,12 @@ class ISOPlot:
             Target specific axis/axes
         data
             Custom data for this specific density plot
-        thresh
-            Threshold for density contours, by default 0.5
-        levels
-            Contour levels, by default 2
-        alpha
-            Transparency level, by default 0.5
         include_outline
             Whether to include an outline around the density plot, by default True
         **params
-            Additional parameters for the density plot
+            Additional parameters for the density plot. Useful options include
+            `thresh` (default `0.5`), `levels` (default `2`), and `alpha`
+            (default `0.5`).
 
         Returns
         -------

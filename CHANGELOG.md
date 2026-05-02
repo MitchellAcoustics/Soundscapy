@@ -5,7 +5,7 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 0.8.0
+## Unreleased - 0.8.0
 
 ### Added
 
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated GitHub issue templates and workflow configurations
 - Improved test coverage for core functionality
 
-## [0.7.6] - 2024-11-06
+## 0.7.6 - 2024-11-06
 
 ### Changed
 
@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`from soundscapy.audio import Binaural`) or from the top level
   (`from soundscapy import Binaural`)
 
-## [0.7.5]
+## 0.7.5
 
 ### Added
 
@@ -101,13 +101,13 @@ pip install soundscapy[all]
 - Added a new workflow for testing tagged releases, including installation from TestPyPI and running tests. (`.github/workflows/test-tag-release.yml` [.github/workflows/test-tag-release.ymlR1-R114](diffhunk://#diff-11b7dedbf7b09ab5a0bd90aa70d8a2eda1918dab64a511c82104706cfa09f3b7R1-R114))
 - Added new workflows for running tests on the main codebase and tutorial notebooks. (`.github/workflows/test.yml` [[1]](diffhunk://#diff-faff1af3d8ff408964a57b2e475f69a6b7c7b71c9978cccc8f471798caac2c88R1-R52) `.github/workflows/test-tutorials.yml` [[2]](diffhunk://#diff-01bd86ab14c3e8d7d1382e5ed2172404eb7d3c46bbffeffe09fc11431885e2a0R1-R42)
 
-## [0.7.3]
+## 0.7.3
 
 ### Improved
 
 - Allowed the user to request files to be resampled upon loading. This is necessary for Mosqito metrics, which requires (and will itself resample) the audio files to be 48 kHz. The user can specify the desired sample rate in `Binaural.from_wav()` and higher level functions like `AudioAnalysis.analyse_file`, `AudioAnalysis.analyse_folder`.
 
-## [0.7.0]
+## 0.7.0
 
 Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surveys`, `databases`, `audio`, `plotting`), and improving the overall structure and functionality of the package. Also added more comprehensive documentation and test coverage.
 
@@ -238,7 +238,7 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 - Moved constants (e.g., DEFAULT_XLIM, DEFAULT_YLIM) to a separate utilities file.
 - Created ExtraParams TypedDict for additional plotting parameters.
 
-## [0.6.2]
+## 0.6.2
 
 ### Added
 

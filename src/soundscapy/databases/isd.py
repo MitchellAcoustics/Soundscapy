@@ -602,7 +602,7 @@ def soundscapy_describe(
         ISD dataframe.
     group_by
         Column to group by, by default "LocationID".
-    type
+    calc_type
         Type of summary, either "percent" or "count", by default "percent".
 
     Returns

@@ -644,13 +644,6 @@ def scatter(
         String values are passed to seaborn.color_palette().
         List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping, by default "colorblind"
-    color
-        Color to use for the plot elements when not using hue mapping,
-        by default "#0173B2" (first color from colorblind palette)
-    figsize
-        Size of the figure to return if `ax` is None, by default (5, 5)
-    s
-        Size of scatter points, by default 20
     legend
         How to draw the legend. If "brief", numeric hue and size variables will be
         represented with a sample of evenly spaced values. If "full", every group will
@@ -661,38 +654,14 @@ def scatter(
     prim_labels
         Deprecated. Use xlabel and ylabel parameters instead.
 
-    Other Parameters
-    ----------------
-    xlabel, ylabel
-        Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$"
-        with math rendering.
-
-        If None is passed, the column names (x and y) will be used as labels.
-
-        If a string is provided, it will be used as the label.
-
-        If False is passed, axis labels will be hidden.
-    xlim, ylim : tuple[float, float], optional
-        Limits for x and y axes, by default (-1, 1) for both
-    legend_loc : MplLegendLocType, optional
-        Location of legend, by default "best"
-    diagonal_lines : bool, optional
-        Whether to include diagonal dimension labels (e.g. calm, etc.),
-        by default False
-    prim_ax_fontdict : dict, optional
-        Font dictionary for axis labels with these defaults:
-
-        {
-            "family": "sans-serif",
-            "fontstyle": "normal",
-            "fontsize": "large",
-            "fontweight": "medium",
-            "parse_math": True,
-            "c": "black",
-            "alpha": 1,
-        }
-    fontsize, fontweight, fontstyle, family, c, alpha, parse_math:
-        Direct parameters for font styling in axis labels
+    **kwargs
+        Additional style arguments. Common options include `color` (default
+        `"#0173B2"` when hue mapping is unused), `figsize` (default `(5, 5)` when
+        creating a new figure), `s` (default `20` for point size), axis label and
+        limit controls such as `xlabel`, `ylabel`, `xlim`, `ylim`, legend placement
+        via `legend_loc`, `diagonal_lines`, and font settings such as
+        `prim_ax_fontdict`, `fontsize`, `fontweight`, `fontstyle`, `family`, `c`,
+        `alpha`, and `parse_math`.
 
     Returns
     -------
@@ -821,8 +790,6 @@ def density(
     scatter_kws
         Keyword arguments to pass to `seaborn.scatterplot` if incl_scatter is True,
         by default {"s": 25, "linewidth": 0}
-    incl_outline
-        Whether to include an outline for the density contours, by default False
     legend
         How to draw the legend. If "brief", numeric hue variables will be
         represented with a sample of evenly spaced values. If "full", every group will
@@ -833,62 +800,14 @@ def density(
         Deprecated. Use xlabel and ylabel parameters instead.
 
     **kwargs
-        Additional styling parameters:
-
-        - alpha : float, optional
-            Proportional opacity of the density fill, by default 0.8
-
-        - fill : bool, optional
-            If True, fill in the area between bivariate contours, by default True
-
-        - levels : int | Iterable[float], optional
-            Number of contour levels or values to draw contours at, by default 10
-
-        - thresh : float, optional
-            Lowest iso-proportional level at which to draw a contour line,
-            by default 0.05
-
-        - bw_adjust : float, optional
-            Factor that multiplicatively scales the bandwidth, by default 1.2
-
-        - xlabel, ylabel : str | Literal[False], optional
-            Custom axis labels. By default, "$P_{ISO}$" and "$E_{ISO}$" with math
-            rendering.
-            If None is passed, the column names (x and y) will be used as labels.
-            If a string is provided, it will be used as the label.
-            If False is passed, axis labels will be hidden.
-
-        - xlim, ylim : tuple[float, float], optional
-            Limits for x and y axes, by default (-1, 1) for both
-
-        - legend_loc : MplLegendLocType, optional
-            Location of legend, by default "best"
-
-        - diagonal_lines : bool, optional
-            Whether to include diagonal dimension labels (e.g. calm, etc.),
-            by default False
-
-        - figsize : tuple[int, int], optional
-            Size of the figure to return if `ax` is None, by default (5, 5)
-
-        - prim_ax_fontdict : dict, optional
-            Font dictionary for axis labels with these defaults:
-
-            {
-                "family": "sans-serif",
-                "fontstyle": "normal",
-                "fontsize": "large",
-                "fontweight": "medium",
-                "parse_math": True,
-                "c": "black",
-                "alpha": 1,
-            }
-
-        - fontsize, fontweight, fontstyle, family, c, alpha, parse_math:
-            Direct parameters for font styling in axis labels
-
-        Also accepts additional keyword arguments for matplotlib's contour and contourf
-        functions.
+        Additional styling parameters. Common options include `incl_outline`,
+        density controls such as `alpha`, `fill`, `levels`, `thresh`, and
+        `bw_adjust`, axis label and limit controls such as `xlabel`, `ylabel`,
+        `xlim`, `ylim`, legend placement via `legend_loc`, `diagonal_lines`,
+        `figsize` for newly created figures, font settings such as
+        `prim_ax_fontdict`, `fontsize`, `fontweight`, `fontstyle`, `family`, `c`,
+        `alpha`, and `parse_math`, plus any extra keyword arguments accepted by
+        matplotlib's `contour` and `contourf`.
 
     Returns
     -------
@@ -1298,12 +1217,6 @@ def jointplot(
         String values are passed to seaborn.color_palette().
         List or dict values imply categorical mapping, while a colormap object
         implies numeric mapping, by default "colorblind"
-    color
-        Color to use for the plot elements when not using hue mapping,
-        by default "#0173B2" (first color from colorblind palette)
-    figsize
-        Size of the figure to create (determines height, width is proportional),
-        by default (5, 5)
     scatter_kws
         Additional keyword arguments to pass to scatter plot if incl_scatter is True,
         by default None
@@ -1335,40 +1248,11 @@ def jointplot(
         density estimation or "hist" for histogram, by default "kde"
 
     **kwargs
-        Additional styling parameters:
-
-        - xlabel, ylabel : str | Literal[False], optional
-            Custom axis labels. By default "$P_{ISO}$" and "$E_{ISO}$" with
-            math rendering.
-
-            If None is passed, the column names (x and y) will be used as labels.
-
-            If a string is provided, it will be used as the label.
-
-            If False is passed, axis labels will be hidden.
-
-        - xlim, ylim : tuple[float, float], optional
-            Limits for x and y axes, by default (-1, 1) for both
-
-        - legend_loc : MplLegendLocType, optional
-            Location of legend, by default "best"
-
-        - diagonal_lines : bool, optional
-            Whether to include diagonal dimension labels (e.g. calm, etc.),
-            by default False
-
-        - prim_ax_fontdict : dict, optional
-            Font dictionary for axis labels with these defaults:
-
-            {
-                "family": "sans-serif",
-                "fontstyle": "normal",
-                "fontsize": "large",
-                "fontweight": "medium",
-                "parse_math": True,
-                "c": "black",
-                "alpha": 1,
-            }
+        Additional styling parameters. Common options include `color`,
+        `figsize`, axis label and limit controls such as `xlabel`, `ylabel`,
+        `xlim`, `ylim`, legend placement via `legend_loc`, `diagonal_lines`, and
+        font settings such as `prim_ax_fontdict`, `fontsize`, `fontweight`,
+        `fontstyle`, `family`, `c`, `alpha`, and `parse_math`.
 
     Returns
     -------

@@ -38,21 +38,21 @@ class MetricSettings(BaseModel):
     """
     Settings for an individual metric.
 
-    Parameters
+    Attributes
     ----------
-    run : bool
+    run
         Whether to run this metric.
-    main : str | int | None
+    main
         The main statistic to calculate.
-    statistics : list[str | int] | None
+    statistics
         List of statistics to calculate.
-    channel : list[str]
+    channel
         List of channels to analyze.
-    label : str
+    label
         Label for the metric.
-    parallel : bool
+    parallel
         Whether to run the metric in parallel.
-    func_args : dict[str, Any]
+    func_args
         Additional arguments for the metric function.
 
     """
@@ -113,15 +113,15 @@ class AnalysisSettings(BaseModel):
     """
     Settings for audio analysis methods.
 
-    Parameters
+    Attributes
     ----------
-    version : str
+    version
         Version of the configuration.
-    AcousticToolbox : LibrarySettings | None
+    AcousticToolbox
         Settings for AcousticToolbox metrics.
-    MoSQITo : LibrarySettings | None
+    MoSQITo
         Settings for MoSQITo metrics.
-    scikit_maad : LibrarySettings | None
+    scikit_maad
         Settings for scikit-maad metrics.
 
     """
@@ -308,7 +308,7 @@ class ConfigManager:
 
     Parameters
     ----------
-    default_config_path : str | Path | None
+    config_path
         Path to the default configuration file.
 
     """
