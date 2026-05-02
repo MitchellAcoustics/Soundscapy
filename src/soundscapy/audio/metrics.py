@@ -393,7 +393,7 @@ def maad_metric_1ch(
         return res
 
 
-def pyacoustics_metric_1ch(  # noqa: ANN201, D103
+def pyacoustics_metric_1ch(  # noqa: ANN201
     s: Signal | Binaural,
     metric: str,
     statistics: list[int | str] = (
@@ -557,7 +557,7 @@ def acoustics_metric_1ch(
         return pd.DataFrame(res, index=[0])
 
 
-def pyacoustics_metric_2ch(  # noqa: ANN201, D103
+def pyacoustics_metric_2ch(  # noqa: ANN201
     b: Binaural,
     metric: str,
     statistics: tuple | list = (

@@ -14,12 +14,11 @@ Examples
 >>> results = signal.process_all_metrics(analysis_settings)
 
 """
-from typing import Self
 from __future__ import annotations
 
 import warnings
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal, Self, cast
 
 import numpy as np
 import pandas as pd
