@@ -11,40 +11,42 @@ Soundscapy is a Python library for analysing and visualising soundscape assessme
 ### Setup
 
 ```bash
-uv sync --all-extras          # Install all dependencies (core + audio + r/satp/spi)
-uv sync                       # Core dependencies only (uses default groups: dev, docs, test)
-uv sync --extra audio         # Core + audio extras
-uv sync --extra r             # Core + R integration (rpy2)
+pixi install --all            # Install every declared Pixi environment
+pixi install                  # Install the default environment
+pixi install -e audio         # Base + audio tooling
+pixi install -e r             # Base + R tooling
+pixi install -e test          # Test environment with optional runtimes
+pixi install -e dev           # Broad contributor environment
 ```
 
 ### Testing
 
 ```bash
-uv run pytest                             # Run all available tests (auto-skips missing dep modules)
-uv run pytest test/test_surveys.py        # Run a single test file
-uv run pytest -k "test_name"             # Run tests matching a pattern
-uv run pytest --no-cov                   # Skip coverage measurement
+pixi run -e test pytest                             # Run all available tests
+pixi run -e test pytest test/test_surveys.py        # Run a single test file
+pixi run -e test pytest -k "test_name"             # Run tests matching a pattern
+pixi run -e test pytest --no-cov                   # Skip coverage measurement
 
 # Tox environments for full multi-dep testing
-uv run tox -e py312-core                 # Core only
-uv run tox -e py312-audio                # Core + audio
-uv run tox -e py312-r                    # Core + R (requires R installed)
-uv run tox -e py312-all                  # All extras
+pixi run -e dev tox -e py312-core        # Core only
+pixi run -e dev tox -e py312-audio       # Core + audio
+pixi run -e dev tox -e py312-r           # Core + R (requires R installed)
+pixi run -e dev tox -e py312-all         # All extras
 ```
 
 ### Linting & Formatting
 
 ```bash
-uv run ruff check .                      # Lint
-uv run ruff check . --fix                # Lint and auto-fix
-uv run ruff format .                     # Format
+pixi run -e dev ruff check .             # Lint
+pixi run -e dev ruff check . --fix       # Lint and auto-fix
+pixi run -e dev ruff format .            # Format
 ```
 
 ### Docs
 
 ```bash
-uv run mkdocs build                      # Build documentation
-uv run mkdocs serve                      # Serve docs locally
+pixi run -e docs mkdocs build            # Build documentation
+pixi run -e docs mkdocs serve            # Serve docs locally
 ```
 
 ## Architecture
