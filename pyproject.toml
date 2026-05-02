@@ -58,7 +58,6 @@ dependencies = [
     "loguru>=0.7.2",
     "numpy!=1.26",
     "packaging>=24.2",
-    "pandas[excel]>=2.2.2",
     "pandera[io,mypy,pandas]>=0.26.1",
     "plot-likert>=0.5.0",
     "pydantic>=2.8.2",
@@ -75,7 +74,7 @@ readme = "README.md"
 requires-python = ">= 3.10"
 
 [project.optional-dependencies]
-all = ["soundscapy[audio]", "soundscapy[satp]", "soundscapy[spi]"]
+# all = ["soundscapy[audio]", "soundscapy[r]"]
 audio = [
     "acoustic-toolbox>=0.1.2",
     "mosqito>=1.2.1",
@@ -83,9 +82,9 @@ audio = [
     "scikit-maad>=1.4.3",
     "tqdm>=4.66.5",
 ]
-r = ["rpy2[all]>=3.5.0"]
-satp = ["soundscapy[r]"]
-spi = ["soundscapy[r]"]
+# r = ["rpy2[all]>=3.5.0"]
+# satp = ["soundscapy[r]"]
+# spi = ["soundscapy[r]"]
 
 [project.urls]
 documentation = "https://soundscapy.readthedocs.io/en/latest/"
@@ -193,3 +192,39 @@ default-groups = ["dev", "docs", "test"]
 
 [tool.uv.pip]
 universal = true
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+soundscapy = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+# all = { features = ["r", "audio"], solve-group = "default" }
+audio = { features = ["audio"], solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+docs = { features = ["docs"], solve-group = "default" }
+r = { features = ["r"], solve-group = "default" }
+# satp = { features = ["satp"], solve-group = "default" }
+# spi = { features = ["spi"], solve-group = "default" }
+test = { features = ["test", "r", "audio", "docs"], solve-group = "default" }
+
+[tool.pixi.tasks.install-r-circe]
+args = [{ "arg" = "package", "default" = "'MitchellAcoustics/CircE-R'" }]
+cmd = "Rscript -e \"remotes::install_github({{ package }}, force=TRUE)\""
+description = "Install the CircE package from MitchellAcoustcs/CircE-R"
+default-environment = "r"
+
+[tool.pixi.dependencies]
+python = "3.12.*"
+pandas = ">=2.2.2,<3"
+openpyxl = ">=3.1.5,<4"
+
+[tool.pixi.feature.r.dependencies]
+r-sn = ">=2.1.3,<3"
+r-essentials = ">=4.5,<5"
+r-base = ">=4.5.3,<4.6"
+r-remotes = ">=2.5.0,<3"
+rpy2 = ">=3.6.7,<4"

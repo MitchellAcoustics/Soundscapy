@@ -184,3 +184,6 @@ CLAUDE.local.md
 CLAUDE.md
 .claude/settings.local.json
 .zed/settings.json
+# pixi environments
+.pixi/*
+!.pixi/config.toml
