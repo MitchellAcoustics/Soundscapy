@@ -36,6 +36,9 @@ nav:
           - "ISO Plot": reference/plotting/iso_plot.md
           - "Plot Functions": reference/plotting/plot_functions.md
           - "Likert": reference/plotting/likert.md
+          - "Parameter Models": reference/plotting/param_models.md
+          - "Parameter Defaults": reference/plotting/defaults.md
+          - "Plotting Context": reference/plotting/plot_context.md
       - Audio:
           - reference/audio/index.md
           - "Binaural": reference/audio/binaural.md
@@ -106,6 +109,13 @@ plugins:
         python:
           paths: [src]
           options:
+            extensions:
+              - griffe_fieldz:
+                  include_inherited: true
+                  include_private: false
+                  add_fields_to: docstring-attributes
+                  remove_fields_from_members: false
+                  strip_annotated: false
             docstring_section_style: spacy
             docstring_style: "numpy"
             members_order: source

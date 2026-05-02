@@ -842,7 +842,9 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/38/eb/a06005807d5b746e914be2286ae1e44b15c9c2431c295e3bec3d95f50a95/acoustic_toolbox-0.2.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/fe/9d/9034acaf3d80e85deb3d49876cb734479327b9cf89a918815ef67cb6b36c/fieldz-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f7/ec/67fbef5d497f86283db54c22eec6f6140243aae73265799baaaa19cd17fb/ghp_import-2.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ce/66/9daa3118d9bf4443778d6ee31b024c79766eeb116b275eca71597adae43a/griffe_fieldz-0.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/11/8c/c9138d881c79aa0ea9ed83cbd58d5ca75624378b38cee225dcf5c42cc91f/griffelib-2.0.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/49/fa/391e437a34e55095173dca5f24070d89cbc233ff85bf1c29c93248c6588d/imageio-2.37.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8a/a1/8d812e53a5da1687abb10445275d41a8b13adb781bbf7196ddbcf8d88505/lazy_loader-0.5-py3-none-any.whl
@@ -1301,7 +1303,9 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/38/eb/a06005807d5b746e914be2286ae1e44b15c9c2431c295e3bec3d95f50a95/acoustic_toolbox-0.2.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/fe/9d/9034acaf3d80e85deb3d49876cb734479327b9cf89a918815ef67cb6b36c/fieldz-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f7/ec/67fbef5d497f86283db54c22eec6f6140243aae73265799baaaa19cd17fb/ghp_import-2.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ce/66/9daa3118d9bf4443778d6ee31b024c79766eeb116b275eca71597adae43a/griffe_fieldz-0.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/11/8c/c9138d881c79aa0ea9ed83cbd58d5ca75624378b38cee225dcf5c42cc91f/griffelib-2.0.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/49/fa/391e437a34e55095173dca5f24070d89cbc233ff85bf1c29c93248c6588d/imageio-2.37.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8a/a1/8d812e53a5da1687abb10445275d41a8b13adb781bbf7196ddbcf8d88505/lazy_loader-0.5-py3-none-any.whl
@@ -1562,7 +1566,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/fe/9d/9034acaf3d80e85deb3d49876cb734479327b9cf89a918815ef67cb6b36c/fieldz-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f7/ec/67fbef5d497f86283db54c22eec6f6140243aae73265799baaaa19cd17fb/ghp_import-2.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ce/66/9daa3118d9bf4443778d6ee31b024c79766eeb116b275eca71597adae43a/griffe_fieldz-0.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/11/8c/c9138d881c79aa0ea9ed83cbd58d5ca75624378b38cee225dcf5c42cc91f/griffelib-2.0.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0c/29/0348de65b8cc732daa3e33e67806420b2ae89bdce2b04af740289c5c6c8c/loguru-0.7.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/19/04f9b178c2d8a15b076c8b5140708fa6ffc5601fb6f1e975537072df5b2a/mergedeep-1.3.4-py3-none-any.whl
@@ -1798,7 +1804,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/fe/9d/9034acaf3d80e85deb3d49876cb734479327b9cf89a918815ef67cb6b36c/fieldz-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f7/ec/67fbef5d497f86283db54c22eec6f6140243aae73265799baaaa19cd17fb/ghp_import-2.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ce/66/9daa3118d9bf4443778d6ee31b024c79766eeb116b275eca71597adae43a/griffe_fieldz-0.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/11/8c/c9138d881c79aa0ea9ed83cbd58d5ca75624378b38cee225dcf5c42cc91f/griffelib-2.0.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0c/29/0348de65b8cc732daa3e33e67806420b2ae89bdce2b04af740289c5c6c8c/loguru-0.7.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/19/04f9b178c2d8a15b076c8b5140708fa6ffc5601fb6f1e975537072df5b2a/mergedeep-1.3.4-py3-none-any.whl
@@ -4164,6 +4172,13 @@ packages:
   - pkg:pypi/executing?source=hash-mapping
   size: 30753
   timestamp: 1756729456476
+- pypi: https://files.pythonhosted.org/packages/fe/9d/9034acaf3d80e85deb3d49876cb734479327b9cf89a918815ef67cb6b36c/fieldz-0.2.0-py3-none-any.whl
+  name: fieldz
+  version: 0.2.0
+  sha256: 43b5be702816df39f55d08ae392eaabe58d3c69d2e4b61a853252cb2da41931f
+  requires_dist:
+  - typing-extensions>=4.10.0
+  requires_python: '>=3.10'
 - conda: https://conda.anaconda.org/conda-forge/noarch/filelock-3.29.0-pyhd8ed1ab_0.conda
   sha256: 6b471a18372bbd52bdf32fc965f71de3bc1b5219418b8e6b3875a67a7b08c483
   md5: 8fa8358d022a3a9bd101384a808044c6
@@ -4487,6 +4502,14 @@ packages:
   - pkg:pypi/greenlet?source=hash-mapping
   size: 258886
   timestamp: 1777329142205
+- pypi: https://files.pythonhosted.org/packages/ce/66/9daa3118d9bf4443778d6ee31b024c79766eeb116b275eca71597adae43a/griffe_fieldz-0.5.0-py3-none-any.whl
+  name: griffe-fieldz
+  version: 0.5.0
+  sha256: d363e56a7468019a7184ea3995277a1f20507bb9a345408c1f7014ae06878ebf
+  requires_dist:
+  - fieldz>=0.1.0
+  - griffelib>=2.0
+  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/11/8c/c9138d881c79aa0ea9ed83cbd58d5ca75624378b38cee225dcf5c42cc91f/griffelib-2.0.2-py3-none-any.whl
   name: griffelib
   version: 2.0.2
@@ -11327,8 +11350,8 @@ packages:
   timestamp: 1762941572482
 - pypi: ./
   name: soundscapy
-  version: 0.8.0rc11.dev9
-  sha256: ee262bed7972a30123fd732a0fff89b347366c0e3b535f168f6592d0a36ba641
+  version: 0.8.0rc11.dev12
+  sha256: 4482aa5d22ebac3ca318efd6b3668b63a9014a49570a1ba46105f21ba8fd918f
   requires_dist:
   - loguru>=0.7.2
   - numpy!=1.26
