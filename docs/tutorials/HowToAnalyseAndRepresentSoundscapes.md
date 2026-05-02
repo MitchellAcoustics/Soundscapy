@@ -1,6 +1,5 @@
 # How to analyse and represent soundscape perception
 
-
 Andrew Mitchell, Francesco Aletta, Jian Kang
 
 This notebook provides examples for analysing and visualising soundscape
@@ -532,14 +531,14 @@ of the bivariate distribution (with color maps for each decile) and
 marginal distribution plots. In this way, three primary characteristics
 of the soundscape perception can be seen:
 
-1.  The distribution across both pleasantness and eventfulness,
+1. The distribution across both pleasantness and eventfulness,
     including the central tendency, the dispersion, and any skewness in
     the response;
-2.  The general shape of the soundscape within the space - in this case
+2. The general shape of the soundscape within the space - in this case
     Russell Sq is almost entirely in the pleasant half, but is split
     relatively evenly across the eventfulness space, meaning while it is
     perceived as generally pleasant, it is not strongly calm or vibrant;
-3.  The degree of agreement about the soundscape perception - there
+3. The degree of agreement about the soundscape perception - there
     appears to be a relatively high agreement about the character of
     Russell Sq, as demonstrated by the compactness of the distribution,
     but this is not the case for every location, as will be shown later.
@@ -857,7 +856,7 @@ In addition to the visualisation demonstrations given above which were
 included in the JASA Express Letters article, we present a few examples
 of the uses of this distributional shape approach.
 
-### The soundscape shape of all 13 locations:
+### The soundscape shape of all 13 locations
 
 ``` python
 len(ssid.LocationID.unique())
@@ -883,7 +882,7 @@ plt.show()
 
 ![](HowToAnalyseAndRepresentSoundscapes_files/figure-markdown_strict/cell-15-output-2.png)
 
-### A comparison of two days in the same location:
+### A comparison of two days in the same location
 
 ``` python
 sspy.density(
@@ -900,7 +899,7 @@ sspy.density(
 
 ![](HowToAnalyseAndRepresentSoundscapes_files/figure-markdown_strict/cell-16-output-1.png)
 
-### All of the survey days in every location:
+### All of the survey days in every location
 
 ``` python
 fig, ax = sspy.create_iso_subplots(

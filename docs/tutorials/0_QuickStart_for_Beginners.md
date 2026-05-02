@@ -1,5 +1,4 @@
-# Soundscapy Quick Start Guide for Beginners.
-
+# Soundscapy Quick Start Guide for Beginners
 
 Welcome to Soundscapy! This tutorial is designed for users who are new
 to Python and want to get started with soundscape analysis. We’ll cover
@@ -110,7 +109,7 @@ print(example_df)
 
 Now that we have a DataFrame, let’s learn some basic operations:
 
-#### DataFrame Info:
+#### DataFrame Info
 
 ``` python
 # Get basic information about the DataFrame
@@ -120,21 +119,21 @@ example_df.info()
     <class 'pandas.core.frame.DataFrame'>
     RangeIndex: 6 entries, 0 to 5
     Data columns (total 9 columns):
-     #   Column      Non-Null Count  Dtype 
-    ---  ------      --------------  ----- 
+     #   Column      Non-Null Count  Dtype
+    ---  ------      --------------  -----
      0   LocationID  6 non-null      object
-     1   PAQ1        6 non-null      int64 
-     2   PAQ2        6 non-null      int64 
-     3   PAQ3        6 non-null      int64 
-     4   PAQ4        6 non-null      int64 
-     5   PAQ5        6 non-null      int64 
-     6   PAQ6        6 non-null      int64 
-     7   PAQ7        6 non-null      int64 
-     8   PAQ8        6 non-null      int64 
+     1   PAQ1        6 non-null      int64
+     2   PAQ2        6 non-null      int64
+     3   PAQ3        6 non-null      int64
+     4   PAQ4        6 non-null      int64
+     5   PAQ5        6 non-null      int64
+     6   PAQ6        6 non-null      int64
+     7   PAQ7        6 non-null      int64
+     8   PAQ8        6 non-null      int64
     dtypes: int64(8), object(1)
     memory usage: 564.0+ bytes
 
-#### Summary Statistics:
+#### Summary Statistics
 
 ``` python
 # Get summary statistics
@@ -264,7 +263,7 @@ example_df.describe()
 
 </div>
 
-#### Select specific columns:
+#### Select specific columns
 
 ``` python
 # Just the PAQ1 and PAQ2 columns
@@ -514,32 +513,32 @@ print(isd_data.head())
 
     First few rows of the ISD dataset:
       LocationID SessionID GroupID RecordID           start_time  \
-    0     CarloV   CarloV2   2CV12     1434  2019-05-16 18:46:00   
-    1     CarloV   CarloV2   2CV12     1435  2019-05-16 18:46:00   
-    2     CarloV   CarloV2   2CV13     1430  2019-05-16 19:02:00   
-    3     CarloV   CarloV2   2CV13     1431  2019-05-16 19:02:00   
-    4     CarloV   CarloV2   2CV13     1432  2019-05-16 19:02:00   
+    0     CarloV   CarloV2   2CV12     1434  2019-05-16 18:46:00
+    1     CarloV   CarloV2   2CV12     1435  2019-05-16 18:46:00
+    2     CarloV   CarloV2   2CV13     1430  2019-05-16 19:02:00
+    3     CarloV   CarloV2   2CV13     1431  2019-05-16 19:02:00
+    4     CarloV   CarloV2   2CV13     1432  2019-05-16 19:02:00
 
                   end_time  latitude  longitude Language Survey_Version  ...  \
-    0  2019-05-16 18:56:00  37.17685  -3.590392      eng     engISO2018  ...   
-    1  2019-05-16 18:56:00  37.17685  -3.590392      eng     engISO2018  ...   
-    2  2019-05-16 19:12:00  37.17685  -3.590392      eng     engISO2018  ...   
-    3  2019-05-16 19:12:00  37.17685  -3.590392      eng     engISO2018  ...   
-    4  2019-05-16 19:12:00  37.17685  -3.590392      eng     engISO2018  ...   
+    0  2019-05-16 18:56:00  37.17685  -3.590392      eng     engISO2018  ...
+    1  2019-05-16 18:56:00  37.17685  -3.590392      eng     engISO2018  ...
+    2  2019-05-16 19:12:00  37.17685  -3.590392      eng     engISO2018  ...
+    3  2019-05-16 19:12:00  37.17685  -3.590392      eng     engISO2018  ...
+    4  2019-05-16 19:12:00  37.17685  -3.590392      eng     engISO2018  ...
 
        RA_cp90_Max  RA_cp95_Max  THD_THD_Max  THD_Min_Max  THD_Max_Max  \
-    0         8.15         6.72        -0.09       -11.76        54.18   
-    1         8.15         6.72        -0.09       -11.76        54.18   
-    2         5.00         3.91        -2.10       -19.32        72.52   
-    3         5.00         3.91        -2.10       -19.32        72.52   
-    4         5.00         3.91        -2.10       -19.32        72.52   
+    0         8.15         6.72        -0.09       -11.76        54.18
+    1         8.15         6.72        -0.09       -11.76        54.18
+    2         5.00         3.91        -2.10       -19.32        72.52
+    3         5.00         3.91        -2.10       -19.32        72.52
+    4         5.00         3.91        -2.10       -19.32        72.52
 
-       THD_L5_Max  THD_L10_Max  THD_L50_Max  THD_L90_Max  THD_L95_Max  
-    0       34.82        26.53         5.57         -9.0       -10.29  
-    1       34.82        26.53         5.57         -9.0       -10.29  
-    2       32.33        24.52         0.25        -16.3       -17.33  
-    3       32.33        24.52         0.25        -16.3       -17.33  
-    4       32.33        24.52         0.25        -16.3       -17.33  
+       THD_L5_Max  THD_L10_Max  THD_L50_Max  THD_L90_Max  THD_L95_Max
+    0       34.82        26.53         5.57         -9.0       -10.29
+    1       34.82        26.53         5.57         -9.0       -10.29
+    2       32.33        24.52         0.25        -16.3       -17.33
+    3       32.33        24.52         0.25        -16.3       -17.33
+    4       32.33        24.52         0.25        -16.3       -17.33
 
     [5 rows x 142 columns]
 
@@ -809,7 +808,6 @@ print(msn2.cp)
 print(msn2.dp)
 ```
 
-
     MSN parameters for StPaulsRow:
     Centred Parameters:
     mean:  [0.235 0.121]
@@ -906,11 +904,11 @@ plot.show()
 Now that we’ve learned the basics of Soundscapy, let’s put it all
 together in a complete analysis workflow:
 
-1.  Load and validate data
-2.  Calculate ISO coordinates
-3.  Visualize the data
-4.  Compare locations
-5.  Calculate SPI
+1. Load and validate data
+2. Calculate ISO coordinates
+3. Visualize the data
+4. Compare locations
+5. Calculate SPI
 
 Here’s a complete example:
 
@@ -972,16 +970,16 @@ plot.show()
 In this tutorial, we’ve covered the basics of using Soundscapy for
 soundscape analysis:
 
-1.  **Python Basics**: We learned about variables, functions, packages,
+1. **Python Basics**: We learned about variables, functions, packages,
     and DataFrames.
 
-2.  **Soundscape Data**: We saw how to load, validate, and process
+2. **Soundscape Data**: We saw how to load, validate, and process
     soundscape data.
 
-3.  **Visualization**: We created beautiful visualizations with just a
+3. **Visualization**: We created beautiful visualizations with just a
     single line of code.
 
-4.  **SPI**: We calculated and interpreted the Soundscape Perception
+4. **SPI**: We calculated and interpreted the Soundscape Perception
     Index.
 
 The key takeaway is that Soundscapy makes complex soundscape analysis
@@ -994,16 +992,16 @@ functions to accomplish the same tasks with just a few lines.
 Now that you’ve completed this quick start guide, you might want to
 explore:
 
-1.  **More Advanced Visualizations**: Check out the Advanced
+1. **More Advanced Visualizations**: Check out the Advanced
     Visualization Techniques tutorial.
 
-2.  **Working with Different Databases**: Learn about the different
+2. **Working with Different Databases**: Learn about the different
     soundscape databases available in Soundscapy.
 
-3.  **In-depth SPI Analysis**: Dive deeper into the Soundscape
+3. **In-depth SPI Analysis**: Dive deeper into the Soundscape
     Perception Index and its applications.
 
-4.  **Custom Analysis Workflows**: Combine Soundscapy functions with
+4. **Custom Analysis Workflows**: Combine Soundscapy functions with
     your own code to create custom analysis workflows.
 
 Happy soundscape analyzing!

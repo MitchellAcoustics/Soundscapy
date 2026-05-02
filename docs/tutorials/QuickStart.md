@@ -1,6 +1,5 @@
 # `Soundscapy` - Quick Start Guide
 
-
 By Andrew Mitchell, Lecturer, University College London
 
 ## Background

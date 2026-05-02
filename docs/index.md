@@ -48,7 +48,7 @@ We welcome contributions from the community. If you're interested in contributin
 !!! note
 
     If you use _Soundscapy_ in your research, please include a citation to our accompanying paper:
-    
+
         Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and represent quantitative soundscape data. _JASA Express Letters, 2_, 37201. [https://doi.org/10.1121/10.0009794](https://doi.org/10.1121/10.0009794) <!-- markdownlint-disable MD046 -->
 
 ## License

@@ -14,6 +14,7 @@ Examples
 >>> results = signal.process_all_metrics(analysis_settings)
 
 """
+
 from __future__ import annotations
 
 import warnings

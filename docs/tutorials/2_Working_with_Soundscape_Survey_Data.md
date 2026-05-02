@@ -1,6 +1,5 @@
 # Working with Soundscape Survey Data
 
-
 ``` python
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -109,12 +108,12 @@ print(f"Excluded samples: {0 if excluded_data is None else excluded_data.shape[0
 
 The `validate` function performs several checks on the PAQ data:
 
-1.  **Missing Values**: By default, it checks for missing values in the
+1. **Missing Values**: By default, it checks for missing values in the
     PAQ columns. You can allow missing values by setting
     `allow_paq_na=True`.
-2.  **Value Range**: It checks that all PAQ values are within the
+2. **Value Range**: It checks that all PAQ values are within the
     expected range (default is 1-5 for a 5-point Likert scale).
-3.  **Constant Responses**: It checks for responses where all PAQs have
+3. **Constant Responses**: It checks for responses where all PAQs have
     the same value (except for the midpoint value), which may indicate
     inattentive responding.
 
@@ -324,7 +323,7 @@ location_stds.head()
 
     Mean ISO coordinates by location:
                    ISOPleasant  ISOEventful
-    LocationID                             
+    LocationID
     CamdenTown       -0.102571     0.364096
     CampoPrincipe     0.504940    -0.076165
     CarloV            0.518265    -0.011537
@@ -509,7 +508,6 @@ print("\nCamden Town summary:")
 for key, value in camden_summary.items():
     print(f"{key}: {value}")
 ```
-
 
     Camden Town summary:
     count: 105
@@ -854,11 +852,11 @@ def apply_language_angles(row):
 if 'Language' in valid_data_with_iso.columns:
     # Apply the function to each row
     results = valid_data_with_iso.apply(apply_language_angles, axis=1)
-    
+
     # Extract the results
     valid_data_with_iso['Lang_ISOPleasant'] = [r[0] for r in results]
     valid_data_with_iso['Lang_ISOEventful'] = [r[1] for r in results]
-    
+
     print("ISO coordinates with language-specific angles:")
     print(valid_data_with_iso[['Lang_ISOPleasant', 'Lang_ISOEventful']].head())
 ```
@@ -898,19 +896,19 @@ sspy.scatter(simulated_data, title="Simulated Soundscape Data")
 In this tutorial, we’ve covered the essential aspects of working with
 soundscape survey data using the Soundscapy package:
 
-1.  **Loading Data**: We learned how to load data from the built-in ISD
+1. **Loading Data**: We learned how to load data from the built-in ISD
     dataset and from external sources.
-2.  **Data Validation**: We explored how to validate and clean
+2. **Data Validation**: We explored how to validate and clean
     soundscape data to ensure quality.
-3.  **ISO Coordinates**: We calculated ISO coordinates from PAQ ratings
+3. **ISO Coordinates**: We calculated ISO coordinates from PAQ ratings
     and customized the calculation.
-4.  **Filtering and Grouping**: We filtered and grouped data based on
+4. **Filtering and Grouping**: We filtered and grouped data based on
     various criteria.
-5.  **Different Scales**: We worked with different survey formats and
+5. **Different Scales**: We worked with different survey formats and
     scales.
-6.  **Multi-Language Data**: We applied language-specific angles to
+6. **Multi-Language Data**: We applied language-specific angles to
     account for cultural differences.
-7.  **Simulation**: We simulated soundscape data for testing and
+7. **Simulation**: We simulated soundscape data for testing and
     demonstration.
 
 These tools and techniques provide a solid foundation for analyzing

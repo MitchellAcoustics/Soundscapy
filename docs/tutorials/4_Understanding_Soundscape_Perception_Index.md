@@ -1,6 +1,5 @@
 # Understanding and Using the Soundscape Perception Index (SPI)
 
-
 ``` python
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,15 +70,15 @@ spread of the data.
 
 The SPI provides several advantages for soundscape analysis:
 
-1.  **Quantitative Comparison**: It allows for a numerical comparison
+1. **Quantitative Comparison**: It allows for a numerical comparison
     between soundscapes, making it easier to evaluate changes or
     differences.
-2.  **Distribution-Based**: Unlike simple averages, it considers the
+2. **Distribution-Based**: Unlike simple averages, it considers the
     full distribution of perceptions, capturing the variability in how
     people experience soundscapes.
-3.  **Target Setting**: It enables setting quantitative targets for
+3. **Target Setting**: It enables setting quantitative targets for
     soundscape design or improvement.
-4.  **Evaluation Tool**: It can be used to evaluate the success of
+4. **Evaluation Tool**: It can be used to evaluate the success of
     soundscape interventions by comparing before and after
     distributions.
 
@@ -124,11 +123,11 @@ capture the asymmetry often observed in soundscape data.
 
 An MSN distribution is defined by three parameters:
 
-1.  **xi (ξ)**: The location parameter, which determines the center of
+1. **xi (ξ)**: The location parameter, which determines the center of
     the distribution.
-2.  **omega (Ω)**: The scale matrix, which determines the spread and
+2. **omega (Ω)**: The scale matrix, which determines the spread and
     correlation of the distribution.
-3.  **alpha (α)**: The shape parameter, which determines the skewness of
+3. **alpha (α)**: The shape parameter, which determines the skewness of
     the distribution.
 
 These parameters can be specified directly (DirectParams) or derived
@@ -619,24 +618,24 @@ plt.show()
 When using the SPI in your soundscape analysis, consider the following
 best practices:
 
-1.  **Sample Size**: Ensure that you have a sufficient sample size for
+1. **Sample Size**: Ensure that you have a sufficient sample size for
     reliable distribution fitting. The more samples, the better the fit.
 
-2.  **Distribution Fitting**: Check the quality of the MSN fit to your
+2. **Distribution Fitting**: Check the quality of the MSN fit to your
     data. A poor fit can lead to misleading SPI values.
 
-3.  **Target Selection**: Choose your target distribution carefully. It
+3. **Target Selection**: Choose your target distribution carefully. It
     should represent a realistic and desirable soundscape for the
     specific context.
 
-4.  **Interpretation**: Remember that SPI is a relative measure. A high
+4. **Interpretation**: Remember that SPI is a relative measure. A high
     SPI doesn’t necessarily mean a good soundscape; it just means
     similarity to the target.
 
-5.  **Visualization**: Always visualize the distributions alongside the
+5. **Visualization**: Always visualize the distributions alongside the
     SPI values to get a complete picture of the comparison.
 
-6.  **Context**: Consider the context when interpreting SPI. Different
+6. **Context**: Consider the context when interpreting SPI. Different
     contexts may require different target distributions.
 
 Let’s demonstrate some of these best practices:
@@ -701,19 +700,19 @@ plt.show()
 In this tutorial, we’ve explored the Soundscape Perception Index (SPI)
 and its applications in soundscape analysis. We’ve learned:
 
-1.  **What SPI is**: A metric for comparing soundscape distributions,
+1. **What SPI is**: A metric for comparing soundscape distributions,
     ranging from 0 to 100.
 
-2.  **How to work with MSN distributions**: Creating, fitting, and
+2. **How to work with MSN distributions**: Creating, fitting, and
     sampling from multi-dimensional skewed normal distributions.
 
-3.  **How to calculate SPI**: Comparing distributions using the
+3. **How to calculate SPI**: Comparing distributions using the
     Kolmogorov-Smirnov test.
 
-4.  **Practical applications**: Evaluating interventions, comparing
+4. **Practical applications**: Evaluating interventions, comparing
     locations, setting design targets, and monitoring changes.
 
-5.  **Best practices**: Ensuring reliable results through proper sample
+5. **Best practices**: Ensuring reliable results through proper sample
     size, distribution fitting, and interpretation.
 
 The SPI provides a powerful tool for quantitative soundscape analysis,
@@ -722,7 +721,7 @@ soundscape design and management.
 
 ## References
 
-1.  Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
+1. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
     represent quantitative soundscape data. JASA Express Letters,
-    2, 37201. https://doi.org/10.1121/10.0009794
-2.  ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
+    2, 37201. <https://doi.org/10.1121/10.0009794>
+2. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.

@@ -1,6 +1,5 @@
 # Using Soundscapy for Binaural Recording Analysis
 
-
 Soundscapy has evolved to provide a comprehensive suite of acoustic and
 psychoacoustic analyses. This tutorial will guide you through using the
 new `AcousticAnalysis` class, which serves as the primary interface for
@@ -12,13 +11,13 @@ ease of use, and reproducibility.
 Soundscapy relies on three main packages to provide its analysis
 functions:
 
-1.  [Acoustic
+1. [Acoustic
     Toolbox](https://github.com/Universite-Gustave-Eiffel/acoustic-toolbox)
     (`acoustic_toolbox`): Provides standard acoustic metrics with direct
     references to relevant standards.
-2.  [scikit-maad](https://scikit-maad.github.io) (`maad`): Offers a
+2. [scikit-maad](https://scikit-maad.github.io) (`maad`): Offers a
     suite of ecological soundscape and bioacoustic indices.
-3.  [MoSQITo](https://github.com/Eomys/MoSQITo) (`mosqito`): Provides
+3. [MoSQITo](https://github.com/Eomys/MoSQITo) (`mosqito`): Provides
     key psychoacoustic metrics.
 
 The metrics available include: - From Acoustic Toolbox:

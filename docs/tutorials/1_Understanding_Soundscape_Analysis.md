@@ -1,6 +1,5 @@
 # Understanding Soundscape Analysis: Concepts and Terminology
 
-
 ## Introduction
 
 Welcome to this tutorial on understanding soundscape analysis using the
@@ -117,14 +116,14 @@ soundscape assessment. These scales measure how people perceive the
 emotional qualities of a soundscape. The ISO 12913-2 standard recommends
 using eight bipolar scales:
 
-1.  **Pleasant** vs. Unpleasant
-2.  **Vibrant** vs. Monotonous
-3.  **Eventful** vs. Uneventful
-4.  **Chaotic** vs. Calm
-5.  **Annoying** vs. Not annoying
-6.  **Monotonous** vs. Exciting
-7.  **Uneventful** vs. Full of events
-8.  **Calm** vs. Chaotic
+1. **Pleasant** vs. Unpleasant
+2. **Vibrant** vs. Monotonous
+3. **Eventful** vs. Uneventful
+4. **Chaotic** vs. Calm
+5. **Annoying** vs. Not annoying
+6. **Monotonous** vs. Exciting
+7. **Uneventful** vs. Full of events
+8. **Calm** vs. Chaotic
 
 These scales are typically measured using 5-point Likert scales, where
 respondents rate their agreement with each attribute.
@@ -158,9 +157,9 @@ Research has shown that the eight PAQs can be organized into a circular
 structure called a “circumplex model.” This model suggests that
 soundscape perception is primarily organized along two main dimensions:
 
-1.  **Pleasantness**: How pleasant or unpleasant the soundscape is
+1. **Pleasantness**: How pleasant or unpleasant the soundscape is
     perceived to be
-2.  **Eventfulness**: How eventful or uneventful the soundscape is
+2. **Eventfulness**: How eventful or uneventful the soundscape is
     perceived to be
 
 The circumplex model places these dimensions at right angles to each
@@ -195,13 +194,13 @@ plt.show()
 The circumplex model divides the perceptual space into four quadrants,
 each representing a different type of soundscape:
 
-1.  **Pleasant and Eventful (top-right)**: Vibrant soundscapes, often
+1. **Pleasant and Eventful (top-right)**: Vibrant soundscapes, often
     found in lively public spaces
-2.  **Unpleasant and Eventful (top-left)**: Chaotic soundscapes, often
+2. **Unpleasant and Eventful (top-left)**: Chaotic soundscapes, often
     found in noisy urban areas
-3.  **Unpleasant and Uneventful (bottom-left)**: Monotonous soundscapes,
+3. **Unpleasant and Uneventful (bottom-left)**: Monotonous soundscapes,
     often found in boring or lifeless spaces
-4.  **Pleasant and Uneventful (bottom-right)**: Calm soundscapes, often
+4. **Pleasant and Uneventful (bottom-right)**: Calm soundscapes, often
     found in tranquil natural environments
 
 This model helps us understand that soundscape quality isn’t just about
@@ -214,9 +213,9 @@ others benefit from calm soundscapes (like residential areas or parks).
 To quantify a soundscape’s position in the circumplex model, we
 calculate two coordinates:
 
-1.  **ISOPleasant**: A value between -1 and 1 representing the
+1. **ISOPleasant**: A value between -1 and 1 representing the
     soundscape’s position on the pleasantness dimension
-2.  **ISOEventful**: A value between -1 and 1 representing the
+2. **ISOEventful**: A value between -1 and 1 representing the
     soundscape’s position on the eventfulness dimension
 
 These coordinates are calculated from the eight PAQ ratings using a
@@ -362,12 +361,12 @@ datasets.
 When analyzing soundscapes, it’s important to consider not just average
 perceptions but the full distribution of perceptions. This is because:
 
-1.  **Individual Variation**: People perceive soundscapes differently
+1. **Individual Variation**: People perceive soundscapes differently
     based on their preferences, expectations, and sensitivities
-2.  **Temporal Variation**: Soundscapes change over time, and a single
+2. **Temporal Variation**: Soundscapes change over time, and a single
     location may have different acoustic characteristics at different
     times
-3.  **Spatial Variation**: Within a single area, there may be different
+3. **Spatial Variation**: Within a single area, there may be different
     acoustic zones with distinct soundscape characteristics
 
 By analyzing the distribution of perceptions, we can gain a more nuanced
@@ -440,19 +439,19 @@ functions.
 In this tutorial, we’ve covered the fundamental concepts and terminology
 of soundscape analysis:
 
-1.  **Soundscape Definition**: The acoustic environment as perceived by
+1. **Soundscape Definition**: The acoustic environment as perceived by
     people in context
-2.  **ISO 12913 Standard**: The international framework for soundscape
+2. **ISO 12913 Standard**: The international framework for soundscape
     assessment
-3.  **Perceptual Attributes (PAQs)**: The eight scales used to evaluate
+3. **Perceptual Attributes (PAQs)**: The eight scales used to evaluate
     soundscapes
-4.  **Circumplex Model**: The two-dimensional model organizing
+4. **Circumplex Model**: The two-dimensional model organizing
     soundscape perception
-5.  **ISO Coordinates**: The mathematical representation of a
+5. **ISO Coordinates**: The mathematical representation of a
     soundscape’s position in the circumplex
-6.  **Distribution Analysis**: The importance of considering the full
+6. **Distribution Analysis**: The importance of considering the full
     range of perceptions
-7.  **Soundscape Perception Index**: A metric for comparing soundscape
+7. **Soundscape Perception Index**: A metric for comparing soundscape
     distributions
 
 With this foundation, you’re now ready to dive deeper into the practical
@@ -461,18 +460,18 @@ we’ll explore how to work with soundscape survey data in more detail.
 
 ## References
 
-1.  ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and
+1. ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and
     conceptual framework.
-2.  ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection
+2. ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection
     and reporting requirements.
-3.  ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
-4.  Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
+3. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
+4. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
     represent quantitative soundscape data. JASA Express Letters,
-    2, 37201. https://doi.org/10.1121/10.0009794
-5.  Aletta, F., Oberman, T., Mitchell, A., Erfanian, M., Lionello, M.,
+    2, 37201. <https://doi.org/10.1121/10.0009794>
+5. Aletta, F., Oberman, T., Mitchell, A., Erfanian, M., Lionello, M.,
     Kachlicka, M., & Kang, J. (2019). Associations between soundscape
     experience and self-reported wellbeing in open public urban spaces:
     a field study. The Lancet, 394, S17.
-6.  Axelsson, Ö., Nilsson, M. E., & Berglund, B. (2010). A principal
+6. Axelsson, Ö., Nilsson, M. E., & Berglund, B. (2010). A principal
     components model of soundscape perception. The Journal of the
     Acoustical Society of America, 128(5), 2836-2846.

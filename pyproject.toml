@@ -138,6 +138,7 @@ tox = ">=4.25.0"
 twine = ">=6.1.0"
 types-pyyaml = ">=6.0.12.20250402"
 python-build = ">=1.2.2.post1"
+prek = ">=0.3.11,<0.4"
 
 [tool.pixi.feature.docs.dependencies]
 ipywidgets = ">=8.1.3"
@@ -167,7 +168,7 @@ setuptools = ">=72.1.0"
 xdoctest = ">=1.1.6"
 
 [tool.pixi.environments]
-default = { features = [], solve-group = "default" }
+default = { features = ["audio", "r"], solve-group = "default" }
 audio = { features = ["audio"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
 r = { features = ["r"], solve-group = "default" }

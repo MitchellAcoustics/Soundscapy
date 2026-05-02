@@ -1,6 +1,5 @@
 # Advanced Visualization Techniques in Soundscapy
 
-
 ``` python
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -377,20 +376,20 @@ plt.show()
 When creating visualizations for soundscape data, consider the following
 best practices:
 
-1.  **Choose the right plot type**:
+1. **Choose the right plot type**:
     - Use scatter plots to show individual data points
     - Use density plots to show the distribution of data
     - Use joint plots to show both the distribution and individual
       points
-2.  **Use appropriate grouping**:
+2. **Use appropriate grouping**:
     - Group by location, time, or other relevant variables
     - Use color to distinguish between groups
     - Limit the number of groups to avoid visual clutter
-3.  **Customize for clarity**:
+3. **Customize for clarity**:
     - Use appropriate axis limits (typically -1 to 1 for ISO
       coordinates)
     - Add informative titles and labels
-4.  **Consider your audience**:
+4. **Consider your audience**:
     - For academic publications, use simple, clear visualizations
     - For presentations, use more visually appealing plots
     - For reports, use a combination of plot types to tell a complete
@@ -497,16 +496,16 @@ plt.close(fig)  # Close the figure to avoid displaying it again
 In this tutorial, we’ve explored the advanced visualization capabilities
 of the Soundscapy package for soundscape analysis. We’ve covered:
 
-1.  **Basic visualization techniques** using scatter, density, and
+1. **Basic visualization techniques** using scatter, density, and
     iso_plot functions
-2.  **Grouping and comparing data** across different locations or
+2. **Grouping and comparing data** across different locations or
     conditions
-3.  **Creating multi-panel visualizations** for comprehensive analysis
-4.  **Using joint plots** to show distributions along both axes
-5.  **Advanced customization techniques** for creating tailored
+3. **Creating multi-panel visualizations** for comprehensive analysis
+4. **Using joint plots** to show distributions along both axes
+5. **Advanced customization techniques** for creating tailored
     visualizations
-6.  **Best practices for effective visualization** in different contexts
-7.  **Exporting and saving visualizations** for reports and publications
+6. **Best practices for effective visualization** in different contexts
+7. **Exporting and saving visualizations** for reports and publications
 
 These visualization techniques provide powerful tools for understanding
 and communicating soundscape data, allowing researchers and
@@ -514,7 +513,7 @@ practitioners to gain insights and share findings effectively.
 
 ## References
 
-1.  Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
+1. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
     represent quantitative soundscape data. JASA Express Letters,
-    2, 37201. https://doi.org/10.1121/10.0009794
-2.  ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
+    2, 37201. <https://doi.org/10.1121/10.0009794>
+2. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.

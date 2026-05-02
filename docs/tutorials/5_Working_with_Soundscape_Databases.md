@@ -1,6 +1,5 @@
 # Working with Soundscape Databases in Soundscapy
 
-
 ``` python
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -30,15 +29,15 @@ Let’s begin by exploring the available databases in Soundscapy.
 
 Soundscapy currently provides access to the following databases:
 
-1.  **International Soundscape Database (ISD)**: A collection of
+1. **International Soundscape Database (ISD)**: A collection of
     soundscape survey data from various locations around the world,
     following the ISO 12913 standard.
 
-2.  **Soundscape Attributes Translation Project (SATP)**: A database
+2. **Soundscape Attributes Translation Project (SATP)**: A database
     containing translations of soundscape attributes in multiple
     languages, allowing for cross-cultural soundscape research.
 
-3.  **ARAUS Database**: A database of soundscape surveys conducted in
+3. **ARAUS Database**: A database of soundscape surveys conducted in
     the Augmented Reality Audio for Urban Soundscapes project.
 
 Each database has its own module in Soundscapy, providing specialized
@@ -243,12 +242,12 @@ isd_data.head()
 
 The ISD dataset contains several types of columns:
 
-1.  **Index Columns**: Identify the survey, location, and respondent
+1. **Index Columns**: Identify the survey, location, and respondent
     - `LocationID`: Identifier for the location
     - `RecordID`: Identifier for the audio recording
     - `GroupID`: Identifier for the group of respondents
     - `SessionID`: Identifier for the survey session
-2.  **Perceptual Attribute Questions (PAQs)**: Ratings on a 5-point
+2. **Perceptual Attribute Questions (PAQs)**: Ratings on a 5-point
     Likert scale
     - `PAQ1` (pleasant): How pleasant is the soundscape?
     - `PAQ2` (vibrant): How vibrant is the soundscape?
@@ -258,11 +257,11 @@ The ISD dataset contains several types of columns:
     - `PAQ6` (monotonous): How monotonous is the soundscape?
     - `PAQ7` (uneventful): How uneventful is the soundscape?
     - `PAQ8` (calm): How calm is the soundscape?
-3.  **Acoustic Metrics**: Objective measurements of the sound
+3. **Acoustic Metrics**: Objective measurements of the sound
     environment
     - `LAeq`: A-weighted equivalent continuous sound level
     - Various other metrics like `N5`, `Sharpness`, etc.
-4.  **Contextual Information**: Additional data about the survey context
+4. **Contextual Information**: Additional data about the survey context
     - Weather conditions, time of day, etc.
 
 Let’s explore the distribution of PAQ responses:
@@ -321,43 +320,43 @@ if isinstance(invalid_indices, pd.DataFrame):
 
     Sample of invalid records:
        LocationID SessionID GroupID RecordID           start_time  \
-    6      CarloV   CarloV2   2CV21     1428  2019-05-16 18:39:00   
-    9      CarloV   CarloV2   2CV32     1437  2019-05-16 18:56:00   
-    13     CarloV   CarloV2   2CV32     1441  2019-05-16 18:56:00   
-    30     CarloV   CarloV2   2CV62     1418  2019-05-16 19:20:00   
-    32     CarloV   CarloV2   2CV62     1420  2019-05-16 19:20:00   
+    6      CarloV   CarloV2   2CV21     1428  2019-05-16 18:39:00
+    9      CarloV   CarloV2   2CV32     1437  2019-05-16 18:56:00
+    13     CarloV   CarloV2   2CV32     1441  2019-05-16 18:56:00
+    30     CarloV   CarloV2   2CV62     1418  2019-05-16 19:20:00
+    32     CarloV   CarloV2   2CV62     1420  2019-05-16 19:20:00
 
                    end_time  latitude  longitude Language Survey_Version  ...  \
-    6   2019-05-16 18:49:00  37.17685  -3.590392      eng     engISO2018  ...   
-    9   2019-05-16 19:00:00  37.17685  -3.590392      eng     engISO2018  ...   
-    13  2019-05-16 19:00:00  37.17685  -3.590392      eng     engISO2018  ...   
-    30  2019-05-16 19:30:00  37.17685  -3.590392      eng     engISO2018  ...   
-    32  2019-05-16 19:30:00  37.17685  -3.590392      eng     engISO2018  ...   
+    6   2019-05-16 18:49:00  37.17685  -3.590392      eng     engISO2018  ...
+    9   2019-05-16 19:00:00  37.17685  -3.590392      eng     engISO2018  ...
+    13  2019-05-16 19:00:00  37.17685  -3.590392      eng     engISO2018  ...
+    30  2019-05-16 19:30:00  37.17685  -3.590392      eng     engISO2018  ...
+    32  2019-05-16 19:30:00  37.17685  -3.590392      eng     engISO2018  ...
 
         RA_cp90_Max  RA_cp95_Max  THD_THD_Max  THD_Min_Max  THD_Max_Max  \
-    6          4.45         3.52        -1.91       -13.06        65.17   
-    9          6.06         4.93        -0.57       -16.16        58.38   
-    13         6.06         4.93        -0.57       -16.16        58.38   
-    30         8.88         7.33        -1.22        -9.39        72.49   
-    32         8.88         7.33        -1.22        -9.39        72.49   
+    6          4.45         3.52        -1.91       -13.06        65.17
+    9          6.06         4.93        -0.57       -16.16        58.38
+    13         6.06         4.93        -0.57       -16.16        58.38
+    30         8.88         7.33        -1.22        -9.39        72.49
+    32         8.88         7.33        -1.22        -9.39        72.49
 
-        THD_L5_Max  THD_L10_Max  THD_L50_Max  THD_L90_Max  THD_L95_Max  
-    6        29.99        22.06         2.14        -9.60       -11.12  
-    9        32.16        24.88         3.93       -13.25       -14.21  
-    13       32.16        24.88         3.93       -13.25       -14.21  
-    30       38.63        30.30        10.19        -5.72        -6.94  
-    32       38.63        30.30        10.19        -5.72        -6.94  
+        THD_L5_Max  THD_L10_Max  THD_L50_Max  THD_L90_Max  THD_L95_Max
+    6        29.99        22.06         2.14        -9.60       -11.12
+    9        32.16        24.88         3.93       -13.25       -14.21
+    13       32.16        24.88         3.93       -13.25       -14.21
+    30       38.63        30.30        10.19        -5.72        -6.94
+    32       38.63        30.30        10.19        -5.72        -6.94
 
     [5 rows x 142 columns]
 
 The validation process checks for several issues:
 
-1.  **Missing Values**: Ensures that all required fields have values
-2.  **Valid PAQ Responses**: Checks that PAQ responses are within the
+1. **Missing Values**: Ensures that all required fields have values
+2. **Valid PAQ Responses**: Checks that PAQ responses are within the
     valid range (1-5)
-3.  **Consistent Responses**: Identifies respondents who gave the same
+3. **Consistent Responses**: Identifies respondents who gave the same
     rating for all PAQs
-4.  **Data Integrity**: Verifies that the data structure matches the
+4. **Data Integrity**: Verifies that the data structure matches the
     expected format
 
 ### 2.4 Calculating ISO Coordinates
@@ -611,11 +610,11 @@ attribute in a specific language.
 
 The main columns are:
 
-1.  **Language**: The language of the translation
-2.  **Attribute**: The soundscape attribute being translated
-3.  **Translation**: The translated term
-4.  **Back Translation**: The back-translation to English
-5.  **Notes**: Additional notes about the translation
+1. **Language**: The language of the translation
+2. **Attribute**: The soundscape attribute being translated
+3. **Translation**: The translated term
+4. **Back Translation**: The back-translation to English
+5. **Notes**: Additional notes about the translation
 
 ### 3.3 Working with Language-Specific Angles
 
@@ -749,23 +748,23 @@ else:
 When working with soundscape databases, consider the following best
 practices:
 
-1.  **Data Validation**: Always validate your data before analysis to
+1. **Data Validation**: Always validate your data before analysis to
     ensure quality and consistency.
 
-2.  **Documentation**: Keep track of your data sources, processing
+2. **Documentation**: Keep track of your data sources, processing
     steps, and analysis methods.
 
-3.  **Cross-Cultural Considerations**: Be aware of cultural differences
+3. **Cross-Cultural Considerations**: Be aware of cultural differences
     in soundscape perception and use language-specific angles when
     appropriate.
 
-4.  **Context**: Consider the context of the soundscape surveys,
+4. **Context**: Consider the context of the soundscape surveys,
     including location, time, and environmental factors.
 
-5.  **Visualization**: Use appropriate visualizations to communicate
+5. **Visualization**: Use appropriate visualizations to communicate
     your findings effectively.
 
-6.  **Reproducibility**: Make your analysis reproducible by documenting
+6. **Reproducibility**: Make your analysis reproducible by documenting
     your code and data processing steps.
 
 ## Summary
@@ -773,23 +772,23 @@ practices:
 In this tutorial, we’ve explored how to work with different soundscape
 databases in Soundscapy. We’ve learned:
 
-1.  **Available Databases**: The ISD, SATP, and ARAUS databases provide
+1. **Available Databases**: The ISD, SATP, and ARAUS databases provide
     different types of soundscape data.
 
-2.  **Data Loading and Validation**: Soundscapy provides functions for
+2. **Data Loading and Validation**: Soundscapy provides functions for
     loading and validating data from these databases.
 
-3.  **ISO Coordinates**: The ISO 12913 standard defines a circumplex
+3. **ISO Coordinates**: The ISO 12913 standard defines a circumplex
     model for soundscape perception, with pleasantness and eventfulness
     as the main dimensions.
 
-4.  **Data Selection**: You can filter and select data based on various
+4. **Data Selection**: You can filter and select data based on various
     criteria, such as location, record, group, or session.
 
-5.  **Cross-Cultural Analysis**: The SATP database and language-specific
+5. **Cross-Cultural Analysis**: The SATP database and language-specific
     angles enable cross-cultural soundscape research.
 
-6.  **Analysis Techniques**: Common analysis techniques include
+6. **Analysis Techniques**: Common analysis techniques include
     calculating mean responses, SSM metrics, and data quality checks.
 
 By leveraging these databases and analysis techniques, you can gain
@@ -798,11 +797,11 @@ growing field of soundscape research.
 
 ## References
 
-1.  ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and
+1. ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and
     conceptual framework.
-2.  ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection
+2. ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection
     and reporting requirements.
-3.  ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
-4.  Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
+3. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
+4. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
     represent quantitative soundscape data. JASA Express Letters,
-    2, 37201. https://doi.org/10.1121/10.0009794
+    2, 37201. <https://doi.org/10.1121/10.0009794>

@@ -1,6 +1,5 @@
 # Soundscape Assessment Tutorial
 
-
 ``` python
 import warnings
 
@@ -249,12 +248,12 @@ data["LocationID"].unique()
 
 Our dataset contains several types of columns:
 
-1.  **Index Columns**: Identify the survey, location, and respondent
+1. **Index Columns**: Identify the survey, location, and respondent
     - `LocationID`: Identifier for the location
     - `RecordID`: Identifier for the audio recording
     - `GroupID`: Identifier for the group of respondents
     - `SessionID`: Identifier for the survey session
-2.  **Perceptual Attribute Questions (PAQs)**: Ratings on a 5-point
+2. **Perceptual Attribute Questions (PAQs)**: Ratings on a 5-point
     Likert scale
     - `PAQ1` (pleasant): How pleasant is the soundscape?
     - `PAQ2` (vibrant): How vibrant is the soundscape?
@@ -264,13 +263,13 @@ Our dataset contains several types of columns:
     - `PAQ6` (monotonous): How monotonous is the soundscape?
     - `PAQ7` (uneventful): How uneventful is the soundscape?
     - `PAQ8` (calm): How calm is the soundscape?
-3.  **Sound Source Dominance**: Ratings of how dominant different sound
+3. **Sound Source Dominance**: Ratings of how dominant different sound
     sources are
     - `traffic_noise`: Dominance of traffic noise
     - `other_noise`: Dominance of other mechanical noise
     - `human_sounds`: Dominance of human sounds
     - `natural_sounds`: Dominance of natural sounds
-4.  **Acoustic Metrics**: Objective measurements of the sound
+4. **Acoustic Metrics**: Objective measurements of the sound
     environment
     - `LAeq`: A-weighted equivalent continuous sound level
     - Various other metrics like `N5`, `Sharpness`, etc.
@@ -611,7 +610,7 @@ sspy.scatter(...)
 
     File [0;32m~/Documents/GitHub/Soundscapy/.venv/lib/python3.12/site-packages/seaborn/relational.py:396[0m, in [0;36m_ScatterPlotter.__init__[0;34m(self, data, variables, legend)[0m
     [1;32m    387[0m [38;5;28;01mdef[39;00m[38;5;250m [39m[38;5;21m__init__[39m([38;5;28mself[39m, [38;5;241m*[39m, data[38;5;241m=[39m[38;5;28;01mNone[39;00m, variables[38;5;241m=[39m{}, legend[38;5;241m=[39m[38;5;28;01mNone[39;00m):
-    [1;32m    388[0m 
+    [1;32m    388[0m
     [1;32m    389[0m     [38;5;66;03m# TODO this is messy, we want the mapping to be agnostic about[39;00m
     [1;32m    390[0m     [38;5;66;03m# the kind of plot to draw, but for the time being we need to set[39;00m
     [1;32m    391[0m     [38;5;66;03m# this information so the SizeMapping can use it[39;00m
@@ -698,9 +697,9 @@ plt.show()
     [1;32m   2003[0m [38;5;28;01mdef[39;00m[38;5;250m [39m[38;5;21m_valid_density[39m(data: pd[38;5;241m.[39mDataFrame) [38;5;241m-[39m[38;5;241m>[39m [38;5;28;01mNone[39;00m:
     [1;32m   2004[0m [38;5;250m    [39m[38;5;124;03m"""[39;00m
     [1;32m   2005[0m [38;5;124;03m    Check if the data is valid for density plots.[39;00m
-    [1;32m   2006[0m 
+    [1;32m   2006[0m
     [0;32m   (...)[0m
-    [1;32m   2018[0m 
+    [1;32m   2018[0m
     [1;32m   2019[0m [38;5;124;03m    """[39;00m
     [0;32m-> 2020[0m     [38;5;28;01mif[39;00m [38;5;28;43mlen[39;49m[43m([49m[43mdata[49m[43m)[49m [38;5;241m<[39m RECOMMENDED_MIN_SAMPLES:
     [1;32m   2021[0m         warnings[38;5;241m.[39mwarn(
@@ -728,7 +727,7 @@ from soundscapy import PAQ_IDS
 sspy.paq_likert(data[PAQ_IDS], title="Distribution of PAQ Responses in the Demo Data")
 ```
 
-    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2117978073.py:3: ExperimentalWarning: This is an experimental function. It may change in the future. 
+    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2117978073.py:3: ExperimentalWarning: This is an experimental function. It may change in the future.
       sspy.paq_likert(data[PAQ_IDS], title="Distribution of PAQ Responses in the Demo Data")
     /Users/mitch/Documents/GitHub/Soundscapy/.venv/lib/python3.12/site-packages/plot_likert/plot_likert.py:257: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
       df.applymap(validate)
@@ -749,28 +748,28 @@ for location in data["LocationID"].unique():
     plt.show()
 ```
 
-    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2426594973.py:2: ExperimentalWarning: This is an experimental function. It may change in the future. 
+    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2426594973.py:2: ExperimentalWarning: This is an experimental function. It may change in the future.
       sspy.paq_likert(
     /Users/mitch/Documents/GitHub/Soundscapy/.venv/lib/python3.12/site-packages/plot_likert/plot_likert.py:257: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
       df.applymap(validate)
 
 ![](6_Soundscape_Assessment_Tutorial_files/figure-markdown_strict/cell-18-output-2.png)
 
-    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2426594973.py:2: ExperimentalWarning: This is an experimental function. It may change in the future. 
+    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2426594973.py:2: ExperimentalWarning: This is an experimental function. It may change in the future.
       sspy.paq_likert(
     /Users/mitch/Documents/GitHub/Soundscapy/.venv/lib/python3.12/site-packages/plot_likert/plot_likert.py:257: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
       df.applymap(validate)
 
 ![](6_Soundscape_Assessment_Tutorial_files/figure-markdown_strict/cell-18-output-4.png)
 
-    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2426594973.py:2: ExperimentalWarning: This is an experimental function. It may change in the future. 
+    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2426594973.py:2: ExperimentalWarning: This is an experimental function. It may change in the future.
       sspy.paq_likert(
     /Users/mitch/Documents/GitHub/Soundscapy/.venv/lib/python3.12/site-packages/plot_likert/plot_likert.py:257: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
       df.applymap(validate)
 
 ![](6_Soundscape_Assessment_Tutorial_files/figure-markdown_strict/cell-18-output-6.png)
 
-    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2426594973.py:2: ExperimentalWarning: This is an experimental function. It may change in the future. 
+    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2426594973.py:2: ExperimentalWarning: This is an experimental function. It may change in the future.
       sspy.paq_likert(
     /Users/mitch/Documents/GitHub/Soundscapy/.venv/lib/python3.12/site-packages/plot_likert/plot_likert.py:257: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
       df.applymap(validate)
@@ -785,7 +784,7 @@ Let’s examine the dominance of different sound sources at each location.
 sspy.stacked_likert(valid_data, "traffic_noise", title="Traffic Noise Dominance")
 ```
 
-    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2060333350.py:1: ExperimentalWarning: This is an experimental function. It may change in the future. Currently, this functio applies brute data cleaning, use with caution. 
+    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/2060333350.py:1: ExperimentalWarning: This is an experimental function. It may change in the future. Currently, this functio applies brute data cleaning, use with caution.
       sspy.stacked_likert(valid_data, "traffic_noise", title="Traffic Noise Dominance")
     /Users/mitch/Documents/GitHub/Soundscapy/.venv/lib/python3.12/site-packages/plot_likert/plot_likert.py:257: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
       df.applymap(validate)
@@ -798,7 +797,7 @@ Try this out with some of the other Likert scaled data:
 sspy.stacked_likert(...)
 ```
 
-    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/3195878422.py:1: ExperimentalWarning: This is an experimental function. It may change in the future. Currently, this functio applies brute data cleaning, use with caution. 
+    /var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_74288/3195878422.py:1: ExperimentalWarning: This is an experimental function. It may change in the future. Currently, this functio applies brute data cleaning, use with caution.
       sspy.stacked_likert(...)
 
     TypeError: 'ellipsis' object is not subscriptable
@@ -841,7 +840,7 @@ sound_sources = (
 )
 ```
 
-#### Mean sound source dominance by location:
+#### Mean sound source dominance by location
 
 ``` python
 sound_sources
@@ -1226,24 +1225,24 @@ vibrant_plot = (
 Now that we’ve analyzed our data and created various visualizations,
 let’s interpret the results:
 
-1.  **Location Characteristics**:
+1. **Location Characteristics**:
     - Each location has a distinct soundscape character, as shown by its
       position in the circumplex model.
     - Some locations are more pleasant (higher ISOPleasant values),
       while others are more eventful (higher ISOEventful values).
-2.  **Sound Source Influence**:
+2. **Sound Source Influence**:
     - Natural sounds tend to increase pleasantness, as shown by the
       relationship between natural sound dominance and ISOPleasant
       values.
     - Traffic noise tends to decrease pleasantness, as shown by the
       relationship between traffic noise dominance and ISOPleasant
       values.
-3.  **Acoustic Metrics**:
+3. **Acoustic Metrics**:
     - Higher sound levels (LAeq) are generally associated with lower
       pleasantness.
     - Higher loudness (N5) is generally associated with higher
       eventfulness.
-4.  **SPI Analysis**:
+4. **SPI Analysis**:
     - Some locations match better with the tranquil target, while others
       match better with the vibrant target.
     - This information can be used to identify which locations provide
@@ -1409,26 +1408,26 @@ plt.show()
 
 In this tutorial, you’ve learned how to:
 
-1.  **Load and validate soundscape survey data**
+1. **Load and validate soundscape survey data**
     - Import data from Excel files
     - Validate data quality
     - Calculate ISO coordinates
-2.  **Create basic visualizations and summary statistics**
+2. **Create basic visualizations and summary statistics**
     - Scatter plots and density plots
     - Summary statistics by location
     - Sound source dominance analysis
-3.  **Create Likert style plots**
+3. **Create Likert style plots**
     - Convert numeric responses to categorical
     - Create side-by-side Likert plots for comparison
-4.  **Create complex plots with hue and subplots**
+4. **Create complex plots with hue and subplots**
     - Visualize relationships between variables
     - Create multi-panel visualizations
     - Analyze the impact of sound sources on perception
-5.  **Apply SPI analysis**
+5. **Apply SPI analysis**
     - Define target distributions
     - Calculate SPI scores
     - Compare locations against different targets
-6.  **Use the ISOPlot interface**
+6. **Use the ISOPlot interface**
     - Create sophisticated SPI visualizations
     - Combine multiple layers in a single plot
     - Customize plot appearance
@@ -1441,11 +1440,11 @@ environments.
 
 ## References
 
-1.  ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and
+1. ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and
     conceptual framework.
-2.  ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection
+2. ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection
     and reporting requirements.
-3.  ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
-4.  Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
+3. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
+4. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
     represent quantitative soundscape data. JASA Express Letters,
-    2, 37201. https://doi.org/10.1121/10.0009794
+    2, 37201. <https://doi.org/10.1121/10.0009794>

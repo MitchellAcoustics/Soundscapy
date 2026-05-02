@@ -1,5 +1,4 @@
 
-
 <a href="https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/dev/docs/tutorials/IoA_Soundscape_Assessment_Tutorial.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
 ``` python
@@ -223,12 +222,12 @@ data["LocationID"].unique()
 
 Our dataset contains several types of columns:
 
-1.  **Index Columns**: Identify the survey, location, and respondent
+1. **Index Columns**: Identify the survey, location, and respondent
     - `LocationID`: Identifier for the location
     - `RecordID`: Identifier for the audio recording
     - `GroupID`: Identifier for the group of respondents
     - `SessionID`: Identifier for the survey session
-2.  **Perceptual Attribute Questions (PAQs)**: Ratings on a 5-point
+2. **Perceptual Attribute Questions (PAQs)**: Ratings on a 5-point
     Likert scale
     - `PAQ1` (pleasant): How pleasant is the soundscape?
     - `PAQ2` (vibrant): How vibrant is the soundscape?
@@ -238,13 +237,13 @@ Our dataset contains several types of columns:
     - `PAQ6` (monotonous): How monotonous is the soundscape?
     - `PAQ7` (uneventful): How uneventful is the soundscape?
     - `PAQ8` (calm): How calm is the soundscape?
-3.  **Sound Source Dominance**: Ratings of how dominant different sound
+3. **Sound Source Dominance**: Ratings of how dominant different sound
     sources are
     - `traffic_noise`: Dominance of traffic noise
     - `other_noise`: Dominance of other mechanical noise
     - `human_sounds`: Dominance of human sounds
     - `natural_sounds`: Dominance of natural sounds
-4.  **Acoustic Metrics**: Objective measurements of the sound
+4. **Acoustic Metrics**: Objective measurements of the sound
     environment
     - `LAeq`: A-weighted equivalent continuous sound level
     - Various other metrics like `N5`, `Sharpness`, etc.
@@ -441,13 +440,12 @@ valid_data[["LocationID", "ISOPleasant", "ISOEventful"]].head()
     </script>
   </div>
 
-
     <div id="df-1c321a98-3015-4fb5-a5ac-ee4a063e7c25">
       <button class="colab-df-quickchart" onclick="quickchart('df-1c321a98-3015-4fb5-a5ac-ee4a063e7c25')"
                 title="Suggest charts"
                 style="display:none;">
 
-<svg xmlns="http://www.w3.org/2000/svg" height="24px"viewBox="0 0 24 24"
+<svg xmlns="<http://www.w3.org/2000/svg>" height="24px"viewBox="0 0 24 24"
      width="24px">
     <g>
         <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
@@ -782,13 +780,12 @@ data-halign="left">ISOEventful</th>
     </script>
   </div>
 
-
     <div id="df-d06a9fc6-eb98-490f-8c36-09494a01c3ab">
       <button class="colab-df-quickchart" onclick="quickchart('df-d06a9fc6-eb98-490f-8c36-09494a01c3ab')"
                 title="Suggest charts"
                 style="display:none;">
 
-<svg xmlns="http://www.w3.org/2000/svg" height="24px"viewBox="0 0 24 24"
+<svg xmlns="<http://www.w3.org/2000/svg>" height="24px"viewBox="0 0 24 24"
      width="24px">
     <g>
         <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
@@ -946,7 +943,7 @@ data-halign="left">ISOEventful</th>
             title="Generate code using this dataframe."
             style="display:none;">
 
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px"viewBox="0 0 24 24"
+  <svg xmlns="<http://www.w3.org/2000/svg>" height="24px"viewBox="0 0 24 24"
        width="24px">
     <path d="M7,19H8.4L18.45,9,17,7.55,7,17.6ZM5,21V16.75L18.45,3.32a2,2,0,0,1,2.83,0l1.4,1.43a1.91,1.91,0,0,1,.58,1.4,1.91,1.91,0,0,1-.58,1.4L9.25,21ZM18.45,9,17,7.55Zm-12,3A5.31,5.31,0,0,0,4.9,8.1,5.31,5.31,0,0,0,1,6.5,5.31,5.31,0,0,0,4.9,4.9,5.31,5.31,0,0,0,6.5,1,5.31,5.31,0,0,0,8.1,4.9,5.31,5.31,0,0,0,12,6.5,5.46,5.46,0,0,0,6.5,12Z"/>
   </svg>
@@ -1157,7 +1154,7 @@ sound_sources = (
 )
 ```
 
-#### Mean sound source dominance by location:
+#### Mean sound source dominance by location
 
 ``` python
 sound_sources
@@ -1417,24 +1414,24 @@ vibrant_plot = (
 Now that we’ve analyzed our data and created various visualizations,
 let’s interpret the results:
 
-1.  **Location Characteristics**:
+1. **Location Characteristics**:
     - Each location has a distinct soundscape character, as shown by its
       position in the circumplex model.
     - Some locations are more pleasant (higher ISOPleasant values),
       while others are more eventful (higher ISOEventful values).
-2.  **Sound Source Influence**:
+2. **Sound Source Influence**:
     - Natural sounds tend to increase pleasantness, as shown by the
       relationship between natural sound dominance and ISOPleasant
       values.
     - Traffic noise tends to decrease pleasantness, as shown by the
       relationship between traffic noise dominance and ISOPleasant
       values.
-3.  **Acoustic Metrics**:
+3. **Acoustic Metrics**:
     - Higher sound levels (LAeq) are generally associated with lower
       pleasantness.
     - Higher loudness (N5) is generally associated with higher
       eventfulness.
-4.  **SPI Analysis**:
+4. **SPI Analysis**:
     - Some locations match better with the tranquil target, while others
       match better with the vibrant target.
     - This information can be used to identify which locations provide
@@ -1580,26 +1577,26 @@ plt.show()
 
 In this tutorial, you’ve learned how to:
 
-1.  **Load and validate soundscape survey data**
+1. **Load and validate soundscape survey data**
     - Import data from Excel files
     - Validate data quality
     - Calculate ISO coordinates
-2.  **Create basic visualizations and summary statistics**
+2. **Create basic visualizations and summary statistics**
     - Scatter plots and density plots
     - Summary statistics by location
     - Sound source dominance analysis
-3.  **Create Likert style plots**
+3. **Create Likert style plots**
     - Convert numeric responses to categorical
     - Create side-by-side Likert plots for comparison
-4.  **Create complex plots with hue and subplots**
+4. **Create complex plots with hue and subplots**
     - Visualize relationships between variables
     - Create multi-panel visualizations
     - Analyze the impact of sound sources on perception
-5.  **Apply SPI analysis**
+5. **Apply SPI analysis**
     - Define target distributions
     - Calculate SPI scores
     - Compare locations against different targets
-6.  **Use the ISOPlot interface**
+6. **Use the ISOPlot interface**
     - Create sophisticated SPI visualizations
     - Combine multiple layers in a single plot
     - Customize plot appearance
@@ -1612,11 +1609,11 @@ environments.
 
 ## References
 
-1.  ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and
+1. ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and
     conceptual framework.
-2.  ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection
+2. ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection
     and reporting requirements.
-3.  ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
-4.  Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
+3. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
+4. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and
     represent quantitative soundscape data. JASA Express Letters,
-    2, 37201. https://doi.org/10.1121/10.0009794
+    2, 37201. <https://doi.org/10.1121/10.0009794>
