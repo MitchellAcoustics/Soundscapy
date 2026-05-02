@@ -57,9 +57,14 @@ def load(locations: list[str] | None = None) -> pd.DataFrame:
     """
     Load the example "ISD" csv file to a DataFrame.
 
+    Parameters
+    ----------
+    locations
+        Optional list of LocationIDs to filter the data by. If None, loads all data.
+
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing ISD data.
 
     Notes
@@ -103,12 +108,12 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
 
     Parameters
     ----------
-    version : str, optional
+    version
         Version number of the dataset to fetch, by default "latest".
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing ISD data.
 
     Raises
@@ -173,18 +178,18 @@ def validate(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         ISD style dataframe, including PAQ data.
-    paq_aliases : Union[List, Dict], optional
+    paq_aliases
         List of PAQ names (in order) or dict of PAQ names with new names as values.
-    allow_paq_na : bool, optional
+    allow_paq_na
         If True, allow NaN values in PAQ data, by default False.
-    val_range : Tuple[int, int], optional
+    val_range
         Min and max range of the PAQ response values, by default (1, 5).
 
     Returns
     -------
-    Tuple[pd.DataFrame, pd.DataFrame | None]
+    :
         Tuple containing the cleaned dataframe
         and optionally a dataframe of excluded samples.
 
@@ -233,14 +238,12 @@ def match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
 
     Parameters
     ----------
-    col : str
+    col
         Column name to match.
-    likert_scale : LikertScale
-        Likert scale to match against.
 
     Returns
     -------
-    Scale
+    :
         Likert scale object.
 
     """
@@ -271,12 +274,12 @@ def likert_categorical_from_data(
 
     Parameters
     ----------
-    data : pd.Series
+    data
         Series containing the data.
 
     Returns
     -------
-    pd.Series
+    :
         Series with Likert labels.
 
     Raises
@@ -306,16 +309,16 @@ def _isd_select(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         ISD dataframe.
-    select_by : str
+    select_by
         Column name of the ID variable to select by.
-    condition : Union[str, int, List, Tuple]
+    condition
         IDs to select from the dataframe.
 
     Returns
     -------
-    pd.DataFrame
+    :
         Filtered dataframe.
 
     Raises
@@ -351,14 +354,14 @@ def select_record_ids(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         ISD dataframe.
-    record_ids : Union[str, int, List, Tuple]
+    record_ids
         RecordID(s) to filter by.
 
     Returns
     -------
-    pd.DataFrame
+    :
         Filtered dataframe.
 
     Examples
@@ -384,14 +387,14 @@ def select_group_ids(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         ISD dataframe.
-    group_ids : Union[str, int, List, Tuple]
+    group_ids
         GroupID(s) to filter by.
 
     Returns
     -------
-    pd.DataFrame
+    :
         Filtered dataframe.
 
     Examples
@@ -417,14 +420,14 @@ def select_session_ids(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         ISD dataframe.
-    session_ids : Union[str, int, List, Tuple]
+    session_ids
         SessionID(s) to filter by.
 
     Returns
     -------
-    pd.DataFrame
+    :
         Filtered dataframe.
 
     Examples
@@ -452,14 +455,14 @@ def select_location_ids(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         ISD dataframe.
-    location_ids : Union[str, int, List, Tuple]
+    location_ids
         LocationID(s) to filter by.
 
     Returns
     -------
-    pd.DataFrame
+    :
         Filtered dataframe.
 
     Examples
@@ -489,20 +492,20 @@ def describe_location(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         ISD dataframe.
-    location : str
+    location
         Location to describe.
-    calc_type : str, optional
+    calc_type
         Type of summary, either "percent" or "count", by default "percent".
-    pl_threshold : float, optional
+    pl_threshold
         Pleasantness threshold, by default 0.
-    ev_threshold : float, optional
+    ev_threshold
         Eventfulness threshold, by default 0.
 
     Returns
     -------
-    Dict[str, Union[int, float]]
+    :
         Summary of the data for the specified location.
 
     Examples
@@ -595,16 +598,16 @@ def soundscapy_describe(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         ISD dataframe.
-    group_by : str, optional
+    group_by
         Column to group by, by default "LocationID".
-    type : str, optional
+    type
         Type of summary, either "percent" or "count", by default "percent".
 
     Returns
     -------
-    pd.DataFrame
+    :
         Summary of the data.
 
     Examples

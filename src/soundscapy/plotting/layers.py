@@ -62,11 +62,11 @@ class Layer:
 
         Parameters
         ----------
-        custom_data : pd.DataFrame | None
+        custom_data
             Optional custom data for this specific layer, overriding context data
-        param_model : type[ParamModel] | None
+        param_model
             The parameter model class to use, if None uses a generic ParamModel
-        **params : dict
+        **params
             Parameters for the layer
 
         """
@@ -80,7 +80,7 @@ class Layer:
 
         Parameters
         ----------
-        context : PlotContext
+        context
             The context containing data and axes for rendering
 
         """
@@ -105,11 +105,11 @@ class Layer:
 
         Parameters
         ----------
-        data : pd.DataFrame
+        data
             The data to render
-        context : PlotContext
+        context
             The context containing state for rendering
-        ax : Axes
+        ax
             The matplotlib axes to render on
 
         """
@@ -126,9 +126,9 @@ class ScatterLayer(Layer):
 
         Parameters
         ----------
-        custom_data : pd.DataFrame | None
+        custom_data
             Optional custom data for this specific layer
-        **params : dict
+        **params
             Parameters for the scatter plot
 
         """
@@ -142,11 +142,11 @@ class ScatterLayer(Layer):
 
         Parameters
         ----------
-        data : pd.DataFrame
+        data
             The data to render
-        context : PlotContext
+        context
             The context containing state for rendering
-        ax : Axes
+        ax
             The matplotlib axes to render on
 
         """
@@ -186,11 +186,11 @@ class DensityLayer(Layer):
 
         Parameters
         ----------
-        custom_data : pd.DataFrame | None
+        custom_data
             Optional custom data for this specific layer
-        include_outline : bool
+        include_outline
             Whether to include an outline around the density plot
-        **params : dict
+        **params
             Parameters for the density plot
 
         """
@@ -206,11 +206,11 @@ class DensityLayer(Layer):
 
         Parameters
         ----------
-        data : pd.DataFrame
+        data
             The data to render
-        context : PlotContext
+        context
             The context containing state for rendering
-        ax : Axes
+        ax
             The matplotlib axes to render on
 
         """
@@ -283,11 +283,11 @@ class SimpleDensityLayer(DensityLayer):
 
         Parameters
         ----------
-        custom_data : pd.DataFrame | None
+        custom_data
             Optional custom data for this specific layer
-        include_outline : bool
+        include_outline
             Whether to include an outline around the density plot
-        **params : dict
+        **params
             Parameters for the density plot
 
         """
@@ -318,16 +318,16 @@ class SPILayer(Layer):
 
         Parameters
         ----------
-        spi_target_data : pd.DataFrame | np.ndarray | None
+        spi_target_data
             Pre-sampled data for SPI target distribution.
             When None, msn_params must be provided.
-        msn_params : DirectParams | CentredParams | None
+        msn_params
             Parameters to generate SPI data if no spi_target_data is provided
-        n : int
+        n
             Number of samples to generate if using msn_params
-        param_model : type[SPISeabornParams]
+        param_model
             The parameter model class to use
-        **params : dict
+        **params
             Parameters for the layer. For compatibility with other layers,
             if 'custom_data' is present and spi_target_data is None,
             custom_data will be used as the SPI target data.
@@ -371,7 +371,7 @@ class SPILayer(Layer):
 
         Parameters
         ----------
-        context : PlotContext
+        context
             The context containing data and axes for rendering
 
         """
@@ -434,15 +434,15 @@ class SPILayer(Layer):
 
         Parameters
         ----------
-        spi_sc : int | None
+        spi_sc
             The SPI score to show
-        show_score : Literal["on axis", "under title"]
+        show_score
             Where to show the score
-        context : PlotContext
+        context
             The context containing data and axes for rendering
-        ax : Axes
+        ax
             The axes to render the score on
-        axis_text_kwargs : dict[str, Any]
+        axis_text_kwargs
             Additional arguments for the axis text
 
         """
@@ -467,11 +467,11 @@ class SPILayer(Layer):
 
         Parameters
         ----------
-        axis : Axes
+        ax
             The axes to add the text to
-        spi_sc : int
+        spi_sc
             The SPI score to show
-        **text_kwargs : dict[str, Any]
+        **text_kwargs
             Additional arguments for the text
 
         """
@@ -490,9 +490,9 @@ class SPILayer(Layer):
 
         Parameters
         ----------
-        axis : Axes
+        ax
             The axes to add the text to
-        spi_sc : int
+        spi_sc
             The SPI score to show
 
         """
@@ -553,18 +553,16 @@ class SPILayer(Layer):
 
         Parameters
         ----------
-        spi_data : pd.DataFrame | np.ndarray | None
+        spi_data
             Data to use for SPI plotting
-        spi_params : DirectParams | CentredParams | None
+        spi_params
             Parameters to generate SPI data
-        n : int
+        n
             Number of samples to generate if using msn_params
-        kwargs : dict
-            Additional parameters
 
         Returns
         -------
-        pd.DataFrame | np.ndarray
+        :
             Prepared data for SPI plotting
 
         """
@@ -601,14 +599,12 @@ class SPILayer(Layer):
 
         Parameters
         ----------
-        spi_data : pd.DataFrame | np.ndarray
+        spi_data
             Data to process
-        kwargs : dict
-            Additional parameters with x and y column names
 
         Returns
         -------
-        pd.DataFrame
+        :
             Processed data in standard format
 
         """
@@ -660,13 +656,13 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
 
         Parameters
         ----------
-        custom_data : pd.DataFrame | None
-            Optional custom data for this specific layer
-        msn_params : DirectParams | CentredParams | None
+        spi_target_data
+            Optional SPI target data for this specific layer
+        msn_params
             Parameters to generate SPI data if no custom data is provided
-        include_outline : bool
+        include_outline
             Whether to include an outline around the density plot
-        **params : dict
+        **params
             Parameters for the density plot
 
         """

@@ -27,19 +27,19 @@ class PlotContext:
 
     Attributes
     ----------
-    data : pd.DataFrame
+    data
         The data associated with this context
-    x : str
+    x
         The column name for x-axis data
-    y : str
+    y
         The column name for y-axis data
-    hue : str | None
+    hue
         The column name for color encoding, if any
-    ax : Axes | None
+    ax
         The matplotlib Axes object this context is associated with
-    title : str | None
+    title
         The title for this context's plot
-    layers : list
+    layers
         The visualization layers to be rendered on this context
 
     """
@@ -58,17 +58,17 @@ class PlotContext:
 
         Parameters
         ----------
-        data : pd.DataFrame | None
+        data
             Data to be visualized
-        x : str
+        x
             Column name for x-axis data
-        y : str
+        y
             Column name for y-axis data
-        hue : str | None
+        hue
             Column name for color encoding
-        ax : Axes | None
+        ax
             Matplotlib axis to render on
-        title : str | None
+        title
             Title for this plot context
 
         """
@@ -92,16 +92,16 @@ class PlotContext:
 
         Parameters
         ----------
-        data : pd.DataFrame | None
+        data
             Data for the child context. If None, inherits from parent.
-        title : str | None
+        title
             Title for the child context
-        ax : Axes | None
+        ax
             Matplotlib axis for the child context
 
         Returns
         -------
-        PlotContext
+        :
             A new child context with inherited properties
 
         """
