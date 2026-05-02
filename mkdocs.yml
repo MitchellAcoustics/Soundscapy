@@ -41,6 +41,7 @@ nav:
           - "Binaural": reference/audio/binaural.md
           - "Audio Analysis": reference/audio/audio_analysis.md
           - "Metrics": reference/audio/metrics.md
+          - "Parallel Processing": reference/audio/parallel_processing.md
       - SPI: reference/spi.md
       - SATP: reference/satp.md
       - Logging: reference/logging.md

@@ -14,6 +14,8 @@ Examples
 >>> results = signal.process_all_metrics(analysis_settings)
 
 """
+from typing import Self
+from __future__ import annotations
 
 import warnings
 from pathlib import Path
@@ -66,22 +68,22 @@ class Binaural(Signal):
 
     def __new__(
         cls, data: np.ndarray, fs: float | None, recording: str = "Rec"
-    ) -> "Binaural":
+    ) -> Binaural:
         """
         Create a new Binaural object.
 
         Parameters
         ----------
-        data : array_like
+        data
             The audio data.
-        fs : float
+        fs
             Sampling frequency of the signal.
-        recording : str, optional
+        recording
             Name or identifier of the recording. Default is "Rec".
 
         Returns
         -------
-        Binaural
+        :
             A new Binaural object.
 
         Raises
@@ -101,7 +103,7 @@ class Binaural(Signal):
         logger.debug(f"Created new Binaural object: {recording}, fs={fs}")
         return obj
 
-    def __array_finalize__(self, obj: "Binaural | None") -> None:
+    def __array_finalize__(self, obj: Binaural | None) -> None:
         """
         Finalize the new Binaural object.
 
@@ -109,7 +111,7 @@ class Binaural(Signal):
 
         Parameters
         ----------
-        obj : Binaural or None
+        obj
             The object from which the new object was created.
 
         """
@@ -122,7 +124,7 @@ class Binaural(Signal):
         self,
         decibel: float | list[float] | tuple[float, float] | np.ndarray | pd.Series,
         inplace: bool = False,  # noqa: FBT001, FBT002 TODO(MitchellAcoustics): Change to keyword-only in acoustic_toolbox.Signal
-    ) -> "Binaural":
+    ) -> Binaural | Self:
         """
         Calibrate the binaural signal to predefined Leq/dB levels.
 
@@ -131,21 +133,21 @@ class Binaural(Signal):
 
         Parameters
         ----------
-        decibel : float or List[float] or Tuple[float, float]
+        decibel
             Target calibration value(s) in dB (Leq).
             If a single value is provided, both channels will be calibrated
             to this level.
             If two values are provided, they will be applied to the left and right
             channels respectively.
-        inplace : bool, optional
+        inplace
             If True, modify the signal in place.
             If False, return a new calibrated signal.
             Default is False.
 
         Returns
         -------
-        Binaural
-            Calibrated Binaural signal. If inplace is True, returns self.
+        :
+            Calibrated Binaural signal. If `inplace` is `True`, returns self.
 
         Raises
         ------
@@ -198,7 +200,7 @@ class Binaural(Signal):
         calibrate_to: float | list | tuple | None = None,
         resample: int | None = None,
         recording: str | None = None,
-    ) -> "Binaural":
+    ) -> Binaural:
         """
         Load a wav file and return a Binaural object.
 
@@ -207,26 +209,27 @@ class Binaural(Signal):
 
         Parameters
         ----------
-        filename : Path or str
+        filename
             Filename of wav file to load.
-        calibrate_to : float or List or Tuple, optional
+        calibrate_to
             Value(s) to calibrate to in dB (Leq).
-            Can also handle np.ndarray and pd.Series of length 2.
+            Can also handle `np.ndarray` and `pd.Series` of length 2.
             If only one value is passed, will calibrate both channels to the same value.
-        normalize : bool, optional
+        normalize
             Whether to normalize the signal. Default is False.
-        resample : int, optional
+        resample
             New sampling frequency to resample the signal to. Default is None
         recording
             Name of the recording.
 
         Returns
         -------
-        Binaural signal object of wav recording.
+        :
+            Binaural signal object of wav recording.
 
         See Also
         --------
-        acoustic_toolbox.Signal.from_wav : Base method for loading wav files.
+        `acoustic_toolbox.Signal.from_wav` : Base method for loading wav files.
 
         """
         filename = ensure_input_path(filename)
@@ -256,21 +259,22 @@ class Binaural(Signal):
         self,
         fs: float,
         original_fs: float | None = None,
-    ) -> "Binaural":
+    ) -> Binaural:
         """
         Resample the signal to a new sampling frequency.
 
         Parameters
         ----------
-        fs : float
+        fs
             New sampling frequency.
-        original_fs : float or None, optional
+        original_fs
             Original sampling frequency.
             If None, it will be inferred from the signal (`Binaural.fs`).
 
         Returns
         -------
-        Resampled Binaural signal. If inplace is True, returns self.
+        :
+            Resampled Binaural signal.
 
         See Also
         --------
@@ -307,12 +311,12 @@ class Binaural(Signal):
 
         Parameters
         ----------
-        channel : int or str
+        channel
             Channel to get (0 or 1, "Left" or "Right").
 
         Returns
         -------
-        Signal
+        :
             Single channel signal.
 
         """
@@ -361,42 +365,44 @@ class Binaural(Signal):
         """
         Run a metric from the pyacoustics library (deprecated).
 
-        This method has been deprecated. Use `acoustics_metric` instead.
-        All parameters are passed directly to `acoustics_metric`.
+        !!! warning "Deprecated in 0.8.0"
+
+            This method has been deprecated. Use `acoustics_metric` instead.
+            All parameters are passed directly to `acoustics_metric`.
 
         Parameters
         ----------
-        metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
+        metric
             The metric to run.
-        statistics : tuple or list, optional
+        statistics
             List of level statistics to calculate (e.g. L_5, L_90, etc.).
-            Default is (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew").
-        label : str, optional
+            Default is `(5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew")`.
+        label
             Label to use for the metric.
             If None, will pull from default label for that metric.
-        channel : tuple, list, or str, optional
-            Which channels to process. Default is ("Left", "Right").
-        as_df : bool, optional
+        channel
+            Which channels to process. Default is `("Left", "Right")`.
+        as_df
             Whether to return a dataframe or not. Default is True.
             If True, returns a MultiIndex Dataframe with
-            ("Recording", "Channel") as the index.
-        return_time_series : bool, optional
+            `("Recording", "Channel")` as the index.
+        return_time_series
             Whether to return the time series of the metric. Default is False.
             Cannot return time series if as_df is True.
-        metric_settings : MetricSettings, optional
+        metric_settings
             Settings for metric analysis. Default is None.
-        func_args : dict, optional
+        func_args
             Any settings given here will override those in the other options.
             Can pass any *args or **kwargs to the underlying acoustic_toolbox method.
 
         Returns
         -------
-        dict or pd.DataFrame
+        :
             Results of the metric calculation.
 
         See Also
         --------
-        Binaural.acoustics_metric
+        `Binaural.acoustics_metric`
 
         """
         if func_args is None:
@@ -445,42 +451,42 @@ class Binaural(Signal):
 
         Parameters
         ----------
-        metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
+        metric
             The metric to run.
-        statistics : tuple or list, optional
+        statistics
             List of level statistics to calculate (e.g. L_5, L_90, etc.).
             Default is (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew").
-        label : str, optional
+        label
             Label to use for the metric.
             If None, will pull from default label for that metric.
-        channel : tuple, list, or str, optional
+        channel
             Which channels to process. Default is ("Left", "Right").
-        as_df : bool, optional
+        as_df
             Whether to return a dataframe or not. Default is True.
             If True, returns a MultiIndex Dataframe with
             ("Recording", "Channel") as the index.
-        return_time_series : bool, optional
+        return_time_series
             Whether to return the time series of the metric. Default is False.
             Cannot return time series if as_df is True.
-        metric_settings : MetricSettings, optional
+        metric_settings
             Settings for metric analysis. Default is None.
-        func_args : dict, optional
+        func_args
             Any settings given here will override those in the other options.
             Can pass any *args or **kwargs to the underlying acoustic_toolbox method.
 
         Returns
         -------
-        dict or pd.DataFrame
+        :
             Dictionary of results if as_df is False, otherwise a pandas DataFrame.
 
         See Also
         --------
-        metrics.acoustics_metric
-        acoustic_toolbox.standards_iso_tr_25417_2007.equivalent_sound_pressure_level :
+        `metrics.acoustics_metric`
+        `acoustic_toolbox.standards_iso_tr_25417_2007.equivalent_sound_pressure_level` :
             Base method for Leq calculation.
-        acoustic_toolbox.standards.iec_61672_1_2013.sound_exposure_level :
+        `acoustic_toolbox.standards.iec_61672_1_2013.sound_exposure_level` :
             Base method for SEL calculation.
-        acoustic_toolbox.standards.iec_61672_1_2013.time_weighted_sound_level :
+        `acoustic_toolbox.standards.iec_61672_1_2013.time_weighted_sound_level` :
             Base method for Leq level time series calculation.
 
         """
@@ -554,39 +560,39 @@ class Binaural(Signal):
         ----------
         metric
             Metric to run from mosqito library.
-        statistics : tuple or list, optional
+        statistics
             List of level statistics to calculate (e.g. L_5, L_90, etc.).
             Default is (5, 10, 50, 90, 95, "avg", "max", "min", "kurt", "skew").
-        label : str, optional
+        label
             Label to use for the metric.
             If None, will pull from default label for that metric.
-        channel : tuple or list of str or str, optional
+        channel
             Which channels to process. Default is ("Left", "Right").
-        as_df : bool, optional
+        as_df
             Whether to return a dataframe or not. Default is True.
             If True, returns a MultiIndex Dataframe
             with ("Recording", "Channel") as the index.
-        return_time_series : bool, optional
+        return_time_series
             Whether to return the time series of the metric. Default is False.
             Cannot return time series if as_df is True.
-        parallel : bool, optional
+        parallel
             Whether to run the channels in parallel. Default is True.
             If False, will run each channel sequentially.
-        metric_settings : MetricSettings, optional
+        metric_settings
             Settings for metric analysis. Default is None.
-        func_args : dict, optional
+        func_args
             Any settings given here will override those in the other options.
             Can pass any *args or **kwargs to the underlying acoustic_toolbox method.
 
         Returns
         -------
-        dict or pd.DataFrame
+        :
             Dictionary of results if as_df is False, otherwise a pandas DataFrame.
 
         See Also
         --------
-        binaural.mosqito_metric_2ch : Method for running metrics on 2 channels.
-        binaural.mosqito_metric_1ch : Method for running metrics on 1 channel.
+        `binaural.mosqito_metric_2ch` : Method for running metrics on 2 channels.
+        `binaural.mosqito_metric_1ch` : Method for running metrics on 1 channel.
 
         """
         logger.info(f"Running mosqito metric: {metric}")
@@ -644,22 +650,22 @@ class Binaural(Signal):
 
         Parameters
         ----------
-        metric : {"all_temporal_alpha_indices", "all_spectral_alpha_indices"}
+        metric
             The metric to run.
-        channel : tuple, list or str, optional
+        channel
             Which channels to process. Default is ("Left", "Right").
-        as_df : bool, optional
+        as_df
             Whether to return a dataframe or not. Default is True.
             If True, returns a MultiIndex Dataframe
             with ("Recording", "Channel") as the index.
-        metric_settings : MetricSettings, optional
+        metric_settings
             Settings for metric analysis. Default is None.
-        func_args : dict, optional
+        func_args
             Additional arguments to pass to the underlying scikit-maad method.
 
         Returns
         -------
-        dict or pd.DataFrame
+        :
             Dictionary of results if as_df is False, otherwise a pandas DataFrame.
 
         Raises
@@ -669,8 +675,8 @@ class Binaural(Signal):
 
         See Also
         --------
-        metrics.maad_metric_1ch
-        metrics.maad_metric_2ch
+        `metrics.maad_metric_1ch`
+        `metrics.maad_metric_2ch`
 
         """
         logger.info(f"Running maad metric: {metric}")
@@ -710,14 +716,14 @@ class Binaural(Signal):
 
         Parameters
         ----------
-        analysis_settings : AnalysisSettings
+        analysis_settings
             Configuration object specifying which metrics to run and their parameters.
-        parallel : bool, optional
+        parallel
             Whether to run calculations in parallel where possible. Default is True.
 
         Returns
         -------
-        pd.DataFrame
+        :
             A MultiIndex DataFrame containing the results of all processed metrics.
             The index includes "Recording" and "Channel" levels.
 

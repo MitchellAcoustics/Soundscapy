@@ -88,12 +88,12 @@ class LibrarySettings(RootModel):
 
         Parameters
         ----------
-        metric : str
+        metric
             The name of the metric.
 
         Returns
         -------
-        MetricSettings
+        :
             The settings for the specified metric.
 
         Raises
@@ -152,12 +152,12 @@ class AnalysisSettings(BaseModel):
 
         Parameters
         ----------
-        filepath : str | Path
+        filepath
             Path to the YAML configuration file.
 
         Returns
         -------
-        AnalysisSettings
+        :
             An instance of AnalysisSettings.
 
         """
@@ -174,7 +174,7 @@ class AnalysisSettings(BaseModel):
 
         Returns
         -------
-        AnalysisSettings
+        :
             An instance of AnalysisSettings with default settings.
 
         """
@@ -192,12 +192,12 @@ class AnalysisSettings(BaseModel):
 
         Parameters
         ----------
-        d : dict
+        d
             Dictionary containing the configuration settings.
 
         Returns
         -------
-        AnalysisSettings
+        :
             An instance of AnalysisSettings.
 
         """
@@ -209,7 +209,7 @@ class AnalysisSettings(BaseModel):
 
         Parameters
         ----------
-        filepath : str | Path
+        filepath
             Path to save the YAML file.
 
         """
@@ -224,9 +224,9 @@ class AnalysisSettings(BaseModel):
 
         Parameters
         ----------
-        library : str
+        library
             The name of the library.
-        metric : str
+        metric
             The name of the metric.
         **kwargs
             Keyword arguments to update the metric settings.
@@ -256,14 +256,14 @@ class AnalysisSettings(BaseModel):
 
         Parameters
         ----------
-        library : str
+        library
             The name of the library.
-        metric : str
+        metric
             The name of the metric.
 
         Returns
         -------
-        MetricSettings
+        :
             The settings for the specified metric.
 
         Raises
@@ -285,7 +285,7 @@ class AnalysisSettings(BaseModel):
 
         Returns
         -------
-        dict[str, dict[str, MetricSettings]]
+        :
             A dictionary of enabled metrics grouped by library.
 
         """
@@ -323,12 +323,12 @@ class ConfigManager:
 
         Parameters
         ----------
-        config_path : str | Path | None, optional
+        config_path
             Path to the configuration file. If None, uses the default configuration.
 
         Returns
         -------
-        AnalysisSettings
+        :
             The loaded configuration.
 
         """
@@ -349,7 +349,7 @@ class ConfigManager:
 
         Parameters
         ----------
-        filepath : str | Path
+        filepath
             Path to save the configuration file.
 
         Raises
@@ -372,12 +372,12 @@ class ConfigManager:
 
         Parameters
         ----------
-        override_config : dict
+        override_config
             Dictionary containing override configuration values.
 
         Returns
         -------
-        AnalysisSettings
+        :
             The merged configuration.
 
         Raises
@@ -415,7 +415,7 @@ class ConfigManager:
 
         Returns
         -------
-        dict
+        :
             A dictionary containing the minimal configuration.
 
         Raises
