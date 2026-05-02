@@ -33,5 +33,5 @@ jobs:
 
       - name: Install tox
         run: python -m pip install tox
-      - name: Build HTML documentation with tox
+      - name: Build Zensical documentation with tox
         run: tox -e docs

@@ -45,8 +45,9 @@ pixi run -e dev ruff format .            # Format
 ### Docs
 
 ```bash
-pixi run -e docs mkdocs build            # Build documentation
-pixi run -e docs mkdocs serve            # Serve docs locally
+pixi run -e docs docs-render             # Render tutorial markdown pages
+pixi run -e docs docs-build              # Build documentation
+pixi run -e docs docs-serve              # Serve docs locally
 ```
 
 ## Architecture

@@ -69,14 +69,10 @@ docs = [
     # "jupyter-dash>=0.4.2",
     "jupyter-cache>=1.0.1",
     "jupyter>=1.1.1",
-    "mkdocs-api-autonav>=0.4.0",
-    "mkdocs-autoapi>=0.4.1",
-    "mkdocs-include-markdown-plugin>=7.1.5",
-    "mkdocs-jupyter>=0.24.8",
-    "mkdocs-material>=9.5.31",
-    "mkdocs>=1.6.0",
-    "mkdocstrings>=0.25.2",
+    "mkdocstrings>=1.0.4",
+    "mkdocstrings-python>=2.0.3",
     "pymdown-extensions>=10.9",
+    "zensical>=0.0.11",
 ]
 test = [
     "nbmake>=1.5.4",
@@ -146,17 +142,13 @@ python-build = ">=1.2.2.post1"
 ipywidgets = ">=8.1.3"
 jupyter-cache = ">=1.0.1"
 jupyter = ">=1.1.1"
-mkdocs = ">=1.6.0"
-mkdocs-include-markdown-plugin = ">=7.1.5"
-mkdocs-jupyter = ">=0.24.8"
-mkdocs-material = ">=9.5.31"
-mkdocstrings = ">=0.25.2"
-mkdocstrings-python = ">=0.25.2"
 pymdown-extensions = ">=10.9"
+quarto = ">=1.7.32"
+zensical = ">=0.0.11"
 
 [tool.pixi.feature.docs.pypi-dependencies]
-mkdocs-api-autonav = ">=0.4.0"
-mkdocs-autoapi = ">=0.4.1"
+mkdocstrings = ">=1.0.4"
+mkdocstrings-python = ">=2.0.3"
 
 [tool.pixi.feature.r.dependencies]
 r-base = ">=4.5.3,<4.6"
@@ -196,8 +188,18 @@ cmd = "ruff check . --fix && ruff format ."
 description = "Fix lint issues and format code"
 default-environment = "dev"
 
+[tool.pixi.tasks.docs-render]
+cmd = "cd docs/tutorials && quarto render *.ipynb --to md"
+description = "Render tutorial markdown pages"
+default-environment = "docs"
+
+[tool.pixi.tasks.docs-build]
+cmd = "cd docs/tutorials && quarto render *.ipynb --to md && cd ../.. && zensical build"
+description = "Render and build docs"
+default-environment = "docs"
+
 [tool.pixi.tasks.docs-serve]
-cmd = "mkdocs serve"
+cmd = "cd docs/tutorials && quarto render *.ipynb --to md && cd ../.. && zensical serve"
 description = "Serve docs locally"
 default-environment = "docs"
 

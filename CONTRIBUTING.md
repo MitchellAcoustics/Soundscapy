@@ -12,6 +12,18 @@ Changes should be made in a feature branch and submitted to `dev` via a pull req
 
 Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting. This will be checked in the CI pipeline, so make sure to run it before committing.
 
+## Documentation
+
+Documentation is built with **Zensical**. Tutorial pages are rendered from the source notebooks in `docs/tutorials/*.ipynb` using **Quarto**, and the API reference pages under `docs/reference/` are maintained as regular Markdown files with `mkdocstrings`.
+
+Use the Pixi docs tasks for local docs work:
+
+```bash
+pixi run -e docs docs-render   # Render tutorial markdown pages
+pixi run -e docs docs-build    # Render and build the docs site
+pixi run -e docs docs-serve    # Render and serve the docs locally
+```
+
 ## Releases and Versioning
 
 Soundscapy uses [Semantic Versioning](https://semver.org/). The version number is stored in `soundscapy/pyproject.toml` and updated for each release.

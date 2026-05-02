@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 site_name: "Soundscapy"
 site_url: https://soundscapy.readthedocs.io/en/latest/
 site_dir: site
@@ -19,14 +18,37 @@ nav:
       - "License": license.md
   - Tutorials:
       - tutorials/index.md
-      - "Quick Start": tutorials/QuickStart.ipynb
-      - "Quick Start pt. 2": tutorials/0_QuickStart_for_Beginners.ipynb
-      - "Understanding Soundscape Analysis": tutorials/1_Understanding_Soundscape_Analysis.ipynb
-      - "Working with Soundscape Survey Data": tutorials/2_Working_with_Soundscape_Survey_Data.ipynb
-      - "Advanced Visualization Techniques": tutorials/3_Advanced_Visualization_Techniques.ipynb
-      - "The Soundscape Perception Index (SPI)": tutorials/SoundscapePerceptionIndex-SPI.ipynb
-      - "Using Soundscapy for Binaural Recording Analysis": tutorials/BinauralAnalysis.ipynb
-      - "How To Analyse and Represent Soundscape Perception": tutorials/HowToAnalyseAndRepresentSoundscapes.ipynb
+      - "Quick Start": tutorials/QuickStart.md
+      - "Quick Start pt. 2": tutorials/0_QuickStart_for_Beginners.md
+      - "Understanding Soundscape Analysis": tutorials/1_Understanding_Soundscape_Analysis.md
+      - "Working with Soundscape Survey Data": tutorials/2_Working_with_Soundscape_Survey_Data.md
+      - "Advanced Visualization Techniques": tutorials/3_Advanced_Visualization_Techniques.md
+      - "The Soundscape Perception Index (SPI)": tutorials/SoundscapePerceptionIndex-SPI.md
+      - "Using Soundscapy for Binaural Recording Analysis": tutorials/BinauralAnalysis.md
+      - "How To Analyse and Represent Soundscape Perception": tutorials/HowToAnalyseAndRepresentSoundscapes.md
+  - Reference:
+      - Overview: reference/index.md
+      - Soundscapy: reference/soundscapy.md
+      - Surveys: reference/surveys.md
+      - Databases: reference/databases.md
+      - Plotting:
+          - reference/plotting/index.md
+          - "ISO Plot": reference/plotting/iso_plot.md
+          - "Plot Functions": reference/plotting/plot_functions.md
+          - "Likert": reference/plotting/likert.md
+      - Audio:
+          - reference/audio/index.md
+          - "Binaural": reference/audio/binaural.md
+          - "Audio Analysis": reference/audio/audio_analysis.md
+          - "Metrics": reference/audio/metrics.md
+      - SPI: reference/spi.md
+      - SATP: reference/satp.md
+      - Logging: reference/logging.md
+  - Developer:
+      - Overview: developer/index.md
+      - "Plotting Internals": developer/plotting-internals.md
+      - "R Internals": developer/r-internals.md
+      - Utilities: developer/utilities.md
   - "News":
       - news.md
       - "Changelog": CHANGELOG.md
@@ -35,87 +57,87 @@ theme:
   name: material
   #  logo: img/DarkLogo.png
   features:
+    - content.action.view
     - navigation.tabs
-    - navigation.expand
-    - navigation.path
-    - navigation.top
+    - navigation.sections
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.footer
     - navigation.indexes
+    - navigation.path
+    - navigation.prune
+    - navigation.top
     - content.action.edit
+    - content.code.copy
+    - content.tooltips
+  font:
+    code: Fira Code
   icon:
     repo: fontawesome/brands/github
   palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme)"
       toggle:
-        icon: material/brightness-auto
+        icon: lucide/sun-moon
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       toggle:
-        icon: material/brightness-7
+        icon: lucide/sun
         name: Switch to dark mode
 
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       toggle:
-        icon: material/brightness-4
+        icon: lucide/moon
         name: Switch to system preference
 
 extra_css:
-  - stylesheets/extra.css
   - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.css
+  - stylesheets/extra.css
 
 plugins:
-  - search
-  - autorefs
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
-          paths: [.]
+          paths: [src]
           options:
             docstring_section_style: spacy
             docstring_style: "numpy"
+            members_order: source
             separate_signature: true
             show_if_no_docstring: false
             merge_init_into_class: true
+            overloads_only: true
+            show_overloads: true
+            show_root_heading: true
+            show_signature: true
+            show_signature_annotations: true
+            show_signature_type_parameters: true
+            show_source: true
+            show_submodules: true
             show_symbol_type_heading: true # waiting for general release
             show_symbol_type_toc: true
             modernize_annotations: true
             summary: true
           inventories:
             - "https://docs.python.org/3/objects.inv"
-  - include-markdown:
-      opening_tag: "{!"
-      closing_tag: "!}"
-  - mkdocs-jupyter:
-      include_source: true
-      theme: default
-  #  - mkdocs-autoapi:
-  #      autoapi_add_nav_entry: Reference
-  #      autoapi_file_patterns:
-  #        - "src/soundscapy/**/*.py"
-  #      autoapi_ignore:
-  #        - "**/dist/**/"
-  #        - "**/.*/**/"
-  #        - "**/test/**/"
-  #        - "**/.venv/**/"
-  #        - "*.ipynb"
-  - api-autonav:
-      modules: ["src/soundscapy"]
-      module_options:
-        ".*":
-          merge_init_into_class: true
-          show_symbol_type_heading: true # waiting for general release
-          show_symbol_type_toc: true
-      exclude: ["re:^soundscapy$"] # Ends up double-documenting top level imports, so don't auto generate things exported from soundscapy.__init__.py
 
 markdown_extensions:
   - admonition
   - pymdownx.tasklist
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.snippets
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
 
 extra_javascript:
   - javascripts/katex.js
