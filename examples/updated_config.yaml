@@ -1,8 +1,8 @@
 AcousticToolbox:
   LAeq:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args:
       method: average
       time: 0.125
@@ -11,20 +11,20 @@ AcousticToolbox:
     parallel: false
     run: false
     statistics:
-    - 5
-    - 10
-    - 50
-    - 90
-    - 95
-    - avg
-    - min
-    - max
-    - kurt
-    - skew
+      - 5
+      - 10
+      - 50
+      - 90
+      - 95
+      - avg
+      - min
+      - max
+      - kurt
+      - skew
   LCeq:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args:
       method: average
       time: 0.125
@@ -33,20 +33,20 @@ AcousticToolbox:
     parallel: false
     run: true
     statistics:
-    - 5
-    - 10
-    - 50
-    - 90
-    - 95
-    - min
-    - max
-    - kurt
-    - skew
-    - avg
+      - 5
+      - 10
+      - 50
+      - 90
+      - 95
+      - min
+      - max
+      - kurt
+      - skew
+      - avg
   LZeq:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args:
       method: average
       time: 0.125
@@ -55,20 +55,20 @@ AcousticToolbox:
     parallel: false
     run: true
     statistics:
-    - 5
-    - 10
-    - 50
-    - 90
-    - 95
-    - min
-    - max
-    - kurt
-    - skew
-    - avg
+      - 5
+      - 10
+      - 50
+      - 90
+      - 95
+      - min
+      - max
+      - kurt
+      - skew
+      - avg
   SEL:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args: {}
     label: SEL
     main: null
@@ -78,8 +78,8 @@ AcousticToolbox:
 MoSQITo:
   loudness_zwtv:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args:
       field_type: free
     label: N
@@ -87,40 +87,40 @@ MoSQITo:
     parallel: true
     run: false
     statistics:
-    - 10
-    - 50
-    - 90
-    - 95
-    - min
-    - max
-    - kurt
-    - skew
-    - avg
-    - 5
+      - 10
+      - 50
+      - 90
+      - 95
+      - min
+      - max
+      - kurt
+      - skew
+      - avg
+      - 5
   roughness_dw:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args: {}
     label: R
     main: avg
     parallel: true
     run: true
     statistics:
-    - 5
-    - 10
-    - 50
-    - 90
-    - 95
-    - min
-    - max
-    - kurt
-    - skew
-    - avg
+      - 5
+      - 10
+      - 50
+      - 90
+      - 95
+      - min
+      - max
+      - kurt
+      - skew
+      - avg
   sharpness_din_from_loudness:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args:
       weighting: din
     label: S_L
@@ -128,20 +128,20 @@ MoSQITo:
     parallel: true
     run: true
     statistics:
-    - 5
-    - 10
-    - 50
-    - 90
-    - 95
-    - min
-    - max
-    - kurt
-    - skew
-    - avg
+      - 5
+      - 10
+      - 50
+      - 90
+      - 95
+      - min
+      - max
+      - kurt
+      - skew
+      - avg
   sharpness_din_perseg:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args:
       field_type: free
       nperseg: 4096
@@ -151,20 +151,20 @@ MoSQITo:
     parallel: false
     run: true
     statistics:
-    - 5
-    - 10
-    - 50
-    - 90
-    - 95
-    - min
-    - max
-    - kurt
-    - skew
-    - avg
+      - 5
+      - 10
+      - 50
+      - 90
+      - 95
+      - min
+      - max
+      - kurt
+      - skew
+      - avg
   sharpness_din_tv:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args:
       field_type: free
       skip: 0.5
@@ -174,21 +174,21 @@ MoSQITo:
     parallel: true
     run: false
     statistics:
-    - 5
-    - 10
-    - 50
-    - 90
-    - 95
-    - min
-    - max
-    - kurt
-    - skew
-    - avg
+      - 5
+      - 10
+      - 50
+      - 90
+      - 95
+      - min
+      - max
+      - kurt
+      - skew
+      - avg
 scikit-maad:
   all_spectral_alpha_indices:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args: {}
     label: label
     main: null
@@ -197,12 +197,12 @@ scikit-maad:
     statistics: null
   all_temporal_alpha_indices:
     channel:
-    - Left
-    - Right
+      - Left
+      - Right
     func_args: {}
     label: label
     main: null
     parallel: false
     run: true
     statistics: null
-version: '1.1'
+version: "1.1"
