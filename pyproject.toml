@@ -1,6 +1,8 @@
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = ["setuptools-scm>=8", "setuptools>=64"]
+[tool.pyrefly.errors]
+bad-override-mutable-attribute = "ignore"
 
 [project]
 authors = [
@@ -111,6 +113,7 @@ python = "3.12.*"
 numpy = "!=1.26"
 scipy = ">=1.14.1"
 pandas = ">=2.2.2,<3"
+ipython = ">=9.13.0,<10"
 
 [tool.pixi.pypi-dependencies]
 soundscapy = { path = ".", editable = true }
