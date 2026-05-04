@@ -34,14 +34,15 @@ nav = [
             { "Binaural" = "reference/audio/binaural.md" },
             { "Parallel Processing" = "reference/audio/parallel_processing.md" },
         ] },
-        { "Developer Guide" = [
-            { "Overview" = "developer/index.md" },
-            { "Plotting Internals" = "developer/plotting-internals.md" },
-            { "R Internals" = "developer/r-internals.md" },
-            { "Utilities" = "developer/utilities.md" },
-            { "Logging" = "reference/logging.md" },
+        { "Internals" = [
+            { "Overview" = "reference/internals/index.md" },
+            { "Plotting Internals" = "reference/internals/plotting-internals.md" },
+            { "R Internals" = "reference/internals/r-internals.md" },
+            { "Utilities" = "reference/internals/utilities.md" },
+            { "Logging" = "reference/internals/logging.md" },
         ] },
     ] },
+    { "Contributing" = "CONTRIBUTING.md" },
     { "News" = [
         "news.md",
         { "Changelog" = "CHANGELOG.md" },
