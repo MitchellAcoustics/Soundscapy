@@ -25,8 +25,8 @@ jobs:
         with:
           pixi-version: v0.67.2
           cache: true
-          auth-host: prefix.dev
-          auth-token: ${{ secrets.PREFIX_DEV_TOKEN }}
+          # auth-host: prefix.dev
+          # auth-token: ${{ secrets.PREFIX_DEV_TOKEN }}
           frozen: true
           environments: "docs"
 
