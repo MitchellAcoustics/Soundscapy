@@ -68,6 +68,9 @@ site_description = "Documentation website for Soundscapy"
 site_name = "Soundscapy"
 site_url = "https://soundscapy.readthedocs.io/en/latest/"
 
+[project.validation]
+unresolved_references = false
+
 [[project.extra.social]]
 icon = "fontawesome/brands/github"
 link = "https://github.com/MitchellAcoustics"

@@ -9,4 +9,3 @@ Curated API reference for Soundscapy's public modules.
 - [Audio](audio/index.md)
 - [SPI](spi.md)
 - [SATP](satp.md)
-- [Logging](logging.md)
