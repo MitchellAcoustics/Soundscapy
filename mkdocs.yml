@@ -18,14 +18,14 @@ nav:
       - "License": license.md
   - Tutorials:
       - tutorials/index.md
-      - "Quick Start": tutorials/QuickStart.md
-      - "Quick Start pt. 2": tutorials/0_QuickStart_for_Beginners.md
-      - "Understanding Soundscape Analysis": tutorials/1_Understanding_Soundscape_Analysis.md
-      - "Working with Soundscape Survey Data": tutorials/2_Working_with_Soundscape_Survey_Data.md
-      - "Advanced Visualization Techniques": tutorials/3_Advanced_Visualization_Techniques.md
-      - "The Soundscape Perception Index (SPI)": tutorials/SoundscapePerceptionIndex-SPI.md
-      - "Using Soundscapy for Binaural Recording Analysis": tutorials/BinauralAnalysis.md
-      - "How To Analyse and Represent Soundscape Perception": tutorials/HowToAnalyseAndRepresentSoundscapes.md
+      - "Quick Start": tutorials/rendered/QuickStart.md
+      - "Quick Start pt. 2": tutorials/rendered/0_QuickStart_for_Beginners.md
+      - "Understanding Soundscape Analysis": tutorials/rendered/1_Understanding_Soundscape_Analysis.md
+      - "Working with Soundscape Survey Data": tutorials/rendered/2_Working_with_Soundscape_Survey_Data.md
+      - "Advanced Visualization Techniques": tutorials/rendered/3_Advanced_Visualization_Techniques.md
+      - "The Soundscape Perception Index (SPI)": tutorials/rendered/SoundscapePerceptionIndex-SPI.md
+      - "Using Soundscapy for Binaural Recording Analysis": tutorials/rendered/BinauralAnalysis.md
+      - "How To Analyse and Represent Soundscape Perception": tutorials/rendered/HowToAnalyseAndRepresentSoundscapes.md
   - Reference:
       - Overview: reference/index.md
       - Soundscapy: reference/soundscapy.md
@@ -107,7 +107,7 @@ plugins:
       default_handler: python
       handlers:
         python:
-          paths: [src]
+          paths: [ src ]
           options:
             extensions:
               - griffe_fieldz:

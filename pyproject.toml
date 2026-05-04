@@ -4,7 +4,7 @@ requires = ["setuptools-scm>=8", "setuptools>=64"]
 
 [project]
 authors = [
-    {email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell"},
+    { email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell" },
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -173,7 +173,13 @@ audio = { features = ["audio"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
 r = { features = ["r"], solve-group = "default" }
 test = { features = ["test", "r", "audio"], solve-group = "default" }
-dev = { features = ["dev", "test", "docs", "r", "audio"], solve-group = "default" }
+dev = { features = [
+    "dev",
+    "test",
+    "docs",
+    "r",
+    "audio",
+], solve-group = "default" }
 
 [tool.pixi.tasks.test]
 cmd = "pytest"
@@ -191,17 +197,19 @@ description = "Fix lint issues and format code"
 default-environment = "dev"
 
 [tool.pixi.tasks.docs-render]
-cmd = "cd docs/tutorials && quarto render *.ipynb --to md"
+cmd = "rm -rf docs/tutorials/rendered && quarto render examples/*.ipynb --to md --output-dir ../docs/tutorials/rendered"
 description = "Render tutorial markdown pages"
 default-environment = "docs"
 
 [tool.pixi.tasks.docs-build]
-cmd = "cd docs/tutorials && quarto render *.ipynb --to md && cd ../.. && zensical build"
+depends-on = ["docs-render"]
+cmd = "zensical build"
 description = "Render and build docs"
 default-environment = "docs"
 
 [tool.pixi.tasks.docs-serve]
-cmd = "cd docs/tutorials && quarto render *.ipynb --to md && cd ../.. && zensical serve"
+depends-on = ["docs-render"]
+cmd = "zensical serve"
 description = "Serve docs locally"
 default-environment = "docs"
 
@@ -212,8 +220,8 @@ description = "Install the CircE package from MitchellAcoustcs/CircE-R"
 default-environment = "r"
 
 [tool.coverage]
-report = {sort = "cover"}
-run = {branch = true, parallel = true, source = ["soundscapy"]}
+report = { sort = "cover" }
+run = { branch = true, parallel = true, source = ["soundscapy"] }
 paths.source = ["src", ".tox*/*/lib/python*/site-packages"]
 
 [tool.mypy]
@@ -243,42 +251,42 @@ lint.ignore = [
     "ANN003",
     # missing kwarg type hinting:
     "ANN401",
-    "COM812", # trailing commas (ruff-format recommended)
-    "D203", # no-blank-line-before-class
-    "D212", # multi-line-summary-first-line
-    "D407", # removed dashes lines under sections
-    "D417", # argument description in docstring (unreliable)
-    "FIX002", # fixme (ruff-format recommended)
-    "ISC001", # simplify implicit str concatenation (ruff-format recommended)
+    "COM812",  # trailing commas (ruff-format recommended)
+    "D203",    # no-blank-line-before-class
+    "D212",    # multi-line-summary-first-line
+    "D407",    # removed dashes lines under sections
+    "D417",    # argument description in docstring (unreliable)
+    "FIX002",  # fixme (ruff-format recommended)
+    "ISC001",  # simplify implicit str concatenation (ruff-format recommended)
     "PLR0913", # too many arguments
-    "TD002", # Missing author in TODO
-    "TD003", # Missing issue link
+    "TD002",   # Missing author in TODO
+    "TD003",   # Missing issue link
 ]
-lint.per-file-ignores = {"*.ipynb" = [
+lint.per-file-ignores = { "*.ipynb" = [
     "ANN001",
     "D103",
-    "E501", # line too long
+    "E501",    # line too long
     "T201",
     'ANN201',
     'ERA001',
     'PLR2004',
 ], "*test*.py" = [
-    "ANN001", # Missing type annotation for function argument
-    "ANN001", # Missing type annotation
-    "ANN201", # Missing return type annotation for public function
-    "D100", # Missing docstring in public module
-    "D101", # Missing docstring in public class
-    "D102", # Missing docstring
-    "D103", # Missing docstring in public function
-    "D104", # Missing docstring in public package
-    "ERA001", # Remove commented-out code
-    "INP001", # File is part of an implicit namespace package.
-    "PGH003", # Use specific rule codes
+    "ANN001",  # Missing type annotation for function argument
+    "ANN001",  # Missing type annotation
+    "ANN201",  # Missing return type annotation for public function
+    "D100",    # Missing docstring in public module
+    "D101",    # Missing docstring in public class
+    "D102",    # Missing docstring
+    "D103",    # Missing docstring in public function
+    "D104",    # Missing docstring in public package
+    "ERA001",  # Remove commented-out code
+    "INP001",  # File is part of an implicit namespace package.
+    "PGH003",  # Use specific rule codes
     "PLC0415", # Import not at top of file
     "PLR2004", # Hardcoded values
-    "S101", # Use of `assert` detected
-    "SLF001", # Private member/module acces
-]}
+    "S101",    # Use of `assert` detected
+    "SLF001",  # Private member/module acces
+] }
 lint.select = ["ALL"]
 lint.isort.known-first-party = ["soundscapy"]
 lint.mccabe.max-complexity = 18
