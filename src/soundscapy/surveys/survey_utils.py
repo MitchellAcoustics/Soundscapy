@@ -36,9 +36,9 @@ class PAQ(Enum):
 
         Parameters
         ----------
-        label : str
+        label
             The descriptive label for the PAQ (e.g., 'pleasant').
-        id : str
+        id
             The standard identifier for the PAQ (e.g., 'PAQ1').
 
         """
@@ -99,19 +99,21 @@ class PAQDfSchema(pa.DataFrameModel):
         Coerce column names to standardized format for PAQ data.
 
         This parser automatically renames columns to match the expected schema:
+
         - PAQ label names (e.g., 'pleasant') to PAQ IDs (e.g., 'PAQ1')
         - Legacy ID column names to lowercase snake_case format
 
         Parameters
         ----------
-        cls : type
+        cls
             The schema class (automatically passed by pandera).
-        df : DataFrame
+        df
             Input DataFrame with potentially non-standard column names.
 
         Returns
         -------
-        DataFrame with standardized column names.
+        :
+            DataFrame with standardized column names.
 
         """
         # Create mapping from PAQ labels to standard PAQ IDs
@@ -137,14 +139,22 @@ class LikertScale:
     This class provides standardized 5-point Likert scales questions commonly used
     in acoustic and soundscape surveys.
 
-    Attributes:
-        PAQ: Agreement scale from "Strongly disagree" to "Strongly agree"
-        SOURCE: Source perception scale from "Not at all" to "Dominates completely"
-        OVERALL: Quality assessment scale from "Very bad" to "Very good"
-        APPROPRIATE: Appropriateness scale from "Not at all" to "Perfectly"
-        LOUD: Loudness perception scale from "Not at all" to "Extremely"
-        OFTEN: Frequency scale with first-time option from "Never / This is my first time here" to "Very often"
-        VISIT: Standard frequency scale from "Never" to "Very often"
+    Attributes
+    ----------
+    PAQ
+        Agreement scale from "Strongly disagree" to "Strongly agree"
+    SOURCE
+        Source perception scale from "Not at all" to "Dominates completely"
+    OVERALL
+        Quality assessment scale from "Very bad" to "Very good"
+    APPROPRIATE
+        Appropriateness scale from "Not at all" to "Perfectly"
+    LOUD
+        Loudness perception scale from "Not at all" to "Extremely"
+    OFTEN
+        Frequency scale with first-time option from "Never / This is my first time here" to "Very often"
+    VISIT
+        Standard frequency scale from "Never" to "Very often"
 
     """  # noqa: E501
 
@@ -242,16 +252,16 @@ def return_paqs(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         Input DataFrame containing PAQ data.
-    other_cols : List[str], optional
+    other_cols
         Other columns to include in the output, by default None.
-    incl_ids : bool, optional
+    incl_ids
         Whether to include ID columns (RecordID, GroupID, etc.), by default True.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing only the PAQ columns and optionally ID and other specified
         columns.
 
@@ -305,16 +315,16 @@ def rename_paqs(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         Input DataFrame containing PAQ data.
-    paq_aliases : Union[Tuple, Dict], optional
+    paq_aliases
         Specify which PAQs are to be renamed. If None, will check if the column names
         are in pre-defined options. If a tuple, the order must match PAQ_IDS.
         If a dict, keys are current names and values are desired PAQ IDs.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame with renamed PAQ columns.
 
     Raises
@@ -369,14 +379,14 @@ def mean_responses(df: pd.DataFrame, group: str) -> pd.DataFrame:
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         Input DataFrame containing PAQ data.
-    group : str
+    group
         Column name to group by.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame with mean responses for each PAQ group.
 
     """

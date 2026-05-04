@@ -2,6 +2,7 @@
 R integration for skew-normal distribution calculations.
 
 This module provides functions for:
+
 1. Checking R and R package dependencies
 2. Initializing and managing R sessions
 3. Converting data between R and Python
@@ -49,39 +50,41 @@ class RSession:
 
     A single module-level instance (``_state``) replaces the previous nine
     module-level globals.  Module functions read and write its fields directly —
-    no ``global`` declarations are needed except in :func:`reset_r_session`,
+    no ``global`` declarations are needed except in `reset_r_session`,
     which rebinds the name.
 
-    :func:`get_r_session` returns ``_state`` directly once the session is
+    `get_r_session` returns ``_state`` directly once the session is
     ready; callers access package objects via named fields
     (``r.sn``, ``r.circe``, …).
 
     Attributes
     ----------
-    session : any
+    session
         Reference to ``rpy2.robjects`` (populated by
-        :func:`initialize_r_session`).
-    sn : any
+        `initialize_r_session`).
+    sn
         Loaded ``sn`` R package object.
-    stats : any
+    stats
         Loaded ``stats`` R package object.
-    base : any
+    base
         Loaded ``base`` R package object.
-    circe : any
+    circe
         Loaded ``CircE`` R package object.
-    active : bool
+    active
         ``True`` once :func:`initialize_r_session` completes successfully.
-    r_checked : bool
+    r_checked
         ``True`` once :func:`check_r_availability` has passed (cached to avoid
         re-querying the R version on every call).
-    sn_checked : bool
+    sn_checked
         ``True`` once :func:`check_sn_package` has passed (cached).
-    circe_checked : bool
+    circe_checked
         ``True`` once :func:`check_circe_package` has passed (cached).
 
-    All fields are reset to their defaults when :func:`reset_r_session` is
+    Notes
+    -----
+    All fields are reset to their defaults when `reset_r_session` is
     called, ensuring a clean re-verification on the next
-    :func:`get_r_session` call.
+    `get_r_session` call.
 
     """
 
@@ -166,7 +169,9 @@ def check_r_availability() -> None:
     """
     Check that R is accessible and meets the minimum version requirement.
 
-    Note: importing this module (or any rpy2-dependent module) already starts
+    Notes
+    -----
+    Importing this module (or any rpy2-dependent module) already starts
     the R process via ``from rpy2 import robjects``.  This function therefore
     cannot test whether R is *installed* — R is always already running by the
     time it is called.  Its purpose is to verify the R *version* and to cache
@@ -364,7 +369,7 @@ def check_dependencies() -> dict[str, Any]:
 
     Returns
     -------
-    dict[str, Any]
+    :
         Dictionary with dependency information.
 
     Raises
@@ -422,6 +427,7 @@ def initialize_r_session() -> dict[str, Any]:
     Initialize an R session for skew-normal distribution calculations.
 
     This function:
+
     1. Checks for R and package dependencies
     2. Imports required R packages
     3. Sets up the R environment
@@ -429,7 +435,7 @@ def initialize_r_session() -> dict[str, Any]:
 
     Returns
     -------
-    dict[str, Any]
+    :
         Session information including R and package versions.
 
     Raises
@@ -507,7 +513,7 @@ def reset_r_session() -> bool:
 
     Returns
     -------
-    bool
+    :
         ``True`` if successful, ``False`` if an error occurred.
 
     """
@@ -538,7 +544,7 @@ def get_r_session() -> RSession:
 
     Returns
     -------
-    RSession
+    :
         The module-level ``_state`` instance once fully initialised.  Access
         package objects by name: ``r.sn``, ``r.circe``, ``r.base``, etc.
 
@@ -565,7 +571,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
 
     Parameters
     ----------
-    packages : list[str] | None, optional
+    packages
         List of R package names to install. Defaults to ["sn", "CircE"].
 
     Raises
@@ -616,7 +622,7 @@ def is_session_active() -> bool:
 
     Returns
     -------
-    bool
+    :
         True if the session is active, False otherwise.
 
     """

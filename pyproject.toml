@@ -1,10 +1,12 @@
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = ["setuptools-scm>=8", "setuptools>=64"]
+[tool.pyrefly.errors]
+bad-override-mutable-attribute = "ignore"
 
 [project]
 authors = [
-    {email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell"},
+    { email = "mitchellacoustics15@gmail.com", name = "Andrew Mitchell" },
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -53,9 +55,7 @@ spi = ["soundscapy[r]"]
 [dependency-groups]
 dev = [
     "build>=1.2.2.post1",
-    "mypy>=1.15.0",
     "pandas-stubs>=2.2.3.250308",
-    "pre-commit>=4.2.0",
     "ruff>=0.7.2",
     "scipy-stubs>=1.15.2.2",
     "setuptools-scm>=8.3.1",
@@ -65,18 +65,15 @@ dev = [
     "types-seaborn>=0.13.2.20250111",
 ]
 docs = [
+    "griffe-fieldz>=0.5.0,<0.6",
     "ipywidgets>=8.1.3",
     # "jupyter-dash>=0.4.2",
     "jupyter-cache>=1.0.1",
     "jupyter>=1.1.1",
-    "mkdocs-api-autonav>=0.4.0",
-    "mkdocs-autoapi>=0.4.1",
-    "mkdocs-include-markdown-plugin>=7.1.5",
-    "mkdocs-jupyter>=0.24.8",
-    "mkdocs-material>=9.5.31",
-    "mkdocs>=1.6.0",
-    "mkdocstrings>=0.25.2",
+    "mkdocstrings>=1.0.4",
+    "mkdocstrings-python>=2.0.3",
     "pymdown-extensions>=10.9",
+    "zensical>=0.0.11",
 ]
 test = [
     "nbmake>=1.5.4",
@@ -116,6 +113,7 @@ python = "3.12.*"
 numpy = "!=1.26"
 scipy = ">=1.14.1"
 pandas = ">=2.2.2,<3"
+ipython = ">=9.13.0,<10"
 
 [tool.pixi.pypi-dependencies]
 soundscapy = { path = ".", editable = true }
@@ -131,9 +129,7 @@ mosqito = ">=1.2.1"
 scikit-maad = ">=1.4.3"
 
 [tool.pixi.feature.dev.dependencies]
-mypy = ">=1.15.0"
 pandas-stubs = ">=2.2.3.250308"
-pre-commit = ">=4.2.0"
 ruff = ">=0.7.2"
 scipy-stubs = ">=1.15.2.2"
 setuptools-scm = ">=8.3.1"
@@ -141,22 +137,20 @@ tox = ">=4.25.0"
 twine = ">=6.1.0"
 types-pyyaml = ">=6.0.12.20250402"
 python-build = ">=1.2.2.post1"
+prek = ">=0.3.11,<0.4"
+pyrefly = ">=0.63.1,<0.64"
 
 [tool.pixi.feature.docs.dependencies]
 ipywidgets = ">=8.1.3"
 jupyter-cache = ">=1.0.1"
 jupyter = ">=1.1.1"
-mkdocs = ">=1.6.0"
-mkdocs-include-markdown-plugin = ">=7.1.5"
-mkdocs-jupyter = ">=0.24.8"
-mkdocs-material = ">=9.5.31"
-mkdocstrings = ">=0.25.2"
-mkdocstrings-python = ">=0.25.2"
 pymdown-extensions = ">=10.9"
+quarto = ">=1.7.32"
+zensical = ">=0.0.11"
 
 [tool.pixi.feature.docs.pypi-dependencies]
-mkdocs-api-autonav = ">=0.4.0"
-mkdocs-autoapi = ">=0.4.1"
+mkdocstrings = ">=1.0.4"
+mkdocstrings-python = ">=2.0.3"
 
 [tool.pixi.feature.r.dependencies]
 r-base = ">=4.5.3,<4.6"
@@ -174,12 +168,18 @@ setuptools = ">=72.1.0"
 xdoctest = ">=1.1.6"
 
 [tool.pixi.environments]
-default = { features = [], solve-group = "default" }
+default = { features = ["audio", "r"], solve-group = "default" }
 audio = { features = ["audio"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
 r = { features = ["r"], solve-group = "default" }
 test = { features = ["test", "r", "audio"], solve-group = "default" }
-dev = { features = ["dev", "test", "docs", "r", "audio"], solve-group = "default" }
+dev = { features = [
+    "dev",
+    "test",
+    "docs",
+    "r",
+    "audio",
+], solve-group = "default" }
 
 [tool.pixi.tasks.test]
 cmd = "pytest"
@@ -196,8 +196,20 @@ cmd = "ruff check . --fix && ruff format ."
 description = "Fix lint issues and format code"
 default-environment = "dev"
 
+[tool.pixi.tasks.docs-render]
+cmd = "rm -rf docs/tutorials/rendered && quarto render examples/*.ipynb --to md --output-dir ../docs/tutorials/rendered"
+description = "Render tutorial markdown pages"
+default-environment = "docs"
+
+[tool.pixi.tasks.docs-build]
+depends-on = ["docs-render"]
+cmd = "zensical build"
+description = "Render and build docs"
+default-environment = "docs"
+
 [tool.pixi.tasks.docs-serve]
-cmd = "mkdocs serve"
+depends-on = ["docs-render"]
+cmd = "zensical serve"
 description = "Serve docs locally"
 default-environment = "docs"
 
@@ -208,8 +220,8 @@ description = "Install the CircE package from MitchellAcoustcs/CircE-R"
 default-environment = "r"
 
 [tool.coverage]
-report = {sort = "cover"}
-run = {branch = true, parallel = true, source = ["soundscapy"]}
+report = { sort = "cover" }
+run = { branch = true, parallel = true, source = ["soundscapy"] }
 paths.source = ["src", ".tox*/*/lib/python*/site-packages"]
 
 [tool.mypy]
@@ -239,42 +251,42 @@ lint.ignore = [
     "ANN003",
     # missing kwarg type hinting:
     "ANN401",
-    "COM812", # trailing commas (ruff-format recommended)
-    "D203", # no-blank-line-before-class
-    "D212", # multi-line-summary-first-line
-    "D407", # removed dashes lines under sections
-    "D417", # argument description in docstring (unreliable)
-    "FIX002", # fixme (ruff-format recommended)
-    "ISC001", # simplify implicit str concatenation (ruff-format recommended)
+    "COM812",  # trailing commas (ruff-format recommended)
+    "D203",    # no-blank-line-before-class
+    "D212",    # multi-line-summary-first-line
+    "D407",    # removed dashes lines under sections
+    "D417",    # argument description in docstring (unreliable)
+    "FIX002",  # fixme (ruff-format recommended)
+    "ISC001",  # simplify implicit str concatenation (ruff-format recommended)
     "PLR0913", # too many arguments
-    "TD002", # Missing author in TODO
-    "TD003", # Missing issue link
+    "TD002",   # Missing author in TODO
+    "TD003",   # Missing issue link
 ]
-lint.per-file-ignores = {"*.ipynb" = [
+lint.per-file-ignores = { "*.ipynb" = [
     "ANN001",
     "D103",
-    "E501", # line too long
+    "E501",    # line too long
     "T201",
     'ANN201',
     'ERA001',
     'PLR2004',
 ], "*test*.py" = [
-    "ANN001", # Missing type annotation for function argument
-    "ANN001", # Missing type annotation
-    "ANN201", # Missing return type annotation for public function
-    "D100", # Missing docstring in public module
-    "D101", # Missing docstring in public class
-    "D102", # Missing docstring
-    "D103", # Missing docstring in public function
-    "D104", # Missing docstring in public package
-    "ERA001", # Remove commented-out code
-    "INP001", # File is part of an implicit namespace package.
-    "PGH003", # Use specific rule codes
+    "ANN001",  # Missing type annotation for function argument
+    "ANN001",  # Missing type annotation
+    "ANN201",  # Missing return type annotation for public function
+    "D100",    # Missing docstring in public module
+    "D101",    # Missing docstring in public class
+    "D102",    # Missing docstring
+    "D103",    # Missing docstring in public function
+    "D104",    # Missing docstring in public package
+    "ERA001",  # Remove commented-out code
+    "INP001",  # File is part of an implicit namespace package.
+    "PGH003",  # Use specific rule codes
     "PLC0415", # Import not at top of file
     "PLR2004", # Hardcoded values
-    "S101", # Use of `assert` detected
-    "SLF001", # Private member/module acces
-]}
+    "S101",    # Use of `assert` detected
+    "SLF001",  # Private member/module acces
+] }
 lint.select = ["ALL"]
 lint.isort.known-first-party = ["soundscapy"]
 lint.mccabe.max-complexity = 18

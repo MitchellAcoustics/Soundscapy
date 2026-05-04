@@ -50,43 +50,45 @@ def paq_radar_plot(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         DataFrame containing PAQ values. Must contain columns matching PAQ_LABELS
         or they will be filtered out.
-    ax : matplotlib.pyplot.Axes, optional
+    ax
         Existing polar subplot axes to plot to. If None, new axes will be created.
-    index : str, optional
+    index
         Column(s) to set as index for the data. Useful for labeling in the legend.
-    figsize : Tuple[float, float], optional
+    figsize
         Figure size (width, height) in inches, by default (8, 8).
         Only used when creating new axes.
-    colors : Optional[Union[List[str], Dict[str, str], str, Colormap]], optional
+    palette
         Colors for the plot lines and fills. Can be:
+
         - List of color names/values for each data row
         - Dictionary mapping index values to colors
         - Single color name/value to use for all data rows
         - A matplotlib colormap to generate colors from
+
         If None, a default colormap will be used.
-    alpha : float, optional
+    alpha
         Transparency for the filled areas, by default 0.25
-    linewidth : float, optional
+    linewidth
         Width of the plot lines, by default 1.5
-    linestyle : str, optional
+    linestyle
         Style of the plot lines, by default "solid"
-    ylim : Tuple[int, int], optional
+    ylim
         Y-axis limits (min, max), by default (1, 5) for standard Likert scale
-    title : str, optional
+    title
         Plot title, by default None
-    text_padding : Dict[str, int], optional
-        Padding for category labels, by default auto-generated
-    legend_loc : str, optional
+    label_pad
+        Padding for category labels, by default 15
+    legend_loc
         Legend location, by default "upper right"
-    legend_bbox_to_anchor : Tuple[float, float], optional
+    legend_bbox_to_anchor
         Legend bbox_to_anchor parameter, by default (0.1, 0.1)
 
     Returns
     -------
-    plt.Axes
+    :
         Matplotlib Axes with radar plot
 
     Examples
@@ -207,26 +209,26 @@ def paq_likert(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         DataFrame containing PAQ values.
-    paq_cols : list[str], optional
+    paq_cols
         List of column names containing PAQ data, by default PAQ_IDS.
-    title : str, optional
+    title
         Plot title, by default "Stacked Likert Plot".
-    legend : bool, optional
+    legend
         Whether to show the legend, by default True.
-    ax : Axes, optional
+    ax
         Matplotlib axes to plot on, by default None.
-    plot_percentage : bool, optional
+    plot_percentage
         Whether to show percentages instead of absolute values, by default False.
-    bar_labels : bool, optional
+    bar_labels
         Whether to show bar labels, by default True.
     **kwargs
         Additional keyword arguments passed to plot_likert.plot_likert.
 
     Returns
     -------
-    None
+    :
         This function does not return anything, it plots directly to the given axes.
 
     Examples
@@ -302,7 +304,7 @@ def stacked_likert(
 
     Returns
     -------
-    None
+    :
         This function does not return anything, it plots directly to the given axes.
 
     Warnings

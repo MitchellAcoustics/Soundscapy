@@ -9,6 +9,7 @@
   .only-dark {
     display: none;
   }
+
   .only-light {
     display: block;
     margin: auto;
@@ -20,8 +21,13 @@
   .only-light {
     display: none;
   }
+
   .only-dark {
     display: block;
     margin: auto;
   }
+}
+
+.md-grid {
+  max-width: 1440px;
 }

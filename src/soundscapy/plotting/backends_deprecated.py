@@ -1,5 +1,5 @@
 """Deprecation warnings for v0.7 APIs."""
-# ruff: noqa: ANN002, ANN003, ARG001, ARG002, D107, D102, ANN204
+# ruff: noqa: ANN002, ARG002, D107, D102
 
 import warnings
 from enum import Enum
