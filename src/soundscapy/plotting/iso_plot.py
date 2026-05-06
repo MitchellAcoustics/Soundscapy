@@ -149,8 +149,8 @@ class ISOPlot:
         >>> plot = ISOPlot()
         >>> isinstance(plot, ISOPlot)
         True
-        Create a plot with a DataFrame:
 
+        Create a plot with a DataFrame:
         >>> data = pd.DataFrame(
         ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...          rng.integers(1, 3, 100)],
@@ -1266,6 +1266,7 @@ class ISOPlot:
         >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 3
         True
+
         Add a SPI layer from spi data:
         >>> # Create a custom distribution
         >>> from soundscapy.spi import MultiSkewNorm
