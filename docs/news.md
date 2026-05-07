@@ -1,5 +1,31 @@
 # News
 
+## 2026-05-08 Embedded CircE Runtime for R-Backed Features
+
+Soundscapy's R-backed SPI and SATP functionality now uses an embedded CircE runtime.
+The CircE R scripts are bundled directly with Soundscapy and sourced through `rpy2`,
+so users no longer need to install CircE separately from GitHub.
+
+### What Changed
+
+- CircE is now shipped with Soundscapy as embedded R scripts.
+- The Python R wrapper sources the bundled CircE implementation directly.
+- Installation guidance now points R users to `pip install "soundscapy[r]"`.
+- The only external R package still required for these features is `sn`.
+
+### What You Need to Install
+
+To use SPI and SATP features, install the Python optional dependency and make sure
+R can install the `sn` package:
+
+```bash
+pip install "soundscapy[r]"
+R -q -e "install.packages('sn')"
+```
+
+This change makes local setup and packaged installs more reliable by removing the
+previous dependency on a separately installed CircE R package.
+
 ## 2024-08-15 Significant Enhancements to Soundscapy's Plotting Module
 
 I am pleased to announce a comprehensive update to Soundscapy's plotting module, introducing enhanced flexibility, improved performance, and more extensive customization options for soundscape visualizations. This update represents a substantial improvement in our toolkit's capabilities.
