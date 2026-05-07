@@ -47,6 +47,9 @@ jobs:
 
       - name: Setup Pixi
         uses: prefix-dev/setup-pixi@v0.9.4
+        env:
+          RPY2_CFFI_MODE: "ABI"
+
         with:
           environments: >-
             test-py313 test-py313-audio test-py313-r test-py313-all
