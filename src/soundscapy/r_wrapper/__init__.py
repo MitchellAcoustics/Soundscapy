@@ -8,7 +8,7 @@ try:
 except ImportError as e:
     msg = (
         "R functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[satp]"
+        "Install with: pip install soundscapy[r]"
     )
     raise ImportError(msg) from e
 
