@@ -81,7 +81,8 @@ docs = [
     "mkdocstrings>=1.0.4",
     "mkdocstrings-python>=2.0.3",
     "pymdown-extensions>=10.9",
-    "zensical>=0.0.11", "quarto-cli>=1.9.37,<2",
+    "zensical>=0.0.11",
+    "quarto-cli>=1.9.37,<2",
 ]
 test = [
     "nbmake>=1.5.4",
@@ -251,44 +252,36 @@ docs-serve = { depends-on = [
 
 install-r-circe = { cmd = "Rscript -e \"remotes::install_github('MitchellAcoustics/CircE-R', force=TRUE)\"", description = "Install the CircE package from MitchellAcoustcs/CircE-R", default-environment = "r" }
 
-[tool.pixi.tasks.test-setup]
+[tool.pixi.feature.test.tasks.test-base]
 cmd = "python --version && pytest -k 'not optional_deps' --ignore-glob='*iso_plot.py'"
+default-environment = "test-py313"
 
-[tool.pixi.tasks.test-setup-audio]
+[tool.pixi.feature.test.tasks.test-audio]
 cmd = "python --version && pytest -k 'not optional_deps or optional_deps and audio' --ignore-glob='*iso_plot.py'"
+default-environment = "test-py313-audio"
 
-[tool.pixi.tasks.test-setup-r]
+[tool.pixi.feature.test.tasks.test-r]
 cmd = "python --version && pytest -k 'not optional_deps or optional_deps and spi or skip_if_deps and spi'"
 depends-on = ["install-r-circe"]
+default-environment = "test-py313-r"
 
-[tool.pixi.tasks.test-setup-all]
+[tool.pixi.feature.test.tasks.test-all]
 cmd = "python --version && pytest"
 depends-on = ["install-r-circe"]
+default-environment = "test-py313-all"
 
 [tool.pixi.tasks.test]
 depends-on = [
-    { task = "test-setup", environment = "test-py311" },
-    { task = "test-setup", environment = "test-py312" },
-    { task = "test-setup", environment = "test-py313" },
-]
-
-[tool.pixi.tasks.test-audio]
-depends-on = [
-    { task = "test-setup-audio", environment = "test-py311-audio" },
-    { task = "test-setup-audio", environment = "test-py312-audio" },
-    { task = "test-setup-audio", environment = "test-py313-audio" },
-]
-
-[tool.pixi.tasks.test-r]
-depends-on = [
-    { task = "test-setup-r", environment = "test-py311-r" },
-    { task = "test-setup-r", environment = "test-py312-r" },
-    { task = "test-setup-r", environment = "test-py313-r" },
-]
-
-[tool.pixi.tasks.test-all]
-depends-on = [
-    { task = "test-setup-all", environment = "test-py311-all" },
-    { task = "test-setup-all", environment = "test-py312-all" },
-    { task = "test-setup-all", environment = "test-py313-all" },
+    { task = "test-base", environment = "test-py311" },
+    { task = "test-base", environment = "test-py312" },
+    { task = "test-base", environment = "test-py313" },
+    { task = "test-audio", environment = "test-py311-audio" },
+    { task = "test-audio", environment = "test-py312-audio" },
+    { task = "test-audio", environment = "test-py313-audio" },
+    { task = "test-r", environment = "test-py311-r" },
+    { task = "test-r", environment = "test-py312-r" },
+    { task = "test-r", environment = "test-py313-r" },
+    { task = "test-all", environment = "test-py311-all" },
+    { task = "test-all", environment = "test-py312-all" },
+    { task = "test-all", environment = "test-py313-all" },
 ]

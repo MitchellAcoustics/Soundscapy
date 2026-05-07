@@ -27869,7 +27869,7 @@ packages:
 - pypi: ./
   name: soundscapy
   version: 0.8.0.dev0
-  sha256: 2e802538549baf90b3260e10e72c91ea186d90db692f084a76720568a2308c2b
+  sha256: 292cec0c54fb795a2d14c84ca4870889d959f193fc0f501616edea7755b61f2f
   requires_dist:
   - loguru>=0.7.2
   - numpy!=1.26
