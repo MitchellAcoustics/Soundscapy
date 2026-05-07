@@ -2,6 +2,7 @@
 
 # ruff: noqa: E402
 import importlib
+from importlib.metadata import version
 
 from loguru import logger
 
@@ -11,7 +12,6 @@ logger.disable("soundscapy")
 # Always available core modules
 from soundscapy import databases, plotting, surveys
 from soundscapy import databases as db
-from soundscapy._version import __version__  # noqa: F401
 from soundscapy.databases import isd
 from soundscapy.plotting import (
     ISOPlot,
@@ -31,6 +31,8 @@ from soundscapy.sspylogging import (
 )
 from soundscapy.surveys import add_iso_coords, ipsatize, processing, rename_paqs
 from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
+
+__version__ = version("soundscapy")
 
 __all__ = [
     "PAQ_IDS",
@@ -60,6 +62,7 @@ __all__ = [
     "stacked_likert",
     # Core modules
     "surveys",
+    "__version__",
 ]
 
 # Try to import optional audio module
