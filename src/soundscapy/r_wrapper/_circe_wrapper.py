@@ -56,7 +56,7 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
     get_r_session()
     with (ro.default_converter + pandas2ri.converter).context():
         py_res = {
-            key.lower(): ro.conversion.get_conversion().rpy2py(val)
+            key.lower(): ro.conversion.get_conversion().rpy2py(val)  # type: ignore[missing-attribute]
             for key, val in bfgs_model.items()
         }
 

@@ -18,11 +18,12 @@ The sole exception is :func:`reset_r_session`, which creates a fresh
 It is not intended to be used directly by end users.
 """
 
+from __future__ import annotations
+
 import importlib.metadata
 import os
 import sys
 from dataclasses import dataclass
-from enum import StrEnum
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
@@ -54,10 +55,6 @@ CIRCE_REQUIRED_SYMBOLS: tuple[str, ...] = (
     "char.assign",
     "residual.CircE",
 )
-
-
-class PKG_SRC(StrEnum):  # noqa: N801
-    CIRCE = "MitchellAcoustics/CircE-R"
 
 
 class EmbeddedRPackage:
@@ -223,7 +220,7 @@ def _source_embedded_circe_scripts() -> None:
 
     for script_path in script_paths:
         try:
-            source_fn = cast(Any, robjects.r["source"])
+            source_fn = cast("Any", robjects.r["source"])
             source_fn(script_path.as_posix())
         except Exception as e:
             msg = f"Failed to source embedded CircE script '{script_path.name}': {e!s}"
@@ -298,9 +295,9 @@ def check_r_availability() -> None:
         # Use _ver() tuple comparison to avoid float pitfalls (e.g. "2.1" minor
         # parsed as 2.1/10 = 0.21 instead of the intended major.minor.patch).
         # R's $minor field is like "6.0" for R 4.6.0 or "2.1" for R 4.2.1.
-        r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[
+        r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[  # type: ignore[bad-index]
             0
-        ]  # type: ignore[index]
+        ]
 
         if _ver(r_version_str) < _ver(REQUIRED_R_VERSION):
             _raise_r_version_too_old_error(r_version_str)
@@ -352,7 +349,7 @@ def check_sn_package() -> None:
     check_r_availability()
 
     try:
-        import rpy2.robjects.packages as rpackages
+        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
 
         # Check if 'sn' package is installed
         try:
@@ -518,7 +515,7 @@ def initialize_r_session() -> dict[str, Any]:
     logger.debug("Dependencies verified: %s", dep_info)
 
     try:
-        import rpy2.robjects.packages as rpackages
+        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
 
         # Import required packages
         _state.sn = rpackages.importr("sn")
@@ -577,7 +574,7 @@ def reset_r_session() -> bool:
     global _state  # noqa: PLW0603
 
     try:
-        import gc
+        import gc  # noqa: PLC0415
 
         was_active = _state.active
         _state = RSession()
@@ -643,8 +640,8 @@ def install_r_packages(packages: list[str] | None = None) -> None:
     check_r_availability()
 
     try:
-        import rpy2.robjects.packages as rpackages
-        from rpy2.robjects.vectors import StrVector
+        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
+        from rpy2.robjects.vectors import StrVector  # noqa: PLC0415
 
         utils = rpackages.importr("utils")
         utils.chooseCRANmirror(ind=1)
