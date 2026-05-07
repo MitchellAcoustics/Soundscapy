@@ -81,7 +81,7 @@ docs = [
     "mkdocstrings>=1.0.4",
     "mkdocstrings-python>=2.0.3",
     "pymdown-extensions>=10.9",
-    "zensical>=0.0.11",
+    "zensical>=0.0.11", "quarto-cli>=1.9.37,<2",
 ]
 test = [
     "nbmake>=1.5.4",
