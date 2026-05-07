@@ -198,7 +198,7 @@ ignore-pypi-mapping = false
 soundscapy = { path = ".", editable = true }
 
 [tool.pixi.environments]
-default = { features = ["all"], solve-group = "default" }
+default = { features = ["all", "dev"], solve-group = "default" }
 all = { features = ["all"], solve-group = "default" }
 audio = { features = ["audio"], solve-group = "default" }
 dev = { features = ["dev", "test"], solve-group = "default" }
@@ -224,6 +224,10 @@ test-py313-all = ["py313", "test", "all"]
 
 [tool.pixi.dependencies]
 scipy = ">=1.17.1,<2"
+
+[tool.pixi.feature.dev.dependencies]
+ipykernel = ">=7.2.0,<8"
+pip = ">=26.1.1,<27"
 
 [tool.pixi.feature.py311.dependencies]
 python = "3.11.*"
