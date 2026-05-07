@@ -46,6 +46,7 @@ class TestRWrapper:
 
         assert res is not None, "R session should be initialized successfully"
         assert res["r_session"] == "active", "R session should be active"
+        assert res["circe_package"] == "embedded", "CircE should be loaded from embedded scripts"
 
     def test_reset_r_session(self):
         """Test R session package unloading."""
@@ -84,9 +85,9 @@ class TestRWrapper:
         sspyr._r_wrapper.check_sn_package()
 
     def test_check_circe_package(self):
-        """Test that the R 'CircE' package is available when R deps are installed."""
+        """Test that the embedded CircE scripts are available when R deps are installed."""
         import soundscapy.r_wrapper as sspyr
 
         # Should not raise — this test only runs (via optional_deps("r")) when
-        # rpy2 is present and the tox commands_pre has installed CircE.
+        # rpy2 is present and the local embedded CircE scripts are available.
         sspyr._r_wrapper.check_circe_package()

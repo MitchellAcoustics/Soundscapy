@@ -21,7 +21,7 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
     Parameters
     ----------
     bfgs_model
-        Fitted model object from the circe package.
+        Fitted model object from the embedded CircE R scripts.
 
     Returns
     -------
@@ -102,7 +102,7 @@ def bfgs(
     equal_com: bool = True,
 ) -> ro.ListVector:
     """
-    Fit a circumplex model using the BFGS algorithm from the circe package.
+    Fit a circumplex model using the embedded CircE BFGS implementation.
 
     Parameters
     ----------
@@ -123,7 +123,7 @@ def bfgs(
     Returns
     -------
     :
-        Fitted model object from the circe package.
+        Fitted model object from the embedded CircE scripts.
 
     Examples
     --------
@@ -155,8 +155,9 @@ def bfgs(
 
     r_cor_mat = r.base.as_matrix(r_data_cor)
     r_scales = ro.StrVector(scales)
+    circe_bfgs = ro.globalenv["CircE.BFGS"]
 
-    return r.circe.CircE_BFGS(
+    return circe_bfgs(
         r_cor_mat,
         v_names=r_scales,
         m=m_val,

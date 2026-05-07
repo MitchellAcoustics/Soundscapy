@@ -268,12 +268,12 @@ default-environment = "test-py313-audio"
 
 [tool.pixi.feature.test.tasks.test-r]
 cmd = "python --version && pytest -k 'not optional_deps or optional_deps and spi or skip_if_deps and spi'"
-depends-on = ["install-r-circe"]
+# depends-on = ["install-r-circe"]
 default-environment = "test-py313-r"
 
 [tool.pixi.feature.test.tasks.test-all]
 cmd = "python --version && pytest"
-depends-on = ["install-r-circe"]
+# depends-on = ["install-r-circe"]
 default-environment = "test-py313-all"
 
 [tool.pixi.tasks.test]
