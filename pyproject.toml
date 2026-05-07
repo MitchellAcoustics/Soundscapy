@@ -256,7 +256,7 @@ docs-serve = { depends-on = [
 ], cmd = "zensical serve", description = "Serve docs locally", default-environment = "docs" }
 
 [tool.pixi.feature.r.tasks]
-install-r-circe = { cmd = "Rscript -e \"remotes::install_github('MitchellAcoustics/CircE-R')\"", description = "Install the CircE package from MitchellAcoustics/CircE-R", default-environment = "r" }
+install-r-circe = { cmd = "Rscript -e \"remotes::install_git('https://github.com/MitchellAcoustics/CircE-R.git')\"", description = "Install the CircE package from MitchellAcoustics/CircE-R", default-environment = "r" }
 
 [tool.pixi.feature.test.tasks.test-base]
 cmd = "python --version && pytest -k 'not optional_deps' --ignore-glob='*iso_plot.py'"
