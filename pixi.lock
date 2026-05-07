@@ -3369,7 +3369,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rcpp-1.1.1_1.1-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rcpparmadillo-15.2.6_1-r45h3704496_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-reshape2-1.4.5-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rlang-1.2.0-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rpart-4.1.27-r45h54b55ab_0.conda
@@ -3609,7 +3608,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rcpp-1.1.1_1.1-r45h384437d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rcpparmadillo-15.2.6_1-r45hb467afd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-reshape2-1.4.5-r45ha730edb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rlang-1.2.0-r45h384437d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rpart-4.1.27-r45h8eed41d_0.conda
@@ -3843,7 +3841,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rcpp-1.1.1_1.1-r45h1380947_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rcpparmadillo-15.2.6_1-r45h595fb66_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-reshape2-1.4.5-r45hc1cd577_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rlang-1.2.0-r45h1380947_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rpart-4.1.27-r45hbe92478_0.conda
@@ -4053,7 +4050,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rcpp-1.1.1_1.1-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rcpparmadillo-15.2.6_1-r44hac2c72c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r44hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r44hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-reshape2-1.4.5-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rlang-1.2.0-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rpart-4.1.27-r44heceb674_0.conda
@@ -6268,7 +6264,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rcpp-1.1.1_1.1-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rcpparmadillo-15.2.6_1-r45h3704496_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-reshape2-1.4.5-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rlang-1.2.0-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rpart-4.1.27-r45h54b55ab_0.conda
@@ -6552,7 +6547,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rcpp-1.1.1_1.1-r45h384437d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rcpparmadillo-15.2.6_1-r45hb467afd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-reshape2-1.4.5-r45ha730edb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rlang-1.2.0-r45h384437d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rpart-4.1.27-r45h8eed41d_0.conda
@@ -6831,7 +6825,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rcpp-1.1.1_1.1-r45h1380947_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rcpparmadillo-15.2.6_1-r45h595fb66_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-reshape2-1.4.5-r45hc1cd577_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rlang-1.2.0-r45h1380947_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rpart-4.1.27-r45hbe92478_0.conda
@@ -7085,7 +7078,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rcpp-1.1.1_1.1-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rcpparmadillo-15.2.6_1-r44hac2c72c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r44hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r44hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-reshape2-1.4.5-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rlang-1.2.0-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rpart-4.1.27-r44heceb674_0.conda
@@ -8861,7 +8853,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rcpp-1.1.1_1.1-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rcpparmadillo-15.2.6_1-r45h3704496_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-reshape2-1.4.5-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rlang-1.2.0-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rpart-4.1.27-r45h54b55ab_0.conda
@@ -9145,7 +9136,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rcpp-1.1.1_1.1-r45h384437d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rcpparmadillo-15.2.6_1-r45hb467afd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-reshape2-1.4.5-r45ha730edb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rlang-1.2.0-r45h384437d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rpart-4.1.27-r45h8eed41d_0.conda
@@ -9424,7 +9414,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rcpp-1.1.1_1.1-r45h1380947_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rcpparmadillo-15.2.6_1-r45h595fb66_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-reshape2-1.4.5-r45hc1cd577_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rlang-1.2.0-r45h1380947_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rpart-4.1.27-r45hbe92478_0.conda
@@ -9678,7 +9667,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rcpp-1.1.1_1.1-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rcpparmadillo-15.2.6_1-r44hac2c72c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r44hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r44hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-reshape2-1.4.5-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rlang-1.2.0-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rpart-4.1.27-r44heceb674_0.conda
@@ -11456,7 +11444,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rcpp-1.1.1_1.1-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rcpparmadillo-15.2.6_1-r45h3704496_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-reshape2-1.4.5-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rlang-1.2.0-r45h3697838_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/r-rpart-4.1.27-r45h54b55ab_0.conda
@@ -11741,7 +11728,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rcpp-1.1.1_1.1-r45h384437d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rcpparmadillo-15.2.6_1-r45hb467afd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-reshape2-1.4.5-r45ha730edb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rlang-1.2.0-r45h384437d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/r-rpart-4.1.27-r45h8eed41d_0.conda
@@ -12021,7 +12007,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rcpp-1.1.1_1.1-r45h1380947_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rcpparmadillo-15.2.6_1-r45h595fb66_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r45hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-reshape2-1.4.5-r45hc1cd577_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rlang-1.2.0-r45h1380947_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/r-rpart-4.1.27-r45hbe92478_0.conda
@@ -12276,7 +12261,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rcpp-1.1.1_1.1-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rcpparmadillo-15.2.6_1-r44hac2c72c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/r-recipes-1.3.2-r44hc72bb7e_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r44hc72bb7e_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-reshape2-1.4.5-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rlang-1.2.0-r44hd8a2815_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/r-rpart-4.1.27-r44heceb674_0.conda
@@ -27948,26 +27932,6 @@ packages:
   purls: []
   size: 1690102
   timestamp: 1775137268515
-- conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r44hc72bb7e_2.conda
-  sha256: 1f4d85feeeab79048cde675287b65e74ee56f0f1df3e9ed537649a735634e28d
-  md5: af39b8f71e6979bd00e9ef71e40bed1e
-  depends:
-  - r-base >=4.4,<4.5.0a0
-  license: GPL-2.0-or-later
-  license_family: GPL3
-  purls: []
-  size: 436897
-  timestamp: 1757451587405
-- conda: https://conda.anaconda.org/conda-forge/noarch/r-remotes-2.5.0-r45hc72bb7e_2.conda
-  sha256: d0ffd9ce29b45dc3cbf3a49359feddc884cf404236c89dc0a9f0b704e542a406
-  md5: 2587026beb4e8e8dc9aa0f39ad3f197e
-  depends:
-  - r-base >=4.5,<4.6.0a0
-  license: GPL-2.0-or-later
-  license_family: GPL3
-  purls: []
-  size: 437047
-  timestamp: 1757451645190
 - conda: https://conda.anaconda.org/conda-forge/linux-64/r-reshape2-1.4.5-r45h3697838_0.conda
   sha256: ffec1e0396849fab33c12bcc580fe71f90818c83da645146c165449ee9a6e799
   md5: 169cd9281096cd54a29072a2d7eea2a9
@@ -31487,7 +31451,7 @@ packages:
 - pypi: ./
   name: soundscapy
   version: 0.8.0.dev0
-  sha256: d952c8b7b83e8a535f9dad070cee40048cb523ed00bdbb17c49154e5fd1a6916
+  sha256: d8beede169acecf09952f2774ebaa658521e7eac8d3d5c41d3806d393c732941
   requires_dist:
   - loguru>=0.7.2
   - numpy!=1.26
