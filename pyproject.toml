@@ -63,8 +63,6 @@ audio = [
     "tqdm>=4.66.5",
 ]
 r = ["rpy2>=3.5.0"]
-satp = ["soundscapy[r]"]
-spi = ["soundscapy[r]"]
 
 [dependency-groups]
 dev = [
@@ -214,17 +212,17 @@ docs = { features = ["docs"] }
 test-py311 = ["py311", "test"]
 test-py311-audio = ["py311", "test", "audio"]
 test-py311-r = ["py311", "test", "r"]
-test-py311-all = ["py311", "test", "all"]
+test-py311-all = ["py311", "test", "audio", "r"]
 
 test-py312 = ["py312", "test"]
 test-py312-audio = ["py312", "test", "audio"]
 test-py312-r = ["py312", "test", "r"]
-test-py312-all = ["py312", "test", "all"]
+test-py312-all = ["py312", "test", "audio", "r"]
 
 test-py313 = ["py313", "test"]
 test-py313-audio = ["py313", "test", "audio"]
 test-py313-r = ["py313", "test", "r"]
-test-py313-all = ["py313", "test", "all"]
+test-py313-all = ["py313", "test", "audio", "r"]
 
 
 [tool.pixi.dependencies]
