@@ -46,7 +46,9 @@ class TestRWrapper:
 
         assert res is not None, "R session should be initialized successfully"
         assert res["r_session"] == "active", "R session should be active"
-        assert res["circe_package"] == "embedded", "CircE should be loaded from embedded scripts"
+        assert res["circe_package"] == "embedded", (
+            "CircE should be loaded from embedded scripts"
+        )
 
     def test_reset_r_session(self):
         """Test R session package unloading."""

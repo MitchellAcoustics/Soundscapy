@@ -1,7 +1,7 @@
 `CircE.Plot` <-
 function(object,pchar=NULL,bg.points="red",ef=0.4,big.points=10,big.labels=10,bg.plot="gray80",col.axis="black",color="black",col.text="white",twodim=TRUE,bound=TRUE,labels=TRUE,reverse=FALSE){
-	
-	
+
+
 
 dev.new(title="  FOURIER FUNCTION ",width=4,height=4)
 
@@ -16,10 +16,10 @@ b.iter=c(object$b)
 theta=K*c(0:360)
 rho=rep(0,length(theta))
 for(i in 1:length(rho)){
-	
-	rho[i]=b.iter[1]+c(rep(1,length(b.iter[-c(1)])))%*%(b.iter[-c(1)]*cos(c(seq(1,k))*theta[i] ))  
-	
-	                    } 
+
+    rho[i]=b.iter[1]+c(rep(1,length(b.iter[-c(1)])))%*%(b.iter[-c(1)]*cos(c(seq(1,k))*theta[i] ))
+
+                        }
 #plot(theta,rho,xlim=c(0*K,360*K),ylim=c(0,1),bty="n")
 mincorr180=2*(sum(b.iter[c(seq(1,(k+1),by=2))]))-1;summary(rho);
 mincorr180=round(mincorr180,3)
@@ -67,7 +67,7 @@ segments(rep(0,length(low)),rep(0,length(low)),cos(low*K)*max(com.ind),sin(low*K
 angular.points=matrix(0,dim(object$R)[1],2)
 for(i in 1:dim(object$R)[1]){
    if(reverse==FALSE){angular.points[i,]=c(cos(K*object$coeff[i,1]),sin(K*object$coeff[i,1]))}
-   if(reverse==TRUE){angular.points[i,]=c(cos(K*(360-object$coeff[i,1])),sin(K*(360-object$coeff[i,1])))}   
+   if(reverse==TRUE){angular.points[i,]=c(cos(K*(360-object$coeff[i,1])),sin(K*(360-object$coeff[i,1])))}
              }
 row.names(angular.points)=object$v.names
 if(labels==TRUE){
@@ -82,4 +82,3 @@ text(-1.09,0.80,labels=substitute(list("max "*h^2)==list(maxcom),list(maxcom=rou
 
 
 }
-

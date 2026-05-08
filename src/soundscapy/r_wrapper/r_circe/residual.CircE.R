@@ -2,11 +2,11 @@ residual.CircE<-function(object,file=NULL,digits=3){
 
 if(!is.null(file))  sink(file,append=FALSE,split=TRUE)
 
-  	coeff=object$coeff
-	p=dim(object$R)[1]
-	v.names=object$v.names
-	R=round(object$R,digits=digits)
-	S=object$S
+    coeff=object$coeff
+    p=dim(object$R)[1]
+    v.names=object$v.names
+    R=round(object$R,digits=digits)
+    S=object$S
      Cs=object$Cs
      Pc=object$Pc
      residuals=object$residuals
@@ -26,7 +26,7 @@ cat("\n Reproduced Common Score Correlation Matrix  ","\n")
 print(round(Pc,digits=digits))
 cat("\n .......................................................","\n")
 
-	   
+
 cat("\n ","\n")
 cat("\n Ratios of Reproduced Variances to Input Variances  ","\n")
 ratio=round(diag(Cs)/diag(R),digits=digits)
@@ -44,6 +44,6 @@ print(round(summary(as.vector(stand.res)),digits=digits))
 cat("\n .......................................................","\n")
 
 
-sink()	
+sink()
 
-	}
+    }
