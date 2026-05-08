@@ -30,7 +30,7 @@ CircE : dataclass
 
 import dataclasses
 import warnings
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 import numpy as np
@@ -63,7 +63,7 @@ _COLUMN_ALIASES: dict[str, str] = {
 }
 
 
-class CircModelE(str, Enum):
+class CircModelE(StrEnum):
     """Enumeration of circumplex model types."""
 
     UNCONSTRAINED = "unconstrained"
@@ -111,7 +111,7 @@ class SATPSchema(pa.DataFrameModel):
     # `nullable=True` permits null *values* within the column when present.
     participant: Series[str] | None = Field(nullable=True)
 
-    class Config:
+    class Config:  # type: ignore [bad-override]
         """Configuration for the schema validation behavior."""
 
         drop_invalid_rows = False
@@ -187,7 +187,9 @@ def normalize_polar_angles(angles: pd.Series) -> pd.Series:
     --------
     >>> from soundscapy.surveys.survey_utils import PAQ_IDS
     >>> import pandas as pd
-    >>> reflected = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
+    >>> reflected = pd.Series(
+    >>>     [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0],
+    >>>     index=PAQ_IDS)
     >>> normalize_polar_angles(reflected).tolist()
     [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
 
@@ -425,7 +427,7 @@ class CircE:
             "gdiff": self.gdiff,
         }
         if self.polar_angles is not None:
-            base.update(self.polar_angles.to_dict())
+            base.update(self.polar_angles.to_dict())  # type: ignore [no-matching-overload]
         else:
             base.update(dict.fromkeys(PAQ_IDS))
         return base
@@ -512,9 +514,10 @@ class CircEResults:
         raise KeyError(msg)
 
     def _repr_html_(self) -> str:
+        # type: ignore [not-callable]
         return self.table._repr_html_()
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # noqa: D105
         return (
             f"CircEResults(language={self.language!r}, "
             f"datasource={self.datasource!r}, "
@@ -557,7 +560,7 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
         column-wise participant-centred values.
 
     """
-    import warnings
+    import warnings  # noqa: PLC0415
 
     warnings.warn(
         "person_center() is deprecated; use ipsatize(method='column_wise') instead.",
@@ -671,6 +674,7 @@ def fit_circe(
         try:
             validated = SATPSchema.validate(clean, lazy=True)
         except SchemaErrors as exc2:
+            # type: ignore [missing-argument]
             raise SchemaErrors(
                 schema_errors=exc2.schema_errors,
                 data=exc2.data,
@@ -707,7 +711,7 @@ def fit_circe(
         try:
             circe = CircE.compute_bfgs_fit(corr, n, datasource, language, model)
             fitted.append(circe)
-        except fit_exceptions as e:  # noqa: PERF203
+        except fit_exceptions as e:
             warnings.warn(f"{model.value} raised {e}", stacklevel=2)
             # Populate all expected columns with None so that pandas does not
             # promote numeric columns (e.g. n, d) to float64 across all rows

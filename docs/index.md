@@ -31,6 +31,20 @@ _Soundscapy_ splits its functionality into optional modules to reduce the number
 pip install "soundscapy[audio]"
 ```
 
+If you would like to use the R-backed SPI and SATP functionality, install the optional `r` dependency:
+
+```bash
+pip install "soundscapy[r]"
+```
+
+R-backed features also require a local R installation and the external `sn` R package:
+
+```bash
+R -q -e "install.packages('sn')"
+```
+
+CircE is bundled with _Soundscapy_ as embedded R scripts, so you do not need to install CircE separately from GitHub.
+
 ## Documentation
 
 This documentation is designed to help you understand and use _Soundscapy_ effectively. It's divided into several sections:

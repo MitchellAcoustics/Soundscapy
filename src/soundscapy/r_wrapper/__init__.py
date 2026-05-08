@@ -8,13 +8,13 @@ try:
 except ImportError as e:
     msg = (
         "R functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[satp]"
+        "Install with: pip install soundscapy[r]"
     )
     raise ImportError(msg) from e
 
 # Now we can import our modules that depend on the optional packages
 from ._circe_wrapper import bfgs, extract_bfgs_fit  # noqa: F401
-from ._r_wrapper import PKG_SRC, get_r_session  # noqa: F401
+from ._r_wrapper import get_r_session  # noqa: F401
 from ._rsn_wrapper import (  # noqa: F401
     cp2dp,
     dp2cp,

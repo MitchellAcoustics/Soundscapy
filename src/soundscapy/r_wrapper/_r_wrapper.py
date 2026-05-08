@@ -18,12 +18,14 @@ The sole exception is :func:`reset_r_session`, which creates a fresh
 It is not intended to be used directly by end users.
 """
 
+from __future__ import annotations
+
 import importlib.metadata
 import os
 import sys
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, NoReturn
+from pathlib import Path
+from typing import Any, NoReturn, cast
 
 # NOTE: importing rpy2.robjects here unconditionally starts the embedded R
 # process.  There is no way to defer this further — R begins as soon as this
@@ -38,9 +40,39 @@ logger = get_logger()
 
 REQUIRED_R_VERSION: str = "3.6"
 
+CIRCE_EMBEDDED_DIR = Path(__file__).parent.joinpath("r_circe")
+CIRCE_EMBEDDED_FILES: tuple[str, ...] = (
+    "bound.assign.R",
+    "char.assign.R",
+    "residual.CircE.R",
+    "CircE.Plot.R",
+    "CircE.BFGS.R",
+)
+CIRCE_REQUIRED_SYMBOLS: tuple[str, ...] = (
+    "CircE.BFGS",
+    "CircE.Plot",
+    "bound.assign",
+    "char.assign",
+    "residual.CircE",
+)
 
-class PKG_SRC(str, Enum):  # noqa: N801
-    CIRCE = "MitchellAcoustics/CircE-R"
+
+class EmbeddedRPackage:
+    """Proxy object exposing sourced R functions through Python attributes."""
+
+    def __init__(self, package_name: str) -> None:
+        self.package_name = package_name
+
+    def __getattr__(self, name: str) -> Any:
+        for symbol_name in (name, name.replace("_", ".")):
+            if _r_function_exists(symbol_name):
+                return robjects.globalenv[symbol_name]
+
+        msg = f"Embedded R package '{self.package_name}' has no symbol '{name}'"
+        raise AttributeError(msg)
+
+    def __repr__(self) -> str:
+        return f"<EmbeddedRPackage {self.package_name}>"
 
 
 @dataclass
@@ -69,7 +101,7 @@ class RSession:
     base
         Loaded ``base`` R package object.
     circe
-        Loaded ``CircE`` R package object.
+        Proxy exposing sourced embedded ``CircE`` R functions.
     active
         ``True`` once :func:`initialize_r_session` completes successfully.
     r_checked
@@ -145,7 +177,6 @@ def _confirm_install_r_packages() -> bool:
                 "\nsoundscapy: One or more R packages required for this feature "
                 "are not installed.\n"
                 "  sn     → install.packages('sn')\n"
-                f"  CircE  → remotes::install_github('{PKG_SRC.CIRCE.value}')\n"
             )
             response = input("Install them now via soundscapy? [y/N] ").strip().lower()
         except EOFError:
@@ -154,6 +185,58 @@ def _confirm_install_r_packages() -> bool:
             return response in ("y", "yes")
 
     return False
+
+
+def _get_circe_embedded_paths() -> list[Path]:
+    """Return the expected embedded CircE script paths, validating existence."""
+    if not CIRCE_EMBEDDED_DIR.is_dir():
+        msg = f"Embedded CircE scripts directory is missing: {CIRCE_EMBEDDED_DIR}"
+        raise ImportError(msg)
+
+    script_paths = [CIRCE_EMBEDDED_DIR / filename for filename in CIRCE_EMBEDDED_FILES]
+    missing_scripts = [path.name for path in script_paths if not path.is_file()]
+    if missing_scripts:
+        msg = "Embedded CircE scripts are missing: " + ", ".join(missing_scripts)
+        raise ImportError(msg)
+
+    return script_paths
+
+
+def _r_function_exists(symbol_name: str) -> bool:
+    """Return ``True`` when an R function symbol is available in the session."""
+    return bool(robjects.r(f"exists('{symbol_name}', mode='function')")[0])  # type: ignore[index]
+
+
+def _embedded_circe_symbols_loaded() -> bool:
+    """Return ``True`` when all required embedded CircE symbols are available."""
+    return all(
+        _r_function_exists(symbol_name) for symbol_name in CIRCE_REQUIRED_SYMBOLS
+    )
+
+
+def _source_embedded_circe_scripts() -> None:
+    """Source the bundled CircE R scripts into the embedded R session."""
+    script_paths = _get_circe_embedded_paths()
+
+    for script_path in script_paths:
+        try:
+            source_fn = cast("Any", robjects.r["source"])
+            source_fn(script_path.as_posix())
+        except Exception as e:
+            msg = f"Failed to source embedded CircE script '{script_path.name}': {e!s}"
+            raise ImportError(msg) from e
+
+    missing_symbols = [
+        symbol_name
+        for symbol_name in CIRCE_REQUIRED_SYMBOLS
+        if not _r_function_exists(symbol_name)
+    ]
+    if missing_symbols:
+        msg = (
+            "Embedded CircE scripts were sourced but required symbols are still "
+            "missing: " + ", ".join(missing_symbols)
+        )
+        raise ImportError(msg)
 
 
 def _ver(v: str) -> tuple[int, ...]:
@@ -212,9 +295,9 @@ def check_r_availability() -> None:
         # Use _ver() tuple comparison to avoid float pitfalls (e.g. "2.1" minor
         # parsed as 2.1/10 = 0.21 instead of the intended major.minor.patch).
         # R's $minor field is like "6.0" for R 4.6.0 or "2.1" for R 4.2.1.
-        r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[
+        r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[  # type: ignore[bad-index]
             0
-        ]  # type: ignore[index]
+        ]
 
         if _ver(r_version_str) < _ver(REQUIRED_R_VERSION):
             _raise_r_version_too_old_error(r_version_str)
@@ -266,7 +349,7 @@ def check_sn_package() -> None:
     check_r_availability()
 
     try:
-        import rpy2.robjects.packages as rpackages
+        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
 
         # Check if 'sn' package is installed
         try:
@@ -293,34 +376,19 @@ def check_sn_package() -> None:
 
 def check_circe_package() -> None:
     """
-    Check if the R 'CircE' package is installed.
+    Check that the embedded CircE R scripts are available and sourceable.
 
     Raises
     ------
     ImportError
-        If the 'CircE' package is not installed.
+        If the bundled CircE scripts are missing or cannot be sourced.
 
     """
 
-    def _raise_circe_not_installed_error() -> NoReturn:
-        msg = (
-            "R package 'CircE' is not installed. "
-            f"Please install it by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
-        )
-        raise ImportError(msg)
-
-    def _raise_circe_version_too_old_error(version: str) -> NoReturn:
-        msg = (
-            f"R 'CircE' package version {version} is too old. "
-            "The SPI feature requires 'CircE' >= 1.1. "
-            f"Please upgrade the package by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
-        )
-        raise ImportError(msg)
-
     def _raise_circe_check_error(e: Exception) -> NoReturn:
         msg = (
-            f"Error checking for R 'CircE' package: {e!s}. "
-            f"Please ensure the package is installed by running in R: remotes::install_github('{PKG_SRC.CIRCE.value}')"  # noqa: E501
+            f"Error checking embedded CircE scripts: {e!s}. "
+            f"Please ensure the bundled scripts exist under {CIRCE_EMBEDDED_DIR}"
         )
         raise ImportError(msg)
 
@@ -331,25 +399,11 @@ def check_circe_package() -> None:
     check_r_availability()
 
     try:
-        import rpy2.robjects.packages as rpackages
+        _get_circe_embedded_paths()
+        if not _embedded_circe_symbols_loaded():
+            _source_embedded_circe_scripts()
 
-        # Check if 'CircE' package is installed
-        try:
-            # Just importing to verify it exists
-            _ = rpackages.importr("CircE")
-
-            # Use R code to get the package version
-            version = robjects.r('as.character(packageVersion("CircE"))')[0]  # type: ignore[index]
-            logger.debug("R 'CircE' package version: %s", version)
-
-            # Tuple comparison avoids lexicographic pitfalls ("1.10" > "1.2")
-            if _ver(version) < (1, 1):
-                _raise_circe_version_too_old_error(version)
-
-            _state.circe_checked = True
-
-        except rpackages.PackageNotInstalledError:
-            _raise_circe_not_installed_error()
+        _state.circe_checked = True
 
     except ImportError:
         raise  # Already a specific ImportError from our helpers — re-raise as-is
@@ -385,28 +439,26 @@ def check_dependencies() -> dict[str, Any]:
         # Then check for the sn package
         check_sn_package()
 
-        # Then check for the CircE package
-        check_circe_package()
-
     except ImportError:
         if _confirm_install_r_packages():
             logger.info("User confirmed: installing missing R packages...")
             try:
-                install_r_packages()
+                install_r_packages(["sn"])
                 # Re-check to confirm everything is now available
                 check_r_availability()
                 check_sn_package()
-                check_circe_package()
             except Exception as install_e:
                 msg = (
                     f"Auto-installation of R packages failed: {install_e!s}. "
                     "Please install the required R packages manually.\n"
-                    "  sn     → install.packages('sn')\n"
-                    f"  CircE  → remotes::install_github('{PKG_SRC.CIRCE.value}')"
+                    "  sn     → install.packages('sn')"
                 )
                 raise ImportError(msg) from install_e
         else:
             raise  # User declined or non-interactive; re-raise the original ImportError
+
+    # CircE is embedded in the Python package, so it is checked separately.
+    check_circe_package()
 
     # If we get here, all dependencies are available
 
@@ -415,7 +467,8 @@ def check_dependencies() -> dict[str, Any]:
         "rpy2_version": importlib.metadata.version("rpy2"),
         "r_version": robjects.r("R.version.string")[0],  # type: ignore[index]
         "sn_version": robjects.r('as.character(packageVersion("sn"))')[0],  # type: ignore[index]
-        "circe_version": robjects.r('as.character(packageVersion("CircE"))')[0],  # type: ignore[index]
+        "circe_source": "embedded",
+        "circe_source_dir": str(CIRCE_EMBEDDED_DIR),
     }
 
 
@@ -454,7 +507,7 @@ def initialize_r_session() -> dict[str, Any]:
             "sn_package": "loaded",
             "stats_package": "loaded",
             "base_package": "loaded",
-            "circe_package": "loaded",
+            "circe_package": "embedded",
         }
 
     # First check all dependencies
@@ -462,14 +515,15 @@ def initialize_r_session() -> dict[str, Any]:
     logger.debug("Dependencies verified: %s", dep_info)
 
     try:
-        import rpy2.robjects.packages as rpackages
+        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
 
         # Import required packages
         _state.sn = rpackages.importr("sn")
-        _state.circe = rpackages.importr("CircE")
         _state.stats = rpackages.importr("stats")
         _state.base = rpackages.importr("base")
-        logger.debug("Imported R packages: sn, CircE, stats, base")
+        check_circe_package()
+        _state.circe = EmbeddedRPackage("CircE")
+        logger.debug("Imported R packages: sn, stats, base; sourced embedded CircE")
 
         # Set R random seed for reproducibility
         robjects.r("set.seed(42)")
@@ -486,7 +540,7 @@ def initialize_r_session() -> dict[str, Any]:
             "sn_package": str(_state.sn),
             "stats_package": str(_state.stats),
             "base_package": str(_state.base),
-            "circe_package": str(_state.circe),
+            "circe_package": "embedded",
             **dep_info,
         }
 
@@ -520,7 +574,7 @@ def reset_r_session() -> bool:
     global _state  # noqa: PLW0603
 
     try:
-        import gc
+        import gc  # noqa: PLC0415
 
         was_active = _state.active
         _state = RSession()
@@ -572,7 +626,7 @@ def install_r_packages(packages: list[str] | None = None) -> None:
     Parameters
     ----------
     packages
-        List of R package names to install. Defaults to ["sn", "CircE"].
+        List of R package names to install. Defaults to ["sn"].
 
     Raises
     ------
@@ -581,16 +635,26 @@ def install_r_packages(packages: list[str] | None = None) -> None:
 
     """
     if packages is None:
-        packages = ["sn", "CircE"]
+        packages = ["sn"]
 
     check_r_availability()
 
     try:
-        import rpy2.robjects.packages as rpackages
-        from rpy2.robjects.vectors import StrVector
+        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
+        from rpy2.robjects.vectors import StrVector  # noqa: PLC0415
 
         utils = rpackages.importr("utils")
         utils.chooseCRANmirror(ind=1)
+
+        if "CircE" in packages:
+            logger.info(
+                "Skipping R package 'CircE' installation because CircE is embedded"
+            )
+            packages = [package for package in packages if package != "CircE"]
+
+        if not packages:
+            logger.debug("No external R packages require installation")
+            return
 
         # Check if packages are installed
         packnames_to_install = [x for x in packages if not rpackages.isinstalled(x)]
@@ -598,13 +662,6 @@ def install_r_packages(packages: list[str] | None = None) -> None:
 
         # Install missing packages
         if len(packnames_to_install) > 0:
-            if "CircE" in packnames_to_install:
-                # CircE is only available from GitHub
-                remotes = rpackages.importr("remotes")
-                remotes.install_github(PKG_SRC.CIRCE.value)
-                packnames_to_install.remove("CircE")
-                logger.info("Installed R package 'CircE' from GitHub")
-
             if packnames_to_install:
                 utils.install_packages(StrVector(packnames_to_install))
                 logger.info("Installed missing R packages: %s", packnames_to_install)

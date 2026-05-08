@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored subplot creation with improved code organization
 - Removed Plotly dependency to simplify installation
 - Updated notebook tutorials to demonstrate new interfaces
+- Bundled CircE R scripts with the package and updated the R wrapper to source the
+  embedded implementation instead of requiring a separate CircE R package install
+- Clarified R-backed installation guidance around `soundscapy[r]`, the external `sn`
+  R dependency, and the embedded CircE runtime
 
 ### Developer Experience
 

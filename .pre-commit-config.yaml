@@ -24,6 +24,7 @@ repos:
     rev: v1.5.5
     hooks:
       - id: forbid-tabs
+      - id: remove-tabs
 
   # TODO(MitchellAcoustics): Enable linting pre-commit hooks
   - repo: https://github.com/rbubley/mirrors-prettier
