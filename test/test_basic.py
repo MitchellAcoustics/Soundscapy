@@ -25,7 +25,7 @@ def test_soundscapy_audio_module():
     assert hasattr(soundscapy, "ConfigManager")
 
 
-@pytest.mark.optional_deps("spi")
+@pytest.mark.optional_deps("r")
 def test_soundscapy_spi_module():
     """Test that the SPI module can be imported when dependencies are available."""
     assert hasattr(soundscapy, "spi"), "Soundscapy should have an spi module"
@@ -35,7 +35,7 @@ def test_soundscapy_spi_module():
     assert hasattr(soundscapy, "spi_score"), "spi_score should be available"
 
 
-@pytest.mark.optional_deps("satp")
+@pytest.mark.optional_deps("r")
 def test_soundscapy_satp_module():
     """Test that the SATP module can be imported when dependencies are available."""
     assert hasattr(soundscapy, "satp"), "Soundscapy should have a satp module"
@@ -53,7 +53,7 @@ def test_spi_import_error():
         import soundscapy.spi  # noqa: F401
 
     assert "SPI functionality requires" in str(excinfo.value)
-    assert "soundscapy[spi]" in str(excinfo.value)
+    assert "soundscapy[r]" in str(excinfo.value)
 
 
 def test_satp_import_error():
@@ -65,4 +65,4 @@ def test_satp_import_error():
         import soundscapy.satp  # noqa: F401
 
     assert "SATP functionality requires" in str(excinfo.value)
-    assert "soundscapy[satp]" in str(excinfo.value)
+    assert "soundscapy[r]" in str(excinfo.value)
