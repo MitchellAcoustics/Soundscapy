@@ -25,7 +25,7 @@ dependencies = [
     "seaborn>=0.13.2",
 ]
 description = "A python library for analysing and visualising soundscape assessments."
-version = "0.8.0dev0"
+version = "0.8.0.dev1"
 keywords = ["acoustics", "audio analysis", "psychoacoustics", "soundscape"]
 license = "BSD-3-Clause"
 name = "soundscapy"
@@ -187,7 +187,7 @@ overrides."tool.tox.env_run_base.commands".inline_arrays = false
 ###### Pixi Workspace Management ######
 
 [tool.pixi.workspace]
-channels = ["conda-forge"]
+channels = ["conda-forge", "https://prefix.dev/sonic-forge"]
 platforms = ["osx-arm64", "linux-64", "osx-64", "win-64"]
 preview = ["pixi-build"]
 

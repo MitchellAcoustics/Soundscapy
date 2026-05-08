@@ -3,6 +3,7 @@ environments:
   all:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -623,6 +624,7 @@ environments:
   audio:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -962,6 +964,7 @@ environments:
   default:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -1854,6 +1857,7 @@ environments:
   dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -2483,6 +2487,7 @@ environments:
   docs:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -3217,6 +3222,7 @@ environments:
   r:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -4121,6 +4127,7 @@ environments:
   test:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -4605,6 +4612,7 @@ environments:
   test-py311:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -5054,6 +5062,7 @@ environments:
   test-py311-all:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -6202,6 +6211,7 @@ environments:
   test-py311-audio:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -6723,6 +6733,7 @@ environments:
   test-py311-r:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -7805,6 +7816,7 @@ environments:
   test-py312:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -8254,6 +8266,7 @@ environments:
   test-py312-all:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -9402,6 +9415,7 @@ environments:
   test-py312-audio:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -9923,6 +9937,7 @@ environments:
   test-py312-r:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -11005,6 +11020,7 @@ environments:
   test-py313:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -11455,6 +11471,7 @@ environments:
   test-py313-all:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -12605,6 +12622,7 @@ environments:
   test-py313-audio:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -13127,6 +13145,7 @@ environments:
   test-py313-r:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    - url: https://prefix.dev/sonic-forge/
     indexes:
     - https://pypi.org/simple
     options:
@@ -33175,7 +33194,7 @@ packages:
 - pypi: ./
   name: soundscapy
   version: 0.8.0.dev0
-  sha256: 2288badb8cc0a5fc16d485c4ab3794e6d700d916b79fc3d2d08e7553f102cd38
+  sha256: 43001ca6c15812f8a11224d86e3527f17712847d6babdb73893987feffc694e5
   requires_dist:
   - loguru>=0.7.2
   - numpy!=1.26
