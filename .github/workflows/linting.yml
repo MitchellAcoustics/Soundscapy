@@ -18,7 +18,7 @@ jobs:
           # auth-host: prefix.dev
           # auth-token: ${{ secrets.PREFIX_DEV_TOKEN }}
           frozen: true
-          environments: "dev"
+          environments: "default"
 
       - name: Run Prek checks
         uses: j178/prek-action@v2

@@ -52,7 +52,7 @@ jobs:
 
         with:
           environments: >-
-            test-py313 test-py313-audio test-py313-r test-py313-all
+            test test-audio test-r test-all
           cache: true
 
       - name: Run tests

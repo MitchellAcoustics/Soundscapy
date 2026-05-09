@@ -14,8 +14,8 @@
   "python.analysis.diagnosticSeverityOverrides": {
     "reportTypedDictNotRequiredAccess": "none"
   },
-  "python-envs.defaultEnvManager": "renan-r-santos.pixi-code:pixi",
-  "python-envs.defaultPackageManager": "renan-r-santos.pixi-code:pixi",
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "python-envs.defaultPackageManager": "ms-python.python:pip",
   "chat.tools.terminal.autoApprove": {
     "git rev-parse": true,
     "git config": true,

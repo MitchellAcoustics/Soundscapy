@@ -22,14 +22,15 @@
         "tamasfe.even-better-toml",
         "ms-toolsai.jupyter",
         "yzhang.markdown-all-in-one",
-        "meta.pyrefly"
+        "meta.pyrefly",
+        "eamodio.gitlens"
       ]
     }
   },
   "mounts": [
     "source=${localWorkspaceFolderBasename}-pixi,target=${containerWorkspaceFolder}/.pixi,type=volume"
   ],
-  "postCreateCommand": "sudo chown vscode .pixi && direnv allow . && pixi install -e dev",
+  "postCreateCommand": "sudo chown vscode .pixi && direnv allow . && pixi install",
   "features": {
     "ghcr.io/devcontainers-community/features/direnv": {},
     "ghcr.io/devcontainers-community/features/direnv:1": {},
