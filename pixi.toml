@@ -104,7 +104,7 @@ description = "Export the conda environment file from the workspace configuratio
 inputs      = ["pixi.toml", "pyproject.toml"]
 
 [tasks.update-environment]
-cmd        = "bash update-environment-yml.sh"
+cmd        = "python scripts/update-environment-yml.py"
 depends-on = ["export-environment"]
 inputs     = ["pixi.toml", "pyproject.toml"]
 
