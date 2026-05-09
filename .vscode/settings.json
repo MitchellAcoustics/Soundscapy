@@ -1,0 +1,19 @@
+{
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestPath": "pytest",
+  "python.analysis.inlayHints.pytestParameters": true,
+  "python.experiments.optInto": ["pythonTestAdapter"],
+  "editor.formatOnSave": true,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": true,
+  "notebook.formatOnSave.enabled": true,
+  "python.analysis.typeCheckingMode": "standard",
+  "python.testing.pytestArgs": ["."],
+  "ruff.configurationPreference": "filesystemFirst",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportTypedDictNotRequiredAccess": "none"
+  },
+  "python-envs.defaultEnvManager": "renan-r-santos.pixi-code:pixi",
+  "python-envs.defaultPackageManager": "renan-r-santos.pixi-code:pixi"
+}

@@ -1,0 +1,38 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/universal
+{
+  "name": "Soundscapy",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  // "image": "mcr.microsoft.com/devcontainers/base:jammy"
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "ruff.importStrategy": "useBundled",
+        "git.requireGitUserConfig": false
+      },
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "GitHub.copilot",
+        "renan-r-santos.pixi-code",
+        "tamasfe.even-better-toml",
+        "ms-toolsai.jupyter",
+        "yzhang.markdown-all-in-one",
+        "meta.pyrefly"
+      ]
+    }
+  },
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-pixi,target=${containerWorkspaceFolder}/.pixi,type=volume"
+  ],
+  "postCreateCommand": "sudo chown vscode .pixi && direnv allow && pixi install -e dev",
+  "features": {
+    "ghcr.io/devcontainers-community/features/direnv": {},
+    "ghcr.io/devcontainers-community/features/direnv:1": {},
+    "ghcr.io/devcontainers-extra/features/prek:1": {}
+  }
+}
