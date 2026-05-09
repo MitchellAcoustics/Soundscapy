@@ -13,7 +13,6 @@ version = "0.*"
 
 [package.build.config]
 ignore-pypi-mapping = false
-pinning-strategy    = "latest-up"
 
 [package.host-dependencies]
 uv = ">=0.9.0"
@@ -111,7 +110,7 @@ cmd         = "uv publish --token $(cat .secrets/test-pypi-token) --index test-p
 depends-on  = ["build"]
 
 [tasks.publish-conda]
-cmd         = "pixi publish --to https://prefix.dev/sonic-forge"
+cmd         = "pixi publish --target-channel https://prefix.dev/sonic-forge"
 description = "Publish the package to Prefix"
 
 [tasks.publish-pypi]
