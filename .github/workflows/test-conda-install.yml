@@ -1,0 +1,53 @@
+name: Test Conda Install
+# Builds the conda package with Pixi and verifies it can be installed locally,
+# confirming a user will be able to install soundscapy from a Conda channel.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+" # v1.2.3-dev1
+      - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+" # v1.2.3dev1
+      - "v[0-9]+.[0-9]+.[0-9]+.dev[0-9]+" # v1.2.3.dev1
+  workflow_dispatch:
+
+jobs:
+  tests-pass:
+    uses: ./.github/workflows/test.yml
+
+  build_and_install:
+    name: Build and local-install on ${{ matrix.os }}
+    needs: [tests-pass]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: v0.67.2
+          run-install: false
+
+      - name: Build conda package
+        run: pixi build
+
+      - name: Install soundscapy from local channel
+        shell: bash
+        run: |
+          # The build output directory is a valid local conda channel.
+          # Use its absolute path as a file:// channel in a fresh pixi project.
+          LOCAL_CHANNEL="$(pwd)/output"
+          mkdir soundscapy-install-test
+          cd soundscapy-install-test
+          pixi init
+          pixi project channel add "file://${LOCAL_CHANNEL}"
+          pixi add soundscapy
+
+      - name: Verify soundscapy import
+        shell: bash
+        working-directory: soundscapy-install-test
+        run: pixi run python -c "import soundscapy; print(soundscapy.__version__)"
