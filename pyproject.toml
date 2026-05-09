@@ -252,7 +252,7 @@ r-base = ">=4.4.3,<4.6"
 r-sn = ">=2.1.3,<3"
 
 [tool.pixi.tasks]
-dev-setup = { cmd = "pixi install -e dev && prek prepare-hooks", default-environment = "dev" }
+dev-setup = { cmd = "pixi install -e dev && prek install --prepare-hooks --overwrite", default-environment = "dev" }
 publish = { cmd = "pixi publish --to https://prefix.dev/sonic-forge" }
 lint = { cmd = "ruff check .", description = "Lint the codebase", default-environment = "dev" }
 format = { cmd = "ruff check . --fix && ruff format .", description = "Fix lint issues and format code", default-environment = "dev" }

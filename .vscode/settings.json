@@ -15,5 +15,10 @@
     "reportTypedDictNotRequiredAccess": "none"
   },
   "python-envs.defaultEnvManager": "renan-r-santos.pixi-code:pixi",
-  "python-envs.defaultPackageManager": "renan-r-santos.pixi-code:pixi"
+  "python-envs.defaultPackageManager": "renan-r-santos.pixi-code:pixi",
+  "chat.tools.terminal.autoApprove": {
+    "git rev-parse": true,
+    "git config": true,
+    "true": true
+  }
 }
