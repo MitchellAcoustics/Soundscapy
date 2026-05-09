@@ -1,0 +1,139 @@
+name: Test Conda Install
+# Tests building the conda package with Pixi and installing from prefix.dev
+# to confirm that users can install soundscapy via Conda/Pixi from scratch.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+-dev[0-9]+" # v1.2.3-dev1
+      - "v[0-9]+.[0-9]+.[0-9]+dev[0-9]+" # v1.2.3dev1
+      - "v[0-9]+.[0-9]+.[0-9]+.dev[0-9]+" # v1.2.3.dev1
+  workflow_dispatch:
+
+jobs:
+  details:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.release.outputs.new_version }}
+      suffix: ${{ steps.release.outputs.suffix }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version_str: ${{ steps.release.outputs.version_str }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract tag and Details
+        id: release
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            VERSION_STR=${TAG_NAME#v}
+            NEW_VERSION=$(echo $VERSION_STR | cut -d'-' -f1)
+            SUFFIX=$(echo "$VERSION_STR" | grep -o '[rd][ec][v1][0-9]*' | tr -d '\n')
+
+            echo "version_str=$VERSION_STR" >> "$GITHUB_OUTPUT"
+            echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+            echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+            echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+
+            echo "Version is $VERSION_STR"
+            echo "Suffix is $SUFFIX"
+            echo "Tag name is $TAG_NAME"
+          else
+            echo "No tag found"
+            exit 1
+          fi
+
+  build_conda:
+    name: Build conda package with Pixi
+    needs: [details]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: v0.67.2
+          run-install: false
+
+      - name: Build conda package
+        run: pixi build
+
+      - name: Upload conda package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: conda-package
+          path: output/
+
+  tests-pass:
+    needs: [details]
+    uses: ./.github/workflows/test.yml
+
+  publish_prefix_dev:
+    name: Publish to prefix.dev sonic-forge channel
+    needs: [build_conda, details, tests-pass]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download conda package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: conda-package
+          path: output/
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: v0.67.2
+          run-install: false
+
+      - name: Install rattler-build
+        run: pixi global install rattler-build
+
+      - name: Publish to prefix.dev sonic-forge channel
+        env:
+          PREFIX_API_KEY: ${{ secrets.PREFIX_DEV_TOKEN }}
+        run: |
+          rattler-build upload prefix -c sonic-forge \
+            $(find output -name "*.conda" -type f)
+
+  test_conda_install:
+    name: Test conda install on ${{ matrix.os }}
+    needs: [publish_prefix_dev, details]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: v0.67.2
+          run-install: false
+
+      - name: Create fresh pixi test environment
+        shell: bash
+        run: |
+          mkdir soundscapy-install-test
+          cd soundscapy-install-test
+          pixi init
+          pixi project channel add https://prefix.dev/sonic-forge
+
+      - name: Install soundscapy from prefix.dev
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          shell: bash
+          command: >-
+            cd soundscapy-install-test &&
+            pixi add "soundscapy==${{ needs.details.outputs.version_str }}"
+
+      - name: Verify soundscapy import
+        shell: bash
+        working-directory: soundscapy-install-test
+        run: pixi run python -c "import soundscapy; print(soundscapy.__version__)"
