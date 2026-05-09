@@ -26,8 +26,10 @@ PYTHONIOENCODING = "utf-8"
 PYTHONNOUSERSITE = "1"
 # R users often set:
 PIXI_R_LIBS = "$CONDA_PREFIX/lib/R/library"
+PIXI_R_HOME = "$CONDA_PREFIX/lib/R"
 R_LIBS      = "$PIXI_R_LIBS"
 R_LIBS_USER = "$PIXI_R_LIBS"
+R_HOME      = "$PIXI_R_HOME"
 
 ###### Dependencies ######
 
