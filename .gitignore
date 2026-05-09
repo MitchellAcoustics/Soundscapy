@@ -185,3 +185,4 @@ CLAUDE.md
 # pixi environments
 .pixi/*
 conda-dist/
+environment.yml.bak

@@ -83,6 +83,10 @@ xdoctest     = ">=1.3.2"
 default = { features = ["audio", "r", "dev", "docs", "test"] }
 docs    = { features = ["docs"], no-default-feature = true }
 
+r              = ["r"]
+audio          = ["r"]
+soundscapy-all = ["r", "audio"]
+
 test       = { features = ["test"] }
 test-audio = ["audio", "test"]
 test-r     = ["r", "test"]
@@ -94,15 +98,24 @@ test-all   = ["audio", "r", "test"]
 lint   = { cmd = "ruff check .", description = "Lint the codebase", default-environment = "dev" }
 format = { cmd = "ruff check . --fix && ruff format .", description = "Fix lint issues and format code", default-environment = "dev" }
 
+[tasks.export-environment]
+cmd         = "pixi workspace export conda-environment environment.yml -n soundscapy -e soundscapy-all"
+description = "Export the conda environment file from the workspace configuration"
+inputs      = ["pixi.toml", "pyproject.toml"]
+
+[tasks.update-environment]
+cmd        = "bash update-environment-yml.sh"
+depends-on = ["export-environment"]
+inputs     = ["pixi.toml", "pyproject.toml"]
+
 # Build and Publish Tasks
 [tasks.version]
 args = [{ "arg" = "bump", default = "dev" }]
-cmd  = "uv version --bump {{ bump }}"
+cmd  = "uv version --no-sync --bump {{ bump }}"
 
 [tasks.build]
 cmd         = "pixi publish --target-dir conda-dist && uv build"
 description = "Build the package"
-depends-on  = ["version"]
 
 [tasks.pypi-test]
 description = "Publish the package to Test PyPI"

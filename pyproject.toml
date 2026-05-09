@@ -13,7 +13,7 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 description = "A python library for analysing and visualising soundscape assessments."
-version = "0.8.0.dev15"
+version = "0.8.1"
 keywords = ["acoustics", "audio analysis", "psychoacoustics", "soundscape"]
 license = { text = "BSD-3-Clause" }
 name = "soundscapy"
