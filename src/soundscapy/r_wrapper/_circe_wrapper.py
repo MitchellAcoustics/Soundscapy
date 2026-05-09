@@ -20,12 +20,12 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
 
     Parameters
     ----------
-    bfgs_model : ro.ListVector
-        Fitted model object from the circe package.
+    bfgs_model
+        Fitted model object from the embedded CircE R scripts.
 
     Returns
     -------
-    dict
+    :
         Dictionary containing fit statistics.
 
     Examples
@@ -56,7 +56,7 @@ def extract_bfgs_fit(bfgs_model: ro.ListVector) -> dict[str, Any]:
     get_r_session()
     with (ro.default_converter + pandas2ri.converter).context():
         py_res = {
-            key.lower(): ro.conversion.get_conversion().rpy2py(val)
+            key.lower(): ro.conversion.get_conversion().rpy2py(val)  # type: ignore[missing-attribute]
             for key, val in bfgs_model.items()
         }
 
@@ -102,28 +102,28 @@ def bfgs(
     equal_com: bool = True,
 ) -> ro.ListVector:
     """
-    Fit a circumplex model using the BFGS algorithm from the circe package.
+    Fit a circumplex model using the embedded CircE BFGS implementation.
 
     Parameters
     ----------
-    data_cor : pd.DataFrame
+    data_cor
         Correlation matrix of the data.
-    n : int
+    n
         Number of observations (participants) used to compute the correlation
         matrix. Used by CircE_BFGS for chi-square and RMSEA calculations.
-    scales : list[str], optional
+    scales
         List of scale names. Defaults to PAQ_IDS.
-    m_val : int, optional
+    m_val
         Number of dimensions. Defaults to 3.
-    equal_ang : bool, optional
+    equal_ang
         Whether to enforce equal angles constraint. Defaults to True.
-    equal_com : bool, optional
+    equal_com
         Whether to enforce equal communalities constraint. Defaults to True.
 
     Returns
     -------
-    ro.ListVector
-        Fitted model object from the circe package.
+    :
+        Fitted model object from the embedded CircE scripts.
 
     Examples
     --------
@@ -155,8 +155,9 @@ def bfgs(
 
     r_cor_mat = r.base.as_matrix(r_data_cor)
     r_scales = ro.StrVector(scales)
+    circe_bfgs = ro.globalenv["CircE.BFGS"]
 
-    return r.circe.CircE_BFGS(
+    return circe_bfgs(
         r_cor_mat,
         v_names=r_scales,
         m=m_val,

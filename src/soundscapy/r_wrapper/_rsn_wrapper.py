@@ -90,29 +90,29 @@ def sample_mtsn(
 
     Parameters
     ----------
-    selm_model : optional
+    selm_model
         Fitted SELM model from R's 'sn' package. If provided, parameters `xi`,
         `omega`, and `alpha` are ignored.
-    xi : np.ndarray, optional
+    xi
         Location parameter (2x1 array).
-    omega : np.ndarray, optional
+    omega
         Scale matrix (2x2 array).
-    alpha : np.ndarray, optional
+    alpha
         Skewness parameter (2x1 array).
-    a : float, optional
+    a
         Lower truncation bound for both dimensions, by default -1.
-    b : float, optional
+    b
         Upper truncation bound for both dimensions, by default 1.
-    n : int, optional
+    n
         Number of samples to generate, by default 1000.
-    max_iter : int, optional
+    max_iter
         Maximum total candidate draws before raising ``RuntimeError``.
         Guards against an infinite loop when the distribution has negligible
         probability mass inside ``[a, b]``.  Default: 100 000.
 
     Returns
     -------
-    np.ndarray
+    :
         Array of samples (n x 2).
 
     Raises
@@ -161,18 +161,18 @@ def dp2cp(
 
     Parameters
     ----------
-    xi : np.ndarray
+    xi
         Location parameter (2x1 array).
-    omega : np.ndarray
+    omega
         Scale matrix (2x2 array).
-    alpha : np.ndarray
+    alpha
         Skewness parameter (2x1 array).
-    family : str, optional
+    family
         Distribution family, by default "SN".
 
     Returns
     -------
-    tuple
+    :
         Tuple containing the centred parameters (mean, sigma, skew).
 
     """
@@ -208,18 +208,18 @@ def cp2dp(
 
     Parameters
     ----------
-    mean : np.ndarray
+    mean
         Mean vector (2x1 array).
-    sigma : np.ndarray
+    sigma
         Covariance matrix (2x2 array).
-    skew : np.ndarray
+    skew
         Skewness vector (2x1 array).
-    family : str, optional
+    family
         Distribution family, by default "SN".
 
     Returns
     -------
-    tuple
+    :
         Tuple containing the direct parameters (xi, omega, alpha).
 
     """

@@ -1,0 +1,24 @@
+{
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestPath": "pytest",
+  "python.analysis.inlayHints.pytestParameters": true,
+  "python.experiments.optInto": ["pythonTestAdapter"],
+  "editor.formatOnSave": true,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": true,
+  "notebook.formatOnSave.enabled": true,
+  "python.analysis.typeCheckingMode": "standard",
+  "python.testing.pytestArgs": ["."],
+  "ruff.configurationPreference": "filesystemFirst",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportTypedDictNotRequiredAccess": "none"
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "python-envs.defaultPackageManager": "ms-python.python:pip",
+  "chat.tools.terminal.autoApprove": {
+    "git rev-parse": true,
+    "git config": true,
+    "true": true
+  }
+}

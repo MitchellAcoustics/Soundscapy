@@ -44,19 +44,21 @@ def load_analyse_binaural(
 
     Parameters
     ----------
-    resample
     wav_file
         Path to the WAV file.
     levels
         Dictionary with calibration levels for each channel.
     analysis_settings
         Analysis settings object.
+    resample
+        Sampling rate to resample the audio to before analysis.
     parallel_mosqito
         Whether to process MoSQITo metrics in parallel. Defaults to True.
 
     Returns
     -------
-    DataFrame with analysis results.
+    :
+        DataFrame with analysis results.
 
     """
     logger.info(f"Processing {wav_file}")
@@ -94,25 +96,26 @@ def parallel_process(
 
     Parameters
     ----------
-    resample
-    wav_files : List[Path]
+    wav_files
         List of WAV files to process.
-    results_df : pd.DataFrame
+    results_df
         Initial results DataFrame to update.
-    levels : Dict
+    levels
         Dictionary with calibration levels for each file.
-    analysis_settings : AnalysisSettings
+    analysis_settings
         Analysis settings object.
-    max_workers : int, optional
+    max_workers
         Maximum number of worker processes.
         If None, it will default to the number of processors on the machine.
-    parallel_mosqito : bool, optional
+    resample
+        Sampling rate to resample the audio to before analysis.
+    parallel_mosqito
         Whether to process MoSQITo metrics in parallel within each file.
         Defaults to True.
 
     Returns
     -------
-    pd.DataFrame
+    :
         Updated results DataFrame with analysis results for all files.
 
     """

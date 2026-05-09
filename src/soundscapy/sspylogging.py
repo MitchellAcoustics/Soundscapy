@@ -28,14 +28,16 @@ def setup_logging(
 
     Parameters
     ----------
-    level : str, default="INFO"
+    level
         Logging level for console output.
+
         Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
-    log_file : str or Path, optional
+    log_file
         Path to a log file.
         If provided, all messages (including DEBUG) will be logged to this file.
-    format_level : str, default="basic"
+    format_level
         Format complexity level. Options:
+
         - "basic": Simple format with timestamp, level, and message
         - "detailed": Adds module, function and line information
         - "developer": Adds exception details and diagnostics
@@ -147,7 +149,7 @@ def get_logger() -> loguru.Logger:
 
     Returns
     -------
-    logger : loguru.logger
+    :
         The loguru logger instance
 
     Examples
@@ -166,7 +168,7 @@ def is_notebook() -> bool:
 
     Returns
     -------
-    bool
+    :
         True if running in a Jupyter notebook, False otherwise
 
     """

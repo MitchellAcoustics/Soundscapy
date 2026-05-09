@@ -10,6 +10,7 @@ plotting functions using Pydantic dataclasses. The module includes:
 - Style and subplot configuration classes
 
 The parameter models provide:
+
 - Type validation and conversion
 - Default value management
 - Parameter updating with validation
@@ -95,11 +96,11 @@ class ParamModel:
 
         Parameters
         ----------
-        extra : {'allow', 'forbid', 'ignore'}, default='allow'
+        extra
             Determines how to handle extra fields in `kwargs`.
-        ignore_null : bool, default=True
+        ignore_null
             If True, removes `None` values from `kwargs`.
-        **kwargs : Any
+        **kwargs
             Field names and values to be updated.
 
         """
@@ -133,8 +134,9 @@ class ParamModel:
 
         Returns
         -------
-        Dictionary mapping field names to their default values.
-        Excludes the special `_extra_fields` field.
+        :
+            Dictionary mapping field names to their default values.
+            Excludes the special `_extra_fields` field.
 
         """
         return {
@@ -148,7 +150,8 @@ class ParamModel:
 
         Returns
         -------
-        Dictionary mapping field names to their default values.
+        :
+            Dictionary mapping field names to their default values.
 
         """
         return self.get_defaults()
@@ -164,14 +167,14 @@ class ParamModel:
 
         Parameters
         ----------
-        key : str
+        key
             Name of the parameter
-        default : Any, optional
+        default
             Default value if parameter doesn't exist
 
         Returns
         -------
-        Any
+        :
             Parameter value or default
 
         """
@@ -185,12 +188,12 @@ class ParamModel:
 
         Parameters
         ----------
-        key : str
+        key
             Name of the parameter
 
         Returns
         -------
-        Any
+        :
             Parameter value
 
         Raises
@@ -210,7 +213,7 @@ class ParamModel:
 
         Returns
         -------
-        Dict[str, Any]
+        :
             Dictionary of parameter values
 
         """
@@ -226,7 +229,7 @@ class ParamModel:
 
         Returns
         -------
-        ParamModel
+        :
             A deep copy of the current instance with all nested objects copied.
 
         """
@@ -236,13 +239,13 @@ class ParamModel:
         """
         Create a copy of the parameter model instance.
 
-        .. deprecated::
+        !!! warning "Deprecated"
             This method is deprecated. Use :meth:`copy` instead.
             Kept only for backwards compatibility with Pydantic.
 
         Returns
         -------
-        ParamModel
+        :
             A deep copy of the current instance.
 
         """
@@ -264,8 +267,8 @@ class ParamModel:
 
         Returns
         -------
-        Dictionary of parameters that differ from defaults, with keys as parameter names
-        and values as their current values (not default values).
+        :
+            Dictionary of changed parameters and their current values.
 
         """
         default_values = self.get_defaults()
@@ -285,12 +288,12 @@ class ParamModel:
 
         Parameters
         ----------
-        keys : list[str]
+        keys
             List of parameter names
 
         Returns
         -------
-        Dict[str, Any]
+        :
             Dictionary of parameter values
 
         """
@@ -304,12 +307,12 @@ class ParamModel:
 
         Parameters
         ----------
-        key : str
+        key
             Name of the parameter
 
         Returns
         -------
-        Any
+        :
             Value of the removed parameter
 
         Raises
@@ -335,9 +338,9 @@ class ParamModel:
 
         Parameters
         ----------
-        keys : str | Iterable[str]
+        keys
             Name of the parameter or list of parameters
-        ignore_missing : bool, default=True
+        ignore_missing
             If True, ignore missing keys. If False, raise KeyError for missing keys.
 
         """
@@ -361,7 +364,7 @@ class ParamModel:
 
         Returns
         -------
-        List[str]
+        :
             List of field names
 
         """
@@ -374,7 +377,7 @@ class ParamModel:
 
         Returns
         -------
-        List[str]
+        :
             List of field names
 
         """
@@ -416,7 +419,7 @@ class SeabornParams(ParamModel):
 
         Returns
         -------
-        dict[str, Any]
+        :
             Dictionary of parameter values suitable for seaborn plotting functions.
 
         """
@@ -463,7 +466,7 @@ class DensityParams(SeabornParams):
 
         Returns
         -------
-        dict[str, Any]
+        :
             Dictionary of parameter values suitable for seaborn plotting functions.
 
         """
@@ -480,14 +483,14 @@ class DensityParams(SeabornParams):
 
         Parameters
         ----------
-        alpha : float, default=1
+        alpha
             Alpha value for the outline.
-        fill : bool, default=False
+        fill
             Whether to fill the outline.
 
         Returns
         -------
-        DensityParams
+        :
             New instance with outline parameters.
 
         """
@@ -559,7 +562,7 @@ class SPISeabornParams(SeabornParams):
 
         Returns
         -------
-        dict[str, Any]
+        :
             Dictionary of parameter values suitable for seaborn plotting functions.
 
         """
@@ -679,7 +682,7 @@ class SubplotsParams(ParamModel):
 
         Returns
         -------
-        int
+        :
             Number of subplots
 
         """
@@ -689,14 +692,9 @@ class SubplotsParams(ParamModel):
         """
         Pass matplotlib subplot arguments to a plt.subplots call.
 
-        Parameters
-        ----------
-        ax : Any
-            Matplotlib Axes object.
-
         Returns
         -------
-        dict[str, Any]
+        :
             Dictionary of subplot parameters.
 
         """

@@ -2,7 +2,7 @@
 
 ## General Principles
 
-- Use the `uv` tool for managing dependencies and other project tasks. `uv add` and `uv remove` should be used to add or remove dependencies. `uv add --optional <group>` should be used to add an optional dependency. `uv sync # add --all-extras, etc as needed` should be used to install dependencies and sync with lock file. `uv build` should be used to build the package.
+- Use **Pixi** for local environment management and command execution. In a `pyproject.toml` project, `pixi add --pypi` writes normal Python requirements into native `[project.dependencies]`, `[project.optional-dependencies]`, or `[dependency-groups]`. Use plain `pixi add` for the matching conda dependency when conda-forge provides a suitable package. Do not delete dependencies from the native Python tables just to move them into Pixi; matching entries under `[tool.pixi.dependencies]` or `[tool.pixi.feature.<name>.dependencies]` intentionally override those PyPI requirements inside Pixi environments.
 - Try to keep all necessary configurations to `pyproject.toml` where possible. This includes versioning, optional dependencies, tool settings (e.g. `bumpver`) and other project settings.
 - Wherever possible, centralise operations and metadata. For instance, version is defined in `pyproject.toml` and automatically brought into `soundscapy` metadata in `__init__.py`; optional dependency checks are performed at the `<module>.__init__.py` level, rather than for each individual function.
 
@@ -11,6 +11,18 @@ Changes should be made in a feature branch and submitted to `dev` via a pull req
 ## Linting and Formatting
 
 Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting. This will be checked in the CI pipeline, so make sure to run it before committing.
+
+## Documentation
+
+Documentation is built with **Zensical**. Tutorial pages are rendered from the source notebooks in `docs/tutorials/*.ipynb` using **Quarto**, and the API reference pages under `docs/reference/` are maintained as regular Markdown files with `mkdocstrings`.
+
+Use the Pixi docs tasks for local docs work:
+
+```bash
+pixi run -e docs docs-render   # Render tutorial markdown pages
+pixi run -e docs docs-build    # Render and build the docs site
+pixi run -e docs docs-serve    # Render and serve the docs locally
+```
 
 ## Releases and Versioning
 
@@ -138,11 +150,15 @@ Soundscapy uses a simple and standard approach to handle optional dependencies.
 Add new packages to an existing group or create a new group:
 
 ```bash
-# For existing groups:
-uv add new-package --optional audio
+# Add the Python package dependency metadata:
+pixi add --pypi new-package --feature audio
 
-# For new groups:
-uv add package1 package2 --optional new_group
+# If conda-forge has the package, add the conda override too:
+pixi add new-package --feature audio
+
+# For a new dependency group:
+pixi add --pypi package1 --feature new_group
+pixi add --pypi package2 --feature new_group
 ```
 
 #### 2. Implement Feature Code

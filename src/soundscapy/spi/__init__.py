@@ -13,7 +13,7 @@ try:
 except ImportError as e:
     msg = (
         "SPI functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[spi]"
+        "Install with: pip install soundscapy[r]"
     )
     raise ImportError(msg) from e
 

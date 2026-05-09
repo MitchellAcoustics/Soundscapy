@@ -188,7 +188,7 @@ def test_fs_resample_with_invalid_frequency():
     original_data = rng.random((2, 1000))
     original_fs = 44100
     binaural_signal = Binaural(original_data, original_fs)
-    with pytest.raises(ValueError, match="negative dimensions are not allowed"):
+    with pytest.raises(ValueError, match="invalid number of data points"):
         binaural_signal.fs_resample(-1000)
 
 

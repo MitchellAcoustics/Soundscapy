@@ -11,11 +11,11 @@ including within-person centering (column-wise centering per participant).
 
 Functions
 ---------
-normalize_polar_angles : function
+normalize_polar_angles
     Correct reflected polar-angle solutions to canonical orientation
-person_center : function
+person_center
     Column-wise within-participant centering of PAQ ratings
-fit_circe : function
+fit_circe
     Fit circumplex SEM models and return a tidy DataFrame
 
 Classes
@@ -30,7 +30,7 @@ CircE : dataclass
 
 import dataclasses
 import warnings
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 import numpy as np
@@ -63,7 +63,7 @@ _COLUMN_ALIASES: dict[str, str] = {
 }
 
 
-class CircModelE(str, Enum):
+class CircModelE(StrEnum):
     """Enumeration of circumplex model types."""
 
     UNCONSTRAINED = "unconstrained"
@@ -111,7 +111,7 @@ class SATPSchema(pa.DataFrameModel):
     # `nullable=True` permits null *values* within the column when present.
     participant: Series[str] | None = Field(nullable=True)
 
-    class Config:
+    class Config:  # type: ignore [bad-override]
         """Configuration for the schema validation behavior."""
 
         drop_invalid_rows = False
@@ -135,7 +135,7 @@ class SATPSchema(pa.DataFrameModel):
 
         Returns
         -------
-        DataFrame with renamed columns matching the schema
+        :
 
         """
         rename_dict = {
@@ -175,11 +175,11 @@ def normalize_polar_angles(angles: pd.Series) -> pd.Series:
     ----------
     angles
         Series of polar angle estimates (degrees) with PAQ_IDS as the index.
-        Typically the ``polar_angles`` attribute of a :class:`CircE` instance.
+        Typically the ``polar_angles`` attribute of a `CircE` instance.
 
     Returns
     -------
-    pd.Series
+    :
         Polar angles in canonical (counter-clockwise) orientation, with the
         same index as the input.
 
@@ -187,7 +187,9 @@ def normalize_polar_angles(angles: pd.Series) -> pd.Series:
     --------
     >>> from soundscapy.surveys.survey_utils import PAQ_IDS
     >>> import pandas as pd
-    >>> reflected = pd.Series([0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS)
+    >>> reflected = pd.Series(
+    >>>     [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0],
+    >>>     index=PAQ_IDS)
     >>> normalize_polar_angles(reflected).tolist()
     [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
 
@@ -379,7 +381,7 @@ class CircE:
 
         Returns
         -------
-        float or None
+        :
             Rounded RMSD value (2 decimal places), or ``None`` if angles are
             fixed by the model.
 
@@ -401,7 +403,7 @@ class CircE:
 
         Returns
         -------
-        dict
+        :
             Flat dictionary suitable for constructing a pandas DataFrame row.
 
         """
@@ -425,7 +427,7 @@ class CircE:
             "gdiff": self.gdiff,
         }
         if self.polar_angles is not None:
-            base.update(self.polar_angles.to_dict())
+            base.update(self.polar_angles.to_dict())  # type: ignore [no-matching-overload]
         else:
             base.update(dict.fromkeys(PAQ_IDS))
         return base
@@ -434,20 +436,20 @@ class CircE:
 @dataclasses.dataclass
 class CircEResults:
     """
-    Collection of fitted CircE models returned by :func:`fit_circe`.
+    Collection of fitted CircE models returned by `fit_circe`.
 
-    Holds both successfully-fitted :class:`CircE` instances and any error rows
+    Holds both successfully-fitted `CircE` instances and any error rows
     from models that failed to converge.  Access the full tidy DataFrame via
-    :attr:`table`; access individual model results via :meth:`for_model`.
+    `table`; access individual model results via `for_model`.
 
     Attributes
     ----------
     models
-        Successfully-fitted :class:`CircE` results, in fitting order.
+        Successfully-fitted `CircE` results, in fitting order.
     language
-        Language code passed to :func:`fit_circe`.
+        Language code passed to `fit_circe`.
     datasource
-        Dataset identifier passed to :func:`fit_circe`.
+        Dataset identifier passed to `fit_circe`.
     error_rows
         Dicts for model runs that raised an exception during fitting.
         Each dict contains ``language``, ``datasource``, ``model``, ``n``,
@@ -470,7 +472,7 @@ class CircEResults:
         Full tidy DataFrame of all model fit statistics.
 
         One row per model (including error rows).  Columns match those
-        described in :func:`fit_circe`.  Integer columns (``n``, ``d``, ``m``)
+        described in `fit_circe`.  Integer columns (``n``, ``d``, ``m``)
         use pandas nullable ``Int64`` dtype so that ``None`` in error rows does
         not promote the whole column to ``float64``.
         """
@@ -491,12 +493,12 @@ class CircEResults:
 
     def for_model(self, model: CircModelE) -> CircE:
         """
-        Return the fitted :class:`CircE` result for a specific model type.
+        Return the fitted `CircE` result for a specific model type.
 
         Parameters
         ----------
         model
-            The :class:`CircModelE` variant to retrieve.
+            The `CircModelE` variant to retrieve.
 
         Raises
         ------
@@ -512,9 +514,10 @@ class CircEResults:
         raise KeyError(msg)
 
     def _repr_html_(self) -> str:
+        # type: ignore [not-callable]
         return self.table._repr_html_()
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # noqa: D105
         return (
             f"CircEResults(language={self.language!r}, "
             f"datasource={self.datasource!r}, "
@@ -526,22 +529,21 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
     """
     Center PAQ ratings within each participant (column-wise within-person centering).
 
-    .. deprecated::
-        Use :func:`soundscapy.surveys.ipsatize` with ``method="column_wise"``
+    !!! warning "Deprecated v0.8.0"
+        Use `soundscapy.surveys.ipsatize` with ``method="column_wise"``
         instead.  For the centering that matches the published SATP analysis,
         use ``method="grand_mean"`` (the default of
-        :func:`~soundscapy.surveys.ipsatize`).
+        `~soundscapy.surveys.ipsatize`).
 
     This function applies **column-wise** centering: for every PAQ column
     independently, each participant's mean across their observations is
     subtracted (8 centering scalars per participant).
 
-    .. note::
-
+    !!! note
         This is *not* the centering described in the original SATP R
         implementation (Aletta et al., 2024), which applies grand-mean
         centering (one scalar per participant across all PAQ columns and
-        observations).  Use :func:`~soundscapy.surveys.ipsatize` with
+        observations).  Use `soundscapy.surveys.ipsatize` with
         ``method="grand_mean"`` to match the R reference implementation.
 
     Parameters
@@ -553,12 +555,12 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing only the PAQ columns (not ``by``), with
         column-wise participant-centred values.
 
     """
-    import warnings
+    import warnings  # noqa: PLC0415
 
     warnings.warn(
         "person_center() is deprecated; use ipsatize(method='column_wise') instead.",
@@ -599,24 +601,24 @@ def fit_circe(
         Stored in the results; not used for computation.
     models
         List of model types to fit. Default: all four ``CircModelE`` variants.
-        Passing ``[]`` returns an empty :class:`CircEResults`
+        Passing ``[]`` returns an empty `CircEResults`
         (``len(result) == 0``).
     center_by_participant
         Whether to apply grand-mean within-person centering (via
-        :func:`~soundscapy.surveys.ipsatize` with ``method="grand_mean"``)
+        `~soundscapy.surveys.ipsatize` with ``method="grand_mean"``)
         before fitting.  Set to ``False`` if the data is already centered or
         if no centering is desired.
     errors
         How to handle rows that fail schema validation (PAQ values outside
         ``[0, 100]``, missing required columns, etc.):
 
-        ``"raise"`` *(default)* — raise a :class:`pandera.errors.SchemaErrors`
+        ``"raise"`` *(default)* — raise a `pandera.errors.SchemaErrors`
         immediately, listing every failing row and constraint.
 
-        ``"warn"`` — emit a :class:`UserWarning` describing the failing rows
+        ``"warn"`` — emit a `UserWarning` describing the failing rows
         and continue with the valid rows only.
 
-        .. note::
+        !!! note
             If you pass *already-centered* data, set
             ``center_by_participant=False`` to skip the internal centering step;
             otherwise pass raw ``[0, 100]``-range data and use the default
@@ -626,7 +628,7 @@ def fit_circe(
 
     Returns
     -------
-    CircEResults
+    :
         Collection of fitted models.  Access the tidy DataFrame via
         ``.table``; access individual model results via ``.for_model()``.
         Failed models are stored in ``.error_rows`` and included in
@@ -672,6 +674,7 @@ def fit_circe(
         try:
             validated = SATPSchema.validate(clean, lazy=True)
         except SchemaErrors as exc2:
+            # type: ignore [missing-argument]
             raise SchemaErrors(
                 schema_errors=exc2.schema_errors,
                 data=exc2.data,
@@ -708,7 +711,7 @@ def fit_circe(
         try:
             circe = CircE.compute_bfgs_fit(corr, n, datasource, language, model)
             fitted.append(circe)
-        except fit_exceptions as e:  # noqa: PERF203
+        except fit_exceptions as e:
             warnings.warn(f"{model.value} raised {e}", stacklevel=2)
             # Populate all expected columns with None so that pandas does not
             # promote numeric columns (e.g. n, d) to float64 across all rows

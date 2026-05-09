@@ -69,8 +69,9 @@ class SSMMetrics:
 
         Returns
         -------
-        pandas.Series
+        :
             A pandas Series containing the following key-value pairs:
+
             - "amplitude": instance attribute representing a certain magnitude.
             - "angle": instance attribute representing a specific angular measurement.
             - "elevation": instance attribute indicating a height or vertical position.
@@ -99,16 +100,16 @@ def calculate_iso_coords(
 
     Parameters
     ----------
-    results_df : pd.DataFrame
+    results_df
         DataFrame containing PAQ data.
-    val_range : Tuple[int, int], optional
+    val_range
         (max, min) range of original PAQ responses, by default (5, 1)
-    angles : Tuple[int, ...], optional
+    angles
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
 
     Returns
     -------
-    Tuple[pd.Series, pd.Series]
+    :
         ISOPleasant and ISOEventful coordinate values
 
     Examples
@@ -148,16 +149,16 @@ def _adj_iso_pl(values: pd.Series, angles: tuple[int, ...], scale: float) -> flo
 
     Parameters
     ----------
-    values : pd.Series
+    values
         PAQ values for a single sample
-    angles : Tuple[int, ...]
+    angles
         Angles for each PAQ in degrees
-    scale : float
+    scale
         Scale factor for normalization
 
     Returns
     -------
-    float
+    :
         Adjusted ISOPleasant value
 
     """
@@ -183,16 +184,16 @@ def _adj_iso_ev(values: pd.Series, angles: tuple[int, ...], scale: float) -> flo
 
     Parameters
     ----------
-    values : pd.Series
+    values
         PAQ values for a single sample
-    angles : Tuple[int, ...]
+    angles
         Angles for each PAQ in degrees
-    scale : float
+    scale
         Scale factor for normalization
 
     Returns
     -------
-    float
+    :
         Adjusted ISOEventful value
 
     """
@@ -223,20 +224,20 @@ def add_iso_coords(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         Input DataFrame containing PAQ data
-    val_range : Tuple[int, int], optional
+    val_range
         (min, max) range of original PAQ responses, by default (1, 5)
-    names : Tuple[str, str], optional
+    names
         Names for new coordinate columns, by default ("ISOPleasant", "ISOEventful")
-    angles : Tuple[int, ...], optional
+    angles
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
-    overwrite : bool, optional
+    overwrite
         Whether to overwrite existing ISO coordinate columns, by default False
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame with new ISO coordinate columns added
 
     Raises
@@ -285,16 +286,16 @@ def likert_data_quality(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         DataFrame containing PAQ data
-    allow_na : bool, optional
+    allow_na
         Whether to allow NaN values in PAQ data, by default False
-    val_range : Tuple[int, int], optional
+    val_range
         Valid range for PAQ values, by default (1, 5)
 
     Returns
     -------
-    List of indices to be removed, or None if no issues found
+    :
 
     Examples
     --------
@@ -358,22 +359,23 @@ def simulation(
 
     Parameters
     ----------
-    n : int, optional
+    n
         Number of samples to simulate, by default 3000
-    val_range : tuple[int, int], optional
+    val_range
         Range of values for PAQ responses, by default (1, 5)
-    incl_iso_coords : bool, optional
+    incl_iso_coords
         Whether to add calculated ISO coordinates, by default False
-    **coord_kwargs : Unpack[_AddISOCoordsKwargs]
+    **coord_kwargs
         Optional keyword arguments passed directly to the `add_iso_coords` function
         if `incl_iso_coords` is True. These can include:
+
         - `names` (tuple[str, str]): Names for the new ISO coordinate columns.
         - `angles` (tuple[int, ...]): Angles for each PAQ used in calculation.
         - `overwrite` (bool): Whether to overwrite existing ISO coordinate columns.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame of randomly generated PAQ responses
 
     Examples
@@ -411,20 +413,20 @@ def ssm_metrics(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         DataFrame containing PAQ data
-    paq_cols : List[str], optional
+    paq_cols
         List of PAQ column names, by default PAQ_IDS
-    method : str, optional
+    method
         Method to calculate SSM metrics, either "cosine" or "polar", by default "cosine"
-    val_range : Tuple[int, int], optional
+    val_range
         Range of values for PAQ responses, by default (5, 1)
-    angles : Tuple[int, ...], optional
+    angles
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing the SSM metrics
 
     Raises
@@ -502,17 +504,17 @@ def ssm_cosine_fit(
 
     Parameters
     ----------
-    y : pd.Series
+    y
         Series of PAQ values
-    angles : tuple[int, ...], optional
+    angles
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
-    bounds : tuple[list[float], list[float]], optional
+    bounds
         Bounds for the optimization parameters,
         by default ([0, 0, 0, -np.inf], [np.inf, 360, np.inf, np.inf])
 
     Returns
     -------
-    SSMMetrics
+    :
         Calculated SSM metrics
 
     Examples
@@ -565,14 +567,14 @@ def _convert_to_polar_coords(
 
     Parameters
     ----------
-    x : Union[float, np.ndarray]
+    x
         x-coordinate(s)
-    y : Union[float, np.ndarray]
+    y
         y-coordinate(s)
 
     Returns
     -------
-    Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]
+    :
         Tuple of (r, theta) in polar coordinates
 
     Examples
@@ -594,14 +596,14 @@ def _r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
     Parameters
     ----------
-    y_true : np.ndarray
+    y_true
         True values
-    y_pred : np.ndarray
+    y_pred
         Predicted values
 
     Returns
     -------
-    float
+    :
         R-squared score
 
     Examples
@@ -663,7 +665,7 @@ def ipsatize(
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing only the scale columns with centred values.
         The ``participant_col`` grouping column is excluded from the result.
 

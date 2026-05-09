@@ -120,12 +120,12 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
 
     Parameters
     ----------
-    version : str, optional
+    version
         Version of the dataset to load. The default is "latest".
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing the SATP dataset.
 
     """
@@ -142,12 +142,12 @@ def load_participants(version: str = "latest") -> pd.DataFrame:
 
     Parameters
     ----------
-    version : str, optional
+    version
         Version of the dataset to load. The default is "latest".
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing the SATP participants dataset.
 
     """
