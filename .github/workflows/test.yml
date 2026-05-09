@@ -55,6 +55,7 @@ jobs:
           environments: >-
             test test-audio test-r test-all
           cache: true
+          locked: false
 
       - name: Run tests
         id: test-results
