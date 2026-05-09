@@ -80,7 +80,7 @@ xdoctest     = ">=1.3.2"
 ########## Environments ############
 
 [environments]
-default = { features = ["audio", "r", "dev", "docs", "test"] }
+default = { features = ["audio", "r", "dev", "docs", "test", "tutorials"] }
 docs    = { features = ["docs"], no-default-feature = true }
 
 test       = { features = ["test"] }
@@ -164,3 +164,16 @@ default-environment = "test-all"
 
 [feature.test.tasks.tests]
 depends-on = ["test-base", "test-audio", "test-r", "test-all"]
+
+[feature.tutorials.dependencies]
+marimo = "*"
+duckdb = ">=1.5.2,<2"
+altair = ">=6.1.0,<7"
+pyarrow = ">=24.0.0,<25"
+polars = ">=1.40.0,<2"
+sqlglot = ">=28.10.1,<29"
+openai = ">=2.36.0,<3"
+ruff = ">=0.15.12,<0.16"
+nbformat = ">=5.10.4,<6"
+vegafusion = ">=2.0.3,<3"
+vl-convert-python = ">=2.0.0rc1,<3"
