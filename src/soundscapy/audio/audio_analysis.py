@@ -12,11 +12,15 @@ from pathlib import Path
 
 import pandas as pd
 from loguru import logger
-from tqdm.auto import tqdm
 
 from soundscapy._utils import ensure_input_path, ensure_path_type
 from soundscapy.audio.analysis_settings import ConfigManager
 from soundscapy.audio.parallel_processing import load_analyse_binaural
+
+from generalimport import generalimport
+
+generalimport("tqdm")
+from tqdm.auto import tqdm
 
 
 class AudioAnalysis:
