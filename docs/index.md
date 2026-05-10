@@ -9,53 +9,56 @@
 [![Documentation Status](https://readthedocs.org/projects/soundscapy/badge/?version=latest)](https://soundscapy.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-_Soundscapy_ is a Python library for analysing and visualising soundscape assessments. This package was designed to (1) load and process soundscape assessment data, (2) visualise the data, and (3) enable psychoacoustic analysis of soundscape recordings.
+_Soundscapy_ is a Python library for analysing and visualising soundscape assessments following the ISO 12913 standard. It is used by researchers and practitioners to process survey data, create publication-quality visualisations of soundscape perception, analyse binaural recordings, and compute Soundscape Perception Indices.
 
-!!! note
+## What can you do with it?
 
-    This project is still under development. We're working hard to make it as good as possible, but there may be bugs or missing features. If you find any issues, please let us know by submitting an issue on Github.
+**Process survey data** — Load, validate, and transform PAQ questionnaire responses into ISO coordinates (`ISOPleasant`, `ISOEventful`) with a single function call. Supports custom value ranges, language-specific angle adjustments, and the ISD, ARAUS, and SATP datasets.
 
-## Getting Started
+**Visualise soundscapes** — Create scatter plots, bivariate density plots, Likert plots, and radar plots of soundscape perception distributions. The `ISOPlot` class supports multi-panel and multi-layer figures suitable for publication.
 
-To get started with _Soundscapy_, you'll need to install it first. You can do this by running the following command:
+**Analyse audio recordings** — Compute psychoacoustic metrics (loudness, sharpness, roughness, fluctuation strength) and environmental indices from binaural WAV files using the `soundscapy[audio]` extension.
+
+**Compute Soundscape Perception Indices** — Fit multi-dimensional skewed normal distributions to perception data and score locations against target distributions using `soundscapy[r]`. Run CircE structural equation models via the SATP module.
+
+## Installation
 
 ```bash
 pip install soundscapy
 ```
 
-### Optional Dependencies
-
-_Soundscapy_ splits its functionality into optional modules to reduce the number of dependencies required for basic functionality. By default, _Soundscapy_ includes the survey data processing and plotting functionality. If you would like to use the binaural audio processing and psychoacoustics functionality, you will need to install the optional `audio` dependency:
+For audio analysis:
 
 ```bash
 pip install "soundscapy[audio]"
 ```
 
-If you would like to use the R-backed SPI and SATP functionality, install the optional `r` dependency:
+For SPI and SATP (requires a local R installation):
 
 ```bash
 pip install "soundscapy[r]"
-```
-
-R-backed features also require a local R installation and the external `sn` R package:
-
-```bash
 R -q -e "install.packages('sn')"
 ```
 
-CircE is bundled with _Soundscapy_ as embedded R scripts, so you do not need to install CircE separately from GitHub.
+!!! note
+    CircE is bundled with _Soundscapy_ — no separate GitHub install needed. Only the `sn` R package is required externally.
 
-## Documentation
+To install everything at once:
 
-This documentation is designed to help you understand and use _Soundscapy_ effectively. It's divided into several sections:
+```bash
+pip install "soundscapy[all]"
+R -q -e "install.packages('sn')"
+```
 
-- **Tutorials**: Practical examples showing how to use our project in real-world scenarios.
-- **API Reference**: Detailed information about our project's API.
-- **News**: Change log and updates.
+## Where to start
+
+New to soundscape analysis? Read [About Soundscape Analysis](background.md) for a concise overview of PAQ attributes, the ISO circumplex model, and what ISOPleasant/ISOEventful mean.
+
+Ready to write code? Go to the [Quick Start](tutorials/rendered/QuickStart.md).
 
 ## Contributing
 
-We welcome contributions from the community. If you're interested in contributing, please get in touch or submit an issue on Github.
+We welcome contributions from the community. Please get in touch or submit an issue on [GitHub](https://github.com/MitchellAcoustics/Soundscapy/).
 
 ## Citing Soundscapy
 
@@ -67,18 +70,4 @@ We welcome contributions from the community. If you're interested in contributin
 
 ## License
 
-This project is licensed under the BSD 3-Clause License. For more information, please see the `license.md` file.
-
-## Project layout
-
-```plaintext
-mkdocs.yml     # The configuration file.
-docs/
-    index.md   # The documentation homepage.
-    license.md # The license page.
-    tutorials/ # Rendered tutorial pages.
-        QuickStart.md
-    reference/ # Checked-in API reference pages.
-    ...        # Other markdown pages, images and other files.
-src/soundscapy/
-```
+This project is licensed under the BSD 3-Clause License. See the [license page](license.md) for details.
