@@ -2,38 +2,14 @@
 Soundscape Attributes Translation (SATP) calculation module.
 
 This module provides functions and classes for conducting the SATP
-analysis,  based on the R implementation. Requires optional dependencies.
+analysis, based on the R implementation. Requires optional dependencies.
 """
 
-# Check for required dependencies directly
-# This will raise ImportError if any dependency is missing
-try:
-    import rpy2  # noqa: F401
+# ruff: noqa: E402
+from soundscapy._optional import require_deps
 
-except ImportError as e:
-    msg = (
-        "SATP functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[r]"
-    )
-    raise ImportError(msg) from e
+require_deps(["rpy2"], extra="r")
 
-# Now we can import our modules that depend on the optional packages
-from soundscapy.satp import circe
-from soundscapy.satp.circe import (
-    CircE,
-    CircEResults,
-    CircModelE,
-    fit_circe,
-    normalize_polar_angles,
-    person_center,
-)
+import lazy_loader as _lazy
 
-__all__ = [
-    "CircE",
-    "CircEResults",
-    "CircModelE",
-    "circe",
-    "fit_circe",
-    "normalize_polar_angles",
-    "person_center",
-]
+__getattr__, __dir__, __all__ = _lazy.attach_stub(__name__, __file__)
