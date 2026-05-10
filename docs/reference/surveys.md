@@ -1,11 +1,18 @@
-# Survey Analysis
+# Surveys
 
-This section provides an overview of the survey instruments used in soundscape research. It includes a brief description of each instrument, as well as information on how to access and use them.
+::: soundscapy.surveys
+    options:
+      heading_level: 2
+      show_submodules: false
+
+## Processing
 
 ::: soundscapy.surveys.processing
-options:
-show_submodules: true
+    options:
+      heading_level: 3
+
+## Survey utilities
 
 ::: soundscapy.surveys.survey_utils
-options:
-show_submodules: true
+    options:
+      heading_level: 3

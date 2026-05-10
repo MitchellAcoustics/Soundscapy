@@ -1,4 +1,5 @@
-# Plotting Functions
+# Plot Functions
 
 ::: soundscapy.plotting.plot_functions
-show_submodules: true
+    options:
+      heading_level: 2

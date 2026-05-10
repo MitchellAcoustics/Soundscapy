@@ -1,6 +1,5 @@
-# Plot Context
-
-This module provides the PlotContext class, which manages the state and context for plotting operations in Soundscapy.
+# Plotting Contexts
 
 ::: soundscapy.plotting.plot_context
-show_submodules: true
+    options:
+      heading_level: 2

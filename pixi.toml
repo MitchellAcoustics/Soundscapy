@@ -1,0 +1,214 @@
+[workspace]
+name          = "soundscapy"
+channels      = ["conda-forge"]
+platforms     = ["osx-arm64", "linux-64", "osx-64", "win-64", "linux-aarch64"]
+preview       = ["pixi-build"]
+requires-pixi = ">=0.68.0,<1.0"
+
+###### Build Configuration ######
+
+[package.build.backend]
+name    = "pixi-build-python"
+version = "0.*"
+
+[package.build.config]
+ignore-pypi-mapping = false
+
+[package.build-dependencies]
+uv = ">=0.9,<1.0"
+
+###### Workspace Config ######
+
+[activation.env]
+# Python users often set:
+PYTHONIOENCODING = "utf-8"
+PYTHONNOUSERSITE = "1"
+# R users often set:
+PIXI_R_LIBS = "$CONDA_PREFIX/lib/R/library"
+PIXI_R_HOME = "$CONDA_PREFIX/lib/R"
+R_LIBS      = "$PIXI_R_LIBS"
+R_LIBS_USER = "$PIXI_R_LIBS"
+# R_HOME      = "$PIXI_R_HOME"
+
+###### Dependencies ######
+
+[pypi-dependencies]
+soundscapy = { path = ".", editable = true }
+
+[dependencies]
+python = ">=3.11,<3.15"
+numpy  = ">=2.1.3,<2.4"
+
+############ Features #############
+
+# Soundscapy Extras
+
+[feature.audio.pypi-dependencies]
+soundscapy = { path = ".", editable = true, extras = ["audio"] }
+
+[feature.r.pypi-dependencies]
+soundscapy = { path = ".", editable = true, extras = ["r"] }
+
+[feature.r.dependencies]
+r-base = ">=4.4.3,<4.6"
+r-sn   = ">=2.1.3"
+rpy2   = ">=3.5.0"
+
+# Dev Extras
+
+[feature.docs.dependencies]
+zensical            = ">=0.0.40"
+jupyter             = ">=1.1.1"
+jupyter-cache       = ">=1.0.1"
+mkdocstrings        = ">=1.0.3"
+mkdocstrings-python = ">=2.0.2"
+
+[feature.docs.pypi-dependencies]
+quarto-cli    = ">=1.9.37"
+griffe-fieldz = ">=0.5.0"
+
+[feature.dev]
+dependencies = { ruff = ">=0.15.12", pyrefly = ">=0.64.1", prek = ">=0.3.13", uv = ">=0.9", types-tqdm = ">=4.67.3.20260508", jupyter-repo2docker = ">=2025.12.0,<2026" }
+
+[feature.test.dependencies]
+nbmake       = ">=1.5.5"
+pytest-cov   = ">=7.1.0"
+pytest-mpl   = ">=0.19.0"
+pytest-xdist = ">=3.8.0"
+pytest       = ">=9.0.3"
+xdoctest     = ">=1.3.2"
+
+########## Environments ############
+
+[environments]
+default = { features = ["audio", "r", "dev", "docs", "test"] }
+docs    = { features = ["docs"], no-default-feature = true }
+
+r              = ["r"]
+audio          = ["audio"]
+soundscapy-all = ["r", "audio"]
+
+test       = { features = ["test"] }
+test-audio = ["audio", "test"]
+test-r     = ["r", "test"]
+test-all   = ["audio", "r", "test"]
+
+########### Tasks ############
+
+[tasks]
+lint   = { cmd = "ruff check .", description = "Lint the codebase", default-environment = "dev" }
+format = { cmd = "ruff check . --fix && ruff format .", description = "Fix lint issues and format code", default-environment = "dev" }
+
+[tasks.export-environment]
+cmd         = "pixi workspace export conda-environment environment.yml -n soundscapy -e soundscapy-all"
+description = "Export the conda environment file from the workspace configuration"
+inputs      = ["pixi.toml", "pyproject.toml"]
+
+[tasks.update-environment]
+cmd        = "python scripts/update-environment-yml.py"
+depends-on = ["export-environment"]
+inputs     = ["pixi.toml", "pyproject.toml"]
+
+# Build and Publish Tasks
+[tasks.version]
+args = [{ arg = "flags", default = "--bump dev" }]
+cmd  = "uv version --no-sync {{ flags }}"
+
+[tasks.build]
+cmd         = "pixi publish --target-dir conda-dist && uv build"
+description = "Build the package"
+
+[tasks.pypi-test]
+description = "Publish the package to Test PyPI"
+cmd         = "uv publish --token $(cat .secrets/test-pypi-token) --index test-pypi && sleep 10 && uv run --index test-pypi --prerelease=allow --index-strategy unsafe-best-match --with soundscapy --no-project -- python -c 'import soundscapy; print(soundscapy.__version__)'"
+depends-on  = ["build"]
+
+[tasks.publish-conda]
+cmd         = "pixi publish --target-channel https://prefix.dev/sonic-forge"
+description = "Publish the package to Prefix"
+
+[tasks.publish-pypi]
+cmd         = "uv publish --token $(cat .secrets/pypi-token)"
+description = "Publish the package to PyPI"
+depends-on  = ["build"]
+
+[tasks.publish]
+description = "Publish the package to all channels"
+depends-on  = ["update-environment", "publish-conda", "publish-pypi"]
+
+# Documentation Tasks
+[feature.docs.tasks.docs-render]
+description         = "Render tutorial markdown pages"
+cmd                 = "rm -rf docs/tutorials/rendered && quarto render examples/*.ipynb --to md --output-dir ../docs/tutorials/rendered"
+default-environment = "docs"
+
+[feature.docs.tasks.docs-build]
+description         = "Render and build docs"
+depends-on          = ["docs-render"]
+cmd                 = "zensical build"
+default-environment = "docs"
+
+[feature.docs.tasks.docs-serve]
+description         = "Serve docs locally"
+depends-on          = ["docs-render"]
+cmd                 = "zensical serve"
+default-environment = "docs"
+
+[feature.dev.tasks.setup-hooks]
+cmd         = "prek install --prepare-hooks --overwrite"
+description = "Setup pre-commit hooks for development work."
+
+# Test Tasks
+
+[feature.test.tasks.test-import-tripwire]
+cmd                 = "python -c 'import soundscapy; assert soundscapy.add_iso_coords' {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
+default-environment = "test"
+description         = "Verify slim install does not trigger optional imports"
+
+[feature.test.tasks.test-base]
+cmd                 = "python --version && pytest {{ flags }}"
+args                = [{ arg = "flags", default = "-n auto" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
+default-environment = "test"
+
+[feature.test.tasks.test-audio]
+cmd                 = "python --version && pytest {{ flags }}"
+args                = [{ arg = "flags", default = "-n auto" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
+default-environment = "test-audio"
+
+[feature.test.tasks.test-r]
+cmd                 = "python --version && pytest {{ flags }}"
+args                = [{ arg = "flags", default = "-n auto" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
+default-environment = "test-r"
+
+[feature.test.tasks.test-all]
+cmd                 = "python --version && pytest -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "-n auto" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
+default-environment = "test-all"
+
+[feature.test.tasks.tests]
+args = [
+    { arg = "flags", default = "-n auto --quiet --no-header -rfs -W ignore" },
+]
+depends-on = [
+    { task = "test-import-tripwire", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-base", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-audio", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-r", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-all", args = [
+        "{{ flags }}",
+    ] },
+]

@@ -4,14 +4,6 @@ Functions for parallel processing of binaural audio files.
 It includes functions to load and analyze binaural files, as well as to process
 multiple files in parallel using concurrent.futures.
 
-Functions:
-    load_analyse_binaural: Load and analyze a single binaural file.
-    parallel_process: Process multiple binaural files in parallel.
-
-Note:
-    This module requires the tqdm library for progress bars and concurrent.futures
-    for parallel processing. It uses loguru for logging.
-
 """
 
 import concurrent.futures
@@ -52,19 +44,20 @@ def load_analyse_binaural(
 
     Parameters
     ----------
-    resample
-    wav_file : Path
+    wav_file
         Path to the WAV file.
-    levels : Dict
+    levels
         Dictionary with calibration levels for each channel.
-    analysis_settings : AnalysisSettings
+    analysis_settings
         Analysis settings object.
-    parallel_mosqito : bool, optional
+    resample
+        Sampling rate to resample the audio to before analysis.
+    parallel_mosqito
         Whether to process MoSQITo metrics in parallel. Defaults to True.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame with analysis results.
 
     """
@@ -103,23 +96,26 @@ def parallel_process(
 
     Parameters
     ----------
-    resample
-    wav_files : List[Path]
+    wav_files
         List of WAV files to process.
-    results_df : pd.DataFrame
+    results_df
         Initial results DataFrame to update.
-    levels : Dict
+    levels
         Dictionary with calibration levels for each file.
-    analysis_settings : AnalysisSettings
+    analysis_settings
         Analysis settings object.
-    max_workers : int, optional
-        Maximum number of worker processes. If None, it will default to the number of processors on the machine.
-    parallel_mosqito : bool, optional
-        Whether to process MoSQITo metrics in parallel within each file. Defaults to True.
+    max_workers
+        Maximum number of worker processes.
+        If None, it will default to the number of processors on the machine.
+    resample
+        Sampling rate to resample the audio to before analysis.
+    parallel_mosqito
+        Whether to process MoSQITo metrics in parallel within each file.
+        Defaults to True.
 
     Returns
     -------
-    pd.DataFrame
+    :
         Updated results DataFrame with analysis results for all files.
 
     """
@@ -146,7 +142,7 @@ def parallel_process(
                 try:
                     result = future.result()
                     results_df = add_results(results_df, result)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing file: {e!s}")
                 finally:
                     pbar.update(1)
@@ -171,22 +167,23 @@ if __name__ == "__main__":
     setup_logging("DEBUG")
 
     base_path = Path().absolute().parent.parent.parent
-    wav_folder = base_path.joinpath("test", "data")
-    levels_file = wav_folder.joinpath("Levels.json")
+    wav_fldr = base_path.joinpath("test", "data")
+    levels_file = wav_fldr.joinpath("Levels.json")
 
-    with open(levels_file) as f:
-        levels = json.load(f)
+    with Path.open(levels_file) as f:
+        lvls = json.load(f)
 
-    analysis_settings = AnalysisSettings.default()
+    settings = AnalysisSettings.default()
 
-    df = prep_multiindex_df(levels, incl_metric=True)
+    data = prep_multiindex_df(lvls, incl_metric=True)
 
-    wav_files = list(wav_folder.glob("*.wav"))
+    files = list(wav_fldr.glob("*.wav"))
 
-    df = parallel_process(wav_files[:4], df, levels, analysis_settings)
+    data = parallel_process(files[:4], data, lvls, settings)
 
     output_file = base_path.joinpath(
-        "test", f"ParallelTest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        "test",
+        f"ParallelTest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",  # noqa: DTZ005
     )
-    df.to_excel(output_file)
-    print(f"Results saved to {output_file}")
+    data.to_excel(output_file)
+    logger.info(f"Results saved to {output_file}")

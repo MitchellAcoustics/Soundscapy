@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
@@ -28,8 +27,7 @@ def simulated_data():
 @pytest.fixture
 def sample_data():
     """Generate sample data for testing."""
-    np.random.seed(42)  # For reproducibility
-    return sspy.surveys.simulation(n=100, incl_iso_coords=True)
+    return sspy.surveys.simulation(n=100, seed=42, incl_iso_coords=True)
 
 
 def test_scatter(simulated_data: pd.DataFrame):
@@ -53,7 +51,7 @@ def test_scatter_image(sample_data: pd.DataFrame):
 
 
 def test_setup_style_and_subplots_args_defaults():
-    """Test with default arguments to ensure proper initialization of style and subplot parameters."""
+    """Test with default arguments to ensure proper initialization of style and subplot parameters."""  # noqa: E501
     x, y, prim_labels, kwargs = None, None, None, {}
     style_args, subplots_args, remaining_kwargs = (
         _setup_style_and_subplots_args_from_kwargs(x, y, prim_labels, kwargs)
@@ -65,7 +63,7 @@ def test_setup_style_and_subplots_args_defaults():
 
 
 def test_setup_style_and_subplots_args_custom_kwargs():
-    """Test with custom kwargs to verify proper handling and removal of style parameters."""
+    """Test with custom kwargs to verify handling and removal of style parameters."""
     x, y, prim_labels = "x_variable", "y_variable", None
     kwargs = {
         "xlabel": "Custom X",
@@ -93,7 +91,7 @@ def test_setup_style_and_subplots_args_deprecated_prim_labels():
 
     with pytest.warns(
         DeprecationWarning,
-        match="The `prim_labels` parameter is deprecated. Use `xlabel` and `ylabel` instead.",
+        match="The `prim_labels` parameter is deprecated. Use `xlabel` and `ylabel` instead.",  # noqa: E501
     ):
         style_args, _, _ = _setup_style_and_subplots_args_from_kwargs(
             x, y, prim_labels, kwargs
@@ -229,7 +227,7 @@ def test_prim_ax_fontdict_override():
 
 
 def test_none_values_handling():
-    """Test that None values in kwargs properly override defaults or are ignored based on ignore_null setting."""
+    """Test that None values in kwargs properly override defaults or are ignored based on ignore_null setting."""  # noqa: E501
     x, y, prim_labels = None, None, None
     kwargs = {
         "xlabel": None,  # Override with None
@@ -240,7 +238,7 @@ def test_none_values_handling():
         x, y, prim_labels, kwargs
     )
 
-    # Since ignore_null=False is passed to update(), None values should override defaults
+    # Since ignore_null=False is passed to update(), None values should override default
     # Other params should override
     assert style_args.xlabel is None
     assert style_args.legend_loc is False
@@ -254,7 +252,7 @@ def test_none_values_handling():
 
 @pytest.mark.xfail(reason="Relied on Pydantic model validation.")
 def test_update_model_validate():
-    """Test that None values in kwargs properly override defaults or are ignored based on ignore_null setting."""
+    """Test that None values in kwargs properly override defaults or are ignored based on ignore_null setting."""  # noqa: E501
     x, y, prim_labels = None, None, None
     kwargs = {
         "xlabel": None,  # Override with None

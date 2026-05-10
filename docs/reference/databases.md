@@ -1,11 +1,24 @@
-# Included Databases
+# Databases
 
-## International Soundscape Database (ISD)
+::: soundscapy.databases
+    options:
+      heading_level: 2
+      show_submodules: false
+
+## ISD
 
 ::: soundscapy.databases.isd
-options:
-filters: ["!ISDAccessor", "!_"]
+    options:
+      heading_level: 3
 
-## Soundscape Attributes Translation Project (SATP)
+## ARAUS
+
+::: soundscapy.databases.araus
+    options:
+      heading_level: 3
+
+## SATP database helpers
 
 ::: soundscapy.databases.satp
+    options:
+      heading_level: 3

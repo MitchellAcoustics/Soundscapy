@@ -1,41 +1,15 @@
 """
-Soundscapy Psychoacoustic Indicator (SPI) calculation module.
+Soundscape Perception Indices (SPI) calculation module.
 
 This module provides functions and classes for calculating SPI,
 based on the R implementation. Requires optional dependencies.
 """
+
 # ruff: noqa: E402
-# ignore module level import order because we need to check dependencies first
+from soundscapy._optional import require_deps
 
-# Check for required dependencies directly
-# This will raise ImportError if any dependency is missing
-try:
-    import rpy2  # noqa: F401
+require_deps(["rpy2"], extra="r")
 
-except ImportError as e:
-    msg = (
-        "SPI functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[spi]"
-    )
-    raise ImportError(msg) from e
+import lazy_loader as _lazy
 
-# Now we can import our modules that depend on the optional packages
-from soundscapy.spi import msn
-from soundscapy.spi.msn import (
-    CentredParams,
-    DirectParams,
-    MultiSkewNorm,
-    cp2dp,
-    dp2cp,
-    spi_score,
-)
-
-__all__ = [
-    "CentredParams",
-    "DirectParams",
-    "MultiSkewNorm",
-    "cp2dp",
-    "dp2cp",
-    "msn",
-    "spi_score",
-]
+__getattr__, __dir__, __all__ = _lazy.attach_stub(__name__, __file__)

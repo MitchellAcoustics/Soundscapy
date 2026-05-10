@@ -1,4 +1,5 @@
-# ISOPlot Interface
+# ISO Plot
 
 ::: soundscapy.plotting.iso_plot
-show_submodules: true
+    options:
+      heading_level: 2

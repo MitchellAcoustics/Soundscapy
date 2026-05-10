@@ -1,6 +1,5 @@
-# Likert Scale Plotting
-
-This module provides functions for visualizing Likert scale data, including radar plots and stacked Likert plots.
+# Likert
 
 ::: soundscapy.plotting.likert
-show_submodules: true
+    options:
+      heading_level: 2

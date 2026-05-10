@@ -33,7 +33,7 @@ def sample_config():
 @pytest.fixture
 def temp_config_file(tmp_path, sample_config):
     config_file = tmp_path / "test_config.yaml"
-    with open(config_file, "w") as f:
+    with Path.open(config_file, "w") as f:
         yaml.dump(sample_config, f)
     return config_file
 
@@ -71,13 +71,15 @@ class TestAudioAnalysis:
         # Check if the number of rows in the result matches the number of WAV files
         analyzed_files = set(result.index.get_level_values(0))
         assert len(analyzed_files) == expected_file_count, (
-            f"Expected {expected_file_count} files to be analyzed, but got {len(analyzed_files)}"
+            f"Expected {expected_file_count} files to be analyzed, "
+            f"but got {len(analyzed_files)}"
         )
 
         # Check if all expected files were analyzed
         expected_files = {f.stem for f in TEST_AUDIO_DIR.glob("*.wav")}
         assert analyzed_files == expected_files, (
-            f"Mismatch in analyzed files. Expected: {expected_files}, Got: {analyzed_files}"
+            f"Mismatch in analyzed files. Expected: {expected_files}, "
+            f"Got: {analyzed_files}"
         )
 
     @pytest.mark.slow
@@ -94,27 +96,29 @@ class TestAudioAnalysis:
         # Check if the number of rows in the result matches the number of WAV files
         analyzed_files = set(result.index.get_level_values(0))
         assert len(analyzed_files) == expected_file_count, (
-            f"Expected {expected_file_count} files to be analyzed, but got {len(analyzed_files)}"
+            f"Expected {expected_file_count} files to be analyzed, "
+            f"but got {len(analyzed_files)}"
         )
 
         # Check if all expected files were analyzed
         expected_files = {f.stem for f in TEST_AUDIO_DIR.glob("*.wav")}
         assert analyzed_files == expected_files, (
-            f"Mismatch in analyzed files. Expected: {expected_files}, Got: {analyzed_files}"
+            f"Mismatch in analyzed files. Expected: {expected_files}, "
+            f"Got: {analyzed_files}"
         )
 
     def test_save_results(self, audio_analysis, tmp_path):
-        df = pd.DataFrame({"test": [1, 2]})
+        data = pd.DataFrame({"test": [1, 2]})
         csv_path = tmp_path / "results.csv"
-        audio_analysis.save_results(df, csv_path)
+        audio_analysis.save_results(data, csv_path)
         assert csv_path.exists()
 
         xlsx_path = tmp_path / "results.xlsx"
-        audio_analysis.save_results(df, xlsx_path)
+        audio_analysis.save_results(data, xlsx_path)
         assert xlsx_path.exists()
 
-        with pytest.raises(ValueError):
-            audio_analysis.save_results(df, tmp_path / "results.txt")
+        with pytest.raises(ValueError, match="Unsupported file format"):
+            audio_analysis.save_results(data, tmp_path / "results.txt")
 
     def test_update_config(self, audio_analysis):
         new_config = {"AcousticToolbox": {"LAeq": {"run": False}}}

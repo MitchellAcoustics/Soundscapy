@@ -162,9 +162,7 @@ dmypy.json
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,vscode
-/.vscode/
 /.idea/
-.vscode/settings.json
 *.DS_Store
 
 # Ignore everything in tests/test_audio_files except .wav files
@@ -181,3 +179,10 @@ CLAUDE.local.md
 # package version
 *_version.py
 /docs/tutorials/SoundscapyResults.xlsx
+CLAUDE.md
+.claude/settings.local.json
+.zed/settings.json
+# pixi environments
+.pixi/*
+conda-dist/
+environment.yml.bak

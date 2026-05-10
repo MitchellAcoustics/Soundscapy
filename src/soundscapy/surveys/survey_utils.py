@@ -7,10 +7,15 @@ the soundscapy package for handling and analyzing soundscape survey data.
 
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import partial
 
 import pandas as pd
+import pandera.pandas as pa
 from loguru import logger
+from pandera.typing.pandas import DataFrame, Series
 from plot_likert.scales import Scale
+
+AllowNan = partial(pa.Field, nullable=True)
 
 
 class PAQ(Enum):
@@ -31,9 +36,9 @@ class PAQ(Enum):
 
         Parameters
         ----------
-        label : str
+        label
             The descriptive label for the PAQ (e.g., 'pleasant').
-        id : str
+        id
             The standard identifier for the PAQ (e.g., 'PAQ1').
 
         """
@@ -45,6 +50,87 @@ PAQ_LABELS = [paq.label for paq in PAQ]
 PAQ_IDS = [paq.id for paq in PAQ]
 
 
+class PAQDfSchema(pa.DataFrameModel):
+    """
+    Pandera schema for validating PAQ (Perceptual Attribute Questions) DataFrames.
+
+    This schema defines the expected structure and data types for DataFrames containing
+    soundscape survey data with PAQ responses and associated metadata. It includes
+    automatic column name coercion to standardize various input formats.
+
+    Attributes
+    ----------
+    PAQ1-PAQ8 : Series[float]
+        Perceptual Attribute Question responses (1-8) on a Likert scale.
+        Nullable to allow for missing responses.
+    language : Series[str] | None
+        Language code for the survey responses. Optional field.
+    location_id : Series[str] | None
+        Identifier for the survey location. Optional field.
+    session_id : Series[str] | None
+        Identifier for the survey session. Optional field.
+    group_id : Series[str] | None
+        Identifier for the survey group. Optional field.
+    record_id : Series[str] | None
+        Unique identifier for each survey record. Optional field.
+
+    """
+
+    # PAQ response columns - float values representing Likert scale responses
+    PAQ1: Series[float] = AllowNan()  # Pleasant
+    PAQ2: Series[float] = AllowNan()  # Vibrant
+    PAQ3: Series[float] = AllowNan()  # Eventful
+    PAQ4: Series[float] = AllowNan()  # Chaotic
+    PAQ5: Series[float] = AllowNan()  # Annoying
+    PAQ6: Series[float] = AllowNan()  # Monotonous
+    PAQ7: Series[float] = AllowNan()  # Uneventful
+    PAQ8: Series[float] = AllowNan()  # Calm
+
+    # Metadata columns - all optional string identifiers
+    language: Series[str] | None = AllowNan()  # Survey language code
+    location_id: Series[str] | None = AllowNan()  # Location identifier
+    session_id: Series[str] | None = AllowNan()  # Session identifier
+    group_id: Series[str] | None = AllowNan()  # Group identifier
+    record_id: Series[str] | None = AllowNan()  # Record identifier
+
+    @pa.dataframe_parser
+    def column_name_coercion(cls, df: DataFrame) -> DataFrame:  # noqa: N805
+        """
+        Coerce column names to standardized format for PAQ data.
+
+        This parser automatically renames columns to match the expected schema:
+
+        - PAQ label names (e.g., 'pleasant') to PAQ IDs (e.g., 'PAQ1')
+        - Legacy ID column names to lowercase snake_case format
+
+        Parameters
+        ----------
+        cls
+            The schema class (automatically passed by pandera).
+        df
+            Input DataFrame with potentially non-standard column names.
+
+        Returns
+        -------
+        :
+            DataFrame with standardized column names.
+
+        """
+        # Create mapping from PAQ labels to standard PAQ IDs
+        rename_dict = dict(zip(PAQ_LABELS, PAQ_IDS, strict=False))
+
+        # Add mappings for legacy ID column names to snake_case format
+        rename_dict.update(
+            {
+                "LocationID": "location_id",
+                "SessionID": "session_id",
+                "GroupID": "group_id",
+                "RecordID": "record_id",
+            }
+        )
+        return df.rename(columns=rename_dict)
+
+
 @dataclass
 class LikertScale:
     """
@@ -53,14 +139,22 @@ class LikertScale:
     This class provides standardized 5-point Likert scales questions commonly used
     in acoustic and soundscape surveys.
 
-    Attributes:
-        PAQ: Agreement scale from "Strongly disagree" to "Strongly agree"
-        SOURCE: Source perception scale from "Not at all" to "Dominates completely"
-        OVERALL: Quality assessment scale from "Very bad" to "Very good"
-        APPROPRIATE: Appropriateness scale from "Not at all" to "Perfectly"
-        LOUD: Loudness perception scale from "Not at all" to "Extremely"
-        OFTEN: Frequency scale with first-time option from "Never / This is my first time here" to "Very often"
-        VISIT: Standard frequency scale from "Never" to "Very often"
+    Attributes
+    ----------
+    PAQ
+        Agreement scale from "Strongly disagree" to "Strongly agree"
+    SOURCE
+        Source perception scale from "Not at all" to "Dominates completely"
+    OVERALL
+        Quality assessment scale from "Very bad" to "Very good"
+    APPROPRIATE
+        Appropriateness scale from "Not at all" to "Perfectly"
+    LOUD
+        Loudness perception scale from "Not at all" to "Extremely"
+    OFTEN
+        Frequency scale with first-time option from "Never / This is my first time here" to "Very often"
+    VISIT
+        Standard frequency scale from "Never" to "Very often"
 
     """  # noqa: E501
 
@@ -158,16 +252,16 @@ def return_paqs(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         Input DataFrame containing PAQ data.
-    other_cols : List[str], optional
+    other_cols
         Other columns to include in the output, by default None.
-    incl_ids : bool, optional
+    incl_ids
         Whether to include ID columns (RecordID, GroupID, etc.), by default True.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing only the PAQ columns and optionally ID and other specified
         columns.
 
@@ -221,16 +315,16 @@ def rename_paqs(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         Input DataFrame containing PAQ data.
-    paq_aliases : Union[Tuple, Dict], optional
+    paq_aliases
         Specify which PAQs are to be renamed. If None, will check if the column names
         are in pre-defined options. If a tuple, the order must match PAQ_IDS.
         If a dict, keys are current names and values are desired PAQ IDs.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame with renamed PAQ columns.
 
     Raises
@@ -285,14 +379,14 @@ def mean_responses(df: pd.DataFrame, group: str) -> pd.DataFrame:
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         Input DataFrame containing PAQ data.
-    group : str
+    group
         Column name to group by.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame with mean responses for each PAQ group.
 
     """

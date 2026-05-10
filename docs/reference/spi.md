@@ -1,11 +1,18 @@
-# Soundscape Perception Indices (SPI) Reference
-
-This section provides an overview of the tools for using the Soundscape Perception Indices (SPI) framework. It includes a brief description of each tool, as well as information on how to access and use them.
+# SPI
 
 ::: soundscapy.spi
-options:
-    show_root_heading: false
-    show_root_toc_entry: false
-    show_submodules: true
-    members:
-    - msn
+    options:
+      heading_level: 2
+      show_submodules: false
+
+## Multi-skew normal model
+
+::: soundscapy.spi.msn
+    options:
+      heading_level: 3
+
+## KS2D utilities
+
+::: soundscapy.spi.ks2d
+    options:
+      heading_level: 3

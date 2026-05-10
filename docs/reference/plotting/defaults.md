@@ -1,6 +1,5 @@
-# Plotting Defaults
-
-This module provides default values and constants used throughout the plotting functionality in Soundscapy.
+# Default Settings
 
 ::: soundscapy.plotting.defaults
-show_submodules: true
+    options:
+      heading_level: 2

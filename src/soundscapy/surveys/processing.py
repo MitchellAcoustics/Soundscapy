@@ -23,7 +23,7 @@ modules under `soundscape.databases`.
 
 import warnings
 from dataclasses import dataclass
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 try:
     from typing import Unpack
@@ -69,8 +69,9 @@ class SSMMetrics:
 
         Returns
         -------
-        pandas.Series
+        :
             A pandas Series containing the following key-value pairs:
+
             - "amplitude": instance attribute representing a certain magnitude.
             - "angle": instance attribute representing a specific angular measurement.
             - "elevation": instance attribute indicating a height or vertical position.
@@ -99,16 +100,16 @@ def calculate_iso_coords(
 
     Parameters
     ----------
-    results_df : pd.DataFrame
+    results_df
         DataFrame containing PAQ data.
-    val_range : Tuple[int, int], optional
+    val_range
         (max, min) range of original PAQ responses, by default (5, 1)
-    angles : Tuple[int, ...], optional
+    angles
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
 
     Returns
     -------
-    Tuple[pd.Series, pd.Series]
+    :
         ISOPleasant and ISOEventful coordinate values
 
     Examples
@@ -148,16 +149,16 @@ def _adj_iso_pl(values: pd.Series, angles: tuple[int, ...], scale: float) -> flo
 
     Parameters
     ----------
-    values : pd.Series
+    values
         PAQ values for a single sample
-    angles : Tuple[int, ...]
+    angles
         Angles for each PAQ in degrees
-    scale : float
+    scale
         Scale factor for normalization
 
     Returns
     -------
-    float
+    :
         Adjusted ISOPleasant value
 
     """
@@ -183,16 +184,16 @@ def _adj_iso_ev(values: pd.Series, angles: tuple[int, ...], scale: float) -> flo
 
     Parameters
     ----------
-    values : pd.Series
+    values
         PAQ values for a single sample
-    angles : Tuple[int, ...]
+    angles
         Angles for each PAQ in degrees
-    scale : float
+    scale
         Scale factor for normalization
 
     Returns
     -------
-    float
+    :
         Adjusted ISOEventful value
 
     """
@@ -223,21 +224,20 @@ def add_iso_coords(
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data
         Input DataFrame containing PAQ data
-    val_range : Tuple[int, int], optional
+    val_range
         (min, max) range of original PAQ responses, by default (1, 5)
-    names : Tuple[str, str], optional
+    names
         Names for new coordinate columns, by default ("ISOPleasant", "ISOEventful")
-    angles : Tuple[int, ...], optional
+    angles
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
-    *
-    overwrite : bool, optional
+    overwrite
         Whether to overwrite existing ISO coordinate columns, by default False
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame with new ISO coordinate columns added
 
     Raises
@@ -286,16 +286,16 @@ def likert_data_quality(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         DataFrame containing PAQ data
-    allow_na : bool, optional
+    allow_na
         Whether to allow NaN values in PAQ data, by default False
-    val_range : Tuple[int, int], optional
+    val_range
         Valid range for PAQ values, by default (1, 5)
 
     Returns
     -------
-    List of indices to be removed, or None if no issues found
+    :
 
     Examples
     --------
@@ -351,6 +351,7 @@ def simulation(
     n: int = 3000,
     val_range: tuple[int, int] = (1, 5),
     *,
+    seed: int | None = None,
     incl_iso_coords: bool = False,
     **coord_kwargs: Unpack[_AddISOCoordsKwargs],
 ) -> pd.DataFrame:
@@ -359,22 +360,25 @@ def simulation(
 
     Parameters
     ----------
-    n : int, optional
+    n
         Number of samples to simulate, by default 3000
-    val_range : tuple[int, int], optional
+    val_range
         Range of values for PAQ responses, by default (1, 5)
-    incl_iso_coords : bool, optional
+    seed
+        Optional random seed for deterministic output, by default None
+    incl_iso_coords
         Whether to add calculated ISO coordinates, by default False
-    **coord_kwargs : Unpack[_AddISOCoordsKwargs]
+    **coord_kwargs
         Optional keyword arguments passed directly to the `add_iso_coords` function
         if `incl_iso_coords` is True. These can include:
+
         - `names` (tuple[str, str]): Names for the new ISO coordinate columns.
         - `angles` (tuple[int, ...]): Angles for each PAQ used in calculation.
         - `overwrite` (bool): Whether to overwrite existing ISO coordinate columns.
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame of randomly generated PAQ responses
 
     Examples
@@ -387,7 +391,7 @@ def simulation(
 
     """  # noqa: E501
     data = pd.DataFrame(
-        np.random.default_rng().integers(
+        np.random.default_rng(seed).integers(
             min(val_range), max(val_range) + 1, size=(n, 8)
         ),
         columns=PAQ_IDS,
@@ -412,20 +416,20 @@ def ssm_metrics(
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df
         DataFrame containing PAQ data
-    paq_cols : List[str], optional
+    paq_cols
         List of PAQ column names, by default PAQ_IDS
-    method : str, optional
+    method
         Method to calculate SSM metrics, either "cosine" or "polar", by default "cosine"
-    val_range : Tuple[int, int], optional
+    val_range
         Range of values for PAQ responses, by default (5, 1)
-    angles : Tuple[int, ...], optional
+    angles
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
 
     Returns
     -------
-    pd.DataFrame
+    :
         DataFrame containing the SSM metrics
 
     Raises
@@ -436,7 +440,7 @@ def ssm_metrics(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> import pandas as pd
     >>> data = pd.DataFrame({
     ...     'PAQ1': [4, 2], 'PAQ2': [3, 5], 'PAQ3': [2, 4], 'PAQ4': [1, 3],
@@ -448,7 +452,7 @@ def ssm_metrics(
     1       1.21   20.63       0.01          3.11       0.39
 
     """
-    # TODO(MitchellAcoustics): Replace with a call to circumplex package  # noqa: TD003
+    # TODO(MitchellAcoustics): Replace with a call to circumplex package
     warnings.warn(
         "This function is not yet fully implemented."
         "See https://github.com/MitchellAcoustics/circumplex for a "
@@ -503,22 +507,22 @@ def ssm_cosine_fit(
 
     Parameters
     ----------
-    y : pd.Series
+    y
         Series of PAQ values
-    angles : tuple[int, ...], optional
+    angles
         Angles for each PAQ in degrees, by default EQUAL_ANGLES
-    bounds : tuple[list[float], list[float]], optional
+    bounds
         Bounds for the optimization parameters,
         by default ([0, 0, 0, -np.inf], [np.inf, 360, np.inf, np.inf])
 
     Returns
     -------
-    SSMMetrics
+    :
         Calculated SSM metrics
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> import pandas as pd
     >>> y = pd.Series([4, 3, 2, 1, 5, 3, 4, 2])
     >>> metrics = ssm_cosine_fit(y)
@@ -566,14 +570,14 @@ def _convert_to_polar_coords(
 
     Parameters
     ----------
-    x : Union[float, np.ndarray]
+    x
         x-coordinate(s)
-    y : Union[float, np.ndarray]
+    y
         y-coordinate(s)
 
     Returns
     -------
-    Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]
+    :
         Tuple of (r, theta) in polar coordinates
 
     Examples
@@ -595,14 +599,14 @@ def _r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
     Parameters
     ----------
-    y_true : np.ndarray
+    y_true
         True values
-    y_pred : np.ndarray
+    y_pred
         Predicted values
 
     Returns
     -------
-    float
+    :
         R-squared score
 
     Examples
@@ -617,6 +621,103 @@ def _r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     ss_residual = np.sum((y_true - y_pred) ** 2)
     # Ensure the return type matches the annotation
     return float(1 - (ss_residual / ss_total))
+
+
+def ipsatize(
+    data: pd.DataFrame,
+    method: Literal["grand_mean", "column_wise", "row_wise"] = "grand_mean",
+    participant_col: str = "participant",
+    scales: list[str] | None = None,
+) -> pd.DataFrame:
+    """
+    Participant-level ipsatization for circumplex analysis.
+
+    Removes systematic response biases before computing a correlation matrix.
+    The choice of method depends on the study design and the type of bias
+    being corrected.
+
+    Parameters
+    ----------
+    data
+        DataFrame containing PAQ scale columns and (for participant-level
+        methods) a grouping column.
+    method
+        Centering strategy:
+
+        ``"grand_mean"`` *(default)* — one scalar per participant: the mean
+        across *all* PAQ values and *all* observations for that participant.
+        Removes overall response-level differences between participants.
+        **Matches the published SATP analysis (Aletta et al., 2024) and the
+        original R implementation.**
+
+        ``"column_wise"`` — eight scalars per participant: the per-scale mean
+        across that participant's observations.  Removes scale-specific
+        response biases.  This is the behaviour of the legacy
+        :func:`person_center` function.
+
+        ``"row_wise"`` — one scalar per observation: the mean across all PAQ
+        scales within that observation.  Removes the general impression of
+        each individual soundscape stimulus.  Equivalent to
+        ``circumplex.ipsatize()``.
+    participant_col
+        Column used to group observations by participant.  Required for
+        ``"grand_mean"`` and ``"column_wise"``; ignored for ``"row_wise"``.
+    scales
+        PAQ column names to centre.  Defaults to :data:`PAQ_IDS` when
+        ``None``.
+
+    Returns
+    -------
+    :
+        DataFrame containing only the scale columns with centred values.
+        The ``participant_col`` grouping column is excluded from the result.
+
+    Raises
+    ------
+    KeyError
+        If ``participant_col`` is not present in ``data`` when
+        ``method`` is ``"grand_mean"`` or ``"column_wise"``.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> data = pd.DataFrame({
+    ...     'PAQ1': [50., 60., 40., 30.], 'PAQ2': [50., 60., 40., 30.],
+    ...     'PAQ3': [50., 60., 40., 30.], 'PAQ4': [50., 60., 40., 30.],
+    ...     'PAQ5': [50., 60., 40., 30.], 'PAQ6': [50., 60., 40., 30.],
+    ...     'PAQ7': [50., 60., 40., 30.], 'PAQ8': [50., 60., 40., 30.],
+    ...     'participant': ['A', 'A', 'B', 'B'],
+    ... })
+    >>> result = ipsatize(data, method="grand_mean")
+    >>> result['PAQ1'].tolist()
+    [-5.0, 5.0, 5.0, -5.0]
+
+    """
+    _scales = scales if scales is not None else PAQ_IDS
+
+    if method == "column_wise":
+        means = data.groupby(participant_col)[_scales].transform("mean")
+        return data[_scales] - means
+
+    if method == "grand_mean":
+        # Compute a single scalar per participant: mean across all PAQ values
+        # and all observations for that participant.  Use nanmean so that
+        # participants with partial NaN data still get a valid grand mean
+        # computed from their non-NaN values; NaN rows are then removed by
+        # downstream listwise deletion rather than silently expanding data loss
+        # to the whole participant.
+        grand_means = data.groupby(participant_col)[_scales].apply(
+            lambda df: float(np.nanmean(df.values))
+        )
+        grand_mean_per_row = data[participant_col].map(grand_means)
+        return data[_scales].subtract(grand_mean_per_row, axis=0)
+
+    if method == "row_wise":
+        row_means = data[_scales].mean(axis=1)
+        return data[_scales].sub(row_means, axis=0)
+
+    msg = f"method must be 'grand_mean', 'column_wise', or 'row_wise'; got {method!r}"
+    raise ValueError(msg)
 
 
 if __name__ == "__main__":

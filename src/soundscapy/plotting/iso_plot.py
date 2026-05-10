@@ -19,10 +19,10 @@ Examples
 ...    .add_simple_density(fill=False)
 ...    .style()
 ... )
->>> isoplot.show() # xdoctest: +SKIP
+>>> isoplot.show() # doctest: +SKIP
 
 """
-# ruff: noqa: SLF001, G004
+# ruff: noqa: G004
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ class ISOPlot:
     ...         .add_scatter()
     ...         .add_density()
     ...         .style())
-    >>> cp.show() # xdoctest: +SKIP
+    >>> cp.show() # doctest: +SKIP
 
     """
 
@@ -118,21 +118,21 @@ class ISOPlot:
 
         Parameters
         ----------
-        data : pd.DataFrame | None, optional
+        data
             The data to be plotted, by default None
-        x : str | np.ndarray | pd.Series | None, optional
+        x
             Column name or data for x-axis, by default "ISOPleasant"
-        y : str | np.ndarray | pd.Series | None, optional
+        y
             Column name or data for y-axis, by default "ISOEventful"
-        title : str | None, optional
+        title
             Title of the plot, by default "Soundscape Density Plot"
-        hue : str | None, optional
+        hue
             Column name for color encoding, by default None
-        palette : SeabornPaletteType | None, optional
+        palette
             Color palette to use, by default "colorblind"
-        figure : Figure | SubFigure | None, optional
+        figure
             Existing figure to plot on, by default None
-        axes : Axes | np.ndarray | None, optional
+        axes
             Existing axes to plot on, by default None
 
         Examples
@@ -151,7 +151,6 @@ class ISOPlot:
         True
 
         Create a plot with a DataFrame:
-
         >>> data = pd.DataFrame(
         ...    np.c_[rng.multivariate_normal([0.2, 0.15], [[0.1, 0], [0, 0.2]], 100),
         ...          rng.integers(1, 3, 100)],
@@ -291,11 +290,11 @@ class ISOPlot:
 
         Parameters
         ----------
-            data : pd.DataFrame | None
+            data
                 The data to be plotted.
-            x : str | pd.Series | np.ndarray
+            x
                 The x-axis data.
-            y : str | pd.Series | np.ndarray
+            y
                 The y-axis data.
 
         """
@@ -376,9 +375,9 @@ class ISOPlot:
 
         Parameters
         ----------
-            data : pd.DataFrame | None
+            data
                 The data to be plotted.
-            hue : str | np.ndarray | pd.Series | None
+            hue
                 The column name for color encoding.
 
         """
@@ -416,21 +415,21 @@ class ISOPlot:
 
         Parameters
         ----------
-        nrows : int, optional
+        nrows
             Number of rows in the subplot grid, by default 1
-        ncols : int, optional
+        ncols
             Number of columns in the subplot grid, by default 1
-        figsize : tuple[int, int], optional
+        figsize
             Size of the figure (width, height), by default (5, 5)
-        subplot_by : str | None, optional
+        subplot_by
             Column name to create subplots by unique values, by default None
-        subplot_datas : list[pd.DataFrame] | None, optional
+        subplot_datas
             List of dataframes for each subplot, by default None
-        subplot_titles : list[str] | None, optional
+        subplot_titles
             List of titles for each subplot, by default None
-        adjust_figsize : bool, optional
+        adjust_figsize
             Whether to adjust the figure size based on nrows/ncols, by default True
-        auto_allocate_axes : bool, optional
+        auto_allocate_axes
             Whether to automatically determine nrows/ncols based on data,
             by default False
         **kwargs :
@@ -438,7 +437,7 @@ class ISOPlot:
 
         Returns
         -------
-        ISOPlot
+        :
             The current plot instance for chaining
 
         Examples
@@ -488,7 +487,8 @@ class ISOPlot:
         # based on the unique values in the specified column
         if self.subplots_params.subplot_by:
             logger.debug(
-                f"Creating subplots by unique values in {self.subplots_params.subplot_by}."
+                "Creating subplots by unique values "
+                f"in {self.subplots_params.subplot_by}."
             )
             subplot_datas, subplot_titles, n_subplots_by = self._setup_subplot_by(
                 self.subplots_params.subplot_by, subplot_datas, subplot_titles
@@ -696,7 +696,8 @@ class ISOPlot:
             )
             raise ValueError(msg)
 
-    def _allocate_subplot_axes(self, subplot_titles: list[str]) -> tuple[int, int]:
+    @staticmethod
+    def _allocate_subplot_axes(subplot_titles: list[str]) -> tuple[int, int]:
         """Allocate the subplot axes based on the number of data subsets."""
         msg = (
             "This is an experimental feature. "
@@ -732,12 +733,16 @@ class ISOPlot:
 
         Returns
         -------
-            Figure | SubFigure: The figure object to be used for plotting.
+        :
+            The matplotlib Figure or SubFigure object associated with this plot.
+
 
         Raises
         ------
-            ValueError: If the figure object does not exist.
-            TypeError: If the figure object is not a valid Figure or SubFigure.
+        ValueError
+            If the figure object does not exist.
+        TypeError
+            If the figure object is not a valid Figure or SubFigure.
 
         """
         if self.figure is None:
@@ -757,12 +762,15 @@ class ISOPlot:
 
         Returns
         -------
-            Axes | np.ndarray: The axes object to be used for plotting.
+        :
+            The matplotlib Axes object or array of Axes associated with this plot.
 
         Raises
         ------
-            ValueError: If the axes object does not exist.
-            TypeError: If the axes object is not a valid Axes or ndarray of Axes.
+        ValueError
+            If the axes object does not exist.
+        TypeError
+            If the axes object is not a valid Axes or ndarray of Axes.
 
         """
         self._check_for_axes()
@@ -777,13 +785,13 @@ class ISOPlot:
 
         Parameters
         ----------
-        ax_idx : int | tuple[int, int] | None, optional
+        ax_idx
             The index of the axes to get. If None, returns the first axes.
             Can be an integer for flattened access or a tuple of (row, col).
 
         Returns
         -------
-        Axes
+        :
             The requested matplotlib Axes object
 
         Raises
@@ -802,7 +810,7 @@ class ISOPlot:
             """
             Validate the tuple axes index.
 
-            This checks the ax_idx types and compares the implied number of axes
+            This checks the `ax_idx` types and compares the implied number of axes
             with the actual number of axes in the figure.
             """
             if (
@@ -839,7 +847,7 @@ class ISOPlot:
             """
             Validate the integer axes index.
 
-            This checks the ax_idx type and compares the implied number of axes
+            This checks the `ax_idx` type and compares the implied number of axes
             with the actual number of axes in the figure.
             """
             if not isinstance(ax_idx, int) or ax_idx < 0:
@@ -877,7 +885,7 @@ class ISOPlot:
 
         Yields
         ------
-        Axes
+        :
             Individual matplotlib Axes objects from the current figure.
 
         """
@@ -893,7 +901,8 @@ class ISOPlot:
 
         Raises
         ------
-            UserWarning: If the data is too small for density plots.
+        UserWarning
+            If the data is too small for density plots.
 
         """
         if len(data) < RECOMMENDED_MIN_SAMPLES:
@@ -917,22 +926,23 @@ class ISOPlot:
 
         Parameters
         ----------
-        layer_class : Layer subclass
+        layer_class
             The type of layer to add
-        on_axis : int | tuple[int, int] | list[int] | None, optional
+        on_axis
             Target specific axis/axes:
+
             - int: Index of subplot (flattened)
             - tuple: (row, col) coordinates
             - list: Multiple indices to apply the layer to
             - None: Apply to all subplots (default)
-        data : pd.DataFrame, optional
+        data
             Custom data for this specific layer, overriding context data
-        **params : dict
+        **params
             Parameters for the layer
 
         Returns
         -------
-        ISOPlot
+        :
             The current plot instance for chaining
 
         Examples
@@ -952,7 +962,7 @@ class ISOPlot:
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer)
         ...         .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
             True
         >>> plot.close()  # Clean up
@@ -963,7 +973,7 @@ class ISOPlot:
         ...         .create_subplots(nrows=2, ncols=2)
         ...         .add_layer(ScatterLayer, on_axis=0)
         ...         .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> all(len(ctx.layers) == 0 for ctx in plot.subplot_contexts[1:])
@@ -976,7 +986,7 @@ class ISOPlot:
         ...            .create_subplots(nrows=2, ncols=2)
         ...            .add_layer(ScatterLayer, on_axis=[0, 2])
         ...            .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> len(plot.subplot_contexts[2].layers) == 1
@@ -998,11 +1008,11 @@ class ISOPlot:
         ...        # Add a layer with custom data to the second subplot
         ...        .add_layer(ScatterLayer, data=custom_data, on_axis=1)
         ...        .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.close()
 
         """
-        # TODO(MitchellAcoustics): Need to handle legend/label creation   # noqa: TD003
+        # TODO(MitchellAcoustics): Need to handle legend/label creation
         #                          for new data added to a specific subplot
         # Create the layer instance
         layer = layer_class(custom_data=data, **params)
@@ -1047,8 +1057,9 @@ class ISOPlot:
 
         Parameters
         ----------
-        on_axis : int | tuple[int, int] | list[int] | None
+        on_axis
             The axis specification:
+
             - None: All subplot contexts
             - int: Single subplot at flattened index
             - tuple[int, int]: Subplot at (row, col)
@@ -1056,7 +1067,7 @@ class ISOPlot:
 
         Returns
         -------
-        list[PlotContext]
+        :
             List of target subplot contexts
 
         """
@@ -1086,12 +1097,12 @@ class ISOPlot:
 
         Parameters
         ----------
-        on_axis : int | tuple[int, int] | list[int]
+        on_axis
             The axis specification to resolve
 
         Returns
         -------
-        list[int]
+        :
             List of flattened indices
 
         Raises
@@ -1123,16 +1134,16 @@ class ISOPlot:
 
         Parameters
         ----------
-        on_axis : int | tuple[int, int] | list[int] | None, optional
+        on_axis
             Target specific axis/axes
-        data : pd.DataFrame, optional
+        data
             Custom data for this specific scatter plot
-        **params : dict
+        **params
             Parameters for the scatter plot
 
         Returns
         -------
-        ISOPlot
+        :
             The current plot instance for chaining
 
         Examples
@@ -1150,7 +1161,7 @@ class ISOPlot:
         ...           .create_subplots(nrows=2, ncols=1)
         ...           .add_scatter(s=50, alpha=0.7, hue='Group')
         ...           .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> all(len(ctx.layers) == 1 for ctx in plot.subplot_contexts)
         True
         >>> plot.close()  # Clean up
@@ -1166,7 +1177,7 @@ class ISOPlot:
         ...            .add_scatter(hue='Group')
         ...            .add_scatter(on_axis=0, data=custom_data, color='red')
         ...            .style())
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.subplot_contexts[0].layers[1].custom_data is custom_data
         True
         >>> plot.close()  # Clean up
@@ -1199,16 +1210,16 @@ class ISOPlot:
 
         Parameters
         ----------
-        on_axis : int | tuple[int, int] | list[int] | None, optional
+        on_axis
             Target specific axis/axes
-        spi_target_data : pd.DataFrame | np.ndarray | None, optional
+        spi_target_data
             Custom data for this specific SPI plot
-        msn_params : DirectParams | CentredParams | None, optional
+        msn_params
             Parameters for the SPI plot
 
         Returns
         -------
-        ISOPlot
+        :
             The current plot instance for chaining
 
         Examples
@@ -1238,7 +1249,7 @@ class ISOPlot:
         ...     .add_spi(msn_params=msn_params)
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
         True
         >>> plot.close()  # Clean up
@@ -1252,7 +1263,7 @@ class ISOPlot:
         ...     .add_spi(msn_params=msn_params, show_score="on axis")
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 3
         True
 
@@ -1285,12 +1296,12 @@ class ISOPlot:
         ...     .add_spi(spi_target_data=spi_msn.sample_data, show_score="under title")
         ...     .style()
         ... )
-        >>> mp3.show() # xdoctest: +SKIP
+        >>> mp3.show() # doctest: +SKIP
         >>> plot.close()  # Clean up
 
+        """
         # BUG: This last doctest doesn't show the spi score under the title
 
-        """
         if layer_class == SPISimpleLayer:
             spi_simple_params = self._spi_simple_density_params.copy()
             spi_simple_params.drop("data")
@@ -1326,18 +1337,18 @@ class ISOPlot:
 
         Parameters
         ----------
-        on_axis : int | tuple[int, int] | list[int] | None, optional
+        on_axis
             Target specific axis/axes
-        data : pd.DataFrame, optional
+        data
             Custom data for this specific density plot
-        include_outline : bool, optional
+        include_outline
             Whether to include an outline around the density plot, by default False
-        **params : dict
+        **params
             Parameters for the density plot
 
         Returns
         -------
-        ISOPlot
+        :
             The current plot instance for chaining
 
         Examples
@@ -1357,7 +1368,7 @@ class ISOPlot:
         ...     .add_density()
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> plot.close()  # Clean up
@@ -1370,7 +1381,7 @@ class ISOPlot:
         ...     .add_density(levels=5, alpha=0.7)
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 1
         True
         >>> plot.close()  # Clean up
@@ -1402,24 +1413,20 @@ class ISOPlot:
 
         Parameters
         ----------
-        on_axis : int | tuple[int, int] | list[int] | None, optional
+        on_axis
             Target specific axis/axes
-        data : pd.DataFrame, optional
+        data
             Custom data for this specific density plot
-        thresh : float, optional
-            Threshold for density contours, by default 0.5
-        levels : int | Iterable[float], optional
-            Contour levels, by default 2
-        alpha : float, optional
-            Transparency level, by default 0.5
-        include_outline : bool, optional
+        include_outline
             Whether to include an outline around the density plot, by default True
-        **params : dict
-            Additional parameters for the density plot
+        **params
+            Additional parameters for the density plot. Useful options include
+            `thresh` (default `0.5`), `levels` (default `2`), and `alpha`
+            (default `0.5`).
 
         Returns
         -------
-        ISOPlot
+        :
             The current plot instance for chaining
 
         Examples
@@ -1440,7 +1447,7 @@ class ISOPlot:
         ...     .add_simple_density()
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
         True
         >>> plot.close()  # Clean up
@@ -1457,7 +1464,7 @@ class ISOPlot:
         ...     .add_simple_density()
         ...     .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> len(plot.subplot_contexts[0].layers) == 2
         True
         >>> plot.close()
@@ -1489,24 +1496,24 @@ class ISOPlot:
 
         Parameters
         ----------
-        text : str
+        text
             The text to display in the annotation.
-        xy : tuple[float, float]
+        xy
             The point to annotate.
-        xytext : tuple[float, float]
+        xytext
             The point at which to place the text.
-        arrowprops : dict[str, Any] | None, optional
+        arrowprops
             Properties for the arrow connecting the annotation text to the point.
 
         Returns
         -------
-        ISOPlot
+        :
             The current plot instance for chaining
 
         """
         msg = "AnnotationLayer is not yet implemented. "
         raise NotImplementedError(msg)
-        # TODO(MitchellAcoustics): Implement AnnotationLayer  # noqa: TD003
+        # TODO(MitchellAcoustics): Implement AnnotationLayer
         return self.add_layer(
             "AnnotationLayer",
             text=text,
@@ -1524,11 +1531,11 @@ class ISOPlot:
 
         Parameters
         ----------
-        **kwargs: Styling parameters to override defaults
+        **kwargs
 
         Returns
         -------
-        ISOPlot
+        :
             The current plot instance for chaining
 
         Examples
@@ -1550,7 +1557,7 @@ class ISOPlot:
         ...       .add_scatter()
         ...       .style()
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.get_figure() is not None
         True
         >>> plot.close()  # Clean up
@@ -1563,7 +1570,7 @@ class ISOPlot:
         ...         .add_scatter()
         ...         .style(xlim=(-2, 2), ylim=(-2, 2), primary_lines=False)
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.get_figure() is not None
         True
         >>> plot.close()  # Clean up
@@ -1578,7 +1585,7 @@ class ISOPlot:
         ...     .add_density(levels=5)
         ...     .style(title_fontsize=14)
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> # Verify results
         >>> isinstance(plot, ISOPlot)
         True
@@ -1714,7 +1721,7 @@ class ISOPlot:
         ...     .add_scatter()
         ...     .style(diagonal_lines=True)
         ... )
-        >>> plot.show() # xdoctest: +SKIP
+        >>> plot.show() # doctest: +SKIP
         >>> plot.close('all')
 
         """
@@ -1787,10 +1794,9 @@ class ISOPlot:
 
     def _move_legend(self) -> None:
         """Move the legend to the specified location."""
-        for i, axis in enumerate(self.yield_axes_objects()):
+        for _, axis in enumerate(self.yield_axes_objects()):
             old_legend = axis.get_legend()
             if old_legend is None:
-                # logger.debug("_move_legend: No legend found for axis %s", i)
                 continue
 
             # Get handles and filter out None values

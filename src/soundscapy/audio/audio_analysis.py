@@ -36,15 +36,15 @@ class AudioAnalysis:
 
     Methods
     -------
-    analyze_file(file_path, calibration_levels, resample)
+    analyze_file
         Analyze a single audio file
-    analyze_folder(folder_path, calibration_file, max_workers, resample)
+    analyze_folder
         Analyze all audio files in a folder using parallel processing
-    save_results(results, output_path)
+    save_results
         Save analysis results to a file
-    update_config(new_config)
+    update_config
         Update the current configuration
-    save_config(config_path)
+    save_config
         Save the current configuration to a file
 
     """
@@ -55,7 +55,7 @@ class AudioAnalysis:
 
         Parameters
         ----------
-        config_path : str, Path, or None
+        config_path
             Path to the configuration file. If None, uses default configuration.
 
         """
@@ -76,15 +76,16 @@ class AudioAnalysis:
 
         Parameters
         ----------
-        resample
-        file_path : str or Path
+        file_path
             Path to the audio file to analyze.
-        calibration_levels : dict, optional
+        calibration_levels
             Dictionary containing calibration levels for left and right channels.
+        resample
+            Sampling rate to resample the audio to before analysis.
 
         Returns
         -------
-        pd.DataFrame
+        :
             DataFrame containing the analysis results.
 
         """
@@ -111,18 +112,19 @@ class AudioAnalysis:
 
         Parameters
         ----------
-        resample
-        folder_path : str or Path
+        folder_path
             Path to the folder containing audio files.
-        calibration_file : str or Path, optional
+        calibration_file
             Path to a JSON file containing calibration levels for each audio file.
-        max_workers : int, optional
+        max_workers
             Maximum number of worker processes to use.
             If None, it will use the number of CPU cores.
+        resample
+            Sampling rate to resample the audio to before analysis.
 
         Returns
         -------
-        pd.DataFrame
+        :
             DataFrame containing the analysis results for all files.
 
         """
@@ -163,7 +165,7 @@ class AudioAnalysis:
                 try:
                     result = future.result()
                     all_results.append(result)
-                except Exception as e:  # noqa: BLE001, PERF203
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing file: {e!s}")
 
         combined_results = pd.concat(all_results)
@@ -178,9 +180,9 @@ class AudioAnalysis:
 
         Parameters
         ----------
-        results : pd.DataFrame
+        results
             DataFrame containing the analysis results.
-        output_path : str or Path
+        output_path
             Path to save the results file.
 
         """
@@ -202,7 +204,7 @@ class AudioAnalysis:
 
         Parameters
         ----------
-        new_config : dict
+        new_config
             Dictionary containing the new configuration settings.
 
         """
@@ -216,7 +218,7 @@ class AudioAnalysis:
 
         Parameters
         ----------
-        config_path : str or Path
+        config_path
             Path to save the configuration file.
 
         """

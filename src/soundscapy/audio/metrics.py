@@ -5,39 +5,14 @@ It includes implementations for single-channel and two-channel signals,
 as well as wrapper functions for different libraries such as Acoustic Toolbox, MoSQITo,
 and scikit-maad.
 
-Functions
----------
-_stat_calcs : Calculate various statistics for a time series array.
-mosqito_metric_1ch : Calculate a MoSQITo psychoacoustic metric for a single channel
-    signal.
-maad_metric_1ch : Run a metric from the scikit-maad library on a single channel signal.
-acoustics_metric_1ch : Run a metric from the Acoustic Toolbox on a single channel
-    object.
-acoustics_metric_2ch : Run a metric from the Acoustic Toolbox on a Binaural object.
-pyacoustics_metric_1ch: Deprecated function for running a metric from the PyAcoustics
-    library
-pyacoustics_metric_2ch: Deprecated function for running a metric from the PyAcoustics
-    library (replaced with `acoustics_metric_2ch`).
-pyacoustics_metric_2ch: Deprecated function for running a metric from the PyAcoustics
-    library (replaced with `acoustics_metric_2ch`).
-mosqito_metric_2ch : Calculate metrics from MoSQITo for a two-channel signal.
-maad_metric_2ch : Run a metric from the scikit-maad library on a binaural signal.
-prep_multiindex_df : Prepare a MultiIndex dataframe from a dictionary of results.
-add_results : Add results to a MultiIndex dataframe.
-process_all_metrics : Process all metrics specified in the analysis settings for a
-    binaural signal.
-
-Notes
------
-This module relies on external libraries such as numpy, pandas, maad, mosqito,
-and scipy. Ensure these dependencies are installed before using this module.
-
 """
+
+from __future__ import annotations
 
 import concurrent.futures
 import multiprocessing as mp
 import warnings
-from typing import Literal, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, TypedDict
 
 try:
     from typing import Unpack
@@ -46,7 +21,6 @@ except ImportError:
 
 import numpy as np
 import pandas as pd
-from acoustic_toolbox import Signal
 from loguru import logger
 from maad.features import all_spectral_alpha_indices, all_temporal_alpha_indices
 from maad.sound import spectrogram
@@ -57,10 +31,14 @@ from mosqito.sq_metrics import (
     sharpness_din_perseg,
     sharpness_din_tv,
 )
-from numpy.typing import NDArray
 from scipy import stats
 
-from soundscapy.audio.analysis_settings import AnalysisSettings
+if TYPE_CHECKING:
+    from acoustic_toolbox import Signal
+    from numpy.typing import NDArray
+
+    from soundscapy import Binaural
+    from soundscapy.audio.analysis_settings import AnalysisSettings
 
 DEFAULT_LABELS = {
     "LZeq": "LZeq",
@@ -87,25 +65,25 @@ def _stat_calcs(
 
     Parameters
     ----------
-    label : str
+    label
         Base label for the statistic in the results dictionary.
-    ts_array : np.ndarray
+    ts_array
         1D numpy array of the time series data.
-    res : dict
+    res
         Existing results dictionary to update with new statistics.
-    statistics : List[Union[int, str]]
+    statistics
         List of statistics to calculate. Can include percentiles
         (as integers) and string identifiers for other statistics
         (e.g., "avg", "max", "min", "kurt", "skew").
 
     Returns
     -------
-    dict
+    :
         Updated results dictionary with newly calculated statistics.
 
     Examples
     --------
-    >>> # xdoctest: +REQUIRES(env:AUDIO_DEPS='1')
+    >>> # doctest: +REQUIRES(env:AUDIO_DEPS='1')
     >>> ts = np.array([1, 2, 3, 4, 5])
     >>> res = {}
     >>> updated_res = _stat_calcs("metric", ts, res, [50, "avg", "max"])
@@ -133,7 +111,7 @@ def _stat_calcs(
             else:
                 logger.error(f"Unrecognized statistic: {stat} for {label}")
                 res[f"{label}_{stat}"] = np.nan
-        except Exception as e:  # noqa: BLE001, PERF203
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error calculating {stat} for {label}: {e!s}")
             res[f"{label}_{stat}"] = np.nan
     return res
@@ -141,9 +119,7 @@ def _stat_calcs(
 
 class _MosqitoMetricParams(TypedDict, total=False):
     field_type: str  # loudness_zwtv, sharpness_din_from_loudness, sharpness_din_tv
-    weighting: (
-        str  # sharpness_din_from_loudness, sharpness_din_perseg, sharpness_din_tv
-    )
+    weighting: str  # sharpness_din_from_loudness,sharpness_din_perseg,sharpness_din_tv
     overlap: float  # roughness_dw
     nperseg: int  # sharpness_din_perseg
     noverlap: int | None  # sharpness_din_perseg
@@ -182,26 +158,26 @@ def mosqito_metric_1ch(
 
     Parameters
     ----------
-    s : Signal
+    s
         Single channel signal object to analyze.
-    metric : str
+    metric
         Name of the metric to calculate. Options are "loudness_zwtv",
         "roughness_dw", "sharpness_din_from_loudness", "sharpness_din_perseg",
         or "sharpness_din_tv".
-    statistics : tuple[int | str, ...], optional
+    statistics
         Statistics to calculate on the metric results.
-    label : str, optional
+    label
         Label to use for the metric in the results. If None, uses a default label.
-    as_df : bool, optional
+    as_df
         If True, return results as a pandas DataFrame. Otherwise, return a dictionary.
-    return_time_series : bool, optional
+    return_time_series
         If True, include the full time series in the results.
-    func_args : dict, optional
+    **kwargs
         Additional arguments to pass to the underlying MoSQITo function.
 
     Returns
     -------
-    Union[dict, pd.DataFrame]
+    :
         Results of the metric calculation and statistics.
 
     Raises
@@ -212,7 +188,7 @@ def mosqito_metric_1ch(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> from soundscapy.audio import Binaural
     >>> signal = Binaural.from_wav("audio.wav", resample=480000)
     >>> results = mosqito_metric_1ch(signal[0], "loudness_zwtv", as_df=True)
@@ -326,7 +302,7 @@ def mosqito_metric_1ch(
         else:
             msg = f"Metric {metric} not recognized."
             logger.error(msg)
-            raise ValueError(msg)
+            raise ValueError(msg)  # noqa: TRY301
     except Exception as e:
         logger.error(f"Error calculating {metric}: {e!s}")
         raise
@@ -339,27 +315,34 @@ def mosqito_metric_1ch(
     return pd.DataFrame(res, index=[rec])
 
 
-def maad_metric_1ch(s, metric: str, as_df: bool = False, func_args={}):
+# noinspection PyPep8Naming
+def maad_metric_1ch(
+    s: Signal | Binaural,
+    metric: Literal["all_temporal_alpha_indices", "all_spectral_alpha_indices"],
+    as_df: bool = False,
+    func_args: dict | None = None,
+) -> Any:
     """
-    Run a metric from the scikit-maad library (or suite of indices) on a single channel signal.
+    Run a metric from the scikit-maad library (or suite of indices) on a single channel.
 
-    Currently only supports running all of the alpha indices at once.
+    Currently only supports running all the alpha indices at once.
 
     Parameters
     ----------
-    s : Signal or Binaural (single channel)
+    s
         Single channel signal to calculate the alpha indices for.
-    metric : {"all_temporal_alpha_indices", "all_spectral_alpha_indices"}
+    metric
         Metric to calculate.
-    as_df : bool, optional
+    as_df
         Whether to return a pandas DataFrame, by default False.
-        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-    func_args : dict, optional
+        If True, returns a MultiIndex Dataframe
+        with ("Recording", "Channel") as the index.
+    func_args
         Additional keyword arguments to pass to the metric function, by default {}.
 
     Returns
     -------
-    dict or pd.DataFrame
+    :
         Dictionary of results if as_df is False, otherwise a pandas DataFrame.
 
     Raises
@@ -375,23 +358,28 @@ def maad_metric_1ch(s, metric: str, as_df: bool = False, func_args={}):
     """
     logger.debug(f"Calculating MAAD metric: {metric}")
 
+    if func_args is None:
+        func_args = {}
+
     # Checks and status
     if s.channels != 1:
-        logger.error("Signal must be single channel")
-        raise ValueError("Signal must be single channel")
+        msg = "Signal must be single channel."
+        logger.error(msg)
+        raise ValueError(msg)
 
     logger.debug(f"Calculating scikit-maad {metric}")
 
     # Start the calc
     try:
         if metric == "all_spectral_alpha_indices":
-            Sxx, tn, fn, ext = spectrogram(s, s.fs, **func_args)
+            Sxx, tn, fn, ext = spectrogram(s, s.fs, **func_args)  # noqa: N806
             res = all_spectral_alpha_indices(Sxx, tn, fn, extent=ext, **func_args)[0]
         elif metric == "all_temporal_alpha_indices":
             res = all_temporal_alpha_indices(s, s.fs, **func_args)
         else:
-            logger.error(f"Metric {metric} not recognized")
-            raise ValueError(f"Metric {metric} not recognized.")
+            msg = f"Metric {metric} not recognized."
+            logger.error(msg)
+            raise ValueError(msg)  # noqa: TRY301
     except Exception as e:
         logger.error(f"Error calculating {metric}: {e!s}")
         raise
@@ -400,14 +388,13 @@ def maad_metric_1ch(s, metric: str, as_df: bool = False, func_args={}):
         return res.to_dict("records")[0]
     try:
         res["Recording"] = s.recording
-        res.set_index(["Recording"], inplace=True)
-        return res
+        return res.set_index(["Recording"])
     except AttributeError:
         return res
 
 
-def pyacoustics_metric_1ch(
-    s,
+def pyacoustics_metric_1ch(  # noqa: ANN201
+    s: Signal | Binaural,
     metric: str,
     statistics: list[int | str] = (
         5,
@@ -422,13 +409,19 @@ def pyacoustics_metric_1ch(
         "skew",
     ),
     label: str | None = None,
-    as_df: bool = False,
-    return_time_series: bool = False,
-    func_args={},
+    as_df: bool = False,  # noqa: FBT001, FBT002
+    return_time_series: bool = False,  # noqa: FBT001, FBT002
+    func_args={},  # noqa: ANN001, B006
 ):
+    """
+
+    !!! warning "Deprecated"
+        pyacoustics is deprecated. Use `acoustics_metric_1ch` instead.
+    """
     warnings.warn(
         "pyacoustics is deprecated. Use acoustics_metric_1ch instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
     return acoustics_metric_1ch(
         s,
@@ -442,7 +435,7 @@ def pyacoustics_metric_1ch(
 
 
 def acoustics_metric_1ch(
-    s,
+    s: Signal | Binaural,
     metric: str,
     statistics: list[int | str] = (
         5,
@@ -459,34 +452,35 @@ def acoustics_metric_1ch(
     label: str | None = None,
     as_df: bool = False,
     return_time_series: bool = False,
-    func_args={},
-):
+    func_args: dict | None = None,
+) -> dict | pd.DataFrame:
     """
     Run a metric from the acoustic_toolbox library on a single channel object.
 
     Parameters
     ----------
-    s : Signal or Binaural (single channel slice)
+    s
         Single channel signal to calculate the metric for.
-    metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
+    metric
         The metric to run.
-    statistics : List[Union[int, str]], optional
+    statistics
         List of level statistics to calculate (e.g. L_5, L_90, etc).
-    label : str, optional
+    label
         Label to use for the metric in the results dictionary.
         If None, will pull from default label for that metric given in DEFAULT_LABELS.
-    as_df : bool, optional
+    as_df
         Whether to return a pandas DataFrame, by default False.
-        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-    return_time_series : bool, optional
+        If True, returns a MultiIndex Dataframe
+        with ("Recording", "Channel") as the index.
+    return_time_series
         Whether to return the time series of the metric, by default False.
         Cannot return time series if as_df is True.
-    func_args : dict, optional
+    func_args
         Additional keyword arguments to pass to the metric function, by default {}.
 
     Returns
     -------
-    dict or pd.DataFrame
+    :
         Dictionary of the calculated statistics or a pandas DataFrame.
 
     Raises
@@ -496,19 +490,24 @@ def acoustics_metric_1ch(
 
     See Also
     --------
-    acoustic_toolbox
+    `acoustic_toolbox`
 
     """
     logger.debug(f"Calculating acoustics metric: {metric}")
 
+    if func_args is None:
+        func_args = {}
+
     if s.channels != 1:
-        logger.error("Signal must be single channel")
-        raise ValueError("Signal must be single channel")
+        msg = "Signal must be single channel"
+        logger.error(msg)
+        raise ValueError(msg)
     try:
         label = label or DEFAULT_LABELS[metric]
     except KeyError as e:
-        logger.error(f"Metric {metric} not recognized")
-        raise ValueError(f"Metric {metric} not recognized.") from e
+        msg = f"Metric {metric} not recognized."
+        logger.error(msg)
+        raise ValueError(msg) from e
     if as_df and return_time_series:
         logger.warning(
             "Cannot return both a dataframe and time series. Returning dataframe only."
@@ -542,8 +541,9 @@ def acoustics_metric_1ch(
         elif metric == "SEL":
             res[f"{label}"] = s.sound_exposure_level()
         else:
-            logger.error(f"Metric {metric} not recognized")
-            raise ValueError(f"Metric {metric} not recognized.")
+            msg = f"Metric {metric} not recognized."
+            logger.error(msg)
+            raise ValueError(msg)  # noqa: TRY301
     except Exception as e:
         logger.error(f"Error calculating {metric}: {e!s}")
         raise
@@ -557,8 +557,8 @@ def acoustics_metric_1ch(
         return pd.DataFrame(res, index=[0])
 
 
-def pyacoustics_metric_2ch(
-    b,
+def pyacoustics_metric_2ch(  # noqa: ANN201
+    b: Binaural,
     metric: str,
     statistics: tuple | list = (
         5,
@@ -572,15 +572,21 @@ def pyacoustics_metric_2ch(
         "kurt",
         "skew",
     ),
-    label: str = None,
+    label: str | None = None,
     channel_names: tuple[str, str] = ("Left", "Right"),
-    as_df: bool = False,
-    return_time_series: bool = False,
-    func_args={},
+    as_df: bool = False,  # noqa: FBT001, FBT002
+    return_time_series: bool = False,  # noqa: FBT001, FBT002
+    func_args={},  # noqa: ANN001, B006
 ):
+    """
+
+    !!! warning "Deprecated"
+        pyacoustics is deprecated. Use `acoustics_metric_2ch` instead.
+    """
     warnings.warn(
         "pyacoustics is deprecated. Use acoustics_metric_2ch instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
     return acoustics_metric_2ch(
         b,
@@ -595,7 +601,7 @@ def pyacoustics_metric_2ch(
 
 
 def acoustics_metric_2ch(
-    b,
+    b: Binaural,
     metric: str,
     statistics: tuple | list = (
         5,
@@ -613,73 +619,37 @@ def acoustics_metric_2ch(
     channel_names: tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
     return_time_series: bool = False,
-    func_args={},
-):
-    warnings.warn(
-        "pyacoustics is deprecated. Use acoustics_metric_2ch instead.",
-        DeprecationWarning,
-    )
-    return acoustics_metric_2ch(
-        b,
-        metric,
-        statistics,
-        label,
-        channel_names,
-        as_df,
-        return_time_series,
-        func_args,
-    )
-
-
-def acoustics_metric_2ch(
-    b,
-    metric: str,
-    statistics: tuple | list = (
-        5,
-        10,
-        50,
-        90,
-        95,
-        "avg",
-        "max",
-        "min",
-        "kurt",
-        "skew",
-    ),
-    label: str | None = None,
-    channel_names: tuple[str, str] = ("Left", "Right"),
-    as_df: bool = False,
-    return_time_series: bool = False,
-    func_args={},
-):
+    func_args: dict | None = None,
+) -> dict | pd.DataFrame:
     """
     Run a metric from the Acoustic Toolbox library on a Binaural object.
 
     Parameters
     ----------
-    b : Binaural
+    b
         Binaural signal to calculate the metric for.
-    metric : {"LZeq", "Leq", "LAeq", "LCeq", "SEL"}
+    metric
         The metric to run.
-    statistics : tuple or list, optional
+    statistics
         List of level statistics to calculate (e.g. L_5, L_90, etc).
-    label : str, optional
+    label
         Label to use for the metric in the results dictionary.
         If None, will pull from default label for that metric given in DEFAULT_LABELS.
-    channel_names : tuple of str, optional
+    channel_names
         Custom names for the channels, by default ("Left", "Right").
-    as_df : bool, optional
+    as_df
         Whether to return a pandas DataFrame, by default False.
-        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-    return_time_series : bool, optional
+        If True, returns a MultiIndex Dataframe
+        with ("Recording", "Channel") as the index.
+    return_time_series
         Whether to return the time series of the metric, by default False.
         Cannot return time series if as_df is True.
-    func_args : dict, optional
+    func_args
         Arguments to pass to the metric function, by default {}.
 
     Returns
     -------
-    dict or pd.DataFrame
+    :
         Dictionary of results if as_df is False, otherwise a pandas DataFrame.
 
     Raises
@@ -689,16 +659,18 @@ def acoustics_metric_2ch(
 
     See Also
     --------
-    acoustics_metric_1ch
+    `acoustics_metric_1ch`
 
     """
     logger.debug(f"Calculating acoustics metric for 2 channels: {metric}")
 
-    if b.channels != 2:
-        logger.error("Must be 2 channel signal. Use `acoustics_metric_1ch` instead.")
-        raise ValueError(
-            "Must be 2 channel signal. Use `acoustics_metric_1ch instead`."
-        )
+    if func_args is None:
+        func_args = {}
+
+    if b.channels != 2:  # noqa: PLR2004
+        msg = "Must be 2 channel signal. Use `acoustics_metric_1ch instead`."
+        logger.error(msg)
+        raise ValueError(msg)
 
     logger.debug(f"Calculating Acoustic Toolbox metrics: {metric}")
 
@@ -734,15 +706,19 @@ def acoustics_metric_2ch(
         rec = b.recording
     except AttributeError:
         rec = 0
-    df = pd.DataFrame.from_dict(res, orient="index")
-    df["Recording"] = rec
-    df["Channel"] = df.index
-    df.set_index(["Recording", "Channel"], inplace=True)
-    return df
+    else:
+        data = pd.DataFrame.from_dict(res, orient="index")
+        data["Recording"] = rec
+        data["Channel"] = data.index
+        return data.set_index(["Recording", "Channel"])
+    data = pd.DataFrame.from_dict(res, orient="index")
+    data["Recording"] = rec
+    data["Channel"] = data.index
+    return data.set_index(["Recording", "Channel"])
 
 
 def _parallel_mosqito_metric_2ch(
-    b,
+    b: Binaural,
     metric: str,
     statistics: tuple | list = (
         5,
@@ -759,40 +735,43 @@ def _parallel_mosqito_metric_2ch(
     label: str | None = None,
     channel_names: tuple[str, str] = ("Left", "Right"),
     return_time_series: bool = False,
-    func_args={},
-):
+    func_args: dict | None = None,
+) -> dict | None:
     """
     Run a metric from the mosqito library on a Binaural object in parallel.
 
     Parameters
     ----------
-    b : Binaural
+    b
         Binaural signal to calculate the metric for.
-    metric : str
+    metric
         The metric to run.
-    statistics : tuple or list, optional
+    statistics
         List of level statistics to calculate (e.g. L_5, L_90, etc).
-    label : str, optional
+    label
         Label to use for the metric in the results dictionary.
         If None, will pull from default label for that metric given in DEFAULT_LABELS.
-    channel_names : tuple of str, optional
+    channel_names
         Custom names for the channels, by default ("Left", "Right").
-    return_time_series : bool, optional
+    return_time_series
         Whether to return the time series of the metric, by default False.
-    func_args : dict, optional
+    func_args
         Arguments to pass to the metric function, by default {}.
 
     Returns
     -------
-    dict
+    :
         Dictionary of results for both channels.
 
     See Also
     --------
-    mosqito_metric_1ch
+    `mosqito_metric_1ch`
 
     """
     logger.debug(f"Calculating MoSQITo metric in parallel: {metric}")
+
+    if func_args is None:
+        func_args = {}
 
     pool = mp.Pool(mp.cpu_count())
     try:
@@ -823,8 +802,14 @@ def _parallel_mosqito_metric_2ch(
 
 
 def mosqito_metric_2ch(
-    b,
-    metric: str,
+    b: Binaural,
+    metric: Literal[
+        "loudness_zwtv",
+        "sharpness_din_from_loudness",
+        "sharpness_din_perseg",
+        "sharpness_din_tv",
+        "roughness_dw",
+    ],
     statistics: tuple | list = (
         5,
         10,
@@ -837,45 +822,45 @@ def mosqito_metric_2ch(
         "kurt",
         "skew",
     ),
-    label: str = None,
+    label: str | None = None,
     channel_names: tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
     return_time_series: bool = False,
     parallel: bool = True,
-    func_args={},
-):
+    func_args: dict | None = None,
+) -> dict | pd.DataFrame:
     """
-    Calculate metrics from MoSQITo for a two-channel signal with optional parallel processing.
+    Calculate metrics from MoSQITo for a two-channel signal with parallel processing.
 
     Parameters
     ----------
-    b : Binaural
+    b
         Binaural signal to calculate the sound quality indices for.
-    metric : {"loudness_zwtv", "sharpness_din_from_loudness", "sharpness_din_perseg",
-    "sharpness_din_tv", "roughness_dw"}
+    metric
         Metric to calculate.
-    statistics : tuple or list, optional
+    statistics
         List of level statistics to calculate (e.g. L_5, L_90, etc.).
-    label : str, optional
+    label
         Label to use for the metric in the results dictionary.
         If None, will pull from default label for that metric given in DEFAULT_LABELS.
-    channel_names : tuple of str, optional
+    channel_names
         Custom names for the channels, by default ("Left", "Right").
-    as_df : bool, optional
+    as_df
         Whether to return a pandas DataFrame, by default False.
-        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-    return_time_series : bool, optional
+        If True, returns a MultiIndex Dataframe
+        with ("Recording", "Channel") as the index.
+    return_time_series
         Whether to return the time series of the metric, by default False.
         Only works for metrics that return a time series array.
         Cannot be returned in a dataframe.
-    parallel : bool, optional
+    parallel
         Whether to process channels in parallel, by default True.
-    func_args : dict, optional
+    func_args
         Additional arguments to pass to the metric function, by default {}.
 
     Returns
     -------
-    dict or pd.DataFrame
+    :
         Dictionary of results if as_df is False, otherwise a pandas DataFrame.
 
     Raises
@@ -886,9 +871,13 @@ def mosqito_metric_2ch(
     """
     logger.debug(f"Calculating MoSQITo metric for 2 channels: {metric}")
 
-    if b.channels != 2:
-        logger.error("Must be 2 channel signal. Use `mosqito_metric_1ch` instead.")
-        raise ValueError("Must be 2 channel signal. Use `mosqito_metric_1ch` instead.")
+    if func_args is None:
+        func_args = {}
+
+    if b.channels != 2:  # noqa: PLR2004
+        msg = "Must be 2 channel signal. Use `mosqito_metric_1ch` instead."
+        logger.error(msg)
+        raise ValueError(msg)
 
     if metric == "sharpness_din_from_loudness":
         logger.debug(
@@ -953,42 +942,47 @@ def mosqito_metric_2ch(
         rec = b.recording
     except AttributeError:
         rec = 0
-    df = pd.DataFrame.from_dict(res, orient="index")
-    df["Recording"] = rec
-    df["Channel"] = df.index
-    df.set_index(["Recording", "Channel"], inplace=True)
-    return df
+    else:
+        data = pd.DataFrame.from_dict(res, orient="index")
+        data["Recording"] = rec
+        data["Channel"] = data.index
+        return data.set_index(["Recording", "Channel"])
+    data = pd.DataFrame.from_dict(res, orient="index")
+    data["Recording"] = rec
+    data["Channel"] = data.index
+    return data.set_index(["Recording", "Channel"])
 
 
 def maad_metric_2ch(
-    b,
-    metric: str,
+    b: Binaural,
+    metric: Literal["all_temporal_alpha_indices", "all_spectral_alpha_indices"],
     channel_names: tuple[str, str] = ("Left", "Right"),
     as_df: bool = False,
-    func_args={},
-):
+    func_args: dict | None = None,
+) -> dict | pd.DataFrame:
     """
-    Run a metric from the scikit-maad library (or suite of indices) on a binaural signal.
+    Run a metric from scikit-maad library (or suite of indices) on a binaural signal.
 
     Currently only supports running all the alpha indices at once.
 
     Parameters
     ----------
-    b : Binaural
+    b
         Binaural signal to calculate the alpha indices for.
-    metric : {"all_temporal_alpha_indices", "all_spectral_alpha_indices"}
+    metric
         Metric to calculate.
-    channel_names : tuple of str, optional
+    channel_names
         Custom names for the channels, by default ("Left", "Right").
-    as_df : bool, optional
+    as_df
         Whether to return a pandas DataFrame, by default False.
-        If True, returns a MultiIndex Dataframe with ("Recording", "Channel") as the index.
-    func_args : dict, optional
+        If True, returns a MultiIndex Dataframe with ("Recording", "Channel")
+        as the index.
+    func_args
         Additional arguments to pass to the metric function, by default {}.
 
     Returns
     -------
-    dict or pd.DataFrame
+    :
         Dictionary of results if as_df is False, otherwise a pandas DataFrame.
 
     Raises
@@ -998,15 +992,20 @@ def maad_metric_2ch(
 
     See Also
     --------
-    scikit-maad library
-    maad_metric_1ch
+    `scikit-maad` library
+
+    `maad_metric_1ch`
 
     """
     logger.debug(f"Calculating MAAD metric for 2 channels: {metric}")
 
-    if b.channels != 2:
+    if func_args is None:
+        func_args = {}
+
+    if b.channels != 2:  # noqa: PLR2004
         logger.error("Must be 2 channel signal. Use `maad_metric_1ch` instead.")
-        raise ValueError("Must be 2 channel signal. Use `maad_metric_1ch` instead.")
+        msg = "Must be 2 channel signal. Use `maad_metric_1ch` instead."
+        raise ValueError(msg)
 
     logger.debug(f"Calculating scikit-maad {metric}")
 
@@ -1024,33 +1023,35 @@ def maad_metric_2ch(
         rec = b.recording
     except AttributeError:
         rec = 0
-    df = pd.DataFrame.from_dict(res, orient="index")
-    df["Recording"] = rec
-    df["Channel"] = df.index
-    df.set_index(["Recording", "Channel"], inplace=True)
-    return df
+    data = pd.DataFrame.from_dict(res, orient="index")
+    data["Recording"] = rec
+    data["Channel"] = data.index
+    return data.set_index(["Recording", "Channel"])
 
 
 # Analysis dataframe functions
-def prep_multiindex_df(dictionary: dict, label: str = "Leq", incl_metric: bool = True):
+def prep_multiindex_df(
+    dictionary: dict, label: str = "Leq", incl_metric: bool = True
+) -> pd.DataFrame:
     """
     Prepare a MultiIndex dataframe from a dictionary of results.
 
     Parameters
     ----------
-    dictionary : dict
-        Dict of results with recording name as key, channels {"Left", "Right"} as second key,
-        and Leq metric as value.
-    label : str, optional
+    dictionary
+        Dict of results with recording name as key,
+        channels {"Left", "Right"} as second key, and Leq metric as value.
+    label
         Name of metric included, by default "Leq".
-    incl_metric : bool, optional
+    incl_metric
         Whether to include the metric value in the resulting dataframe, by default True.
         If False, will only set up the DataFrame with the proper MultiIndex.
 
     Returns
     -------
-    pd.DataFrame
-        Index includes "Recording" and "Channel" with a column for each index if `incl_metric`.
+    :
+        Index includes "Recording" and "Channel" with a column for each index
+        if `incl_metric`.
 
     Raises
     ------
@@ -1061,35 +1062,36 @@ def prep_multiindex_df(dictionary: dict, label: str = "Leq", incl_metric: bool =
     logger.info("Preparing MultiIndex DataFrame")
     try:
         new_dict = {}
-        for outerKey, innerDict in dictionary.items():
-            for innerKey, values in innerDict.items():
-                new_dict[(outerKey, innerKey)] = values
+        for outer_key, inner_dict in dictionary.items():
+            for inner_key, values in inner_dict.items():
+                new_dict[(outer_key, inner_key)] = values
         idx = pd.MultiIndex.from_tuples(new_dict.keys())
-        df = pd.DataFrame(new_dict.values(), index=idx, columns=[label])
-        df.index.names = ["Recording", "Channel"]
+        data = pd.DataFrame(new_dict.values(), index=idx, columns=[label])
+        data.index.names = ["Recording", "Channel"]
         if not incl_metric:
-            df = df.drop(columns=[label])
-        logger.debug("MultiIndex DataFrame prepared successfully")
-        return df
+            data = data.drop(columns=[label])
     except Exception as e:
         logger.error(f"Error preparing MultiIndex DataFrame: {e!s}")
-        raise ValueError("Invalid input dictionary format") from e
+        msg = "Invalid input dictionary format"
+        raise ValueError(msg) from e
+    logger.debug("MultiIndex DataFrame prepared successfully")
+    return data
 
 
-def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
+def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame) -> pd.DataFrame:
     """
     Add results to MultiIndex dataframe.
 
     Parameters
     ----------
-    results_df : pd.DataFrame
+    results_df
         MultiIndex dataframe to add results to.
-    metric_results : pd.DataFrame
+    metric_results
         MultiIndex dataframe of results to add.
 
     Returns
     -------
-    pd.DataFrame
+    :
         Index includes "Recording" and "Channel" with a column for each index.
 
     Raises
@@ -1108,34 +1110,36 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame):
             results_df = results_df.join(metric_results)
         else:
             results_df.update(metric_results, errors="ignore")
-        logger.debug("Results added successfully")
-        return results_df
     except Exception as e:
         logger.error(f"Error adding results to DataFrame: {e!s}")
-        raise ValueError("Invalid input DataFrame format") from e
+        msg = "Invalid input DataFrame format"
+        raise ValueError(msg) from e
+    logger.debug("Results added successfully")
+    return results_df
 
 
 def process_all_metrics(
-    b, analysis_settings: AnalysisSettings, parallel: bool = True
+    b: Binaural, analysis_settings: AnalysisSettings, parallel: bool = True
 ) -> pd.DataFrame:
     """
     Process all metrics specified in the analysis settings for a binaural signal.
 
     This function runs through all enabled metrics in the provided analysis settings,
-    computes them for the given binaural signal, and compiles the results into a single DataFrame.
+    computes them for the given binaural signal, and compiles the results into a
+    single DataFrame.
 
     Parameters
     ----------
-    b : Binaural
+    b
         Binaural signal object to process.
-    analysis_settings : AnalysisSettings
+    analysis_settings
         Configuration object specifying which metrics to run and their parameters.
-    parallel : bool, optional
+    parallel
         If True, run applicable calculations in parallel. Defaults to True.
 
     Returns
     -------
-    pd.DataFrame
+    :
         A MultiIndex DataFrame containing results from all processed metrics.
         The index includes "Recording" and "Channel" levels.
 
@@ -1151,7 +1155,7 @@ def process_all_metrics(
 
     Examples
     --------
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> from soundscapy.audio import Binaural
     >>> from soundscapy import AnalysisSettings
     >>> signal = Binaural.from_wav("audio.wav", resample=480000)
@@ -1171,7 +1175,7 @@ def process_all_metrics(
             library,
             metrics_settings,
         ) in analysis_settings.get_enabled_metrics().items():
-            for metric in metrics_settings.keys():
+            for metric in metrics_settings:
                 logger.debug(f"Processing {library} metric: {metric}")
                 if library == "AcousticToolbox":
                     results_df = pd.concat(
@@ -1195,7 +1199,7 @@ def process_all_metrics(
                         ),
                         axis=1,
                     )
-                elif library == "scikit-maad" or library == "scikit_maad":
+                elif library in {"scikit-maad", "scikit_maad"}:
                     results_df = pd.concat(
                         (
                             results_df,
@@ -1205,15 +1209,10 @@ def process_all_metrics(
                         ),
                         axis=1,
                     )
-        logger.info("All metrics processed successfully")
-        return results_df
     except Exception as e:
         logger.error(f"Error processing metrics: {e!s}")
-        raise ValueError("Error processing metrics") from e
+        msg = "Error processing metrics"
+        raise ValueError(msg) from e
 
-
-# Add any additional helper functions or constants here if needed
-
-if __name__ == "__main__":
-    # Add any script-level code or examples here
-    pass
+    logger.info("All metrics processed successfully")
+    return results_df
