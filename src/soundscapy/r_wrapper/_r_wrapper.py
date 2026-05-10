@@ -542,6 +542,23 @@ def bfgs_fit(
         file=robjects.NULL,
     )
 
+    return _extract_bfgs_stats(bfgs_model)
+
+
+def _extract_bfgs_stats(bfgs_model: Any) -> dict[str, Any]:
+    """Convert a raw rpy2 BFGS model ListVector to a Python dict of fit stats.
+
+    Parameters
+    ----------
+    bfgs_model
+        Fitted model object returned by the embedded ``CircE.BFGS`` R function.
+
+    Returns
+    -------
+    :
+        Dictionary of fit statistics with scalar normalisation and a
+        scipy-computed p-value.
+    """
     with (robjects.default_converter + pandas2ri.converter).context():
         py_res = {
             key.lower(): robjects.conversion.get_conversion().rpy2py(val)  # type: ignore[missing-attribute]
