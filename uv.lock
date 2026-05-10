@@ -1225,6 +1225,7 @@ name = "soundscapy"
 version = "0.8.1"
 source = { editable = "." }
 dependencies = [
+    { name = "lazy-loader" },
     { name = "loguru" },
     { name = "numpy" },
     { name = "pandas", extra = ["excel"] },
@@ -1259,6 +1260,7 @@ r = [
 [package.metadata]
 requires-dist = [
     { name = "acoustic-toolbox", marker = "extra == 'audio'", specifier = ">=0.1.2" },
+    { name = "lazy-loader", specifier = ">=0.4" },
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "mosqito", marker = "extra == 'audio'", specifier = ">=1.2.1" },
     { name = "numba", marker = "extra == 'audio'", specifier = ">=0.59" },
