@@ -1,0 +1,41 @@
+name: Update environment.yml
+
+# Keeps environment.yml in sync with pixi.toml and pyproject.toml.
+# Runs whenever either source file changes on main and commits back if needed.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - pixi.toml
+      - pyproject.toml
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.9.5
+        with:
+          pixi-version: v0.68.0
+          run-install: false
+
+      - name: Export and update environment.yml
+        run: |
+          pixi workspace export conda-environment environment.yml -n soundscapy -e soundscapy-all
+          python scripts/update-environment-yml.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add environment.yml
+          if git diff --cached --quiet; then
+            echo "environment.yml unchanged — nothing to commit."
+          else
+            git commit -m "chore: update environment.yml [skip ci]"
+            git push origin main
+          fi
