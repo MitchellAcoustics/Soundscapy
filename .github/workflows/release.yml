@@ -1,0 +1,135 @@
+name: Release
+
+# Triggered by merges to main. Publishes to PyPI and creates a GitHub
+# release + git tag when pyproject.toml contains a clean version number
+# (no .dev / rc / a / b suffix) and that tag doesn't already exist.
+#
+# If the version was published to PyPI manually without a tag, the publish
+# step will fail and print instructions for creating the tag manually.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      release: ${{ steps.ver.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version and check release status
+        id: ver
+        run: |
+          VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "//;s/"//')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          # Pre-release version (has .dev, rc, a, b suffix) — skip
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Pre-release version ${VERSION} — skipping release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Tag already exists — already released (possibly manually)
+          git fetch --tags
+          if git ls-remote --tags origin "refs/tags/v${VERSION}" | grep -q .; then
+            echo "Tag v${VERSION} already exists — skipping release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Clean version ${VERSION} with no existing tag — will release."
+          echo "release=true" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: check
+    if: needs.check.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.7.2"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Setup Python
+        run: uv python install 3.12
+
+      - name: Build wheel and sdist
+        run: uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  tests-pass:
+    needs: check
+    if: needs.check.outputs.release == 'true'
+    uses: ./.github/workflows/test.yml
+
+  docs-pass:
+    needs: check
+    if: needs.check.outputs.release == 'true'
+    uses: ./.github/workflows/docs.yml
+
+  publish:
+    name: Publish to PyPI
+    needs: [check, build, tests-pass, docs-pass]
+    if: needs.check.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Publish failed — manual tag needed
+        if: failure()
+        run: |
+          echo "::error::PyPI publish failed for soundscapy ${{ needs.check.outputs.version }}."
+          echo "::error::If this version was already published manually, the git tag is missing."
+          echo "::error::Create it with: git tag v${{ needs.check.outputs.version }} && git push origin v${{ needs.check.outputs.version }}"
+
+  tag-and-release:
+    name: Tag and create GitHub release
+    needs: [check, build, publish]
+    if: needs.check.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create git tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+          gh release create "v${VERSION}" dist/* \
+            --title "v${VERSION}" \
+            --generate-notes
