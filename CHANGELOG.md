@@ -5,6 +5,52 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.4 - 2026-05-11
+
+### Added
+
+- New "About Soundscape Analysis" documentation page covering ISO 12913, PAQ attributes,
+  the circumplex model, and distributional analysis.
+- `.github/FUNDING.yml` for GitHub Sponsors.
+
+### Changed
+
+- **Documentation**: improved homepage with clearer installation instructions, capability
+  tiers, and a new "Where to start" section; reorganized files into subdirectories;
+  updated tutorial and API reference overviews; updated notebook tutorials (QuickStart,
+  Introduction to Analysis v2, How To Analyse, Soundscape Assessment Tutorial, Working
+  with Databases).
+- **`r_wrapper`**: consolidated `_circe_wrapper.py` and `_rsn_wrapper.py` into a single
+  `_r_wrapper` module. `bfgs_fit()` now returns a Python `dict`; `CircE.from_bfgs()`
+  accepts a dict instead of a raw R `ListVector` (backward-compatible via deprecation
+  warning). `sample_mtsn` now batch-draws candidates in R (up to 64 per call), improving
+  performance.
+- **CI/CD**: set `frozen: true` in setup-pixi steps; `publish-pypi` now waits for
+  `publish-conda` to prevent duplicate PyPI uploads on retry; excluded generated
+  `environment.yml` from pre-commit hooks.
+- Removed ReadTheDocs badge from README; updated migration guide link.
+
+### Removed
+
+- Automatic R package installation logic; a clear `ImportError` with instructions is now
+  raised instead.
+- `EmbeddedRPackage` proxy class, `_state.session` / `_state.stats` fields,
+  `is_session_active()`, and `is_ready` property from `_r_wrapper`.
+- Outdated news sections from documentation.
+
+### Fixed
+
+- Redundant double-check during R package installation.
+- `batch_size` max_iter checking in `sample_mtsn`.
+
+---
+
+## 0.8.3 - 2026-05-10
+
+Patch release dealing with release workflow and CI/CD issues. No user-facing changes.
+
+---
+
 ## 0.8.2 - 2026-05-10
 
 This is the long-overdue stable release that consolidates the entire `0.8.0rc1`
