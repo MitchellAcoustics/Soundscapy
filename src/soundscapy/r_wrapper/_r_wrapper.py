@@ -545,7 +545,7 @@ def bfgs_fit(
     return _extract_bfgs_stats(bfgs_model)
 
 
-def _extract_bfgs_stats(bfgs_model: Any) -> dict[str, Any]:
+def _extract_bfgs_stats(bfgs_model: robjects.ListVector) -> dict[str, Any]:
     """Convert a raw rpy2 BFGS model ListVector to a Python dict of fit stats.
 
     Parameters

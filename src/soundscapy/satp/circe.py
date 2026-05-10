@@ -270,7 +270,7 @@ class CircE:
     @classmethod
     def from_bfgs(
         cls,
-        fit_stats: "dict[str, Any] | Any",
+        fit_stats: "Mapping[str, Any] | Any",
         datasource: str,
         language: str,
         circ_model: CircModelE,
@@ -294,8 +294,9 @@ class CircE:
         n
             Number of observations used to compute the correlation matrix.
 
-        .. deprecated::
-            Passing an rpy2 ``ListVector`` as *fit_stats* is deprecated.
+        .. deprecated:: 0.8.4
+            Passing an rpy2 ``ListVector`` as *fit_stats* is deprecated and
+            will be removed in a future release.
             Call :func:`soundscapy.r_wrapper.bfgs_fit` to obtain a dict and
             pass that instead.
         """
