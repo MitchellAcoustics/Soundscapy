@@ -89,6 +89,7 @@ jobs:
     needs: [check, build, tests-pass, docs-pass]
     if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-latest
+    environment: pypi
     permissions:
       id-token: write
     steps:
