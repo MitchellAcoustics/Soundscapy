@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from numpy.random import default_rng
 
 from soundscapy import create_iso_subplots
 from soundscapy.plotting import (
@@ -20,14 +19,11 @@ from soundscapy.plotting import (
 )
 from soundscapy.surveys.processing import simulation
 
-rng = default_rng(42)
-
 
 @pytest.fixture
 def sample_data():
     """Generate sample data for testing."""
-    np.random.seed(42)  # For reproducibility  # noqa: NPY002
-    return simulation(n=100, incl_iso_coords=True)
+    return simulation(n=100, seed=42, incl_iso_coords=True)
 
 
 @pytest.mark.mpl_image_compare(

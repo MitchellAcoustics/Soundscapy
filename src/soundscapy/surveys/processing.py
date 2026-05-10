@@ -351,6 +351,7 @@ def simulation(
     n: int = 3000,
     val_range: tuple[int, int] = (1, 5),
     *,
+    seed: int | None = None,
     incl_iso_coords: bool = False,
     **coord_kwargs: Unpack[_AddISOCoordsKwargs],
 ) -> pd.DataFrame:
@@ -363,6 +364,8 @@ def simulation(
         Number of samples to simulate, by default 3000
     val_range
         Range of values for PAQ responses, by default (1, 5)
+    seed
+        Optional random seed for deterministic output, by default None
     incl_iso_coords
         Whether to add calculated ISO coordinates, by default False
     **coord_kwargs
@@ -388,7 +391,7 @@ def simulation(
 
     """  # noqa: E501
     data = pd.DataFrame(
-        np.random.default_rng().integers(
+        np.random.default_rng(seed).integers(
             min(val_range), max(val_range) + 1, size=(n, 8)
         ),
         columns=PAQ_IDS,

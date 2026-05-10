@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
@@ -28,8 +27,7 @@ def simulated_data():
 @pytest.fixture
 def sample_data():
     """Generate sample data for testing."""
-    np.random.default_rng(42)  # For reproducibility
-    return sspy.surveys.simulation(n=100, incl_iso_coords=True)
+    return sspy.surveys.simulation(n=100, seed=42, incl_iso_coords=True)
 
 
 def test_scatter(simulated_data: pd.DataFrame):

@@ -187,6 +187,11 @@ class TestSimulation:
         assert not data["ISOPleasant"].isna().any()
         assert not data["ISOEventful"].isna().any()
 
+    def test_simulation_with_seed_is_deterministic(self):
+        data_1 = simulation(n=200, seed=42)
+        data_2 = simulation(n=200, seed=42)
+        pd.testing.assert_frame_equal(data_1, data_2)
+
 
 class TestSSMMetrics:
     @pytest.fixture

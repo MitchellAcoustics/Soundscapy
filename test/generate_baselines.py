@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from numpy import random
 
 from soundscapy.plotting import Backend, density_plot, scatter_plot
 from soundscapy.sspylogging import get_logger
@@ -11,15 +10,12 @@ from soundscapy.surveys.processing import simulation
 
 logger = get_logger()
 
-# Set random seed for reproducibility
-random.default_rng(42)
-
 # Create directory for baseline images if it doesn't exist
 BASELINE_DIR = Path("/Users/mitch/Documents/GitHub/Soundscapy/test/baseline")
 BASELINE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Generate sample data
-sample_data = simulation(n=100, incl_iso_coords=True)
+sample_data = simulation(n=100, seed=42, incl_iso_coords=True)
 
 # Generate and save scatter plot
 scatter_ax = scatter_plot(sample_data, backend=Backend.SEABORN)
