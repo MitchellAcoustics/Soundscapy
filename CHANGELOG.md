@@ -5,6 +5,45 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Docs overhaul
+
+#### Added
+
+- Adds new "About Soundscape Analysis" documentation.
+
+#### Changed
+
+- Improves documentation homepage structure for easier navigation.
+- Updates the documentation site navigation.
+- Reorganizes documentation files into subdirectories for better structure.
+- Updates tutorial and API reference overviews.
+- Updates various documentation pages and tutorials, including "QuickStart", "Introduction to Analysis (v2)", "How To Analyse", "Soundscape Assessment Tutorial", and "Working with Databases".
+
+#### Removed
+
+- Removes outdated news regarding the plotting module.
+
+### `r_wrapper` refactor
+
+#### Changed
+
+- Changes the API for BFGS fit results; `bfgs_fit()` now returns a Python dictionary, and `from_bfgs()` accepts a dictionary instead of a raw R ListVector.
+- Improves performance for `sample_mtsn` by batch-drawing candidates in R calls.
+
+#### Removed
+
+- Removes the automatic installation logic for R packages. Users will now receive a clear `ImportError` with instructions if required packages are missing.
+
+#### Fixed
+
+- Fixes a redundant double-check during R package installation.
+
+## 0.8.3 - 2026-05-10
+
+Patch release dealing with release workflow and CI/CD issues. No user-facing changes.
+
 ## 0.8.2 - 2026-05-10
 
 This is the long-overdue stable release that consolidates the entire `0.8.0rc1`
