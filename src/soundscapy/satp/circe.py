@@ -278,6 +278,12 @@ class CircE:
     ) -> "CircE":
         """Create a CircE instance from BFGS fit output.
 
+        !!! warning "Deprecated v0.8.4"
+            Passing an rpy2 ``ListVector`` as *fit_stats* is deprecated and
+            will be removed in a future release.
+            Call :func:`soundscapy.r_wrapper.bfgs_fit` to obtain a dict and
+            pass that instead.
+
         Parameters
         ----------
         fit_stats
@@ -294,11 +300,6 @@ class CircE:
         n
             Number of observations used to compute the correlation matrix.
 
-        .. deprecated:: 0.8.4
-            Passing an rpy2 ``ListVector`` as *fit_stats* is deprecated and
-            will be removed in a future release.
-            Call :func:`soundscapy.r_wrapper.bfgs_fit` to obtain a dict and
-            pass that instead.
         """
         if not isinstance(fit_stats, Mapping):
             warnings.warn(
