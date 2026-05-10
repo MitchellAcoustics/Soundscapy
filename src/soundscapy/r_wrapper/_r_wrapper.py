@@ -375,17 +375,23 @@ def sample_mtsn(
     batch_size = max(n, 64)
 
     while len(accepted) < n:
-        if total_drawn >= max_iter:
+        remaining_budget = max_iter - total_drawn
+        if remaining_budget <= 0:
             raise RuntimeError(
                 f"sample_mtsn: reached max_iter={max_iter} without collecting "
                 f"{n} accepted samples (got {len(accepted)}). "
                 "The distribution may have negligible mass inside "
                 f"[{a}, {b}]. Adjust the bounds or increase max_iter."
             )
+        current_batch_size = min(batch_size, remaining_budget)
         candidates = sample_msn(
-            selm_model=selm_model, xi=xi, omega=omega, alpha=alpha, n=batch_size
+            selm_model=selm_model,
+            xi=xi,
+            omega=omega,
+            alpha=alpha,
+            n=current_batch_size,
         )
-        total_drawn += batch_size
+        total_drawn += current_batch_size
         in_bounds = (
             (candidates[:, 0] >= a)
             & (candidates[:, 0] <= b)
