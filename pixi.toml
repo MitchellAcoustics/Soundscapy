@@ -83,7 +83,7 @@ default = { features = ["audio", "r", "dev", "docs", "test"] }
 docs    = { features = ["docs"], no-default-feature = true }
 
 r              = ["r"]
-audio          = ["r"]
+audio          = ["audio"]
 soundscapy-all = ["r", "audio"]
 
 test       = { features = ["test"] }
