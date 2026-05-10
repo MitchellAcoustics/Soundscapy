@@ -98,65 +98,33 @@ def isd_with_participant():
 
 
 # ---------------------------------------------------------------------------
-# Tests for bfgs() / extract_bfgs_fit() wrappers  ← NUMERICAL REGRESSION ANCHORS
+# Tests for bfgs_fit() wrapper  ← NUMERICAL REGRESSION ANCHORS
 # These tests must not be weakened or removed — they verify the actual R computation.
 # ---------------------------------------------------------------------------
+
+_BFGS_KWARGS = dict(data_cor=VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3)
 
 
 class TestBfgsWrapper:
     """
-    Direct tests of the bfgs() and extract_bfgs_fit() wrappers.
+    Direct tests of the bfgs_fit() wrapper.
 
     All reference values come from running CircE.BFGS(R, v.names, m=3, N=175)
     in R and reading the printed output.
     """
 
-    def test_bfgs_returns_list_vector(self):
-        """bfgs() should return an rpy2 ListVector (the raw R model object)."""
-        from rpy2.robjects import ListVector
+    def test_bfgs_fit_returns_dict(self):
+        """bfgs_fit() should return a plain Python dict."""
+        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
 
-        from soundscapy.r_wrapper._circe_wrapper import bfgs
-
-        result = bfgs(
-            VOCATIONAL_COR,
-            n=VOCATIONAL_N,
-            scales=_V_NAMES,
-            m_val=3,
-            equal_ang=False,
-            equal_com=False,
-        )
-        assert isinstance(result, ListVector)
-
-    def test_extract_bfgs_fit_returns_dict(self):
-        """extract_bfgs_fit() should return a plain Python dict."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
-
-        fit = extract_bfgs_fit(
-            bfgs(
-                VOCATIONAL_COR,
-                n=VOCATIONAL_N,
-                scales=_V_NAMES,
-                m_val=3,
-                equal_ang=False,
-                equal_com=False,
-            )
-        )
+        fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert isinstance(fit, dict)
 
     def test_bfgs_fit_keys_present(self):
-        """extract_bfgs_fit() result must contain the expected fit-statistic keys."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
+        """bfgs_fit() result must contain the expected fit-statistic keys."""
+        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
 
-        fit = extract_bfgs_fit(
-            bfgs(
-                VOCATIONAL_COR,
-                n=VOCATIONAL_N,
-                scales=_V_NAMES,
-                m_val=3,
-                equal_ang=False,
-                equal_com=False,
-            )
-        )
+        fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         required = {
             "chisq",
             "d",
@@ -187,34 +155,16 @@ class TestBfgsWrapper:
 
     def test_bfgs_unconstrained_chisq(self):
         """Chi-square statistic must match R package reference value (±0.01)."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
+        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
 
-        fit = extract_bfgs_fit(
-            bfgs(
-                VOCATIONAL_COR,
-                n=VOCATIONAL_N,
-                scales=_V_NAMES,
-                m_val=3,
-                equal_ang=False,
-                equal_com=False,
-            )
-        )
+        fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert pytest.approx(fit["chisq"], abs=0.01) == 11.598
 
     def test_bfgs_unconstrained_model_df(self):
         """Model degrees of freedom must be 5 (not 21 = dfnull)."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
+        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
 
-        fit = extract_bfgs_fit(
-            bfgs(
-                VOCATIONAL_COR,
-                n=VOCATIONAL_N,
-                scales=_V_NAMES,
-                m_val=3,
-                equal_ang=False,
-                equal_com=False,
-            )
-        )
+        fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert int(fit["d"]) == 5
 
     def test_bfgs_unconstrained_p_value(self):
@@ -224,52 +174,25 @@ class TestBfgsWrapper:
         R reference: p = 0.041.
         If dfnull=21 were (wrongly) used the result would be ~0.95.
         """
-        from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
+        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
 
-        fit = extract_bfgs_fit(
-            bfgs(
-                VOCATIONAL_COR,
-                n=VOCATIONAL_N,
-                scales=_V_NAMES,
-                m_val=3,
-                equal_ang=False,
-                equal_com=False,
-            )
-        )
+        fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert pytest.approx(fit["p"], abs=0.005) == 0.041
         assert fit["p"] < 0.1, "p ≈ 0.95 suggests wrong df was used"
 
     def test_bfgs_p_equals_scipy_chi2_against_model_df(self):
         """The stored p must equal scipy_chi2.sf(chisq, d) exactly."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
+        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
 
-        fit = extract_bfgs_fit(
-            bfgs(
-                VOCATIONAL_COR,
-                n=VOCATIONAL_N,
-                scales=_V_NAMES,
-                m_val=3,
-                equal_ang=False,
-                equal_com=False,
-            )
-        )
+        fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         expected_p = scipy_chi2.sf(fit["chisq"], fit["d"])
         assert pytest.approx(fit["p"], rel=1e-6) == expected_p
 
     def test_bfgs_unconstrained_fit_indices(self):
         """Fit indices must match R package reference values (±0.001)."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
+        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
 
-        fit = extract_bfgs_fit(
-            bfgs(
-                VOCATIONAL_COR,
-                n=VOCATIONAL_N,
-                scales=_V_NAMES,
-                m_val=3,
-                equal_ang=False,
-                equal_com=False,
-            )
-        )
+        fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert pytest.approx(float(fit["rmsea"]), abs=0.001) == 0.087
         assert pytest.approx(float(fit["rmsea.l"]), abs=0.001) == 0.017
         assert pytest.approx(float(fit["rmsea.u"]), abs=0.001) == 0.154
@@ -286,24 +209,14 @@ class TestBfgsWrapper:
         R reference (equal_ang=False, equal_com=True):
           chi-sq = 50.409, Model df = 11, RMSEA = 0.143, CFI = 0.946, SRMR = 0.060
         """
-        from soundscapy.r_wrapper._circe_wrapper import bfgs, extract_bfgs_fit
+        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
 
-        fit = extract_bfgs_fit(
-            bfgs(
-                VOCATIONAL_COR,
-                n=VOCATIONAL_N,
-                scales=_V_NAMES,
-                m_val=3,
-                equal_ang=False,
-                equal_com=True,
-            )
-        )
+        fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=True)
         assert pytest.approx(fit["chisq"], abs=0.01) == 50.409
         assert int(fit["d"]) == 11
         assert pytest.approx(float(fit["rmsea"]), abs=0.001) == 0.143
         assert pytest.approx(float(fit["cfi"]), abs=0.001) == 0.946
         assert pytest.approx(float(fit["srmr"]), abs=0.001) == 0.060
-        # p-value must be very small for this over-constrained model
         assert fit["p"] < 0.001
 
 

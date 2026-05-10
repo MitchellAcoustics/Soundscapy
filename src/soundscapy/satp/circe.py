@@ -269,14 +269,13 @@ class CircE:
     @classmethod
     def from_bfgs(
         cls,
-        bfgs_model: Any,
+        fit_stats: dict[str, Any],
         datasource: str,
         language: str,
         circ_model: CircModelE,
         n: int,
     ) -> "CircE":
-        """Create a CircE instance from a fitted BFGS model."""
-        fit_stats = sspyr.extract_bfgs_fit(bfgs_model)
+        """Create a CircE instance from extracted BFGS fit statistics."""
         polar_angles = None
         # Only extract polar angles for models where angles are free parameters.
         # The R key is "polar.angles" (dot), not "polar_angles" (underscore).
@@ -357,7 +356,7 @@ class CircE:
         ...
 
         """
-        bfgs_model = sspyr.bfgs(
+        fit_stats = sspyr.bfgs_fit(
             data_cor=data_cor,
             n=n,
             scales=PAQ_IDS,
@@ -365,7 +364,7 @@ class CircE:
             equal_ang=circ_model.equal_ang,
             equal_com=circ_model.equal_com,
         )
-        return cls.from_bfgs(bfgs_model, datasource, language, circ_model, n)
+        return cls.from_bfgs(fit_stats, datasource, language, circ_model, n)
 
     @property
     def gdiff(self) -> float | None:
