@@ -65,7 +65,7 @@ quarto-cli    = ">=1.9.37"
 griffe-fieldz = ">=0.5.0"
 
 [feature.dev]
-dependencies = { ruff = ">=0.15.12", pyrefly = ">=0.64.1", prek = ">=0.3.13", uv = ">=0.9" }
+dependencies = { ruff = ">=0.15.12", pyrefly = ">=0.64.1", prek = ">=0.3.13", uv = ">=0.9", types-tqdm = ">=4.67.3.20260508" }
 
 [feature.test.dependencies]
 nbmake       = ">=1.5.5"
@@ -157,21 +157,48 @@ description = "Setup pre-commit hooks for development work."
 
 # Test Tasks
 
+[feature.test.tasks.test-import-tripwire]
+cmd                 = "python -c 'import soundscapy; assert soundscapy.add_iso_coords' {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
+default-environment = "test"
+description         = "Verify slim install does not trigger optional imports"
+
 [feature.test.tasks.test-base]
-cmd                 = "python --version && pytest -k 'not optional_deps' --ignore-glob='*iso_plot.py'"
+cmd                 = "python --version && pytest -k 'not optional_deps' --ignore-glob='*iso_plot.py' -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
 default-environment = "test"
 
 [feature.test.tasks.test-audio]
-cmd                 = "python --version && pytest -k 'not optional_deps or optional_deps and audio' --ignore-glob='*iso_plot.py' -n auto"
+cmd                 = "python --version && pytest -k 'not optional_deps or optional_deps and audio' --ignore-glob='*iso_plot.py' -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
 default-environment = "test-audio"
 
 [feature.test.tasks.test-r]
-cmd                 = "python --version && pytest -k 'not optional_deps or optional_deps and spi or skip_if_deps and spi' -n auto"
+cmd                 = "python --version && pytest -k 'not optional_deps or optional_deps and spi or skip_if_deps and spi' -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
 default-environment = "test-r"
 
 [feature.test.tasks.test-all]
-cmd                 = "python --version && pytest -n auto"
+cmd                 = "python --version && pytest -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
 default-environment = "test-all"
 
 [feature.test.tasks.tests]
-depends-on = ["test-base", "test-audio", "test-r", "test-all"]
+args = [{ arg = "flags", default = "--quiet --no-header -rfs -W ignore" }]
+depends-on = [
+    { task = "test-import-tripwire", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-base", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-audio", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-r", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-all", args = [
+        "{{ flags }}",
+    ] },
+]
