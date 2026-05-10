@@ -12,15 +12,11 @@ from pathlib import Path
 
 import pandas as pd
 from loguru import logger
+from tqdm.auto import tqdm
 
 from soundscapy._utils import ensure_input_path, ensure_path_type
 from soundscapy.audio.analysis_settings import ConfigManager
 from soundscapy.audio.parallel_processing import load_analyse_binaural
-
-from generalimport import generalimport
-
-generalimport("tqdm")
-from tqdm.auto import tqdm
 
 
 class AudioAnalysis:
@@ -169,7 +165,7 @@ class AudioAnalysis:
                 try:
                     result = future.result()
                     all_results.append(result)
-                except Exception as e:  # noqa: BLE001, PERF203
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing file: {e!s}")
 
         combined_results = pd.concat(all_results)

@@ -44,12 +44,6 @@ import soundscapy.r_wrapper as sspyr
 from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
 from soundscapy.surveys.processing import ipsatize
 
-from generalimport import generalimport
-
-generalimport("rpy2")
-from rpy2.rinterface_lib.embedded import RRuntimeError
-
-
 logger = get_logger()
 
 # ---------------------------------------------------------------------------
@@ -655,6 +649,8 @@ def fit_circe(
         UserWarning,
         stacklevel=2,
     )
+    from rpy2.rinterface_lib.embedded import RRuntimeError  # noqa: PLC0415
+
     if len(data) == 0:
         msg = (
             "No complete cases found: input DataFrame is empty. "

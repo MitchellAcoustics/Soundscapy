@@ -27,14 +27,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
-# NOTE: importing rpy2.robjects here unconditionally starts the embedded R
-# process.  There is no way to defer this further — R begins as soon as this
-# module is loaded.  The lazy __getattr__ in soundscapy/__init__.py ensures
-# this module (and therefore R) is only loaded when the user first accesses
-# soundscapy.spi or soundscapy.satp, not on a plain ``import soundscapy``.
-from generalimport iport generalimport
-generalimport("rpy2")
-
 from rpy2 import robjects
 
 from soundscapy.sspylogging import get_logger
