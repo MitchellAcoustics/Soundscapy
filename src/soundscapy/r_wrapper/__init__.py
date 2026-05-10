@@ -7,9 +7,8 @@ from soundscapy._optional import require_deps
 # mismatch) still surface lazily on first call into r_wrapper internals.
 require_deps(["rpy2"], extra="r")
 
-from ._circe_wrapper import bfgs, extract_bfgs_fit  # noqa: F401
-from ._r_wrapper import get_r_session  # noqa: F401
-from ._rsn_wrapper import (  # noqa: F401
+from ._r_wrapper import (  # noqa: F401
+    bfgs_fit,
     cp2dp,
     dp2cp,
     extract_cp,

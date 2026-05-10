@@ -102,7 +102,7 @@ jobs:
 
   publish-pypi:
     name: Publish to PyPI
-    needs: [check, build, tests-pass, docs-pass]
+    needs: [check, build, tests-pass, docs-pass, publish-conda]
     if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-latest
     environment: pypi

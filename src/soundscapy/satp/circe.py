@@ -30,6 +30,7 @@ CircE : dataclass
 
 import dataclasses
 import warnings
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import Any, Literal
 
@@ -269,14 +270,49 @@ class CircE:
     @classmethod
     def from_bfgs(
         cls,
-        bfgs_model: Any,
+        fit_stats: "Mapping[str, Any] | rpy2.robjects.ListVector",
         datasource: str,
         language: str,
         circ_model: CircModelE,
         n: int,
     ) -> "CircE":
-        """Create a CircE instance from a fitted BFGS model."""
-        fit_stats = sspyr.extract_bfgs_fit(bfgs_model)
+        """Create a CircE instance from BFGS fit output.
+
+        !!! warning "Deprecated v0.8.4"
+            Passing an rpy2 ``ListVector`` as *fit_stats* is deprecated and
+            will be removed in a future release.
+            Call :func:`soundscapy.r_wrapper.bfgs_fit` to obtain a dict and
+            pass that instead.
+
+        Parameters
+        ----------
+        fit_stats
+            Either a pre-extracted ``dict`` of fit statistics (new path, as
+            returned by :func:`soundscapy.r_wrapper.bfgs_fit`), or the raw
+            rpy2 ``ListVector`` returned by the embedded ``CircE.BFGS`` R
+            function (deprecated — pass a dict instead).
+        datasource
+            Source identifier for the dataset.
+        language
+            Language code for the dataset.
+        circ_model
+            Circumplex model type that was fitted.
+        n
+            Number of observations used to compute the correlation matrix.
+
+        """
+        if not isinstance(fit_stats, Mapping):
+            warnings.warn(
+                "Passing an rpy2 model object to CircE.from_bfgs() is deprecated. "
+                "Use soundscapy.r_wrapper.bfgs_fit() to obtain a fit-stats dict "
+                "and pass that instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            from soundscapy.r_wrapper._r_wrapper import _extract_bfgs_stats  # noqa: PLC0415
+
+            fit_stats = _extract_bfgs_stats(fit_stats)
+
         polar_angles = None
         # Only extract polar angles for models where angles are free parameters.
         # The R key is "polar.angles" (dot), not "polar_angles" (underscore).
@@ -357,7 +393,7 @@ class CircE:
         ...
 
         """
-        bfgs_model = sspyr.bfgs(
+        fit_stats = sspyr.bfgs_fit(
             data_cor=data_cor,
             n=n,
             scales=PAQ_IDS,
@@ -365,7 +401,7 @@ class CircE:
             equal_ang=circ_model.equal_ang,
             equal_com=circ_model.equal_com,
         )
-        return cls.from_bfgs(bfgs_model, datasource, language, circ_model, n)
+        return cls.from_bfgs(fit_stats, datasource, language, circ_model, n)
 
     @property
     def gdiff(self) -> float | None:
