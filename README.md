@@ -9,8 +9,6 @@
 
 A python library for analysing and visualising soundscape assessments.
 
-**Disclaimer:** This module is still heavily in development, and might break what you're working on. It will also likely require a decent amount of troubleshooting at this stage. I promise bug fixes and cleaning up is coming!
-
 ## Installation
 
 Soundscapy can be installed with pip:
@@ -18,6 +16,12 @@ Soundscapy can be installed with pip:
 ```bash
 pip install soundscapy
 ```
+
+> **Upgrading from 0.7.x?** `v0.8.2` is the long-overdue stable release that
+> consolidates the entire `v0.8.0rc*` and `v0.8.2.dev*` pre-release line.
+> Several APIs have changed (most notably the new `ISOPlot` plotting API).
+> See the [migration guide](https://soundscapy.readthedocs.io/en/latest/migration-0.7-to-0.8/)
+> before upgrading.
 
 ### Optional Dependencies
 
@@ -89,7 +93,7 @@ Bibtex:
 
 ## Development Plans
 
-As noted, this package is in heavy development to make it more useable, more stable, and to add features and improvements. At this stage it is mostly limited to doing basic quality checks of soundscape survey data and creating the soundscape distribution plots. Some planned improvements are:
+Soundscapy is under active development as we add features and refine the API. The package now covers survey processing, the new layered `ISOPlot` plotting API, binaural and psychoacoustic audio analysis, and R-backed circumplex SEM (SATP) and Soundscape Perception Indices (SPI) modules. Some planned improvements are:
 
 - [x] Simplify the plotting options
 - [x] Possibly improve how the plots and data are handled - a more OOP approach would be good.

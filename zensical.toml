@@ -45,6 +45,7 @@ nav = [
     { "Contributing" = "CONTRIBUTING.md" },
     { "News" = [
         "news.md",
+        { "Upgrading from 0.7" = "migration-0.7-to-0.8.md" },
         { "Changelog" = "CHANGELOG.md" },
         { "License" = "license.md" },
     ] },

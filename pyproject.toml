@@ -12,7 +12,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 description = "A python library for analysing and visualising soundscape assessments."
-version = "0.8.2.dev1"
+version = "0.8.2"
 keywords = ["acoustics", "audio analysis", "psychoacoustics", "soundscape"]
 license = { text = "BSD-3-Clause" }
 name = "soundscapy"

@@ -5,39 +5,130 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased - 0.8.0
+## 0.8.2 - 2026-05-10
+
+This is the long-overdue stable release that consolidates the entire `0.8.0rc1`
+through `0.8.0rc10` and `0.8.2.dev1` pre-release line into a single shipping
+version. The last user-facing stable release on PyPI was `0.7.8`, so most users
+are upgrading across a much larger gap than the version number suggests.
+
+If you are upgrading from `0.7.x`, please read the
+[migration guide](migration-0.7-to-0.8.md) before installing — there are
+several breaking changes, most notably the new `ISOPlot` API.
+
+### ⚠️ Breaking Changes
+
+- **Plotting API**: `CircumplexPlot` has been replaced by the new `ISOPlot` API
+  with a layered plotting architecture. The function-style helpers
+  (`scatter_plot`, `density_plot`) are still available and have been adapted to
+  the new backend, but custom subclasses or direct `CircumplexPlot` use will
+  need to migrate. See the [migration guide](migration-0.7-to-0.8.md).
+- **Plotly backend removed**: only the seaborn backend is supported now. The
+  `plotly` dependency has been dropped to simplify installation.
+- **RTHORR R package integration removed**: the `rthorr` R package is no longer
+  required or supported. Use the new SATP module instead.
+- **R-backed install path changed**: install with
+  `pip install "soundscapy[r]"` for SPI / SATP features. During the rc cycle
+  this was briefly available as `soundscapy[spi]`; the `[spi]` extras name is
+  gone.
+- **`fit_circe()` validation behaviour**: schema validation now raises by
+  default instead of silently dropping invalid rows. Pass `errors="warn"` to
+  restore the older permissive behaviour.
+- **Centering default change**: `ipsatize()` (and therefore `fit_circe()`) now
+  defaults to grand-mean centering, matching the published R reference. The
+  previous column-wise default produced SRMR values off by ~0.005.
+- **Pydantic ParamModels removed**: plotting parameter handling now uses plain
+  dataclasses. If you were instantiating Pydantic param models directly, you'll
+  need to migrate to the dataclass equivalents.
 
 ### Added
 
-- New **Soundscape Perception Indices (SPI)** module
-  - Provides tools for calculating Soundscape Perception Indices
-  - Implements Multi-dimensional Skewed Normal (MSN) distribution for soundscape analysis
-  - Includes R wrapper for core statistical functionality
-  - Adds SPI score calculation and visualization
-
-- Completely redesigned **ISOPlot API** with layered plotting approach
-  - New flexible and extensible plotting interface
-  - Layered architecture for combining different plot types
-  - Enhanced subplot support for comparing multiple conditions
-  - Improved parameter handling for consistent styling
-  - Added SPI visualization integration
+- New **SATP** (Soundscape Attributes Translation Project) circumplex SEM
+  module:
+  - `fit_circe(data, language, datasource)` — primary API; validates,
+    ipsatizes, fits all four circumplex model types, and returns a
+    `CircEResults` container.
+  - `ipsatize(data, method="grand_mean")` — public participant-wise centering
+    function with `method` argument (`"grand_mean"`, `"column_wise"`,
+    `"row_wise"`).
+  - `CircE` and `CircEResults` dataclasses — typed result containers with
+    `to_dict()`, `gdiff`, and `.table` / `_repr_html_()` for tidy DataFrame
+    access.
+  - `CircModelE` enum with `equal_ang` / `equal_com` constraint properties.
+  - `SATPVersion` enum for dataset version management with comparison methods
+    and validation against participant data.
+  - Uses listwise deletion (complete cases) consistent with R's `na.omit`.
+- New **Soundscape Perception Indices (SPI)** module:
+  - Tools for calculating Soundscape Perception Indices.
+  - Multi-dimensional Skewed Normal (MSN) distribution for soundscape analysis.
+  - R wrapper for core statistical functionality.
+  - SPI score calculation and visualisation, integrated with `ISOPlot`.
+- **Embedded CircE R runtime**: CircE R scripts are now bundled with Soundscapy
+  and sourced through `rpy2`. Users no longer need to install CircE separately
+  from GitHub.
+- Completely redesigned **ISOPlot API** with a layered plotting approach:
+  - Flexible, extensible plotting interface.
+  - Layered architecture for combining different plot types.
+  - Enhanced subplot support for comparing multiple conditions.
+  - Improved parameter handling for consistent styling.
+  - SPI visualisation integration.
 
 ### Changed
 
-- Replaced CircumplexPlot with the new ISOPlot interface
-- Removed Pydantic ParamModels in favor of dataclass-based parameter handling
-- Improved logging system with new sspylogging module
-- Enhanced plotting documentation, testing, and configuration
-- Refactored subplot creation with improved code organization
-- Removed Plotly dependency to simplify installation
-- Updated notebook tutorials to demonstrate new interfaces
+- Logging system reworked with the new `sspylogging` module.
+- R wrapper output capture for cleaner debugging during model fitting.
+- Notebook tutorials updated to demonstrate the new ISOPlot and SATP / SPI
+  interfaces.
+- Installation guidance now points R users to `pip install "soundscapy[r]"`.
+  The only external R package still required is `sn`.
+
+### Removed
+
+- `CircumplexPlot` class (replaced by `ISOPlot`).
+- `plotly` dependency (and the Plotly plotting backend).
+- `rthorr` R package integration.
+- Pydantic ParamModels (replaced by dataclass-based parameter handling).
+- CircE-from-GitHub install requirement (CircE is now bundled).
+
+### Fixed
+
+- DataFrame mutation bug in the R wrapper (#127).
+- `fit_circe` silently dropping all rows after centering when
+  `drop_invalid_rows=True` combined with `ge=0,le=100` schema bounds; the
+  default now raises and `errors="warn"` is supported (#132).
+- `person_center` centering bug: default aligned with the published R
+  grand-mean implementation; previous column-wise centering caused SRMR drift
+  (#132).
 
 ### Developer Experience
 
-- Added pre-commit hooks and improved CI/CD pipeline
-- Enhanced type hints and documentation throughout the codebase
-- Updated GitHub issue templates and workflow configurations
-- Improved test coverage for core functionality
+- **Switched env management from uv-only to mixed uv + pixi** (#134). pixi now
+  owns environment management and dev tasks (tests, lint, docs build, conda
+  publish). uv still owns the wheel/sdist build, version updates, and PyPI
+  publish.
+- **Manual uv-managed versioning** (deliberate): `pixi run version` wraps
+  `uv version` to update `pyproject.toml`. There is no setuptools-scm in this
+  project.
+- **Revamped testing setup**: per-directory conftests use `pytest.importorskip`
+  instead of the previous `@pytest.mark.optional_deps` marker. Multi-environment
+  matrices (`test`, `test-audio`, `test-r`, `test-all`) plus a slim-install
+  tripwire (`test-import-tripwire`) ensure `import soundscapy` pulls no
+  optional deps in any environment.
+- **Docs migrated from mkdocs to zensical**: `zensical.toml` replaces
+  `mkdocs.yml`; build via `pixi run docs-build`.
+- **SPEC 1 lazy loading** (#137): top-level lazy loading via
+  `lazy_loader.attach_stub` driven by `src/soundscapy/__init__.pyi`. Level-2
+  lazy loading inside `audio`, `spi`, and `satp` submodules. `import
+  soundscapy` no longer attempts any optional import.
+- New `_optional.py` helper (`require_deps(modules, *, extra)`) standardises
+  `ImportError` messages across all optional subpackages.
+- PEP 561 typed stubs (`__init__.pyi`) for `soundscapy`, `soundscapy.audio`,
+  `soundscapy.spi`, `soundscapy.satp`. `from soundscapy.audio import Binaural`
+  now resolves correctly in mypy, pyright, and IDEs.
+- New `test/test_optional_helper.py` and `test/test_slim_install.py` assert
+  gate behaviour and confirm slim installs stay slim.
+- Pre-commit hooks and CI/CD pipeline expanded; `tox` retired in favour of
+  pixi-driven CI.
 
 ## 0.7.6 - 2024-11-06
 
