@@ -11,7 +11,7 @@ from soundscapy.surveys.processing import simulation
 logger = get_logger()
 
 # Create directory for baseline images if it doesn't exist
-BASELINE_DIR = Path("/Users/mitch/Documents/GitHub/Soundscapy/test/baseline")
+BASELINE_DIR = Path(__file__).resolve().parent / "baseline"
 BASELINE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Generate sample data
