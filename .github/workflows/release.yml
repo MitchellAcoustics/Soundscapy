@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths-ignore:
       - "**.md"
+  workflow_dispatch: # manual escape hatch if a push-triggered run needs retrying
 
 jobs:
   check:
