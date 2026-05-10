@@ -10,7 +10,8 @@ from loguru import logger
 # extras aren't installed. Test directories under test/ are gated by their
 # own conftest.py + pytest.importorskip.
 collect_ignore_glob: list[str] = []
-if importlib.util.find_spec("acoustic_toolbox") is None:
+_audio_deps = ("acoustic_toolbox", "maad", "mosqito", "tqdm")
+if any(importlib.util.find_spec(dep) is None for dep in _audio_deps):
     collect_ignore_glob.append("src/soundscapy/audio/*")
 if importlib.util.find_spec("rpy2") is None:
     collect_ignore_glob += [
