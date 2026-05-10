@@ -168,32 +168,32 @@ default-environment = "test"
 description         = "Verify slim install does not trigger optional imports"
 
 [feature.test.tasks.test-base]
-cmd                 = "python --version && pytest {{ flags }}"
-args                = [{ arg = "flags", default = "-n auto" }]
+cmd                 = "python --version && pytest -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
 env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test"
 
 [feature.test.tasks.test-audio]
-cmd                 = "python --version && pytest {{ flags }}"
-args                = [{ arg = "flags", default = "-n auto" }]
+cmd                 = "python --version && pytest -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
 env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test-audio"
 
 [feature.test.tasks.test-r]
-cmd                 = "python --version && pytest {{ flags }}"
-args                = [{ arg = "flags", default = "-n auto" }]
+cmd                 = "python --version && pytest -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
 env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test-r"
 
 [feature.test.tasks.test-all]
 cmd                 = "python --version && pytest -n auto {{ flags }}"
-args                = [{ arg = "flags", default = "-n auto" }]
+args                = [{ arg = "flags", default = "" }]
 env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test-all"
 
 [feature.test.tasks.tests]
 args = [
-    { arg = "flags", default = "-n auto --quiet --no-header -rfs -W ignore" },
+    { arg = "flags", default = "--quiet --no-header -rfs -W ignore" },
 ]
 depends-on = [
     { task = "test-import-tripwire", args = [
