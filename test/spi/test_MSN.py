@@ -25,7 +25,6 @@ except ImportError:
 rng = default_rng(42)  # Set a random seed for reproducibility
 
 
-@pytest.mark.optional_deps("spi")
 class TestDirectParams:
     def test_direct_params_init_valid(self):
         """Test initialization with valid parameters."""
@@ -99,7 +98,6 @@ class TestDirectParams:
         assert not dp._xi_is_in_range((0.2, 1.0))
 
 
-@pytest.mark.optional_deps("spi")
 class TestCentredParams:
     def test_centred_params_init(self):
         """Test initialization of CentredParams."""
@@ -187,7 +185,6 @@ MOCK_Y = MOCK_DF["y"].to_numpy()
 MOCK_SAMPLE_SIZE = 100
 
 
-@pytest.mark.optional_deps("spi")
 class TestMultiSkewNorm:
     def test_init(self):
         """Test initialization of MultiSkewNorm."""
@@ -577,7 +574,6 @@ class TestMultiSkewNorm:
         assert 0 <= spi_value <= 100, "SPI score must be in [0, 100]"
 
 
-@pytest.mark.optional_deps("spi")
 def test_cp2dp():
     """Test cp2dp via a round-trip: dp → cp → dp2cp(dp) should reproduce the same CP."""
     # Convert known DP to CP
@@ -597,7 +593,6 @@ def test_cp2dp():
     np.testing.assert_allclose(cp_roundtrip.skew, cp.skew, atol=1e-4)
 
 
-@pytest.mark.optional_deps("spi")
 def test_dp2cp():
     """Test dp2cp function."""
     # Use the known DP values

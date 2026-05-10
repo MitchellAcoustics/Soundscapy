@@ -31,7 +31,6 @@ def test_ver_avoids_lexicographic_pitfall():
 # === End-to-end R tests ===
 
 
-@pytest.mark.optional_deps("r")
 class TestRWrapper:
     """Test the R wrapper functionality."""
 
@@ -82,14 +81,10 @@ class TestRWrapper:
         """Test that the R 'sn' package is available when R deps are installed."""
         import soundscapy.r_wrapper as sspyr
 
-        # Should not raise — this test only runs (via optional_deps("r")) when
-        # rpy2 is present and the tox commands_pre has installed sn.
         sspyr._r_wrapper.check_sn_package()
 
     def test_check_circe_package(self):
         """Test that the embedded CircE scripts are available when R deps are installed."""
         import soundscapy.r_wrapper as sspyr
 
-        # Should not raise — this test only runs (via optional_deps("r")) when
-        # rpy2 is present and the local embedded CircE scripts are available.
         sspyr._r_wrapper.check_circe_package()

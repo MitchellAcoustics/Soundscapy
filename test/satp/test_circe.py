@@ -103,7 +103,6 @@ def isd_with_participant():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.optional_deps("satp")
 class TestBfgsWrapper:
     """
     Direct tests of the bfgs() and extract_bfgs_fit() wrappers.
@@ -313,7 +312,6 @@ class TestBfgsWrapper:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.optional_deps("satp")
 class TestCircEDataclass:
     """Tests for CircE.compute_bfgs_fit() using ISD data (8-PAQ format)."""
 
@@ -473,7 +471,6 @@ class TestCircEDataclass:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.optional_deps("satp")
 class TestCircModelEProperties:
     """Tests for the equal_ang / equal_com properties on CircModelE."""
 
@@ -507,7 +504,6 @@ class TestCircModelEProperties:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.optional_deps("satp")
 class TestFitCirce:
     """Integration tests for fit_circe() and person_center()."""
 
@@ -874,7 +870,6 @@ class TestFitCirce:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.optional_deps("satp")
 class TestNormalizePolarAngles:
     """Tests for normalize_polar_angles()."""
 
@@ -950,7 +945,6 @@ class TestNormalizePolarAngles:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.optional_deps("satp")
 class TestGdiff:
     """Tests for CircE.gdiff property."""
 
