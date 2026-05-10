@@ -32,7 +32,7 @@
   ],
   "postCreateCommand": "sudo chown vscode .pixi && direnv allow . && pixi install",
   "features": {
-    "ghcr.io/devcontainers-community/features/direnv": {},
+    // "ghcr.io/devcontainers-community/features/direnv": {},
     "ghcr.io/devcontainers-community/features/direnv:1": {},
     "ghcr.io/devcontainers-extra/features/prek:1": {}
   }
