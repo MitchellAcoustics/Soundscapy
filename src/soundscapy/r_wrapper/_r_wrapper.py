@@ -555,7 +555,7 @@ def _extract_bfgs_stats(bfgs_model: robjects.ListVector) -> dict[str, Any]:
 
     Returns
     -------
-    :
+    dict[str, Any]
         Dictionary of fit statistics with scalar normalisation and a
         scipy-computed p-value.
     """

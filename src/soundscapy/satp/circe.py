@@ -270,7 +270,7 @@ class CircE:
     @classmethod
     def from_bfgs(
         cls,
-        fit_stats: "Mapping[str, Any] | Any",
+        fit_stats: "Mapping[str, Any] | rpy2.robjects.ListVector",
         datasource: str,
         language: str,
         circ_model: CircModelE,
