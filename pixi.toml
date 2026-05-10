@@ -108,8 +108,8 @@ inputs     = ["pixi.toml", "pyproject.toml"]
 
 # Build and Publish Tasks
 [tasks.version]
-args = [{ "arg" = "bump", default = "dev" }]
-cmd  = "uv version --no-sync --bump {{ bump }}"
+args = [{ arg = "flags", default = "--bump dev" }]
+cmd  = "uv version --no-sync {{ flags }}"
 
 [tasks.build]
 cmd         = "pixi publish --target-dir conda-dist && uv build"
@@ -131,7 +131,7 @@ depends-on  = ["build"]
 
 [tasks.publish]
 description = "Publish the package to all channels"
-depends-on  = ["publish-conda", "publish-pypi"]
+depends-on  = ["update-environment", "publish-conda", "publish-pypi"]
 
 # Documentation Tasks
 [feature.docs.tasks.docs-render]
