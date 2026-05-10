@@ -142,7 +142,7 @@ def parallel_process(
                 try:
                     result = future.result()
                     results_df = add_results(results_df, result)
-                except Exception as e:  # noqa: BLE001, PERF203
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing file: {e!s}")
                 finally:
                     pbar.update(1)

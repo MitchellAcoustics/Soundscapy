@@ -45,8 +45,11 @@ def test_setup_logging_with_format_levels():
 
 def test_enable_debug():
     """Test enabling debug logging."""
-    enable_debug()
-    assert logger.level("DEBUG").name == "DEBUG"
+    try:
+        enable_debug()
+        assert logger.level("DEBUG").name == "DEBUG"
+    finally:
+        disable_logging()
 
 
 def test_disable_logging():

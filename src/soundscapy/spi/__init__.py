@@ -5,35 +5,11 @@ This module provides functions and classes for calculating SPI,
 based on the R implementation. Requires optional dependencies.
 """
 
-# Check for required dependencies directly
-# This will raise ImportError if any dependency is missing
-try:
-    import rpy2  # noqa: F401
+# ruff: noqa: E402
+from soundscapy._optional import require_deps
 
-except ImportError as e:
-    msg = (
-        "SPI functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[r]"
-    )
-    raise ImportError(msg) from e
+require_deps(["rpy2"], extra="r")
 
-# Now we can import our modules that depend on the optional packages
-from soundscapy.spi import msn
-from soundscapy.spi.msn import (
-    CentredParams,
-    DirectParams,
-    MultiSkewNorm,
-    cp2dp,
-    dp2cp,
-    spi_score,
-)
+import lazy_loader as _lazy
 
-__all__ = [
-    "CentredParams",
-    "DirectParams",
-    "MultiSkewNorm",
-    "cp2dp",
-    "dp2cp",
-    "msn",
-    "spi_score",
-]
+__getattr__, __dir__, __all__ = _lazy.attach_stub(__name__, __file__)

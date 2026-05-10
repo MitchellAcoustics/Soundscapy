@@ -65,7 +65,7 @@ quarto-cli    = ">=1.9.37"
 griffe-fieldz = ">=0.5.0"
 
 [feature.dev]
-dependencies = { ruff = ">=0.15.12", pyrefly = ">=0.64.1", prek = ">=0.3.13", uv = ">=0.9" , jupyter-repo2docker = ">=2025.12.0,<2026" }
+dependencies = { ruff = ">=0.15.12", pyrefly = ">=0.64.1", prek = ">=0.3.13", uv = ">=0.9", types-tqdm = ">=4.67.3.20260508", jupyter-repo2docker = ">=2025.12.0,<2026" }
 
 [feature.test.dependencies]
 nbmake       = ">=1.5.5"
@@ -82,7 +82,7 @@ default = { features = ["audio", "r", "dev", "docs", "test"] }
 docs    = { features = ["docs"], no-default-feature = true }
 
 r              = ["r"]
-audio          = ["r"]
+audio          = ["audio"]
 soundscapy-all = ["r", "audio"]
 
 test       = { features = ["test"] }
@@ -108,8 +108,8 @@ inputs     = ["pixi.toml", "pyproject.toml"]
 
 # Build and Publish Tasks
 [tasks.version]
-args = [{ "arg" = "bump", default = "dev" }]
-cmd  = "uv version --no-sync --bump {{ bump }}"
+args = [{ arg = "flags", default = "--bump dev" }]
+cmd  = "uv version --no-sync {{ flags }}"
 
 [tasks.build]
 cmd         = "pixi publish --target-dir conda-dist && uv build"
@@ -131,7 +131,7 @@ depends-on  = ["build"]
 
 [tasks.publish]
 description = "Publish the package to all channels"
-depends-on  = ["publish-conda", "publish-pypi"]
+depends-on  = ["update-environment", "publish-conda", "publish-pypi"]
 
 # Documentation Tasks
 [feature.docs.tasks.docs-render]
@@ -157,21 +157,55 @@ description = "Setup pre-commit hooks for development work."
 
 # Test Tasks
 
+[feature.test.tasks.test-import-tripwire]
+cmd                 = "python -c 'import soundscapy; assert soundscapy.add_iso_coords' {{ flags }}"
+args                = [{ arg = "flags", default = "" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
+default-environment = "test"
+description         = "Verify slim install does not trigger optional imports"
+
 [feature.test.tasks.test-base]
-cmd                 = "python --version && pytest -k 'not optional_deps' --ignore-glob='*iso_plot.py'"
+cmd                 = "python --version && pytest {{ flags }}"
+args                = [{ arg = "flags", default = "-n auto" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test"
 
 [feature.test.tasks.test-audio]
-cmd                 = "python --version && pytest -k 'not optional_deps or optional_deps and audio' --ignore-glob='*iso_plot.py' -n auto"
+cmd                 = "python --version && pytest {{ flags }}"
+args                = [{ arg = "flags", default = "-n auto" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test-audio"
 
 [feature.test.tasks.test-r]
-cmd                 = "python --version && pytest -k 'not optional_deps or optional_deps and spi or skip_if_deps and spi' -n auto"
+cmd                 = "python --version && pytest {{ flags }}"
+args                = [{ arg = "flags", default = "-n auto" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test-r"
 
 [feature.test.tasks.test-all]
-cmd                 = "python --version && pytest -n auto"
+cmd                 = "python --version && pytest -n auto {{ flags }}"
+args                = [{ arg = "flags", default = "-n auto" }]
+env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test-all"
 
 [feature.test.tasks.tests]
-depends-on = ["test-base", "test-audio", "test-r", "test-all"]
+args = [
+    { arg = "flags", default = "-n auto --quiet --no-header -rfs -W ignore" },
+]
+depends-on = [
+    { task = "test-import-tripwire", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-base", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-audio", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-r", args = [
+        "{{ flags }}",
+    ] },
+    { task = "test-all", args = [
+        "{{ flags }}",
+    ] },
+]

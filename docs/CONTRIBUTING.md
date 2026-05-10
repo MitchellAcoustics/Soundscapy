@@ -3,14 +3,16 @@
 ## General Principles
 
 - Use **Pixi** for local environment management and command execution. In a `pyproject.toml` project, `pixi add --pypi` writes normal Python requirements into native `[project.dependencies]`, `[project.optional-dependencies]`, or `[dependency-groups]`. Use plain `pixi add` for the matching conda dependency when conda-forge provides a suitable package. Do not delete dependencies from the native Python tables just to move them into Pixi; matching entries under `[tool.pixi.dependencies]` or `[tool.pixi.feature.<name>.dependencies]` intentionally override those PyPI requirements inside Pixi environments.
-- Try to keep all necessary configurations to `pyproject.toml` where possible. This includes versioning, optional dependencies, tool settings (e.g. `bumpver`) and other project settings.
+- Try to keep all necessary configurations to `pyproject.toml` where possible. This includes versioning, optional dependencies, tool settings, and other project settings.
 - Wherever possible, centralise operations and metadata. For instance, version is defined in `pyproject.toml` and automatically brought into `soundscapy` metadata in `__init__.py`; optional dependency checks are performed at the `<module>.__init__.py` level, rather than for each individual function.
 
 Changes should be made in a feature branch and submitted to `dev` via a pull request. The pull request should be reviewed by at least one other developer before being merged. The `main` branch should only contain stable releases. Docs can be updated directly on `dev` or `main` as needed.
 
 ## Linting and Formatting
 
-Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting. This will be checked in the CI pipeline, so make sure to run it before committing.
+Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting and [Pyrefly](https://github.com/Pyrefly/pyrefly) for type checking. This will be checked in the CI pipeline, so make sure to run it before committing.
+
+We use [Prek](https://prek.j178.dev) for pre-commit hooks, configured in `.pre-commit-config.yaml` and `pyproject.toml`.
 
 ## Documentation
 
@@ -89,261 +91,214 @@ The avilable types are:
 
 ## Optional Dependencies System
 
-Soundscapy uses a simple and standard approach to handle optional dependencies.
+Soundscapy uses a uniform, pandas-style gate for optional dependencies, built on two
+complementary tools: a small `_optional.py` helper (for the gate itself) and
+`lazy_loader` / [Scientific Python SPEC 1](https://scientific-python.org/specs/spec-0001/) (for deferred top-level access and type stubs).
 
-### Core Components
+### Design principle
 
-1. **Package Configuration** (`pyproject.toml`):
+> There are two distinct problems. `require_deps` solves the *gate* problem (any import
+> path — direct, submodule, or internal — must produce an actionable error message).
+> `lazy_loader` solves the *deferral* problem (`import soundscapy` must pay nothing, and
+> `soundscapy.Binaural` must still work). Neither can replace the other.
 
-   ```toml
-   [project.optional-dependencies]
-   audio = [
-       "mosqito>=1.2.1",
-       "scikit-maad>=1.4.3",
-       "acoustic-toolbox>=0.1.2",
-   ]
-   ```
+### Core components
 
-2. **Module-Level Dependency Check** (`audio/__init__.py`):
+#### 1. The gate helper (`src/soundscapy/_optional.py`)
 
-   ```python
-   # Check for required dependencies directly
-   try:
-       import mosqito
-       import maad
-       import tqdm
-       import acoustic_toolbox
-   except ImportError as e:
-       raise ImportError(
-           "Audio analysis functionality requires additional dependencies. "
-           "Install with: pip install soundscapy[audio]"
-       ) from e
+`require_deps(modules, *, extra)` uses `importlib.util.find_spec` (no import side
+effects) and raises a uniform `ImportError` listing the PyPI install command:
 
-   # Now import module components
-   from .binaural import Binaural
-   ```
-
-3. **Top-Level Imports** (`soundscapy/__init__.py`):
-
-   ```python
-   # Try to import optional audio module
-   try:
-       from soundscapy import audio
-       from soundscapy.audio import (
-           Binaural, AudioAnalysis, AnalysisSettings, ConfigManager,
-           process_all_metrics, prep_multiindex_df, add_results, parallel_process,
-       )
-       __all__.extend([
-           "audio", "Binaural", "AudioAnalysis", "AnalysisSettings",
-           "ConfigManager", "process_all_metrics", "prep_multiindex_df",
-           "add_results", "parallel_process",
-       ])
-   except ImportError:
-       # Audio module not available - this is expected if dependencies aren't installed
-       pass
-   ```
-
-### Adding New Optional Features
-
-#### 1. Add New Dependencies
-
-Add new packages to an existing group or create a new group:
-
-```bash
-# Add the Python package dependency metadata:
-pixi add --pypi new-package --feature audio
-
-# If conda-forge has the package, add the conda override too:
-pixi add new-package --feature audio
-
-# For a new dependency group:
-pixi add --pypi package1 --feature new_group
-pixi add --pypi package2 --feature new_group
+```python
+from soundscapy._optional import require_deps
+require_deps(["mosqito", "maad", "acoustic_toolbox", "tqdm"], extra="audio")
+# ImportError: 'mosqito', 'scikit-maad', 'acoustic-toolbox', 'tqdm' required for
+# soundscapy[audio], not installed. Install with:  pip install 'soundscapy[audio]'
 ```
 
-#### 2. Implement Feature Code
+Call `require_deps` as the **first statement** of every optional subpackage's
+`__init__.py`, before any heavy import. This ensures any import path — `import
+soundscapy.audio`, `from soundscapy.audio import Binaural`, or an internal
+`from soundscapy.spi.msn import MultiSkewNorm` inside plotting code — all surface the
+same message.
 
-Create a new module directory if needed (e.g., `new_group/`) with an `__init__.py`:
+If you add a package whose import name differs from its PyPI name, add an entry to
+`_DIST_NAME` in `_optional.py` (e.g. `"acoustic_toolbox": "acoustic-toolbox"`).
+
+#### 2. Lazy loading and type stubs ([SPEC 1](https://scientific-python.org/specs/spec-0001/))
+
+Each optional subpackage and the top-level package use `lazy_loader.attach_stub` to
+defer imports until first use. The stub file (`.pyi`) adjacent to each `__init__.py`
+is the single source of truth: it drives both `lazy_loader` at runtime and static type
+checkers (mypy, pyright) at analysis time.
+
+```text
+src/soundscapy/
+├── __init__.py          # attach_stub(__name__, __file__)
+├── __init__.pyi         # lists audio/spi/satp attrs for lazy_loader + type checkers
+├── audio/
+│   ├── __init__.py      # require_deps(...) then attach_stub(__name__, __file__)
+│   └── __init__.pyi     # lists Binaural, AudioAnalysis, etc.
+├── spi/
+│   ├── __init__.py
+│   └── __init__.pyi
+└── satp/
+    ├── __init__.py
+    └── __init__.pyi
+```
+
+`import soundscapy` pays nothing — no optional imports are attempted. The gate fires
+only when the subpackage is first accessed.
+
+#### 3. Package configuration (`pyproject.toml`)
+
+```toml
+[project.optional-dependencies]
+audio = ["acoustic-toolbox>=0.1.2", "mosqito>=1.2.1", "scikit-maad>=1.4.3", "tqdm>=4.66.5"]
+r     = ["rpy2>=3.5.0"]
+all   = ["soundscapy[audio]", "soundscapy[r]"]
+```
+
+### Adding a new optional subpackage
+
+#### 1. Add dependencies
+
+```bash
+# Add the PyPI dependency to the new extras group:
+pixi add --pypi package1 --feature new_group
+
+# If conda-forge has the package, add a conda override too:
+pixi add package1 --feature new_group
+```
+
+Also add a pixi environment and test task for the new group — follow the `audio` and
+`r` patterns in `pixi.toml`.
+
+#### 2. Implement the gate in `new_group/__init__.py`
 
 ```python
 """Module docstring describing the new functionality."""
-# Check dependencies directly
-try:
-    import package1
-    import package2
-except ImportError as e:
-    raise ImportError(
-        "This functionality requires additional dependencies. "
-        "Install with: pip install soundscapy[new_group]"
-    ) from e
+# ruff: noqa: E402
+from soundscapy._optional import require_deps
 
-# Now import your feature code
-from .feature import NewFeature
+require_deps(["package1", "package2"], extra="new_group")
 
-__all__ = ["NewFeature"]
+import lazy_loader as _lazy
+
+__getattr__, __dir__, __all__ = _lazy.attach_stub(__name__, __file__)
 ```
 
-#### 3. Add to Top-Level Exports
-
-Update the main `__init__.py` to import and expose the new module:
+#### 3. Write `new_group/__init__.pyi`
 
 ```python
-# Try to import optional new_group module
-try:
-    from soundscapy import new_group
-    from soundscapy.new_group import NewFeature
-    __all__.extend(["new_group", "NewFeature"])
-except ImportError:
-    # new_group module not available - expected if dependencies aren't installed
-    pass
+from .feature import NewFeature as NewFeature
+from .utils import helper_fn as helper_fn
 ```
 
-### How It Works
+The `.pyi` stub is parsed by `lazy_loader` to set up the lazy `__getattr__`, and read
+by type checkers for type information. Use relative imports only (`from .X import Y`);
+the `as Y` alias marks names as public re-exports per PEP 484.
 
-The system uses standard Python try/except patterns at two levels:
+#### 4. Expose at the top level
 
-1. **Module Level**: Each optional module checks for its dependencies on import and raises a helpful error if they're missing.
+Add the new submodule and its public names to `src/soundscapy/__init__.pyi`:
 
-2. **Top Level**: The main package tries to import optional modules and their components, extending **all** only when available.
-
-Benefits:
-
-- Clear error messages when dependencies are missing
-- Standard Python import patterns that are easy to understand
-- Good IDE support through explicit exports
-- No runtime overhead for unused optional features
-- Simpler to maintain and extend
-
-### Testing Optional Dependencies
-
-Soundscapy uses a flexible system for testing optional dependencies that allows both local development testing and full integration testing in CI.
-
-#### Test Structure
-
-Optional dependency tests exist at several levels:
-
-1. **Optional Module Tests**: Tests within optional modules (e.g., `audio/`)
-
-   - Only collected when dependencies are available using pytest_ignore_collect
-   - Test actual functionality
-   - No need for special markers
-
-2. **Integration Tests**: Tests that use optional features from other modules
-
-   - Use `@pytest.mark.optional_deps('group')` marker
-   - Expected to fail when dependencies are unavailable
-   - Test actual integration between components
-
-3. **In-Development Module Tests**: For modules under active development (e.g., `spi/`)
-   - Use module-level `pytestmark = pytest.mark.skip(reason="...")` to skip all tests
-   - Prevent pytest collection errors by using `--ignore=src/soundscapy/module/` flag
-   - Simplifies testing during development when module imports might fail
-
-#### Testing with Tox
-
-Soundscapy's tox configuration provides separate environments for different dependency groups:
-
-```bash
-# Run core tests (no optional dependencies)
-tox -e py310-core
-
-# Run with audio dependencies
-tox -e py310-audio
-
-# Run with SPI dependencies
-tox -e py310-spi
-
-# Run with all dependencies
-tox -e py310-all
+```python
+from . import new_group as new_group
+from .new_group import NewFeature as NewFeature
 ```
 
-Each environment is configured to run the appropriate tests:
+`__init__.py` itself does not need touching — `attach_stub` reads the updated stub
+automatically.
 
-- Core: Run only tests with no optional dependency requirements
-- Audio: Run core tests and audio-specific tests, skipping SPI tests
-- SPI: Run core tests and SPI-specific tests
-- All: Run all tests
+### Testing optional dependencies
 
-Test selection is implemented using pytest's keyword-based filtering to precisely target the right tests:
+#### Per-directory skip (preferred)
 
-```bash
-# Core tests only
-pytest -k "not optional_deps"
+Create a `test/new_group/conftest.py` that calls `pytest.importorskip` for each
+required package. pytest skips the entire directory if any call fails:
 
-# Core + audio tests
-pytest -k "not optional_deps or optional_deps and audio"
-
-# Core + SPI tests
-pytest -k "not optional_deps or optional_deps and spi"
+```python
+# test/new_group/conftest.py
+import pytest
+pytest.importorskip("package1")
+pytest.importorskip("package2")
 ```
 
-#### When to Use Each Testing Approach
+Tests inside `test/new_group/` need no markers — they are collected only when their
+dependencies are present.
 
-1. **Use `@pytest.mark.optional_deps` when**:
+#### Inline skip for mixed-directory tests
 
-   - Testing actual functionality that requires dependencies
-   - Writing integration tests
-   - Testing with real package interactions
+For tests in a shared file (e.g., `test/test_basic.py`) that verify top-level
+access to an optional module, call `pytest.importorskip` at the start of the test
+function:
 
-2. **No special handling needed when**:
+```python
+def test_new_group_available():
+    pytest.importorskip("package1")
+    import soundscapy
+    assert hasattr(soundscapy, "NewFeature")
+```
 
-   - Writing tests within an optional module directory
-   - Testing core functionality that doesn't use optional features
+#### Gate-failure tests
 
-3. **Use module-level skip markers when**:
-   - Working on a module that is not yet ready for testing
-   - Dependencies might cause import errors during collection
-   - You want to include tests in the codebase but skip their execution
+Tests asserting that the gate fires with the correct error message belong in
+`test/test_slim_install.py`. Use `monkeypatch` on `importlib.util.find_spec` to
+simulate a missing dependency without actually uninstalling anything:
 
-### Adding Tests for New Optional Features
+```python
+def test_new_group_gate_hint(monkeypatch):
+    # ... block package1 via monkeypatched find_spec ...
+    with pytest.raises(ImportError, match=r"soundscapy\[new_group\]"):
+        importlib.import_module("soundscapy.new_group")
+```
 
-When adding new optional features:
+#### Doctest collection from source
 
-1. **Inside Optional Module**:
+The root `conftest.py` maintains a `collect_ignore_glob` list that prevents xdoctest
+from collecting inside optional source directories when their extras are not installed.
+Add a new entry there when adding a new optional subpackage:
 
-   - Put tests in the module's test directory (e.g., `test/new_group/`)
-   - Tests will only be collected when dependencies are available
-   - No markers needed for tests within the module's directory
+```python
+if importlib.util.find_spec("package1") is None:
+    collect_ignore_glob.append("src/soundscapy/new_group/*")
+```
 
-   ```python
-   # test/new_group/test_feature.py
-   def test_new_feature():
-       """Regular test, no special handling needed."""
-       from soundscapy.new_group import NewFeature
-       assert NewFeature.method() == expected
-   ```
+#### `errors="raise"` vs `"warn"` at call sites
 
-2. **Integration Tests**:
+`require_deps` always raises — it is for module-level gates only. If a future function
+needs an optional enrichment that should degrade gracefully instead of failing hard,
+use `import_optional` from `_optional.py` (not yet added; add it when the first
+warn-and-degrade call site appears). The rule of thumb:
 
-   - Use the optional_deps marker
-   - Put in main test directory
-
-   ```python
-   # test/test_integration.py
-   @pytest.mark.optional_deps('new_group')
-   def test_new_feature_integration():
-       """Will be marked as expected to fail if dependencies missing."""
-       from soundscapy import NewFeature
-       assert NewFeature.integrate() == expected
-   ```
+- User passed a kwarg whose **only purpose** is the optional path → `errors="raise"`
+  (silent degradation would be surprising)
+- User passed a kwarg that **enriches** an otherwise-complete result → `errors="warn"`
+  (the function still returns something useful without the enrichment)
 
 ## Github Actions
 
-Soundscapy has three primary workflows: `test.yml`, `test-tutorials.yml` and `tag-release.yml`. `test.yml` runs the test suite on all pushes and pull requests. `tag-release.yml` is triggered by a tag push to `main` or `dev` and creates a release on Github and publishes to PyPI.
+Soundscapy has two primary workflows: `test.yml` and `linting.yml`. Dependencies and
+environments are managed by **Pixi** across all workflows.
 
-In all cases, python and dependencies are managed and installed with `uv`.
+`test.yml` runs a matrix of pixi tasks across Ubuntu, macOS, and Windows:
 
-`test.yml` uses tox to test across multiple Python versions and dependency combinations. The workflow has a two-stage approach:
+| Task | Environment | What runs |
+|---|---|---|
+| `test-import-tripwire` | `test` (slim) | `import soundscapy` guard — fails if any optional dep is eagerly imported |
+| `test-base` | `test` (slim) | Core tests + gate-failure tests; optional dirs skipped by `importorskip` |
+| `test-audio` | `test-audio` | All of the above plus `test/audio/` |
+| `test-r` | `test-r` | All of the above plus `test/spi/` and `test/satp/` |
+| `test-all` | `test-all` | Full suite |
 
-1. **Linting**: First, it runs ruff checks for code quality and formatting.
+To run these locally:
 
-2. **Testing**: Then, it runs tox with different environments:
-   - **Core**: Tests with just core dependencies using `py{310,311,312}-core`
-   - **Audio**: Tests with audio dependencies using `py{310,311,312}-audio`
-   - **All**: Tests with all dependencies using `py{310,311,312}-all`
-
-This approach ensures consistent testing between local development (using tox locally) and CI environments, while verifying that the package works correctly with different Python versions and dependency combinations.
-
-`test-tutorials.yml` uses `--nbmake` to convert the notebooks to python files and run them. This is useful for testing the tutorials and ensuring they are up to date. It does not test the veracity of the outputs, just whether the notebooks run without errors.
-
-When `tag-release.yml` runs, it will also run the tests by `uses` and `needs` calling the test workflows. This ensures that the release is only created if the tests pass. Then, it will use `uv build` to build the package, the PyPI publish action to publish to PyPI, and the Github release action to create a release on Github. The release is created with the tag name and the release notes are taken from the tag message.
+```bash
+pixi run test-import-tripwire   # slim-install guard
+pixi run test-base              # no optional deps
+pixi run test-audio             # audio extras
+pixi run test-r                 # R extras
+pixi run test-all               # everything
+pixi run tests                  # all of the above in sequence
+```

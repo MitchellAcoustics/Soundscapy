@@ -13,13 +13,14 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 description = "A python library for analysing and visualising soundscape assessments."
-version = "0.8.1"
+version = "0.8.2.dev1"
 keywords = ["acoustics", "audio analysis", "psychoacoustics", "soundscape"]
 license = { text = "BSD-3-Clause" }
 name = "soundscapy"
 readme = "README.md"
 requires-python = ">= 3.11"
 dependencies = [
+    "lazy-loader>=0.4",
     "loguru>=0.7.2",
     "numpy>=2.1.3,<2.4",
     "pandas[excel]>=2.2.2,<3.0",
@@ -91,7 +92,6 @@ bad-override-mutable-attribute = "ignore"
 addopts = ["--color=yes", "--import-mode=importlib", "--verbose", "--xdoctest"]
 doctest_optionflags = "NUMBER NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL"
 markers = [
-    "optional_deps(group): mark tests that depend on optional dependencies. group can be 'audio', etc.",
     "parametrize: mark test as parametrized",
     "skip: mark test as skipped",
     "skipif: mark test as skipped if condition is met",

@@ -111,7 +111,7 @@ def _stat_calcs(
             else:
                 logger.error(f"Unrecognized statistic: {stat} for {label}")
                 res[f"{label}_{stat}"] = np.nan
-        except Exception as e:  # noqa: BLE001, PERF203
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error calculating {stat} for {label}: {e!s}")
             res[f"{label}_{stat}"] = np.nan
     return res

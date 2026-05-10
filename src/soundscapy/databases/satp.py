@@ -29,11 +29,11 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import total_ordering
+from typing import Self
 
 import pandas as pd
 from loguru import logger
 from packaging.version import Version
-from typing_extensions import Self
 
 _ZENODO_BASE = "https://zenodo.org/record/{record}/files/SATP%20Dataset%20{label}.xlsx"
 

@@ -5,7 +5,34 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased - 0.8.0
+## Unreleased - 0.8.2
+
+### Developer Experience
+
+- Replaced ad-hoc optional-dependency handling with a uniform, pandas-style gate:
+  - New `src/soundscapy/_optional.py` helper — `require_deps(modules, *, extra)` uses
+    `importlib.util.find_spec` (no import side effects) and formats a consistent
+    `"Install with: pip install 'soundscapy[<extra>]'"` message for every optional module
+  - Each optional subpackage (`audio`, `spi`, `satp`, `r_wrapper`) calls `require_deps`
+    as its first statement so any import path — direct, submodule, or internal — surfaces
+    the same actionable error
+  - Top-level lazy loading migrated to Scientific Python SPEC 1 via `lazy_loader.attach_stub`,
+    driven by `src/soundscapy/__init__.pyi`; `import soundscapy` no longer attempts any
+    optional import
+  - Level-2 lazy loading added inside `audio`, `spi`, and `satp` submodules (SPEC 1):
+    implementation modules are deferred until their symbols are first accessed
+  - PEP 561 type stubs (`__init__.pyi`) added for `soundscapy`, `soundscapy.audio`,
+    `soundscapy.spi`, and `soundscapy.satp` — `from soundscapy.audio import Binaural`
+    now resolves correctly in mypy, pyright, and IDEs
+  - `@pytest.mark.optional_deps` marker and `pytest_ignore_collect` hook replaced by
+    `pytest.importorskip` in per-directory conftests (`test/audio/`, `test/spi/`,
+    `test/satp/`) and inline in `test_basic.py`
+  - New `test/test_optional_helper.py` and `test/test_slim_install.py` assert gate
+    behaviour and confirm that `import soundscapy` pulls no optional deps in any env
+  - New pixi task `test-import-tripwire` runs `python -c 'import soundscapy; assert
+soundscapy.add_iso_coords'` in the slim (`test`) environment; added to the CI matrix
+
+## 0.8.0 - 2026-03-08
 
 ### Added
 

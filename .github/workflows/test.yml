@@ -39,7 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        tasks: [test-base, test-audio, test-r, test-all]
+        tasks: [test-import-tripwire, test-base, test-audio, test-r, test-all]
 
     steps:
       - name: Checkout repository
@@ -60,5 +60,5 @@ jobs:
       - name: Run tests
         id: test-results
         run: |
-          pixi run ${{ matrix.tasks }} -n auto
+          pixi run ${{ matrix.tasks }}
           echo "result=true" >> $GITHUB_OUTPUT
