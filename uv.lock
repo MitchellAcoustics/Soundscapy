@@ -199,15 +199,6 @@ wheels = [
 ]
 
 [[package]]
-name = "generalimport"
-version = "0.5.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7b/01/e036ec9b3bf234ce275d3f11287a2670da5fc3a3268c93403b59d7e547df/generalimport-0.5.2.tar.gz", hash = "sha256:083f5e8feeada8a23cf3917edf299e71e71f2c7d2bd29e1795e11eeb759d7c62", size = 20256, upload-time = "2024-01-24T06:20:43.443Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/48/5586c61dee513068e72732fa9f5899289503a566e766bf99db9bb0f4589e/generalimport-0.5.2-py3-none-any.whl", hash = "sha256:ce9082be1e6cd48ef108fede3b13ccc308d6aff2b6f6d65f52310521e8332fcd", size = 28808, upload-time = "2024-01-24T06:20:41.237Z" },
-]
-
-[[package]]
 name = "imageio"
 version = "2.37.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1234,7 +1225,6 @@ name = "soundscapy"
 version = "0.8.1"
 source = { editable = "." }
 dependencies = [
-    { name = "generalimport" },
     { name = "loguru" },
     { name = "numpy" },
     { name = "pandas", extra = ["excel"] },
@@ -1269,7 +1259,6 @@ r = [
 [package.metadata]
 requires-dist = [
     { name = "acoustic-toolbox", marker = "extra == 'audio'", specifier = ">=0.1.2" },
-    { name = "generalimport", specifier = ">=0.5.2" },
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "mosqito", marker = "extra == 'audio'", specifier = ">=1.2.1" },
     { name = "numba", marker = "extra == 'audio'", specifier = ">=0.59" },

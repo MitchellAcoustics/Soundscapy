@@ -39,16 +39,11 @@ import pandera.pandas as pa
 from pandera import Field
 from pandera.errors import SchemaErrors
 from pandera.typing.pandas import DataFrame, Series
+from rpy2.rinterface_lib.embedded import RRuntimeError
 
 import soundscapy.r_wrapper as sspyr
 from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
 from soundscapy.surveys.processing import ipsatize
-
-from generalimport import generalimport
-
-generalimport("rpy2")
-from rpy2.rinterface_lib.embedded import RRuntimeError
-
 
 logger = get_logger()
 

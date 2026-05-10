@@ -32,9 +32,6 @@ from typing import Any, NoReturn, cast
 # module is loaded.  The lazy __getattr__ in soundscapy/__init__.py ensures
 # this module (and therefore R) is only loaded when the user first accesses
 # soundscapy.spi or soundscapy.satp, not on a plain ``import soundscapy``.
-from generalimport iport generalimport
-generalimport("rpy2")
-
 from rpy2 import robjects
 
 from soundscapy.sspylogging import get_logger

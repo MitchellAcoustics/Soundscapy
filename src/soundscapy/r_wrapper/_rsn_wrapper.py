@@ -3,14 +3,12 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from soundscapy.sspylogging import get_logger
-
-from generalimport import generalimport
-
-generalimport("rpy2")
+# NOTE: importing rpy2 here starts the embedded R process (see _r_wrapper.py).
 from rpy2 import robjects
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.methods import RS4
+
+from soundscapy.sspylogging import get_logger
 
 from ._r_wrapper import get_r_session
 

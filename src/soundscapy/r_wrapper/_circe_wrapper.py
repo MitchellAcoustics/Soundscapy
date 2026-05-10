@@ -2,18 +2,12 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-
+from rpy2 import robjects as ro
+from rpy2.robjects import pandas2ri
 from scipy.stats import chi2 as scipy_chi2
 
 from soundscapy.sspylogging import get_logger
 from soundscapy.surveys.survey_utils import PAQ_IDS
-
-from generialimport import generalimport
-
-generalimport("rpy2")
-
-from rpy2 import robjects as ro
-from rpy2.robjects import pandas2ri
 
 from ._r_wrapper import get_r_session
 

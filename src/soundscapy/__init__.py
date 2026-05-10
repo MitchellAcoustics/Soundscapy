@@ -38,7 +38,6 @@ __all__ = [
     "PAQ_IDS",
     "PAQ_LABELS",
     "ISOPlot",
-    "__version__",
     "add_iso_coords",
     "create_iso_subplots",
     "databases",
@@ -63,6 +62,7 @@ __all__ = [
     "stacked_likert",
     # Core modules
     "surveys",
+    "__version__",
 ]
 
 # Try to import optional audio module

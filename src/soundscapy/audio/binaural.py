@@ -24,6 +24,7 @@ from typing import Literal, Self, cast
 import numpy as np
 import pandas as pd
 import scipy.signal
+from acoustic_toolbox import Signal
 from loguru import logger
 from scipy.io import wavfile
 
@@ -38,13 +39,6 @@ from soundscapy.audio.metrics import (
     mosqito_metric_2ch,
     process_all_metrics,
 )
-
-
-from generalimport import generalimport
-
-generalimport("acoustic_toolbox")
-
-from acoustic_toolbox import Signal
 
 ALLOWED_BINAURAL_CHANNELS = 2
 DEFAULT_SETTINGS = AnalysisSettings.default()
