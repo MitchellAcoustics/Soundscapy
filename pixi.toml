@@ -14,9 +14,6 @@ version = "0.*"
 [package.build.config]
 ignore-pypi-mapping = false
 
-[package.host-dependencies]
-uv = ">=0.9.0"
-
 ###### Workspace Config ######
 
 [activation.env]
@@ -28,7 +25,7 @@ PIXI_R_LIBS = "$CONDA_PREFIX/lib/R/library"
 PIXI_R_HOME = "$CONDA_PREFIX/lib/R"
 R_LIBS      = "$PIXI_R_LIBS"
 R_LIBS_USER = "$PIXI_R_LIBS"
-R_HOME      = "$PIXI_R_HOME"
+# R_HOME      = "$PIXI_R_HOME"
 
 ###### Dependencies ######
 
@@ -37,6 +34,7 @@ soundscapy = { path = ".", editable = true }
 
 [dependencies]
 python = ">=3.11,<3.15"
+numpy  = ">=2.1.3,<2.4"
 
 ############ Features #############
 
@@ -160,7 +158,7 @@ description = "Setup pre-commit hooks for development work."
 # Test Tasks
 
 [feature.test.tasks.test-base]
-cmd                 = "python --version && pytest -k 'not optional_deps' --ignore-glob='*iso_plot.py' -n auto"
+cmd                 = "python --version && pytest -k 'not optional_deps' --ignore-glob='*iso_plot.py'"
 default-environment = "test"
 
 [feature.test.tasks.test-audio]

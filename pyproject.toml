@@ -21,7 +21,7 @@ readme = "README.md"
 requires-python = ">= 3.11"
 dependencies = [
     "loguru>=0.7.2",
-    "numpy!=1.26",
+    "numpy>=2.1.3,<2.4",
     "pandas[excel]>=2.2.2,<3.0",
     "pandera[io,mypy,pandas]>=0.26.1",
     "plot-likert>=0.5.0",
