@@ -2,10 +2,6 @@ name: Documentation
 
 on:
   workflow_call:
-    outputs:
-      docs-pass:
-        description: "Indicates if documentation build passed"
-        value: ${{ github.event.inputs.docs-pass }}
   push:
     branches:
       - main
