@@ -22,6 +22,13 @@ except ImportError:
 import numpy as np
 import pandas as pd
 from loguru import logger
+from scipy import stats
+
+from generalimport import generalimport
+
+generalimport("maad")
+generalimport("mosqito")
+
 from maad.features import all_spectral_alpha_indices, all_temporal_alpha_indices
 from maad.sound import spectrogram
 from mosqito.sq_metrics import (
@@ -31,7 +38,6 @@ from mosqito.sq_metrics import (
     sharpness_din_perseg,
     sharpness_din_tv,
 )
-from scipy import stats
 
 if TYPE_CHECKING:
     from acoustic_toolbox import Signal
@@ -111,7 +117,7 @@ def _stat_calcs(
             else:
                 logger.error(f"Unrecognized statistic: {stat} for {label}")
                 res[f"{label}_{stat}"] = np.nan
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001, PERF203
             logger.error(f"Error calculating {stat} for {label}: {e!s}")
             res[f"{label}_{stat}"] = np.nan
     return res

@@ -1,4 +1,0 @@
-pinning-strategy = "latest-up"
-
-[experimental]
-use-environment-activation-cache = true
