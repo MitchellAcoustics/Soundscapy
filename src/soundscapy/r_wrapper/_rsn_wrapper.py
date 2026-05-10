@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -19,6 +19,13 @@ def _r2np(r_obj: object) -> np.ndarray:
     """Convert a single R numeric object to a numpy array via an explicit converter."""
     with (robjects.default_converter + numpy2ri.converter).context():
         return robjects.conversion.get_conversion().rpy2py(r_obj)
+
+
+def _np2rmat(arr: np.ndarray) -> Any:
+    """Convert a 2-D numpy array to an R matrix."""
+    return robjects.r.matrix(  # type: ignore[reportCallIssue]
+        robjects.FloatVector(arr.flatten()), nrow=arr.shape[0], ncol=arr.shape[1]
+    )
 
 
 def selm(x: str, y: str, data: pd.DataFrame) -> RS4:
@@ -58,14 +65,12 @@ def sample_msn(
     if selm_model is not None:
         r_result = r.sn.rmsn(n, dp=selm_model.slots["param"][0])
     elif xi is not None and omega is not None and alpha is not None:
-        r_xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
-        r_omega = robjects.r.matrix(
-            robjects.FloatVector(omega.flatten()),
-            nrow=omega.shape[0],
-            ncol=omega.shape[1],
-        )  # type: ignore[reportCallIssue]
-        r_alpha = robjects.FloatVector(alpha)
-        r_result = r.sn.rmsn(n, xi=r_xi, Omega=r_omega, alpha=r_alpha)
+        r_result = r.sn.rmsn(
+            n,
+            xi=robjects.FloatVector(xi.T),
+            Omega=_np2rmat(omega),
+            alpha=robjects.FloatVector(alpha),
+        )
     else:
         msg = "Either selm_model or xi, omega, and alpha must be provided."
         raise ValueError(msg)
@@ -125,10 +130,18 @@ def sample_mtsn(
         outside ``[a, b]``.
 
     """
+    if selm_model is None and not (
+        xi is not None and omega is not None and alpha is not None
+    ):
+        msg = "Either selm_model or xi, omega, and alpha must be provided."
+        raise ValueError(msg)
+
     accepted: list[np.ndarray] = []
-    n_iter = 0
+    total_drawn = 0
+    batch_size = max(n, 64)
+
     while len(accepted) < n:
-        if n_iter >= max_iter:
+        if total_drawn >= max_iter:
             msg = (
                 f"sample_mtsn: reached max_iter={max_iter} without collecting "
                 f"{n} accepted samples (got {len(accepted)}). "
@@ -136,18 +149,21 @@ def sample_mtsn(
                 f"[{a}, {b}]. Adjust the bounds or increase max_iter."
             )
             raise RuntimeError(msg)
-        if selm_model is not None:
-            sample = sample_msn(selm_model, n=1)
-        elif xi is not None and omega is not None and alpha is not None:
-            sample = sample_msn(xi=xi, omega=omega, alpha=alpha, n=1)
-        else:
-            msg = "Either selm_model or xi, omega, and alpha must be provided."
-            raise ValueError(msg)
-        n_iter += 1
-        if a <= sample[0][0] <= b and a <= sample[0][1] <= b:
-            accepted.append(sample)
 
-    return np.vstack(accepted)
+        candidates = sample_msn(
+            selm_model=selm_model, xi=xi, omega=omega, alpha=alpha, n=batch_size
+        )
+        total_drawn += batch_size
+
+        in_bounds = (
+            (candidates[:, 0] >= a)
+            & (candidates[:, 0] <= b)
+            & (candidates[:, 1] >= a)
+            & (candidates[:, 1] <= b)
+        )
+        accepted.extend(candidates[in_bounds])
+
+    return np.vstack(accepted[:n])
 
 
 def dp2cp(
@@ -177,22 +193,13 @@ def dp2cp(
 
     """
     r = get_r_session()
-    r_xi = robjects.FloatVector(xi.T)  # Transpose to make it a column vector
-    r_omega = robjects.r.matrix(
-        robjects.FloatVector(omega.flatten()),
-        nrow=omega.shape[0],
-        ncol=omega.shape[1],
-    )  # type: ignore[reportCallIssue]
-    r_alpha = robjects.FloatVector(alpha)
-
     dp_r = robjects.ListVector(
         {
-            "xi": r_xi,
-            "Omega": r_omega,
-            "alpha": r_alpha,
+            "xi": robjects.FloatVector(xi.T),
+            "Omega": _np2rmat(omega),
+            "alpha": robjects.FloatVector(alpha),
         }
     )
-
     cp_r = r.sn.dp2cp(dp_r, family=family)
     return tuple(_r2np(cp_r[i]) for i in range(len(cp_r)))
 
@@ -224,18 +231,11 @@ def cp2dp(
 
     """
     r = get_r_session()
-    r_mean = robjects.FloatVector(mean.T)  # Transpose to make it a column vector
-    r_sigma = robjects.r.matrix(
-        robjects.FloatVector(sigma.flatten()),
-        nrow=sigma.shape[0],
-        ncol=sigma.shape[1],
-    )  # type: ignore[reportCallIssue]
-    r_skew = robjects.FloatVector(skew)
     cp_r = robjects.ListVector(
         {
-            "mean": r_mean,
-            "Sigma": r_sigma,
-            "skew": r_skew,
+            "mean": robjects.FloatVector(mean.T),
+            "Sigma": _np2rmat(sigma),
+            "skew": robjects.FloatVector(skew),
         }
     )
     dp_r = r.sn.cp2dp(cp_r, family=family)
