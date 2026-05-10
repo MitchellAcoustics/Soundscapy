@@ -211,8 +211,12 @@ def get_r_session() -> RSession:
 
     Raises
     ------
+    ImportError
+        If R is not installed or its version is too old, if the ``sn``
+        R package is missing or too old, or if the embedded CircE scripts
+        cannot be sourced.
     RuntimeError
-        If session initialisation fails.
+        If session initialisation fails for any other reason.
     """
     if not _state.active:
         _initialize_r_session()
