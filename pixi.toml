@@ -193,7 +193,7 @@ default-environment = "test-all"
 
 [feature.test.tasks.tests]
 args = [
-    { arg = "flags", default = "-n auto --quiet --no-header -rfs -W ignore" },
+    { arg = "flags", default = "--quiet --no-header -rfs -W ignore" },
 ]
 depends-on = [
     { task = "test-import-tripwire", args = [
