@@ -4,7 +4,6 @@
 
 [![PyPI version](https://badge.fury.io/py/soundscapy.svg)](https://badge.fury.io/py/soundscapy)
 [![Tests](https://github.com/MitchellAcoustics/Soundscapy/actions/workflows/test.yml/badge.svg)](https://github.com/MitchellAcoustics/Soundscapy/actions/workflows/test.yml)
-[![Documentation Status](https://readthedocs.org/projects/soundscapy/badge/?version=latest)](https://soundscapy.readthedocs.io/en/latest/?badge=latest)
 ![License](https://img.shields.io/github/license/MitchellAcoustics/Soundscapy)
 
 A python library for analysing and visualising soundscape assessments.
