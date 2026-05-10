@@ -1,28 +1,24 @@
 """
-R integration for skew-normal distribution calculations.
+Internal R integration for skew-normal and circumplex model calculations.
 
-This module provides functions for:
-
-1. Checking R and R package dependencies
-2. Initializing and managing R sessions
-3. Converting data between R and Python
-4. Executing R functions for skew-normal calculations
-
+Wraps rpy2 to expose R's ``sn`` package and the bundled CircE BFGS scripts.
 Session state is held in a single module-level :class:`RSession` dataclass
-instance (``_state``).  Functions that read or write session fields do so
-directly — no ``global`` declarations are needed, since mutating an object's
-attributes does not rebind the module-level name.  The sole exception is
-:func:`reset_r_session`, which creates a fresh ``RSession()`` and therefore
-does rebind ``_state``.
+instance (``_state``).  Call :func:`get_r_session` to obtain it; the session
+is initialised lazily on first access.
 
-It is not intended to be used directly by end users.
+Not intended for direct use — all public names are re-exported from
+``soundscapy.spi`` and ``soundscapy.satp``.
 """
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+import numpy as np
+import pandas as pd
 
 # NOTE: importing rpy2.robjects here unconditionally starts the embedded R
 # process.  There is no way to defer this further — R begins as soon as this
@@ -30,14 +26,18 @@ from typing import Any
 # this module (and therefore R) is only loaded when the user first accesses
 # soundscapy.spi or soundscapy.satp, not on a plain ``import soundscapy``.
 from rpy2 import robjects
+from rpy2.robjects import numpy2ri, pandas2ri
+from rpy2.robjects.methods import RS4
+from scipy.stats import chi2 as scipy_chi2
 
 from soundscapy.sspylogging import get_logger
+from soundscapy.surveys.survey_utils import PAQ_IDS
 
 logger = get_logger()
 
 REQUIRED_R_VERSION: str = "3.6"
 
-CIRCE_EMBEDDED_DIR = Path(__file__).parent.joinpath("r_circe")
+CIRCE_EMBEDDED_DIR = Path(__file__).parent / "r_circe"
 CIRCE_EMBEDDED_FILES: tuple[str, ...] = (
     "bound.assign.R",
     "char.assign.R",
@@ -54,17 +54,17 @@ CIRCE_REQUIRED_SYMBOLS: tuple[str, ...] = (
 )
 
 
+# ── Session state ──────────────────────────────────────────────────────────────
+
+
 @dataclass
 class RSession:
     """
-    Unified state container for the R session, loaded packages, and check flags.
+    State container for the active R session.
 
-    A single module-level instance (``_state``) replaces scattered module-level
-    globals.  Module functions read and write its fields directly — no ``global``
-    declarations are needed except in `reset_r_session`, which rebinds the name.
-
-    `get_r_session` returns ``_state`` directly once the session is ready;
-    callers access package objects via named fields (``r.sn``, ``r.base``, …).
+    A single module-level instance (``_state``) holds the loaded R package
+    objects.  :func:`get_r_session` initialises it lazily on first call;
+    :func:`reset_r_session` clears it to force re-initialisation.
 
     Attributes
     ----------
@@ -72,49 +72,28 @@ class RSession:
         Loaded ``sn`` R package object.
     base
         Loaded ``base`` R package object.
-    circe_sourced
-        ``True`` once the embedded CircE R scripts have been sourced.
     active
-        ``True`` once :func:`initialize_r_session` completes successfully.
-    r_checked
-        ``True`` once :func:`check_r_availability` has passed (cached).
-    sn_checked
-        ``True`` once :func:`check_sn_package` has passed (cached).
-    circe_checked
-        ``True`` once :func:`check_circe_package` has passed (cached).
-
-    Notes
-    -----
-    All fields are reset to their defaults when `reset_r_session` is called,
-    ensuring clean re-verification on the next `get_r_session` call.
-
+        ``True`` once initialisation has completed successfully.
     """
 
     sn: Any = None
     base: Any = None
-    circe_sourced: bool = False
     active: bool = False
-    r_checked: bool = False
-    sn_checked: bool = False
-    circe_checked: bool = False
 
 
-# Single module-level state instance.  All session functions operate on this
-# object; only reset_r_session() rebinds the name (via ``global _state``).
+# Single module-level state instance.  Only reset_r_session() rebinds the name.
 _state = RSession()
 
 
-def _get_circe_embedded_paths() -> list[Path]:
-    """Return the expected embedded CircE script paths, validating existence."""
-    if not CIRCE_EMBEDDED_DIR.is_dir():
-        raise ImportError(
-            f"Embedded CircE scripts directory is missing: {CIRCE_EMBEDDED_DIR}"
-        )
-    script_paths = [CIRCE_EMBEDDED_DIR / filename for filename in CIRCE_EMBEDDED_FILES]
-    missing = [p.name for p in script_paths if not p.is_file()]
-    if missing:
-        raise ImportError("Embedded CircE scripts are missing: " + ", ".join(missing))
-    return script_paths
+# ── Private helpers ────────────────────────────────────────────────────────────
+
+
+def _ver(v: str) -> tuple[int, ...]:
+    """Parse a dotted version string into a comparable integer tuple.
+
+    Avoids lexicographic pitfalls where ``"1.10" < "1.2"`` is True.
+    """
+    return tuple(int(x) for x in v.split("."))
 
 
 def _r_function_exists(symbol_name: str) -> bool:
@@ -128,185 +107,120 @@ def _embedded_circe_symbols_loaded() -> bool:
 
 
 def _source_embedded_circe_scripts() -> None:
-    """Source the bundled CircE R scripts into the embedded R session."""
-    for script_path in _get_circe_embedded_paths():
+    if not CIRCE_EMBEDDED_DIR.is_dir():
+        raise ImportError(
+            f"Embedded CircE scripts directory is missing: {CIRCE_EMBEDDED_DIR}"
+        )
+    script_paths = [CIRCE_EMBEDDED_DIR / f for f in CIRCE_EMBEDDED_FILES]
+    missing = [p.name for p in script_paths if not p.is_file()]
+    if missing:
+        raise ImportError("Embedded CircE scripts are missing: " + ", ".join(missing))
+    for path in script_paths:
         try:
-            robjects.r["source"](script_path.as_posix())
+            robjects.r["source"](path.as_posix())
         except Exception as e:
             raise ImportError(
-                f"Failed to source embedded CircE script '{script_path.name}': {e}"
+                f"Failed to source embedded CircE script '{path.name}': {e}"
             ) from e
-
-    missing = [s for s in CIRCE_REQUIRED_SYMBOLS if not _r_function_exists(s)]
-    if missing:
+    missing_syms = [s for s in CIRCE_REQUIRED_SYMBOLS if not _r_function_exists(s)]
+    if missing_syms:
         raise ImportError(
             "Embedded CircE scripts were sourced but required symbols are still "
-            "missing: " + ", ".join(missing)
+            "missing: " + ", ".join(missing_syms)
         )
 
 
-def _ver(v: str) -> tuple[int, ...]:
-    """
-    Parse a dotted version string into a comparable integer tuple.
-
-    Avoids lexicographic pitfalls where ``"1.10" < "1.2"`` is True.
-    """
-    return tuple(int(x) for x in v.split("."))
+def _r2np(r_obj: object) -> np.ndarray:
+    """Convert an R numeric object to a numpy array."""
+    with (robjects.default_converter + numpy2ri.converter).context():
+        return robjects.conversion.get_conversion().rpy2py(r_obj)
 
 
-def check_r_availability() -> None:
-    """
-    Check that R is accessible and meets the minimum version requirement.
+def _np2rmat(arr: np.ndarray) -> Any:
+    """Convert a 2-D numpy array to an R matrix."""
+    return robjects.r.matrix(  # type: ignore[reportCallIssue]
+        robjects.FloatVector(arr.flatten()), nrow=arr.shape[0], ncol=arr.shape[1]
+    )
 
-    Notes
-    -----
-    Importing this module already starts the R process via
-    ``from rpy2 import robjects``.  This function verifies the R *version*
-    and caches the result so the version query runs at most once per session.
 
-    Raises
-    ------
-    ImportError
-        If the running R version is older than :data:`REQUIRED_R_VERSION`.
+# ── Session management ─────────────────────────────────────────────────────────
 
-    """
-    if _state.r_checked:
+
+def _initialize_r_session() -> None:
+    """Lazily initialise the R session, checking all dependencies."""
+    if _state.active:
         return
+
+    import rpy2.robjects.packages as rpackages  # noqa: PLC0415
+
+    # Verify R version
     try:
-        # R's $minor field is like "6.0" for R 4.6.0 or "2.1" for R 4.2.1 —
-        # use _ver() tuple comparison to avoid float pitfalls.
         r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[
             0
         ]  # type: ignore[index]
         logger.debug("R version: %s", robjects.r("R.version.string")[0])  # type: ignore[index]
-        if _ver(r_version_str) < _ver(REQUIRED_R_VERSION):
-            raise ImportError(
-                f"R version {r_version_str} is too old; "
-                f"requires >= {REQUIRED_R_VERSION}. Please upgrade your R installation."
-            )
-        _state.r_checked = True
-    except ImportError:
-        raise
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise ImportError(
             f"Error querying R version: {e}. "
             "Please ensure R is installed and correctly configured."
         ) from e
-
-
-def check_sn_package() -> None:
-    """
-    Check that the R ``sn`` package is installed and meets the minimum version.
-
-    Raises
-    ------
-    ImportError
-        If the ``sn`` package is missing or too old.
-
-    """
-    if _state.sn_checked:
-        return
-    try:
-        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
-
-        try:
-            rpackages.importr("sn")
-        except rpackages.PackageNotInstalledError:
-            raise ImportError(
-                "R package 'sn' is not installed. Run in R: install.packages('sn')"
-            )
-        version = robjects.r('as.character(packageVersion("sn"))')[0]  # type: ignore[index]
-        logger.debug("R 'sn' package version: %s", version)
-        if _ver(version) < (2, 0, 0):
-            raise ImportError(
-                f"R 'sn' package version {version} is too old; requires >= 2.0.0. "
-                "Run in R: install.packages('sn')"
-            )
-        _state.sn_checked = True
-    except ImportError:
-        raise
-    except Exception as e:  # noqa: BLE001
+    if _ver(r_version_str) < _ver(REQUIRED_R_VERSION):
         raise ImportError(
-            f"Error checking for R 'sn' package: {e}. Run in R: install.packages('sn')"
-        ) from e
+            f"R version {r_version_str} is too old; "
+            f"requires >= {REQUIRED_R_VERSION}. Please upgrade your R installation."
+        )
 
+    # Check and load the sn package
+    try:
+        sn_pkg = rpackages.importr("sn")
+    except rpackages.PackageNotInstalledError:
+        raise ImportError(
+            "R package 'sn' is not installed. Run in R: install.packages('sn')"
+        )
+    version = robjects.r('as.character(packageVersion("sn"))')[0]  # type: ignore[index]
+    logger.debug("R 'sn' package version: %s", version)
+    if _ver(version) < (2, 0, 0):
+        raise ImportError(
+            f"R 'sn' package version {version} is too old; requires >= 2.0.0. "
+            "Run in R: install.packages('sn')"
+        )
 
-def check_circe_package() -> None:
-    """
-    Check that the embedded CircE R scripts are available and sourceable.
-
-    Raises
-    ------
-    ImportError
-        If the bundled CircE scripts are missing or cannot be sourced.
-
-    """
-    if _state.circe_checked:
-        return
+    # Source CircE scripts if not already loaded in the global environment
     if not _embedded_circe_symbols_loaded():
         _source_embedded_circe_scripts()
-    _state.circe_checked = True
-
-
-def check_dependencies() -> None:
-    """
-    Check all required R dependencies.
-
-    Verifies R version, the ``sn`` CRAN package, and the embedded CircE scripts.
-
-    Raises
-    ------
-    ImportError
-        If any dependency check fails.
-
-    """
-    check_r_availability()
-    check_sn_package()
-    check_circe_package()
-
-
-# === SESSION MANAGEMENT ===
-
-
-def initialize_r_session() -> None:
-    """
-    Initialize an R session for skew-normal distribution calculations.
-
-    Raises
-    ------
-    ImportError
-        If dependencies are missing.
-    RuntimeError
-        If session initialization fails.
-
-    """
-    if _state.active:
-        logger.debug("R session already initialized")
-        return
-
-    check_dependencies()
 
     try:
-        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
-
-        _state.sn = rpackages.importr("sn")
+        _state.sn = sn_pkg
         _state.base = rpackages.importr("base")
-        _state.circe_sourced = True
-        logger.debug("Imported R packages: sn, base; sourced embedded CircE")
-
         robjects.r("set.seed(42)")
         _state.active = True
         logger.info("R session successfully initialized")
-
     except Exception as e:
         logger.exception("Failed to initialize R session")
         reset_r_session()
         raise RuntimeError(f"Failed to initialize R session: {e}") from e
 
 
-def reset_r_session() -> bool:
+def get_r_session() -> RSession:
+    """Return the active R session, initialising lazily on first call.
+
+    Returns
+    -------
+    :
+        The module-level ``_state`` instance.
+
+    Raises
+    ------
+    RuntimeError
+        If session initialisation fails.
     """
-    Reset all session state, forcing re-verification on the next call.
+    if not _state.active:
+        _initialize_r_session()
+    return _state
+
+
+def reset_r_session() -> bool:
+    """Reset all session state, forcing re-initialisation on the next call.
 
     Note: the *R process itself continues running* — rpy2 does not support
     terminating the embedded R interpreter.
@@ -315,7 +229,6 @@ def reset_r_session() -> bool:
     -------
     :
         ``True`` if successful, ``False`` if an error occurred.
-
     """
     global _state  # noqa: PLW0603
 
@@ -326,7 +239,7 @@ def reset_r_session() -> bool:
         _state = RSession()
         gc.collect()
         if was_active:
-            logger.info("R session packages successfully unloaded")
+            logger.info("R session successfully reset")
         else:
             logger.debug("R session state cleared")
     except Exception:
@@ -336,67 +249,313 @@ def reset_r_session() -> bool:
         return True
 
 
-def get_r_session() -> RSession:
+def install_r_packages(packages: list[str] | None = None) -> None:  # noqa: ARG001
     """
-    Return the active R session, initialising lazily on first call.
+    .. deprecated::
+        This function is a no-op and will be removed in a future release.
+        Install the R ``sn`` package directly from an R session::
+
+            install.packages('sn')
+    """
+    warnings.warn(
+        "install_r_packages() is deprecated and will be removed in a future release. "
+        "Install the R 'sn' package directly from R: install.packages('sn')",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+
+# ── Skew-normal wrappers (sn package) ─────────────────────────────────────────
+
+
+def selm(x: str, y: str, data: pd.DataFrame) -> RS4:
+    r = get_r_session()
+    formula = f"cbind({x}, {y}) ~ 1"
+    with (robjects.default_converter + pandas2ri.converter).context():
+        r_data = robjects.conversion.get_conversion().py2rpy(data)
+    return r.sn.selm(formula, data=r_data, family="SN")
+
+
+def extract_cp(selm_model: RS4) -> tuple:
+    # param[[1]] in R (0-indexed in rpy2) is the CP list: {mean, Sigma, skew}
+    cp_r = selm_model.slots["param"][1]
+    mean = _r2np(cp_r[0]).flatten()
+    sigma = _r2np(cp_r[1])
+    skew = _r2np(cp_r[2]).flatten()
+    return (mean, sigma, skew)
+
+
+def extract_dp(selm_model: RS4) -> tuple:
+    # param[[0]] in R (0-indexed in rpy2) is the DP list: {xi, Omega, alpha}
+    dp_r = selm_model.slots["param"][0]
+    xi = _r2np(dp_r[0]).flatten()
+    omega = _r2np(dp_r[1])
+    alpha = _r2np(dp_r[2]).flatten()
+    return (xi, omega, alpha)
+
+
+def sample_msn(
+    selm_model: RS4 | None = None,
+    xi: np.ndarray | None = None,
+    omega: np.ndarray | None = None,
+    alpha: np.ndarray | None = None,
+    n: int = 1000,
+) -> np.ndarray:
+    r = get_r_session()
+    if selm_model is not None:
+        r_result = r.sn.rmsn(n, dp=selm_model.slots["param"][0])
+    elif xi is not None and omega is not None and alpha is not None:
+        r_result = r.sn.rmsn(
+            n,
+            xi=robjects.FloatVector(xi.T),
+            Omega=_np2rmat(omega),
+            alpha=robjects.FloatVector(alpha),
+        )
+    else:
+        raise ValueError("Either selm_model or xi, omega, and alpha must be provided.")
+    return _r2np(r_result)
+
+
+def sample_mtsn(
+    selm_model: RS4 | None = None,
+    xi: np.ndarray | None = None,
+    omega: np.ndarray | None = None,
+    alpha: np.ndarray | None = None,
+    a: float = -1,
+    b: float = 1,
+    n: int = 1000,
+    max_iter: int = 100_000,
+) -> np.ndarray:
+    """
+    Sample from a multivariate truncated skew-normal distribution.
+
+    Uses rejection sampling to ensure samples fall within ``[a, b]`` for both
+    dimensions.
+
+    Parameters
+    ----------
+    selm_model
+        Fitted SELM model from R's ``sn`` package.  If provided, ``xi``,
+        ``omega``, and ``alpha`` are ignored.
+    xi
+        Location parameter (2×1 array).
+    omega
+        Scale matrix (2×2 array).
+    alpha
+        Skewness parameter (2×1 array).
+    a
+        Lower truncation bound for both dimensions.
+    b
+        Upper truncation bound for both dimensions.
+    n
+        Number of samples to generate.
+    max_iter
+        Maximum total candidate draws before raising ``RuntimeError``.
 
     Returns
     -------
     :
-        The module-level ``_state`` instance.  Access package objects by name:
-        ``r.sn``, ``r.base``, etc.
+        Array of samples (n × 2).
 
     Raises
     ------
+    ValueError
+        If neither ``selm_model`` nor all of ``xi``, ``omega``, ``alpha`` are given.
     RuntimeError
-        If session initialisation fails.
-
+        If ``max_iter`` draws are exhausted before ``n`` accepted samples are
+        collected.
     """
-    if not _state.active:
-        initialize_r_session()
-    return _state
+    if selm_model is None and not (
+        xi is not None and omega is not None and alpha is not None
+    ):
+        raise ValueError("Either selm_model or xi, omega, and alpha must be provided.")
+
+    accepted: list[np.ndarray] = []
+    total_drawn = 0
+    batch_size = max(n, 64)
+
+    while len(accepted) < n:
+        if total_drawn >= max_iter:
+            raise RuntimeError(
+                f"sample_mtsn: reached max_iter={max_iter} without collecting "
+                f"{n} accepted samples (got {len(accepted)}). "
+                "The distribution may have negligible mass inside "
+                f"[{a}, {b}]. Adjust the bounds or increase max_iter."
+            )
+        candidates = sample_msn(
+            selm_model=selm_model, xi=xi, omega=omega, alpha=alpha, n=batch_size
+        )
+        total_drawn += batch_size
+        in_bounds = (
+            (candidates[:, 0] >= a)
+            & (candidates[:, 0] <= b)
+            & (candidates[:, 1] >= a)
+            & (candidates[:, 1] <= b)
+        )
+        accepted.extend(candidates[in_bounds])
+
+    return np.vstack(accepted[:n])
 
 
-def install_r_packages(packages: list[str] | None = None) -> None:
-    """
-    Install R packages if not already installed.
+def dp2cp(
+    xi: np.ndarray,
+    omega: np.ndarray,
+    alpha: np.ndarray,
+    family: Literal["SN", "ESN", "ST", "SC"] = "SN",
+) -> tuple:
+    """Convert Direct Parameters (DP) to Centred Parameters (CP).
 
     Parameters
     ----------
-    packages
-        List of R package names to install. Defaults to ``["sn"]``.
+    xi
+        Location parameter (2×1 array).
+    omega
+        Scale matrix (2×2 array).
+    alpha
+        Skewness parameter (2×1 array).
+    family
+        Distribution family.
 
-    Raises
-    ------
-    ImportError
-        If R is not available or package installation fails.
-
+    Returns
+    -------
+    :
+        Tuple of centred parameters ``(mean, sigma, skew)``.
     """
-    if packages is None:
-        packages = ["sn"]
+    r = get_r_session()
+    dp_r = robjects.ListVector(
+        {
+            "xi": robjects.FloatVector(xi.T),
+            "Omega": _np2rmat(omega),
+            "alpha": robjects.FloatVector(alpha),
+        }
+    )
+    cp_r = r.sn.dp2cp(dp_r, family=family)
+    return tuple(_r2np(cp_r[i]) for i in range(len(cp_r)))
 
-    check_r_availability()
 
-    try:
-        import rpy2.robjects.packages as rpackages  # noqa: PLC0415
-        from rpy2.robjects.vectors import StrVector  # noqa: PLC0415
+def cp2dp(
+    mean: np.ndarray,
+    sigma: np.ndarray,
+    skew: np.ndarray,
+    family: Literal["SN", "ESN", "ST", "SC"] = "SN",
+) -> tuple:
+    """Convert Centred Parameters (CP) to Direct Parameters (DP).
 
-        utils = rpackages.importr("utils")
-        utils.chooseCRANmirror(ind=1)
+    Parameters
+    ----------
+    mean
+        Mean vector (2×1 array).
+    sigma
+        Covariance matrix (2×2 array).
+    skew
+        Skewness vector (2×1 array).
+    family
+        Distribution family.
 
-        if "CircE" in packages:
-            logger.info("Skipping 'CircE' — it is embedded, not a CRAN package")
-            packages = [p for p in packages if p != "CircE"]
+    Returns
+    -------
+    :
+        Tuple of direct parameters ``(xi, omega, alpha)``.
+    """
+    r = get_r_session()
+    cp_r = robjects.ListVector(
+        {
+            "mean": robjects.FloatVector(mean.T),
+            "Sigma": _np2rmat(sigma),
+            "skew": robjects.FloatVector(skew),
+        }
+    )
+    dp_r = r.sn.cp2dp(cp_r, family=family)
+    return tuple(_r2np(dp_r[i]) for i in range(len(dp_r)))
 
-        if not packages:
-            return
 
-        to_install = [p for p in packages if not rpackages.isinstalled(p)]
-        if to_install:
-            utils.install_packages(StrVector(to_install))
-            logger.info("Installed R packages: %s", to_install)
-        else:
-            logger.debug("All required R packages are already installed")
+# ── CircE wrappers (embedded R scripts) ───────────────────────────────────────
 
-    except Exception as e:
-        raise ImportError(f"Failed to install R packages: {e}") from e
+
+def bfgs_fit(
+    data_cor: pd.DataFrame,
+    n: int,
+    scales: list[str] = PAQ_IDS,
+    m_val: int = 3,
+    *,
+    equal_ang: bool = True,
+    equal_com: bool = True,
+) -> dict[str, Any]:
+    """Fit a circumplex model and return extracted fit statistics.
+
+    Calls the embedded CircE BFGS implementation and converts the result to a
+    Python dict with scalar normalisation and a scipy-computed p-value.
+
+    Parameters
+    ----------
+    data_cor
+        Correlation matrix of the data.
+    n
+        Number of observations used to compute ``data_cor``.
+    scales
+        List of scale names.
+    m_val
+        Number of Fourier dimensions.
+    equal_ang
+        Whether to enforce equal-angles constraint.
+    equal_com
+        Whether to enforce equal-communalities constraint.
+
+    Returns
+    -------
+    :
+        Dictionary of fit statistics.
+    """
+    r = get_r_session()
+
+    with (robjects.default_converter + pandas2ri.converter).context():
+        # Only the Python→R conversion needs the pandas2ri context.
+        # Calling as_matrix() inside the context would cause its R-matrix
+        # return value to be auto-converted back to numpy by the active
+        # converter, producing a numpy array instead of an R matrix.
+        r_data_cor = robjects.conversion.get_conversion().py2rpy(data_cor)
+
+    r_cor_mat = r.base.as_matrix(r_data_cor)
+    circe_bfgs = robjects.globalenv["CircE.BFGS"]
+
+    bfgs_model = circe_bfgs(
+        r_cor_mat,
+        v_names=robjects.StrVector(scales),
+        m=m_val,
+        N=n,
+        start_values="PFA",
+        equal_ang=equal_ang,
+        equal_com=equal_com,
+        iterlim=1000,
+        try_refit_BFGS=True,
+        print_level=0,
+        file=robjects.NULL,
+    )
+
+    with (robjects.default_converter + pandas2ri.converter).context():
+        py_res = {
+            key.lower(): robjects.conversion.get_conversion().rpy2py(val)  # type: ignore[missing-attribute]
+            for key, val in bfgs_model.items()
+        }
+
+    # Normalise length-1 numpy arrays to Python scalars.
+    py_res = {
+        k: (v.item() if isinstance(v, np.ndarray) and v.shape == (1,) else v)
+        for k, v in py_res.items()
+    }
+
+    # rpy2 may deliver degree-of-freedom fields as numpy floats.
+    for key in ("m", "d", "dfnull"):
+        if key in py_res and py_res[key] is not None:
+            py_res[key] = int(py_res[key])
+
+    # Use scipy instead of R's pchisq to avoid py2rpy conversion issues.
+    # Use model df ("d"), NOT null-model df ("dfnull").
+    _chisq, _d = py_res.get("chisq"), py_res.get("d")
+    py_res["p"] = (
+        float(scipy_chi2.sf(_chisq, _d))
+        if _chisq is not None and _d is not None
+        else None
+    )
+
+    return py_res

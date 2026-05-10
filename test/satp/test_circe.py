@@ -115,14 +115,14 @@ class TestBfgsWrapper:
 
     def test_bfgs_fit_returns_dict(self):
         """bfgs_fit() should return a plain Python dict."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
+        from soundscapy.r_wrapper._r_wrapper import bfgs_fit
 
         fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert isinstance(fit, dict)
 
     def test_bfgs_fit_keys_present(self):
         """bfgs_fit() result must contain the expected fit-statistic keys."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
+        from soundscapy.r_wrapper._r_wrapper import bfgs_fit
 
         fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         required = {
@@ -155,14 +155,14 @@ class TestBfgsWrapper:
 
     def test_bfgs_unconstrained_chisq(self):
         """Chi-square statistic must match R package reference value (±0.01)."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
+        from soundscapy.r_wrapper._r_wrapper import bfgs_fit
 
         fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert pytest.approx(fit["chisq"], abs=0.01) == 11.598
 
     def test_bfgs_unconstrained_model_df(self):
         """Model degrees of freedom must be 5 (not 21 = dfnull)."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
+        from soundscapy.r_wrapper._r_wrapper import bfgs_fit
 
         fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert int(fit["d"]) == 5
@@ -174,7 +174,7 @@ class TestBfgsWrapper:
         R reference: p = 0.041.
         If dfnull=21 were (wrongly) used the result would be ~0.95.
         """
-        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
+        from soundscapy.r_wrapper._r_wrapper import bfgs_fit
 
         fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert pytest.approx(fit["p"], abs=0.005) == 0.041
@@ -182,7 +182,7 @@ class TestBfgsWrapper:
 
     def test_bfgs_p_equals_scipy_chi2_against_model_df(self):
         """The stored p must equal scipy_chi2.sf(chisq, d) exactly."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
+        from soundscapy.r_wrapper._r_wrapper import bfgs_fit
 
         fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         expected_p = scipy_chi2.sf(fit["chisq"], fit["d"])
@@ -190,7 +190,7 @@ class TestBfgsWrapper:
 
     def test_bfgs_unconstrained_fit_indices(self):
         """Fit indices must match R package reference values (±0.001)."""
-        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
+        from soundscapy.r_wrapper._r_wrapper import bfgs_fit
 
         fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=False)
         assert pytest.approx(float(fit["rmsea"]), abs=0.001) == 0.087
@@ -209,7 +209,7 @@ class TestBfgsWrapper:
         R reference (equal_ang=False, equal_com=True):
           chi-sq = 50.409, Model df = 11, RMSEA = 0.143, CFI = 0.946, SRMR = 0.060
         """
-        from soundscapy.r_wrapper._circe_wrapper import bfgs_fit
+        from soundscapy.r_wrapper._r_wrapper import bfgs_fit
 
         fit = bfgs_fit(**_BFGS_KWARGS, equal_ang=False, equal_com=True)
         assert pytest.approx(fit["chisq"], abs=0.01) == 50.409
