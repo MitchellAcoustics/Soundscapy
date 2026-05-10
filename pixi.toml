@@ -165,19 +165,19 @@ default-environment = "test"
 description         = "Verify slim install does not trigger optional imports"
 
 [feature.test.tasks.test-base]
-cmd                 = "python --version && pytest -k 'not optional_deps' --ignore-glob='*iso_plot.py' {{ flags }}"
+cmd                 = "python --version && pytest {{ flags }}"
 args                = [{ arg = "flags", default = "-n auto" }]
 env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test"
 
 [feature.test.tasks.test-audio]
-cmd                 = "python --version && pytest -k 'not optional_deps or optional_deps and audio' --ignore-glob='*iso_plot.py' {{ flags }}"
+cmd                 = "python --version && pytest {{ flags }}"
 args                = [{ arg = "flags", default = "-n auto" }]
 env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test-audio"
 
 [feature.test.tasks.test-r]
-cmd                 = "python --version && pytest -k 'not optional_deps or optional_deps and spi or skip_if_deps and spi' -n auto {{ flags }}"
+cmd                 = "python --version && pytest {{ flags }}"
 args                = [{ arg = "flags", default = "-n auto" }]
 env                 = { PYTHONWARNINGS = "ignore:Parsing dates involving a day of month without a year:DeprecationWarning" }
 default-environment = "test-r"

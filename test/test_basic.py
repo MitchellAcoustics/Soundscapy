@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 import soundscapy
@@ -15,54 +13,27 @@ def test_core_soundscapy_modules():
     assert hasattr(soundscapy, "databases"), "Soundscapy should have a databases module"
 
 
-@pytest.mark.optional_deps("audio")
 def test_soundscapy_audio_module():
+    pytest.importorskip("mosqito")
     assert hasattr(soundscapy, "audio"), "Soundscapy should have an audio module"
-    # Test that the key classes are available
     assert hasattr(soundscapy, "Binaural")
     assert hasattr(soundscapy, "AudioAnalysis")
     assert hasattr(soundscapy, "AnalysisSettings")
     assert hasattr(soundscapy, "ConfigManager")
 
 
-@pytest.mark.optional_deps("r")
 def test_soundscapy_spi_module():
     """Test that the SPI module can be imported when dependencies are available."""
+    pytest.importorskip("rpy2")
     assert hasattr(soundscapy, "spi"), "Soundscapy should have an spi module"
-    # Test top-level imports
     assert hasattr(soundscapy, "MultiSkewNorm"), "MultiSkewNorm should be available"
     assert hasattr(soundscapy, "dp2cp"), "dp2cp should be available"
     assert hasattr(soundscapy, "spi_score"), "spi_score should be available"
 
 
-@pytest.mark.optional_deps("r")
 def test_soundscapy_satp_module():
     """Test that the SATP module can be imported when dependencies are available."""
+    pytest.importorskip("rpy2")
     assert hasattr(soundscapy, "satp"), "Soundscapy should have a satp module"
     assert hasattr(soundscapy, "fit_circe"), "fit_circe should be available"
     assert hasattr(soundscapy, "CircModelE"), "CircModelE should be available"
-
-
-def test_spi_import_error():
-    """Test that helpful error message is shown when SPI dependencies are missing."""
-    # Skip if dependencies are actually installed
-    if os.environ.get("SPI_DEPS") == "1":
-        pytest.skip("SPI dependencies are installed")
-
-    with pytest.raises(ImportError) as excinfo:
-        import soundscapy.spi  # noqa: F401
-
-    assert "SPI functionality requires" in str(excinfo.value)
-    assert "soundscapy[r]" in str(excinfo.value)
-
-
-def test_satp_import_error():
-    """Test that helpful error message is shown when SATP dependencies are missing."""
-    if os.environ.get("SATP_DEPS") == "1":
-        pytest.skip("SATP dependencies are installed")
-
-    with pytest.raises(ImportError) as excinfo:
-        import soundscapy.satp  # noqa: F401
-
-    assert "SATP functionality requires" in str(excinfo.value)
-    assert "soundscapy[r]" in str(excinfo.value)

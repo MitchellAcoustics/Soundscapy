@@ -92,7 +92,6 @@ bad-override-mutable-attribute = "ignore"
 addopts = ["--color=yes", "--import-mode=importlib", "--verbose", "--xdoctest"]
 doctest_optionflags = "NUMBER NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL"
 markers = [
-    "optional_deps(group): mark tests that depend on optional dependencies. group can be 'audio', etc.",
     "parametrize: mark test as parametrized",
     "skip: mark test as skipped",
     "skipif: mark test as skipped if condition is met",
