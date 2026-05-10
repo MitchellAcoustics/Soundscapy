@@ -350,7 +350,7 @@ class ParamModel:
         for key in keys:
             try:
                 delattr(self, key)
-            except (KeyError, AttributeError) as e:  # noqa: PERF203
+            except (KeyError, AttributeError) as e:
                 if not ignore_missing:
                     if isinstance(e, AttributeError):
                         msg = f"Parameter '{key}' does not exist."
