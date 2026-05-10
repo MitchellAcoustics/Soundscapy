@@ -7,20 +7,20 @@ for data retrieval from Zenodo and basic data loading operations.
 
 Examples
 --------
->>> import soundscapy.databases.satp as satp
->>> df = satp.load_zenodo()
->>> isinstance(df, pd.DataFrame)
+>>> import soundscapy.databases.satp as satp # doctest: +SKIP
+>>> df = satp.load_zenodo() # doctest: +SKIP
+>>> isinstance(df, pd.DataFrame) # doctest: +SKIP
 True
->>> 'Language' in df.columns
+>>> 'Language' in df.columns # doctest: +SKIP
 True
->>> satp.load_participants()
+>>> satp.load_participants() # doctest: +SKIP
 Traceback (most recent call last):
     ...
 ValueError: Participant data is only available for SATP versions up to v1.2.1.
->>> participants = satp.load_participants(version="v1.2")
->>> isinstance(participants, pd.DataFrame)
+>>> participants = satp.load_participants(version="v1.2") # doctest: +SKIP
+>>> isinstance(participants, pd.DataFrame) # doctest: +SKIP
 True
->>> 'Age' in participants.columns
+>>> 'Age' in participants.columns # doctest: +SKIP
 True
 
 """
