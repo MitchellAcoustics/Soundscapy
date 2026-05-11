@@ -3,17 +3,50 @@ project:
 
 website:
   title: "Soundscapy tutorials"
+  site-url: https://drandrewmitchell.com/Soundscapy/tutorials
+  description: "Tutorials for soundscape analysis with Soundscapy"
   navbar:
     left:
       - href: index.qmd
         text: Home
-      - background.qmd
-      - QuickStart.qmd
+      # - sidebar:user-guide
+      - sidebar:tutorials
+      # - Examples Gallery
+    tools:
+      - icon: github
+        menu:
+          - text: Source Code
+            url: https://github.com/MitchellAcoustics/Soundscapy
+
+  sidebar:
+    - id: tutorials
+      text: "Tutorials"
+      contents:
+        - QuickStart.qmd
+        - 0_QuickStart_for_Beginners.qmd
+        - HowToAnalyseAndRepresentSoundscapes.qmd
+        - 1_Understanding_Soundscape_Analysis.qmd
+        - 2_Working_with_Soundscape_Survey_Data.qmd
+        - 3_Advanced_Visualization_Techniques.qmd
+        - 4_Understanding_Soundscape_Perception_Index.qmd
+        - 5_Working_with_Soundscape_Databases.qmd
+        - 6_Soundscape_Assessment_Tutorial.qmd
+        - BinauralAnalysis.qmd
 
 format:
   html:
     theme:
-      - darkly
-      - brand
+      light: flatly
+      dark: superhero
     css: styles.css
     toc: true
+    toc-depth: 4
+    toc-title: "Contents"
+    html-math-method: katex
+    include-in-header:
+      - includes.html
+    highlight-style: tango
+    smooth-scroll: true
+
+render:
+  freeze: auto
