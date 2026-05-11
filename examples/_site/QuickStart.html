@@ -1,0 +1,2058 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="generator" content="quarto-1.9.37" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+
+    <title>Soundscapy - Quick Start Guide – Soundscapy tutorials</title>
+    <style>
+      /* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+      code {
+        white-space: pre-wrap;
+      }
+      span.smallcaps {
+        font-variant: small-caps;
+      }
+      div.columns {
+        display: flex;
+        gap: min(4vw, 1.5em);
+      }
+      div.column {
+        flex: auto;
+        overflow-x: auto;
+      }
+      div.hanging-indent {
+        margin-left: 1.5em;
+        text-indent: -1.5em;
+      }
+      ul.task-list {
+        list-style: none;
+      }
+      ul.task-list li input[type="checkbox"] {
+        width: 0.8em;
+        margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */
+        vertical-align: middle;
+      }
+      /* CSS for syntax highlighting */
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      pre > code.sourceCode {
+        white-space: pre;
+        position: relative;
+      }
+      pre > code.sourceCode > span {
+        display: inline-block;
+        line-height: 1.25;
+      }
+      pre > code.sourceCode > span:empty {
+        height: 1.2em;
+      }
+      .sourceCode {
+        overflow: visible;
+      }
+      code.sourceCode > span {
+        color: inherit;
+        text-decoration: inherit;
+      }
+      div.sourceCode {
+        margin: 1em 0;
+      }
+      pre.sourceCode {
+        margin: 0;
+      }
+      @media screen {
+        div.sourceCode {
+          overflow: auto;
+        }
+      }
+      @media print {
+        pre > code.sourceCode {
+          white-space: pre-wrap;
+        }
+        pre > code.sourceCode > span {
+          text-indent: -5em;
+          padding-left: 5em;
+        }
+      }
+      pre.numberSource code {
+        counter-reset: source-line 0;
+      }
+      pre.numberSource code > span {
+        position: relative;
+        left: -4em;
+        counter-increment: source-line;
+      }
+      pre.numberSource code > span > a:first-child::before {
+        content: counter(source-line);
+        position: relative;
+        left: -1em;
+        text-align: right;
+        vertical-align: baseline;
+        border: none;
+        display: inline-block;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        padding: 0 4px;
+        width: 4em;
+      }
+      pre.numberSource {
+        margin-left: 3em;
+        padding-left: 4px;
+      }
+      div.sourceCode {
+      }
+      @media screen {
+        pre > code.sourceCode > span > a:first-child::before {
+          text-decoration: underline;
+        }
+      }
+    </style>
+
+    <script src="site_libs/quarto-nav/quarto-nav.js"></script>
+    <script src="site_libs/quarto-nav/headroom.min.js"></script>
+    <script src="site_libs/clipboard/clipboard.min.js"></script>
+    <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+    <script src="site_libs/quarto-search/fuse.min.js"></script>
+    <script src="site_libs/quarto-search/quarto-search.js"></script>
+    <meta name="quarto:offset" content="./" />
+    <script src="site_libs/quarto-html/quarto.js" type="module"></script>
+    <script
+      src="site_libs/quarto-html/tabsets/tabsets.js"
+      type="module"
+    ></script>
+    <script src="site_libs/quarto-html/popper.min.js"></script>
+    <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+    <script src="site_libs/quarto-html/anchor.min.js"></script>
+    <link href="site_libs/quarto-html/tippy.css" rel="stylesheet" />
+    <link
+      href="site_libs/quarto-html/quarto-syntax-highlighting-f79c7fb6db380d32be398468f2fb58cf.css"
+      rel="stylesheet"
+      class="quarto-color-scheme"
+      id="quarto-text-highlighting-styles"
+    />
+    <link
+      href="site_libs/quarto-html/quarto-syntax-highlighting-dark-f79c7fb6db380d32be398468f2fb58cf.css"
+      rel="stylesheet"
+      class="quarto-color-scheme quarto-color-alternate"
+      id="quarto-text-highlighting-styles"
+    />
+    <link
+      href="site_libs/quarto-html/quarto-syntax-highlighting-f79c7fb6db380d32be398468f2fb58cf.css"
+      rel="stylesheet"
+      class="quarto-color-scheme-extra"
+      id="quarto-text-highlighting-styles"
+    />
+    <script src="site_libs/bootstrap/bootstrap.min.js"></script>
+    <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet" />
+    <link
+      href="site_libs/bootstrap/bootstrap-b7b983ed2118ca8540c757c17a7bd7d3.min.css"
+      rel="stylesheet"
+      append-hash="true"
+      class="quarto-color-scheme"
+      id="quarto-bootstrap"
+      data-mode="light"
+    />
+    <link
+      href="site_libs/bootstrap/bootstrap-dark-7b7862469dc09b0e967cddee6388404f.min.css"
+      rel="stylesheet"
+      append-hash="true"
+      class="quarto-color-scheme quarto-color-alternate"
+      id="quarto-bootstrap"
+      data-mode="dark"
+    />
+    <link
+      href="site_libs/bootstrap/bootstrap-b7b983ed2118ca8540c757c17a7bd7d3.min.css"
+      rel="stylesheet"
+      append-hash="true"
+      class="quarto-color-scheme-extra"
+      id="quarto-bootstrap"
+      data-mode="light"
+    />
+    <script id="quarto-search-options" type="application/json">
+      {
+        "location": "navbar",
+        "copy-button": false,
+        "collapse-after": 3,
+        "panel-placement": "end",
+        "type": "overlay",
+        "limit": 50,
+        "keyboard-shortcut": ["f", "/", "s"],
+        "show-item-context": false,
+        "language": {
+          "search-no-results-text": "No results",
+          "search-matching-documents-text": "matching documents",
+          "search-copy-link-title": "Copy link to search",
+          "search-hide-matches-text": "Hide additional matches",
+          "search-more-match-text": "more match in this document",
+          "search-more-matches-text": "more matches in this document",
+          "search-clear-button-title": "Clear",
+          "search-text-placeholder": "",
+          "search-detached-cancel-button-title": "Cancel",
+          "search-submit-button-title": "Submit",
+          "search-label": "Search"
+        }
+      }
+    </script>
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body class="nav-sidebar floating nav-fixed quarto-light">
+    <script id="quarto-html-before-body" type="application/javascript">
+      const toggleBodyColorMode = (bsSheetEl) => {
+        const mode = bsSheetEl.getAttribute("data-mode");
+        const bodyEl = window.document.querySelector("body");
+        if (mode === "dark") {
+          bodyEl.classList.add("quarto-dark");
+          bodyEl.classList.remove("quarto-light");
+        } else {
+          bodyEl.classList.add("quarto-light");
+          bodyEl.classList.remove("quarto-dark");
+        }
+      };
+      const toggleBodyColorPrimary = () => {
+        const bsSheetEl = window.document.querySelector(
+          "link#quarto-bootstrap:not([rel=disabled-stylesheet])",
+        );
+        if (bsSheetEl) {
+          toggleBodyColorMode(bsSheetEl);
+        }
+      };
+      const setColorSchemeToggle = (alternate) => {
+        const toggles = window.document.querySelectorAll(
+          ".quarto-color-scheme-toggle",
+        );
+        for (let i = 0; i < toggles.length; i++) {
+          const toggle = toggles[i];
+          if (toggle) {
+            if (alternate) {
+              toggle.classList.add("alternate");
+            } else {
+              toggle.classList.remove("alternate");
+            }
+          }
+        }
+      };
+      const toggleColorMode = (alternate) => {
+        // Switch the stylesheets
+        const primaryStylesheets = window.document.querySelectorAll(
+          "link.quarto-color-scheme:not(.quarto-color-alternate)",
+        );
+        const alternateStylesheets = window.document.querySelectorAll(
+          "link.quarto-color-scheme.quarto-color-alternate",
+        );
+        manageTransitions("#quarto-margin-sidebar .nav-link", false);
+        if (alternate) {
+          // note: dark is layered on light, we don't disable primary!
+          enableStylesheet(alternateStylesheets);
+          for (const sheetNode of alternateStylesheets) {
+            if (sheetNode.id === "quarto-bootstrap") {
+              toggleBodyColorMode(sheetNode);
+            }
+          }
+        } else {
+          disableStylesheet(alternateStylesheets);
+          enableStylesheet(primaryStylesheets);
+          toggleBodyColorPrimary();
+        }
+        manageTransitions("#quarto-margin-sidebar .nav-link", true);
+        // Switch the toggles
+        setColorSchemeToggle(alternate);
+        // Hack to workaround the fact that safari doesn't
+        // properly recolor the scrollbar when toggling (#1455)
+        if (
+          navigator.userAgent.indexOf("Safari") > 0 &&
+          navigator.userAgent.indexOf("Chrome") == -1
+        ) {
+          manageTransitions("body", false);
+          window.scrollTo(0, 1);
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+            manageTransitions("body", true);
+          }, 40);
+        }
+      };
+      const disableStylesheet = (stylesheets) => {
+        for (let i = 0; i < stylesheets.length; i++) {
+          const stylesheet = stylesheets[i];
+          stylesheet.rel = "disabled-stylesheet";
+        }
+      };
+      const enableStylesheet = (stylesheets) => {
+        for (let i = 0; i < stylesheets.length; i++) {
+          const stylesheet = stylesheets[i];
+          if (stylesheet.rel !== "stylesheet") {
+            // for Chrome, which will still FOUC without this check
+            stylesheet.rel = "stylesheet";
+          }
+        }
+      };
+      const manageTransitions = (selector, allowTransitions) => {
+        const els = window.document.querySelectorAll(selector);
+        for (let i = 0; i < els.length; i++) {
+          const el = els[i];
+          if (allowTransitions) {
+            el.classList.remove("notransition");
+          } else {
+            el.classList.add("notransition");
+          }
+        }
+      };
+      const isFileUrl = () => {
+        return window.location.protocol === "file:";
+      };
+      const hasAlternateSentinel = () => {
+        let styleSentinel = getColorSchemeSentinel();
+        if (styleSentinel !== null) {
+          return styleSentinel === "alternate";
+        } else {
+          return false;
+        }
+      };
+      const setStyleSentinel = (alternate) => {
+        const value = alternate ? "alternate" : "default";
+        if (!isFileUrl()) {
+          window.localStorage.setItem("quarto-color-scheme", value);
+        } else {
+          localAlternateSentinel = value;
+        }
+      };
+      const getColorSchemeSentinel = () => {
+        if (!isFileUrl()) {
+          const storageValue = window.localStorage.getItem(
+            "quarto-color-scheme",
+          );
+          return storageValue != null ? storageValue : localAlternateSentinel;
+        } else {
+          return localAlternateSentinel;
+        }
+      };
+      const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+        const baseTheme =
+          document.querySelector("#giscus-base-theme")?.value ?? "light";
+        const alternateTheme =
+          document.querySelector("#giscus-alt-theme")?.value ?? "dark";
+        let newTheme = "";
+        if (authorPrefersDark) {
+          newTheme = isAlternate ? baseTheme : alternateTheme;
+        } else {
+          newTheme = isAlternate ? alternateTheme : baseTheme;
+        }
+        const changeGiscusTheme = () => {
+          // From: https://github.com/giscus/giscus/issues/336
+          const sendMessage = (message) => {
+            const iframe = document.querySelector("iframe.giscus-frame");
+            if (!iframe) return;
+            iframe.contentWindow.postMessage(
+              { giscus: message },
+              "https://giscus.app",
+            );
+          };
+          sendMessage({
+            setConfig: {
+              theme: newTheme,
+            },
+          });
+        };
+        const isGiscussLoaded =
+          window.document.querySelector("iframe.giscus-frame") !== null;
+        if (isGiscussLoaded) {
+          changeGiscusTheme();
+        }
+      };
+      const authorPrefersDark = false;
+      const darkModeDefault = authorPrefersDark;
+      document.querySelector(
+        "link#quarto-text-highlighting-styles.quarto-color-scheme-extra",
+      ).rel = "disabled-stylesheet";
+      document.querySelector(
+        "link#quarto-bootstrap.quarto-color-scheme-extra",
+      ).rel = "disabled-stylesheet";
+      let localAlternateSentinel = darkModeDefault ? "alternate" : "default";
+      // Dark / light mode switch
+      window.quartoToggleColorScheme = () => {
+        // Read the current dark / light value
+        let toAlternate = !hasAlternateSentinel();
+        toggleColorMode(toAlternate);
+        setStyleSentinel(toAlternate);
+        toggleGiscusIfUsed(toAlternate, darkModeDefault);
+        window.dispatchEvent(new Event("resize"));
+      };
+      // Switch to dark mode if need be
+      if (hasAlternateSentinel()) {
+        toggleColorMode(true);
+      } else {
+        toggleColorMode(false);
+      }
+    </script>
+
+    <div id="quarto-search-results"></div>
+    <header id="quarto-header" class="headroom fixed-top">
+      <nav class="navbar navbar-expand-lg" data-bs-theme="dark">
+        <div class="navbar-container container-fluid">
+          <div class="navbar-brand-container mx-auto">
+            <a class="navbar-brand" href="./index.html">
+              <span class="navbar-title">Soundscapy tutorials</span>
+            </a>
+          </div>
+          <div id="quarto-search" class="" title="Search"></div>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarCollapse"
+            aria-controls="navbarCollapse"
+            role="menu"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+            onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+              <li class="nav-item">
+                <a class="nav-link" href="./index.html">
+                  <span class="menu-text">Home</span></a
+                >
+              </li>
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle"
+                  href="#"
+                  id="nav-menu-tutorials"
+                  role="link"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <span class="menu-text">tutorials</span>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="nav-menu-tutorials">
+                  <li>
+                    <a class="dropdown-item" href="./QuickStart.html">
+                      <span class="dropdown-text"
+                        ><code>Soundscapy</code> - Quick Start Guide</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="./0_QuickStart_for_Beginners.html"
+                    >
+                      <span class="dropdown-text"
+                        >Soundscapy Quick Start Guide for Beginners.</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="./HowToAnalyseAndRepresentSoundscapes.html"
+                    >
+                      <span class="dropdown-text"
+                        >How to analyse and represent soundscape
+                        perception</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="./1_Understanding_Soundscape_Analysis.html"
+                    >
+                      <span class="dropdown-text"
+                        >Understanding Soundscape Analysis: Concepts and
+                        Terminology</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="./2_Working_with_Soundscape_Survey_Data.html"
+                    >
+                      <span class="dropdown-text"
+                        >Working with Soundscape Survey Data</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="./3_Advanced_Visualization_Techniques.html"
+                    >
+                      <span class="dropdown-text"
+                        >Advanced Visualization Techniques in Soundscapy</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="./4_Understanding_Soundscape_Perception_Index.html"
+                    >
+                      <span class="dropdown-text"
+                        >Understanding and Using the Soundscape Perception Index
+                        (SPI)</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="./5_Working_with_Soundscape_Databases.html"
+                    >
+                      <span class="dropdown-text"
+                        >Working with Soundscape Databases in Soundscapy</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="./6_Soundscape_Assessment_Tutorial.html"
+                    >
+                      <span class="dropdown-text"
+                        >Soundscape Assessment Tutorial</span
+                      ></a
+                    >
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="./BinauralAnalysis.html">
+                      <span class="dropdown-text"
+                        >Using Soundscapy for Binaural Recording Analysis</span
+                      ></a
+                    >
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+            <div class="dropdown">
+              <a
+                href=""
+                title=""
+                id="quarto-navigation-tool-dropdown-0"
+                class="quarto-navigation-tool dropdown-toggle px-1"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                role="link"
+                aria-label=""
+                ><i class="bi bi-github"></i
+              ></a>
+              <ul
+                class="dropdown-menu"
+                aria-labelledby="quarto-navigation-tool-dropdown-0"
+              >
+                <li>
+                  <a
+                    class="dropdown-item quarto-navbar-tools-item"
+                    href="https://github.com/MitchellAcoustics/Soundscapy"
+                  >
+                    Source Code
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <a
+              href=""
+              class="quarto-color-scheme-toggle quarto-navigation-tool px-1"
+              onclick="window.quartoToggleColorScheme(); return false;"
+              title="Toggle dark mode"
+              ><i class="bi"></i
+            ></a>
+          </div>
+        </div>
+        <!-- /container-fluid -->
+      </nav>
+      <nav class="quarto-secondary-nav">
+        <div class="container-fluid d-flex">
+          <button
+            type="button"
+            class="quarto-btn-toggle btn"
+            data-bs-toggle="collapse"
+            role="button"
+            data-bs-target=".quarto-sidebar-collapse-item"
+            aria-controls="quarto-sidebar"
+            aria-expanded="false"
+            aria-label="Toggle sidebar navigation"
+            onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }"
+          >
+            <i class="bi bi-layout-text-sidebar-reverse"></i>
+          </button>
+          <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item">
+                <a href="./QuickStart.html"
+                  ><code>Soundscapy</code> - Quick Start Guide</a
+                >
+              </li>
+            </ol>
+          </nav>
+          <a
+            class="flex-grow-1"
+            role="navigation"
+            data-bs-toggle="collapse"
+            data-bs-target=".quarto-sidebar-collapse-item"
+            aria-controls="quarto-sidebar"
+            aria-expanded="false"
+            aria-label="Toggle sidebar navigation"
+            onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }"
+          >
+          </a>
+        </div>
+      </nav>
+    </header>
+    <!-- content -->
+    <div
+      id="quarto-content"
+      class="quarto-container page-columns page-rows-contents page-layout-article page-navbar"
+    >
+      <!-- sidebar -->
+      <nav
+        id="quarto-sidebar"
+        class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto"
+      >
+        <div class="sidebar-menu-container">
+          <ul class="list-unstyled mt-1">
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./QuickStart.html"
+                  class="sidebar-item-text sidebar-link active"
+                >
+                  <span class="menu-text"
+                    ><code>Soundscapy</code> - Quick Start Guide</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./0_QuickStart_for_Beginners.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >Soundscapy Quick Start Guide for Beginners.</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./HowToAnalyseAndRepresentSoundscapes.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >How to analyse and represent soundscape perception</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./1_Understanding_Soundscape_Analysis.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >Understanding Soundscape Analysis: Concepts and
+                    Terminology</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./2_Working_with_Soundscape_Survey_Data.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >Working with Soundscape Survey Data</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./3_Advanced_Visualization_Techniques.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >Advanced Visualization Techniques in Soundscapy</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./4_Understanding_Soundscape_Perception_Index.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >Understanding and Using the Soundscape Perception Index
+                    (SPI)</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./5_Working_with_Soundscape_Databases.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >Working with Soundscape Databases in Soundscapy</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./6_Soundscape_Assessment_Tutorial.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >Soundscape Assessment Tutorial</span
+                  ></a
+                >
+              </div>
+            </li>
+            <li class="sidebar-item">
+              <div class="sidebar-item-container">
+                <a
+                  href="./BinauralAnalysis.html"
+                  class="sidebar-item-text sidebar-link"
+                >
+                  <span class="menu-text"
+                    >Using Soundscapy for Binaural Recording Analysis</span
+                  ></a
+                >
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div
+        id="quarto-sidebar-glass"
+        class="quarto-sidebar-collapse-item"
+        data-bs-toggle="collapse"
+        data-bs-target=".quarto-sidebar-collapse-item"
+      ></div>
+      <!-- margin-sidebar -->
+      <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+          <h2 id="toc-title">Contents</h2>
+
+          <ul>
+            <li>
+              <a
+                href="#background"
+                id="toc-background"
+                class="nav-link active"
+                data-scroll-target="#background"
+                >Background</a
+              >
+            </li>
+            <li>
+              <a
+                href="#this-notebook"
+                id="toc-this-notebook"
+                class="nav-link"
+                data-scroll-target="#this-notebook"
+                >This Notebook</a
+              >
+            </li>
+            <li>
+              <a
+                href="#installation"
+                id="toc-installation"
+                class="nav-link"
+                data-scroll-target="#installation"
+                >Installation</a
+              >
+            </li>
+            <li>
+              <a
+                href="#working-with-data"
+                id="toc-working-with-data"
+                class="nav-link"
+                data-scroll-target="#working-with-data"
+                >Working with Data</a
+              >
+              <ul>
+                <li>
+                  <a
+                    href="#loading-and-validating-data"
+                    id="toc-loading-and-validating-data"
+                    class="nav-link"
+                    data-scroll-target="#loading-and-validating-data"
+                    >Loading and Validating Data</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#calculating-isopleasant-and-isoeventful-coordinates"
+                    id="toc-calculating-isopleasant-and-isoeventful-coordinates"
+                    class="nav-link"
+                    data-scroll-target="#calculating-isopleasant-and-isoeventful-coordinates"
+                    >Calculating ISOPleasant and ISOEventful Coordinates</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#filtering-data"
+                    id="toc-filtering-data"
+                    class="nav-link"
+                    data-scroll-target="#filtering-data"
+                    >Filtering Data</a
+                  >
+                </li>
+              </ul>
+            </li>
+            <li>
+              <a
+                href="#plotting"
+                id="toc-plotting"
+                class="nav-link"
+                data-scroll-target="#plotting"
+                >Plotting</a
+              >
+              <ul>
+                <li>
+                  <a
+                    href="#scatter-plots"
+                    id="toc-scatter-plots"
+                    class="nav-link"
+                    data-scroll-target="#scatter-plots"
+                    >Scatter plots</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#density-plots"
+                    id="toc-density-plots"
+                    class="nav-link"
+                    data-scroll-target="#density-plots"
+                    >Density plots</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#jointplots"
+                    id="toc-jointplots"
+                    class="nav-link"
+                    data-scroll-target="#jointplots"
+                    >Jointplots</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#creating-subplots"
+                    id="toc-creating-subplots"
+                    class="nav-link"
+                    data-scroll-target="#creating-subplots"
+                    >Creating subplots</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#using-adjusted-angles"
+                    id="toc-using-adjusted-angles"
+                    class="nav-link"
+                    data-scroll-target="#using-adjusted-angles"
+                    >Using Adjusted Angles</a
+                  >
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      <!-- main -->
+      <main class="content" id="quarto-document-content">
+        <header id="title-block-header" class="quarto-title-block default">
+          <div class="quarto-title">
+            <h1 class="title"><code>Soundscapy</code> - Quick Start Guide</h1>
+          </div>
+
+          <div class="quarto-title-meta"></div>
+        </header>
+
+        <p>By Andrew Mitchell, Lecturer, University College London</p>
+        <section id="background" class="level2">
+          <h2 class="anchored" data-anchor-id="background">Background</h2>
+          <p>
+            <code>Soundscapy</code> is a python toolbox for analysing
+            quantitative soundscape data. Urban soundscapes are typically
+            assessed through surveys which ask respondents how they perceive the
+            given soundscape. Particularly when collected following the
+            technical specification ISO 12913, these surveys can constitute
+            quantitative data about the soundscape perception. As proposed in
+            <em>How to analyse and represent quantitative soundscape data</em>
+            <a href="https://asa.scitation.org/doi/full/10.1121/10.0009794"
+              >(Mitchell, Aletta, &amp; Kang, 2022)</a
+            >, in order to describe the soundscape perception of a group or of a
+            location, we should consider the distribution of responses.
+            <code>Soundscapy</code>’s approach to soundscape analysis follows
+            this approach and makes it simple to process soundscape data and
+            visualise the distribution of responses.
+          </p>
+          <p>
+            For more information on the theory underlying the assessments and
+            forms of data collection, please see ISO 12913-Part 2,
+            <em>The SSID Protocol</em>
+            <a href="https://www.mdpi.com/2076-3417/10/7/2397"
+              >(Mitchell, <em>et al.</em>, 2020)</a
+            >, and
+            <em>How to analyse and represent quantitative soundscape data</em>.
+          </p>
+        </section>
+        <section id="this-notebook" class="level2">
+          <h2 class="anchored" data-anchor-id="this-notebook">This Notebook</h2>
+          <p>
+            The purpose of this notebook is to give a brief overview of how
+            <code>Soundscapy</code> works and how to quickly get started using
+            it to analyse your own soundscape data. The example dataset used is
+            <em>The International Soundscape Database (ISD)</em> (Mitchell,
+            <em>et al.</em>, 2021), which is publicly available at
+            <a href="https://zenodo.org/record/6331810">Zenodo</a> and is free
+            to use. <code>Soundscapy</code> expects data to follow the format
+            used in the ISD, but can be adapted for similar datasets.
+          </p>
+          <hr />
+        </section>
+        <section id="installation" class="level2">
+          <h2 class="anchored" data-anchor-id="installation">Installation</h2>
+          <p>To install Soundscapy with <code>pip</code>:</p>
+          <pre><code>pip install soundscapy</code></pre>
+          <hr />
+        </section>
+        <section id="working-with-data" class="level2">
+          <h2 class="anchored" data-anchor-id="working-with-data">
+            Working with Data
+          </h2>
+          <section id="loading-and-validating-data" class="level3">
+            <h3 class="anchored" data-anchor-id="loading-and-validating-data">
+              Loading and Validating Data
+            </h3>
+            <p>
+              Let’s start by importing Soundscapy and loading the International
+              Soundscape Database (ISD):
+            </p>
+            <div
+              id="cc8c99b4"
+              class="cell"
+              data-quarto-private-1='{"key":"execution","value":{"iopub.execute_input":"2023-08-13T15:59:04.324365Z","iopub.status.busy":"2023-08-13T15:59:04.324077Z","iopub.status.idle":"2023-08-13T15:59:06.994240Z","shell.execute_reply":"2023-08-13T15:59:06.993941Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb2">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Soundscapy</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> soundscapy <span class="im">as</span> sspy</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy.databases <span class="im">import</span> isd</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the ISD dataset</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> isd.load()</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(data.shape)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate the dataset with ISD-custom checks</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>df, excl <span class="op">=</span> isd.validate(data)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Valid samples: </span><span class="sc">{</span>data<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">, Excluded samples: </span><span class="sc">{</span>excl<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+          <section
+            id="calculating-isopleasant-and-isoeventful-coordinates"
+            class="level3"
+          >
+            <h3
+              class="anchored"
+              data-anchor-id="calculating-isopleasant-and-isoeventful-coordinates"
+            >
+              Calculating ISOPleasant and ISOEventful Coordinates
+            </h3>
+            <p>Next, we’ll calculate the ISOCoordinate values:</p>
+            <div
+              id="b1908692"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:36:31.934238Z","start_time":"2025-05-14T23:36:31.673459Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb3">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sspy.surveys.add_iso_coords(data)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>data[[<span class="st">"ISOPleasant"</span>, <span class="st">"ISOEventful"</span>]].<span class="bu">round</span>(<span class="dv">2</span>).head()</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <p>
+              <code>Soundscapy</code> expects the PAQ values to be Likert scale
+              values ranging from 1 to 5 by default, as specified in ISO 12913
+              and the SSID Protocol. However, it is possible to use data which,
+              although structured the same way, has a different range of values.
+              For instance this could be a 7-point Likert scale, or a 0 to 100
+              scale. By passing these numbers both to
+              <code>validate_dataset()</code> and
+              <code>add_paq_coords()</code> as the <code>val_range</code>,
+              <code>Soundscapy</code> will check that the data conforms to what
+              is expected and will automatically scale the ISOCoordinates from
+              -1 to +1 depending on the original value range.
+            </p>
+            <p>For example:</p>
+            <div
+              id="2bd285db"
+              class="cell"
+              data-quarto-private-1='{"key":"execution","value":{"iopub.execute_input":"2023-08-13T15:59:07.229603Z","iopub.status.busy":"2023-08-13T15:59:07.229511Z","iopub.status.idle":"2023-08-13T15:59:07.243861Z","shell.execute_reply":"2023-08-13T15:59:07.243597Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb4">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>val_range <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>sample_transform <span class="op">=</span> {</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RecordID"</span>: [<span class="st">"EX1"</span>, <span class="st">"EX2"</span>],</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pleasant"</span>: [<span class="dv">40</span>, <span class="dv">25</span>],</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"vibrant"</span>: [<span class="dv">45</span>, <span class="dv">31</span>],</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"eventful"</span>: [<span class="dv">41</span>, <span class="dv">54</span>],</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"chaotic"</span>: [<span class="dv">24</span>, <span class="dv">56</span>],</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"annoying"</span>: [<span class="dv">8</span>, <span class="dv">52</span>],</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"monotonous"</span>: [<span class="dv">31</span>, <span class="dv">55</span>],</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"uneventful"</span>: [<span class="dv">37</span>, <span class="dv">31</span>],</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"calm"</span>: [<span class="dv">40</span>, <span class="dv">10</span>],</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>sample_transform <span class="op">=</span> pd.DataFrame().from_dict(sample_transform)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>sample_transform <span class="op">=</span> sspy.rename_paqs(sample_transform)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>sample_transform <span class="op">=</span> sspy.add_iso_coords(sample_transform, val_range<span class="op">=</span>val_range)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>sample_transform</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+          <section id="filtering-data" class="level3">
+            <h3 class="anchored" data-anchor-id="filtering-data">
+              Filtering Data
+            </h3>
+            <p>
+              <code>Soundscapy</code> includes methods for several filters that
+              are normally needed within the ISD, such as filtering by
+              <code>LocationID</code> or <code>SessionID</code>.
+            </p>
+            <div
+              id="cd0a9431"
+              class="cell"
+              data-quarto-private-1='{"key":"execution","value":{"iopub.execute_input":"2023-08-13T15:59:07.264726Z","iopub.status.busy":"2023-08-13T15:59:07.264642Z","iopub.status.idle":"2023-08-13T15:59:07.285762Z","shell.execute_reply":"2023-08-13T15:59:07.285519Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb5">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by location</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>camden_data <span class="op">=</span> isd.select_location_ids(data, [<span class="st">"CamdenTown"</span>])</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Camden Town samples: </span><span class="sc">{</span>camden_data<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by session</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>regent_data <span class="op">=</span> isd.select_session_ids(data, [<span class="st">"RegentsParkJapan1"</span>])</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Regent's Park Japan session 1 samples: </span><span class="sc">{</span>regent_data<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Complex filtering using pandas query</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>women_over_50 <span class="op">=</span> df.query(<span class="st">"gen00 == 'Female' and age00 &gt; 50"</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Women over 50: </span><span class="sc">{</span>women_over_50<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <p>
+              All of these filters can also be chained together. So, for
+              instance, to return surveys from women over 50 taken in Camden
+              Town, we would do:
+            </p>
+            <div
+              id="907d161a"
+              class="cell"
+              data-quarto-private-1='{"key":"execution","value":{"iopub.execute_input":"2023-08-13T15:59:07.352987Z","iopub.status.busy":"2023-08-13T15:59:07.352919Z","iopub.status.idle":"2023-08-13T15:59:07.374112Z","shell.execute_reply":"2023-08-13T15:59:07.373866Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb6">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>isd.select_location_ids(data, <span class="st">"CamdenTown"</span>).query(<span class="st">"gen00 == 'Female' and age00 &gt; 50"</span>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+        </section>
+        <section id="plotting" class="level2">
+          <h2 class="anchored" data-anchor-id="plotting">Plotting</h2>
+          <p>
+            Soundscapy offers various plotting functions to visualize soundscape
+            data. Let’s explore some of them:
+          </p>
+          <section id="scatter-plots" class="level3">
+            <h3 class="anchored" data-anchor-id="scatter-plots">
+              Scatter plots
+            </h3>
+            <div
+              id="391a255e"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:36:34.500600Z","start_time":"2025-05-14T23:36:34.119344Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb7">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy.plotting <span class="im">import</span> ISOPlot</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Basic scatter plot</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>p1 <span class="op">=</span> (</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    ISOPlot(data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"RussellSq"</span>]), title<span class="op">=</span><span class="st">"Russell Square"</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    .create_subplots()</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    .style()</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Customized scatter plot with multiple locations</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>p2 <span class="op">=</span> (</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"RussellSq"</span>, <span class="st">"EustonTap"</span>]),</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">"Russell Square vs. Euston Tap"</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        hue<span class="op">=</span><span class="st">"LocationID"</span>,</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    .create_subplots()</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    .style(diagonal_lines<span class="op">=</span><span class="va">True</span>, legend_loc<span class="op">=</span><span class="st">"lower left"</span>)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <p>
+              The <code>ISOPlot</code> class also allows us to make this set of
+              plots in one go, as a single figure. To do this, we need to set up
+              the subplots slightly differently, then pass the subplot data to
+              each <code>.add_scatter()</code> call separately, rather than
+              passing the whole dataframe to the <code>ISOPlot</code> object.
+            </p>
+            <div
+              id="d7d17108"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:36:56.455694Z","start_time":"2025-05-14T23:36:56.241799Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb8">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>p3 <span class="op">=</span> (</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    ISOPlot(title<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    .create_subplots(</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        <span class="dv">2</span>, <span class="dv">1</span>, subplot_titles<span class="op">=</span>[<span class="st">"Russell Square"</span>, <span class="st">"Russell Square vs. Euston Tap"</span>]</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    .add_scatter(data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"RussellSq"</span>]), on_axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    .add_scatter(</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"RussellSq"</span>, <span class="st">"EustonTap"</span>]),</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        on_axis<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        hue<span class="op">=</span><span class="st">"LocationID"</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    .style()</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>p3.show()</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+          <section id="density-plots" class="level3">
+            <h3 class="anchored" data-anchor-id="density-plots">
+              Density plots
+            </h3>
+            <div
+              id="6d317369"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:03.456726Z","start_time":"2025-05-14T23:37:02.960742Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb9">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> (</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"CamdenTown"</span>]),</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">"Camden Town Density Plot"</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    .create_subplots()</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    .add_density()</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    .style()</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>d2 <span class="op">=</span> (</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"CamdenTown"</span>, <span class="st">"RussellSq"</span>, <span class="st">"PancrasLock"</span>]),</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">"Comparison of the soundscapes of three urban spaces"</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        hue<span class="op">=</span><span class="st">"LocationID"</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        palette<span class="op">=</span><span class="st">"husl"</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    .create_subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>))</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    .add_simple_density(hue<span class="op">=</span><span class="st">"LocationID"</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    .style(title_fontsize<span class="op">=</span><span class="dv">14</span>)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+          <section id="jointplots" class="level3">
+            <h3 class="anchored" data-anchor-id="jointplots">Jointplots</h3>
+            <div
+              id="b51fb174"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:08.107626Z","start_time":"2025-05-14T23:37:07.893574Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb10">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sspy.jointplot(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"CamdenTown"</span>]),</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">"ISOEventful"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">"ISOPleasant"</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Camden Town"</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    palette<span class="op">=</span><span class="st">"husl"</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    kind<span class="op">=</span><span class="st">"kde"</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+          <section id="creating-subplots" class="level3">
+            <h3 class="anchored" data-anchor-id="creating-subplots">
+              Creating subplots
+            </h3>
+            <p>
+              <code>Soundscapy</code> also provides a method for creating
+              subplots of the circumplex. This is particularly useful when
+              comparing multiple locations.
+            </p>
+            <div
+              id="d3194a97"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:11.215566Z","start_time":"2025-05-14T23:37:11.212314Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb11">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"LocationID"</span>].unique()</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <div
+              id="7546c9c1"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:13.820399Z","start_time":"2025-05-14T23:37:13.354136Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb12">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sub_data <span class="op">=</span> sspy.isd.select_location_ids(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    data, [<span class="st">"PancrasLock"</span>, <span class="st">"TorringtonSq"</span>, <span class="st">"RegentsParkFields"</span>, <span class="st">"RegentsParkJapan"</span>]</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>mp1 <span class="op">=</span> (</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>sub_data,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">"Density plots of the first four locations"</span>,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    .create_subplots(subplot_by<span class="op">=</span><span class="st">"LocationID"</span>, auto_allocate_axes<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    .add_density()</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    .style()</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <p>
+              You can also do this manually if you need more control, by
+              creating a figure and axes and then plotting the density plots on
+              the axes.
+            </p>
+            <div
+              id="66822a89"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:18.145217Z","start_time":"2025-05-14T23:37:17.493009Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb13">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sub_data2 <span class="op">=</span> sspy.isd.select_location_ids(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    data, [<span class="st">"CarloV"</span>, <span class="st">"SanMarco"</span>, <span class="st">"PlazaBibRambla"</span>, <span class="st">"CamdenTown"</span>]</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>mp2 <span class="op">=</span> (</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>sub_data2,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        hue<span class="op">=</span><span class="st">"SessionID"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    .create_subplots(</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        <span class="dv">2</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        <span class="dv">2</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>        subplot_by<span class="op">=</span><span class="st">"LocationID"</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">12</span>),</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        adjust_figsize<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    .add_simple_density(fill<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    .style()</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>mp2.show()</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+          <section id="using-adjusted-angles" class="level3">
+            <h3 class="anchored" data-anchor-id="using-adjusted-angles">
+              Using Adjusted Angles
+            </h3>
+            <p>
+              In Aletta et. al.&nbsp;(2024), we propose a method for adjusting
+              the angles of the circumplex to better represent the perceptual
+              space. These adjusted angles are derived for each language
+              separately, meaning that, once projected, the circumplex
+              coordinates will be comparable across all languages. This ability
+              and the derived angles have been incorporated into
+              <code>Soundscapy</code>.
+            </p>
+            <div
+              id="95d5c20f"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:21.528919Z","start_time":"2025-05-14T23:37:21.058116Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb14">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy.surveys <span class="im">import</span> LANGUAGE_ANGLES</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>adj_data <span class="op">=</span> sspy.surveys.add_iso_coords(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    data,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    names<span class="op">=</span>(<span class="st">"AdjustedPleasant"</span>, <span class="st">"AdjustedEventful"</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    angles<span class="op">=</span>LANGUAGE_ANGLES[<span class="st">"eng"</span>],</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    overwrite<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>adj_p <span class="op">=</span> (</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>isd.select_location_ids(adj_data, [<span class="st">"CamdenTown"</span>, <span class="st">"RussellSq"</span>]),</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>        x<span class="op">=</span><span class="st">"AdjustedPleasant"</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        y<span class="op">=</span><span class="st">"AdjustedEventful"</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>        hue<span class="op">=</span><span class="st">"LocationID"</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">"Adjusted Pleasant vs. Adjusted Eventful"</span>,</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    .create_subplots()</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    .add_simple_density()</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    .style()</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>adj_p.show()</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <div
+              id="b5343cff"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:28.076608Z","start_time":"2025-05-14T23:37:24.050488Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb15">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_iso_coords(row):</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    angles <span class="op">=</span> LANGUAGE_ANGLES.get(row[<span class="st">"Language"</span>], <span class="va">None</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> angles:</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> sspy.surveys.add_iso_coords(</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>            pd.DataFrame([row]),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>            angles<span class="op">=</span>angles,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>            names<span class="op">=</span>(<span class="st">"AdjPleasant"</span>, <span class="st">"AdjEventful"</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>            overwrite<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>        ).iloc[<span class="dv">0</span>]</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> row</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> data.<span class="bu">apply</span>(apply_iso_coords, axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <div
+              id="94bdfe61"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:32.006002Z","start_time":"2025-05-14T23:37:31.999285Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb16">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>data[[<span class="st">"AdjPleasant"</span>, <span class="st">"AdjEventful"</span>]].describe()</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <div
+              id="181d9fc1"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:37.770038Z","start_time":"2025-05-14T23:37:33.156187Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb17">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>mp3 <span class="op">=</span> (</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>data,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">"Soundscape Density Plots with corrected ISO coordinates"</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>        x<span class="op">=</span><span class="st">"AdjPleasant"</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>        y<span class="op">=</span><span class="st">"AdjEventful"</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>        hue<span class="op">=</span><span class="st">"SessionID"</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    .create_subplots(</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>        subplot_by<span class="op">=</span><span class="st">"LocationID"</span>,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>        figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>),</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>        auto_allocate_axes<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    .add_simple_density(fill<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    .style(title_fontsize<span class="op">=</span><span class="dv">25</span>)</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+            <div
+              id="04561103"
+              class="cell"
+              data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-05-14T23:37:56.376366Z","start_time":"2025-05-14T23:37:42.472639Z"}}'
+            >
+              <div class="code-copy-outer-scaffold">
+                <div class="sourceCode cell-code" id="cb18">
+                  <pre
+                    class="sourceCode python code-with-copy"
+                  ><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy.spi <span class="im">import</span> DirectParams, MultiSkewNorm</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>spi <span class="op">=</span> DirectParams(</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    xi<span class="op">=</span>np.array([<span class="fl">0.5</span>, <span class="fl">0.7</span>]),</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    omega<span class="op">=</span>np.array([[<span class="fl">0.1</span>, <span class="fl">0.05</span>], [<span class="fl">0.05</span>, <span class="fl">0.1</span>]]),</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span>np.array([<span class="dv">0</span>, <span class="op">-</span><span class="dv">5</span>]),</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a custom distribution</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>spi_msn <span class="op">=</span> MultiSkewNorm.from_params(spi)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate random samples</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>spi_msn.sample(<span class="dv">1000</span>)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>mp3 <span class="op">=</span> (</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>data,</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">"Soundscape Density Plots with corrected ISO coordinates"</span>,</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>        x<span class="op">=</span><span class="st">"AdjPleasant"</span>,</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>        y<span class="op">=</span><span class="st">"AdjEventful"</span>,</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    .create_subplots(</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>        subplot_by<span class="op">=</span><span class="st">"LocationID"</span>,</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>        figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>),</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>        auto_allocate_axes<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>    .add_scatter()</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>    .add_simple_density(fill<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>    .add_spi(spi_target_data<span class="op">=</span>spi_msn.sample_data, show_score<span class="op">=</span><span class="st">"on axis"</span>)</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>    .style(legend_loc<span class="op">=</span><span class="va">False</span>, title_fontsize<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>)</span></code></pre>
+                </div>
+                <button title="Copy to Clipboard" class="code-copy-button">
+                  <i class="bi"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+      <!-- /main -->
+      <script id="quarto-html-after-body" type="application/javascript">
+        window.document.addEventListener("DOMContentLoaded", function (event) {
+          // Ensure there is a toggle, if there isn't float one in the top right
+          if (
+            window.document.querySelector(".quarto-color-scheme-toggle") ===
+            null
+          ) {
+            const a = window.document.createElement("a");
+            a.classList.add("top-right");
+            a.classList.add("quarto-color-scheme-toggle");
+            a.href = "";
+            a.onclick = function () {
+              try {
+                window.quartoToggleColorScheme();
+              } catch {}
+              return false;
+            };
+            const i = window.document.createElement("i");
+            i.classList.add("bi");
+            a.appendChild(i);
+            window.document.body.appendChild(a);
+          }
+          setColorSchemeToggle(hasAlternateSentinel());
+          const icon = "";
+          const anchorJS = new window.AnchorJS();
+          anchorJS.options = {
+            placement: "right",
+            icon: icon,
+          };
+          anchorJS.add(".anchored");
+          const isCodeAnnotation = (el) => {
+            for (const clz of el.classList) {
+              if (clz.startsWith("code-annotation-")) {
+                return true;
+              }
+            }
+            return false;
+          };
+          const onCopySuccess = function (e) {
+            // button target
+            const button = e.trigger;
+            // don't keep focus
+            button.blur();
+            // flash "checked"
+            button.classList.add("code-copy-button-checked");
+            var currentTitle = button.getAttribute("title");
+            button.setAttribute("title", "Copied!");
+            let tooltip;
+            if (window.bootstrap) {
+              button.setAttribute("data-bs-toggle", "tooltip");
+              button.setAttribute("data-bs-placement", "left");
+              button.setAttribute("data-bs-title", "Copied!");
+              tooltip = new bootstrap.Tooltip(button, {
+                trigger: "manual",
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8],
+              });
+              tooltip.show();
+            }
+            setTimeout(function () {
+              if (tooltip) {
+                tooltip.hide();
+                button.removeAttribute("data-bs-title");
+                button.removeAttribute("data-bs-toggle");
+                button.removeAttribute("data-bs-placement");
+              }
+              button.setAttribute("title", currentTitle);
+              button.classList.remove("code-copy-button-checked");
+            }, 1000);
+            // clear code selection
+            e.clearSelection();
+          };
+          const getTextToCopy = function (trigger) {
+            const outerScaffold = trigger.parentElement.cloneNode(true);
+            const codeEl = outerScaffold.querySelector("code");
+            for (const childEl of codeEl.children) {
+              if (isCodeAnnotation(childEl)) {
+                childEl.remove();
+              }
+            }
+            return codeEl.innerText;
+          };
+          const clipboard = new window.ClipboardJS(
+            ".code-copy-button:not([data-in-quarto-modal])",
+            {
+              text: getTextToCopy,
+            },
+          );
+          clipboard.on("success", onCopySuccess);
+          if (
+            window.document.getElementById("quarto-embedded-source-code-modal")
+          ) {
+            const clipboardModal = new window.ClipboardJS(
+              ".code-copy-button[data-in-quarto-modal]",
+              {
+                text: getTextToCopy,
+                container: window.document.getElementById(
+                  "quarto-embedded-source-code-modal",
+                ),
+              },
+            );
+            clipboardModal.on("success", onCopySuccess);
+          }
+          var localhostRegex = new RegExp(
+            /^(?:http|https):\/\/localhost\:?[0-9]*\//,
+          );
+          var mailtoRegex = new RegExp(/^mailto:/);
+          var filterRegex = new RegExp(
+            "https:\/\/drandrewmitchell\.com\/Soundscapy\/tutorials",
+          );
+          var isInternal = (href) => {
+            return (
+              filterRegex.test(href) ||
+              localhostRegex.test(href) ||
+              mailtoRegex.test(href)
+            );
+          };
+          // Inspect non-navigation links and adorn them if external
+          var links = window.document.querySelectorAll(
+            "a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)",
+          );
+          for (var i = 0; i < links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+          function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+            const config = {
+              allowHTML: true,
+              maxWidth: 500,
+              delay: 100,
+              arrow: false,
+              appendTo: function (el) {
+                return el.parentElement;
+              },
+              interactive: true,
+              interactiveBorder: 10,
+              theme: "quarto",
+              placement: "bottom-start",
+            };
+            if (contentFn) {
+              config.content = contentFn;
+            }
+            if (onTriggerFn) {
+              config.onTrigger = onTriggerFn;
+            }
+            if (onUntriggerFn) {
+              config.onUntrigger = onUntriggerFn;
+            }
+            window.tippy(el, config);
+          }
+          const noterefs = window.document.querySelectorAll(
+            'a[role="doc-noteref"]',
+          );
+          for (var i = 0; i < noterefs.length; i++) {
+            const ref = noterefs[i];
+            tippyHover(ref, function () {
+              // use id or data attribute instead here
+              let href =
+                ref.getAttribute("data-footnote-href") ||
+                ref.getAttribute("href");
+              try {
+                href = new URL(href).hash;
+              } catch {}
+              const id = href.replace(/^#\/?/, "");
+              const note = window.document.getElementById(id);
+              if (note) {
+                return note.innerHTML;
+              } else {
+                return "";
+              }
+            });
+          }
+          const xrefs = window.document.querySelectorAll("a.quarto-xref");
+          const processXRef = (id, note) => {
+            // Strip column container classes
+            const stripColumnClz = (el) => {
+              el.classList.remove("page-full", "page-columns");
+              if (el.children) {
+                for (const child of el.children) {
+                  stripColumnClz(child);
+                }
+              }
+            };
+            stripColumnClz(note);
+            if (id === null || id.startsWith("sec-")) {
+              // Special case sections, only their first couple elements
+              const container = document.createElement("div");
+              if (note.children && note.children.length > 2) {
+                container.appendChild(note.children[0].cloneNode(true));
+                for (let i = 1; i < note.children.length; i++) {
+                  const child = note.children[i];
+                  if (child.tagName === "P" && child.innerText === "") {
+                    continue;
+                  } else {
+                    container.appendChild(child.cloneNode(true));
+                    break;
+                  }
+                }
+                if (window.Quarto?.typesetMath) {
+                  window.Quarto.typesetMath(container);
+                }
+                return container.innerHTML;
+              } else {
+                if (window.Quarto?.typesetMath) {
+                  window.Quarto.typesetMath(note);
+                }
+                return note.innerHTML;
+              }
+            } else {
+              // Remove any anchor links if they are present
+              const anchorLink = note.querySelector("a.anchorjs-link");
+              if (anchorLink) {
+                anchorLink.remove();
+              }
+              if (window.Quarto?.typesetMath) {
+                window.Quarto.typesetMath(note);
+              }
+              if (note.classList.contains("callout")) {
+                return note.outerHTML;
+              } else {
+                return note.innerHTML;
+              }
+            }
+          };
+          for (var i = 0; i < xrefs.length; i++) {
+            const xref = xrefs[i];
+            tippyHover(
+              xref,
+              undefined,
+              function (instance) {
+                instance.disable();
+                let url = xref.getAttribute("href");
+                let hash = undefined;
+                if (url.startsWith("#")) {
+                  hash = url;
+                } else {
+                  try {
+                    hash = new URL(url).hash;
+                  } catch {}
+                }
+                if (hash) {
+                  const id = hash.replace(/^#\/?/, "");
+                  const note = window.document.getElementById(id);
+                  if (note !== null) {
+                    try {
+                      const html = processXRef(id, note.cloneNode(true));
+                      instance.setContent(html);
+                    } finally {
+                      instance.enable();
+                      instance.show();
+                    }
+                  } else {
+                    // See if we can fetch this
+                    fetch(url.split("#")[0])
+                      .then((res) => res.text())
+                      .then((html) => {
+                        const parser = new DOMParser();
+                        const htmlDoc = parser.parseFromString(
+                          html,
+                          "text/html",
+                        );
+                        const note = htmlDoc.getElementById(id);
+                        if (note !== null) {
+                          const html = processXRef(id, note);
+                          instance.setContent(html);
+                        }
+                      })
+                      .finally(() => {
+                        instance.enable();
+                        instance.show();
+                      });
+                  }
+                } else {
+                  // See if we can fetch a full url (with no hash to target)
+                  // This is a special case and we should probably do some content thinning / targeting
+                  fetch(url)
+                    .then((res) => res.text())
+                    .then((html) => {
+                      const parser = new DOMParser();
+                      const htmlDoc = parser.parseFromString(html, "text/html");
+                      const note = htmlDoc.querySelector("main.content");
+                      if (note !== null) {
+                        // This should only happen for chapter cross references
+                        // (since there is no id in the URL)
+                        // remove the first header
+                        if (
+                          note.children.length > 0 &&
+                          note.children[0].tagName === "HEADER"
+                        ) {
+                          note.children[0].remove();
+                        }
+                        const html = processXRef(null, note);
+                        instance.setContent(html);
+                      }
+                    })
+                    .finally(() => {
+                      instance.enable();
+                      instance.show();
+                    });
+                }
+              },
+              function (instance) {},
+            );
+          }
+          let selectedAnnoteEl;
+          const selectorForAnnotation = (cell, annotation) => {
+            let cellAttr = 'data-code-cell="' + cell + '"';
+            let lineAttr = 'data-code-annotation="' + annotation + '"';
+            const selector = "span[" + cellAttr + "][" + lineAttr + "]";
+            return selector;
+          };
+          const selectCodeLines = (annoteEl) => {
+            const doc = window.document;
+            const targetCell = annoteEl.getAttribute("data-target-cell");
+            const targetAnnotation = annoteEl.getAttribute(
+              "data-target-annotation",
+            );
+            const annoteSpan = window.document.querySelector(
+              selectorForAnnotation(targetCell, targetAnnotation),
+            );
+            const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+            const lineIds = lines.map((line) => {
+              return targetCell + "-" + line;
+            });
+            let top = null;
+            let height = null;
+            let parent = null;
+            if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+              if (lineIds.length > 1) {
+                const lastEl = window.document.getElementById(
+                  lineIds[lineIds.length - 1],
+                );
+                const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+                height = bottom - top;
+              }
+              if (top !== null && height !== null && parent !== null) {
+                // cook up a div (if necessary) and position it
+                let div = window.document.getElementById(
+                  "code-annotation-line-highlight",
+                );
+                if (div === null) {
+                  div = window.document.createElement("div");
+                  div.setAttribute("id", "code-annotation-line-highlight");
+                  div.style.position = "absolute";
+                  parent.appendChild(div);
+                }
+                div.style.top = top - 2 + "px";
+                div.style.height = height + 4 + "px";
+                div.style.left = 0;
+                let gutterDiv = window.document.getElementById(
+                  "code-annotation-line-highlight-gutter",
+                );
+                if (gutterDiv === null) {
+                  gutterDiv = window.document.createElement("div");
+                  gutterDiv.setAttribute(
+                    "id",
+                    "code-annotation-line-highlight-gutter",
+                  );
+                  gutterDiv.style.position = "absolute";
+                  const codeCell = window.document.getElementById(targetCell);
+                  const gutter = codeCell.querySelector(
+                    ".code-annotation-gutter",
+                  );
+                  gutter.appendChild(gutterDiv);
+                }
+                gutterDiv.style.top = top - 2 + "px";
+                gutterDiv.style.height = height + 4 + "px";
+              }
+              selectedAnnoteEl = annoteEl;
+            }
+          };
+          const unselectCodeLines = () => {
+            const elementsIds = [
+              "code-annotation-line-highlight",
+              "code-annotation-line-highlight-gutter",
+            ];
+            elementsIds.forEach((elId) => {
+              const div = window.document.getElementById(elId);
+              if (div) {
+                div.remove();
+              }
+            });
+            selectedAnnoteEl = undefined;
+          };
+          // Handle positioning of the toggle
+          window.addEventListener(
+            "resize",
+            throttle(() => {
+              elRect = undefined;
+              if (selectedAnnoteEl) {
+                selectCodeLines(selectedAnnoteEl);
+              }
+            }, 10),
+          );
+          function throttle(fn, ms) {
+            let throttle = false;
+            let timer;
+            return (...args) => {
+              if (!throttle) {
+                // first call gets through
+                fn.apply(this, args);
+                throttle = true;
+              } else {
+                // all the others get throttled
+                if (timer) clearTimeout(timer); // cancel #2
+                timer = setTimeout(() => {
+                  fn.apply(this, args);
+                  timer = throttle = false;
+                }, ms);
+              }
+            };
+          }
+          // Attach click handler to the DT
+          const annoteDls = window.document.querySelectorAll(
+            "dt[data-target-cell]",
+          );
+          for (const annoteDlNode of annoteDls) {
+            annoteDlNode.addEventListener("click", (event) => {
+              const clickedEl = event.target;
+              if (clickedEl !== selectedAnnoteEl) {
+                unselectCodeLines();
+                const activeEl = window.document.querySelector(
+                  "dt[data-target-cell].code-annotation-active",
+                );
+                if (activeEl) {
+                  activeEl.classList.remove("code-annotation-active");
+                }
+                selectCodeLines(clickedEl);
+                clickedEl.classList.add("code-annotation-active");
+              } else {
+                // Unselect the line
+                unselectCodeLines();
+                clickedEl.classList.remove("code-annotation-active");
+              }
+            });
+          }
+          const findCites = (el) => {
+            const parentEl = el.parentElement;
+            if (parentEl) {
+              const cites = parentEl.dataset.cites;
+              if (cites) {
+                return {
+                  el,
+                  cites: cites.split(" "),
+                };
+              } else {
+                return findCites(el.parentElement);
+              }
+            } else {
+              return undefined;
+            }
+          };
+          var bibliorefs = window.document.querySelectorAll(
+            'a[role="doc-biblioref"]',
+          );
+          for (var i = 0; i < bibliorefs.length; i++) {
+            const ref = bibliorefs[i];
+            const citeInfo = findCites(ref);
+            if (citeInfo) {
+              tippyHover(citeInfo.el, function () {
+                var popup = window.document.createElement("div");
+                citeInfo.cites.forEach(function (cite) {
+                  var citeDiv = window.document.createElement("div");
+                  citeDiv.classList.add("hanging-indent");
+                  citeDiv.classList.add("csl-entry");
+                  var biblioDiv = window.document.getElementById("ref-" + cite);
+                  if (biblioDiv) {
+                    citeDiv.innerHTML = biblioDiv.innerHTML;
+                  }
+                  popup.appendChild(citeDiv);
+                });
+                return popup.innerHTML;
+              });
+            }
+          }
+        });
+      </script>
+    </div>
+    <!-- /content -->
+
+    <script src="site_libs/quarto-html/zenscroll-min.js"></script>
+  </body>
+</html>
