@@ -42,11 +42,22 @@ format:
     toc: true
     toc-depth: 4
     toc-title: "Contents"
+    code-links:
+      - text: "Open in Colab"
+        href: "https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/quarto-binder-setup/examples/0_QuickStart_for_Beginners.ipynb"
+        icon: "laptop"
     html-math-method: katex
     include-in-header:
       - includes.html
     highlight-style: tango
     smooth-scroll: true
+
+colab:
+  gh-user: "MitchellAcoustics"
+  gh-repo: "Soundscapy"
+  gh-branch: "quarto-binder-setup/examples"
+filters:
+  - colab
 
 render:
   freeze: auto
