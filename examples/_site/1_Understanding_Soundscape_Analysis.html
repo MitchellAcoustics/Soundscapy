@@ -123,6 +123,11 @@
       }
     </style>
 
+    <script
+      src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"
+      integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2"
+      crossorigin="anonymous"
+    ></script>
     <script src="site_libs/quarto-nav/quarto-nav.js"></script>
     <script src="site_libs/quarto-nav/headroom.min.js"></script>
     <script src="site_libs/clipboard/clipboard.min.js"></script>
@@ -217,6 +222,17 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css"
     />
+    <script
+      src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js"
+      integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx"
+      crossorigin="anonymous"
+    ></script>
+
+    <script type="application/javascript">
+      define("jquery", [], function () {
+        return window.jQuery;
+      });
+    </script>
 
     <script>
       window.backupDefine = window.define;
@@ -1024,6 +1040,17 @@
               >
             </li>
           </ul>
+          <div class="quarto-code-links">
+            <h2>Code Links</h2>
+            <ul>
+              <li>
+                <a
+                  href="https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/quarto-binder-setup/examples/0_QuickStart_for_Beginners.ipynb"
+                  ><i class="bi bi-laptop"></i>Open in Colab</a
+                >
+              </li>
+            </ul>
+          </div>
         </nav>
       </div>
       <!-- main -->
@@ -1063,9 +1090,10 @@
             </p>
             <p>Let’s begin by importing the necessary libraries:</p>
             <div
-              id="779ae52a"
+              id="3ebe4978"
               class="cell"
               data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-09-17T21:14:07.892259Z","start_time":"2025-09-17T21:14:05.672997Z"}}'
+              data-execution_count="1"
             >
               <div class="code-copy-outer-scaffold">
                 <div class="sourceCode cell-code" id="cb1">
@@ -1240,9 +1268,10 @@
           </p>
           <p>Let’s look at how these PAQs are defined in Soundscapy:</p>
           <div
-            id="269c76d5"
+            id="2a803cfd"
             class="cell"
             data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-09-17T21:14:13.200873Z","start_time":"2025-09-17T21:14:13.198773Z"}}'
+            data-execution_count="2"
           >
             <div class="code-copy-outer-scaffold">
               <div class="sourceCode cell-code" id="cb2">
@@ -1257,6 +1286,13 @@
               <button title="Copy to Clipboard" class="code-copy-button">
                 <i class="bi"></i>
               </button>
+            </div>
+            <div class="cell-output cell-output-stdout">
+              <pre><code>PAQ IDs:
+['PAQ1', 'PAQ2', 'PAQ3', 'PAQ4', 'PAQ5', 'PAQ6', 'PAQ7', 'PAQ8']
+
+PAQ Labels:
+['pleasant', 'vibrant', 'eventful', 'chaotic', 'annoying', 'monotonous', 'uneventful', 'calm']</code></pre>
             </div>
           </div>
           <section id="the-meaning-of-paqs" class="level3">
@@ -1304,34 +1340,49 @@
           </p>
           <p>Let’s visualize this circumplex model:</p>
           <div
-            id="7a8c841a"
+            id="7bb29309"
             class="cell"
             data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-09-17T21:14:18.297525Z","start_time":"2025-09-17T21:14:18.203588Z"}}'
+            data-execution_count="3"
           >
             <div class="code-copy-outer-scaffold">
-              <div class="sourceCode cell-code" id="cb3">
+              <div class="sourceCode cell-code" id="cb4">
                 <pre
                   class="sourceCode python code-with-copy"
-                ><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    {</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Location"</span>: [<span class="st">"Park"</span>, <span class="st">"Street"</span>],</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="st">"pleasant"</span>: [<span class="fl">4.2</span>, <span class="fl">2.1</span>],</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">"vibrant"</span>: [<span class="fl">3.5</span>, <span class="fl">4.2</span>],</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">"eventful"</span>: [<span class="fl">2.8</span>, <span class="fl">4.5</span>],</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"chaotic"</span>: [<span class="fl">1.5</span>, <span class="fl">3.9</span>],</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"annoying"</span>: [<span class="fl">1.2</span>, <span class="fl">3.7</span>],</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"monotonous"</span>: [<span class="fl">2.5</span>, <span class="fl">1.8</span>],</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"uneventful"</span>: [<span class="fl">3.1</span>, <span class="fl">1.9</span>],</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"calm"</span>: [<span class="fl">4.3</span>, <span class="fl">1.4</span>],</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>sspy.paq_radar_plot(data, title<span class="op">=</span><span class="st">"Circumplex Model of Soundscape Perception"</span>)</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre>
+                ><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    {</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Location"</span>: [<span class="st">"Park"</span>, <span class="st">"Street"</span>],</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="st">"pleasant"</span>: [<span class="fl">4.2</span>, <span class="fl">2.1</span>],</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">"vibrant"</span>: [<span class="fl">3.5</span>, <span class="fl">4.2</span>],</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">"eventful"</span>: [<span class="fl">2.8</span>, <span class="fl">4.5</span>],</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"chaotic"</span>: [<span class="fl">1.5</span>, <span class="fl">3.9</span>],</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"annoying"</span>: [<span class="fl">1.2</span>, <span class="fl">3.7</span>],</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"monotonous"</span>: [<span class="fl">2.5</span>, <span class="fl">1.8</span>],</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"uneventful"</span>: [<span class="fl">3.1</span>, <span class="fl">1.9</span>],</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"calm"</span>: [<span class="fl">4.3</span>, <span class="fl">1.4</span>],</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>sspy.paq_radar_plot(data, title<span class="op">=</span><span class="st">"Circumplex Model of Soundscape Perception"</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre>
               </div>
               <button title="Copy to Clipboard" class="code-copy-button">
                 <i class="bi"></i>
               </button>
+            </div>
+            <div class="cell-output cell-output-display">
+              <div>
+                <figure class="figure">
+                  <p>
+                    <img
+                      src="1_Understanding_Soundscape_Analysis_files/figure-html/cell-4-output-1.png"
+                      width="762"
+                      height="742"
+                      class="figure-img"
+                    />
+                  </p>
+                </figure>
+              </div>
             </div>
           </div>
           <section id="interpreting-the-circumplex-model" class="level3">
@@ -1404,35 +1455,93 @@
             Let’s look at how these coordinates are calculated in Soundscapy:
           </p>
           <div
-            id="f51aab75"
+            id="37b32156"
             class="cell"
             data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-09-17T21:14:25.964615Z","start_time":"2025-09-17T21:14:25.933826Z"}}'
+            data-execution_count="4"
           >
             <div class="code-copy-outer-scaffold">
-              <div class="sourceCode cell-code" id="cb4">
+              <div class="sourceCode cell-code" id="cb5">
                 <pre
                   class="sourceCode python code-with-copy"
-                ><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load a sample dataset</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> isd.load()</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Display a few rows of PAQ data</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>sample_data <span class="op">=</span> data[PAQ_IDS].head(<span class="dv">5</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Sample PAQ data:"</span>)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sample_data)</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate ISO coordinates for the sample data</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>iso_pleasant, iso_eventful <span class="op">=</span> sspy.surveys.calculate_iso_coords(sample_data)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Display the calculated coordinates</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Calculated ISO coordinates:"</span>)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>result_df <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"ISOPleasant"</span>: iso_pleasant.<span class="bu">round</span>(<span class="dv">3</span>), <span class="st">"ISOEventful"</span>: iso_eventful.<span class="bu">round</span>(<span class="dv">3</span>)}</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>result_df</span></code></pre>
+                ><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load a sample dataset</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> isd.load()</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Display a few rows of PAQ data</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>sample_data <span class="op">=</span> data[PAQ_IDS].head(<span class="dv">5</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Sample PAQ data:"</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sample_data)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate ISO coordinates for the sample data</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>iso_pleasant, iso_eventful <span class="op">=</span> sspy.surveys.calculate_iso_coords(sample_data)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Display the calculated coordinates</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Calculated ISO coordinates:"</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>result_df <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"ISOPleasant"</span>: iso_pleasant.<span class="bu">round</span>(<span class="dv">3</span>), <span class="st">"ISOEventful"</span>: iso_eventful.<span class="bu">round</span>(<span class="dv">3</span>)}</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>result_df</span></code></pre>
               </div>
               <button title="Copy to Clipboard" class="code-copy-button">
                 <i class="bi"></i>
               </button>
+            </div>
+            <div class="cell-output cell-output-stdout">
+              <pre><code>Sample PAQ data:
+   PAQ1  PAQ2  PAQ3  PAQ4  PAQ5  PAQ6  PAQ7  PAQ8
+0   2.0   4.0   2.0   1.0   2.0   2.0   4.0   2.0
+1   2.0   4.0   4.0   4.0   4.0   4.0   1.0   1.0
+2   5.0   3.0   3.0   1.0   2.0   1.0   3.0   4.0
+3   5.0   3.0   3.0   1.0   2.0   2.0   3.0   4.0
+4   5.0   3.0   3.0   2.0   2.0   3.0   3.0   4.0
+
+Calculated ISO coordinates:</code></pre>
+            </div>
+            <div
+              class="cell-output cell-output-display"
+              data-execution_count="4"
+            >
+              <div>
+                <table
+                  class="dataframe caption-top table table-sm table-striped small"
+                  data-border="1"
+                >
+                  <thead>
+                    <tr class="header">
+                      <th data-quarto-table-cell-role="th"></th>
+                      <th data-quarto-table-cell-role="th">ISOPleasant</th>
+                      <th data-quarto-table-cell-role="th">ISOEventful</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="odd">
+                      <th data-quarto-table-cell-role="th">0</th>
+                      <td>0.220</td>
+                      <td>-0.134</td>
+                    </tr>
+                    <tr class="even">
+                      <th data-quarto-table-cell-role="th">1</th>
+                      <td>-0.427</td>
+                      <td>0.530</td>
+                    </tr>
+                    <tr class="odd">
+                      <th data-quarto-table-cell-role="th">2</th>
+                      <td>0.677</td>
+                      <td>-0.073</td>
+                    </tr>
+                    <tr class="even">
+                      <th data-quarto-table-cell-role="th">3</th>
+                      <td>0.604</td>
+                      <td>-0.146</td>
+                    </tr>
+                    <tr class="odd">
+                      <th data-quarto-table-cell-role="th">4</th>
+                      <td>0.457</td>
+                      <td>-0.146</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
           <section id="the-mathematics-behind-iso-coordinates" class="level3">
@@ -1484,22 +1593,38 @@
               angles:
             </p>
             <div
-              id="1188f97d"
+              id="c79635eb"
               class="cell"
               data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-09-17T21:14:29.889875Z","start_time":"2025-09-17T21:14:29.887959Z"}}'
+              data-execution_count="5"
             >
               <div class="code-copy-outer-scaffold">
-                <div class="sourceCode cell-code" id="cb5">
+                <div class="sourceCode cell-code" id="cb7">
                   <pre
                     class="sourceCode python code-with-copy"
-                  ><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Display the language-specific angles</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Language-specific angles:"</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> language, angles <span class="kw">in</span> LANGUAGE_ANGLES.items():</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>language<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>angles<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+                  ><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Display the language-specific angles</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Language-specific angles:"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> language, angles <span class="kw">in</span> LANGUAGE_ANGLES.items():</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>language<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>angles<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
                 </div>
                 <button title="Copy to Clipboard" class="code-copy-button">
                   <i class="bi"></i>
                 </button>
+              </div>
+              <div class="cell-output cell-output-stdout">
+                <pre><code>Language-specific angles:
+eng: (0, 46, 94, 138, 177, 241, 275, 340)
+arb: (0, 36, 45, 135, 167, 201, 242, 308)
+cmn: (0, 18, 38, 154, 171, 196, 217, 318)
+hrv: (0, 84, 93, 160, 173, 243, 273, 354)
+nld: (0, 43, 111, 125, 174, 257, 307, 341)
+deu: (0, 64, 97, 132, 182, 254, 282, 336)
+ell: (0, 72, 86, 133, 161, 233, 267, 328)
+ind: (0, 53, 104, 123, 139, 202, 284, 308)
+ita: (0, 57, 104, 143, 170, 274, 285, 336)
+spa: (0, 41, 103, 147, 174, 238, 279, 332)
+swe: (0, 66, 87, 146, 175, 249, 275, 335)
+tur: (0, 55, 97, 106, 157, 254, 289, 313)</code></pre>
               </div>
             </div>
             <p>
@@ -1551,35 +1676,50 @@
             location:
           </p>
           <div
-            id="681e9478"
+            id="e0127eac"
             class="cell"
             data-quarto-private-1='{"key":"ExecuteTime","value":{"end_time":"2025-09-17T21:14:33.365648Z","start_time":"2025-09-17T21:14:33.132467Z"}}'
+            data-execution_count="6"
           >
             <div class="code-copy-outer-scaffold">
-              <div class="sourceCode cell-code" id="cb6">
+              <div class="sourceCode cell-code" id="cb9">
                 <pre
                   class="sourceCode python code-with-copy"
-                ><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter data for a specific location</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>location_data <span class="op">=</span> isd.select_location_ids(data, <span class="st">"CamdenTown"</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate ISO coordinates if not already present</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ISOPleasant"</span> <span class="kw">not</span> <span class="kw">in</span> location_data.columns</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">or</span> <span class="st">"ISOEventful"</span> <span class="kw">not</span> <span class="kw">in</span> location_data.columns</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    location_data <span class="op">=</span> sspy.surveys.add_iso_coords(location_data)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a scatter plot with density contours</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>sspy.iso_plot(</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    location_data,</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Distribution of Soundscape Perceptions in Camden Town"</span>,</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    plot_layers<span class="op">=</span>[<span class="st">"scatter"</span>, <span class="st">"density"</span>],</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    diagonal_lines<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre>
+                ><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter data for a specific location</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>location_data <span class="op">=</span> isd.select_location_ids(data, <span class="st">"CamdenTown"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate ISO coordinates if not already present</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ISOPleasant"</span> <span class="kw">not</span> <span class="kw">in</span> location_data.columns</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">or</span> <span class="st">"ISOEventful"</span> <span class="kw">not</span> <span class="kw">in</span> location_data.columns</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    location_data <span class="op">=</span> sspy.surveys.add_iso_coords(location_data)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a scatter plot with density contours</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>sspy.iso_plot(</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    location_data,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Distribution of Soundscape Perceptions in Camden Town"</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    plot_layers<span class="op">=</span>[<span class="st">"scatter"</span>, <span class="st">"density"</span>],</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    diagonal_lines<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre>
               </div>
               <button title="Copy to Clipboard" class="code-copy-button">
                 <i class="bi"></i>
               </button>
+            </div>
+            <div class="cell-output cell-output-display">
+              <div>
+                <figure class="figure">
+                  <p>
+                    <img
+                      src="1_Understanding_Soundscape_Analysis_files/figure-html/cell-7-output-1.png"
+                      width="621"
+                      height="489"
+                      class="figure-img"
+                    />
+                  </p>
+                </figure>
+              </div>
             </div>
           </div>
           <section id="interpreting-distribution-plots" class="level3">

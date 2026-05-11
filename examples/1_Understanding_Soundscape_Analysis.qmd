@@ -1,6 +1,13 @@
 ---
 title: 'Understanding Soundscape Analysis: Concepts and Terminology'
 jupyter: python3
+setup-cells:
+  r:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Custom R setup
+        !Rscript -e "install.packages('sn')"
+        !pip install "soundscapy[r]>=0.8.4"
 ---
 
 
