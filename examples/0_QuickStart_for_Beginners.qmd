@@ -22,7 +22,7 @@ colab:
 filters:
     - colab
 setup-cells:
-    python:
+    r:
         language: "python"
         code: |
             !Rscript -e "install.packages('sn')"
