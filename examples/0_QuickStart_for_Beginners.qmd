@@ -13,7 +13,7 @@ format:
     html:
         code-links:
             - text: "Open in Colab"
-            - href: "https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/quarto-binder-setup/examples/0_QuickStart_for_Beginners.ipynb"
+            - href: "https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/quarto-binder-setup/examples/_site/0_QuickStart_for_Beginners.ipynb"
             - icon: "laptop"
 colab:
     gh-user: "MitchellAcoustics"
