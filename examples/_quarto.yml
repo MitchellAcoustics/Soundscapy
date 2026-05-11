@@ -23,7 +23,7 @@ website:
       text: "Tutorials"
       contents:
         - QuickStart.qmd
-        - 0_QuickStart_for_Beginners.qmd
+        - 0_QuickStart_for_Beginners.ipynb
         - HowToAnalyseAndRepresentSoundscapes.qmd
         - 1_Understanding_Soundscape_Analysis.qmd
         - 2_Working_with_Soundscape_Survey_Data.qmd
