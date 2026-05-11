@@ -9,6 +9,24 @@ jupyter:
     display_name: Python 3
     language: python
     name: python3
+format:
+    html:
+        code-links:
+            - text: "Open in Colab"
+            - href: "https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/quarto-binder-setup/examples/0_QuickStart_for_Beginners.ipynb"
+            - icon: "laptop"
+colab:
+    gh-user: "MitchellAcoustics"
+    gh-repo: "Soundscapy"
+    gh-branch: "quarto-binder-setup"
+filters:
+    - colab
+setup-cells:
+    python:
+        language: "python"
+        code: |
+            !Rscript -e "install.packages('sn')"
+            !pip install "soundscapy[r]>=0.8.4"
 ---
 
 

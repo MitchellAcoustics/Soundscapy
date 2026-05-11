@@ -1,0 +1,9 @@
+title: Colab
+author: James J Balamuta
+version: 0.0.0-dev.1
+quarto-required: ">=1.4.0"
+contributes:
+  filters:
+    - patch-blocks.lua
+    - language-magic.lua
+    - colab.lua
