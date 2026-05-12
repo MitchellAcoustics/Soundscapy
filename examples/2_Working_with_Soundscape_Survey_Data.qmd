@@ -9,10 +9,19 @@ jupyter:
     display_name: soundscapy (3.12.5)
     language: python
     name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}""
+      !pip install "soundscapy[r]>=0.8.4"
+      %load_ext rpy2.ipython
 ---
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:16:27.779426Z', start_time: '2025-09-17T21:16:25.956352Z'}
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -44,7 +53,6 @@ Let's begin by importing the necessary libraries:
 Soundscapy provides several ways to load soundscape survey data. The most common approach is to use the built-in functions for loading the International Soundscape Database (ISD).
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:16:31.594846Z', start_time: '2025-09-17T21:16:31.568384Z'}
 # Load the ISD dataset included with Soundscapy
 data = isd.load()
 
@@ -60,7 +68,6 @@ print(f"PAQ columns: {PAQ_IDS}")
 You can also load the ISD dataset directly from Zenodo, which allows you to access different versions of the dataset:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:16:34.741491Z', start_time: '2025-09-17T21:16:34.739894Z'}
 # Load a specific version of the ISD dataset from Zenodo
 # Note: This requires an internet connection
 # data_zenodo = isd.load_zenodo(version="v1.0.1")
@@ -96,7 +103,6 @@ my_data = rename_paqs(my_data, paq_mapping)
 Before analyzing soundscape data, it's important to validate it and check for data quality issues. Soundscapy provides functions for this purpose.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:16:48.778750Z', start_time: '2025-09-17T21:16:48.598007Z'}
 # Validate the dataset
 valid_data, excluded_data = isd.validate(data)
 
@@ -115,7 +121,6 @@ The `validate` function performs several checks on the PAQ data:
 Let's look at how to customize these checks:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:16:51.595243Z', start_time: '2025-09-17T21:16:51.416058Z'}
 # Custom validation with different parameters
 custom_valid_data, custom_excluded_data = isd.validate(
     data,
@@ -134,7 +139,6 @@ print(
 You can also perform your own data quality checks using pandas functions:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:16:58.697062Z', start_time: '2025-09-17T21:16:58.692751Z'}
 # Check for missing values in PAQ columns
 missing_counts = data[PAQ_IDS].isna().sum()
 print("Missing values in PAQ columns:")
@@ -151,7 +155,6 @@ print(out_of_range)
 Once you have validated your data, the next step is to calculate the ISO coordinates (ISOPleasant and ISOEventful) from the PAQ ratings. Soundscapy provides functions for this purpose.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:01.730902Z', start_time: '2025-09-17T21:17:01.212891Z'}
 # Calculate ISO coordinates
 iso_pleasant, iso_eventful = sspy.surveys.calculate_iso_coords(valid_data[PAQ_IDS])
 
@@ -175,7 +178,6 @@ print(valid_data_with_iso[["ISOPleasant", "ISOEventful"]].head())
 You can customize the ISO coordinate calculation by specifying the value range of the PAQ ratings and the angles of the PAQs in the circumplex model:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:04.189869Z', start_time: '2025-09-17T21:17:03.735966Z'}
 # Custom ISO coordinate calculation
 custom_iso_data = sspy.surveys.add_iso_coords(
     valid_data,
@@ -208,7 +210,6 @@ plt.title("ISO Coordinates")
 Soundscapy provides several functions for filtering and grouping soundscape data based on various criteria.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:12.096296Z', start_time: '2025-09-17T21:17:12.081884Z'}
 # Filter by location
 camden_data = isd.select_location_ids(valid_data_with_iso, "CamdenTown")
 print(f"Camden Town samples: {camden_data.shape[0]}")
@@ -225,7 +226,6 @@ print(f"Camden Town and Hyde Park samples: {multiple_locations.shape[0]}")
 You can also use pandas' query function for more complex filtering:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:13.495835Z', start_time: '2025-09-17T21:17:13.481550Z'}
 # Filter by demographic variables
 if "gen00" in valid_data_with_iso.columns and "age00" in valid_data_with_iso.columns:
     women_over_50 = valid_data_with_iso.query("gen00 == 'Female' and age00 > 50")
@@ -241,7 +241,6 @@ print(f"Pleasant soundscapes (ISOPleasant > 0.5): {pleasant_soundscapes.shape[0]
 You can use pandas' groupby function to group and summarize soundscape data:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:16.001318Z', start_time: '2025-09-17T21:17:15.992795Z'}
 # Group by location and calculate mean ISO coordinates
 location_means = valid_data_with_iso.groupby("LocationID")[
     ["ISOPleasant", "ISOEventful"]
@@ -262,7 +261,6 @@ location_stds.head()
 Soundscapy provides a `soundscapy_describe` function that summarizes soundscape data by location:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:17.316299Z', start_time: '2025-09-17T21:17:17.176124Z'}
 # Describe locations
 location_summary = isd.soundscapy_describe(valid_data_with_iso)
 print("Soundscape summary by location:")
@@ -270,7 +268,6 @@ location_summary.head()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:20.453042Z', start_time: '2025-09-17T21:17:20.444548Z'}
 # Describe a specific location
 camden_summary = isd.describe_location(valid_data_with_iso, "CamdenTown")
 print("\nCamden Town summary:")
@@ -283,7 +280,6 @@ for key, value in camden_summary.items():
 Soundscape surveys may use different scales for PAQ ratings. Soundscapy can handle different scales by specifying the value range when calculating ISO coordinates.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:21.921256Z', start_time: '2025-09-17T21:17:21.915829Z'}
 # Create a sample dataset with a different scale (0-100)
 sample_data = pd.DataFrame(
     {
@@ -312,7 +308,6 @@ sample_data_with_iso[["ISOPleasant", "ISOEventful"]]
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:23.725813Z', start_time: '2025-09-17T21:17:23.720371Z'}
 # Create a sample dataset with different column names
 sample_data_2 = pd.DataFrame(
     {
@@ -353,7 +348,6 @@ sample_data_2_with_iso[["ISOPleasant", "ISOEventful"]]
 Soundscape perception can vary across languages and cultures. Soundscapy provides language-specific angles for calculating ISO coordinates that account for these differences.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:25.400883Z', start_time: '2025-09-17T21:17:25.398760Z'}
 # Display the available language-specific angles
 print("Available language-specific angles:")
 for language, angles in LANGUAGE_ANGLES.items():
@@ -365,7 +359,6 @@ for language, angles in LANGUAGE_ANGLES.items():
 You can apply language-specific angles when calculating ISO coordinates:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:28.667143Z', start_time: '2025-09-17T21:17:28.141614Z'}
 # Calculate ISO coordinates with language-specific angles
 english_angles = LANGUAGE_ANGLES["eng"]
 spanish_angles = LANGUAGE_ANGLES["spa"]
@@ -405,7 +398,6 @@ comparison_df.head()
 If your dataset contains responses in multiple languages, you can apply the appropriate angles for each language:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:30.723071Z', start_time: '2025-09-17T21:17:30.719625Z'}
 # Filter data for English and Spanish languages
 if "Language" in valid_data_with_iso.columns:
     eng_data = valid_data_with_iso[valid_data_with_iso["Language"] == "eng"]
@@ -416,7 +408,6 @@ if "Language" in valid_data_with_iso.columns:
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:31.925042Z', start_time: '2025-09-17T21:17:31.923043Z'}
 # Function to apply language-specific angles to each row
 def apply_language_angles(row):
     if "Language" not in row or row["Language"] not in LANGUAGE_ANGLES:
@@ -448,7 +439,6 @@ if 'Language' in valid_data_with_iso.columns:
 Soundscapy provides a function for simulating soundscape data, which can be useful for testing and demonstration purposes.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:36.892176Z', start_time: '2025-09-17T21:17:36.760990Z'}
 # Simulate soundscape data
 simulated_data = sspy.surveys.simulation(
     n=100,  # Number of samples

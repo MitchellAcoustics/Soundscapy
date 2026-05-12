@@ -2,21 +2,14 @@
 title: 'Understanding Soundscape Analysis: Concepts and Terminology'
 jupyter: python3
 setup-cells:
-  r:
+  python:
     language: "python"    # Language assumed for the setup cell
     code: |
-      # Custom R setup
-        !Rscript -e "install.packages('sn')"
-        !pip install "soundscapy[r]>=0.8.4"
-format:
-  ipynb: default
-  html:
-    code-links:
-      - text: "Open in Colab"
-        href: "https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/quarto-binder-setup/examples/_site/1_Understanding_Soundscape_Analysis.ipynb"
-        icon: "laptop"
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !pip install "soundscapy=0.8.4"
 ---
-
 
 ## Introduction
 
@@ -34,9 +27,7 @@ By the end of this tutorial, you will be able to:
 
 Let's begin by importing the necessary libraries:
 
-
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:14:07.892259Z', start_time: '2025-09-17T21:14:05.672997Z'}
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -118,7 +109,6 @@ These scales are typically measured using 5-point Likert scales, where responden
 Let's look at how these PAQs are defined in Soundscapy:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:14:13.200873Z', start_time: '2025-09-17T21:14:13.198773Z'}
 # Display the PAQ IDs and labels
 print("PAQ IDs:")
 print(PAQ_IDS)
@@ -142,7 +132,6 @@ The circumplex model places these dimensions at right angles to each other, crea
 Let's visualize this circumplex model:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:14:18.297525Z', start_time: '2025-09-17T21:14:18.203588Z'}
 data = pd.DataFrame(
     {
         "Location": ["Park", "Street"],
@@ -184,7 +173,6 @@ These coordinates are calculated from the eight PAQ ratings using a projection m
 Let's look at how these coordinates are calculated in Soundscapy:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:14:25.964615Z', start_time: '2025-09-17T21:14:25.933826Z'}
 # Load a sample dataset
 data = isd.load()
 
@@ -224,7 +212,6 @@ In Soundscapy, these calculations are implemented in the `calculate_iso_coords` 
 Research has shown that the exact angles of PAQs in the circumplex can vary slightly across different languages and cultures. Soundscapy accounts for this by providing language-specific angles:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:14:29.889875Z', start_time: '2025-09-17T21:14:29.887959Z'}
 # Display the language-specific angles
 print("Language-specific angles:")
 for language, angles in LANGUAGE_ANGLES.items():
@@ -246,7 +233,6 @@ By analyzing the distribution of perceptions, we can gain a more nuanced underst
 Let's visualize the distribution of perceptions for a sample location:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:14:33.365648Z', start_time: '2025-09-17T21:14:33.132467Z'}
 # Filter data for a specific location
 location_data = isd.select_location_ids(data, "CamdenTown")
 

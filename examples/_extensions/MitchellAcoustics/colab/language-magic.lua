@@ -86,6 +86,69 @@ local function merge_tables(t1, t2)
     return result
 end
 
+---@param text string
+---@return string
+local function normalize_quotes(text)
+    -- Keep code ASCII-safe if smart punctuation is introduced during metadata parsing.
+    local normalized = text
+        :gsub("“", '"')
+        :gsub("”", '"')
+        :gsub("‘", "'")
+        :gsub("’", "'")
+    return normalized
+end
+
+---@param inlines pandoc.Inlines
+---@return string[]
+local function inlines_to_lines(inlines)
+    local lines = {}
+    local parts = {}
+
+    for _, inline in ipairs(inlines) do
+        if inline.t == "LineBreak" or inline.t == "SoftBreak" then
+            if #parts > 0 then
+                table.insert(lines, normalize_quotes(pandoc.utils.stringify(parts)))
+                parts = {}
+            end
+        else
+            table.insert(parts, inline)
+        end
+    end
+
+    if #parts > 0 then
+        table.insert(lines, normalize_quotes(pandoc.utils.stringify(parts)))
+    end
+
+    return lines
+end
+
+---@param value any
+---@return string
+local function meta_value_to_code(value)
+    local ptype = pandoc.utils.type(value)
+
+    if ptype == "Blocks" then
+        local lines = {}
+        for _, block in ipairs(value) do
+            if block.t == "Header" then
+                local prefix = string.rep("#", block.level) .. " "
+                table.insert(lines, prefix .. normalize_quotes(pandoc.utils.stringify(block.content)))
+            elseif block.t == "Para" or block.t == "Plain" then
+                for _, line in ipairs(inlines_to_lines(block.content)) do
+                    table.insert(lines, line)
+                end
+            elseif block.t == "CodeBlock" or block.t == "RawBlock" then
+                table.insert(lines, normalize_quotes(block.text))
+            else
+                table.insert(lines, normalize_quotes(pandoc.utils.stringify(block)))
+            end
+        end
+        return table.concat(lines, "\n")
+    end
+
+    return normalize_quotes(pandoc.utils.stringify(value))
+end
+
 ---@param block pandoc.CodeBlock
 ---@return boolean
 local function isCellEvaluated(block)
@@ -101,7 +164,20 @@ end
 ---@return pandoc.Meta
 function Meta(meta)
     magicCommands = merge_tables(DEFAULT_MAGIC_COMMANDS, meta['magic-commands'] or {})
-    setupCells = merge_tables(DEFAULT_SETUP_CELLS, meta['setup-cells'] or {})
+
+    -- Convert user-defined setup-cells from Pandoc MetaMap to plain Lua tables
+    local userSetupCells = {}
+    if meta['setup-cells'] then
+        for lang, setup in pairs(meta['setup-cells']) do
+            if setup and setup.code then
+                userSetupCells[lang] = {
+                    language = setup.language and pandoc.utils.stringify(setup.language) or lang,
+                    code = setup.code and meta_value_to_code(setup.code) or ""
+                }
+            end
+        end
+    end
+    setupCells = merge_tables(DEFAULT_SETUP_CELLS, userSetupCells)
     return meta
 end
 
@@ -111,15 +187,23 @@ function detectLanguages(doc)
     ---@type table<string, boolean>
     local languages = {}
 
-    for _, block in pairs(doc.blocks) do
-        if block.t == "CodeBlock" then
-            local lang = block.attr.classes[1]
-            if lang then
-                languages[lang] = true
+    local function traverse(blocks)
+        for _, block in pairs(blocks) do
+            if block.t == "CodeBlock" then
+                -- Only count evaluated cells (those with "cell-code" class)
+                if isCellEvaluated(block) then
+                    local lang = block.attr.classes[1]
+                    if lang and lang ~= "cell-code" then
+                        languages[lang] = true
+                    end
+                end
+            elseif block.t == "Div" then
+                traverse(block.content)
             end
         end
     end
 
+    traverse(doc.blocks)
     return languages
 end
 
@@ -162,6 +246,8 @@ end
 ---@param doc pandoc.Doc
 ---@return pandoc.Doc
 function Pandoc(doc)
+    if not quarto.doc.is_format("ipynb") then return doc end
+
     local detectedLangs = detectLanguages(doc)
     local setupBlocks = createSetupCells(detectedLangs)
 

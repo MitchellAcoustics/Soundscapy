@@ -9,10 +9,19 @@ jupyter:
     display_name: soundscapy (3.12.5)
     language: python
     name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}""
+      !pip install "soundscapy[r]>=0.8.4"
+      %load_ext rpy2.ipython
 ---
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-15T00:17:58.885081Z', start_time: '2025-05-15T00:17:57.203271Z'}
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -41,7 +50,6 @@ Let's begin by loading some sample data from the International Soundscape Databa
 
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-15T00:17:59.331252Z', start_time: '2025-05-15T00:17:58.891838Z'}
 # Load the ISD dataset
 data = isd.load()
 
@@ -79,7 +87,6 @@ The SPI provides several advantages for soundscape analysis:
 Let's explore how to use the SPI in practice.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-15T00:17:59.563520Z', start_time: '2025-05-15T00:17:59.345720Z'}
 # Select data for a specific location to use as our reference
 reference_location = "CamdenTown"
 reference_data = isd.select_location_ids(valid_data, reference_location)
@@ -117,7 +124,6 @@ These parameters can be specified directly (DirectParams) or derived from more i
 Let's create an MSN distribution and visualize it:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-15T00:17:59.826962Z', start_time: '2025-05-15T00:17:59.573674Z'}
 # Create a MultiSkewNorm instance
 msn = MultiSkewNorm()
 

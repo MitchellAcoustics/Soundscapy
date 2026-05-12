@@ -9,10 +9,19 @@ jupyter:
     display_name: soundscapy:default (3.13.13)
     language: python
     name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}""
+      !pip install "soundscapy[r]>=0.8.4"
+      %load_ext rpy2.ipython
 ---
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-10-01T19:05:58.083860Z', start_time: '2025-10-01T19:05:58.081694Z'}
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -57,7 +66,6 @@ The International Soundscape Database (ISD) is a comprehensive collection of sou
 ### 2.1 Loading the ISD Data
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-10-01T19:05:58.138702Z', start_time: '2025-10-01T19:05:58.105168Z'}
 # Load the ISD dataset
 isd_data = isd.load()
 
@@ -100,7 +108,6 @@ The ISD dataset contains several types of columns:
 Let's explore the distribution of PAQ responses:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-10-01T19:05:58.242384Z', start_time: '2025-10-01T19:05:58.163608Z'}
 # Calculate the distribution of responses for each PAQ
 paq_columns = [f"PAQ{i}" for i in range(1, 9)]
 paq_distribution = isd_data[paq_columns].apply(pd.value_counts).T
@@ -125,7 +132,6 @@ plt.show()
 Before analyzing the data, it's important to validate it to ensure quality and consistency. Soundscapy provides functions for validating the ISD data:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-10-01T19:05:58.436514Z', start_time: '2025-10-01T19:05:58.256499Z'}
 # Validate the ISD dataset
 valid_data, invalid_indices = isd.validate(isd_data)
 
@@ -154,7 +160,6 @@ The validation process checks for several issues:
 The ISO 12913 standard defines a circumplex model for soundscape perception, with two main dimensions: pleasantness and eventfulness. Soundscapy can calculate these coordinates from the PAQ responses:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-10-01T19:05:58.801836Z', start_time: '2025-10-01T19:05:58.538592Z'}
 # Calculate ISO coordinates if not already present
 if "ISOPleasant" not in valid_data.columns or "ISOEventful" not in valid_data.columns:
     valid_data = sspy.surveys.add_iso_coords(valid_data)
@@ -182,7 +187,6 @@ valid_data[
 Soundscapy provides functions for filtering and selecting data from the ISD dataset:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-10-01T19:05:59.000696Z', start_time: '2025-10-01T19:05:58.824860Z'}
 # Select data for a specific location
 location_id = "CamdenTown"
 location_data = isd.select_location_ids(valid_data, location_id)
@@ -204,7 +208,6 @@ plt.show()
 You can also select data based on other criteria, such as `RecordID`, `GroupID`, or `SessionID`:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-10-01T19:05:59.018558Z', start_time: '2025-10-01T19:05:59.014963Z'}
 # Select data for a specific record
 record_id = "CT101"
 record_data = valid_data[valid_data["RecordID"] == record_id]
@@ -220,7 +223,6 @@ print(f"Mean ISOEventful: {record_data['ISOEventful'].mean():.3f}")
 One common analysis is to compare soundscape perceptions across different locations:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-10-01T19:05:59.239627Z', start_time: '2025-10-01T19:05:59.044049Z'}
 # Select data for multiple locations
 locations = ["CamdenTown", "RegentsParkJapan", "PancrasLock", "RussellSq"]
 multi_location_data = pd.concat(

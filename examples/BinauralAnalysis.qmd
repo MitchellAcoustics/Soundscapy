@@ -7,6 +7,14 @@ jupyter:
     display_name: .venv
     language: python
     name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !pip install "soundscapy[audio]>=0.8.4"
 ---
 
 
@@ -33,8 +41,6 @@ Soundscapy combines all of these metrics and makes it easy and (relatively) fast
 Let's begin by importing the necessary modules and setting up our environment:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:05:20.406024Z', start_time: '2025-02-22T22:05:19.237376Z'}
-#| lines_to_next_cell: 2
 import json
 from pathlib import Path
 
@@ -45,7 +51,6 @@ from soundscapy import AnalysisSettings, AudioAnalysis
 Set up where the data is located. In this case, we'll use the sample recordings located under the `test` folder.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:05:20.410739Z', start_time: '2025-02-22T22:05:20.409125Z'}
 # May need to adjust for your system
 wav_folder = Path().cwd().parent.parent.joinpath("test", "data")
 ```
@@ -55,7 +60,6 @@ wav_folder = Path().cwd().parent.parent.joinpath("test", "data")
 Ensuring correct calibration is crucial for accurate analysis. If you used equipment such as the Head Acoustics SqoBold, and were careful about how the recordings are exported to .wav, then they may already be correctly adjusted (as ours are here). However its best to be safe and calibrate each signal to their real-world dB level. To do this, we load in a .json that contains the per-channel correct dB $L_{eq}$ level.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:05:20.523338Z', start_time: '2025-02-22T22:05:20.518855Z'}
 levels_file = wav_folder.joinpath("Levels.json")
 
 with levels_file.open("r", encoding="utf-8") as f:
@@ -70,14 +74,12 @@ list(levels.items())[:5]
 The `AudioAnalysis` class is our main interface for performing acoustic analyses. Let's initialize it with default settings:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:05:20.532654Z', start_time: '2025-02-22T22:05:20.526942Z'}
 analysis = AudioAnalysis()
 ```
 
 By default, this loads the standard configuration. If you have a custom configuration file, you can specify it:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:05:20.543343Z', start_time: '2025-02-22T22:05:20.541502Z'}
 # analysis = AudioAnalysis("path/to/custom_config.yaml")
 ```
 
@@ -86,7 +88,6 @@ By default, this loads the standard configuration. If you have a custom configur
 Let's analyze a single audio file:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:11:32.520506Z', start_time: '2025-02-22T22:08:32.055173Z'}
 import time
 
 start = time.perf_counter()
@@ -109,7 +110,6 @@ This performs all the analyses specified in our configuration on the single file
 Now, let's analyze all the WAV files in our folder:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:15:27.215392Z', start_time: '2025-02-22T22:11:32.601640Z'}
 #| editable: true
 #| slideshow: {slide_type: ''}
 #| tags: [skip_execution]
@@ -131,7 +131,6 @@ folder_results
 We can easily save our results to a file:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:15:27.391139Z', start_time: '2025-02-22T22:15:27.272047Z'}
 #| tags: [skip-execution]
 analysis.save_results(folder_results, "acoustic_analysis_results.xlsx")
 ```
@@ -143,7 +142,6 @@ analysis.save_results(folder_results, "acoustic_analysis_results.xlsx")
 If we want to modify our analysis configuration, we can do so using the `update_config` method:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:15:27.408942Z', start_time: '2025-02-22T22:15:27.406880Z'}
 new_config = {"AcousticToolbox": {"LAeq": {"run": False}}}
 
 analysis.update_config(new_config)
@@ -186,7 +184,6 @@ analysis.update_config(custom_settings.model_dump())
 The `analyze_folder` method uses parallel processing by default. You can control the number of worker processes using the `max_workers` argument. Setting `max_workers = None` (the default) will use all available CPU cores. Setting `max_workers = 1` will disable parallel processing, and will take significantly longer to process:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-02-22T22:40:16.845358Z', start_time: '2025-02-22T22:15:48.641369Z'}
 #| tags: [skip-execution]
 start = time.perf_counter()
 

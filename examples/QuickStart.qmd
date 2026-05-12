@@ -1,5 +1,7 @@
 ---
 title: '`Soundscapy` - Quick Start Guide'
+author:
+  - name: Andrew Mitchell
 jupyter:
   jupytext:
     cell_markers: '"""'
@@ -7,6 +9,16 @@ jupyter:
     display_name: soundscapy (3.12.5)
     language: python
     name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}""
+      !pip install "soundscapy[r]>=0.8.4"
+      %load_ext rpy2.ipython
 ---
 
 
@@ -42,8 +54,6 @@ pip install soundscapy
 Let's start by importing Soundscapy and loading the International Soundscape Database (ISD):
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:36:31.668934Z', start_time: '2025-05-14T23:36:29.680368Z'}
-#| execution: {iopub.execute_input: '2023-08-13T15:59:04.324365Z', iopub.status.busy: '2023-08-13T15:59:04.324077Z', iopub.status.idle: '2023-08-13T15:59:06.994240Z', shell.execute_reply: '2023-08-13T15:59:06.993941Z'}
 # Import Soundscapy
 import soundscapy as sspy
 from soundscapy.databases import isd
@@ -62,7 +72,6 @@ print(f"Valid samples: {data.shape[0]}, Excluded samples: {excl.shape[0]}")
 Next, we'll calculate the ISOCoordinate values:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:36:31.934238Z', start_time: '2025-05-14T23:36:31.673459Z'}
 data = sspy.surveys.add_iso_coords(data)
 data[["ISOPleasant", "ISOEventful"]].round(2).head()
 ```
@@ -72,8 +81,6 @@ data[["ISOPleasant", "ISOEventful"]].round(2).head()
 For example:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:36:32.034105Z', start_time: '2025-05-14T23:36:32.028681Z'}
-#| execution: {iopub.execute_input: '2023-08-13T15:59:07.229603Z', iopub.status.busy: '2023-08-13T15:59:07.229511Z', iopub.status.idle: '2023-08-13T15:59:07.243861Z', shell.execute_reply: '2023-08-13T15:59:07.243597Z'}
 import pandas as pd
 
 val_range = (0, 100)
@@ -99,8 +106,6 @@ sample_transform
 `Soundscapy` includes methods for several filters that are normally needed within the ISD, such as filtering by `LocationID` or `SessionID`.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:36:32.103442Z', start_time: '2025-05-14T23:36:32.083742Z'}
-#| execution: {iopub.execute_input: '2023-08-13T15:59:07.264726Z', iopub.status.busy: '2023-08-13T15:59:07.264642Z', iopub.status.idle: '2023-08-13T15:59:07.285762Z', shell.execute_reply: '2023-08-13T15:59:07.285519Z'}
 # Filter by location
 camden_data = isd.select_location_ids(data, ["CamdenTown"])
 print(f"Camden Town samples: {camden_data.shape[0]}")
@@ -117,8 +122,6 @@ print(f"Women over 50: {women_over_50.shape[0]}")
 All of these filters can also be chained together. So, for instance, to return surveys from women over 50 taken in Camden Town, we would do:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:36:32.853974Z', start_time: '2025-05-14T23:36:32.836026Z'}
-#| execution: {iopub.execute_input: '2023-08-13T15:59:07.352987Z', iopub.status.busy: '2023-08-13T15:59:07.352919Z', iopub.status.idle: '2023-08-13T15:59:07.374112Z', shell.execute_reply: '2023-08-13T15:59:07.373866Z'}
 isd.select_location_ids(data, "CamdenTown").query("gen00 == 'Female' and age00 > 50")
 ```
 
@@ -129,7 +132,6 @@ Soundscapy offers various plotting functions to visualize soundscape data. Let's
 ### Scatter plots
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:36:34.500600Z', start_time: '2025-05-14T23:36:34.119344Z'}
 from soundscapy.plotting import ISOPlot
 
 # Basic scatter plot
@@ -156,7 +158,6 @@ p2 = (
 The `ISOPlot` class also allows us to make this set of plots in one go, as a single figure. To do this, we need to set up the subplots slightly differently, then pass the subplot data to each `.add_scatter()` call separately, rather than passing the whole dataframe to the `ISOPlot` object.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:36:56.455694Z', start_time: '2025-05-14T23:36:56.241799Z'}
 p3 = (
     ISOPlot(title=None)
     .create_subplots(
@@ -176,7 +177,6 @@ p3.show()
 ### Density plots
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:03.456726Z', start_time: '2025-05-14T23:37:02.960742Z'}
 d1 = (
     ISOPlot(
         data=isd.select_location_ids(data, ["CamdenTown"]),
@@ -205,7 +205,6 @@ d2 = (
 ### Jointplots
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:08.107626Z', start_time: '2025-05-14T23:37:07.893574Z'}
 sspy.jointplot(
     data=isd.select_location_ids(data, ["CamdenTown"]),
     x="ISOEventful",
@@ -221,12 +220,10 @@ sspy.jointplot(
 `Soundscapy` also provides a method for creating subplots of the circumplex. This is particularly useful when comparing multiple locations.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:11.215566Z', start_time: '2025-05-14T23:37:11.212314Z'}
 df["LocationID"].unique()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:13.820399Z', start_time: '2025-05-14T23:37:13.354136Z'}
 sub_data = sspy.isd.select_location_ids(
     data, ["PancrasLock", "TorringtonSq", "RegentsParkFields", "RegentsParkJapan"]
 )
@@ -246,7 +243,6 @@ mp1 = (
 You can also do this manually if you need more control, by creating a figure and axes and then plotting the density plots on the axes.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:18.145217Z', start_time: '2025-05-14T23:37:17.493009Z'}
 sub_data2 = sspy.isd.select_location_ids(
     data, ["CarloV", "SanMarco", "PlazaBibRambla", "CamdenTown"]
 )
@@ -276,7 +272,6 @@ mp2.show()
 In Aletta et. al. (2024), we propose a method for adjusting the angles of the circumplex to better represent the perceptual space. These adjusted angles are derived for each language separately, meaning that, once projected, the circumplex coordinates will be comparable across all languages. This ability and the derived angles have been incorporated into `Soundscapy`.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:21.528919Z', start_time: '2025-05-14T23:37:21.058116Z'}
 #| collapsed: false
 from soundscapy.surveys import LANGUAGE_ANGLES
 
@@ -304,7 +299,6 @@ adj_p.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:28.076608Z', start_time: '2025-05-14T23:37:24.050488Z'}
 def apply_iso_coords(row):
     angles = LANGUAGE_ANGLES.get(row["Language"], None)
     if angles:
@@ -321,12 +315,10 @@ data = data.apply(apply_iso_coords, axis=1)
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:32.006002Z', start_time: '2025-05-14T23:37:31.999285Z'}
 data[["AdjPleasant", "AdjEventful"]].describe()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:37.770038Z', start_time: '2025-05-14T23:37:33.156187Z'}
 import matplotlib.pyplot as plt
 
 mp3 = (
@@ -350,7 +342,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:37:56.376366Z', start_time: '2025-05-14T23:37:42.472639Z'}
 import matplotlib.pyplot as plt
 import numpy as np
 

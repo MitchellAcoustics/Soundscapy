@@ -1,23 +1,22 @@
 project:
   type: website
   render:
-    - "*.qmd"
-    - "!HowToAnalyseAndRepresentSoundscapes.qmd"
-    - "!1_Understanding_Soundscape_Analysis.qmd"
-    - "!2_Working_with_Soundscape_Survey_Data.qmd"
-    - "!3_Advanced_Visualization_Techniques.qmd"
-    - "!4_Understanding_Soundscape_Perception_Index.qmd"
-    - "!5_Working_with_Soundscape_Databases.qmd"
-    - "!6_Soundscape_Assessment_Tutorial.qmd"
-    - "!BinauralAnalysis.qmd"
-    - "!IoA_Soundscape_Assessment_Tutorial_v2.qmd"
-    - "!archive/"
+    - index.qmd
+    - QuickStart.qmd
+    - 0_QuickStart_for_Beginners.qmd
+    - HowToAnalyseAndRepresentSoundscapes.qmd
+    - 1_Understanding_Soundscape_Analysis.qmd
+    - 2_Working_with_Soundscape_Survey_Data.qmd
+    - 3_Advanced_Visualization_Techniques.qmd
+    - 4_Understanding_Soundscape_Perception_Index.qmd
+    - 5_Working_with_Soundscape_Databases.qmd
+    - 6_Soundscape_Assessment_Tutorial.qmd
 
 website:
   title: "Soundscapy tutorials"
   site-url: https://drandrewmitchell.com/Soundscapy/tutorials
   repo-url: https://github.com/MitchellAcoustics/Soundscapy
-  repo-subdir: examples/_site
+  repo-subdir: examples
   description: "Tutorials for soundscape analysis with Soundscapy"
   navbar:
     left:
@@ -38,37 +37,49 @@ website:
       contents:
         - QuickStart.qmd
         - 0_QuickStart_for_Beginners.qmd
-        # - HowToAnalyseAndRepresentSoundscapes.qmd
-        # - 1_Understanding_Soundscape_Analysis.qmd
-        # - 2_Working_with_Soundscape_Survey_Data.qmd
-        # - 3_Advanced_Visualization_Techniques.qmd
-        # - 4_Understanding_Soundscape_Perception_Index.qmd
-        # - 5_Working_with_Soundscape_Databases.qmd
-        # - 6_Soundscape_Assessment_Tutorial.qmd
+        - HowToAnalyseAndRepresentSoundscapes.qmd
+        - 1_Understanding_Soundscape_Analysis.qmd
+        - 2_Working_with_Soundscape_Survey_Data.qmd
+        - 3_Advanced_Visualization_Techniques.qmd
+        - 4_Understanding_Soundscape_Perception_Index.qmd
+        - 5_Working_with_Soundscape_Databases.qmd
+        - 6_Soundscape_Assessment_Tutorial.qmd
         # - BinauralAnalysis.qmd
 
 format:
-  ipynb: default
   html:
     theme:
       light: flatly
       dark: superhero
-    css: styles.css
+    css: _quarto_reqs/styles.css
     toc: true
     toc-depth: 4
     toc-title: "Contents"
     html-math-method: katex
     include-in-header:
-      - includes.html
+      - _quarto_reqs/includes.html
     highlight-style: tango
     smooth-scroll: true
+  ipynb: default
 
 colab:
   gh-user: "MitchellAcoustics"
   gh-repo: "Soundscapy"
-  gh-branch: "quarto-binder-setup"
+  gh-branch: "quarto-binder-setup/examples/_site"
 filters:
   - colab
 
+setup-cells:
+  python:
+    language: "python" # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}""
+      !pip install "soundscapy[r]>=0.8.4"
+      %load_ext rpy2.ipython
+
 render:
-  freeze: auto
+  freeze: true
+  cache: true

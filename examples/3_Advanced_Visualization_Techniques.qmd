@@ -9,10 +9,18 @@ jupyter:
     display_name: soundscapy (3.12.5)
     language: python
     name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !pip install "soundscapy>=0.8.4"
+      %load_ext rpy2.ipython
 ---
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:52.279634Z', start_time: '2025-09-17T21:17:50.718583Z'}
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -38,7 +46,6 @@ Let's begin by loading some sample data from the International Soundscape Databa
 
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:52.739248Z', start_time: '2025-09-17T21:17:52.285034Z'}
 # Load the ISD dataset
 data = isd.load()
 
@@ -66,7 +73,6 @@ Soundscapy provides several core visualization functions that form the foundatio
 Let's explore these basic visualization techniques:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:57.415940Z', start_time: '2025-09-17T21:17:57.238604Z'}
 # 1.1 Basic scatter plot
 ax = sspy.scatter(
     valid_data,
@@ -77,7 +83,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:58.818117Z', start_time: '2025-09-17T21:17:58.108362Z'}
 # 1.2 Basic density plot
 ax = sspy.density(
     valid_data,
@@ -88,7 +93,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:17:59.547339Z', start_time: '2025-09-17T21:17:58.840979Z'}
 # 1.3 Using iso_plot for combined visualization
 ax = sspy.iso_plot(
     valid_data,
@@ -104,7 +108,6 @@ plt.show()
 Soundscapy provides many options for customizing the appearance of your plots. Let's explore some of these options:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:18:00.581475Z', start_time: '2025-09-17T21:18:00.500128Z'}
 # 1.4 Customizing scatter plots
 ax = sspy.scatter(
     valid_data,
@@ -120,7 +123,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:18:02.004040Z', start_time: '2025-09-17T21:18:01.236537Z'}
 # 1.5 Customizing density plots
 ax = sspy.density(
     valid_data,
@@ -137,7 +139,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:18:53.607942Z', start_time: '2025-09-17T21:18:52.301268Z'}
 # 1.6 Simple density plot (fewer contours for cleaner visualization)
 ax = sspy.density(
     valid_data,
@@ -154,7 +155,6 @@ plt.show()
 One of the most powerful features of Soundscapy's visualization tools is the ability to group and compare data based on different variables. This is particularly useful for comparing soundscapes across different locations, times, or conditions.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:18:54.426160Z', start_time: '2025-09-17T21:18:54.202332Z'}
 # 2.1 Grouping by location
 ax = sspy.scatter(
     valid_data,
@@ -168,7 +168,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:18:55.581632Z', start_time: '2025-09-17T21:18:55.277122Z'}
 # 2.2 Density plot with grouping
 # Select a subset of locations for clearer visualization
 selected_locations = [
@@ -192,7 +191,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:18:56.898769Z', start_time: '2025-09-17T21:18:56.599188Z'}
 # 2.3 Using the ISOPlot class for more control
 p = (
     sspy.ISOPlot(
@@ -214,7 +212,6 @@ p.show()
 For comparing multiple soundscapes or conditions, multi-panel visualizations are extremely useful. Soundscapy provides several ways to create these:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:19:00.021101Z', start_time: '2025-09-17T21:18:59.348903Z'}
 # 3.1 Creating subplots by location - alternative approach
 # Get unique locations
 locations = subset_data["LocationID"].unique()
@@ -234,7 +231,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:19:00.932206Z', start_time: '2025-09-17T21:19:00.385471Z'}
 # 3.3 Using the ISOPlot class for more complex multi-panel visualizations
 mp = (
     sspy.ISOPlot(
@@ -259,7 +255,6 @@ plt.show()
 Joint plots are a powerful way to visualize the distribution of data along both axes. Soundscapy provides a `jointplot` function that creates a main plot with marginal distributions:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:19:03.749810Z', start_time: '2025-09-17T21:19:03.459355Z'}
 # 4.1 Basic joint plot
 g = sspy.jointplot(
     sspy.isd.select_location_ids(valid_data, "CamdenTown"),
@@ -270,7 +265,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:19:05.608711Z', start_time: '2025-09-17T21:19:05.407811Z'}
 # 4.2 Joint plot with histogram marginals
 g = sspy.jointplot(
     sspy.isd.select_location_ids(valid_data, "CamdenTown"),
@@ -282,7 +276,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:19:07.948552Z', start_time: '2025-09-17T21:19:07.561095Z'}
 # 4.3 Joint plot with grouping
 g = sspy.jointplot(
     subset_data,
@@ -299,7 +292,6 @@ plt.show()
 For more advanced customization, Soundscapy provides several options:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:19:09.715166Z', start_time: '2025-09-17T21:19:09.619449Z'}
 # 5.1 Customizing axis labels and appearance
 ax = sspy.scatter(
     valid_data,
@@ -312,7 +304,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:19:13.333314Z', start_time: '2025-09-17T21:19:13.196678Z'}
 # 5.2 Adding annotations to plots
 # Calculate mean ISO coordinates for each location
 location_means = valid_data.groupby("LocationID")[["ISOPleasant", "ISOEventful"]].mean()
@@ -368,7 +359,6 @@ When creating visualizations for soundscape data, consider the following best pr
 Let's apply these best practices to create an effective visualization for a report:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-09-17T21:19:19.607228Z', start_time: '2025-09-17T21:19:18.726615Z'}
 # 6.1 Creating an effective visualization for a report
 # Select data for multiple locations
 report_locations = ["CamdenTown", "PancrasLock", "RegentsParkJapan"]

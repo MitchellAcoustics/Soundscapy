@@ -1,4 +1,5 @@
 ---
+title: Soundscape Assessment Tutorial
 jupyter:
   jupytext:
     cell_metadata_filter: '-all'
@@ -8,12 +9,17 @@ jupyter:
     display_name: Python 3 (ipykernel)
     language: python
     name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}""
+      !pip install "soundscapy[r]>=0.8.4"
+      %load_ext rpy2.ipython
 ---
-
-<a href="https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/main/examples/IoA_Soundscape_Assessment_Tutorial_v2.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
-
-# Soundscape Assessment Tutorial
-
 
 ## Introduction
 
@@ -27,48 +33,9 @@ By the end of this tutorial, you'll be able to:
 - Apply the Soundscape Perception Index (SPI) to evaluate soundscapes against target distributions
 - Create professional reports and presentations of your findings
 
-
-
----
-
-
-
-### _IMPORTANT steps for Google Colab setup_:
-
-> _Ignore if not in Google Colab_
-
-If running this as a Google Colab notebook, the following steps and code cell are important to run properly. If you are not in Colab, keep this cell commented out or delete.
-
-The cell below will install `soundscapy` and other required packages into the Colab programming environment. This will need to be done each time you start a new runtime - that's whenever you create a new notebook or when the notebook hasn't been opened in a while.
-
-1. Un-comment the contents of the cell below (delete just the `# ` at the start of the lines).
-2. Run just this cell on its own. _Do not proceed to later cells yet!_
-
-    It will print some status about installing things. First, it will install the `sn` package for `R`. Soundscapy needs this for using SPI functionality. If you don't need this, you can delete this line.
-
-    Then it will install Soundscapy itself (`pip install soundscapy`). In this notebook specifically, we require some optional extras for working with statistics performed in `R`, so we install `soundscapy[r]` to include these extras.
-3. When the cell stops running, it should say something about successfully installing things. It may end with some red text - this is expected.
-4. The instructions should say: _You must restart the runtime in order to use newly installed versions._, possibly in a pop up box or with a 'Restart Session' button.
-5. Restart the session with the button, or by clicking 'Runtime' at the top of the page and selecting 'Restart Session'.
-
-You're now ready to go! Soundscapy is installed along with everything it needs.
-
-You should only need to run this install cell once (per work session). Skip past it and continue on to the rest of the notebook! You can also comment it out again (add a `#` at the start of each line) and hit 'Run all' to run the whole notebook at once.
+Before you can use any of the tools and functions included in a package, like soundscapy, you need to `import` it. We'll import most of what we need here at the start:
 
 ```{python}
-#| collapsed: true
-# !R -q -e "install.packages('sn')"
-# !pip install "soundscapy[r]>=0.8.4"
-```
-
----
-
-### Setup cell for everyone
-
-Before you can use and of the tools and functions included in a package, like soundscapy, you need to `import` it. We'll import most of what we need here at the start:
-
-```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:34.158489Z', start_time: '2025-05-14T23:24:32.660819Z'}
 import warnings
 
 import matplotlib.pyplot as plt
@@ -89,8 +56,6 @@ warnings.filterwarnings("ignore")
 The first step in any soundscape assessment is to load and explore your data. For this tutorial, we'll use a sample dataset containing soundscape survey responses from multiple locations.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:34.328574Z', start_time: '2025-05-14T23:24:34.216293Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 233}
 # Load the demo data
 data = pd.read_excel("/content/DemoData.xlsx")
 
@@ -103,29 +68,22 @@ data.head()
 Dataset shape:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:34.353011Z', start_time: '2025-05-14T23:24:34.351100Z'}
-#| colab: {base_uri: https://localhost:8080/}
 data.shape
 ```
 
 ```{python}
-#| colab: {base_uri: https://localhost:8080/, height: 326}
 data.describe()
 ```
 
 Number of locations:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:34.374001Z', start_time: '2025-05-14T23:24:34.371935Z'}
-#| colab: {base_uri: https://localhost:8080/}
 data["LocationID"].nunique()
 ```
 
 Locations:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:34.435340Z', start_time: '2025-05-14T23:24:34.432935Z'}
-#| colab: {base_uri: https://localhost:8080/}
 data["LocationID"].unique()
 ```
 
@@ -164,8 +122,6 @@ Our dataset contains several types of columns:
 Before analyzing the data, it's important to validate it to ensure quality and consistency. Soundscapy provides functions for validating soundscape data and calculating ISO coordinates.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:35.284400Z', start_time: '2025-05-14T23:24:35.257620Z'}
-#| colab: {base_uri: https://localhost:8080/}
 # Validate the data
 valid_data, invalid_indices = sspy.databases.isd.validate(data)
 
@@ -195,8 +151,6 @@ These coordinates allow us to position each response in the soundscape circumple
 - Pleasant and Uneventful: "Calm"
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:35.333164Z', start_time: '2025-05-14T23:24:35.293624Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 436}
 # Calculate ISO coordinates if not already present
 valid_data = sspy.surveys.add_iso_coords(valid_data, overwrite=True)
 
@@ -210,7 +164,6 @@ valid_data.round(3)
 After using Soundscapy to calculate the ISOCoordinates, we can easily save our resulting DataFrame out to a file. We can easily save to an Excel file, allowing you to use the tools you're more comfortable with for additional analysis:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:35.437548Z', start_time: '2025-05-14T23:24:35.354545Z'}
 valid_data.to_csv("SoundscapyResults.csv", index=False)
 ```
 
@@ -219,8 +172,6 @@ valid_data.to_csv("SoundscapyResults.csv", index=False)
 Now that we have our validated data with ISO coordinates, we can create basic visualizations and calculate summary statistics to understand the soundscape perceptions at different locations.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:35.456769Z', start_time: '2025-05-14T23:24:35.450838Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 252}
 # Get summary statistics for ISO coordinates by location
 iso_stats = valid_data.groupby("LocationID")[["ISOPleasant", "ISOEventful"]].agg(
     ["mean", "std", "min", "max"]
@@ -236,8 +187,6 @@ iso_stats
 Creating a scatter plot of the Soundscape data is extremely easy in Soundscapy. Let's start by plotting a single location. Again, we use `sspy.isd.select_location_ids()` to select a single location:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:35.672574Z', start_time: '2025-05-14T23:24:35.505180Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 545}
 subset_data = sspy.isd.select_location_ids(valid_data, ["CamdenTown", "PancrasLock"])
 
 sspy.scatter(subset_data)
@@ -248,8 +197,6 @@ sspy.scatter(subset_data)
 The Soundscapy plotting functions contain several customization options, such as changing the color, palette, point size, and title:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:35.877377Z', start_time: '2025-05-14T23:24:35.686826Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 539}
 sspy.scatter(
     sspy.isd.select_location_ids(valid_data, "CamdenTown"),
     color="purple",
@@ -266,8 +213,6 @@ sspy.scatter(
 One of the most useful settings is the ability to split the plot by some grouping variable. In Soundscape data, this will often be the location, but we can easily select any other categorical variable in the dataset. Simply set the `hue` option to get a different color for each group:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:36.022578Z', start_time: '2025-05-14T23:24:35.913579Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 909}
 # Create a basic scatter plot of ISO coordinates
 sspy.scatter(
     valid_data,
@@ -282,10 +227,10 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:36.256862Z', start_time: '2025-05-14T23:24:36.031532Z'}
+#| eval: false
 # Split by a different variable:
 
-# sspy.scatter(...)
+sspy.scatter(...)
 ```
 
 ## Density Plots
@@ -293,8 +238,6 @@ plt.show()
 Of course, the most notable plot type in Soundscapy is the Density plot. Just like scatter, this has its own simple function. Try it out:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:36.271131Z', start_time: '2025-05-14T23:15:55.417031Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 524}
 # Create a basic density plot
 sspy.density(
     valid_data,
@@ -313,21 +256,16 @@ We can use Soundscapy's `paq_likert` plot to examine the distribution of PAQ res
 
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:34.671964Z', start_time: '2025-05-14T23:24:34.490307Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 559}
 sspy.paq_likert(valid_data, title="Distribution of PAQ Responses in the Demo Data")
 ```
 
 To get a better view of the data, we can also split it across the Locations. To do this, we use the `select_location_ids()` function from Soundscapy, and use a `for` loop to create a separate plot for each location.
 
 ```{python}
-#| colab: {base_uri: https://localhost:8080/}
 data["LocationID"].unique()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:24:35.251559Z', start_time: '2025-05-14T23:24:34.677723Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 1000}
 for location in data["LocationID"].unique():
     sspy.paq_likert(
         sspy.databases.isd.select_location_ids(data, location),
@@ -341,22 +279,19 @@ for location in data["LocationID"].unique():
 Let's examine the dominance of different sound sources at each location.
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:34:21.050407Z', start_time: '2025-05-14T23:34:20.969219Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 559}
 sspy.stacked_likert(valid_data, "traffic_noise", title="Traffic Noise Dominance")
 ```
 
 Try this out with some of the other Likert scaled data:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:34:35.153468Z', start_time: '2025-05-14T23:34:35.140005Z'}
-# sspy.stacked_likert(...)
+#| eval: false
+sspy.stacked_likert(...)
 ```
 
 In addition to the more specialised Likert plots provided by Soundscapy, we can of course apply more common analyses. For this, we need to do some data processing and plotting in Pandas and Seaborn:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:34:42.102693Z', start_time: '2025-05-14T23:34:42.099555Z'}
 # Calculate mean sound source dominance by location
 sound_sources = (
     valid_data.groupby("LocationID")[
@@ -370,16 +305,12 @@ sound_sources = (
 #### Mean sound source dominance by location:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:34:43.404158Z', start_time: '2025-05-14T23:34:43.400531Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 204}
 sound_sources
 ```
 
 Since Soundscapy doesn't implement its own functionality for the more common plots, we fall back to the very nice Seaborn plotting library, which we imported as `sns` to create a barplot of the mean sound source responses (or you can of course do this in something like Excel):
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:34:44.773329Z', start_time: '2025-05-14T23:34:44.676498Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 487}
 # Create a bar chart
 sound_sources_plot = sound_sources.reset_index().melt(
     id_vars=["LocationID"], var_name="Source", value_name="Dominance"
@@ -405,8 +336,6 @@ plt.show()
 Soundscapy makes it easy to create more complex visualizations that show relationships between different variables. Let's explore how sound source dominance affects soundscape perception:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:20:17.456473Z', start_time: '2025-05-14T23:20:16.755274Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 962}
 # Create subplots showing the impact of natural sounds on soundscape perception
 sspy.create_iso_subplots(
     data=valid_data,
@@ -422,8 +351,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:20:41.402636Z', start_time: '2025-05-14T23:20:40.624154Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 962}
 # Create subplots showing the impact of traffic noise on soundscape perception
 sspy.create_iso_subplots(
     data=valid_data,
@@ -439,8 +366,6 @@ plt.show()
 We can also examine the relationship between acoustic metrics and soundscape perception:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:20:50.307625Z', start_time: '2025-05-14T23:20:50.051723Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 607}
 # Create a scatter plot with regression line showing the relationship between LAeq and ISOPleasant
 sns.lmplot(
     data=valid_data,
@@ -457,8 +382,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:20:52.545844Z', start_time: '2025-05-14T23:20:52.294276Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 607}
 # Create a scatter plot with regression line showing the relationship between N5 and ISOEventful
 sns.lmplot(
     data=valid_data,
@@ -481,8 +404,6 @@ The Soundscape Perception Index (SPI) is a powerful tool for comparing soundscap
 Let's define some target distributions and calculate SPI scores for our locations:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:25:03.907327Z', start_time: '2025-05-14T23:25:03.573847Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 541}
 # Define a "tranquil" target distribution
 tranquil_target = DirectParams(
     xi=np.array([[0.8, -0.5]]),  # Pleasant and uneventful
@@ -508,8 +429,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:25:29.500085Z', start_time: '2025-05-14T23:25:29.244636Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 524}
 # Define a "vibrant" target distribution
 vibrant_target = DirectParams(
     xi=np.array([[0.7, 0.6]]),  # Pleasant and eventful
@@ -540,8 +459,6 @@ plt.show()
 Now let's calculate SPI scores for each location against both target distributions:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:27:00.257221Z', start_time: '2025-05-14T23:26:59.823916Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 572}
 # Calculate SPI scores for each location against the tranquil target
 locations = valid_data["LocationID"].unique()
 tranquil_spi_scores = {}
@@ -590,8 +507,6 @@ plt.show()
 Soundscapy's `ISOPlot` class provides a more sophisticated interface for creating SPI visualizations. Let's use it to create a comprehensive SPI analysis:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:27:35.810920Z', start_time: '2025-05-14T23:27:33.813811Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 777}
 # Create an SPI plot comparing locations against the tranquil target
 tranquil_plot = (
     ISOPlot(
@@ -611,8 +526,6 @@ tranquil_plot = (
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:27:43.894896Z', start_time: '2025-05-14T23:27:41.872996Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 777}
 # Create an SPI plot comparing locations against the vibrant target
 vibrant_plot = (
     ISOPlot(
@@ -661,8 +574,6 @@ These insights can inform soundscape design and management decisions, such as:
 Soundscapy offers a wide range of visualization options. Here's a gallery of additional plots you can create:
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:27:59.760870Z', start_time: '2025-05-14T23:27:59.669467Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 524}
 # Basic scatter plot
 sspy.scatter(
     valid_data,
@@ -673,8 +584,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:28:02.948138Z', start_time: '2025-05-14T23:28:02.774013Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 524}
 # Density plot
 sspy.density(
     valid_data,
@@ -686,8 +595,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:28:37.889784Z', start_time: '2025-05-14T23:28:37.714743Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 524}
 # Combined scatter and density plot
 sspy.iso_plot(
     valid_data,
@@ -699,8 +606,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:28:38.976014Z', start_time: '2025-05-14T23:28:38.580949Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 524}
 # Simple density plot with hue
 sspy.density(
     valid_data,
@@ -712,8 +617,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:28:41.137518Z', start_time: '2025-05-14T23:28:40.900084Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 635}
 # Joint plot
 sspy.jointplot(
     valid_data,
@@ -723,8 +626,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:28:43.044673Z', start_time: '2025-05-14T23:28:42.789562Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 652}
 # Joint plot with histogram marginals
 plt.figure(figsize=(10, 10))
 sspy.jointplot(
@@ -734,8 +635,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:28:59.028211Z', start_time: '2025-05-14T23:28:58.661144Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 652}
 # Joint plot with grouping
 plt.figure(figsize=(10, 10))
 sspy.jointplot(
@@ -748,8 +647,6 @@ plt.show()
 ```
 
 ```{python}
-#| ExecuteTime: {end_time: '2025-05-14T23:31:07.870384Z', start_time: '2025-05-14T23:31:06.862124Z'}
-#| colab: {base_uri: https://localhost:8080/, height: 1000}
 # Custom multi-panel visualization
 fig = plt.figure(figsize=(15, 14))
 
