@@ -159,7 +159,7 @@ cmd         = "zensical build"
 [feature.docs.tasks.docs-build]
 description = "Build complete docs site: zensical + quarto tutorials copied into site/tutorials/"
 depends-on  = ["zensical-build", "examples-render"]
-cmd         = "cp -r examples/_site site/tutorials"
+cmd         = "rm -rf site/tutorials && cp -r examples/_site site/tutorials"
 
 [feature.docs.tasks.docs-serve]
 description         = "Serve main docs locally (for tutorial preview run: cd examples && quarto preview)"
