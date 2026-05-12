@@ -3,7 +3,8 @@ exclude: |
   (?x)^(
     environment\.yml|
     examples/\.quarto/.*|
-    examples/_quarto_reqs/.*
+    examples/_quarto_reqs/.*|
+    examples/_site/.*\.ipynb
   )$
 
 repos:

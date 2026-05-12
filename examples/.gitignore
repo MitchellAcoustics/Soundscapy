@@ -1,6 +1,7 @@
 **/*.quarto_ipynb
 /.jupyter_cache/
-_site
+_site/*
+!_site/*.ipynb
 
 # Quarto project cache — do not commit
 /.quarto/idx/
