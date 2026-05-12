@@ -8,6 +8,13 @@ setup-cells:
       # Custom R setup
         !Rscript -e "install.packages('sn')"
         !pip install "soundscapy[r]>=0.8.4"
+format:
+  ipynb: default
+  html:
+    code-links:
+      - text: "Open in Colab"
+        href: "https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/quarto-binder-setup/examples/_site/1_Understanding_Soundscape_Analysis.qmd"
+        icon: "laptop"
 ---
 
 
