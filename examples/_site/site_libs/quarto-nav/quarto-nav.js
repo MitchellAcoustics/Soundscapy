@@ -81,7 +81,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
           showBackToTop();
         }
       },
-      false,
+      false
     );
   }
 
@@ -123,7 +123,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
 
   function dashboardOffset() {
     const dashboardNavEl = window.document.getElementById(
-      "quarto-dashboard-header",
+      "quarto-dashboard-header"
     );
     if (dashboardNavEl !== null) {
       return dashboardNavEl.clientHeight;
@@ -146,7 +146,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
 
     // deal with sidebar offsets
     const sidebars = window.document.querySelectorAll(
-      ".sidebar, .headroom-target",
+      ".sidebar, .headroom-target"
     );
     sidebars.forEach((sidebar) => {
       if (!animated) {
@@ -190,7 +190,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
         display: block;
         height: ${topOffset}px;
         margin: -${topOffset}px 0 0;
-      }`),
+      }`)
       );
     }
     if (init) {
@@ -206,7 +206,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
       tolerance: 5,
       onPin: function () {
         const sidebars = window.document.querySelectorAll(
-          ".sidebar, .headroom-target",
+          ".sidebar, .headroom-target"
         );
         sidebars.forEach((sidebar) => {
           sidebar.classList.remove("sidebar-unpinned");
@@ -215,7 +215,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
       },
       onUnpin: function () {
         const sidebars = window.document.querySelectorAll(
-          ".sidebar, .headroom-target",
+          ".sidebar, .headroom-target"
         );
         sidebars.forEach((sidebar) => {
           sidebar.classList.add("sidebar-unpinned");
@@ -246,7 +246,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
         window.scrollTo(0, window.pageYOffset - headerOffset());
       }
     },
-    false,
+    false
   );
 
   // Observe size changed for the header
@@ -263,7 +263,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
   } else {
     window.addEventListener(
       "resize",
-      throttle(updateDocumentOffsetWithoutAnimation, 50),
+      throttle(updateDocumentOffsetWithoutAnimation, 50)
     );
   }
   setTimeout(updateDocumentOffsetWithoutAnimation, 250);
@@ -281,7 +281,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
     // Fixup any sharing links that require urls
     // Append url to any sharing urls
     const sharingLinks = window.document.querySelectorAll(
-      "a.sidebar-tools-main-item, a.quarto-navigation-tool, a.quarto-navbar-tools, a.quarto-navbar-tools-item",
+      "a.sidebar-tools-main-item, a.quarto-navigation-tool, a.quarto-navbar-tools, a.quarto-navbar-tools-item"
     );
     for (let i = 0; i < sharingLinks.length; i++) {
       const sharingLink = sharingLinks[i];
@@ -289,7 +289,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
       if (href) {
         sharingLink.setAttribute(
           "href",
-          href.replace("|url|", window.location.href),
+          href.replace("|url|", window.location.href)
         );
       }
     }

@@ -1,0 +1,483 @@
+---
+title: Soundscapy Quick Start Guide for Beginners.
+jupyter:
+  jupytext:
+    cell_metadata_filter: '-all'
+    main_language: python
+    notebook_metadata_filter: '-all'
+  kernelspec:
+    display_name: soundscapy:default (3.13.13)
+    language: python
+    name: python3
+setup-cells:
+  r:
+    language: python
+    code: |
+      !Rscript -e "install.packages('sn')"
+      !pip install "soundscapy[r]>=0.8.4"
+---
+
+[![Open In
+Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/MitchellAcoustics/Soundscapy/blob/quarto-binder-setup/examples/_site/0_QuickStart_for_Beginners.ipynb)
+
+Welcome to Soundscapy! This tutorial is designed for users who are new
+to soundscape analysis with Python. We’ll show you how Soundscapy makes
+it easy to load, process, and visualise soundscape survey data.
+
+## What is Soundscapy?
+
+Soundscapy is a Python package for analyzing and visualizing soundscape
+data. It provides simple, (often) one-line functions for tasks that
+would otherwise require many lines of complex code. Whether you’re
+analyzing survey responses, visualizing soundscape perceptions, or
+calculating the Soundscape Perception Index (SPI), Soundscapy makes it
+easy.
+
+## What You’ll Learn
+
+In this tutorial, you’ll learn:
+
+1.  How to load and process soundscape survey data
+2.  How to create visualizations with Soundscapy’s simple API
+3.  How to calculate and interpret the Soundscape Perception Index (SPI)
+
+Let’s get started!
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T20:52:02.852953Z', start_time: '2025-09-17T20:52:00.515723Z'}}
+# Import the necessary packages
+import matplotlib.pyplot as plt  # For creating plots
+import numpy as np  # For numerical operations
+import pandas as pd  # For data handling
+import seaborn as sns  # For enhanced visualizations
+
+# Import soundscapy with the alias 'sspy'
+import soundscapy as sspy
+
+# Set a nice plot style
+sns.set_context("notebook")
+```
+
+## 1. Working with Soundscape Data in Soundscapy
+
+Now that we understand the basics of Python and DataFrames, let’s see
+how Soundscapy makes it easy to work with soundscape data.
+
+### 1.1 Loading Soundscape Data
+
+Soundscapy provides simple functions to load data from various
+soundscape databases. The default is the International Soundscape
+Database (ISD):
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:03:10.746772Z', start_time: '2025-09-17T21:03:10.706469Z'}}
+# Load data from the International Soundscape Database (ISD)
+isd_data = sspy.isd.load()
+
+# Display basic information about the dataset
+print(f"ISD Dataset shape: {isd_data.shape}")
+print(f"Number of locations: {isd_data['LocationID'].nunique()}")
+print(f"Number of records: {isd_data['RecordID'].nunique()}")
+
+# Display the first few rows
+print("\nFirst few rows of the ISD dataset:")
+print(isd_data.head())
+```
+
+### 1.2 Data Validation and Processing
+
+Before analyzing soundscape data, it’s important to validate it to
+ensure quality. Soundscapy makes this easy with built-in validation
+functions:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:04:49.075166Z', start_time: '2025-09-17T21:04:48.902455Z'}}
+# Validate the ISD dataset
+valid_data, excluded_data = sspy.databases.isd.validate(isd_data)
+
+# Display validation results
+print(f"Original dataset size: {len(isd_data)}")
+print(f"Valid dataset size: {len(valid_data)}")
+print(f"Number of excluded data: {len(excluded_data)}")
+```
+
+### 1.3 Calculating ISO Coordinates
+
+The ISO 12913 standard defines a circumplex model for soundscape
+perception, with two main dimensions: pleasantness and eventfulness.
+Soundscapy can calculate these coordinates from the PAQ responses with a
+single function:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:06:09.894297Z', start_time: '2025-09-17T21:06:09.616280Z'}}
+# Calculate ISO coordinates
+valid_data = sspy.surveys.add_iso_coords(valid_data, overwrite=True)
+
+# Display the first few rows with ISO coordinates
+print("Data with ISO coordinates:")
+print(valid_data[["LocationID", "ISOPleasant", "ISOEventful"]].head())
+```
+
+### 1.4 Filtering and Selecting Data
+
+Soundscapy provides convenient functions for filtering and selecting
+data:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:06:16.485600Z', start_time: '2025-09-17T21:06:16.473386Z'}}
+# Select data for a specific location
+location_id = "CamdenTown"
+location_data = sspy.databases.isd.select_location_ids(valid_data, location_id)
+
+print(f"Data for {location_id}:")
+print(f"Number of records: {len(location_data)}")
+print(f"Mean ISOPleasant: {location_data['ISOPleasant'].mean():.3f}")
+print(f"Mean ISOEventful: {location_data['ISOEventful'].mean():.3f}")
+```
+
+## 2. Creating Beautiful Visualizations with Soundscapy
+
+One of the most powerful features of Soundscapy is its ability to create
+beautiful, publication-quality visualizations with just a single
+function. No need to worry about complex matplotlib customizations!
+
+### 2.1 Basic Scatter Plots
+
+Let’s start with a simple scatter plot of ISO coordinates:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:07:47.437443Z', start_time: '2025-09-17T21:07:47.162583Z'}}
+# Create a scatter plot with a single function
+sspy.scatter(
+    location_data,
+    title=f"Soundscape Perception at {location_id}",
+    diagonal_lines=True,  # Add diagonal lines for the circumplex model
+)
+plt.show()
+```
+
+That’s it! With just one line of code, we’ve created a
+professional-looking scatter plot with: - Properly labeled axes - A
+clear title - Diagonal lines showing the circumplex model - Appropriate
+axis limits - A clean, readable design
+
+### 2.2 Density Plots
+
+For a more sophisticated visualization that shows the distribution of
+perceptions, we can use a density plot:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:07:58.250223Z', start_time: '2025-09-17T21:07:58.034523Z'}}
+# Create a density plot with a single line of code
+sspy.density(
+    location_data,
+    title=f"Soundscape Perception Density at {location_id}",
+    diagonal_lines=True,
+    fill=True,  # Fill the contours with color
+    incl_scatter=False,  # Do not include scatter points
+)
+plt.show()
+```
+
+### 2.3 Combined Plots
+
+Soundscapy also makes it easy to create combined plots that show both
+individual data points and the overall distribution:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:09.614984Z', start_time: '2025-09-17T21:09:09.478864Z'}}
+# Create a combined scatter and density plot
+sspy.iso_plot(
+    location_data,
+    title=f"Combined Visualization for {location_id}",
+    plot_layers=["scatter", "density"],  # Include both scatter and density layers
+    diagonal_lines=True,
+)
+plt.show()
+```
+
+### 2.4 Comparing Multiple Locations
+
+One common task in soundscape analysis is comparing perceptions across
+different locations. Soundscapy makes this easy:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:17.682010Z', start_time: '2025-09-17T21:09:17.544Z'}}
+# Select data for multiple locations
+locations = ["CamdenTown", "RegentsParkJapan", "PancrasLock"]
+multi_location_data = pd.concat(
+    [sspy.databases.isd.select_location_ids(valid_data, loc) for loc in locations]
+)
+
+# Create a scatter plot with locations as hue
+sspy.scatter(
+    multi_location_data,
+    title="Comparison of Soundscape Perceptions Across Locations",
+    hue="LocationID",  # Color points by location
+    diagonal_lines=True,
+)
+plt.show()
+```
+
+### 2.5 Creating Multi-panel Visualizations
+
+For a more detailed comparison, we can create multi-panel
+visualizations:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:24.987881Z', start_time: '2025-09-17T21:09:24.555400Z'}}
+# Create a figure with subplots for each location
+fig, axes = plt.subplots(1, len(locations), figsize=(15, 5))
+
+# Plot each location in its own subplot
+for i, location in enumerate(locations):
+    location_data = sspy.databases.isd.select_location_ids(valid_data, location)
+
+    # Use iso_plot for each subplot
+    sspy.iso_plot(
+        location_data,
+        title=location,
+        plot_layers=["scatter", "simple_density"],
+        diagonal_lines=True,
+        ax=axes[i],
+    )
+
+plt.tight_layout()
+plt.show()
+```
+
+## 3. Understanding the Soundscape Perception Index (SPI)
+
+The Soundscape Perception Index (SPI) is a powerful metric for comparing
+soundscape distributions. It quantifies the similarity between two
+soundscape distributions on a scale from 0 to 100.
+
+### 3.1 Creating Multi-dimensional Skewed Normal Distributions
+
+To calculate the SPI, we first need to fit multi-dimensional skewed
+normal (MSN) distributions to our data:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:36.332197Z', start_time: '2025-09-17T21:09:35.543717Z'}}
+# Import the MultiSkewNorm class
+from soundscapy.spi import MultiSkewNorm
+
+# Select data for two locations to compare
+location1 = "StPaulsCross"
+location2 = "StPaulsRow"
+
+data1 = sspy.databases.isd.select_location_ids(valid_data, location1)
+
+# Fit MSN distributions to both locations
+msn1 = MultiSkewNorm()
+msn1.fit(data=data1[["ISOPleasant", "ISOEventful"]])
+msn1.sample_mtsn(1000)
+
+print(f"MSN parameters for {location1}:")
+print()
+print(msn1.cp)
+print()
+print(msn1.dp)
+```
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:41.576645Z', start_time: '2025-09-17T21:09:41.217028Z'}}
+from soundscapy import ISOPlot
+
+fitted_data = pd.DataFrame(
+    {
+        "ISOPleasant": msn1.sample_data[:, 0],
+        "ISOEventful": msn1.sample_data[:, 1],
+    }
+)
+
+p = (
+    ISOPlot()
+    .create_subplots(nrows=1, ncols=2, figsize=(8, 4), subplot_titles=[""])
+    .add_scatter(data=data1, on_axis=0)
+    .add_scatter(data=fitted_data, on_axis=1, color="red")
+    .add_density(data=data1, on_axis=0)
+    .add_density(data=fitted_data, on_axis=1, color="red")
+    .style()
+)
+plt.tight_layout()
+p.show()
+```
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:47.466179Z', start_time: '2025-09-17T21:09:47.450550Z'}}
+data2 = sspy.databases.isd.select_location_ids(valid_data, location2)
+
+msn2 = MultiSkewNorm()
+msn2.fit(data=data2[["ISOPleasant", "ISOEventful"]])
+print(f"\nMSN parameters for {location2}:")
+print(msn2.cp)
+print(msn2.dp)
+```
+
+### 3.4 Creating a Target Distribution
+
+One powerful application of the SPI is comparing actual soundscapes to a
+target or ideal distribution:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:52.034399Z', start_time: '2025-09-17T21:09:51.923785Z'}}
+# Create a target distribution
+target_msn = MultiSkewNorm()
+target_msn.define_dp(
+    xi=np.array([0.6, 0.2]),  # A pleasant but not too eventful soundscape
+    omega=np.array([[0.08, 0.02], [0.02, 0.08]]),  # Scale matrix (spread)
+    alpha=np.array([0, 0]),  # Symmetric distribution
+)
+target_msn.sample(n=1000)  # Generate sample data
+
+# Calculate SPI against the target
+spi1_location1 = target_msn.spi_score(data1[["ISOPleasant", "ISOEventful"]])
+spi1_location2 = target_msn.spi_score(data2[["ISOPleasant", "ISOEventful"]])
+
+print(f"SPI between {location1} and target: {spi1_location1}")
+print(f"SPI between {location2} and target: {spi1_location2}")
+```
+
+### 3.3 Visualizing the Comparison
+
+Let’s visualize the two distributions to better understand the SPI:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:54.743664Z', start_time: '2025-09-17T21:09:53.473896Z'}}
+from soundscapy import ISOPlot
+
+# Select data for two locations to compare
+location1 = "MarchmontGarden"
+location2 = "StPaulsRow"
+
+data1 = sspy.databases.isd.select_location_ids(valid_data, location1)
+data2 = sspy.databases.isd.select_location_ids(valid_data, location2)
+
+target_df = pd.DataFrame(
+    {
+        "ISOPleasant": target_msn.sample_data[:, 0],
+        "ISOEventful": target_msn.sample_data[:, 1],
+    }
+)
+
+# Create a plot for the SPI scores
+plot = (
+    ISOPlot(title="Comparison of Soundscape Perceptions Against a Pleasant target")
+    .create_subplots(
+        nrows=1,
+        ncols=3,
+        figsize=(6, 6),
+        subplot_datas=[target_df, data1, data2],
+        subplot_titles=["Target Distribution", location1, location2],
+    )
+    .add_scatter(color="red", on_axis=0)
+    .add_density(color="red", on_axis=0)
+    .add_scatter(on_axis=1)
+    .add_density(on_axis=1)
+    .add_scatter(on_axis=2)
+    .add_density(on_axis=2)
+    .add_spi(on_axis=1, spi_target_data=target_df, show_score="on axis")
+    .add_spi(on_axis=2, spi_target_data=target_df, show_score="on axis")
+    .style()
+)
+plot.show()
+
+# plot.add_data("CamdenTown", spi1_location1)
+# plot.add_data("RegentsParkJapan", spi1_location2)
+# plot.add_data("PancrasLock", spi_score)
+```
+
+## 4. Putting It All Together
+
+Now that we’ve learned the basics of Soundscapy, let’s put it all
+together in a complete analysis workflow:
+
+1.  Load and validate data
+2.  Calculate ISO coordinates
+3.  Visualize the data
+4.  Compare locations
+5.  Calculate SPI
+
+Here’s a complete example:
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:55.231703Z', start_time: '2025-09-17T21:09:55.204630Z'}}
+data = sspy.isd.load()
+data.LocationID.unique()
+```
+
+```{python}
+#| quarto-private-1: {key: ExecuteTime, value: {end_time: '2025-09-17T21:09:58.545928Z', start_time: '2025-09-17T21:09:56.096897Z'}}
+# 1. Load and validate data
+data = sspy.databases.isd.load()
+valid_data, _ = sspy.databases.isd.validate(data)
+
+# 2. Calculate ISO coordinates
+valid_data = sspy.surveys.add_iso_coords(valid_data)
+
+# 3. Select locations to analyze
+locations = ["EustonTap", "MarchmontGarden", "StPaulsCross", "StPaulsRow"]
+locations_data = sspy.isd.select_location_ids(valid_data, locations)
+
+# 4. Select a target distribution
+target_msn = MultiSkewNorm()
+target_msn.define_dp(
+    xi=np.array([0.6, 0.2]),  # A pleasant but not too eventful soundscape
+    omega=np.array([[0.1, 0.02], [0.02, 0.1]]),
+    alpha=np.array([0, 0]),
+)
+target_msn.sample(n=1000)
+
+plot = (
+    ISOPlot(locations_data)
+    .create_subplots(subplot_by="LocationID", auto_allocate_axes=True)
+    .add_scatter()
+    .add_density()
+    .add_spi(spi_target_data=target_msn.sample_data, show_score="on axis")
+    .style()
+)
+plot.show()
+```
+
+## Summary
+
+In this tutorial, we’ve covered the basics of using Soundscapy for
+soundscape analysis:
+
+1.  **Python Basics**: We learned about variables, functions, packages,
+    and DataFrames.
+
+2.  **Soundscape Data**: We saw how to load, validate, and process
+    soundscape data.
+
+3.  **Visualization**: We created beautiful visualizations with just a
+    single line of code.
+
+4.  **SPI**: We calculated and interpreted the Soundscape Perception
+    Index.
+
+The key takeaway is that Soundscapy makes complex soundscape analysis
+tasks simple. Instead of writing dozens of lines of code for each
+visualization or calculation, you can use Soundscapy’s intuitive
+functions to accomplish the same tasks with just a few lines.
+
+## Next Steps
+
+Now that you’ve completed this quick start guide, you might want to
+explore:
+
+1.  **More Advanced Visualizations**: Check out the Advanced
+    Visualization Techniques tutorial.
+
+2.  **Working with Different Databases**: Learn about the different
+    soundscape databases available in Soundscapy.
+
+3.  **In-depth SPI Analysis**: Dive deeper into the Soundscape
+    Perception Index and its applications.
+
+4.  **Custom Analysis Workflows**: Combine Soundscapy functions with
+    your own code to create custom analysis workflows.
+
+Happy soundscape analyzing!
+

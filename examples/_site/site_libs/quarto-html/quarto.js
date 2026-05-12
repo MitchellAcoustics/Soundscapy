@@ -11,7 +11,7 @@ const layoutMarginEls = () => {
   // Find any conflicting margin elements and add margins to the
   // top to prevent overlap
   const marginChildren = window.document.querySelectorAll(
-    ".column-margin.column-container > *, .margin-caption, .aside",
+    ".column-margin.column-container > *, .margin-caption, .aside"
   );
 
   let lastBottom = 0;
@@ -45,7 +45,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
         ) {
           quartoToggleReader();
         }
-      }, 50),
+      }, 50)
     );
     resizeObserver.observe(window.document.body);
   }
@@ -54,7 +54,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
   const sidebarEl = window.document.getElementById("quarto-sidebar");
   const leftTocEl = window.document.getElementById("quarto-sidebar-toc-left");
   const marginSidebarEl = window.document.getElementById(
-    "quarto-margin-sidebar",
+    "quarto-margin-sidebar"
   );
   // function to determine whether the element has a previous sibling that is active
   const prevSiblingIsActiveLink = (el) => {
@@ -99,7 +99,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
       fireSlideEnter();
       distpatchShinyEvents(event.detail.previousTab, event.detail.tab);
     },
-    false,
+    false
   );
 
   // Track scrolling and mark TOC links as active
@@ -118,7 +118,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
       if (link.href.indexOf("#") !== -1) {
         const anchor = link.href.split("#")[1];
         const heading = window.document.querySelector(
-          `[data-anchor-id="${anchor}"]`,
+          `[data-anchor-id="${anchor}"]`
         );
         if (heading) {
           // Add the class
@@ -251,7 +251,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
   async function findAndActivateCategories() {
     // Categories search with listing only use path without query
     const currentPagePath = offsetAbsoluteUrl(
-      window.location.origin + window.location.pathname,
+      window.location.origin + window.location.pathname
     );
     const response = await fetch(offsetRelativeUrl("listings.json"));
     if (response.status == 200) {
@@ -281,7 +281,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
         // Look up the tree for a nearby linting and use that if we find one
         const nearestListing = findNearestParentListing(
           offsetAbsoluteUrl(window.location.pathname),
-          listingHrefs,
+          listingHrefs
         );
         if (nearestListing) {
           activateCategories(nearestListing);
@@ -366,12 +366,12 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
 
             const toggleTitle = window.document.createElement("div");
             const titleEl = window.document.body.querySelector(
-              placeholderDescriptor.titleSelector,
+              placeholderDescriptor.titleSelector
             );
             if (titleEl) {
               toggleTitle.append(
                 titleEl.textContent || titleEl.innerText,
-                toggleIcon,
+                toggleIcon
               );
             }
             toggleTitle.classList.add("zindex-over-content");
@@ -430,7 +430,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
               "scroll",
               throttle(() => {
                 closeToggle();
-              }, 50),
+              }, 50)
             );
 
             // Handle positioning of the toggle
@@ -439,7 +439,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
               throttle(() => {
                 elRect = undefined;
                 positionToggle();
-              }, 50),
+              }, 50)
             );
 
             window.addEventListener("quarto-hrChanged", () => {
@@ -468,7 +468,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
           }
 
           const placeholderEl = window.document.getElementById(
-            placeholderDescriptor.id,
+            placeholderDescriptor.id
           );
           if (placeholderEl) {
             placeholderEl.remove();
@@ -511,7 +511,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
     const id = tabEl.getAttribute("data-bs-target");
     if (id) {
       const columnEl = document.querySelector(
-        `${id} .column-margin, .tabset-margin-content`,
+        `${id} .column-margin, .tabset-margin-content`
       );
       if (columnEl)
         tabEl.addEventListener("shown.bs.tab", function (event) {
@@ -534,7 +534,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
                 prevSib.classList.contains("tabset-margin-container")
               ) {
                 const childNodes = prevSib.querySelectorAll(
-                  ".tabset-margin-content",
+                  ".tabset-margin-content"
                 );
                 for (const childEl of childNodes) {
                   if (childEl.classList.contains(visibleCls)) {
@@ -574,7 +574,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
 
   // Find the first element that uses formatting in special columns
   const conflictingEls = window.document.body.querySelectorAll(
-    '[class^="column-"], [class*=" column-"], aside, [class*="margin-caption"], [class*=" margin-caption"], [class*="margin-ref"], [class*=" margin-ref"]',
+    '[class^="column-"], [class*=" column-"], aside, [class*="margin-caption"], [class*=" margin-caption"], [class*="margin-ref"], [class*=" margin-ref"]'
   );
 
   // Filter all the possibly conflicting elements into ones
@@ -653,7 +653,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
         }
         hasObserved = true;
       },
-      {},
+      {}
     );
     els.forEach((el) => {
       intersectionObserver.observe(el);
@@ -674,7 +674,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
     sidebarScrollVisiblity(toRegions(leftElementObserver.getVisibleEntries()));
     if (tocLeftScrollVisibility) {
       tocLeftScrollVisibility(
-        toRegions(leftElementObserver.getVisibleEntries()),
+        toRegions(leftElementObserver.getVisibleEntries())
       );
     }
   };
@@ -807,7 +807,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
       if (!isReaderMode()) {
         hideOverlappedSidebars();
       }
-    }, 5),
+    }, 5)
   );
   window.addEventListener(
     "resize",
@@ -819,7 +819,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
       if (!isReaderMode()) {
         hideOverlappedSidebars();
       }
-    }, 10),
+    }, 10)
   );
   hideOverlappedSidebars();
   highlightReaderToggle(isReaderMode());

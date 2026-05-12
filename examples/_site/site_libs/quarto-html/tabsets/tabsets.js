@@ -16,7 +16,7 @@ export function init() {
     function setTabSettings(data) {
       localStorage.setItem(
         "quarto-persistent-tabsets-data",
-        JSON.stringify(data),
+        JSON.stringify(data)
       );
     }
 
@@ -50,7 +50,7 @@ export function init() {
     function findSelectorsToSyncByLanguage() {
       const result = {};
       const tabs = Array.from(
-        document.querySelectorAll(`div[data-group] a[id^='tabset-']`),
+        document.querySelectorAll(`div[data-group] a[id^='tabset-']`)
       );
       for (const item of tabs) {
         const div = item.parentElement.parentElement.parentElement;

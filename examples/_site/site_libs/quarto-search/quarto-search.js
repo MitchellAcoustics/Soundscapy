@@ -31,7 +31,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
   let quartoSearchOptions = {};
   let language = {};
   const searchOptionEl = window.document.getElementById(
-    "quarto-search-options",
+    "quarto-search-options"
   );
   if (searchOptionEl) {
     const jsonStr = searchOptionEl.textContent;
@@ -61,22 +61,18 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
     // tabsets.js registers its pageshow handler during module execution (before
     // DOMContentLoaded). By registering ours during DOMContentLoaded, listener
     // ordering guarantees we run after tabsets.js — so search activation wins.
-    window.addEventListener(
-      "pageshow",
-      function (event) {
-        if (!event.persisted) {
-          for (const mark of mainEl.querySelectorAll("mark")) {
-            openAllTabsetsContainingEl(mark);
-          }
-          // Only scroll to first match when there's no hash fragment.
-          // With a hash, the browser already scrolled to the target section.
-          if (!currentUrl.hash) {
-            requestAnimationFrame(() => scrollToFirstVisibleMatch(mainEl));
-          }
+    window.addEventListener("pageshow", function (event) {
+      if (!event.persisted) {
+        for (const mark of mainEl.querySelectorAll("mark")) {
+          openAllTabsetsContainingEl(mark);
         }
-      },
-      { once: true },
-    );
+        // Only scroll to first match when there's no hash fragment.
+        // With a hash, the browser already scrolled to the target section.
+        if (!currentUrl.hash) {
+          requestAnimationFrame(() => scrollToFirstVisibleMatch(mainEl));
+        }
+      }
+    }, { once: true });
   }
 
   // function to clear highlighting on the page when the search query changes
@@ -322,11 +318,10 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
               return createElement(
                 "div",
                 {
-                  class: `quarto-search-no-results${
-                    hasQuery ? "" : " no-query"
-                  }`,
+                  class: `quarto-search-no-results${hasQuery ? "" : " no-query"
+                    }`,
                 },
-                language["search-no-results-text"],
+                language["search-no-results-text"]
               );
             },
             header({ items, createElement }) {
@@ -339,13 +334,13 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
                 return createElement(
                   "div",
                   { class: "search-result-header" },
-                  `${count} ${language["search-matching-documents-text"]}`,
+                  `${count} ${language["search-matching-documents-text"]}`
                 );
               } else {
                 return createElement(
                   "div",
                   { class: "search-result-header-no-results" },
-                  ``,
+                  ``
                 );
               }
             },
@@ -357,24 +352,23 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
                 const libDir = quartoSearchOptions.algolia["libDir"];
                 const logo = createElement("img", {
                   src: offsetURL(
-                    `${libDir}/quarto-search/search-by-algolia.svg`,
+                    `${libDir}/quarto-search/search-by-algolia.svg`
                   ),
                   class: "algolia-search-logo",
                 });
                 return createElement(
                   "a",
                   { href: "http://www.algolia.com/" },
-                  logo,
+                  logo
                 );
               }
             },
 
             item({ item, createElement }) {
-              if (item.text && item.href && !item.href.includes("?q=")) {
-                const [main, hash] = item.href.split("#");
-                const hashAppend = hash ? "#" + hash : "";
-                item.href =
-                  main + "?q=" + encodeURIComponent(state.query) + hashAppend;
+              if (item.text && item.href && !item.href.includes('?q=')) {
+                const [main, hash] = item.href.split('#')
+                const hashAppend = hash ? '#' + hash : ''
+                item.href = main + '?q=' + encodeURIComponent(state.query) + hashAppend
               }
 
               return renderItem(
@@ -384,7 +378,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
                 setActiveItemId,
                 setContext,
                 refresh,
-                quartoSearchOptions,
+                quartoSearchOptions
               );
             },
           },
@@ -429,7 +423,7 @@ window.document.addEventListener("DOMContentLoaded", function (_event) {
   // to a non-existent label
   if (quartoSearchOptions.type === "overlay") {
     const inputEl = window.document.querySelector(
-      "#quarto-search .aa-Autocomplete",
+      "#quarto-search .aa-Autocomplete"
     );
     if (inputEl) {
       inputEl.removeAttribute("aria-labelledby");
@@ -488,15 +482,12 @@ function configurePlugins(quartoSearchOptions) {
         window["@algolia/autocomplete-plugin-algolia-insights"]
       ) {
         // Check if cookie consent is enabled from search options
-        const cookieConsentEnabled =
-          algoliaOptions["cookie-consent-enabled"] || false;
+        const cookieConsentEnabled = algoliaOptions["cookie-consent-enabled"] || false;
 
         // Generate random session token only when cookies are disabled
-        const userToken = cookieConsentEnabled
-          ? undefined
-          : Array.from(Array(20), () =>
-              Math.floor(Math.random() * 36).toString(36),
-            ).join("");
+        const userToken = cookieConsentEnabled ? undefined : Array.from(Array(20), () =>
+          Math.floor(Math.random() * 36).toString(36)
+        ).join("");
 
         window.aa("init", {
           appId,
@@ -642,12 +633,12 @@ function showCopyLink(query, options) {
   lastQuery = query;
   // Insert share icon
   const inputSuffixEl = window.document.body.querySelector(
-    ".aa-Form .aa-InputWrapperSuffix",
+    ".aa-Form .aa-InputWrapperSuffix"
   );
 
   if (inputSuffixEl) {
     let copyButtonEl = window.document.body.querySelector(
-      ".aa-Form .aa-InputWrapperSuffix .aa-CopyButton",
+      ".aa-Form .aa-InputWrapperSuffix .aa-CopyButton"
     );
 
     if (copyButtonEl === null) {
@@ -725,7 +716,7 @@ async function readSearchData() {
   if (fuseIndex === undefined) {
     if (window.location.protocol === "file:" && !shownWarning) {
       window.alert(
-        "Search requires JavaScript features disabled when running in file://... URLs. In order to use search, please run this document in a web server.",
+        "Search requires JavaScript features disabled when running in file://... URLs. In order to use search, please run this document in a web server."
       );
       shownWarning = true;
       return;
@@ -745,8 +736,8 @@ async function readSearchData() {
     } else {
       return Promise.reject(
         new Error(
-          "Unexpected status from search index request: " + response.status,
-        ),
+          "Unexpected status from search index request: " + response.status
+        )
       );
     }
   }
@@ -780,7 +771,7 @@ function renderItem(
   setActiveItemId,
   setContext,
   refresh,
-  quartoSearchOptions,
+  quartoSearchOptions
 ) {
   switch (item.type) {
     case kItemTypeDoc:
@@ -792,7 +783,7 @@ function renderItem(
         item.text,
         item.href,
         item.crumbs,
-        quartoSearchOptions,
+        quartoSearchOptions
       );
     case kItemTypeMore:
       return createMoreCard(
@@ -801,14 +792,14 @@ function renderItem(
         state,
         setActiveItemId,
         setContext,
-        refresh,
+        refresh
       );
     case kItemTypeItem:
       return createSectionCard(
         createElement,
         item.section,
         item.text,
-        item.href,
+        item.href
       );
     case kItemTypeError:
       return createErrorCard(createElement, item.title, item.text);
@@ -825,7 +816,7 @@ function createDocumentCard(
   text,
   href,
   crumbs,
-  quartoSearchOptions,
+  quartoSearchOptions
 ) {
   const iconEl = createElement("i", {
     class: `bi bi-${icon} search-result-icon`,
@@ -848,7 +839,7 @@ function createDocumentCard(
     const crumbEl = createElement(
       "p",
       { class: crumbClz.join(" ") },
-      crumbsOut,
+      crumbsOut
     );
     titleContents.push(crumbEl);
   }
@@ -856,7 +847,7 @@ function createDocumentCard(
   const titleContainerEl = createElement(
     "div",
     { class: "search-result-title-container" },
-    titleContents,
+    titleContents
   );
 
   const textEls = [];
@@ -864,7 +855,7 @@ function createDocumentCard(
     const sectionEl = createElement(
       "p",
       { class: "search-result-section" },
-      section,
+      section
     );
     textEls.push(sectionEl);
   }
@@ -879,7 +870,7 @@ function createDocumentCard(
   const textContainerEl = createElement(
     "div",
     { class: "search-result-text-container" },
-    textEls,
+    textEls
   );
 
   const containerEl = createElement(
@@ -887,7 +878,7 @@ function createDocumentCard(
     {
       class: "search-result-container",
     },
-    [titleContainerEl, textContainerEl],
+    [titleContainerEl, textContainerEl]
   );
 
   const linkEl = createElement(
@@ -896,7 +887,7 @@ function createDocumentCard(
       href: offsetURL(href),
       class: "search-result-link",
     },
-    containerEl,
+    containerEl
   );
 
   const classes = ["search-result-doc", "search-item"];
@@ -909,7 +900,7 @@ function createDocumentCard(
     {
       class: classes.join(" "),
     },
-    linkEl,
+    linkEl
   );
 }
 
@@ -919,7 +910,7 @@ function createMoreCard(
   state,
   setActiveItemId,
   setContext,
-  refresh,
+  refresh
 ) {
   const moreCardEl = createElement(
     "div",
@@ -932,7 +923,7 @@ function createMoreCard(
         e.stopPropagation();
       },
     },
-    item.title,
+    item.title
   );
 
   return moreCardEl;
@@ -959,7 +950,7 @@ function createSectionCard(createElement, section, text, href) {
     {
       class: "search-result-doc-section search-item",
     },
-    sectionEl,
+    sectionEl
   );
 }
 
@@ -978,7 +969,7 @@ function createSection(createElement, title, text, href) {
       href: offsetURL(href),
       class: "search-result-link",
     },
-    [titleEl, descEl],
+    [titleEl, descEl]
   );
   return linkEl;
 }
@@ -1006,10 +997,10 @@ function createErrorCard(createElement, title, text) {
 
 function positionPanel(pos) {
   const panelEl = window.document.querySelector(
-    "#quarto-search-results .aa-Panel",
+    "#quarto-search-results .aa-Panel"
   );
   const inputEl = window.document.querySelector(
-    "#quarto-search .aa-Autocomplete",
+    "#quarto-search .aa-Autocomplete"
   );
 
   if (panelEl && inputEl) {
@@ -1041,7 +1032,7 @@ function highlightMatch(query, text) {
       const startInfo = clipStart(text, start);
       const endInfo = clipEnd(
         text,
-        startInfo.position + startMark.length + endMark.length,
+        startInfo.position + startMark.length + endMark.length
       );
       text =
         startInfo.prefix +
@@ -1144,11 +1135,11 @@ function getLeafNodes(root) {
   return leaves;
 }
 /** create and return `<mark>${txt}</mark>` */
-const markEl = (txt) => {
+const markEl = txt => {
   const el = document.createElement("mark");
   el.appendChild(document.createTextNode(txt));
-  return el;
-};
+  return el
+}
 /** get all ancestors of an element matching the given css selector */
 const matchAncestors = (el, selector) => {
   let ancestors = [];
@@ -1159,82 +1150,81 @@ const matchAncestors = (el, selector) => {
   return ancestors;
 };
 
-const isWhitespace = (s) => s.trim().length === 0;
+const isWhitespace = s => s.trim().length === 0
 // =================
 // MATCHING CODE
 // =================
 const initMatch = () => ({
   i: 0,
-  lohisByNode: new Map(),
-});
-/**
+  lohisByNode: new Map()
+})
+/** 
  * keeps track of the start (lo) and end (hi) index of the match per node (leaf)
  * note: mutates the contents of `matchContext`
  */
 const advanceMatch = (leaf, leafi, matchContext) => {
-  matchContext.i++;
+  matchContext.i++
 
-  const curLoHi = matchContext.lohisByNode.get(leaf);
+  const curLoHi = matchContext.lohisByNode.get(leaf)
 
-  matchContext.lohisByNode.set(leaf, { lo: curLoHi?.lo ?? leafi, hi: leafi });
-};
+  matchContext.lohisByNode.set(leaf, { lo: curLoHi?.lo ?? leafi, hi: leafi })
+}
 /**
- * Finds all non-overlapping matches for a search string in the document.
+ * Finds all non-overlapping matches for a search string in the document. 
  * The search string may be split between multiple consecutive leaf nodes.
- *
+ * 
  * Whitespace in the search string must be present in the document to match, but
  * there may be addititional whitespace in the document that is ignored.
- *
+ * 
  * e.g. searching for `dogs rock` would match `dogs  \n <span> rock</span>`,
- * and would contribute the match
+ * and would contribute the match 
  * `{ i:9, els: new Map([[textNode, {lo:0, hi:8}],[spanNode,{lo:0,hi:5}]]) }`
- *
+ * 
  * @returns {Map<HTMLElement,{lo:number,hi:number}>[]}
  */
 function searchMatches(inSearch, el) {
   // searchText has all sequences of whitespace replaced by a single space
-  const searchText = inSearch.toLowerCase().replace(/\s+/g, " ");
-  const leafNodes = getLeafNodes(el);
+  const searchText = inSearch.toLowerCase().replace(/\s+/g, ' ')
+  const leafNodes = getLeafNodes(el)
 
   /** @type {Map<HTMLElement,{lo:number,hi:number}>[]} */
-  const matches = [];
+  const matches = []
   /** @type {{i:number; els:Map<HTMLElement,{lo:number,hi:number}>}[]} */
-  let curMatchContext = initMatch();
+  let curMatchContext = initMatch()
 
   for (const leaf of leafNodes) {
-    const leafStr = leaf.textContent.toLowerCase();
+    const leafStr = leaf.textContent.toLowerCase()
     // for each character in this leaf's text:
     for (let leafi = 0; leafi < leafStr.length; leafi++) {
+
       if (isWhitespace(leafStr[leafi])) {
         // if there is at least one whitespace in the document
         // we advance over a search text whitespace.
-        if (isWhitespace(searchText[curMatchContext.i]))
-          advanceMatch(leaf, leafi, curMatchContext);
+        if (isWhitespace(searchText[curMatchContext.i])) advanceMatch(leaf, leafi, curMatchContext)
         // all sequences of whitespace are otherwise ignored.
       } else {
         if (searchText[curMatchContext.i] === leafStr[leafi]) {
-          advanceMatch(leaf, leafi, curMatchContext);
+          advanceMatch(leaf, leafi, curMatchContext)
         } else {
-          curMatchContext = initMatch();
+          curMatchContext = initMatch()
           // if current character in the document did not match at i in the search text,
           // reset the search and see if that character matches at 0 in the search text.
-          if (searchText[curMatchContext.i] === leafStr[leafi])
-            advanceMatch(leaf, leafi, curMatchContext);
+          if (searchText[curMatchContext.i] === leafStr[leafi]) advanceMatch(leaf, leafi, curMatchContext)
         }
       }
 
-      const isMatchComplete = curMatchContext.i === searchText.length;
+      const isMatchComplete = curMatchContext.i === searchText.length
       if (isMatchComplete) {
-        matches.push(curMatchContext.lohisByNode);
-        curMatchContext = initMatch();
+        matches.push(curMatchContext.lohisByNode)
+        curMatchContext = initMatch()
       }
     }
   }
 
-  return matches;
+  return matches
 }
 
-/**
+/** 
  * e.g. `markMatches(myTextNode, [[0,5],[12,15]])` would wrap the
  * character sequences in myTextNode from 0-5 and 12-15 in marks.
  * Its important to mark all sequences in a text node at once
@@ -1242,34 +1232,36 @@ function searchMatches(inSearch, el) {
  * other references to that text node will no longer be in the DOM.
  */
 function markMatches(node, lohis) {
-  const text = node.nodeValue;
+  const text = node.nodeValue
 
   const markFragment = document.createDocumentFragment();
 
-  let prevHi = 0;
+  let prevHi = 0
   for (const [lo, hi] of lohis) {
     markFragment.append(
       document.createTextNode(text.slice(prevHi, lo)),
-      markEl(text.slice(lo, hi + 1)),
-    );
-    prevHi = hi + 1;
+      markEl(text.slice(lo, hi + 1))
+    )
+    prevHi = hi + 1
   }
-  markFragment.append(document.createTextNode(text.slice(prevHi, text.length)));
+  markFragment.append(
+    document.createTextNode(text.slice(prevHi, text.length))
+  )
 
-  const parent = node.parentElement;
-  parent?.replaceChild(markFragment, node);
-  return parent;
+  const parent = node.parentElement
+  parent?.replaceChild(markFragment, node)
+  return parent
 }
 
 // Activate ancestor tabs so a search match inside an inactive pane becomes visible.
 // When multiple panes in the same tabset contain matches, avoid switching away from
 // the currently active pane — the user already sees a match there.
 function openAllTabsetsContainingEl(el) {
-  for (const pane of matchAncestors(el, ".tab-pane")) {
-    const tabContent = pane.closest(".tab-content");
+  for (const pane of matchAncestors(el, '.tab-pane')) {
+    const tabContent = pane.closest('.tab-content');
     if (!tabContent) continue;
-    const activePane = tabContent.querySelector(":scope > .tab-pane.active");
-    if (activePane?.querySelector("mark")) continue;
+    const activePane = tabContent.querySelector(':scope > .tab-pane.active');
+    if (activePane?.querySelector('mark')) continue;
     const tabButton = document.querySelector(`[data-bs-target="#${pane.id}"]`);
     if (tabButton) new bootstrap.Tab(tabButton).show();
   }
@@ -1277,9 +1269,9 @@ function openAllTabsetsContainingEl(el) {
 
 function scrollToFirstVisibleMatch(mainEl) {
   for (const mark of mainEl.querySelectorAll("mark")) {
-    const isMarkVisible = matchAncestors(mark, ".tab-pane").every(
-      (markTabPane) => markTabPane.classList.contains("active"),
-    );
+    const isMarkVisible = matchAncestors(mark, '.tab-pane').every(markTabPane =>
+      markTabPane.classList.contains("active")
+    )
     if (isMarkVisible) {
       mark.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -1294,33 +1286,33 @@ function scrollToFirstVisibleMatch(mainEl) {
  *
  * arrayMapPush(m, 'dog', 'Max')
  * console.log(m) // Map { dog->['Max'] }
- *
+ * 
  * arrayMapPush(m, 'dog', 'Samba')
  * arrayMapPush(m, 'cat', 'Scruffle')
  * console.log(m) // Map { dog->['Max', 'Samba'], cat->['Scruffle'] }
  * ```
  */
 const arrayMapPush = (map, key, item) => {
-  if (!map.has(key)) map.set(key, []);
-  map.set(key, [...map.get(key), item]);
-};
+  if (!map.has(key)) map.set(key, [])
+  map.set(key, [...map.get(key), item])
+}
 
 // copy&paste any string from a quarto page and
 // this should find that string in the page and highlight it.
 // exception: text that starts outside/inside a tabset and ends
-// inside/outside that tabset.
+// inside/outside that tabset. 
 function highlight(searchStr, el) {
   const matches = searchMatches(searchStr, el);
 
-  const matchesGroupedByNode = new Map();
+  const matchesGroupedByNode = new Map()
   for (const match of matches) {
     for (const [mel, { lo, hi }] of match) {
-      arrayMapPush(matchesGroupedByNode, mel, [lo, hi]);
+      arrayMapPush(matchesGroupedByNode, mel, [lo, hi])
     }
   }
 
   for (const [node, lohis] of matchesGroupedByNode) {
-    markMatches(node, lohis);
+    markMatches(node, lohis)
   }
 }
 
@@ -1391,7 +1383,7 @@ function algoliaSearch(query, limit, algoliaOptions) {
                   newItem[keyName] = item[mappedName];
                   delete newItem[mappedName];
                 }
-              },
+              }
             );
             newItem.text = highlightMatch(query, newItem.text);
             return newItem;

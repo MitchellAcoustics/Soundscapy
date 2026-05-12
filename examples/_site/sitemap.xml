@@ -1,67 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/0_QuickStart_for_Beginners.html</loc>
-    <lastmod>2026-05-11T23:54:28.034Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/2_Working_with_Soundscape_Survey_Data.html</loc>
-    <lastmod>2026-05-11T22:57:14.537Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/5_Working_with_Soundscape_Databases.html</loc>
-    <lastmod>2026-05-11T22:57:14.515Z</lastmod>
+    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/index.html</loc>
+    <lastmod>2026-05-11T22:47:06.951Z</lastmod>
   </url>
   <url>
     <loc>https://drandrewmitchell.com/Soundscapy/tutorials/about.html</loc>
     <lastmod>2026-05-11T22:38:27.535Z</lastmod>
   </url>
   <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/BinauralAnalysis.html</loc>
-    <lastmod>2026-05-11T22:57:14.515Z</lastmod>
+    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/0_QuickStart_for_Beginners.html</loc>
+    <lastmod>2026-05-12T00:24:29.308Z</lastmod>
   </url>
   <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/6_Soundscape_Assessment_Tutorial.html</loc>
-    <lastmod>2026-05-11T22:57:14.537Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/archive/SoundscapePerceptionIndex-SPI.html</loc>
-    <lastmod>2026-05-11T22:35:27.605Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/IoA_Soundscape_Assessment_Tutorial_v2.html</loc>
+    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/QuickStart.html</loc>
     <lastmod>2026-05-11T22:57:14.537Z</lastmod>
   </url>
   <url>
     <loc>https://drandrewmitchell.com/Soundscapy/tutorials/background.html</loc>
     <lastmod>2026-05-11T22:49:46.119Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/1_Understanding_Soundscape_Analysis.html</loc>
-    <lastmod>2026-05-12T00:04:25.414Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/archive/IoA_Soundscape_Assessment_Tutorial.html</loc>
-    <lastmod>2026-05-11T22:35:27.604Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/HowToAnalyseAndRepresentSoundscapes.html</loc>
-    <lastmod>2026-05-11T22:57:14.537Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/index.html</loc>
-    <lastmod>2026-05-11T22:47:06.951Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/4_Understanding_Soundscape_Perception_Index.html</loc>
-    <lastmod>2026-05-11T22:57:14.515Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/3_Advanced_Visualization_Techniques.html</loc>
-    <lastmod>2026-05-11T22:57:14.515Z</lastmod>
-  </url>
-  <url>
-    <loc>https://drandrewmitchell.com/Soundscapy/tutorials/QuickStart.html</loc>
-    <lastmod>2026-05-11T22:57:14.537Z</lastmod>
   </url>
 </urlset>
