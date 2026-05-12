@@ -57,7 +57,7 @@ The first step in any soundscape assessment is to load and explore your data. Fo
 
 ```{python}
 # Load the demo data
-data = pd.read_excel("/content/DemoData.xlsx")
+data = pd.read_excel("data/DemoData.xlsx")
 
 # Display the first few rows
 data.head()

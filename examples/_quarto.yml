@@ -11,6 +11,7 @@ project:
     - 4_Understanding_Soundscape_Perception_Index.qmd
     - 5_Working_with_Soundscape_Databases.qmd
     - 6_Soundscape_Assessment_Tutorial.qmd
+    - IoA_Soundscape_Assessment_Tutorial_v2.qmd
 
 website:
   title: "Soundscapy User Guide"
@@ -44,6 +45,7 @@ website:
         - 4_Understanding_Soundscape_Perception_Index.qmd
         - 5_Working_with_Soundscape_Databases.qmd
         - 6_Soundscape_Assessment_Tutorial.qmd
+        - IoA_Soundscape_Assessment_Tutorial_v2.qmd
         # - BinauralAnalysis.qmd
 
 format:
@@ -69,21 +71,10 @@ format:
 colab:
   gh-user: "MitchellAcoustics"
   gh-repo: "Soundscapy"
-  gh-branch: "main"
+  gh-branch: "main/examples/_site"
   html-link: true
 filters:
   - colab
-
-setup-cells:
-  python:
-    language: "python" # Language assumed for the setup cell
-    code: |
-      # Setup for Colab
-      # Run this cell once to install the required packages
-      # Then restart your session, and you can skip running this cell again
-      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}""
-      !pip install "soundscapy[r]>=0.8.4"
-      %load_ext rpy2.ipython
 
 render:
   freeze: true

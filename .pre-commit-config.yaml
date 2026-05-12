@@ -4,7 +4,8 @@ exclude: |
     environment\.yml|
     examples/\.quarto/.*|
     examples/_quarto_reqs/.*|
-    examples/_site/.*\.ipynb
+    examples/_site/.*|
+    site/.*
   )$
 
 repos:
