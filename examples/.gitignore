@@ -8,3 +8,5 @@ _site/*
 /.quarto/project-cache/
 /.quarto/xref/
 # _freeze/ is intentionally tracked so CI can render with --no-execute
+
+/.quarto/
