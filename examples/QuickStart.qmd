@@ -21,7 +21,6 @@ setup-cells:
       %load_ext rpy2.ipython
 ---
 
-
 By Andrew Mitchell, Lecturer, University College London
 
 ## Background

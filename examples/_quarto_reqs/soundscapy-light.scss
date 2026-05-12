@@ -1,0 +1,15 @@
+/*-- scss:defaults --*/
+// Primary, background, foreground, and monospace font are set by _brand.yml.
+// Light mode needs no additional SCSS variable overrides beyond what flatly provides.
+
+/*-- scss:rules --*/
+
+// Match zensical's wider layout max-width
+.page-columns {
+  max-width: 1440px;
+}
+
+// Enable Fira Code contextual ligatures
+pre, code, kbd, samp {
+  font-variant-ligatures: contextual;
+}

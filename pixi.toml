@@ -141,28 +141,28 @@ description = "Publish the package to all channels"
 depends-on  = ["update-environment", "publish-conda", "publish-pypi"]
 
 # Documentation Tasks
+
 [feature.docs.tasks.examples-execute]
-description = "Execute tutorial notebooks and cache outputs"
+description = "Re-execute all tutorial notebooks and update freeze cache (dev only — commit examples/.quarto/_freeze/ afterwards)"
 cwd         = "examples"
 cmd         = "quarto render --execute"
 
-[feature.docs.tasks.examples-render]
-description = "Render tutorial quarto pages"
-cwd         = "examples"
-cmd         = "quarto render --no-execute"
-
-[feature.docs.tasks.docs-render]
-description = "Render tutorial markdown pages"
-cmd         = "rm -rf docs/tutorials/rendered && quarto render examples/*.ipynb --to md --output-dir ../docs/tutorials/rendered"
-
-[feature.docs.tasks.docs-build]
-description = "Render and build docs"
-depends-on  = ["docs-render"]
+[feature.docs.tasks.zensical-build]
+description = "Build main zensical docs site"
 cmd         = "zensical build"
 
+[feature.docs.tasks.examples-render]
+description = "Render tutorials using freeze cache, CI-safe (runs after zensical so quarto writes to site/tutorials/)"
+cwd         = "examples"
+cmd         = "quarto render --no-execute"
+depends-on  = ["zensical-build"]
+
+[feature.docs.tasks.docs-build]
+description = "Build complete docs site: zensical main docs then quarto tutorials into site/"
+depends-on  = ["examples-render"]
+
 [feature.docs.tasks.docs-serve]
-description         = "Serve docs locally"
-depends-on          = ["docs-render"]
+description         = "Serve main docs locally (for tutorial preview run: cd examples && quarto preview)"
 cmd                 = "zensical serve"
 default-environment = "docs"
 

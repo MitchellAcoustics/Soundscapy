@@ -2,7 +2,8 @@
 exclude: |
   (?x)^(
     environment\.yml|
-    examples/\.quarto/.*
+    examples/\.quarto/.*|
+    examples/_quarto_reqs/.*
   )$
 
 repos:

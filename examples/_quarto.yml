@@ -1,5 +1,6 @@
 project:
   type: website
+  output-dir: ../site/tutorials
   render:
     - index.qmd
     - QuickStart.qmd
@@ -13,18 +14,18 @@ project:
     - 6_Soundscape_Assessment_Tutorial.qmd
 
 website:
-  title: "Soundscapy tutorials"
+  title: "Soundscapy User Guide"
   site-url: https://drandrewmitchell.com/Soundscapy/tutorials
   repo-url: https://github.com/MitchellAcoustics/Soundscapy
   repo-subdir: examples
-  description: "Tutorials for soundscape analysis with Soundscapy"
+  description: "Tutorials and how-to guides for soundscape analysis with Soundscapy"
   navbar:
     left:
+      - text: "API Docs"
+        href: https://drandrewmitchell.com/Soundscapy/
       - href: index.qmd
         text: Home
-      # - sidebar:user-guide
       - sidebar:tutorials
-      # - Examples Gallery
     tools:
       - icon: github
         menu:
@@ -49,8 +50,8 @@ website:
 format:
   html:
     theme:
-      light: flatly
-      dark: superhero
+      light: [flatly, _quarto_reqs/soundscapy-light.scss]
+      dark: [superhero, _quarto_reqs/soundscapy-dark.scss]
     css: _quarto_reqs/styles.css
     toc: true
     toc-depth: 4
