@@ -1,6 +1,5 @@
 project:
   type: website
-  output-dir: ../site/tutorials
   render:
     - index.qmd
     - QuickStart.qmd
@@ -50,8 +49,12 @@ website:
 format:
   html:
     theme:
-      light: [flatly, _quarto_reqs/soundscapy-light.scss]
-      dark: [superhero, _quarto_reqs/soundscapy-dark.scss]
+      light:
+        - flatly
+        - brand
+      dark:
+        - superhero
+        - brand
     css: _quarto_reqs/styles.css
     toc: true
     toc-depth: 4
@@ -67,6 +70,7 @@ colab:
   gh-user: "MitchellAcoustics"
   gh-repo: "Soundscapy"
   gh-branch: "quarto-binder-setup/examples/_site"
+  html-link: true
 filters:
   - colab
 

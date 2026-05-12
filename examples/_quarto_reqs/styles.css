@@ -1,1 +1,21 @@
-/* Additional CSS overrides beyond what _brand.yml and the SCSS theme files provide. */
+/* Non-brand layout and typography rules.
+   Brand colours, fonts, and logo are all defined in _brand.yml. */
+
+/* Match zensical's wider content area */
+.page-columns {
+  max-width: 1440px;
+}
+
+/* Fira Code contextual ligatures */
+pre,
+code,
+kbd,
+samp {
+  font-variant-ligatures: contextual;
+}
+
+/* Dark mode: deepen navbar/sidebar to match brand navy palette */
+[data-bs-theme="dark"] .navbar,
+[data-bs-theme="dark"] .sidebar-navigation {
+  background-color: #071629;
+}

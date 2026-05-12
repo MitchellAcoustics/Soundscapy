@@ -147,19 +147,19 @@ description = "Re-execute all tutorial notebooks and update freeze cache (dev on
 cwd         = "examples"
 cmd         = "quarto render --execute"
 
-[feature.docs.tasks.zensical-build]
-description = "Build main zensical docs site"
-cmd         = "zensical build"
-
 [feature.docs.tasks.examples-render]
-description = "Render tutorials using freeze cache, CI-safe (runs after zensical so quarto writes to site/tutorials/)"
+description = "Render tutorials using freeze cache, CI-safe (outputs to examples/_site/)"
 cwd         = "examples"
 cmd         = "quarto render --no-execute"
-depends-on  = ["zensical-build"]
+
+[feature.docs.tasks.zensical-build]
+description = "Build main zensical docs site (outputs to site/)"
+cmd         = "zensical build"
 
 [feature.docs.tasks.docs-build]
-description = "Build complete docs site: zensical main docs then quarto tutorials into site/"
-depends-on  = ["examples-render"]
+description = "Build complete docs site: zensical + quarto tutorials copied into site/tutorials/"
+depends-on  = ["zensical-build", "examples-render"]
+cmd         = "cp -r examples/_site site/tutorials"
 
 [feature.docs.tasks.docs-serve]
 description         = "Serve main docs locally (for tutorial preview run: cd examples && quarto preview)"
