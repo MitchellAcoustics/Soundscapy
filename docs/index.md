@@ -54,7 +54,7 @@ R -q -e "install.packages('sn')"
 
 New to soundscape analysis? Read [About Soundscape Analysis](background.md) for a concise overview of PAQ attributes, the ISO circumplex model, and what ISOPleasant/ISOEventful mean.
 
-Ready to write code? Go to the [Quick Start](tutorials/rendered/QuickStart.md).
+Ready to write code? Go to the [Quick Start](https://drandrewmitchell.com/Soundscapy/tutorials/QuickStart.html).
 
 ## Contributing
 

@@ -1,0 +1,35 @@
+meta:
+  name: Soundscapy
+  link: https://drandrewmitchell.com/Soundscapy/
+
+color:
+  palette:
+    sspy-teal: "#71e5e9" # brand accent (readable on dark)
+    sspy-teal-mid: "#0097a7" # darker teal (readable on white)
+    sspy-navy: "#010e20" # dark background (matches Material slate)
+    text-dark: "#2c3e50" # body text on light
+    text-light: "#e0e0e0" # body text on dark
+
+  primary:
+    light: sspy-teal-mid
+    dark: sspy-teal
+  background:
+    light: "#ffffff"
+    dark: sspy-navy
+  foreground:
+    light: text-dark
+    dark: text-light
+
+logo:
+  small:
+    light: ../docs/img/LightLogoSmall.png
+    dark: ../docs/img/DarkLogoSmall.png
+  medium:
+    light: ../docs/img/LightLogoSmall.png
+    dark: ../docs/img/DarkLogoSmall.png
+
+typography:
+  fonts:
+    - family: "Fira Code"
+      source: google
+  monospace: "Fira Code"
