@@ -438,7 +438,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="loading-and-validating-data" class="level3">
 <h3 class="anchored" data-anchor-id="loading-and-validating-data">Loading and Validating Data</h3>
 <p>Let’s start by importing Soundscapy and loading the International Soundscape Database (ISD):</p>
-<div id="3251d451" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2023-08-13T15:59:04.324365Z&quot;,&quot;iopub.status.busy&quot;:&quot;2023-08-13T15:59:04.324077Z&quot;,&quot;iopub.status.idle&quot;:&quot;2023-08-13T15:59:06.994240Z&quot;,&quot;shell.execute_reply&quot;:&quot;2023-08-13T15:59:06.993941Z&quot;}}" data-execution_count="1">
+<div id="733b1dc7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2023-08-13T15:59:04.324365Z&quot;,&quot;iopub.status.busy&quot;:&quot;2023-08-13T15:59:04.324077Z&quot;,&quot;iopub.status.idle&quot;:&quot;2023-08-13T15:59:06.994240Z&quot;,&quot;shell.execute_reply&quot;:&quot;2023-08-13T15:59:06.993941Z&quot;}}" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Soundscapy</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> soundscapy <span class="im">as</span> sspy</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy.databases <span class="im">import</span> isd</span>
@@ -459,7 +459,7 @@ Valid samples: 3589, Excluded samples: 56</code></pre>
 <section id="calculating-isopleasant-and-isoeventful-coordinates" class="level3">
 <h3 class="anchored" data-anchor-id="calculating-isopleasant-and-isoeventful-coordinates">Calculating ISOPleasant and ISOEventful Coordinates</h3>
 <p>Next, we’ll calculate the ISOCoordinate values:</p>
-<div id="98d2d84c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:36:31.934238Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:36:31.673459Z&quot;}}" data-execution_count="2">
+<div id="14a19fd2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:36:31.934238Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:36:31.673459Z&quot;}}" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sspy.surveys.add_iso_coords(data)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>data[[<span class="st">"ISOPleasant"</span>, <span class="st">"ISOEventful"</span>]].<span class="bu">round</span>(<span class="dv">2</span>).head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="2">
@@ -508,7 +508,7 @@ Valid samples: 3589, Excluded samples: 56</code></pre>
 </div>
 <p><code>Soundscapy</code> expects the PAQ values to be Likert scale values ranging from 1 to 5 by default, as specified in ISO 12913 and the SSID Protocol. However, it is possible to use data which, although structured the same way, has a different range of values. For instance this could be a 7-point Likert scale, or a 0 to 100 scale. By passing these numbers both to <code>validate_dataset()</code> and <code>add_paq_coords()</code> as the <code>val_range</code>, <code>Soundscapy</code> will check that the data conforms to what is expected and will automatically scale the ISOCoordinates from -1 to +1 depending on the original value range.</p>
 <p>For example:</p>
-<div id="56515527" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2023-08-13T15:59:07.229603Z&quot;,&quot;iopub.status.busy&quot;:&quot;2023-08-13T15:59:07.229511Z&quot;,&quot;iopub.status.idle&quot;:&quot;2023-08-13T15:59:07.243861Z&quot;,&quot;shell.execute_reply&quot;:&quot;2023-08-13T15:59:07.243597Z&quot;}}" data-execution_count="3">
+<div id="0e29fec4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2023-08-13T15:59:07.229603Z&quot;,&quot;iopub.status.busy&quot;:&quot;2023-08-13T15:59:07.229511Z&quot;,&quot;iopub.status.idle&quot;:&quot;2023-08-13T15:59:07.243861Z&quot;,&quot;shell.execute_reply&quot;:&quot;2023-08-13T15:59:07.243597Z&quot;}}" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>val_range <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">100</span>)</span>
@@ -587,7 +587,7 @@ Valid samples: 3589, Excluded samples: 56</code></pre>
 <section id="filtering-data" class="level3">
 <h3 class="anchored" data-anchor-id="filtering-data">Filtering Data</h3>
 <p><code>Soundscapy</code> includes methods for several filters that are normally needed within the ISD, such as filtering by <code>LocationID</code> or <code>SessionID</code>.</p>
-<div id="4143d24e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2023-08-13T15:59:07.264726Z&quot;,&quot;iopub.status.busy&quot;:&quot;2023-08-13T15:59:07.264642Z&quot;,&quot;iopub.status.idle&quot;:&quot;2023-08-13T15:59:07.285762Z&quot;,&quot;shell.execute_reply&quot;:&quot;2023-08-13T15:59:07.285519Z&quot;}}" data-execution_count="4">
+<div id="938a557c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2023-08-13T15:59:07.264726Z&quot;,&quot;iopub.status.busy&quot;:&quot;2023-08-13T15:59:07.264642Z&quot;,&quot;iopub.status.idle&quot;:&quot;2023-08-13T15:59:07.285762Z&quot;,&quot;shell.execute_reply&quot;:&quot;2023-08-13T15:59:07.285519Z&quot;}}" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by location</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>camden_data <span class="op">=</span> isd.select_location_ids(data, [<span class="st">"CamdenTown"</span>])</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Camden Town samples: </span><span class="sc">{</span>camden_data<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
@@ -606,7 +606,7 @@ Women over 50: 133</code></pre>
 </div>
 </div>
 <p>All of these filters can also be chained together. So, for instance, to return surveys from women over 50 taken in Camden Town, we would do:</p>
-<div id="ce5d7083" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2023-08-13T15:59:07.352987Z&quot;,&quot;iopub.status.busy&quot;:&quot;2023-08-13T15:59:07.352919Z&quot;,&quot;iopub.status.idle&quot;:&quot;2023-08-13T15:59:07.374112Z&quot;,&quot;shell.execute_reply&quot;:&quot;2023-08-13T15:59:07.373866Z&quot;}}" data-execution_count="5">
+<div id="4766e30d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2023-08-13T15:59:07.352987Z&quot;,&quot;iopub.status.busy&quot;:&quot;2023-08-13T15:59:07.352919Z&quot;,&quot;iopub.status.idle&quot;:&quot;2023-08-13T15:59:07.374112Z&quot;,&quot;shell.execute_reply&quot;:&quot;2023-08-13T15:59:07.373866Z&quot;}}" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>isd.select_location_ids(data, <span class="st">"CamdenTown"</span>).query(<span class="st">"gen00 == 'Female' and age00 &gt; 50"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <div>
@@ -822,7 +822,7 @@ Women over 50: 133</code></pre>
 <p>Soundscapy offers various plotting functions to visualize soundscape data. Let’s explore some of them:</p>
 <section id="scatter-plots" class="level3">
 <h3 class="anchored" data-anchor-id="scatter-plots">Scatter plots</h3>
-<div id="5a6cfda1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:36:34.500600Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:36:34.119344Z&quot;}}" data-execution_count="6">
+<div id="cacbabc8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:36:34.500600Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:36:34.119344Z&quot;}}" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy.plotting <span class="im">import</span> ISOPlot</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Basic scatter plot</span></span>
@@ -845,9 +845,9 @@ Women over 50: 133</code></pre>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    .style(diagonal_lines<span class="op">=</span><span class="va">True</span>, legend_loc<span class="op">=</span><span class="st">"lower left"</span>)</span>
 <span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/3448120047.py:5: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/3448120047.py:5: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(data=isd.select_location_ids(data, ["RussellSq"]), title="Russell Square")
-/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/3448120047.py:13: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/3448120047.py:13: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -866,7 +866,7 @@ Women over 50: 133</code></pre>
 </div>
 </div>
 <p>The <code>ISOPlot</code> class also allows us to make this set of plots in one go, as a single figure. To do this, we need to set up the subplots slightly differently, then pass the subplot data to each <code>.add_scatter()</code> call separately, rather than passing the whole dataframe to the <code>ISOPlot</code> object.</p>
-<div id="4be245d7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:36:56.455694Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:36:56.241799Z&quot;}}" data-execution_count="7">
+<div id="3aaa92bc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:36:56.455694Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:36:56.241799Z&quot;}}" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>p3 <span class="op">=</span> (</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    ISOPlot(title<span class="op">=</span><span class="va">None</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    .create_subplots(</span>
@@ -882,7 +882,7 @@ Women over 50: 133</code></pre>
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>p3.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/2487250941.py:2: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/2487250941.py:2: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(title=None)</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -896,7 +896,7 @@ Women over 50: 133</code></pre>
 </section>
 <section id="density-plots" class="level3">
 <h3 class="anchored" data-anchor-id="density-plots">Density plots</h3>
-<div id="4624f9a6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:03.456726Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:02.960742Z&quot;}}" data-execution_count="8">
+<div id="ced7bf5f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:03.456726Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:02.960742Z&quot;}}" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> (</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    ISOPlot(</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"CamdenTown"</span>]),</span>
@@ -921,9 +921,9 @@ Women over 50: 133</code></pre>
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    .style(title_fontsize<span class="op">=</span><span class="dv">14</span>)</span>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/599338729.py:2: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/599338729.py:2: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(
-/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/599338729.py:13: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/599338729.py:13: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -944,7 +944,7 @@ Women over 50: 133</code></pre>
 </section>
 <section id="jointplots" class="level3">
 <h3 class="anchored" data-anchor-id="jointplots">Jointplots</h3>
-<div id="16ddd11d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:08.107626Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:07.893574Z&quot;}}" data-execution_count="9">
+<div id="af3b120e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:08.107626Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:07.893574Z&quot;}}" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sspy.jointplot(</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>isd.select_location_ids(data, [<span class="st">"CamdenTown"</span>]),</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">"ISOEventful"</span>,</span>
@@ -965,7 +965,7 @@ Women over 50: 133</code></pre>
 <section id="creating-subplots" class="level3">
 <h3 class="anchored" data-anchor-id="creating-subplots">Creating subplots</h3>
 <p><code>Soundscapy</code> also provides a method for creating subplots of the circumplex. This is particularly useful when comparing multiple locations.</p>
-<div id="cfd88d0a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:11.215566Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:11.212314Z&quot;}}" data-execution_count="10">
+<div id="6d8d78e5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:11.215566Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:11.212314Z&quot;}}" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"LocationID"</span>].unique()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="10">
 <pre><code>array(['CarloV', 'SanMarco', 'PlazaBibRambla', 'CamdenTown', 'EustonTap',
@@ -978,7 +978,7 @@ Women over 50: 133</code></pre>
        'DadongSquare'], dtype=object)</code></pre>
 </div>
 </div>
-<div id="c275635e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:13.820399Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:13.354136Z&quot;}}" data-execution_count="11">
+<div id="7cd9fcc0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:13.820399Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:13.354136Z&quot;}}" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sub_data <span class="op">=</span> sspy.isd.select_location_ids(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    data, [<span class="st">"PancrasLock"</span>, <span class="st">"TorringtonSq"</span>, <span class="st">"RegentsParkFields"</span>, <span class="st">"RegentsParkJapan"</span>]</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -994,7 +994,7 @@ Women over 50: 133</code></pre>
 <span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    .style()</span>
 <span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/3697725512.py:6: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/3697725512.py:6: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(
 /Users/mitch/Documents/GitHub/Soundscapy/src/soundscapy/plotting/iso_plot.py:502: UserWarning: This is an experimental feature. The number of rows and columns may not be optimal.
   self._allocate_subplot_axes(subplot_titles)</code></pre>
@@ -1008,7 +1008,7 @@ Women over 50: 133</code></pre>
 </div>
 </div>
 <p>You can also do this manually if you need more control, by creating a figure and axes and then plotting the density plots on the axes.</p>
-<div id="782cd6a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:18.145217Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:17.493009Z&quot;}}" data-execution_count="12">
+<div id="2620c38d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:18.145217Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:17.493009Z&quot;}}" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sub_data2 <span class="op">=</span> sspy.isd.select_location_ids(</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    data, [<span class="st">"CarloV"</span>, <span class="st">"SanMarco"</span>, <span class="st">"PlazaBibRambla"</span>, <span class="st">"CamdenTown"</span>]</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -1032,7 +1032,7 @@ Women over 50: 133</code></pre>
 <span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>mp2.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/2299543610.py:6: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/2299543610.py:6: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(
 /Users/mitch/Documents/GitHub/Soundscapy/src/soundscapy/plotting/layers.py:218: UserWarning: Density plots are not recommended for small datasets (&lt;30 samples).
   self._valid_density_size(data)</code></pre>
@@ -1049,7 +1049,7 @@ Women over 50: 133</code></pre>
 <section id="using-adjusted-angles" class="level3">
 <h3 class="anchored" data-anchor-id="using-adjusted-angles">Using Adjusted Angles</h3>
 <p>In Aletta et. al.&nbsp;(2024), we propose a method for adjusting the angles of the circumplex to better represent the perceptual space. These adjusted angles are derived for each language separately, meaning that, once projected, the circumplex coordinates will be comparable across all languages. This ability and the derived angles have been incorporated into <code>Soundscapy</code>.</p>
-<div id="d6c4f7c0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:21.528919Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:21.058116Z&quot;}}" data-execution_count="13">
+<div id="07ef2ada" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:21.528919Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:21.058116Z&quot;}}" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy.surveys <span class="im">import</span> LANGUAGE_ANGLES</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>adj_data <span class="op">=</span> sspy.surveys.add_iso_coords(</span>
@@ -1074,7 +1074,7 @@ Women over 50: 133</code></pre>
 <span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>adj_p.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/936699763.py:11: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/936699763.py:11: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -1085,7 +1085,7 @@ Women over 50: 133</code></pre>
 </div>
 </div>
 </div>
-<div id="df02c9ff" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:28.076608Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:24.050488Z&quot;}}" data-execution_count="14">
+<div id="d51b60c3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:28.076608Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:24.050488Z&quot;}}" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_iso_coords(row):</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    angles <span class="op">=</span> LANGUAGE_ANGLES.get(row[<span class="st">"Language"</span>], <span class="va">None</span>)</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> angles:</span>
@@ -1100,7 +1100,7 @@ Women over 50: 133</code></pre>
 <span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> data.<span class="bu">apply</span>(apply_iso_coords, axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cd99ed2a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:32.006002Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:31.999285Z&quot;}}" data-execution_count="15">
+<div id="b12df0be" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:32.006002Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:31.999285Z&quot;}}" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>data[[<span class="st">"AdjPleasant"</span>, <span class="st">"AdjEventful"</span>]].describe()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="15">
 <div>
@@ -1161,7 +1161,7 @@ Women over 50: 133</code></pre>
 </div>
 </div>
 </div>
-<div id="48d9e64b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:37.770038Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:33.156187Z&quot;}}" data-execution_count="16">
+<div id="046f94bd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:37.770038Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:33.156187Z&quot;}}" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>mp3 <span class="op">=</span> (</span>
@@ -1183,7 +1183,7 @@ Women over 50: 133</code></pre>
 <span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/2782207669.py:4: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/2782207669.py:4: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(
 /Users/mitch/Documents/GitHub/Soundscapy/src/soundscapy/plotting/iso_plot.py:502: UserWarning: This is an experimental feature. The number of rows and columns may not be optimal.
   self._allocate_subplot_axes(subplot_titles)
@@ -1198,7 +1198,7 @@ Women over 50: 133</code></pre>
 </div>
 </div>
 </div>
-<div id="127c0dd3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:56.376366Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:42.472639Z&quot;}}" data-execution_count="17">
+<div id="28add50b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-05-14T23:37:56.376366Z&quot;,&quot;start_time&quot;:&quot;2025-05-14T23:37:42.472639Z&quot;}}" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1234,7 +1234,7 @@ Women over 50: 133</code></pre>
 <div class="cell-output cell-output-stderr">
 <pre><code>/Users/mitch/Documents/GitHub/Soundscapy/src/soundscapy/spi/msn.py:415: UserWarning: The SPI analysis module is experimental. Use with caution.
   instance = cls()
-/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_8158/1633614515.py:17: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_10306/1633614515.py:17: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(
 /Users/mitch/Documents/GitHub/Soundscapy/src/soundscapy/plotting/iso_plot.py:502: UserWarning: This is an experimental feature. The number of rows and columns may not be optimal.
   self._allocate_subplot_axes(subplot_titles)

@@ -442,7 +442,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>How to calculate and interpret the Soundscape Perception Index (SPI)</li>
 </ol>
 <p>Let’s get started!</p>
-<div id="bed0163b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T20:52:02.852953Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T20:52:00.515723Z&quot;}}}" data-execution_count="1">
+<div id="d36bcdd7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T20:52:02.852953Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T20:52:00.515723Z&quot;}}}" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import the necessary packages</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt  <span class="co"># For creating plots</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np  <span class="co"># For numerical operations</span></span>
@@ -462,7 +462,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="loading-soundscape-data" class="level3">
 <h3 class="anchored" data-anchor-id="loading-soundscape-data">1.1 Loading Soundscape Data</h3>
 <p>Soundscapy provides simple functions to load data from various soundscape databases. The default is the International Soundscape Database (ISD):</p>
-<div id="e8a0f2cc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:03:10.746772Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:03:10.706469Z&quot;}}}" data-execution_count="2">
+<div id="0cbff9d3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:03:10.746772Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:03:10.706469Z&quot;}}}" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data from the International Soundscape Database (ISD)</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>isd_data <span class="op">=</span> sspy.isd.load()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -515,7 +515,7 @@ First few rows of the ISD dataset:
 <section id="data-validation-and-processing" class="level3">
 <h3 class="anchored" data-anchor-id="data-validation-and-processing">1.2 Data Validation and Processing</h3>
 <p>Before analyzing soundscape data, it’s important to validate it to ensure quality. Soundscapy makes this easy with built-in validation functions:</p>
-<div id="4e0755e6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:04:49.075166Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:04:48.902455Z&quot;}}}" data-execution_count="3">
+<div id="35a112ed" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:04:49.075166Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:04:48.902455Z&quot;}}}" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate the ISD dataset</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>valid_data, excluded_data <span class="op">=</span> sspy.databases.isd.validate(isd_data)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -533,7 +533,7 @@ Number of excluded data: 56</code></pre>
 <section id="calculating-iso-coordinates" class="level3">
 <h3 class="anchored" data-anchor-id="calculating-iso-coordinates">1.3 Calculating ISO Coordinates</h3>
 <p>The ISO 12913 standard defines a circumplex model for soundscape perception, with two main dimensions: pleasantness and eventfulness. Soundscapy can calculate these coordinates from the PAQ responses with a single function:</p>
-<div id="774af682" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:06:09.894297Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:06:09.616280Z&quot;}}}" data-execution_count="4">
+<div id="42e4b693" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:06:09.894297Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:06:09.616280Z&quot;}}}" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate ISO coordinates</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>valid_data <span class="op">=</span> sspy.surveys.add_iso_coords(valid_data, overwrite<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -554,7 +554,7 @@ Number of excluded data: 56</code></pre>
 <section id="filtering-and-selecting-data" class="level3">
 <h3 class="anchored" data-anchor-id="filtering-and-selecting-data">1.4 Filtering and Selecting Data</h3>
 <p>Soundscapy provides convenient functions for filtering and selecting data:</p>
-<div id="70a86c0c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:06:16.485600Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:06:16.473386Z&quot;}}}" data-execution_count="5">
+<div id="400b30e8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:06:16.485600Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:06:16.473386Z&quot;}}}" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select data for a specific location</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>location_id <span class="op">=</span> <span class="st">"CamdenTown"</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>location_data <span class="op">=</span> sspy.databases.isd.select_location_ids(valid_data, location_id)</span>
@@ -578,7 +578,7 @@ Mean ISOEventful: 0.364</code></pre>
 <section id="basic-scatter-plots" class="level3">
 <h3 class="anchored" data-anchor-id="basic-scatter-plots">2.1 Basic Scatter Plots</h3>
 <p>Let’s start with a simple scatter plot of ISO coordinates:</p>
-<div id="d3dfdb0e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:07:47.437443Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:07:47.162583Z&quot;}}}" data-execution_count="6">
+<div id="447760a0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:07:47.437443Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:07:47.162583Z&quot;}}}" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a scatter plot with a single function</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>sspy.scatter(</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    location_data,</span>
@@ -599,7 +599,7 @@ Mean ISOEventful: 0.364</code></pre>
 <section id="density-plots" class="level3">
 <h3 class="anchored" data-anchor-id="density-plots">2.2 Density Plots</h3>
 <p>For a more sophisticated visualization that shows the distribution of perceptions, we can use a density plot:</p>
-<div id="07e9f1c3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:07:58.250223Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:07:58.034523Z&quot;}}}" data-execution_count="7">
+<div id="55c3a546" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:07:58.250223Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:07:58.034523Z&quot;}}}" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a density plot with a single line of code</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>sspy.density(</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    location_data,</span>
@@ -621,7 +621,7 @@ Mean ISOEventful: 0.364</code></pre>
 <section id="combined-plots" class="level3">
 <h3 class="anchored" data-anchor-id="combined-plots">2.3 Combined Plots</h3>
 <p>Soundscapy also makes it easy to create combined plots that show both individual data points and the overall distribution:</p>
-<div id="563c10d3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:09.614984Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:09.478864Z&quot;}}}" data-execution_count="8">
+<div id="fe2d0879" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:09.614984Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:09.478864Z&quot;}}}" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a combined scatter and density plot</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>sspy.iso_plot(</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    location_data,</span>
@@ -642,7 +642,7 @@ Mean ISOEventful: 0.364</code></pre>
 <section id="comparing-multiple-locations" class="level3">
 <h3 class="anchored" data-anchor-id="comparing-multiple-locations">2.4 Comparing Multiple Locations</h3>
 <p>One common task in soundscape analysis is comparing perceptions across different locations. Soundscapy makes this easy:</p>
-<div id="12b4d7a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:17.682010Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:17.544Z&quot;}}}" data-execution_count="9">
+<div id="6abadfc4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:17.682010Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:17.544Z&quot;}}}" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select data for multiple locations</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>locations <span class="op">=</span> [<span class="st">"CamdenTown"</span>, <span class="st">"RegentsParkJapan"</span>, <span class="st">"PancrasLock"</span>]</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>multi_location_data <span class="op">=</span> pd.concat(</span>
@@ -669,7 +669,7 @@ Mean ISOEventful: 0.364</code></pre>
 <section id="creating-multi-panel-visualizations" class="level3">
 <h3 class="anchored" data-anchor-id="creating-multi-panel-visualizations">2.5 Creating Multi-panel Visualizations</h3>
 <p>For a more detailed comparison, we can create multi-panel visualizations:</p>
-<div id="2abf1076" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:24.987881Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:24.555400Z&quot;}}}" data-execution_count="10">
+<div id="1eb2bfba" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:24.987881Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:24.555400Z&quot;}}}" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a figure with subplots for each location</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="bu">len</span>(locations), figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">5</span>))</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -704,7 +704,7 @@ Mean ISOEventful: 0.364</code></pre>
 <section id="creating-multi-dimensional-skewed-normal-distributions" class="level3">
 <h3 class="anchored" data-anchor-id="creating-multi-dimensional-skewed-normal-distributions">3.1 Creating Multi-dimensional Skewed Normal Distributions</h3>
 <p>To calculate the SPI, we first need to fit multi-dimensional skewed normal (MSN) distributions to our data:</p>
-<div id="967d4874" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:36.332197Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:35.543717Z&quot;}}}" data-execution_count="11">
+<div id="d0d9ba76" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:36.332197Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:35.543717Z&quot;}}}" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import the MultiSkewNorm class</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy.spi <span class="im">import</span> MultiSkewNorm</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -725,7 +725,7 @@ Mean ISOEventful: 0.364</code></pre>
 <span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
 <span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(msn1.dp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_7854/412969792.py:11: UserWarning: The SPI analysis module is experimental. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_9977/412969792.py:11: UserWarning: The SPI analysis module is experimental. Use with caution.
   msn1 = MultiSkewNorm()</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
@@ -744,7 +744,7 @@ omega: [[0.243 0.007]
 alpha: [-4.448 -1.511]</code></pre>
 </div>
 </div>
-<div id="b0a9e0f3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:41.576645Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:41.217028Z&quot;}}}" data-execution_count="12">
+<div id="0aec43f0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:41.576645Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:41.217028Z&quot;}}}" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy <span class="im">import</span> ISOPlot</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>fitted_data <span class="op">=</span> pd.DataFrame(</span>
@@ -766,7 +766,7 @@ alpha: [-4.448 -1.511]</code></pre>
 <span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>p.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_7854/2977760463.py:11: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_9977/2977760463.py:11: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot()</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -777,7 +777,7 @@ alpha: [-4.448 -1.511]</code></pre>
 </div>
 </div>
 </div>
-<div id="cc9cec4c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:47.466179Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:47.450550Z&quot;}}}" data-execution_count="13">
+<div id="9dae1f76" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:47.466179Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:47.450550Z&quot;}}}" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>data2 <span class="op">=</span> sspy.databases.isd.select_location_ids(valid_data, location2)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>msn2 <span class="op">=</span> MultiSkewNorm()</span>
@@ -800,7 +800,7 @@ omega: [[ 0.195 -0.094]
 alpha: [-1.52   2.324]</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_7854/3539347689.py:3: UserWarning: The SPI analysis module is experimental. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_9977/3539347689.py:3: UserWarning: The SPI analysis module is experimental. Use with caution.
   msn2 = MultiSkewNorm()</code></pre>
 </div>
 </div>
@@ -808,7 +808,7 @@ alpha: [-1.52   2.324]</code></pre>
 <section id="creating-a-target-distribution" class="level3">
 <h3 class="anchored" data-anchor-id="creating-a-target-distribution">3.4 Creating a Target Distribution</h3>
 <p>One powerful application of the SPI is comparing actual soundscapes to a target or ideal distribution:</p>
-<div id="6d9cad50" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:52.034399Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:51.923785Z&quot;}}}" data-execution_count="14">
+<div id="994a72dc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:52.034399Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:51.923785Z&quot;}}}" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a target distribution</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>target_msn <span class="op">=</span> MultiSkewNorm()</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>target_msn.define_dp(</span>
@@ -825,7 +825,7 @@ alpha: [-1.52   2.324]</code></pre>
 <span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"SPI between </span><span class="sc">{</span>location1<span class="sc">}</span><span class="ss"> and target: </span><span class="sc">{</span>spi1_location1<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"SPI between </span><span class="sc">{</span>location2<span class="sc">}</span><span class="ss"> and target: </span><span class="sc">{</span>spi1_location2<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_7854/3107196999.py:2: UserWarning: The SPI analysis module is experimental. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_9977/3107196999.py:2: UserWarning: The SPI analysis module is experimental. Use with caution.
   target_msn = MultiSkewNorm()</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
@@ -837,7 +837,7 @@ SPI between StPaulsRow and target: 57</code></pre>
 <section id="visualizing-the-comparison" class="level3">
 <h3 class="anchored" data-anchor-id="visualizing-the-comparison">3.3 Visualizing the Comparison</h3>
 <p>Let’s visualize the two distributions to better understand the SPI:</p>
-<div id="f7bbf7c3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:54.743664Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:53.473896Z&quot;}}}" data-execution_count="15">
+<div id="dc425643" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:54.743664Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:53.473896Z&quot;}}}" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundscapy <span class="im">import</span> ISOPlot</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Select data for two locations to compare</span></span>
@@ -880,7 +880,7 @@ SPI between StPaulsRow and target: 57</code></pre>
 <span id="cb26-40"><a href="#cb26-40" aria-hidden="true" tabindex="-1"></a><span class="co"># plot.add_data("RegentsParkJapan", spi1_location2)</span></span>
 <span id="cb26-41"><a href="#cb26-41" aria-hidden="true" tabindex="-1"></a><span class="co"># plot.add_data("PancrasLock", spi_score)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_7854/1661159736.py:19: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_9977/1661159736.py:19: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(title="Comparison of Soundscape Perceptions Against a Pleasant target")</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -904,7 +904,7 @@ SPI between StPaulsRow and target: 57</code></pre>
 <li>Calculate SPI</li>
 </ol>
 <p>Here’s a complete example:</p>
-<div id="065b9738" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:55.231703Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:55.204630Z&quot;}}}" data-execution_count="16">
+<div id="3d0a6353" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:55.231703Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:55.204630Z&quot;}}}" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sspy.isd.load()</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>data.LocationID.unique()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
@@ -918,7 +918,7 @@ SPI between StPaulsRow and target: 57</code></pre>
        'DadongSquare'], dtype=object)</code></pre>
 </div>
 </div>
-<div id="7785a61a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:58.545928Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:56.096897Z&quot;}}}" data-execution_count="17">
+<div id="d44e97d6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;quarto-private-1&quot;,&quot;value&quot;:{&quot;key&quot;:&quot;ExecuteTime&quot;,&quot;value&quot;:{&quot;end_time&quot;:&quot;2025-09-17T21:09:58.545928Z&quot;,&quot;start_time&quot;:&quot;2025-09-17T21:09:56.096897Z&quot;}}}" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Load and validate data</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sspy.databases.isd.load()</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>valid_data, _ <span class="op">=</span> sspy.databases.isd.validate(data)</span>
@@ -949,9 +949,9 @@ SPI between StPaulsRow and target: 57</code></pre>
 <span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a>plot.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_7854/2490149953.py:13: UserWarning: The SPI analysis module is experimental. Use with caution.
+<pre><code>/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_9977/2490149953.py:13: UserWarning: The SPI analysis module is experimental. Use with caution.
   target_msn = MultiSkewNorm()
-/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_7854/2490149953.py:22: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
+/var/folders/6t/7h8wn9n92w5f24ml_bkwck9m0000gn/T/ipykernel_9977/2490149953.py:22: ExperimentalWarning: `ISOPlot` is currently under development and should be considered experimental. `ISOPlot` implements an experimental API for creating layered soundscape circumplex plots. Use with caution.
   ISOPlot(locations_data)
 /Users/mitch/Documents/GitHub/Soundscapy/src/soundscapy/plotting/iso_plot.py:502: UserWarning: This is an experimental feature. The number of rows and columns may not be optimal.
   self._allocate_subplot_axes(subplot_titles)</code></pre>
