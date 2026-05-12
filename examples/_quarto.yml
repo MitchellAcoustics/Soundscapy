@@ -69,7 +69,7 @@ format:
 colab:
   gh-user: "MitchellAcoustics"
   gh-repo: "Soundscapy"
-  gh-branch: "quarto-binder-setup/examples/_site"
+  gh-branch: "main"
   html-link: true
 filters:
   - colab
