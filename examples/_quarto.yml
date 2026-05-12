@@ -1,0 +1,90 @@
+project:
+  type: website
+  render:
+    - index.qmd
+    - QuickStart.qmd
+    - 0_QuickStart_for_Beginners.qmd
+    - HowToAnalyseAndRepresentSoundscapes.qmd
+    - 1_Understanding_Soundscape_Analysis.qmd
+    - 2_Working_with_Soundscape_Survey_Data.qmd
+    - 3_Advanced_Visualization_Techniques.qmd
+    - 4_Understanding_Soundscape_Perception_Index.qmd
+    - 5_Working_with_Soundscape_Databases.qmd
+    - 6_Soundscape_Assessment_Tutorial.qmd
+
+website:
+  title: "Soundscapy User Guide"
+  site-url: https://drandrewmitchell.com/Soundscapy/tutorials
+  repo-url: https://github.com/MitchellAcoustics/Soundscapy
+  repo-subdir: examples
+  description: "Tutorials and how-to guides for soundscape analysis with Soundscapy"
+  navbar:
+    left:
+      - text: "API Docs"
+        href: https://drandrewmitchell.com/Soundscapy/
+      - href: index.qmd
+        text: Home
+      - sidebar:tutorials
+    tools:
+      - icon: github
+        menu:
+          - text: Source Code
+            url: https://github.com/MitchellAcoustics/Soundscapy
+
+  sidebar:
+    - id: tutorials
+      text: "Tutorials"
+      contents:
+        - QuickStart.qmd
+        - 0_QuickStart_for_Beginners.qmd
+        - HowToAnalyseAndRepresentSoundscapes.qmd
+        - 1_Understanding_Soundscape_Analysis.qmd
+        - 2_Working_with_Soundscape_Survey_Data.qmd
+        - 3_Advanced_Visualization_Techniques.qmd
+        - 4_Understanding_Soundscape_Perception_Index.qmd
+        - 5_Working_with_Soundscape_Databases.qmd
+        - 6_Soundscape_Assessment_Tutorial.qmd
+        # - BinauralAnalysis.qmd
+
+format:
+  html:
+    theme:
+      light:
+        - flatly
+        - brand
+      dark:
+        - superhero
+        - brand
+    css: _quarto_reqs/styles.css
+    toc: true
+    toc-depth: 4
+    toc-title: "Contents"
+    html-math-method: katex
+    include-in-header:
+      - _quarto_reqs/includes.html
+    highlight-style: tango
+    smooth-scroll: true
+  ipynb: default
+
+colab:
+  gh-user: "MitchellAcoustics"
+  gh-repo: "Soundscapy"
+  gh-branch: "quarto-binder-setup/examples/_site"
+  html-link: true
+filters:
+  - colab
+
+setup-cells:
+  python:
+    language: "python" # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}""
+      !pip install "soundscapy[r]>=0.8.4"
+      %load_ext rpy2.ipython
+
+render:
+  freeze: true
+  cache: true

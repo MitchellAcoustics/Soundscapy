@@ -1,5 +1,11 @@
-/.quarto/
 **/*.quarto_ipynb
 /.jupyter_cache/
-SATP_CircE_Analysis.qmd
-SATP_CircE_Analysis.html
+_site
+
+# Quarto project cache — do not commit
+/.quarto/idx/
+/.quarto/project-cache/
+/.quarto/xref/
+# _freeze/ is intentionally tracked so CI can render with --no-execute
+
+/.quarto/

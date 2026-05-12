@@ -186,3 +186,5 @@ CLAUDE.md
 .pixi/*
 conda-dist/
 environment.yml.bak
+
+**/*.quarto_ipynb

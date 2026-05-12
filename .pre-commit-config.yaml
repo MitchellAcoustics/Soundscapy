@@ -1,5 +1,10 @@
 # Generated files that should not be reformatted by any hook
-exclude: ^environment\.yml$
+exclude: |
+  (?x)^(
+    environment\.yml|
+    examples/\.quarto/.*|
+    examples/_quarto_reqs/.*
+  )$
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit

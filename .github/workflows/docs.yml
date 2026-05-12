@@ -26,7 +26,7 @@ jobs:
           frozen: true
           environments: "docs"
 
-      - name: Build Zensical documentation with pixi
+      - name: Build docs (zensical + quarto tutorials)
         run: pixi run docs-build
 
       - name: Upload built docs as artifact
