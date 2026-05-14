@@ -24,6 +24,24 @@ from soundscapy.surveys.survey_utils import (
 )
 
 
+def _round_pct_labels(ax: Axes, decimals: int = 1) -> None:
+    """Round percentage text labels on the given axes to the specified decimals.
+
+    ``plot_likert`` computes percentages internally but has no parameter to
+    control rounding.  This helper walks the axis text children and rewrites
+    any label that looks like a percentage (ends with ``%``) to the desired
+    precision.
+    """
+    for child in ax.get_children():
+        label = getattr(child, "get_text", lambda: None)()
+        if label and label.endswith("%"):
+            try:
+                value = float(label.rstrip("% "))
+                child.set_text(f"{value:.{decimals}f}%")
+            except ValueError:
+                pass
+
+
 def paq_radar_plot(
     data: pd.DataFrame,
     ax: Axes | None = None,
@@ -224,6 +242,9 @@ def paq_likert(
         Whether to show percentages instead of absolute values, by default False.
     bar_labels
         Whether to show bar labels, by default True.
+    percent_decimals
+        Number of decimal places for percentage labels when
+        ``plot_percentage`` is True, by default 1.
     **kwargs
         Additional keyword arguments passed to plot_likert.plot_likert.
 
@@ -256,13 +277,15 @@ def paq_likert(
         new_data,
         LIKERT_SCALES.paq,
         plot_percentage=plot_percentage,
-        percent_decimals=percent_decimals if plot_percentage else 0,
         ax=ax,
         legend=legend,
-        bar_labels=bar_labels,  # show the bar labels
+        bar_labels=bar_labels,
         title=title,
         **kwargs,
     )
+
+    if plot_percentage:
+        _round_pct_labels(ax, percent_decimals)
 
 
 def stacked_likert(
@@ -302,6 +325,9 @@ def stacked_likert(
         Whether to show percentages instead of absolute values, by default False.
     bar_labels
         Whether to show bar labels, by default True.
+    percent_decimals
+        Number of decimal places for percentage labels when
+        ``plot_percentage`` is True, by default 1.
     **kwargs
         Additional keyword arguments passed to plot_likert.plot_likert.
 
@@ -332,7 +358,7 @@ def stacked_likert(
 
     """
     warnings.warn(
-        "This is an experimental function. It may change in the future. "
+        "This is an experimental function that may change in the future. "
         "Currently, this functio applies brute data cleaning, use with caution. ",
         ExperimentalWarning,
         stacklevel=2,
@@ -354,10 +380,12 @@ def stacked_likert(
         pd.Series(new_data),
         match_col_to_likert_scale(column),
         plot_percentage=plot_percentage,
-        percent_decimals=percent_decimals if plot_percentage else 0,
         ax=ax,
         legend=legend,
         bar_labels=bar_labels,
         title=title,
         **kwargs,
     )
+
+    if plot_percentage:
+        _round_pct_labels(ax, percent_decimals)
