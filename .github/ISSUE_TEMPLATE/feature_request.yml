@@ -1,34 +1,25 @@
 ---
-name: Feature Request
-description: Suggest a Way to Improve This Project
+name: Idea for improvement
+description: Share an idea, even if it is rough
 labels:
   - enhancement
 body:
-  - id: problem
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea. Simple suggestions are welcome.
+  - id: idea
     type: textarea
     attributes:
-      label: Is Your Feature Request Related to a Problem? Please Describe
-      description: A clear and concise description of what the problem is.
-      placeholder: I'm always frustrated when [...]
-    validations:
-      required: true
-  - id: solution
+      label: What would you like to see?
+      description: Describe the change you want.
+  - id: why_helpful
     type: textarea
     attributes:
-      label: Describe the Solution You'd Like
-      description: A clear and concise description of what you want to happen.
-    validations:
-      required: true
-  - id: alternatives
-    type: textarea
-    attributes:
-      label: Describe Alternatives You've Considered
-      description: >-
-        A clear and concise description of any alternative solutions or features
-        you've considered.
+      label: Why would this help?
+      description: Optional context about your workflow or use case.
   - id: additional
     type: textarea
     attributes:
-      label: Additional Context
-      description: >-
-        Add any other context or screenshots about the feature request here.
+      label: Extra details (optional)
+      description: Links, mockups, examples, or anything else.

@@ -1,63 +1,30 @@
 ---
-name: Bug Report
-description: Create a Report to Help us Improve
+name: Something is not working
+description: Tell us what happened in plain language
 labels:
   - bug
 body:
-  - id: describe
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. Short notes are completely fine.
+  - id: what_happened
     type: textarea
     attributes:
-      label: Describe the Bug
-      description: A clear and concise description of what the bug is.
-    validations:
-      required: true
-  - id: reproduce
-    type: textarea
-    attributes:
-      label: To Reproduce
-      description: >-
-        A minimal working example of code to reproduce the unexpected behaviour,
-        this will render as `Python` code so no need for backticks.
-      value: |-
-        import soundscapy
-
-        ...
-      render: Python
-    validations:
-      required: true
+      label: What happened?
+      description: What did you do, and what went wrong?
+      placeholder: I ran ... and got ...
   - id: expected
     type: textarea
     attributes:
-      label: Expected Behaviour
-      description: >-
-        A clear and concise description of what you expected to happen.
-    validations:
-      required: true
-  - id: actual
-    type: textarea
-    attributes:
-      label: Actual Behaviour
-      description: >-
-        Be a specific and detailed as you can. Paste any output or stack traces
-        of errors you receive.
-    validations:
-      required: true
-  - id: version
+      label: What did you expect instead?
+      description: One or two lines is enough.
+  - id: environment
     type: input
     attributes:
-      label: Version In Use
-      description: |-
-        Can be found by
-        ```sh
-        python -c "import soundscapy; print(soundscapy.__version__)"
-        ```
-    validations:
-      required: true
-  - id: additional
-    type: textarea
-    attributes:
-      label: Additional Context
+      label: Optional environment info
+      description: For example Python version, Soundscapy version, and operating system.
       value: |-
         - Python version:
+        - Soundscapy version:
         - Operating system:
-      render: Markdown
