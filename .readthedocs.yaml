@@ -17,8 +17,6 @@ build:
     post_build:
       - mkdir -p $READTHEDOCS_OUTPUT/html/
       - cp --recursive site/* $READTHEDOCS_OUTPUT/html/
-  commands:
-    - zensical build
 python:
   install:
     - method: uv
