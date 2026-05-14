@@ -202,6 +202,7 @@ def paq_likert(
     ax: Axes | None = None,
     plot_percentage: bool = False,
     bar_labels: bool = True,
+    percent_decimals: int = 1,
     **kwargs,
 ) -> None:
     """
@@ -255,6 +256,7 @@ def paq_likert(
         new_data,
         LIKERT_SCALES.paq,
         plot_percentage=plot_percentage,
+        percent_decimals=percent_decimals if plot_percentage else 0,
         ax=ax,
         legend=legend,
         bar_labels=bar_labels,  # show the bar labels
@@ -272,6 +274,7 @@ def stacked_likert(
     ax: Axes | None = None,
     plot_percentage: bool = False,
     bar_labels: bool = True,
+    percent_decimals: int = 1,
     **kwargs,
 ) -> None:
     """
@@ -351,6 +354,7 @@ def stacked_likert(
         pd.Series(new_data),
         match_col_to_likert_scale(column),
         plot_percentage=plot_percentage,
+        percent_decimals=percent_decimals if plot_percentage else 0,
         ax=ax,
         legend=legend,
         bar_labels=bar_labels,
