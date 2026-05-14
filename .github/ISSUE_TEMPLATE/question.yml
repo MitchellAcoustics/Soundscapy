@@ -1,24 +1,25 @@
 ---
-name: Question
-description: General Questions About Using Soundscapy
+name: I need help
+description: Ask a question about installing or using Soundscapy
 labels:
   - question
 body:
-  - id: topic
-    type: dropdown
+  - type: markdown
     attributes:
-      label: What is the Topic of Your Question
-      description: Please indicate the topic in the title of your question.
-      options:
-        - Documentation
-        - Installation
-        - Usage
-        - Other
-    validations:
-      required: true
+      value: |
+        Questions from new users are welcome.
   - id: question
     type: textarea
     attributes:
-      label: Add Your Question Below
-    validations:
-      required: true
+      label: What are you trying to do?
+      description: Tell us your goal and where you are stuck.
+  - id: code_or_error
+    type: textarea
+    attributes:
+      label: Optional code or error message
+      description: Paste the smallest snippet or error text if you have it.
+  - id: environment
+    type: input
+    attributes:
+      label: Optional environment info
+      description: For example Python version, Soundscapy version, and operating system.
