@@ -10,7 +10,7 @@ project:
     - 3_Advanced_Visualization_Techniques.qmd
     - 4_Understanding_Soundscape_Perception_Index.qmd
     - 5_Working_with_Soundscape_Databases.qmd
-    - 6_Soundscape_Assessment_Tutorial.qmd
+    # - 6_Soundscape_Assessment_Tutorial.qmd
     - IoA_Soundscape_Assessment_Tutorial_v2.qmd
 
 website:
@@ -44,7 +44,7 @@ website:
         - 3_Advanced_Visualization_Techniques.qmd
         - 4_Understanding_Soundscape_Perception_Index.qmd
         - 5_Working_with_Soundscape_Databases.qmd
-        - 6_Soundscape_Assessment_Tutorial.qmd
+        # - 6_Soundscape_Assessment_Tutorial.qmd
         - IoA_Soundscape_Assessment_Tutorial_v2.qmd
         # - BinauralAnalysis.qmd
 

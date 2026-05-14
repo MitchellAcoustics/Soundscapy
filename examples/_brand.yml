@@ -1,5 +1,5 @@
 meta:
-  name: Soundscapy
+  name: Soundscap
   link: https://drandrewmitchell.com/Soundscapy/
 
 color:
@@ -22,11 +22,11 @@ color:
 
 logo:
   small:
-    light: ../docs/img/LightLogoSmall.png
-    dark: ../docs/img/DarkLogoSmall.png
+    light: quarto_reqs/img/LightLogoSmall.png
+    dark: quarto_reqs/img/DarkLogoSmall.png
   medium:
-    light: ../docs/img/LightLogoSmall.png
-    dark: ../docs/img/DarkLogoSmall.png
+    light: quarto_reqs/img/LightLogoSmall.png
+    dark: quarto_reqs/img/DarkLogoSmall.png
 
 typography:
   fonts:
