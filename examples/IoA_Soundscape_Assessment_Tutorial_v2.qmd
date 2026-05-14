@@ -26,6 +26,7 @@ setup-cells:
 This tutorial will guide you through the process of conducting a comprehensive soundscape assessment using Soundscapy. You'll learn how to analyze survey data, create visualizations, and interpret the results to understand how people perceive and experience soundscapes in different locations.
 
 By the end of this tutorial, you'll be able to:
+
 - Load and validate soundscape survey data
 - Calculate ISO coordinates from perceptual attribute questions (PAQs)
 - Create basic and advanced visualizations of soundscape data
@@ -57,7 +58,9 @@ The first step in any soundscape assessment is to load and explore your data. Fo
 
 ```{python}
 # Load the demo data
-data = pd.read_excel("data/DemoData.xlsx")
+data = pd.read_csv(
+    "https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/refs/heads/main/examples/data/DemoData.csv"
+)
 
 # Display the first few rows
 data.head()
@@ -141,10 +144,12 @@ if invalid_indices:
 The ISO 12913 standard defines a circumplex model for soundscape perception, with two main dimensions: pleasantness and eventfulness. Soundscapy can calculate these coordinates from the PAQ responses with a single function call.
 
 The ISO coordinates are calculated using a trigonometric projection of the eight PAQ responses, where:
+
 - `ISOPleasant` represents the horizontal axis (pleasant to unpleasant)
 - `ISOEventful` represents the vertical axis (eventful to uneventful)
 
 These coordinates allow us to position each response in the soundscape circumplex model, which has four quadrants:
+
 - Pleasant and Eventful: "Vibrant"
 - Unpleasant and Eventful: "Chaotic"
 - Unpleasant and Uneventful: "Monotonous"
@@ -565,6 +570,7 @@ Now that we've analyzed our data and created various visualizations, let's inter
    - This information can be used to identify which locations provide the desired soundscape experience.
 
 These insights can inform soundscape design and management decisions, such as:
+
 - Which locations to preserve or enhance for specific soundscape experiences
 - Which sound sources to promote or mitigate at different locations
 - How to design new spaces to achieve desired soundscape characteristics
