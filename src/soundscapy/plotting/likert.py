@@ -262,6 +262,17 @@ def paq_likert(
         **kwargs,
     )
 
+    # Round percentage bar labels to 1 decimal place
+    if plot_percentage and bar_labels:
+        for text in ax.texts:
+            txt = text.get_text()
+            if txt and txt != "" and "%" in txt:
+                try:
+                    val = float(txt.replace("%", ""))
+                    text.set_text(f"{val:.1f}%")
+                except ValueError:
+                    pass
+
 
 def stacked_likert(
     data: pd.DataFrame,
@@ -357,3 +368,14 @@ def stacked_likert(
         title=title,
         **kwargs,
     )
+
+    # Round percentage bar labels to 1 decimal place
+    if plot_percentage and bar_labels:
+        for text in ax.texts:
+            txt = text.get_text()
+            if txt and txt != "" and "%" in txt:
+                try:
+                    val = float(txt.replace("%", ""))
+                    text.set_text(f"{val:.1f}%")
+                except ValueError:
+                    pass
