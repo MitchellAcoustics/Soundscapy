@@ -7,49 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.8.4 - 2026-05-11
 
-### Added
+### Docs overhaul
 
-- New "About Soundscape Analysis" documentation page covering ISO 12913, PAQ attributes,
-  the circumplex model, and distributional analysis.
-- `.github/FUNDING.yml` for GitHub Sponsors.
+#### Added
 
-### Changed
+- Adds new "About Soundscape Analysis" documentation.
 
-- **Documentation**: improved homepage with clearer installation instructions, capability
-  tiers, and a new "Where to start" section; reorganized files into subdirectories;
-  updated tutorial and API reference overviews; updated notebook tutorials (QuickStart,
-  Introduction to Analysis v2, How To Analyse, Soundscape Assessment Tutorial, Working
-  with Databases).
-- **`r_wrapper`**: consolidated `_circe_wrapper.py` and `_rsn_wrapper.py` into a single
-  `_r_wrapper` module. `bfgs_fit()` now returns a Python `dict`; `CircE.from_bfgs()`
-  accepts a dict instead of a raw R `ListVector` (backward-compatible via deprecation
-  warning). `sample_mtsn` now batch-draws candidates in R (up to 64 per call), improving
-  performance.
-- **CI/CD**: set `frozen: true` in setup-pixi steps; `publish-pypi` now waits for
-  `publish-conda` to prevent duplicate PyPI uploads on retry; excluded generated
-  `environment.yml` from pre-commit hooks.
-- Removed ReadTheDocs badge from README; updated migration guide link.
+#### Changed
 
-### Removed
+- Improves documentation homepage structure for easier navigation.
+- Updates the documentation site navigation.
+- Reorganizes documentation files into subdirectories for better structure.
+- Updates tutorial and API reference overviews.
+- Updates various documentation pages and tutorials, including "QuickStart", "Introduction to Analysis (v2)", "How To Analyse", "Soundscape Assessment Tutorial", and "Working with Databases".
 
-- Automatic R package installation logic; a clear `ImportError` with instructions is now
-  raised instead.
-- `EmbeddedRPackage` proxy class, `_state.session` / `_state.stats` fields,
-  `is_session_active()`, and `is_ready` property from `_r_wrapper`.
-- Outdated news sections from documentation.
+#### Removed
 
-### Fixed
+- Removes outdated news regarding the plotting module.
 
-- Redundant double-check during R package installation.
-- `batch_size` max_iter checking in `sample_mtsn`.
+### `r_wrapper` refactor
 
----
+#### Changed
+
+- Changes the API for BFGS fit results; `bfgs_fit()` now returns a Python dictionary, and `from_bfgs()` accepts a dictionary instead of a raw R ListVector.
+- Improves performance for `sample_mtsn` by batch-drawing candidates in R calls.
+
+#### Removed
+
+- Removes the automatic installation logic for R packages. Users will now receive a clear `ImportError` with instructions if required packages are missing.
+
+#### Fixed
+
+- Fixes a redundant double-check during R package installation.
 
 ## 0.8.3 - 2026-05-10
 
 Patch release dealing with release workflow and CI/CD issues. No user-facing changes.
-
----
 
 ## 0.8.2 - 2026-05-10
 
@@ -59,7 +52,7 @@ version. The last user-facing stable release on PyPI was `0.7.8`, so most users
 are upgrading across a much larger gap than the version number suggests.
 
 If you are upgrading from `0.7.x`, please read the
-[migration guide](docs/migration-0.7-to-0.8.md) before installing — there are
+[migration guide](migration-0.7-to-0.8.md) before installing — there are
 several breaking changes, most notably the new `ISOPlot` API.
 
 ### ⚠️ Breaking Changes
@@ -68,7 +61,7 @@ several breaking changes, most notably the new `ISOPlot` API.
   with a layered plotting architecture. The function-style helpers
   (`scatter_plot`, `density_plot`) are still available and have been adapted to
   the new backend, but custom subclasses or direct `CircumplexPlot` use will
-  need to migrate. See the [migration guide](docs/migration-0.7-to-0.8.md).
+  need to migrate. See the [migration guide](migration-0.7-to-0.8.md).
 - **Plotly backend removed**: only the seaborn backend is supported now. The
   `plotly` dependency has been dropped to simplify installation.
 - **RTHORR R package integration removed**: the `rthorr` R package is no longer
@@ -165,7 +158,7 @@ several breaking changes, most notably the new `ISOPlot` API.
 - **SPEC 1 lazy loading** (#137): top-level lazy loading via
   `lazy_loader.attach_stub` driven by `src/soundscapy/__init__.pyi`. Level-2
   lazy loading inside `audio`, `spi`, and `satp` submodules. `import
-soundscapy` no longer attempts any optional import.
+  soundscapy` no longer attempts any optional import.
 - New `_optional.py` helper (`require_deps(modules, *, extra)`) standardises
   `ImportError` messages across all optional subpackages.
 - PEP 561 typed stubs (`__init__.pyi`) for `soundscapy`, `soundscapy.audio`,
@@ -371,3 +364,4 @@ Complete refactoring of `Soundscapy`, splitting it into multiple modules (`surve
 
 - Changed the name of the `calculate_paq_coords` to `calculate_iso_coords` to better reflect the function's purpose.
 - Updated the formula for `calculate_iso_coords` to the more generalised form given in Aletta et. al. (2024).
+
