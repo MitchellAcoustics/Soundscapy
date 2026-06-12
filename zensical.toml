@@ -1,6 +1,7 @@
 [project]
 nav = [
     { "Home" = "index.md" },
+    { "Background" = "background.md" },
     { "User Guide ↗" = "https://drandrewmitchell.com/Soundscapy/tutorials/" },
     { "API Reference" = [
         { "Overview" = "reference/index.md" },
