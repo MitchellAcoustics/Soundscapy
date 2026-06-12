@@ -32,6 +32,7 @@ import pandas as pd
 
 import soundscapy.r_wrapper as sspyr
 from soundscapy.plotting.plot_functions import scatter
+from soundscapy.spi._mvskew import msn_dp2cp, mst_dp2cp
 from soundscapy.spi.ks2d import ks2d2s
 from soundscapy.sspylogging import get_logger
 
@@ -63,11 +64,20 @@ class DirectParams:
 
     """
 
-    def __init__(self, xi: np.ndarray, omega: np.ndarray, alpha: np.ndarray) -> None:
+    def __init__(
+        self,
+        xi: np.ndarray,
+        omega: np.ndarray,
+        alpha: np.ndarray,
+        tau: np.ndarray | None = None,
+        nu: int | None = None,
+    ) -> None:
         """Initialize DirectParams instance."""
         self.xi = xi
         self.omega = omega
         self.alpha = alpha
+        self.tau = tau
+        self.nu = nu
         self.validate()
 
     def __repr__(self) -> str:
@@ -178,11 +188,20 @@ class CentredParams:
 
     """
 
-    def __init__(self, mean: np.ndarray, sigma: np.ndarray, skew: np.ndarray) -> None:
+    def __init__(
+        self,
+        mean: np.ndarray,
+        sigma: np.ndarray,
+        skew: np.ndarray,
+        gamma2: np.ndarray | None = None,
+        nu: int | None = None,
+    ) -> None:
         """Initialize CentredParams instance."""
         self.mean = mean
         self.sigma = sigma
         self.skew = skew
+        self.gamma2 = gamma2
+        self.nu = nu
 
     def __repr__(self) -> str:
         """Return a string representation of the CentredParams object."""
@@ -214,7 +233,7 @@ class CentredParams:
 
         """
         cp = dp2cp(dp)
-        return cls(cp.mean, cp.sigma, cp.skew)
+        return cls(cp.mean, cp.sigma, cp.skew, gamma2=cp.gamma2, nu=cp.nu)
 
 
 class MultiSkewNorm:
@@ -736,6 +755,47 @@ def dp2cp(
         The corresponding centred parameters object.
 
     """
-    cp_r = sspyr.dp2cp(dp.xi, dp.omega, dp.alpha, family=family)
+    if family in ("SN", "ESN"):
+        tau = (
+            np.zeros(1)
+            if dp.tau is None
+            else np.atleast_1d(np.asarray(dp.tau, dtype=float))
+        )
+        mean, sigma_mat, skew, *_ = msn_dp2cp(dp.xi, dp.omega, dp.alpha, tau=tau)
+        return CentredParams(
+            mean=np.asarray(mean).ravel(),
+            sigma=np.asarray(sigma_mat),
+            skew=np.asarray(skew).ravel(),
+        )
 
-    return CentredParams(*cp_r)
+    if family in ("ST", "SC"):
+        # SC is ST with nu=1; ST requires an explicit nu on DirectParams
+        nu = 1.0 if family == "SC" else float(dp.nu if dp.nu is not None else 1)
+        tau = (
+            np.zeros(1)
+            if dp.tau is None
+            else np.atleast_1d(np.asarray(dp.tau, dtype=float))
+        )
+        # "proper" CP requires nu > upto (default 4); fall back to "approx" otherwise
+        cp_type = "proper" if nu > 4 else "approx"  # noqa: PLR2004
+        result = mst_dp2cp(dp.xi, dp.omega, dp.alpha, tau=tau, nu=nu, cp_type=cp_type)
+        if result is None:
+            msg = (
+                f"Centred parameters could not be computed for "
+                f"family={family!r}, nu={nu}"
+            )
+            raise ValueError(msg)
+        beta, sigma_mat, gamma1, gamma2, nu_out = result[:5]
+        skew = (
+            np.asarray(gamma1).ravel() if gamma1 is not None else np.zeros(len(dp.xi))
+        )
+        return CentredParams(
+            mean=np.asarray(beta).ravel(),
+            sigma=np.asarray(sigma_mat),
+            skew=skew,
+            gamma2=gamma2,
+            nu=int(nu_out) if nu_out is not None else None,
+        )
+
+    msg = f"Unknown family {family!r}; supported: 'SN', 'ESN', 'ST', 'SC'"
+    raise ValueError(msg)
