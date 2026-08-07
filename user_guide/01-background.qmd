@@ -1,3 +1,7 @@
+---
+title: About Soundscape Analysis
+---
+
 # About Soundscape Analysis
 
 ## What is a soundscape?
@@ -69,4 +73,4 @@ Soundscapy is organised into capability tiers based on dependencies:
 - **Run code immediately** → [Quick Start](https://drandrewmitchell.com/Soundscapy/tutorials/QuickStart.html)
 - **Step-by-step introduction** → [Getting Started](https://drandrewmitchell.com/Soundscapy/tutorials/0_QuickStart_for_Beginners.html)
 - **The distributional analysis approach** → [Analysing and Representing Soundscapes](https://drandrewmitchell.com/Soundscapy/tutorials/HowToAnalyseAndRepresentSoundscapes.html)
-- **Full API documentation** → [API Reference](reference/index.md)
+- **Full API documentation** → [API Reference](../reference/index.html)

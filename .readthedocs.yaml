@@ -1,31 +1,5 @@
-# .readthedocs.yaml
-# Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
-
-# Required
+# Read the Docs is no longer used. Documentation is published to GitHub Pages
+# via .github/workflows/docs.yml using great-docs build.
+# This file is retained as a placeholder to prevent ReadTheDocs from
+# auto-detecting the repository.
 version: 2
-
-# Set the OS, Python version and other tools you might need
-build:
-  os: ubuntu-22.04
-  tools:
-    python: "latest"
-  jobs:
-    create_environment:
-      - asdf plugin add pixi
-      - asdf install pixi latest
-      - asdf global pixi latest
-    install:
-      - pixi install -e docs
-    build:
-      html:
-        - pixi run -e docs docs-build
-    post_build:
-      - mkdir -p $READTHEDOCS_OUTPUT/html/
-      - cp --recursive site/* $READTHEDOCS_OUTPUT/html/
-# Optional but recommended, declare the Python requirements required
-# to build your documentation
-# See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-# python:
-#    install:
-#    - requirements: docs/requirements.txt

@@ -188,3 +188,8 @@ conda-dist/
 environment.yml.bak
 
 **/*.quarto_ipynb
+
+# Great Docs build output (ephemeral — regenerated on every build)
+great-docs/_site/
+great-docs/
+site/

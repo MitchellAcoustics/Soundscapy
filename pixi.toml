@@ -57,15 +57,11 @@ rpy2   = ">=3.5.0"
 # Dev Extras
 
 [feature.docs.dependencies]
-zensical            = ">=0.0.40"
-jupyter             = ">=1.1.1"
-jupyter-cache       = ">=1.0.1"
-mkdocstrings        = ">=1.0.3"
-mkdocstrings-python = ">=2.0.2"
+python = "3.12.*"
 
 [feature.docs.pypi-dependencies]
 quarto-cli    = ">=1.9.37"
-griffe-fieldz = ">=0.5.0"
+great-docs    = ">=0.15.0,<0.16.0"
 
 [feature.dev.dependencies]
 ruff       = ">=0.15.12"
@@ -152,18 +148,14 @@ description = "Render tutorials using freeze cache, CI-safe (outputs to examples
 cwd         = "examples"
 cmd         = "quarto render --no-execute"
 
-[feature.docs.tasks.zensical-build]
-description = "Build main zensical docs site (outputs to site/)"
-cmd         = "zensical build"
-
 [feature.docs.tasks.docs-build]
-description = "Build complete docs site: zensical + quarto tutorials copied into site/tutorials/"
-depends-on  = ["zensical-build", "examples-render"]
-cmd         = "rm -rf site/tutorials && cp -r examples/_site site/tutorials"
+description = "Build complete docs site with great-docs (outputs to great-docs/_site/)"
+cmd         = "great-docs build"
+default-environment = "docs"
 
-[feature.docs.tasks.docs-serve]
-description         = "Serve main docs locally (for tutorial preview run: cd examples && quarto preview)"
-cmd                 = "zensical serve"
+[feature.docs.tasks.docs-preview]
+description = "Preview docs locally at http://localhost:3000 (for tutorial preview run: cd examples && quarto preview)"
+cmd         = "great-docs preview"
 default-environment = "docs"
 
 [feature.dev.tasks.setup-hooks]

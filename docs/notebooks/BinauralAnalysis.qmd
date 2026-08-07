@@ -1,5 +1,7 @@
 ---
 title: Using Soundscapy for Binaural Recording Analysis
+execute:
+  freeze: true   # requires local audio data — do not re-execute in CI
 jupyter:
   jupytext:
     cell_markers: '"""'
