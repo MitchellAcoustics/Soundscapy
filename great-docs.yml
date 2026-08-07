@@ -1,49 +1,13 @@
-# great-docs.yml — Soundscapy documentation site configuration
-
-# ── Package identity ──────────────────────────────────────────
-module: soundscapy
 display_name: Soundscapy
-parser: numpy
-dynamic: false # Required: lazy_loader + lazy imports break runtime introspection
+dynamic: false
+site_url: https://drandrewmitchell.com/Soundscapy/
 
-# ── GitHub ────────────────────────────────────────────────────
-repo: https://github.com/MitchellAcoustics/Soundscapy
-github_style: widget
-
-# ── Source links ──────────────────────────────────────────────
-source:
-  enabled: true
-  branch: main
-  path: src/soundscapy
-
-# ── Logo and hero ─────────────────────────────────────────────
 logo:
   light: assets/logo.png
   dark: assets/logo-dark.png
 favicon: assets/favicon.png
-hero:
-  enabled: true
-  tagline: "Analyse and visualise soundscape assessments following ISO 12913"
 
-# ── Theming ───────────────────────────────────────────────────
 navbar_style: sky
-dark_mode_toggle: true
 
-# ── Content ───────────────────────────────────────────────────
-homepage: index # Use README.md as the landing page
-
-# ── User guide ────────────────────────────────────────────────
-# Pages in user_guide/ with numeric prefixes are auto-discovered in order
-
-# ── Tutorials section (Quarto site) ───────────────────────────
-sections:
-  - title: Tutorials
-    dir: examples
-
-# ── Changelog ─────────────────────────────────────────────────
-changelog:
-  enabled: true
-
-# ── API reference exclusions ──────────────────────────────────
 exclude:
-  - backends_deprecated # deprecated plotting backends
+  - backends_deprecated

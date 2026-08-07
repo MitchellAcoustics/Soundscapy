@@ -43,13 +43,7 @@ pixi run -e docs docs-build     # full build → great-docs/_site/
 pixi run -e docs docs-preview   # local preview at http://localhost:3000
 ```
 
-The docs site is built with **great-docs** (`great-docs.yml` at project root). The `great-docs/` directory is ephemeral and gitignored — never edit files inside it. The Quarto tutorials in `examples/` are included as a custom section and rendered as part of the same build.
-
-For re-executing tutorial notebooks locally (requires audio data, R, etc.):
-
-```bash
-pixi run -e docs examples-execute   # re-execute + update freeze cache, then commit examples/.quarto/_freeze/
-```
+The docs site is built with **great-docs** (`great-docs.yml` at project root). The `great-docs/` directory is ephemeral and gitignored — never edit files inside it. Narrative pages live in `user_guide/` and are auto-discovered by numeric prefix order.
 
 ## Architecture
 

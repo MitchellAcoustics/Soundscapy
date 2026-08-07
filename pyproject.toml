@@ -43,8 +43,8 @@ audio = [
 r = ["rpy2>=3.5.0"]
 
 [project.urls]
-documentation = "https://soundscapy.readthedocs.io/en/latest/"
-repository    = "https://github.com/MitchellAcoustics/Soundscapy"
+Documentation = "https://drandrewmitchell.com/Soundscapy/"
+Repository    = "https://github.com/MitchellAcoustics/Soundscapy"
 
 ####### Packaging ########
 

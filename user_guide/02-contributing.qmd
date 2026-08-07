@@ -20,14 +20,13 @@ We use [Prek](https://prek.j178.dev) for pre-commit hooks, configured in `.pre-c
 
 ## Documentation
 
-Documentation is built with **Zensical**. Tutorial pages are rendered from the source notebooks in `docs/tutorials/*.ipynb` using **Quarto**, and the API reference pages under `docs/reference/` are maintained as regular Markdown files with `mkdocstrings`.
+Documentation is built with **great-docs**. Narrative pages live in `user_guide/`, API reference pages are generated from source, and the output site is written to `great-docs/_site/`.
 
 Use the Pixi docs tasks for local docs work:
 
 ```bash
-pixi run -e docs docs-render   # Render tutorial markdown pages
-pixi run -e docs docs-build    # Render and build the docs site
-pixi run -e docs docs-serve    # Render and serve the docs locally
+pixi run -e docs docs-build     # Build docs site to great-docs/_site/
+pixi run -e docs docs-preview   # Preview docs locally
 ```
 
 ## Releases and Versioning

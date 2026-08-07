@@ -221,11 +221,11 @@ If you're contributing to Soundscapy itself, two project-level tooling shifts
 are worth knowing about:
 
 - **Environment management is now driven by [pixi](https://pixi.sh)**.
-  Common tasks: `pixi run lint`, `pixi run tests`, `pixi run docs-serve`.
+  Common tasks: `pixi run lint`, `pixi run tests`, `pixi run -e docs docs-build`.
   uv is retained for build, version, and PyPI publish (e.g.
   `pixi run version --bump release`, `pixi run build`).
-- **Documentation has migrated from mkdocs to
-  [zensical](https://zensical.org)**. The `mkdocs.yml` is gone; nav and
-  config live in `zensical.toml`.
+- **Documentation is now built with
+  [great-docs](https://posit-dev.github.io/great-docs/)** with configuration
+  in `great-docs.yml`.
 
 See `pixi.toml` and `CONTRIBUTING.md` for the full workflow.
