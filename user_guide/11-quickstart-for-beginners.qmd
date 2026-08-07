@@ -15,7 +15,11 @@ setup-cells:
 
 Welcome to Soundscapy! This tutorial is designed for users who are new
 to soundscape analysis with Python. We’ll show you how Soundscapy makes
-it easy to load, process, and visualise soundscape survey data.
+it easy to load, process, and visualise soundscape survey data. This page
+complements the [Quick Start](10-quickstart.qmd) rather than repeating it.
+Use it when you want a gentler introduction with more context, and then move
+on to the [concepts page](01-background.qmd) or the [gallery](20-gallery.qmd)
+for shorter examples of the most common workflows.
 
 ## What is Soundscapy?
 

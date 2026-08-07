@@ -1,0 +1,22 @@
+---
+title: Start here
+---
+
+# Start here
+
+This guide is organised as a progressive path for new users. If you want the shortest route to a first analysis, start with the quick start; if you want more context, follow the concepts page; and if you want the most common plot patterns and analysis recipes, use the gallery.
+
+## Recommended reading path
+
+1. **Quick Start** — a compact workflow for loading data, adding ISO coordinates, and creating a first figure.
+2. **Concepts and terminology** — the background, terminology, and distributional approach behind the package.
+3. **Working with survey data** — the core data preparation and validation workflow.
+4. **Gallery** — short, task-oriented examples for the most common plots and analysis patterns.
+5. **Applied tutorials** — fuller end-to-end examples for more complete workflows.
+
+## Start with one of these
+
+- [Quick Start](10-quickstart.qmd)
+- [Quick Start for Beginners](11-quickstart-for-beginners.qmd)
+- [Concepts and terminology](01-background.qmd)
+- [Gallery](20-gallery.qmd)

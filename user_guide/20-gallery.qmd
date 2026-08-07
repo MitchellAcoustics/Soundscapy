@@ -1,0 +1,14 @@
+---
+title: Gallery
+---
+
+# Gallery
+
+The gallery pages collect short, task-oriented examples that sit alongside the main tutorials. They are designed for readers who want to jump straight to a plot type or an analysis pattern without reading a longer narrative page.
+
+## Gallery sections
+
+- [Visualization gallery](21-visualization-gallery.qmd) — compact examples for scatter, density, joint, and multi-panel plots.
+- [Analysis recipes](22-analysis-recipes.qmd) — short recipes for comparing locations, checking distributions, and working with SPI-style comparisons.
+
+Use these pages as a companion to the main tutorials, especially [Working with survey data](13-working-with-survey-data.qmd), [Advanced visualization techniques](14-advanced-visualization-techniques.qmd), and [How to analyse and represent soundscape perception](18-how-to-analyse-and-represent-soundscapes.qmd).
