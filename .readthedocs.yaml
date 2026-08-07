@@ -1,5 +1,0 @@
-# Read the Docs is no longer used. Documentation is published to GitHub Pages
-# via .github/workflows/docs.yml using great-docs build.
-# This file is retained as a placeholder to prevent ReadTheDocs from
-# auto-detecting the repository.
-version: 2

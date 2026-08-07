@@ -1,0 +1,16 @@
+---
+title: Analysis recipes
+---
+
+# Analysis recipes
+
+These short recipes capture a few of the most common analysis workflows in Soundscapy. They are intended to be read alongside the main tutorials rather than as a substitute for them.
+
+## Typical workflows
+
+- **Compare two or more locations** — use the same data preparation steps as the survey tutorial and then create a multi-location comparison.
+- **Inspect a distribution of responses** — start from a single location and use a density or joint plot to look at concentration and spread.
+- **Work with SPI-style comparisons** — use the SPI tutorial when you want a formal comparison between distributions rather than a simple visual check.
+- **Build an end-to-end workflow** — follow the full applied tutorial once you are comfortable with the basics.
+
+Useful companion pages include [Working with survey data](../user-guide/working-with-survey-data.qmd), [Understanding the Soundscape Perception Index](../user-guide/understanding-spi.qmd), and [How to analyse and represent soundscape perception](../user-guide/how-to-analyse-and-represent-soundscapes.qmd).

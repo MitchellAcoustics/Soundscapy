@@ -48,7 +48,7 @@ data = sspy.add_iso_coords(data)
 # → adds "ISOPleasant" and "ISOEventful" columns
 ```
 
-For a deeper treatment of the formula and why a distributional representation of responses is preferred over single-point summaries, see [Analysing and Representing Soundscapes](https://drandrewmitchell.com/Soundscapy/tutorials/HowToAnalyseAndRepresentSoundscapes.html).
+For a deeper treatment of the formula and why a distributional representation of responses is preferred over single-point summaries, see [How to analyse and represent soundscape perception](how-to-analyse-and-represent-soundscapes.qmd).
 
 ## Why distributions, not means
 
@@ -72,7 +72,7 @@ Soundscapy is organised into capability tiers based on dependencies:
 
 For a guided path through the documentation, start with the quick start for a compact workflow, then move on to the beginner tutorial for more context and the applied tutorial for a fuller end-to-end example.
 
-- **Run code immediately** → [Quick Start](10-quickstart.qmd)
-- **Step-by-step introduction** → [Quick Start for Beginners](11-quickstart-for-beginners.qmd)
-- **The distributional analysis approach** → [How to analyse and represent soundscape perception](18-how-to-analyse-and-represent-soundscapes.qmd)
-- **Short, task-oriented examples** → [Gallery](20-gallery.qmd)
+- **Run code immediately** → [Quick Start](quickstart.qmd)
+- **Step-by-step introduction** → [Quick Start for Beginners](quickstart-for-beginners.qmd)
+- **The distributional analysis approach** → [How to analyse and represent soundscape perception](how-to-analyse-and-represent-soundscapes.qmd)
+- **Short, task-oriented examples** → [Gallery](../gallery/gallery.qmd)

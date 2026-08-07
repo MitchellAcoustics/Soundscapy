@@ -2,9 +2,7 @@
 exclude: |
   (?x)^(
     environment\.yml|
-    examples/\.quarto/.*|
-    examples/_quarto_reqs/.*|
-    examples/_site/.*|
+    great-docs/.*|
     site/.*
   )$
 
@@ -43,7 +41,7 @@ repos:
       - id: prettier
         args:
           - --quote-props=as-needed
-        exclude: ^docs/.*\.md$
+        exclude: ^great-docs/.*$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:

@@ -9,5 +9,9 @@ favicon: assets/favicon.png
 
 navbar_style: sky
 
+sections:
+  - title: Gallery
+    dir: gallery
+
 exclude:
   - backends_deprecated

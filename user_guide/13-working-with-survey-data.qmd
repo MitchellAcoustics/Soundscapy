@@ -33,7 +33,7 @@ from soundscapy.surveys import LANGUAGE_ANGLES, PAQ_IDS, rename_paqs
 
 ## Introduction
 
-This tutorial provides a comprehensive guide to working with soundscape survey data using the `Soundscapy` package. We'll cover loading, validating, cleaning, and processing survey data, with a focus on the International Soundscape Database (ISD) format. If you are new to the package, start with the [Quick Start](10-quickstart.qmd) and the [Concepts and terminology](01-background.qmd) page first; this page focuses on data preparation and validation in more detail.
+This tutorial provides a comprehensive guide to working with soundscape survey data using the `Soundscapy` package. We'll cover loading, validating, cleaning, and processing survey data, with a focus on the International Soundscape Database (ISD) format. If you are new to the package, start with the [Quick Start](quickstart.qmd) and the [Concepts and terminology](background.qmd) page first; this page focuses on data preparation and validation in more detail.
 
 ### Learning Objectives
 

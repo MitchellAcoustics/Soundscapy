@@ -228,4 +228,4 @@ are worth knowing about:
   [great-docs](https://posit-dev.github.io/great-docs/)** with configuration
   in `great-docs.yml`.
 
-See `pixi.toml` and `CONTRIBUTING.md` for the full workflow.
+See `pixi.toml` and [the contributing guide](contributing.qmd) for the full workflow.

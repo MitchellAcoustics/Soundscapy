@@ -59,7 +59,7 @@ The first step in any soundscape assessment is to load and explore your data. Fo
 
 ```{python}
 # Load the demo data (stored on Github)
-data = pd.read_csv("https://raw.githubusercontent.com/MitchellAcoustics/Soundscapy/refs/heads/main/examples/data/DemoData.csv")
+data = pd.read_csv("../assets/DemoData.csv")
 
 # Display the first few rows
 data.head()

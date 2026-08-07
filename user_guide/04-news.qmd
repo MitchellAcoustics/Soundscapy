@@ -13,7 +13,7 @@ publishing a non-prerelease tag. **`v0.8.2` consolidates eighteen months of
 that work into a single shipping release.**
 
 If you are upgrading from `0.7.x`, please read the
-[migration guide](03-migration-0.7-to-0.8.qmd) before installing. Most users will
+[migration guide](migration-0.7-to-0.8.qmd) before installing. Most users will
 need to make small code changes.
 
 ### Breaking changes you should know about first
@@ -86,12 +86,12 @@ Project tooling has shifted: environment management is now driven by
 publish. See `pixi.toml` for the new task layout (`pixi run lint`,
 `pixi run tests`, `pixi run -e docs docs-build`, etc.). Documentation is
 now built with [great-docs](https://posit-dev.github.io/great-docs/). If you contribute, the
-[CONTRIBUTING guide](02-contributing.qmd) has the updated workflow.
+[CONTRIBUTING guide](contributing.qmd) has the updated workflow.
 
 ### Full migration guide
 
 For copy-pasteable before/after snippets and a complete list of removed APIs,
-see [Upgrading from 0.7](03-migration-0.7-to-0.8.qmd).
+see [Upgrading from 0.7](migration-0.7-to-0.8.qmd).
 
 ## 2026-05-08 Embedded CircE Runtime for R-Backed Features
 

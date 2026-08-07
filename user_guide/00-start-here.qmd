@@ -16,7 +16,7 @@ This guide is organised as a progressive path for new users. If you want the sho
 
 ## Start with one of these
 
-- [Quick Start](10-quickstart.qmd)
-- [Quick Start for Beginners](11-quickstart-for-beginners.qmd)
-- [Concepts and terminology](01-background.qmd)
-- [Gallery](20-gallery.qmd)
+- [Quick Start](quickstart.qmd)
+- [Quick Start for Beginners](quickstart-for-beginners.qmd)
+- [Concepts and terminology](background.qmd)
+- [Gallery](../gallery/gallery.qmd)

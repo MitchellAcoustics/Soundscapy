@@ -33,7 +33,7 @@ For more information on the theory underlying the assessments and forms of data 
 
 The purpose of this notebook is to give a brief overview of how `Soundscapy` works and how to quickly get started using it to analyse your own soundscape data. The example dataset used is *The International Soundscape Database (ISD)* (Mitchell, *et al.*, 2021), which is publicly available at [Zenodo](https://zenodo.org/record/6331810) and is free to use. `Soundscapy` expects data to follow the format used in the ISD, but can be adapted for similar datasets.
 
-This page is the main entry point for first-time users. After working through it, continue with [Quick Start for Beginners](11-quickstart-for-beginners.qmd) for a more guided introduction, [Concepts and terminology](01-background.qmd) for the underlying framework, or the [gallery](20-gallery.qmd) for short examples of the most common plot types.
+This page is the main entry point for first-time users. After working through it, continue with [Quick Start for Beginners](quickstart-for-beginners.qmd) for a more guided introduction, [Concepts and terminology](background.qmd) for the underlying framework, or the [gallery](../gallery/gallery.qmd) for short examples of the most common plot types.
 
 ----------
 

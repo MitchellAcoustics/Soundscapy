@@ -56,7 +56,7 @@ pip install "soundscapy[all]"
 
 We are currently working on writing more comprehensive examples and documentation, please bear with us in the meantime.
 
-Tutorials for using Soundscapy can be found in the [documentation](https://soundscapy.readthedocs.io/en/latest/).
+Tutorials for using Soundscapy can be found in the [documentation](https://drandrewmitchell.com/Soundscapy/).
 
 ## Acknowledgements
 
@@ -110,4 +110,4 @@ Large planned feature additions are:
 
 If you would like to contribute or if you have any bugs you have found while using `Soundscapy', please feel free to get in touch or submit an issue or pull request!
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+Please see [contribution guidelines](user-guide/contributing.qmd) for contribution guidelines.
