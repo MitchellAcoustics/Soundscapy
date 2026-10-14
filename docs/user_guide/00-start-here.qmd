@@ -1,22 +1,31 @@
 ---
 title: Start here
+guide-section: "Getting Started"
 ---
 
 # Start here
 
-This guide is organised as a progressive path for new users. If you want the shortest route to a first analysis, start with the quick start; if you want more context, follow the concepts page; and if you want the most common plot patterns and analysis recipes, use the gallery.
+The documentation is organised into five parts. Pick the route that matches what you want to do.
+
+| Section | What it is for |
+|---------|----------------|
+| **User Guide** (this section) | How to use Soundscapy, and the background and context behind it. |
+| [**Tutorials**](../tutorials/soundscape-assessment-tutorial.qmd) | Longer, end-to-end worked examples and companions to published papers. |
+| [**Gallery**](../gallery/index.qmd) | Copy-and-adapt example figures for every plot type. |
+| **Reference** | The API documentation for every public function and class. |
+| **Project** | News, the 0.7 → 0.8 migration guide and how to contribute. |
 
 ## Recommended reading path
 
-1. **Quick Start** — a compact workflow for loading data, adding ISO coordinates, and creating a first figure.
-2. **Concepts and terminology** — the background, terminology, and distributional approach behind the package.
-3. **Working with survey data** — the core data preparation and validation workflow.
-4. **Gallery** — short, task-oriented examples for the most common plots and analysis patterns.
-5. **Applied tutorials** — fuller end-to-end examples for more complete workflows.
+1. [Quick Start](quickstart.qmd): load data, add ISO coordinates and draw a first figure.
+2. [Concepts and terminology](concepts-and-terminology.qmd): the ISO 12913 framework, the circumplex and why we analyse distributions.
+3. [Working with survey data](working-with-survey-data.qmd): validation, coordinates, grouping and summaries for your own data.
+4. [Working with databases](working-with-databases.qmd): the ISD, SATP and ARAUS loaders.
+5. [Visualising soundscapes](visualising-soundscapes.qmd): the plotting API, from one-line functions to the layered `ISOPlot` builder.
+6. [Understanding the SPI](understanding-spi.qmd): comparing soundscape distributions against targets (requires the R extra).
 
-## Start with one of these
+When you want worked examples, move on to the [Tutorials](../tutorials/soundscape-assessment-tutorial.qmd), or browse the [Gallery](../gallery/index.qmd) for figures to adapt.
 
-- [Quick Start](quickstart.qmd)
-- [Quick Start for Beginners](quickstart-for-beginners.qmd)
-- [Concepts and terminology](background.qmd)
-- [Gallery](../gallery/gallery.qmd)
+## Upgrading from 0.7?
+
+See the [migration guide](../project/migration-0.7-to-0.8.qmd).

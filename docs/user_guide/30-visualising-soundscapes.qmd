@@ -1,0 +1,197 @@
+---
+title: Visualising Soundscapes
+guide-section: "Analysis and Visualisation"
+jupyter:
+  jupytext:
+    cell_metadata_filter: '-all'
+    main_language: python
+    notebook_metadata_filter: '-all'
+  kernelspec:
+    display_name: soundscapy (3.12.5)
+    language: python
+    name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !pip install "soundscapy>=0.8.4"
+---
+
+# Visualising Soundscapes
+
+Soundscapy's plotting module is built around the ISO circumplex: a two-dimensional space with ISOPleasant on the x-axis and ISOEventful on the y-axis. This page explains how the plotting API is organised and which options matter most. For finished, copy-and-adapt examples of each plot type, see the [Gallery](../gallery/index.qmd).
+
+```{python}
+import matplotlib.pyplot as plt
+
+import soundscapy as sspy
+from soundscapy.databases import isd
+
+data = isd.load()
+valid_data, _ = isd.validate(data)
+valid_data = sspy.add_iso_coords(valid_data)
+```
+
+## Two ways to plot
+
+Soundscapy offers two complementary interfaces:
+
+| Interface | Best for | Entry points |
+|-----------|----------|--------------|
+| **Function style** | One-off plots in a single call | `scatter()`, `density()`, `iso_plot()`, `jointplot()`, `create_iso_subplots()` |
+| **`ISOPlot` builder** | Composing layers step by step, multi-panel figures, adding SPI targets | `ISOPlot(...).create_subplots().add_scatter().add_density().style()` |
+
+Both produce standard Matplotlib figures, so anything Matplotlib can do (annotations, saving, embedding in a larger layout) still works.
+
+## Function-style plots
+
+`scatter()` shows individual responses, `density()` shows their distribution, and `iso_plot()` combines layers via `plot_layers`:
+
+```{python}
+sspy.iso_plot(
+    isd.select_location_ids(valid_data, "CamdenTown"),
+    title="Camden Town",
+    plot_layers=["scatter", "density"],
+    diagonal_lines=True,
+)
+plt.show()
+```
+
+### Key parameters
+
+These are shared across the plotting functions:
+
+| Parameter | Effect |
+|-----------|--------|
+| `hue` | Colour (and group) by a column, e.g. `"LocationID"` |
+| `palette` | Colour palette for the groups, e.g. `"husl"` |
+| `title`, `xlabel`, `ylabel` | Labels |
+| `xlim`, `ylim` | Axis limits (default $-1$ to $1$) |
+| `diagonal_lines` | Draw the circumplex diagonals (vibrant/calm/chaotic/monotonous) |
+| `ax` | Draw on an existing Matplotlib axis |
+
+Density plots add `density_type` (`"full"` or `"simple"`, which draws fewer, cleaner contours), `levels`, `thresh`, `fill`, `cmap` and `incl_scatter`. Scatter plots pass `color`, `s` and `alpha` through to Matplotlib.
+
+### Comparing groups
+
+Pass `hue` to compare groups on one set of axes. Limit the number of groups, since overlapping distributions quickly become hard to read:
+
+```{python}
+subset = isd.select_location_ids(valid_data, ["CamdenTown", "PancrasLock", "RegentsParkJapan"])
+
+sspy.density(
+    subset,
+    title="Three locations",
+    hue="LocationID",
+    density_type="simple",
+    incl_scatter=True,
+    fill=False,
+    diagonal_lines=True,
+)
+plt.show()
+```
+
+### Multiple panels
+
+`create_iso_subplots()` draws one panel per value of `subplot_by`:
+
+```{python}
+sspy.create_iso_subplots(
+    subset,
+    subplot_by="LocationID",
+    plot_layers=["scatter", "simple_density"],
+    nrows=1,
+    ncols=3,
+    title="Soundscapes by location",
+)
+plt.tight_layout()
+plt.show()
+```
+
+### Joint plots
+
+`jointplot()` adds marginal distributions of each axis, with `marginal_kind="kde"` (default) or `"hist"`:
+
+```{python}
+sspy.jointplot(
+    isd.select_location_ids(valid_data, "CamdenTown"),
+    title="Camden Town",
+    diagonal_lines=True,
+)
+plt.show()
+```
+
+## The `ISOPlot` builder
+
+`ISOPlot` assembles a plot from layers. You create the figure with `.create_subplots()`, add layers (`.add_scatter()`, `.add_density()`, `.add_simple_density()`, `.add_spi()`), and finish with `.style()`. Because each layer is a separate call, you can mix layers and data across panels:
+
+```{python}
+(
+    sspy.ISOPlot(
+        data=subset,
+        title="Layered plot",
+        hue="LocationID",
+        palette="husl",
+    )
+    .create_subplots()
+    .add_scatter()
+    .add_simple_density(fill=False)
+    .style(diagonal_lines=True, legend_loc="lower left")
+)
+plt.show()
+```
+
+For multi-panel figures, split by a column and let `ISOPlot` allocate the axes:
+
+```{python}
+(
+    sspy.ISOPlot(data=subset, title=None, hue="SessionID")
+    .create_subplots(
+        subplot_by="LocationID",
+        figsize=(4, 4),
+        auto_allocate_axes=True,
+    )
+    .add_scatter()
+    .add_simple_density(fill=False)
+    .style(title_fontsize=14, diagonal_lines=True)
+)
+plt.show()
+```
+
+To give each panel its own data instead, create the subplots grid with explicit `subplot_titles` and pass `data=` and `on_axis=` to each `.add_*()` call. The [Understanding the SPI](understanding-spi.qmd) page shows how to overlay a target distribution with `.add_spi()`.
+
+## Customising and exporting
+
+Because the output is a Matplotlib figure, you can annotate it, adjust it, or save it with `savefig`:
+
+```{python}
+#| eval: false
+fig, ax = plt.subplots(figsize=(8, 8))
+sspy.scatter(valid_data, title="Soundscape scatter plot", diagonal_lines=True, ax=ax)
+
+fig.savefig("soundscape_scatter.png", dpi=300, bbox_inches="tight")  # raster
+fig.savefig("soundscape_scatter.pdf", bbox_inches="tight")  # vector, for publication
+```
+
+The Gallery includes examples of [annotating location means](../gallery/annotated-location-means/index.qmd) and building a [report-style multi-panel figure](../gallery/report-figure/index.qmd).
+
+## Choosing a plot
+
+1. **Match the plot to the question.** Scatter plots show individual responses, density plots show the distribution, and joint plots show both with the marginals.
+2. **Group sparingly.** Colour by `hue` for a handful of groups; use subplots when there are more.
+3. **Keep the axes comparable.** Use the default $-1$ to $1$ limits, and the same limits across panels, so locations can be compared directly.
+4. **Consider the audience.** Simple, clear figures suit papers; richer layouts suit presentations and reports.
+
+## Next steps
+
+- [Gallery](../gallery/index.qmd): ready-to-adapt examples of every plot above.
+- [Understanding the SPI](understanding-spi.qmd): overlay and score target distributions.
+- [Soundscape assessment tutorial](../tutorials/soundscape-assessment-tutorial.qmd): plots within a complete analysis.
+
+## References
+
+1. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and represent quantitative soundscape data. JASA Express Letters, 2, 37201. https://doi.org/10.1121/10.0009794
+2. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.

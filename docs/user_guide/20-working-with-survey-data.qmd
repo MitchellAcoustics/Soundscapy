@@ -1,5 +1,6 @@
 ---
-title: Working with Soundscape Survey Data
+title: Working with Survey Data
+guide-section: "Working with Data"
 jupyter:
   jupytext:
     cell_metadata_filter: '-all'
@@ -16,10 +17,26 @@ setup-cells:
       # Setup for Colab
       # Run this cell once to install the required packages
       # Then restart your session, and you can skip running this cell again
-      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}"
-      !pip install "soundscapy[r]>=0.8.4"
-      %load_ext rpy2.ipython
+      !pip install "soundscapy>=0.8.4"
 ---
+
+# Working with Survey Data
+
+This page is the main reference for preparing soundscape survey data: loading, validating, calculating ISO coordinates, filtering, grouping, summarising and handling different scales and languages. It uses the International Soundscape Database (ISD) as the running example, but everything applies to your own data in the same format. If you are new to the package, start with the [Quick Start](quickstart.qmd) and [Concepts and terminology](concepts-and-terminology.qmd); the databases themselves are described in [Working with databases](working-with-databases.qmd).
+
+### What you will learn
+
+- Load and validate soundscape survey data
+- Perform data quality checks and handle missing values
+- Calculate ISO coordinates from PAQ ratings
+- Filter, group and summarise data
+- Work with different survey formats and scales
+- Handle multi-language data using language-specific angles
+- Calculate mean responses, SSM metrics and data quality checks
+
+
+
+Let's begin by importing the necessary libraries:
 
 ```{python}
 import matplotlib.pyplot as plt
@@ -29,24 +46,6 @@ import soundscapy as sspy
 from soundscapy.databases import isd
 from soundscapy.surveys import LANGUAGE_ANGLES, PAQ_IDS, rename_paqs
 ```
-
-
-## Introduction
-
-This tutorial provides a comprehensive guide to working with soundscape survey data using the `Soundscapy` package. We'll cover loading, validating, cleaning, and processing survey data, with a focus on the International Soundscape Database (ISD) format. If you are new to the package, start with the [Quick Start](quickstart.qmd) and the [Concepts and terminology](background.qmd) page first; this page focuses on data preparation and validation in more detail.
-
-### Learning Objectives
-
-By the end of this tutorial, you will be able to:
-- Load and validate soundscape survey data
-- Perform data quality checks and handle missing values
-- Calculate ISO coordinates from PAQ ratings
-- Filter and group data by various criteria
-- Work with different survey formats and scales
-- Handle multi-language data using language-specific angles
-
-Let's begin by importing the necessary libraries:
-
 
 ## 1. Loading Soundscape Survey Data
 
@@ -453,9 +452,56 @@ print(simulated_data.head())
 sspy.scatter(simulated_data, title="Simulated Soundscape Data")
 ```
 
-## 8. Conclusion
+## 8. Common Analysis Techniques
 
-In this tutorial, we've covered the essential aspects of working with soundscape survey data using the Soundscapy package:
+There are several common analysis techniques that can be applied to soundscape data.
+
+### 8.1 Calculating Mean Responses
+
+One simple analysis is to calculate the mean responses for each PAQ:
+
+```{python}
+# Calculate mean responses by location
+mean_by_location = sspy.surveys.survey_utils.mean_responses(
+    valid_data, group="LocationID"
+)
+
+# Display the results
+print("Mean PAQ responses by location:")
+mean_by_location.round(2).head()
+```
+
+### 8.2 Structural Summary Method (SSM)
+
+The Structural Summary Method (SSM) provides a more sophisticated analysis of circumplex data. It fits a cosine function to the PAQ responses and extracts parameters such as amplitude, angle, elevation, and displacement:
+
+```{python}
+# Calculate SSM metrics for a location
+location_data = isd.select_location_ids(valid_data, "CamdenTown")
+ssm_results = sspy.surveys.processing.ssm_metrics(location_data)
+
+# Display the results
+print("SSM metrics for CamdenTown:")
+ssm_results.round(2).head()
+```
+
+### 8.3 Data Quality Checks
+
+Soundscapy provides functions for checking the quality of Likert scale data:
+
+```{python}
+# Perform data quality checks
+invalid_indices = sspy.surveys.processing.likert_data_quality(valid_data)
+
+if invalid_indices:
+    print(f"Found {len(invalid_indices)} records with data quality issues.")
+else:
+    print("All records passed the data quality check.")
+```
+
+## 9. Summary
+
+The essentials of working with soundscape survey data:
 
 1. **Loading Data**: We learned how to load data from the built-in ISD dataset and from external sources.
 2. **Data Validation**: We explored how to validate and clean soundscape data to ensure quality.
@@ -464,5 +510,12 @@ In this tutorial, we've covered the essential aspects of working with soundscape
 5. **Different Scales**: We worked with different survey formats and scales.
 6. **Multi-Language Data**: We applied language-specific angles to account for cultural differences.
 7. **Simulation**: We simulated soundscape data for testing and demonstration.
+8. **Analysis techniques**: We calculated mean responses, SSM metrics and data quality checks.
 
 These tools and techniques provide a solid foundation for analyzing soundscape survey data and can be applied to a wide range of research questions and datasets.
+
+
+## Next steps
+
+- [Visualising soundscapes](visualising-soundscapes.qmd) to plot the data you have prepared.
+- [Understanding the SPI](understanding-spi.qmd) to compare distributions against targets.

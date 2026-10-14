@@ -1,5 +1,6 @@
 ---
-title: 'Understanding Soundscape Analysis: Concepts and Terminology'
+title: 'Concepts and Terminology'
+guide-section: "Getting Started"
 jupyter: python3
 setup-cells:
   python:
@@ -8,12 +9,12 @@ setup-cells:
       # Setup for Colab
       # Run this cell once to install the required packages
       # Then restart your session, and you can skip running this cell again
-      !pip install "soundscapy=0.8.4"
+      !pip install "soundscapy>=0.8.4"
 ---
 
-## Introduction
+# Concepts and Terminology
 
-Welcome to this tutorial on understanding soundscape analysis using the `Soundscapy` Python package. Before diving into code and analysis techniques, it's important to understand the fundamental concepts and terminology in soundscape research. This tutorial provides a theoretical foundation that will help you better understand why and how we analyze soundscapes.
+Before diving into code, it helps to know the concepts and terminology behind soundscape research. This page gives the theoretical foundation for everything else in the guide: what a soundscape is, how ISO 12913 assesses it, and how Soundscapy turns questionnaire responses into the coordinates and distributions you will plot and compare.
 
 ### Learning Objectives
 
@@ -93,18 +94,20 @@ The `Soundscapy` package implements many of these recommended analysis methods, 
 
 ## 3. Perceptual Attributes (PAQs)
 
-Perceived Affective Quality (PAQ) scales are a key component of soundscape assessment. These scales measure how people perceive the emotional qualities of a soundscape. The ISO 12913-2 standard recommends using eight bipolar scales:
+Perceived Affective Quality (PAQ) scales are a key component of soundscape assessment. These scales measure how people perceive the emotional qualities of a soundscape. ISO 12913-2 recommends eight attributes, each rated separately (they are unipolar items, not opposite ends of a single scale):
 
-1. **Pleasant** vs. Unpleasant
-2. **Vibrant** vs. Monotonous
-3. **Eventful** vs. Uneventful
-4. **Chaotic** vs. Calm
-5. **Annoying** vs. Not annoying
-6. **Monotonous** vs. Exciting
-7. **Uneventful** vs. Full of events
-8. **Calm** vs. Chaotic
+1. **Pleasant**
+2. **Vibrant**
+3. **Eventful**
+4. **Chaotic**
+5. **Annoying**
+6. **Monotonous**
+7. **Uneventful**
+8. **Calm**
 
-These scales are typically measured using 5-point Likert scales, where respondents rate their agreement with each attribute.
+In the circumplex they sit at 45° intervals, so that four of them form opposing pairs: pleasant–annoying, vibrant–monotonous, eventful–uneventful and chaotic–calm.
+
+Each is typically rated on a five-point Likert scale (1 = strongly disagree, 5 = strongly agree) for how well it describes the soundscape.
 
 Let's look at how these PAQs are defined in Soundscapy:
 
@@ -194,16 +197,17 @@ result_df
 
 ### The Mathematics Behind ISO Coordinates
 
-The calculation of ISO coordinates involves projecting the PAQ ratings onto the pleasantness and eventfulness dimensions. The basic formula is:
+The calculation of ISO coordinates involves projecting the PAQ ratings onto the pleasantness and eventfulness dimensions. Following ISO 12913-3, with each PAQ rating on the 1–5 scale:
 
-$$\mathrm{ISOPleasant} = \frac{\sum_{i=1}^{8} \mathrm{PAQ}_i \cdot \cos(\theta_i)}{\mathrm{normalization\ factor}}$$
+$$
+\text{ISOPleasant} = \frac{(\text{pleasant} - \text{annoying}) + \cos 45° \cdot [(\text{calm} - \text{chaotic}) + (\text{vibrant} - \text{monotonous})]}{4 + \sqrt{32}}
+$$
 
-$$\mathrm{ISOEventful} = \frac{\sum_{i=1}^{8} \mathrm{PAQ}_i \cdot \sin(\theta_i)}{\mathrm{normalization\ factor}}$$
+$$
+\text{ISOEventful} = \frac{(\text{eventful} - \text{uneventful}) + \cos 45° \cdot [(\text{chaotic} - \text{calm}) + (\text{vibrant} - \text{monotonous})]}{4 + \sqrt{32}}
+$$
 
-Where:
-- $\mathrm{PAQ}_i$ is the rating for the $i$-th PAQ (adjusted to center around 0)
-- $\theta_i$ is the angle of the $i$-th PAQ in the circumplex (in radians)
-- The normalization factor ensures that the coordinates fall between -1 and 1
+The denominator scales the result to the range $[-1, +1]$. A point at (+1, 0) is a maximally pleasant, neutral-eventfulness soundscape; a point at (−1, +0.5) is an unpleasant, moderately eventful one (like a busy road). For the generalised form with language-specific angles, see the [language-specific angles](#language-specific-angles) below.
 
 In Soundscapy, these calculations are implemented in the `calculate_iso_coords` function, which we just demonstrated above.
 
@@ -264,32 +268,35 @@ This type of analysis provides much richer information than simple averages. For
 
 ## 7. The Soundscape Perception Index (SPI)
 
-The Soundscape Perception Index (SPI) is a metric developed to quantify the similarity between a measured soundscape perception and a target or ideal perception. It's based on the statistical comparison of distributions in the ISO coordinate space.
+The Soundscape Perception Index (SPI) builds on the distributional view: it quantifies, on a 0–100 scale, how similar a measured soundscape distribution is to a target distribution in the ISO coordinate space. It is useful for evaluating interventions, comparing locations and setting quantitative design targets. See [Understanding the SPI](understanding-spi.qmd) for the method and the API.
 
-The SPI ranges from 0 to 100, where:
-- 100 indicates perfect similarity to the target distribution
-- 0 indicates complete dissimilarity
+## 8. What Soundscapy Provides
 
-This index is useful for:
-- Evaluating the success of soundscape interventions
-- Comparing soundscapes across different locations
-- Setting quantitative targets for soundscape design
+Soundscapy is organised into capability tiers based on dependencies:
 
-The SPI is calculated using a two-sample Kolmogorov-Smirnov test, which measures the maximum difference between two cumulative distribution functions.
+| Capability | Install | Key entry points |
+|------------|---------|-----------------|
+| Survey data processing | `pip install soundscapy` | `add_iso_coords()`, `ipsatize()`, `isd.load()` |
+| Visualisation | `pip install soundscapy` | `ISOPlot`, `scatter()`, `density()`, `paq_likert()` |
+| Psychoacoustic audio analysis | `pip install "soundscapy[audio]"` | `Binaural`, `AudioAnalysis` |
+| Soundscape Perception Index | `pip install "soundscapy[r]"` + R + `sn` | `spi.MultiSkewNorm` |
+| CircE structural equation model | `pip install "soundscapy[r]"` + R + `sn` | `satp.fit_circe()` |
 
 ## Summary
 
-In this tutorial, we've covered the fundamental concepts and terminology of soundscape analysis:
+1. **Soundscape**: the acoustic environment as perceived by people, in context.
+2. **ISO 12913**: the international framework for soundscape assessment.
+3. **PAQs**: the eight attributes used to evaluate soundscapes.
+4. **Circumplex model**: the two-dimensional structure organising those attributes.
+5. **ISO coordinates**: a soundscape's position in the circumplex.
+6. **Distributions**: why we analyse the full range of responses, not just means.
+7. **SPI**: a metric for comparing soundscape distributions.
 
-1. **Soundscape Definition**: The acoustic environment as perceived by people in context
-2. **ISO 12913 Standard**: The international framework for soundscape assessment
-3. **Perceptual Attributes (PAQs)**: The eight scales used to evaluate soundscapes
-4. **Circumplex Model**: The two-dimensional model organizing soundscape perception
-5. **ISO Coordinates**: The mathematical representation of a soundscape's position in the circumplex
-6. **Distribution Analysis**: The importance of considering the full range of perceptions
-7. **Soundscape Perception Index**: A metric for comparing soundscape distributions
+## Next steps
 
-With this foundation, you're now ready to dive deeper into the practical aspects of soundscape analysis using Soundscapy. In the next tutorial, we'll explore how to work with soundscape survey data in more detail.
+- [Quick Start](quickstart.qmd) for a first analysis in a few minutes.
+- [Working with survey data](working-with-survey-data.qmd) for validation, coordinates and summaries.
+- [How to analyse and represent soundscapes](../tutorials/how-to-analyse-and-represent-soundscapes.qmd) for the paper companion and a deeper treatment of the distributional approach.
 
 ## References
 

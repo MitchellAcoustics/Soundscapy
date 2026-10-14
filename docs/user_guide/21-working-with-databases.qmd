@@ -1,0 +1,245 @@
+---
+title: Working with Soundscape Databases
+guide-section: "Working with Data"
+jupyter:
+  jupytext:
+    cell_metadata_filter: '-all'
+    main_language: python
+    notebook_metadata_filter: '-all'
+  kernelspec:
+    display_name: soundscapy:default (3.13.13)
+    language: python
+    name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !pip install "soundscapy>=0.8.4"
+---
+
+```{python}
+import matplotlib.pyplot as plt
+import pandas as pd
+
+import soundscapy as sspy
+from soundscapy.databases import isd
+```
+
+
+
+# Working with Soundscape Databases
+
+Soundscapy provides loaders for several public soundscape databases. This page describes what each database contains and how to load it. Once loaded, ISD-format data is processed in exactly the same way as your own surveys; the generic steps (validation, ISO coordinates, filtering, comparing locations, language angles) are covered once in [Working with survey data](working-with-survey-data.qmd) rather than repeated here.
+
+## 1. Available Databases in Soundscapy
+
+Soundscapy currently provides access to the following databases:
+
+1. **International Soundscape Database (ISD)**: A collection of soundscape survey data from various locations around the world, following the ISO 12913 standard.
+
+2. **Soundscape Attributes Translation Project (SATP)**: A database containing translations of soundscape attributes in multiple languages, allowing for cross-cultural soundscape research.
+
+3. **ARAUS Database**: Surveys from the Augmented Reality Audio for Urban Soundscapes project (loader not yet implemented; see [section 4](#araus)).
+
+Each database has its own module in Soundscapy, providing specialized functions for loading, validating, and analyzing the data.
+
+
+## 2. Working with the International Soundscape Database (ISD)
+
+The International Soundscape Database (ISD) is a comprehensive collection of soundscape survey data following the ISO 12913 standard. It includes data from various locations, with perceptual attributes, acoustic metrics, and contextual information.
+
+### 2.1 Loading the ISD Data
+
+```{python}
+# Load the ISD dataset
+isd_data = isd.load()
+
+# Display basic information about the dataset
+print(f"ISD Dataset shape: {isd_data.shape}")
+print(f"Number of locations: {isd_data['LocationID'].nunique()}")
+print(f"Number of records: {isd_data['RecordID'].nunique()}")
+
+# Display the first few rows
+isd_data.head()
+```
+
+### 2.2 Understanding the ISD Data Structure
+
+The ISD dataset contains several types of columns:
+
+1. **Index Columns**: Identify the survey, location, and respondent
+   - `LocationID`: Identifier for the location
+   - `RecordID`: Identifier for the audio recording
+   - `GroupID`: Identifier for the group of respondents
+   - `SessionID`: Identifier for the survey session
+
+2. **Perceptual Attribute Questions (PAQs)**: Ratings on a 5-point Likert scale
+   - `PAQ1` (pleasant): How pleasant is the soundscape?
+   - `PAQ2` (vibrant): How vibrant is the soundscape?
+   - `PAQ3` (eventful): How eventful is the soundscape?
+   - `PAQ4` (chaotic): How chaotic is the soundscape?
+   - `PAQ5` (annoying): How annoying is the soundscape?
+   - `PAQ6` (monotonous): How monotonous is the soundscape?
+   - `PAQ7` (uneventful): How uneventful is the soundscape?
+   - `PAQ8` (calm): How calm is the soundscape?
+
+3. **Acoustic Metrics**: Objective measurements of the sound environment
+   - `LAeq`: A-weighted equivalent continuous sound level
+   - Various other metrics like `N5`, `Sharpness`, etc.
+
+4. **Contextual Information**: Additional data about the survey context
+   - Weather conditions, time of day, etc.
+
+Let's explore the distribution of PAQ responses:
+
+```{python}
+# Calculate the distribution of responses for each PAQ
+paq_columns = [f"PAQ{i}" for i in range(1, 9)]
+paq_distribution = isd_data[paq_columns].apply(pd.value_counts).T
+
+# Create a stacked bar chart
+ax = paq_distribution.plot(
+    kind="bar",
+    stacked=True,
+    figsize=(12, 6),
+    colormap="viridis",
+    title="Distribution of PAQ Responses in the ISD Dataset",
+)
+ax.set_xlabel("Perceptual Attribute Question")
+ax.set_ylabel("Count")
+ax.legend(title="Rating (1-5)")
+plt.tight_layout()
+plt.show()
+```
+
+
+### 2.3 Validating the ISD Data
+
+Before analyzing the data, it's important to validate it to ensure quality and consistency. Soundscapy provides functions for validating the ISD data:
+
+```{python}
+# Validate the ISD dataset
+valid_data, invalid_indices = isd.validate(isd_data)
+
+# Display validation results
+print(f"Original dataset size: {len(isd_data)}")
+print(f"Valid dataset size: {len(valid_data)}")
+print(
+    f"Number of invalid records: {len(invalid_indices) if isinstance(invalid_indices, pd.DataFrame) else 0}"
+)
+
+# If there are invalid records, display the first few
+if isinstance(invalid_indices, pd.DataFrame):
+    print("\nSample of invalid records:")
+isd_data.iloc[invalid_indices[:5].index]
+```
+
+The validation process checks for several issues:
+
+1. **Missing Values**: Ensures that all required fields have values
+2. **Valid PAQ Responses**: Checks that PAQ responses are within the valid range (1-5)
+3. **Consistent Responses**: Identifies respondents who gave the same rating for all PAQs
+4. **Data Integrity**: Verifies that the data structure matches the expected format
+
+Validation options (`val_range`, custom checks) and the following steps are covered in [Working with survey data](working-with-survey-data.qmd#data-validation-and-quality-checks).
+
+## 3. Working with the Soundscape Attributes Translation Project (SATP)
+
+The Soundscape Attributes Translation Project (SATP) provides translations of soundscape attributes in multiple languages. This is particularly useful for cross-cultural soundscape research.
+
+### 3.1 Loading the SATP Data
+
+Accessing and loading the SATP data is done through `soundscapy.databases.satp`, which provides functions for loading the SATP dataset from Zenodo.
+
+```{python}
+from soundscapy.databases import satp
+
+try:
+    data = satp.load_zenodo()
+except Exception as exc:
+    print(f"Remote SATP data could not be fetched during the docs build: {exc}")
+    data = pd.DataFrame(
+        {
+            "language": ["eng", "eng", "fra", "deu"],
+            "pleasant": [4.0, 3.0, 3.5, 2.5],
+            "eventful": [2.0, 3.5, 2.5, 4.0],
+        }
+    )
+
+data.head()
+```
+
+#### The SATP Analysis Module in Soundscapy
+
+Soundscapy's `satp` module is not a data loader — it provides the **CircE structural equation model** for validating circumplex structure in soundscape data. It requires `soundscapy[r]`.
+
+The main entry point is `fit_circe()`:
+
+```{python}
+#| output: false
+
+import soundscapy as sspy
+
+# Fit all four circumplex model types to your data when a compatible dataset is available.
+if "language" in data.columns and "Language" in data.columns:
+    eng_data = data.query("Language == 'eng'")
+else:
+    eng_data = data.copy()
+
+if "Language" in eng_data.columns:
+    try:
+        results = sspy.satp.fit_circe(eng_data, language="eng", datasource="UCL", errors="warn")
+    except Exception as exc:
+        results = f"SATP fit skipped in the docs build: {exc}"
+else:
+    results = "SATP fit skipped in offline docs build; the example data above is illustrative only."
+```
+
+```{python}
+results
+```
+
+For language-specific coordinate angles from the SATP project, see the `LANGUAGE_ANGLES` constant below.
+
+### 3.2 Understanding the SATP Data Structure
+
+The SATP dataset contains translations of soundscape attributes in multiple languages. Each row represents a translation of a specific attribute in a specific language.
+
+The main columns are:
+
+1. **Language**: The language of the translation
+2. **Attribute**: The soundscape attribute being translated
+3. **Translation**: The translated term
+4. **Back Translation**: The back-translation to English
+5. **Notes**: Additional notes about the translation
+
+### 3.3 Language-specific angles
+
+The SATP project provides the language-specific circumplex angles available as `LANGUAGE_ANGLES`. See [Working with survey data](working-with-survey-data.qmd#handling-multi-language-data) for how to apply them.
+
+## 4. ARAUS
+
+The ARAUS (Augmented Reality Audio for Urban Soundscapes) dataset is listed for completeness, but the `soundscapy.databases.araus` module is **not yet implemented**, so there is no loader at present.
+
+## 5. Best practices
+
+1. **Validate first**: always validate data before analysis.
+2. **Record provenance**: keep track of data sources, versions and processing steps.
+3. **Mind the language**: use language-specific angles for cross-cultural data.
+4. **Consider context**: location, time and environment all shape perception.
+5. **Stay reproducible**: document code and processing so analyses can be rerun.
+
+## Next steps
+
+- [Working with survey data](working-with-survey-data.qmd) for validation, coordinates, grouping and summaries.
+- [Visualising soundscapes](visualising-soundscapes.qmd) for plotting the data.
+
+## References
+
+1. ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and conceptual framework.
+2. ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection and reporting requirements.
+3. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
+4. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and represent quantitative soundscape data. JASA Express Letters, 2, 37201. https://doi.org/10.1121/10.0009794

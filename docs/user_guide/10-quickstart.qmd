@@ -1,5 +1,6 @@
 ---
-title: '`Soundscapy` - Quick Start Guide'
+title: 'Quick Start'
+guide-section: "Getting Started"
 author:
   - name: Andrew Mitchell
 jupyter:
@@ -16,41 +17,30 @@ setup-cells:
       # Setup for Colab
       # Run this cell once to install the required packages
       # Then restart your session, and you can skip running this cell again
-      !R -q -e "if(!require(sn)){install.packages('sn', quiet = TRUE)}"
-      !pip install "soundscapy[r]>=0.8.4"
-      %load_ext rpy2.ipython
+      !pip install "soundscapy>=0.8.4"
 ---
 
-By Andrew Mitchell, Lecturer, University College London
+# Quick Start
+
+This page is the fastest route to a first analysis: install Soundscapy, load a dataset, calculate ISO coordinates, filter the data and draw your first circumplex plots. Each step links to the page that covers it in depth.
 
 ## Background
 
-`Soundscapy` is a python toolbox for analysing quantitative soundscape data. Urban soundscapes are typically assessed through surveys which ask respondents how they perceive the given soundscape. Particularly when collected following the technical specification ISO 12913, these surveys can constitute quantitative data about the soundscape perception. As proposed in *How to analyse and represent quantitative soundscape data* [(Mitchell, Aletta, & Kang, 2022)](https://asa.scitation.org/doi/full/10.1121/10.0009794), in order to describe the soundscape perception of a group or of a location, we should consider the distribution of responses. `Soundscapy`'s approach to soundscape analysis follows this approach and makes it simple to process soundscape data and visualise the distribution of responses.
+Soundscapy is a Python toolbox for analysing quantitative soundscape data. Urban soundscapes are typically assessed with surveys that ask respondents how they perceive a soundscape. Following ISO 12913, these surveys give quantitative data about soundscape perception. As proposed in [Mitchell, Aletta & Kang (2022)](https://asa.scitation.org/doi/full/10.1121/10.0009794), the perception of a group or location is best described by the *distribution* of responses, and Soundscapy makes it simple to process the data and visualise those distributions. If any terms are unfamiliar, see [Concepts and terminology](concepts-and-terminology.qmd).
 
-For more information on the theory underlying the assessments and forms of data collection, please see ISO 12913-Part 2, *The SSID Protocol* [(Mitchell, *et al.*, 2020)](https://www.mdpi.com/2076-3417/10/7/2397), and *How to analyse and represent quantitative soundscape data*.
-
-## This Notebook
-
-The purpose of this notebook is to give a brief overview of how `Soundscapy` works and how to quickly get started using it to analyse your own soundscape data. The example dataset used is *The International Soundscape Database (ISD)* (Mitchell, *et al.*, 2021), which is publicly available at [Zenodo](https://zenodo.org/record/6331810) and is free to use. `Soundscapy` expects data to follow the format used in the ISD, but can be adapted for similar datasets.
-
-This page is the main entry point for first-time users. After working through it, continue with [Quick Start for Beginners](quickstart-for-beginners.qmd) for a more guided introduction, [Concepts and terminology](background.qmd) for the underlying framework, or the [gallery](../gallery/gallery.qmd) for short examples of the most common plot types.
-
-----------
+The example dataset is the *International Soundscape Database (ISD)* (Mitchell *et al.*, 2021), freely available on [Zenodo](https://zenodo.org/record/6331810). Soundscapy expects data in the ISD format, but can be adapted to similar datasets.
 
 ## Installation
-
-To install Soundscapy with `pip`:
 
 ```
 pip install soundscapy
 ```
 
-----
-
+Optional extras add psychoacoustic audio analysis (`soundscapy[audio]`) and the R-based SPI and SATP tools (`soundscapy[r]`); see [Concepts and terminology](concepts-and-terminology.qmd#what-soundscapy-provides) for the full table.
 
 ## Working with Data
 
-### Loading and Validating Data
+### Loading and validating data
 
 Let's start by importing Soundscapy and loading the International Soundscape Database (ISD):
 
@@ -77,7 +67,7 @@ data = sspy.surveys.add_iso_coords(data)
 data[["ISOPleasant", "ISOEventful"]].round(2).head()
 ```
 
-`Soundscapy` expects the PAQ values to be Likert scale values ranging from 1 to 5 by default, as specified in ISO 12913 and the SSID Protocol. However, it is possible to use data which, although structured the same way, has a different range of values. For instance this could be a 7-point Likert scale, or a 0 to 100 scale. By passing these numbers both to `validate_dataset()` and `add_paq_coords()` as the `val_range`, `Soundscapy` will check that the data conforms to what is expected and will automatically scale the ISOCoordinates from -1 to +1 depending on the original value range.
+`Soundscapy` expects the PAQ values to be Likert scale values ranging from 1 to 5 by default, as specified in ISO 12913 and the SSID Protocol. However, it is possible to use data which, although structured the same way, has a different range of values. For instance this could be a 7-point Likert scale, or a 0 to 100 scale. By passing these numbers both to `isd.validate()` and `add_iso_coords()` as the `val_range`, `Soundscapy` will check that the data conforms to what is expected and will automatically scale the ISOCoordinates from -1 to +1 depending on the original value range.
 
 For example:
 
@@ -128,251 +118,71 @@ isd.select_location_ids(data, "CamdenTown").query("gen00 == 'Female' and age00 >
 
 ## Plotting
 
-Soundscapy offers various plotting functions to visualize soundscape data. Let's explore some of them:
-
-### Scatter plots
-
-```{python}
-from soundscapy.plotting import ISOPlot
-
-# Basic scatter plot
-p1 = (
-    ISOPlot(data=isd.select_location_ids(data, ["RussellSq"]), title="Russell Square")
-    .create_subplots()
-    .add_scatter()
-    .style()
-)
-
-# Customized scatter plot with multiple locations
-p2 = (
-    ISOPlot(
-        data=isd.select_location_ids(data, ["RussellSq", "EustonTap"]),
-        title="Russell Square vs. Euston Tap",
-        hue="LocationID",
-    )
-    .create_subplots()
-    .add_scatter()
-    .style(diagonal_lines=True, legend_loc="lower left")
-)
-```
-
-The `ISOPlot` class also allows us to make this set of plots in one go, as a single figure. To do this, we need to set up the subplots slightly differently, then pass the subplot data to each `.add_scatter()` call separately, rather than passing the whole dataframe to the `ISOPlot` object.
-
-```{python}
-p3 = (
-    ISOPlot(title=None)
-    .create_subplots(
-        2, 1, subplot_titles=["Russell Square", "Russell Square vs. Euston Tap"]
-    )
-    .add_scatter(data=isd.select_location_ids(data, ["RussellSq"]), on_axis=0)
-    .add_scatter(
-        data=isd.select_location_ids(data, ["RussellSq", "EustonTap"]),
-        on_axis=1,
-        hue="LocationID",
-    )
-    .style()
-)
-p3.show()
-```
-
-### Density plots
-
-```{python}
-d1 = (
-    ISOPlot(
-        data=isd.select_location_ids(data, ["CamdenTown"]),
-        title="Camden Town Density Plot",
-    )
-    .create_subplots()
-    .add_scatter()
-    .add_density()
-    .style()
-)
-
-d2 = (
-    ISOPlot(
-        data=isd.select_location_ids(data, ["CamdenTown", "RussellSq", "PancrasLock"]),
-        title="Comparison of the soundscapes of three urban spaces",
-        hue="LocationID",
-        palette="husl",
-    )
-    .create_subplots(figsize=(8, 8))
-    .add_scatter()
-    .add_simple_density(hue="LocationID")
-    .style(title_fontsize=14)
-)
-```
-
-### Jointplots
-
-```{python}
-sspy.jointplot(
-    data=isd.select_location_ids(data, ["CamdenTown"]),
-    x="ISOEventful",
-    y="ISOPleasant",
-    title="Camden Town",
-    palette="husl",
-    kind="kde",
-)
-```
-
-### Creating subplots
-
-`Soundscapy` also provides a method for creating subplots of the circumplex. This is particularly useful when comparing multiple locations.
-
-```{python}
-df["LocationID"].unique()
-```
-
-```{python}
-sub_data = sspy.isd.select_location_ids(
-    data, ["PancrasLock", "TorringtonSq", "RegentsParkFields", "RegentsParkJapan"]
-)
-
-mp1 = (
-    ISOPlot(
-        data=sub_data,
-        title="Density plots of the first four locations",
-    )
-    .create_subplots(subplot_by="LocationID", auto_allocate_axes=True)
-    .add_scatter()
-    .add_density()
-    .style()
-)
-```
-
-You can also do this manually if you need more control, by creating a figure and axes and then plotting the density plots on the axes.
-
-```{python}
-sub_data2 = sspy.isd.select_location_ids(
-    data, ["CarloV", "SanMarco", "PlazaBibRambla", "CamdenTown"]
-)
-
-mp2 = (
-    ISOPlot(
-        data=sub_data2,
-        title=None,
-        hue="SessionID",
-    )
-    .create_subplots(
-        2,
-        2,
-        subplot_by="LocationID",
-        figsize=(12, 12),
-        adjust_figsize=False,
-    )
-    .add_scatter()
-    .add_simple_density(fill=False)
-    .style()
-)
-mp2.show()
-```
-
-### Using Adjusted Angles
-
-In Aletta et. al. (2024), we propose a method for adjusting the angles of the circumplex to better represent the perceptual space. These adjusted angles are derived for each language separately, meaning that, once projected, the circumplex coordinates will be comparable across all languages. This ability and the derived angles have been incorporated into `Soundscapy`.
-
-```{python}
-#| collapsed: false
-from soundscapy.surveys import LANGUAGE_ANGLES
-
-adj_data = sspy.surveys.add_iso_coords(
-    data,
-    names=("AdjustedPleasant", "AdjustedEventful"),
-    angles=LANGUAGE_ANGLES["eng"],
-    overwrite=True,
-)
-
-adj_p = (
-    ISOPlot(
-        data=isd.select_location_ids(adj_data, ["CamdenTown", "RussellSq"]),
-        x="AdjustedPleasant",
-        y="AdjustedEventful",
-        hue="LocationID",
-        title="Adjusted Pleasant vs. Adjusted Eventful",
-    )
-    .create_subplots()
-    .add_scatter()
-    .add_simple_density()
-    .style()
-)
-adj_p.show()
-```
-
-```{python}
-def apply_iso_coords(row):
-    angles = LANGUAGE_ANGLES.get(row["Language"], None)
-    if angles:
-        return sspy.surveys.add_iso_coords(
-            pd.DataFrame([row]),
-            angles=angles,
-            names=("AdjPleasant", "AdjEventful"),
-            overwrite=True,
-        ).iloc[0]
-    return row
-
-
-data = data.apply(apply_iso_coords, axis=1)
-```
-
-```{python}
-data[["AdjPleasant", "AdjEventful"]].describe()
-```
+Soundscapy plots on the ISO circumplex: ISOPleasant on the x-axis and ISOEventful on the y-axis. The function-style API is the quickest way in.
 
 ```{python}
 import matplotlib.pyplot as plt
 
-mp3 = (
-    ISOPlot(
-        data=data,
-        title="Soundscape Density Plots with corrected ISO coordinates",
-        x="AdjPleasant",
-        y="AdjEventful",
-        hue="SessionID",
-    )
-    .create_subplots(
-        subplot_by="LocationID",
-        figsize=(4, 4),
-        auto_allocate_axes=True,
-    )
-    .add_scatter()
-    .add_simple_density(fill=False)
-    .style(title_fontsize=25)
+sspy.scatter(
+    isd.select_location_ids(data, "CamdenTown"),
+    title="Camden Town",
+    diagonal_lines=True,
 )
 plt.show()
 ```
 
+Use `hue` to compare groups, and `density` to show the distribution rather than individual points:
+
 ```{python}
-import matplotlib.pyplot as plt
-import numpy as np
+three = isd.select_location_ids(data, ["CamdenTown", "RussellSq", "PancrasLock"])
 
-from soundscapy.spi import DirectParams, MultiSkewNorm
-
-spi = DirectParams(
-    xi=np.array([0.5, 0.7]),
-    omega=np.array([[0.1, 0.05], [0.05, 0.1]]),
-    alpha=np.array([0, -5]),
+sspy.density(
+    three,
+    title="Comparison of three urban spaces",
+    hue="LocationID",
+    density_type="simple",
+    incl_scatter=True,
 )
-# Create a custom distribution
-spi_msn = MultiSkewNorm.from_params(spi)
-# Generate random samples
-spi_msn.sample(1000)
-
-mp3 = (
-    ISOPlot(
-        data=data,
-        title="Soundscape Density Plots with corrected ISO coordinates",
-        x="AdjPleasant",
-        y="AdjEventful",
-    )
-    .create_subplots(
-        subplot_by="LocationID",
-        figsize=(4, 4),
-        auto_allocate_axes=True,
-    )
-    .add_scatter()
-    .add_simple_density(fill=False)
-    .add_spi(spi_target_data=spi_msn.sample_data, show_score="on axis")
-    .style(legend_loc=False, title_fontsize=30)
-)
+plt.show()
 ```
+
+`iso_plot()` combines layers in one call, and `create_iso_subplots()` draws one panel per group:
+
+```{python}
+sspy.create_iso_subplots(
+    isd.select_location_ids(
+        data, ["PancrasLock", "TorringtonSq", "RegentsParkFields", "RegentsParkJapan"]
+    ),
+    subplot_by="LocationID",
+    plot_layers=["scatter", "density"],
+    title="Four locations",
+)
+plt.tight_layout()
+plt.show()
+```
+
+For finer control, the layered `ISOPlot` builder composes a figure step by step:
+
+```{python}
+from soundscapy.plotting import ISOPlot
+
+(
+    ISOPlot(data=three, hue="LocationID", palette="husl", title="Three urban spaces")
+    .create_subplots()
+    .add_scatter()
+    .add_simple_density()
+    .style(diagonal_lines=True)
+)
+plt.show()
+```
+
+The [Visualising soundscapes](visualising-soundscapes.qmd) guide explains both APIs in detail, and the [Gallery](../gallery/index.qmd) has ready-to-adapt examples of every plot type.
+
+## Where next?
+
+- [Concepts and terminology](concepts-and-terminology.qmd): the ISO 12913 framework behind the numbers.
+- [Working with survey data](working-with-survey-data.qmd): validation, `val_range`, language angles and summaries.
+- [Working with databases](working-with-databases.qmd): the ISD, SATP and ARAUS loaders.
+- [Visualising soundscapes](visualising-soundscapes.qmd): the plotting API.
+- [Understanding the SPI](understanding-spi.qmd): comparing soundscape distributions against targets.
+- [Tutorials and papers](../tutorials/soundscape-assessment-tutorial.qmd): end-to-end worked examples.

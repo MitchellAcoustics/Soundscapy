@@ -1,5 +1,6 @@
 ---
-title: Understanding and Using the Soundscape Perception Index (SPI)
+title: Understanding the Soundscape Perception Index (SPI)
+guide-section: "Analysis and Visualisation"
 jupyter:
   jupytext:
     cell_metadata_filter: '-all'
@@ -32,13 +33,18 @@ from soundscapy.spi import DirectParams, MultiSkewNorm
 ```
 
 
-## Introduction
+# Understanding the Soundscape Perception Index (SPI)
 
-The Soundscape Perception Index (SPI) is a powerful metric for comparing soundscape distributions and evaluating the similarity between a measured soundscape and a target or ideal soundscape. This tutorial will guide you through understanding the SPI concept and using Soundscapy's SPI functionality to analyze and compare soundscapes.
+The Soundscape Perception Index (SPI) is a metric for comparing soundscape distributions: it evaluates how similar a measured soundscape is to a target or ideal soundscape. This page explains the concept, the multi-dimensional skewed normal (MSN) distributions it is built on, and Soundscapy's SPI functionality.
 
-### Learning Objectives
+:::{.callout-note}
+## Requirements
 
-By the end of this tutorial, you will be able to:
+The SPI uses R's `sn` package through `rpy2`. Install the extra with `pip install "soundscapy[r]"` and make sure R and the `sn` package are available. See [Concepts and terminology](concepts-and-terminology.qmd#what-soundscapy-provides) for the full dependency table.
+:::
+
+### What you will learn
+
 - Understand the theoretical foundation of the SPI
 - Work with multi-dimensional skewed normal distributions
 - Fit distributions to soundscape data
