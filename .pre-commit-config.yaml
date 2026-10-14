@@ -1,9 +1,11 @@
 # Generated files that should not be reformatted by any hook
 exclude: |
   (?x)^(
-    environment\.yml|
-    great-docs/.*|
-    site/.*
+    environment\.yml |
+    docs/_quarto/.*|
+    docs/_site/.*|
+    docs/_freeze/.*|
+    docs/\.cache/.*
   )$
 
 repos:
@@ -41,7 +43,7 @@ repos:
       - id: prettier
         args:
           - --quote-props=as-needed
-        exclude: ^great-docs/.*$
+        exclude: ^CITATION\.cff$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -54,6 +56,7 @@ repos:
         args:
           - --fix=lf
       - id: trailing-whitespace
+        exclude: ^CITATION\.cff$
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.37.2
     hooks:
@@ -78,14 +81,14 @@ repos:
             "--dir",
             "src/soundscapy",
           ]
-  # - repo: local
-  #   hooks:
-  #     - id: updatecitation
-  #       name: updateCitation
-  #       entry: updateCitation
-  #       language: python
-  #       additional_dependencies:
-  #         - updateCitation
-  #       files: ^$
-  #       pass_filenames: false
-  #       always_run: true
+  - repo: local
+    hooks:
+      - id: updatecitation
+        name: updateCitation
+        entry: updateCitation
+        language: python
+        additional_dependencies:
+          - updateCitation
+        files: ^$
+        pass_filenames: false
+        always_run: true
