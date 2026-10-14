@@ -33,7 +33,11 @@ from soundscapy.sspylogging import (
     get_logger,
     setup_logging,
 )
-from soundscapy.surveys import add_iso_coords, ipsatize, processing, rename_paqs
+from soundscapy.surveys import add_iso_coords, ipsatize, rename_paqs
+
+# Kept importable as ``soundscapy.processing`` for backwards compatibility, but
+# left out of ``__all__`` so the docs list these functions once, under ``surveys``.
+from soundscapy.surveys import processing as processing
 
 __version__ = version("soundscapy")
 
@@ -76,7 +80,6 @@ __all__ = [  # noqa: PLE0604 # _lazy_all is list[str] from lazy_loader.attach_st
     "paq_likert",
     "paq_radar_plot",
     "plotting",
-    "processing",
     "rename_paqs",
     "scatter",
     "setup_logging",
