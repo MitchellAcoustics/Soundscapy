@@ -47,8 +47,8 @@ display directly into the visualisation.
 
 The function-style entry points (`scatter_plot`, `density_plot`) remain the
 quickest way to make a single plot, while `ISOPlot` itself is the way to build
-multi-layer or multi-panel figures. The migration guide and the "Advanced
-Visualization Techniques" tutorial in the docs walk through both.
+multi-layer or multi-panel figures. The migration guide and the
+[Visualising soundscapes](../user-guide/visualising-soundscapes.qmd) guide walk through both.
 
 ### New: SATP and SPI modules
 
@@ -86,7 +86,7 @@ Project tooling has shifted: environment management is now driven by
 publish. See `pixi.toml` for the new task layout (`pixi run lint`,
 `pixi run tests`, `pixi run -e docs docs-build`, etc.). Documentation is
 now built with [great-docs](https://posit-dev.github.io/great-docs/). If you contribute, the
-[contributing guide](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/user_guide/02-contributing.qmd) has the updated workflow.
+[contributing guide](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/project/02-contributing.qmd) has the updated workflow.
 
 ### Full migration guide
 

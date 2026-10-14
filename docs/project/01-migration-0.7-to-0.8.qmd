@@ -7,13 +7,13 @@ title: "Upgrading from 0.7 to 0.8"
 This guide walks through the changes you need to be aware of when upgrading
 from the `0.7.x` series to the `0.8.2` stable release.
 
-!!! note
-
-    The last user-facing stable release of _Soundscapy_ on PyPI was `v0.7.8`.
-    The `0.8.0rc1` through `0.8.0rc10` and `0.8.2.dev1` tags were
-    pre-releases. `v0.8.2` consolidates that entire pre-release line into a
-    single shipping version, so most users are upgrading across a much larger
-    gap than the version number suggests.
+:::{.callout-note}
+The last user-facing stable release of _Soundscapy_ on PyPI was `v0.7.8`.
+The `0.8.0rc1` through `0.8.0rc10` and `0.8.2.dev1` tags were
+pre-releases. `v0.8.2` consolidates that entire pre-release line into a
+single shipping version, so most users are upgrading across a much larger
+gap than the version number suggests.
+:::
 
 ## Why this matters
 
@@ -71,8 +71,8 @@ plot.show()
 ```
 
 Subplots, custom styling, and SPI integration are all part of the new
-`ISOPlot` API. See the **Advanced Visualization Techniques** tutorial in the
-docs for a full walkthrough.
+`ISOPlot` API. See the [Visualising soundscapes](../user-guide/visualising-soundscapes.qmd)
+guide for a full walkthrough.
 
 ## Plotly backend removed
 
@@ -228,4 +228,4 @@ are worth knowing about:
   [great-docs](https://posit-dev.github.io/great-docs/)** with configuration
   in `great-docs.yml`.
 
-See `pixi.toml` and [the contributing guide](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/user_guide/02-contributing.qmd) for the full workflow.
+See `pixi.toml` and [the contributing guide](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/project/02-contributing.qmd) for the full workflow.

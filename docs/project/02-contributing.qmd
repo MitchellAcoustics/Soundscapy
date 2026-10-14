@@ -20,7 +20,7 @@ We use [Prek](https://prek.j178.dev) for pre-commit hooks, configured in `.pre-c
 
 ## Documentation
 
-Documentation is built with **great-docs**. Configuration lives in `docs/great-docs.yml`, narrative pages in `docs/user_guide/`, gallery examples in `docs/gallery/`, API reference pages are generated from source, and the output site is written to `docs/_site/`.
+Documentation is built with **great-docs**. Configuration lives in `docs/great-docs.yml`, user-guide pages in `docs/user_guide/`, tutorials and papers in `docs/tutorials/`, gallery examples in `docs/gallery/`, project pages (news, migration, contributing) in `docs/project/`, API reference pages are generated from source, and the output site is written to `docs/_site/`.
 
 Use the Pixi docs tasks for local docs work:
 

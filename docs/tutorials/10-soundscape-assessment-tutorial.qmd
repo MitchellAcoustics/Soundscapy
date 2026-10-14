@@ -1,4 +1,5 @@
 ---
+title: Soundscape Assessment Tutorial
 jupyter:
   jupytext:
     cell_metadata_filter: '-all'
@@ -24,6 +25,10 @@ setup-cells:
 
 
 ## Introduction
+
+:::{.callout-tip}
+Running this as a workshop? The [IoA workshop worksheet](ioa-workshop-worksheet.qmd) is a condensed version of this tutorial with exercise prompts.
+:::
 
 This tutorial will guide you through the process of conducting a comprehensive soundscape assessment using Soundscapy. You'll learn how to analyze survey data, create visualizations, and interpret the results to understand how people perceive and experience soundscapes in different locations.
 
@@ -558,134 +563,9 @@ These insights can inform soundscape design and management decisions, such as:
 - Which sound sources to promote or mitigate at different locations
 - How to design new spaces to achieve desired soundscape characteristics
 
-## 9. Gallery of Soundscapy Visualizations
+## 9. More plot types
 
-Soundscapy offers a wide range of visualization options. Here's a gallery of additional plots you can create:
-
-```{python}
-# Basic scatter plot
-sspy.scatter(
-    valid_data,
-    title="Basic Scatter Plot",
-    diagonal_lines=True,
-)
-plt.show()
-```
-
-```{python}
-# Density plot
-sspy.density(
-    valid_data,
-    title="Density Plot",
-    diagonal_lines=True,
-    fill=True,
-)
-plt.show()
-```
-
-```{python}
-# Combined scatter and density plot
-sspy.iso_plot(
-    valid_data,
-    title="Combined Scatter and Density Plot",
-    plot_layers=["scatter", "density"],
-    diagonal_lines=True,
-)
-plt.show()
-```
-
-```{python}
-# Simple density plot with hue
-sspy.density(
-    valid_data,
-    title="Simple Density Plot with Hue",
-    density_type="simple",
-    hue="LocationID",
-)
-plt.show()
-```
-
-```{python}
-# Joint plot
-sspy.jointplot(
-    valid_data,
-    title="Joint Plot",
-)
-plt.show()
-```
-
-```{python}
-# Joint plot with histogram marginals
-plt.figure(figsize=(10, 10))
-sspy.jointplot(
-    valid_data, title="Joint Plot with Histogram Marginals", marginal_kind="hist"
-)
-plt.show()
-```
-
-```{python}
-# Joint plot with grouping
-plt.figure(figsize=(10, 10))
-sspy.jointplot(
-    valid_data,
-    title="Joint Plot with Grouping",
-    hue="LocationID",
-    density_type="simple",
-)
-plt.show()
-```
-
-```{python}
-# Custom multi-panel visualization
-fig = plt.figure(figsize=(15, 14))
-
-# Create a 2x2 grid
-gs = fig.add_gridspec(2, 2, height_ratios=[1, 1.2])
-
-# Create a scatter plot of all locations in the first subplot
-ax1 = fig.add_subplot(gs[0, 0])
-sspy.scatter(
-    valid_data,
-    title="All Locations - Scatter",
-    hue="LocationID",
-    ax=ax1,
-)
-
-# Create a density plot of all locations in the second subplot
-ax2 = fig.add_subplot(gs[0, 1])
-sspy.density(
-    valid_data,
-    title="All Locations - Density",
-    hue="LocationID",
-    density_type="simple",
-    incl_scatter=False,
-    fill=False,
-    ax=ax2,
-)
-
-# Create a scatter plot colored by LAeq in the third subplot
-ax3 = fig.add_subplot(gs[1, 0])
-sspy.scatter(
-    valid_data,
-    title="Sound Level (LAeq)",
-    hue="LAeq",
-    palette="viridis",
-    ax=ax3,
-)
-
-# Create a density plot colored by natural sounds in the fourth subplot
-ax4 = fig.add_subplot(gs[1, 1])
-sspy.density(
-    valid_data,
-    title="Natural Sounds Dominance",
-    hue="natural_sounds",
-    density_type="simple",
-    ax=ax4,
-)
-
-plt.tight_layout()
-plt.show()
-```
+Soundscapy can draw many more plot types than the ones used above (joint plots, histogram marginals, grouped densities, custom multi-panel figures and more). Browse the [Gallery](../gallery/index.qmd) for ready-to-adapt examples, and see [Visualising soundscapes](../user-guide/visualising-soundscapes.qmd) for the API.
 
 ## 10. Summary
 
