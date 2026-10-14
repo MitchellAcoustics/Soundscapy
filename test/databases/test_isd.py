@@ -60,7 +60,8 @@ class TestISDValidation:
         df_clean, df_excl = isd.validate(isd_data)
         assert isinstance(df_clean, pd.DataFrame)
         assert isinstance(df_excl, pd.DataFrame) or df_excl is None
-        assert len(df_clean) + len(df_excl) == len(isd_data)
+        if df_excl is not None:
+            assert len(df_clean) + len(df_excl) == len(isd_data)
         assert all(col in df_clean.columns for col in isd._PAQ_ALIASES.values())
 
         df_clean, df_excl = isd.validate(df_clean)
@@ -68,7 +69,7 @@ class TestISDValidation:
 
     def test_validate_allow_na(self, isd_data):
         """Test validation of ISD data allowing NaN values."""
-        df_clean, df_excl = isd.validate(isd_data, allow_paq_na=True)
+        df_clean, _df_excl = isd.validate(isd_data, allow_paq_na=True)
         assert df_clean.isna().sum().sum() > 0
 
 
