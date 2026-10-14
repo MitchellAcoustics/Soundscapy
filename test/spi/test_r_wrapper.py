@@ -1,11 +1,12 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Tests for the R integration wrapper.
 
 These tests check the R session management and data conversion functions.
 They are skipped if rpy2 is not installed.
 """
-
-import pytest
 
 
 # === Pure-Python tests (no R required) ===

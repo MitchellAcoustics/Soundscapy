@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """Plotting functions for visualizing Likert scale data."""
 
 import warnings
@@ -14,7 +17,7 @@ from soundscapy.databases.isd import (
     likert_categorical_from_data,
     match_col_to_likert_scale,
 )
-from soundscapy.plotting.iso_plot import ExperimentalWarning
+from soundscapy.plotting._warnings import ExperimentalWarning
 from soundscapy.surveys import rename_paqs, return_paqs
 from soundscapy.surveys.survey_utils import (
     EQUAL_ANGLES,
@@ -246,6 +249,9 @@ def paq_likert(
     )
 
     new_data = data[paq_cols].copy()
+    # pyrefly: ignore [no-matching-overload]
+    # pandas-stubs have no DataFrame.apply overload returning Categorical
+    # works at runtime
     new_data = new_data.apply(likert_categorical_from_data, axis=0)
 
     if ax is None:

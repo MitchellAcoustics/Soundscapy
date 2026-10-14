@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Soundscapy Plotting Module.
 
@@ -14,7 +17,16 @@ from soundscapy.plotting.backends_deprecated import (
     PlotType,
     StyleOptions,
 )
-from soundscapy.plotting.iso_plot import ISOPlot
+from soundscapy.plotting.isoplot import ISOPlot
+from soundscapy.plotting.layers import (
+    DensityLayer,
+    Layer,
+    ScatterLayer,
+    SimpleDensityLayer,
+    SPIDensityLayer,
+    SPIScatterLayer,
+    SPISimpleLayer,
+)
 from soundscapy.plotting.likert import paq_likert, paq_radar_plot, stacked_likert
 from soundscapy.plotting.plot_functions import (
     create_circumplex_subplots,
@@ -31,8 +43,15 @@ __all__ = [
     "Backend",
     "CircumplexPlot",
     "CircumplexPlotParams",
+    "DensityLayer",
     "ISOPlot",
+    "Layer",
     "PlotType",
+    "SPIDensityLayer",
+    "SPIScatterLayer",
+    "SPISimpleLayer",
+    "ScatterLayer",
+    "SimpleDensityLayer",
     "StyleOptions",
     "create_circumplex_subplots",
     "create_iso_subplots",

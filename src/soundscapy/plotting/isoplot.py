@@ -1,10 +1,13 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Main module for creating circumplex plots using different backends.
 
 Examples
 --------
 >>> from soundscapy import isd, surveys
->>> from soundscapy.plotting.iso_plot import ISOPlot
+>>> from soundscapy.plotting.isoplot import ISOPlot
 >>> df = isd.load()
 >>> df = surveys.add_iso_coords(df)
 >>> sub_df = isd.select_location_ids(df, ['CamdenTown', 'RegentsParkJapan'])
@@ -38,6 +41,7 @@ from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure, SubFigure
 
+from soundscapy.plotting._warnings import ExperimentalWarning
 from soundscapy.plotting.defaults import (
     DEFAULT_STYLE_PARAMS,
     DEFAULT_XCOL,
@@ -68,16 +72,9 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from soundscapy.plotting.param_models import SeabornPaletteType
-    from soundscapy.spi.msn import (
-        CentredParams,
-        DirectParams,
-    )
+    from soundscapy.spi import msn
 
 logger = get_logger()
-
-
-class ExperimentalWarning(Warning):
-    """A warning class to signify experimental features."""
 
 
 class ISOPlot:
@@ -102,7 +99,7 @@ class ISOPlot:
 
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         data: pd.DataFrame | None = None,
         x: str | np.ndarray | pd.Series | None = "ISOPleasant",
@@ -384,7 +381,7 @@ class ISOPlot:
         if data is None:
             return
 
-        if isinstance(hue, str) and not (hue in data.columns or hue in data.index.name):
+        if isinstance(hue, str) and hue not in data.columns and hue != data.index.name:
             msg = (
                 f"Invalid hue column '{hue}'. "
                 f"Available columns are: {data.columns.tolist()}"
@@ -397,7 +394,7 @@ class ISOPlot:
             msg = "hue must be a string, numpy array, or pandas Series."
             raise TypeError(msg)
 
-    def create_subplots(
+    def create_subplots(  # noqa: PLR0917
         self,
         nrows: int = 1,
         ncols: int = 1,
@@ -1200,7 +1197,7 @@ class ISOPlot:
         self,
         on_axis: int | tuple[int, int] | list[int] | None = None,
         spi_target_data: pd.DataFrame | np.ndarray | None = None,
-        msn_params: DirectParams | CentredParams | None = None,
+        msn_params: msn.DirectParams | msn.CentredParams | None = None,
         *,
         layer_class: type[Layer] = SPISimpleLayer,
         **params: Any,
@@ -1228,7 +1225,7 @@ class ISOPlot:
 
         >>> import pandas as pd
         >>> import numpy as np
-        >>> from soundscapy.spi import DirectParams
+        >>> from soundscapy.spi import msn
         >>> rng = np.random.default_rng(42)
         >>>    # Create a DataFrame with random data
         >>> data = pd.DataFrame(
@@ -1236,7 +1233,7 @@ class ISOPlot:
         ...    columns=['ISOPleasant', 'ISOEventful']
         ... )
         >>>    # Define MSN parameters for the SPI target
-        >>> msn_params = DirectParams(
+        >>> msn_params = msn.DirectParams(
         ...     xi=np.array([0.5, 0.7]),
         ...     omega=np.array([[0.1, 0.05], [0.05, 0.1]]),
         ...     alpha=np.array([0, -5]),
@@ -1514,7 +1511,9 @@ class ISOPlot:
         msg = "AnnotationLayer is not yet implemented. "
         raise NotImplementedError(msg)
         # TODO(MitchellAcoustics): Implement AnnotationLayer
+        # pyrefly: ignore [unreachable]
         return self.add_layer(
+            # pyrefly: ignore [bad-argument-type]
             "AnnotationLayer",
             text=text,
             xy=xy,

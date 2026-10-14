@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Layer-based visualization components for plotting.
 
@@ -15,7 +18,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
+from soundscapy.plotting.defaults import (
+    DEFAULT_SPI_TEXT_KWARGS,
+    RECOMMENDED_MIN_SAMPLES,
+)
 from soundscapy.plotting.param_models import (
     DensityParams,
     ScatterParams,
@@ -475,8 +481,6 @@ class SPILayer(Layer):
             Additional arguments for the text
 
         """
-        from soundscapy.plotting.defaults import DEFAULT_SPI_TEXT_KWARGS
-
         text_kwargs = DEFAULT_SPI_TEXT_KWARGS.copy()
         text_kwargs.update(**text_kwargs)
         text_kwargs["s"] = f"SPI: {spi_sc}"
@@ -509,7 +513,7 @@ class SPILayer(Layer):
         spi_params: DirectParams | CentredParams | None,
     ) -> tuple[pd.DataFrame | np.ndarray | None, DirectParams | CentredParams | None]:
         """Validate the right combination of inputs for the SPI plot."""
-        from soundscapy.spi.msn import CentredParams, DirectParams
+        from soundscapy.spi.msn import CentredParams, DirectParams  # noqa: PLC0415 lazy import to avoid triggering R
 
         # Input validation
         if spi_data is None and spi_params is None:
@@ -566,7 +570,7 @@ class SPILayer(Layer):
             Prepared data for SPI plotting
 
         """
-        from soundscapy.spi.msn import MultiSkewNorm
+        from soundscapy.spi.msn import MultiSkewNorm  # noqa: PLC0415
 
         # Generate data from parameters if provided
         if spi_params is not None:
@@ -635,7 +639,7 @@ class SPILayer(Layer):
         target_data: pd.DataFrame,
         test_data: pd.DataFrame,
     ) -> int | None:
-        from soundscapy.spi import spi_score
+        from soundscapy.spi import spi_score  # noqa: PLC0415
 
         return spi_score(target=target_data, test=test_data)
 
@@ -678,6 +682,10 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
 
 class SPIDensityLayer(SPILayer, DensityLayer):
     """Layer for rendering simplified SPI plots with fewer contour levels."""
+
+    # Narrowed to satisfy both SPILayer (SPISeabornParams)
+    # and DensityLayer (DensityParams)
+    params: SPISimpleDensityParams
 
     def __init__(self) -> None:
         """
