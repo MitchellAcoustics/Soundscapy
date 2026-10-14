@@ -198,3 +198,5 @@ environment.yml.bak
 
 # Local, machine-specific direnv overrides (tokens etc.)
 .envrc.local
+docs/tutorials/SoundscapyResults.xlsx
+docs/tutorials/SoundscapyResults.csv
