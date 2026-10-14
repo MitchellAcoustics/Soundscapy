@@ -9,10 +9,9 @@ categories: [density, customisation]
 #| label: fig-customised-density
 #| fig-alt: "Customised density plot"
 import matplotlib.pyplot as plt
-import pandas as pd
 import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 
 sspy.density(
     data,

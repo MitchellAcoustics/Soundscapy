@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 data["natural_sounds"] = pd.cut(
     data["natural_sounds"], bins=[0, 2, 5], labels=["Low (1-2)", "High (3-5)"]
 )

@@ -9,10 +9,10 @@ categories: [acoustic metrics, seaborn]
 #| label: fig-eventfulness-vs-loudness
 #| fig-alt: "ISOEventful against N5 by location"
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
+import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 
 sns.lmplot(
     data=data,

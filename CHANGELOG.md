@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `isd.load_demo()` returns a small, tidy subset of the bundled ISD (four London
+  locations, descriptive column names, ISO coordinates added) for examples and tutorials.
+
 ### Changed
 
 - Universal constants (`PAQ`, `PAQ_IDS`, `PAQ_LABELS`, `LikertScale`, `LIKERT_SCALES`,

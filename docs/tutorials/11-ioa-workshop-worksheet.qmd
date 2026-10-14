@@ -61,10 +61,8 @@ warnings.filterwarnings("ignore")
 The first step in any soundscape assessment is to load and explore your data. For this tutorial, we'll use a sample dataset containing soundscape survey responses from multiple locations.
 
 ```{python}
-# Load the demo data
-data = pd.read_csv(
-    "../assets/DemoData.csv"
-)
+# Load the demo data bundled with Soundscapy (a subset of the ISD)
+data = sspy.isd.load_demo()
 
 # Display the first few rows
 data.head()

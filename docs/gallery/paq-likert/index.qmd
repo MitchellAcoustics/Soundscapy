@@ -9,12 +9,10 @@ categories: [likert]
 #| label: fig-paq-likert
 #| fig-alt: "Likert plot of PAQ responses"
 import matplotlib.pyplot as plt
-import pandas as pd
 import soundscapy as sspy
+from soundscapy.constants import PAQ_IDS
 
-data = pd.read_csv("../../assets/DemoData.csv")
-
-from soundscapy import PAQ_IDS
+data = sspy.isd.load_demo()
 
 sspy.paq_likert(data[PAQ_IDS], title="Distribution of PAQ responses")
 plt.show()

@@ -98,6 +98,79 @@ def load(locations: list[str] | None = None) -> pd.DataFrame:
     return data
 
 
+_DEMO_LOCATIONS = ["CamdenTown", "MarchmontGarden", "PancrasLock", "TateModern"]
+
+# ISD column -> friendlier demo name, in demo column order.
+_DEMO_COLUMNS = {
+    "LocationID": "LocationID",
+    "SessionID": "SessionID",
+    "GroupID": "GroupID",
+    "RecordID": "RecordID",
+    "start_time": "start_time",
+    "end_time": "end_time",
+    "ssi01": "traffic_noise",
+    "ssi02": "other_noise",
+    "ssi03": "human_sounds",
+    "ssi04": "natural_sounds",
+    **{paq: paq for paq in constants.PAQ_IDS},
+    "sss01": "overall_sound_environment",
+    "sss02": "appropriate",
+    "sss03": "perceived_loud",
+    "sss04": "visit_often",
+    "sss05": "like_to_visit",
+    "age00": "age",
+    "gen00": "gender",
+    "misc01": "free_response",
+    "misc03": "tourist_local",
+    "LAeq_L(A)_Max": "LAeq",
+    "LAeq_L10(A)_Max": "LA10",
+    "LAeq_L90(A)_Max": "LA90",
+    "LCeq_L(C)_Max": "LCeq",
+    "N_N5_Max": "N5",
+    "S_S_Max": "sharpness",
+    "R_R_Max": "roughness",
+    "T_TonalityHMS_Max": "tonality",
+}
+
+
+def load_demo() -> pd.DataFrame:
+    """
+    Load a small, tidy subset of the ISD for examples and tutorials.
+
+    The demo dataset contains the four London locations CamdenTown,
+    MarchmontGarden, PancrasLock and TateModern from the bundled ISD. Responses
+    with any missing PAQ are dropped, survey and acoustic columns get short
+    descriptive names (e.g. ``traffic_noise``, ``LAeq``, ``N5``), and the
+    ``ISOPleasant`` and ``ISOEventful`` coordinates are added.
+
+    Returns
+    -------
+    :
+        DataFrame with one row per survey response.
+
+    See Also
+    --------
+    load : Load the full bundled ISD with its original column names.
+
+    Examples
+    --------
+    >>> df = load_demo()
+    >>> sorted(df["LocationID"].unique())
+    ['CamdenTown', 'MarchmontGarden', 'PancrasLock', 'TateModern']
+    >>> {"ISOPleasant", "ISOEventful", "LAeq"}.issubset(df.columns)
+    True
+
+    """
+    data = (
+        load(_DEMO_LOCATIONS)
+        .dropna(subset=constants.PAQ_IDS)
+        .loc[:, list(_DEMO_COLUMNS)]
+        .rename(columns=_DEMO_COLUMNS)
+        .reset_index(drop=True)
+    )
+    return processing.add_iso_coords(data)
+
+
 def load_zenodo(version: str = "latest") -> pd.DataFrame:
     """
     Automatically fetch and load the ISD dataset from Zenodo.

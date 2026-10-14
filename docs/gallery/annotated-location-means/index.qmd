@@ -9,10 +9,9 @@ categories: [customisation]
 #| label: fig-annotated-location-means
 #| fig-alt: "Mean ISO coordinates labelled by location"
 import matplotlib.pyplot as plt
-import pandas as pd
 import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 
 means = data.groupby("LocationID")[["ISOPleasant", "ISOEventful"]].mean()
 

@@ -9,10 +9,9 @@ categories: [ISOPlot, grouping]
 #| label: fig-isoplot-builder
 #| fig-alt: "Layered ISOPlot comparing four locations"
 import matplotlib.pyplot as plt
-import pandas as pd
 import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 
 places = ["CamdenTown", "PancrasLock", "RegentsParkJapan", "RegentsParkFields"]
 subset = data[data["LocationID"].isin(places)]

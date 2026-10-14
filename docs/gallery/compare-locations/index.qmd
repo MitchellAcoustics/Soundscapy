@@ -9,10 +9,9 @@ categories: [comparison]
 #| label: fig-compare-locations
 #| fig-alt: "Density outlines for four locations"
 import matplotlib.pyplot as plt
-import pandas as pd
 import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 places = ["CamdenTown", "PancrasLock", "RegentsParkJapan", "RegentsParkFields"]
 
 sspy.density(

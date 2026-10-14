@@ -9,10 +9,9 @@ categories: [layers]
 #| label: fig-scatter-density
 #| fig-alt: "Scatter points layered over a density surface"
 import matplotlib.pyplot as plt
-import pandas as pd
 import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 
 sspy.iso_plot(
     data,

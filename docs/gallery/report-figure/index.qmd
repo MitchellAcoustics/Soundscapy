@@ -9,10 +9,9 @@ categories: [customisation, subplots]
 #| label: fig-report-figure
 #| fig-alt: "Report figure combining scatter, density and per-location panels"
 import matplotlib.pyplot as plt
-import pandas as pd
 import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 
 places = ["CamdenTown", "PancrasLock", "RegentsParkJapan"]
 report = data[data["LocationID"].isin(places)]

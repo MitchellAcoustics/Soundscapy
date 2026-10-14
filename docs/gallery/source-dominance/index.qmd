@@ -9,10 +9,10 @@ categories: [sound sources, seaborn]
 #| label: fig-source-dominance
 #| fig-alt: "Mean sound source dominance by location"
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
+import soundscapy as sspy
 
-data = pd.read_csv("../../assets/DemoData.csv")
+data = sspy.isd.load_demo()
 
 sources = ["traffic_noise", "other_noise", "human_sounds", "natural_sounds"]
 long = (

@@ -29,6 +29,15 @@ class TestISDLoading:
         assert data.shape == (3589, 142)  # Adjust these numbers if they change
         assert all(col in data.columns for col in isd._PAQ_ALIASES.values())
 
+    def test_load_demo(self):
+        """Test the demo subset: four locations, complete PAQs, renamed columns."""
+        data = isd.load_demo()
+        assert data.shape == (456, 37)
+        assert set(data["LocationID"]) == set(isd._DEMO_LOCATIONS)
+        assert list(data.columns[:-2]) == list(isd._DEMO_COLUMNS.values())
+        assert list(data.columns[-2:]) == ["ISOPleasant", "ISOEventful"]
+        assert not data[list(isd._PAQ_ALIASES.values())].isna().any().any()
+
     @pytest.mark.slow
     def test_load_zenodo(self):
         """Test loading of ISD data from Zenodo."""
