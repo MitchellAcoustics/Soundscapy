@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Integration tests for the CircE wrapper.
 
@@ -18,6 +21,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from scipy.stats import chi2 as scipy_chi2
+
+from soundscapy.constants import PAQ_IDS, PAQ_LABELS
 
 # ---------------------------------------------------------------------------
 # Vocational interests correlation matrix from CircE.BFGS.Rd example
@@ -59,7 +64,6 @@ VOCATIONAL_N = 175
 def isd_paqs():
     """Return the ISD PAQ data (dropna) for use in SATP tests."""
     import soundscapy as sspy
-    from soundscapy.surveys.survey_utils import PAQ_IDS
 
     return sspy.isd.load()[PAQ_IDS].dropna()
 
@@ -86,7 +90,6 @@ def isd_with_participant():
     valid (non-degenerate) correlation matrix.
     """
     import soundscapy as sspy
-    from soundscapy.surveys.survey_utils import PAQ_IDS
 
     raw = sspy.isd.load()
     return (
@@ -102,7 +105,12 @@ def isd_with_participant():
 # These tests must not be weakened or removed — they verify the actual R computation.
 # ---------------------------------------------------------------------------
 
-_BFGS_KWARGS = dict(data_cor=VOCATIONAL_COR, n=VOCATIONAL_N, scales=_V_NAMES, m_val=3)
+_BFGS_KWARGS = {
+    "data_cor": VOCATIONAL_COR,
+    "n": VOCATIONAL_N,
+    "scales": _V_NAMES,
+    "m_val": 3,
+}
 
 
 class TestBfgsWrapper:
@@ -268,6 +276,7 @@ class TestCircEDataclass:
             isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
         )
         # Model df must be strictly less than null df (28 for 8 variables)
+        assert result.d is not None
         assert result.d < 28, (
             f"CircE.d = {result.d} — looks like dfnull was used instead of d."
         )
@@ -280,6 +289,8 @@ class TestCircEDataclass:
         result = CircE.compute_bfgs_fit(
             isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
         )
+        assert result.chisq is not None
+        assert result.d is not None
         expected_p = scipy_chi2.sf(result.chisq, result.d)
         assert pytest.approx(result.p, rel=1e-6) == expected_p
 
@@ -290,6 +301,12 @@ class TestCircEDataclass:
         result = CircE.compute_bfgs_fit(
             isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
         )
+        assert result.chisq is not None
+        assert result.p is not None
+        assert result.rmsea is not None
+        assert result.cfi is not None
+        assert result.gfi is not None
+        assert result.srmr is not None
         assert result.chisq >= 0
         assert 0.0 <= result.p <= 1.0
         assert result.rmsea >= 0
@@ -300,7 +317,6 @@ class TestCircEDataclass:
     def test_polar_angles_is_series_for_free_angle_models(self, isd_cor, isd_n):
         """polar_angles must be a pd.Series with PAQ_IDS index for UNCONSTRAINED and EQUAL_COM."""  # noqa: E501
         from soundscapy.satp.circe import CircE, CircModelE
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         for model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
             result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
@@ -325,7 +341,6 @@ class TestCircEDataclass:
     def test_circe_to_dict_has_expected_keys(self, isd_cor, isd_n):
         """to_dict() must include all fit statistics and PAQ1-PAQ8 columns."""
         from soundscapy.satp.circe import CircE, CircModelE
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         result = CircE.compute_bfgs_fit(
             isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
@@ -356,19 +371,18 @@ class TestCircEDataclass:
     def test_circe_to_dict_paq_values_match_polar_angles(self, isd_cor, isd_n):
         """PAQ values in to_dict() must match the polar_angles Series."""
         from soundscapy.satp.circe import CircE, CircModelE
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         result = CircE.compute_bfgs_fit(
             isd_cor, isd_n, "ISD", "EN", CircModelE.UNCONSTRAINED
         )
         d = result.to_dict()
+        assert result.polar_angles is not None
         for paq in PAQ_IDS:
             assert d[paq] == pytest.approx(result.polar_angles[paq])
 
     def test_circe_to_dict_paq_none_for_constrained(self, isd_cor, isd_n):
         """PAQ1-PAQ8 must be None in to_dict() for constrained-angle models."""
         from soundscapy.satp.circe import CircE, CircModelE
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         for model in (CircModelE.EQUAL_ANG, CircModelE.CIRCUMPLEX):
             result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
@@ -429,7 +443,6 @@ class TestFitCirce:
         (participant, PAQ_col) pair, the mean across the participant's rows is zero.
         """
         from soundscapy.satp.circe import person_center
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         with pytest.warns(DeprecationWarning, match="person_center"):
             centered = person_center(isd_with_participant, by="participant")
@@ -490,7 +503,6 @@ class TestFitCirce:
         """
         from soundscapy.satp.circe import fit_circe
         from soundscapy.surveys import ipsatize
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         # Introduce NaN in one PAQ column for a single participant's rows
         data_with_nan = isd_with_participant.copy()
@@ -547,7 +559,7 @@ class TestFitCirce:
             )
 
     def test_fit_circe_no_person_centering(self, isd_with_participant):
-        """center_by_participant=False must run without error and return a CircEResults."""
+        """center_by_participant=False must run without error and return a CircEResults."""  # noqa: E501
         from soundscapy.satp.circe import CircEResults, fit_circe
 
         result = fit_circe(
@@ -621,7 +633,6 @@ class TestFitCirce:
     def test_satp_schema_participant_case_insensitive(self):
         """SATPSchema must accept 'PARTICIPANT' and normalise it to 'participant'."""
         from soundscapy.satp.circe import SATPSchema
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         # Build a tiny valid DataFrame with an ALL-CAPS participant column.
         rng = np.random.default_rng(0)
@@ -635,7 +646,6 @@ class TestFitCirce:
     def test_satp_schema_paq_label_case_insensitive(self):
         """SATPSchema must accept PAQ labels in any case ('Pleasant' → 'PAQ1')."""
         from soundscapy.satp.circe import SATPSchema
-        from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
 
         rng = np.random.default_rng(1)
         # Build DataFrame using title-cased label names (e.g. 'Pleasant').
@@ -650,12 +660,11 @@ class TestFitCirce:
             assert label not in validated.columns, f"Original '{label}' still present"
 
     def test_fit_circe_no_person_centering_no_participant(self):
-        """fit_circe(center_by_participant=False) must work without a participant column."""
+        """fit_circe(center_by_participant=False) must work without a participant column."""  # noqa: E501
         import warnings
 
         import soundscapy as sspy
         from soundscapy.satp.circe import CircEResults, fit_circe
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         data = sspy.isd.load()[PAQ_IDS].dropna()  # no participant column
         with warnings.catch_warnings():
@@ -672,7 +681,6 @@ class TestFitCirce:
 
         import soundscapy as sspy
         from soundscapy.satp.circe import fit_circe
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         data = sspy.isd.load()[PAQ_IDS].dropna()  # no participant column
         with warnings.catch_warnings():
@@ -761,10 +769,9 @@ class TestFitCirce:
     def test_fit_circe_grand_mean_centering(self, isd_with_participant):
         """fit_circe uses grand-mean centering: one scalar per participant."""
         from soundscapy.surveys import ipsatize
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         # Grand-mean centering: for each participant, all PAQ values sum to zero
-        # (the grand mean across all scales × all rows is zero).
+        # (the grand mean across all scales x all rows is zero).
         centered = ipsatize(
             isd_with_participant, method="grand_mean", participant_col="participant"
         )
@@ -773,7 +780,7 @@ class TestFitCirce:
             participant=isd_with_participant["participant"].values
         )
         flat_means = check.groupby("participant")[PAQ_IDS].apply(
-            lambda df: float(df.values.mean())
+            lambda df: float(df.to_numpy().mean())
         )
         np.testing.assert_allclose(flat_means.to_numpy(), 0.0, atol=1e-10)
 
@@ -789,7 +796,6 @@ class TestNormalizePolarAngles:
     def test_canonical_angles_unchanged(self):
         """Canonical (counter-clockwise) angles must be returned unchanged."""
         from soundscapy.satp.circe import normalize_polar_angles
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         canonical = pd.Series(
             [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0], index=PAQ_IDS
@@ -800,7 +806,6 @@ class TestNormalizePolarAngles:
     def test_reflected_angles_corrected(self):
         """Reflected (clockwise) angles must be converted to canonical form."""
         from soundscapy.satp.circe import normalize_polar_angles
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         reflected = pd.Series(
             [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS
@@ -814,7 +819,6 @@ class TestNormalizePolarAngles:
     def test_paq1_always_zero_after_correction(self):
         """PAQ1 must remain at 0° when a reflected solution is corrected."""
         from soundscapy.satp.circe import normalize_polar_angles
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         reflected = pd.Series(
             [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS
@@ -825,7 +829,6 @@ class TestNormalizePolarAngles:
     def test_index_preserved(self):
         """The output Series must have the same PAQ_IDS index as the input."""
         from soundscapy.satp.circe import normalize_polar_angles
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         angles = pd.Series(
             [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0], index=PAQ_IDS
@@ -844,12 +847,15 @@ class TestNormalizePolarAngles:
 
         for model in (CircModelE.UNCONSTRAINED, CircModelE.EQUAL_COM):
             result = CircE.compute_bfgs_fit(isd_cor, isd_n, "ISD", "EN", model)
+            assert result.polar_angles is not None
             angles = result.polar_angles.to_numpy()
             assert angles[1] <= angles[2], (
-                f"{model.value}: PAQ2 ({angles[1]:.1f}°) > PAQ3 ({angles[2]:.1f}°) — not canonical"
+                f"{model.value}: PAQ2 ({angles[1]:.1f}°) > "
+                f"PAQ3 ({angles[2]:.1f}°) — not canonical"
             )
             assert angles[2] <= angles[3], (
-                f"{model.value}: PAQ3 ({angles[2]:.1f}°) > PAQ4 ({angles[3]:.1f}°) — not canonical"
+                f"{model.value}: PAQ3 ({angles[2]:.1f}°) > "
+                f"PAQ4 ({angles[3]:.1f}°) — not canonical"
             )
 
 

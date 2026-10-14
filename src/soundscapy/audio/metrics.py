@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Functions for calculating various acoustic and psychoacoustic metrics for audio signals.
 
@@ -12,7 +15,7 @@ from __future__ import annotations
 import concurrent.futures
 import multiprocessing as mp
 import warnings
-from typing import TYPE_CHECKING, Any, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, cast
 
 try:
     from typing import Unpack
@@ -34,6 +37,8 @@ from mosqito.sq_metrics import (
 from scipy import stats
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
     from acoustic_toolbox import Signal
     from numpy.typing import NDArray
 
@@ -54,11 +59,16 @@ DEFAULT_LABELS = {
 }
 
 
+def _pick(kwargs: Mapping[str, Any], *keys: str) -> dict[str, Any]:
+    """Return the subset of ``kwargs`` whose keys are in ``keys``."""
+    return {k: kwargs[k] for k in keys if k in kwargs}
+
+
 def _stat_calcs(
     label: str,
     ts_array: NDArray[np.float64],
     res: dict,
-    statistics: tuple[int | str, ...],
+    statistics: Sequence[int | str],
 ) -> dict:
     """
     Calculate various statistics for a time series array and add them to a dictionary.
@@ -83,7 +93,6 @@ def _stat_calcs(
 
     Examples
     --------
-    >>> # doctest: +REQUIRES(env:AUDIO_DEPS='1')
     >>> ts = np.array([1, 2, 3, 4, 5])
     >>> res = {}
     >>> updated_res = _stat_calcs("metric", ts, res, [50, "avg", "max"])
@@ -126,7 +135,7 @@ class _MosqitoMetricParams(TypedDict, total=False):
     skip: float  # sharpness_din_tv
 
 
-def mosqito_metric_1ch(
+def mosqito_metric_1ch(  # noqa: C901, PLR0912, PLR0915
     s: Signal,
     metric: Literal[
         "loudness_zwtv",
@@ -135,7 +144,7 @@ def mosqito_metric_1ch(
         "sharpness_din_perseg",
         "sharpness_din_tv",
     ],
-    statistics: tuple[int | str, ...] = (
+    statistics: Sequence[int | str] = (
         5,
         10,
         50,
@@ -250,11 +259,10 @@ def mosqito_metric_1ch(
                 res[f"{label}_ts"] = (time_axis, R)
 
         elif metric == "sharpness_din_from_loudness":
-            # Prepare args for loudness_zwtv (needed first)
-            loudness_args = {}
-            if "field_type" in kwargs:
-                loudness_args["field_type"] = kwargs["field_type"]
-            N, N_spec, _, time_axis = loudness_zwtv(s, s.fs, **loudness_args)  # noqa: N806
+            # loudness_zwtv is needed first
+            N, N_spec, _, time_axis = loudness_zwtv(  # noqa: N806
+                s, s.fs, **_pick(kwargs, "field_type")
+            )
             # TODO(MitchellAcoustics): Add the R_spec and bark_axis back in
             # when we implement time series calcs
             # https://github.com/MitchellAcoustics/Soundscapy/issues/113
@@ -262,40 +270,25 @@ def mosqito_metric_1ch(
             if return_time_series:
                 res["N_ts"] = time_axis, N
 
-            # Prepare args specifically for sharpness_din_from_loudness
-            sharpness_args = {}
-            if "weighting" in kwargs:
-                sharpness_args["weighting"] = kwargs["weighting"]
-            # Call with filtered args
-            S = sharpness_din_from_loudness(N, N_spec, **sharpness_args)  # noqa: N806
+            S = sharpness_din_from_loudness(  # noqa: N806
+                N, N_spec, **_pick(kwargs, "weighting")
+            )
             res = _stat_calcs(label, S, res, statistics)
             if return_time_series:
                 res[f"{label}_ts"] = (time_axis, S)
 
         elif metric == "sharpness_din_perseg":
-            # Prepare args specifically for sharpness_din_perseg
-            sharpness_args = {}
-            if "weighting" in kwargs:
-                sharpness_args["weighting"] = kwargs["weighting"]
-            if "nperseg" in kwargs:
-                sharpness_args["nperseg"] = kwargs["nperseg"]
-            if "noverlap" in kwargs:
-                sharpness_args["noverlap"] = kwargs["noverlap"]
-            # Call with filtered args
-            S, time_axis = sharpness_din_perseg(s, s.fs, **sharpness_args)  # noqa: N806
+            S, time_axis = sharpness_din_perseg(  # noqa: N806
+                s, s.fs, **_pick(kwargs, "weighting", "nperseg", "noverlap")
+            )
             res = _stat_calcs(label, S, res, statistics)
             if return_time_series:
                 res[f"{label}_ts"] = (time_axis, S)
 
         elif metric == "sharpness_din_tv":
-            # Prepare args specifically for sharpness_din_tv
-            sharpness_args = {}
-            if "weighting" in kwargs:
-                sharpness_args["weighting"] = kwargs["weighting"]
-            if "skip" in kwargs:
-                sharpness_args["skip"] = kwargs["skip"]
-            # Call with filtered args
-            S, time_axis = sharpness_din_tv(s, s.fs, **sharpness_args)  # noqa: N806
+            S, time_axis = sharpness_din_tv(  # noqa: N806
+                s, s.fs, **_pick(kwargs, "weighting", "skip")
+            )
             res = _stat_calcs(label, S, res, statistics)
             if return_time_series:
                 res[f"{label}_ts"] = (time_axis, S)
@@ -319,7 +312,7 @@ def mosqito_metric_1ch(
 def maad_metric_1ch(
     s: Signal | Binaural,
     metric: Literal["all_temporal_alpha_indices", "all_spectral_alpha_indices"],
-    as_df: bool = False,
+    as_df: bool = False,  # noqa: FBT001, FBT002
     func_args: dict | None = None,
 ) -> Any:
     """
@@ -386,17 +379,16 @@ def maad_metric_1ch(
 
     if not as_df:
         return res.to_dict("records")[0]
-    try:
-        res["Recording"] = s.recording
-        return res.set_index(["Recording"])
-    except AttributeError:
+    if not hasattr(s, "recording"):
         return res
+    res["Recording"] = s.recording
+    return res.set_index(["Recording"])
 
 
 def pyacoustics_metric_1ch(  # noqa: ANN201
     s: Signal | Binaural,
     metric: str,
-    statistics: list[int | str] = (
+    statistics: Sequence[int | str] = (
         5,
         10,
         50,
@@ -414,12 +406,13 @@ def pyacoustics_metric_1ch(  # noqa: ANN201
     func_args={},  # noqa: ANN001, B006
 ):
     """
+    Forward to `acoustics_metric_1ch` (deprecated alias).
 
     !!! warning "Deprecated"
         pyacoustics is deprecated. Use `acoustics_metric_1ch` instead.
     """
     warnings.warn(
-        "pyacoustics is deprecated. Use acoustics_metric_1ch instead.",
+        "pyacoustics is deprecated. Use `acoustics_metric_1ch` instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -434,10 +427,10 @@ def pyacoustics_metric_1ch(  # noqa: ANN201
     )
 
 
-def acoustics_metric_1ch(
+def acoustics_metric_1ch(  # noqa: PLR0912
     s: Signal | Binaural,
     metric: str,
-    statistics: list[int | str] = (
+    statistics: Sequence[int | str] = (
         5,
         10,
         50,
@@ -450,8 +443,8 @@ def acoustics_metric_1ch(
         "skew",
     ),
     label: str | None = None,
-    as_df: bool = False,
-    return_time_series: bool = False,
+    as_df: bool = False,  # noqa: FBT001, FBT002
+    return_time_series: bool = False,  # noqa: FBT001, FBT002
     func_args: dict | None = None,
 ) -> dict | pd.DataFrame:
     """
@@ -517,7 +510,7 @@ def acoustics_metric_1ch(
 
     logger.debug(f"Calculating Acoustic Toolbox: {metric} {statistics}")
 
-    res = {}
+    res: dict[str, Any] = {}
     try:
         if metric in {"LZeq", "Leq", "LAeq", "LCeq"}:
             if metric in {"LZeq", "Leq"}:
@@ -550,17 +543,14 @@ def acoustics_metric_1ch(
 
     if not as_df:
         return res
-    try:
-        rec = s.recording
-        return pd.DataFrame(res, index=[rec])
-    except AttributeError:
-        return pd.DataFrame(res, index=[0])
+    rec = getattr(s, "recording", 0)
+    return pd.DataFrame(res, index=[rec])
 
 
 def pyacoustics_metric_2ch(  # noqa: ANN201
     b: Binaural,
     metric: str,
-    statistics: tuple | list = (
+    statistics: Sequence[int | str] = (
         5,
         10,
         50,
@@ -579,12 +569,13 @@ def pyacoustics_metric_2ch(  # noqa: ANN201
     func_args={},  # noqa: ANN001, B006
 ):
     """
+    Forward to `acoustics_metric_2ch` (deprecated alias).
 
     !!! warning "Deprecated"
         pyacoustics is deprecated. Use `acoustics_metric_2ch` instead.
     """
     warnings.warn(
-        "pyacoustics is deprecated. Use acoustics_metric_2ch instead.",
+        "pyacoustics is deprecated. Use `acoustics_metric_2ch` instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -603,7 +594,7 @@ def pyacoustics_metric_2ch(  # noqa: ANN201
 def acoustics_metric_2ch(
     b: Binaural,
     metric: str,
-    statistics: tuple | list = (
+    statistics: Sequence[int | str] = (
         5,
         10,
         50,
@@ -617,8 +608,8 @@ def acoustics_metric_2ch(
     ),
     label: str | None = None,
     channel_names: tuple[str, str] = ("Left", "Right"),
-    as_df: bool = False,
-    return_time_series: bool = False,
+    as_df: bool = False,  # noqa: FBT001, FBT002
+    return_time_series: bool = False,  # noqa: FBT001, FBT002
     func_args: dict | None = None,
 ) -> dict | pd.DataFrame:
     """
@@ -720,7 +711,7 @@ def acoustics_metric_2ch(
 def _parallel_mosqito_metric_2ch(
     b: Binaural,
     metric: str,
-    statistics: tuple | list = (
+    statistics: Sequence[int | str] = (
         5,
         10,
         50,
@@ -734,7 +725,7 @@ def _parallel_mosqito_metric_2ch(
     ),
     label: str | None = None,
     channel_names: tuple[str, str] = ("Left", "Right"),
-    return_time_series: bool = False,
+    return_time_series: bool = False,  # noqa: FBT001, FBT002
     func_args: dict | None = None,
 ) -> dict | None:
     """
@@ -810,7 +801,7 @@ def mosqito_metric_2ch(
         "sharpness_din_tv",
         "roughness_dw",
     ],
-    statistics: tuple | list = (
+    statistics: Sequence[int | str] = (
         5,
         10,
         50,
@@ -824,9 +815,9 @@ def mosqito_metric_2ch(
     ),
     label: str | None = None,
     channel_names: tuple[str, str] = ("Left", "Right"),
-    as_df: bool = False,
-    return_time_series: bool = False,
-    parallel: bool = True,
+    as_df: bool = False,  # noqa: FBT001, FBT002
+    return_time_series: bool = False,  # noqa: FBT001, FBT002
+    parallel: bool = True,  # noqa: FBT001, FBT002
     func_args: dict | None = None,
 ) -> dict | pd.DataFrame:
     """
@@ -957,7 +948,7 @@ def maad_metric_2ch(
     b: Binaural,
     metric: Literal["all_temporal_alpha_indices", "all_spectral_alpha_indices"],
     channel_names: tuple[str, str] = ("Left", "Right"),
-    as_df: bool = False,
+    as_df: bool = False,  # noqa: FBT001, FBT002
     func_args: dict | None = None,
 ) -> dict | pd.DataFrame:
     """
@@ -1031,7 +1022,9 @@ def maad_metric_2ch(
 
 # Analysis dataframe functions
 def prep_multiindex_df(
-    dictionary: dict, label: str = "Leq", incl_metric: bool = True
+    dictionary: dict,
+    label: str = "Leq",
+    incl_metric: bool = True,  # noqa: FBT001, FBT002
 ) -> pd.DataFrame:
     """
     Prepare a MultiIndex dataframe from a dictionary of results.
@@ -1119,7 +1112,9 @@ def add_results(results_df: pd.DataFrame, metric_results: pd.DataFrame) -> pd.Da
 
 
 def process_all_metrics(
-    b: Binaural, analysis_settings: AnalysisSettings, parallel: bool = True
+    b: Binaural,
+    analysis_settings: AnalysisSettings,
+    parallel: bool = True,  # noqa: FBT001, FBT002
 ) -> pd.DataFrame:
     """
     Process all metrics specified in the analysis settings for a binaural signal.
@@ -1177,38 +1172,27 @@ def process_all_metrics(
         ) in analysis_settings.get_enabled_metrics().items():
             for metric in metrics_settings:
                 logger.debug(f"Processing {library} metric: {metric}")
-                if library == "AcousticToolbox":
-                    results_df = pd.concat(
-                        (
-                            results_df,
-                            b.acoustics_metric(
-                                metric, metric_settings=metrics_settings[metric]
-                            ),
-                        ),
-                        axis=1,
-                    )
-                elif library == "MoSQITo":
-                    results_df = pd.concat(
-                        (
-                            results_df,
-                            b.mosqito_metric(
-                                metric,
-                                parallel=parallel,
-                                metric_settings=metrics_settings[metric],
-                            ),
-                        ),
-                        axis=1,
-                    )
-                elif library in {"scikit-maad", "scikit_maad"}:
-                    results_df = pd.concat(
-                        (
-                            results_df,
-                            b.maad_metric(
-                                metric, metric_settings=metrics_settings[metric]
-                            ),
-                        ),
-                        axis=1,
-                    )
+                # Metric names come from user-supplied settings, so they cannot be
+                # statically narrowed to each Binaural method's Literal.
+                metric_name = cast("Any", metric)
+                settings = metrics_settings[metric]
+                match library:
+                    case "AcousticToolbox":
+                        metric_df = b.acoustics_metric(
+                            metric_name, metric_settings=settings
+                        )
+                    case "MoSQITo":
+                        metric_df = b.mosqito_metric(
+                            metric_name, parallel=parallel, metric_settings=settings
+                        )
+                    case "scikit-maad" | "scikit_maad":
+                        metric_df = b.maad_metric(metric_name, metric_settings=settings)
+                    case _:
+                        # Libraries we don't recognise are skipped, as before.
+                        continue
+                results_df = pd.concat(
+                    (results_df, cast("pd.DataFrame", metric_df)), axis=1
+                )
     except Exception as e:
         logger.error(f"Error processing metrics: {e!s}")
         msg = "Error processing metrics"
