@@ -1,11 +1,17 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
 # Parsed at runtime by lazy_loader.attach_stub to set up lazy imports.
 # Also read by static type checkers (mypy, pyright) for type information.
 # Relative imports are required by lazy_loader's stub parser.
 # The "as X" aliases mark these as public re-exports per PEP 484 convention.
 
 from . import audio as audio
+from . import constants as constants
+from . import databases as databases
+from . import plotting as plotting
 from . import satp as satp
 from . import spi as spi
+from . import surveys as surveys
 from .audio import AnalysisSettings as AnalysisSettings
 from .audio import AudioAnalysis as AudioAnalysis
 from .audio import Binaural as Binaural
@@ -14,6 +20,7 @@ from .audio import add_results as add_results
 from .audio import parallel_process as parallel_process
 from .audio import prep_multiindex_df as prep_multiindex_df
 from .audio import process_all_metrics as process_all_metrics
+from .databases import isd as isd
 from .satp import CircE as CircE
 from .satp import CircEResults as CircEResults
 from .satp import CircModelE as CircModelE
