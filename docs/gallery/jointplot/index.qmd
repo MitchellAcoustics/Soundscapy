@@ -3,6 +3,7 @@ title: "Joint plot"
 description: "Scatter and density with marginal distributions."
 date: 2026-01-09
 categories: [jointplot]
+tags: [Visualizations]
 ---
 
 ```{python}

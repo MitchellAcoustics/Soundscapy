@@ -3,6 +3,7 @@ title: "Sound source dominance"
 description: "Mean dominance of each sound source, by location."
 date: 2026-01-17
 categories: [sound sources, seaborn]
+tags: [Visualizations]
 ---
 
 ```{python}

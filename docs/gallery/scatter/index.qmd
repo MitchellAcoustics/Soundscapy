@@ -3,6 +3,7 @@ title: "Scatter plot"
 description: "Each survey response as a point in the ISO circumplex."
 date: 2026-01-01
 categories: [scatter]
+tags: [Visualizations]
 ---
 
 ```{python}

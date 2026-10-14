@@ -3,6 +3,7 @@ title: "Simple density"
 description: "Fewer contours for a cleaner view, with scatter points underneath."
 date: 2026-01-05
 categories: [density]
+tags: [Visualizations]
 ---
 
 ```{python}

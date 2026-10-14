@@ -3,6 +3,7 @@ title: "Customised density"
 description: "Filled contours with a custom colormap, levels and threshold."
 date: 2026-01-04
 categories: [density, customisation]
+tags: [Visualizations]
 ---
 
 ```{python}

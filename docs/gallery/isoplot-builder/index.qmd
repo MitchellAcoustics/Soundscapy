@@ -3,6 +3,7 @@ title: "ISOPlot builder"
 description: "Compose a grouped figure layer by layer."
 date: 2026-01-06
 categories: [ISOPlot, grouping]
+tags: [Visualizations]
 ---
 
 ```{python}

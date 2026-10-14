@@ -3,6 +3,7 @@ title: "Eventfulness vs loudness"
 description: "Relate ISOEventful to N5 loudness with a regression line per location."
 date: 2026-01-20
 categories: [acoustic metrics, seaborn]
+tags: [Visualizations]
 ---
 
 ```{python}

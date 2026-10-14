@@ -3,6 +3,7 @@ title: "Comparing locations"
 description: "Outline the distribution of several locations on one plot."
 date: 2026-01-01
 categories: [comparison]
+tags: [Visualizations]
 ---
 
 ```{python}

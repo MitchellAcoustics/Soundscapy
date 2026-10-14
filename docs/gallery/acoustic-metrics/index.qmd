@@ -3,6 +3,7 @@ title: "Pleasantness vs sound level"
 description: "Relate ISOPleasant to LAeq with a regression line per location."
 date: 2026-01-19
 categories: [acoustic metrics, seaborn]
+tags: [Visualizations]
 ---
 
 ```{python}

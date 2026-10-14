@@ -3,6 +3,7 @@ title: "PAQ Likert plot"
 description: "Distribution of responses to the eight PAQs."
 date: 2026-01-14
 categories: [likert]
+tags: [Visualizations]
 ---
 
 ```{python}

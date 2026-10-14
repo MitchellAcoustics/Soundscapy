@@ -3,6 +3,7 @@ title: "Customised scatter"
 description: "Point colour, size, transparency and axis limits."
 date: 2026-01-03
 categories: [scatter, customisation]
+tags: [Visualizations]
 ---
 
 ```{python}

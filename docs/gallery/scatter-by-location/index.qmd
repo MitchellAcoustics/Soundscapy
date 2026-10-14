@@ -3,6 +3,7 @@ title: "Scatter by location"
 description: "Colour responses by location to compare soundscapes."
 date: 2026-01-02
 categories: [scatter, grouping]
+tags: [Visualizations]
 ---
 
 ```{python}

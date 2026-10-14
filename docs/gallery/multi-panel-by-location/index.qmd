@@ -3,6 +3,7 @@ title: "Multi-panel by location"
 description: "One panel per location with scatter and density layers."
 date: 2026-01-07
 categories: [subplots]
+tags: [Visualizations]
 ---
 
 ```{python}

@@ -3,6 +3,7 @@ title: "Grouped joint plot"
 description: "Compare several locations with shared marginals."
 date: 2026-01-11
 categories: [jointplot, grouping]
+tags: [Visualizations]
 ---
 
 ```{python}

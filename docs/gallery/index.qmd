@@ -8,6 +8,7 @@ listing:
   fields: [image, title, description]
   sort: "date"
 toc: false
+status: new
 ---
 
 Short, self-contained examples of the plots Soundscapy can make: scatter and density plots, grouped and multi-panel layouts, joint plots, Likert charts, sound-source and acoustic-metric views. Each one runs on the sample survey data bundled with these docs, so you can copy it and swap in your own data. For explanations of the options used here, see the [Visualising soundscapes](../user-guide/visualising-soundscapes.qmd) guide.

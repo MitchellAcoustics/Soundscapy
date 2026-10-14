@@ -3,6 +3,7 @@ title: "Circumplex by sound source"
 description: "Colour each location's responses by how much a source dominates."
 date: 2026-01-18
 categories: [sound sources, subplots]
+tags: [Visualizations]
 ---
 
 ```{python}

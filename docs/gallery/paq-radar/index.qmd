@@ -3,6 +3,7 @@ title: "PAQ radar plot"
 description: "Compare the eight PAQs of two soundscapes on a radar chart."
 date: 2026-01-16
 categories: [radar]
+tags: [Visualizations]
 ---
 
 ```{python}

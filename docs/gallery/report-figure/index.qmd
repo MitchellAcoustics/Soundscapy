@@ -3,6 +3,7 @@ title: "Report-style figure"
 description: "Combine several plots in one Matplotlib grid for a report."
 date: 2026-01-13
 categories: [customisation, subplots]
+tags: [Visualizations]
 ---
 
 ```{python}

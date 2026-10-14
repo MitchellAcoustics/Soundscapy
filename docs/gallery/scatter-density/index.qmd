@@ -3,6 +3,7 @@ title: "Scatter with density"
 description: "Raw points layered over the overall distribution."
 date: 2026-01-01
 categories: [layers]
+tags: [Visualizations]
 ---
 
 ```{python}

@@ -3,6 +3,7 @@ title: "ISOPlot subplots by location"
 description: "Split an ISOPlot into panels and colour by session."
 date: 2026-01-08
 categories: [ISOPlot, subplots]
+tags: [Visualizations]
 ---
 
 ```{python}

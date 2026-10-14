@@ -1,5 +1,7 @@
 ---
 title: How to analyse and represent soundscape perception
+status: legacy
+tags: [Paper]
 jupyter:
   jupytext:
     cell_markers: '"""'
