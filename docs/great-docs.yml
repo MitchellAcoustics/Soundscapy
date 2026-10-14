@@ -3,6 +3,8 @@
 display_name: Soundscapy
 site_url: https://drandrewmitchell.com/Soundscapy/
 
+versions: ["0.8.5"]
+
 authors:
   - name: Andrew Mitchell
     role: Honorary Lecturer
@@ -14,12 +16,6 @@ authors:
 exclude:
   - backends_deprecated
 
-interlinks:
-  sources:
-    numpy:
-      url: https://numpy.org/doc/stable/
-      aliases: [np]
-
 logo:
   light: assets/logo.png
   dark: assets/logo-dark.png
@@ -27,6 +23,80 @@ favicon:
   icon: assets/favicon.png
 
 navbar_style: sky
+
+nav_icons:
+  navbar:
+    User Guide: book-open
+    Gallery: images
+    Tutorials: scroll-text
+    Reference: code
+    Project: message-square-more
+    Changelog: clock
+  sidebar:
+    Quick Start: rocket
+    Concepts and Terminology: brain
+    Working with Survey Data: grid-2x2-check
+    Working with Soundscape Databases: database-search
+    Visualising Soundscapes: chart-scatter
+    Understanding the Soundscape Perception Index (SPI): arrow-up-1-0
+    News: rss
+    Upgrading from Soundscapy 0.7 to 0.8.2: circle-fading-arrow-up
+    Contributing: users
+
+site:
+  show_dates: true
+  show_author: true
+
+page_status:
+  enabled: true
+  statuses:
+    legacy:
+      label: "Legacy"
+      icon: archive
+      color: "#9ca3af"
+      description: "Superseded by a newer approach."
+
+tags:
+  enabled: true
+  icons:
+    Tutorial: book-open
+    Visualizations: chart-bar
+    Paper: file-text
+
+# API Reference Settings
+inline_methods: false
+# Source Links
+source:
+  enabled: true
+  placement: usage
+
+interlinks:
+  sources:
+    python:
+      url: https://docs.python.org/3/
+      aliases: [py]
+    numpy:
+      url: https://numpy.org/doc/stable/
+      aliases: [np]
+    pandas:
+      url: https://pandas.pydata.org/pandas-docs/stable/
+      aliases: [pd]
+    mosqito:
+      url: https://mosqito.readthedocs.io/en/stable/
+    acoustic-toolbox:
+      url: https://acoustic-toolbox.readthedocs.io/en/latest/
+      aliases: [acoustic_toolbox]
+    scikit-maad:
+      url: https://scikit-maad.github.io
+      aliases: [maad, scikit_maad]
+    circumplex:
+      url: https://drandrewmitchell.com/circumplex/
+    matplotlib:
+      url: https://matplotlib.org/stable/index.html
+      aliases: [mpl]
+    seaborn:
+      url: https://seaborn.pydata.org
+      aliases: [sns]
 
 sections:
   - title: Tutorials
@@ -46,6 +116,4 @@ sections:
     navbar_after: Tutorials
   - title: Project
     dir: project
-    navbar_after: Gallery
-
-versions: ["0.8.5"]
+    navbar_after: Reference
