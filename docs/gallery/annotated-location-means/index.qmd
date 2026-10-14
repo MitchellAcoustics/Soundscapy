@@ -1,0 +1,39 @@
+---
+title: "Annotated location means"
+description: "Mean position per location, labelled with Matplotlib."
+date: 2026-01-12
+categories: [customisation]
+---
+
+```{python}
+#| label: fig-annotated-location-means
+#| fig-alt: "Mean ISO coordinates labelled by location"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = pd.read_csv("../../assets/DemoData.csv")
+
+means = data.groupby("LocationID")[["ISOPleasant", "ISOEventful"]].mean()
+
+fig, ax = plt.subplots(figsize=(8, 8))
+sspy.scatter(
+    means.reset_index(),
+    x="ISOPleasant",
+    y="ISOEventful",
+    title="Mean ISO coordinates by location",
+    diagonal_lines=True,
+    ax=ax,
+)
+
+for name, row in means.iterrows():
+    ax.annotate(
+        str(name),
+        (row["ISOPleasant"], row["ISOEventful"]),
+        xytext=(10, 5),
+        textcoords="offset points",
+        fontsize=10,
+        fontweight="bold",
+    )
+plt.show()
+```

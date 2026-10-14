@@ -1,0 +1,28 @@
+---
+title: "Customised scatter"
+description: "Point colour, size, transparency and axis limits."
+date: 2026-01-03
+categories: [scatter, customisation]
+---
+
+```{python}
+#| label: fig-customised-scatter
+#| fig-alt: "Customised scatter plot"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = pd.read_csv("../../assets/DemoData.csv")
+
+sspy.scatter(
+    data,
+    title="Customised scatter plot",
+    diagonal_lines=True,
+    color="darkred",
+    s=30,
+    alpha=0.7,
+    xlim=(-1.2, 1.2),
+    ylim=(-1.2, 1.2),
+)
+plt.show()
+```

@@ -1,0 +1,26 @@
+---
+title: "Joint plot with histograms"
+description: "Histogram marginals instead of KDE."
+date: 2026-01-10
+categories: [jointplot]
+---
+
+```{python}
+#| label: fig-jointplot-histogram
+#| fig-alt: "Joint plot with histogram marginals"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = pd.read_csv("../../assets/DemoData.csv")
+
+camden = data[data["LocationID"] == "CamdenTown"]
+
+sspy.jointplot(
+    camden,
+    title="Camden Town",
+    marginal_kind="hist",
+    diagonal_lines=True,
+)
+plt.show()
+```

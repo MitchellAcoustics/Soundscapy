@@ -1,0 +1,25 @@
+---
+title: "Simple density"
+description: "Fewer contours for a cleaner view, with scatter points underneath."
+date: 2026-01-05
+categories: [density]
+---
+
+```{python}
+#| label: fig-simple-density
+#| fig-alt: "Simple density plot"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = pd.read_csv("../../assets/DemoData.csv")
+
+sspy.density(
+    data,
+    title="Simple density plot",
+    density_type="simple",
+    diagonal_lines=True,
+    incl_scatter=True,
+)
+plt.show()
+```

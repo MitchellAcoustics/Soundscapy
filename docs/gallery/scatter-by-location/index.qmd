@@ -1,0 +1,26 @@
+---
+title: "Scatter by location"
+description: "Colour responses by location to compare soundscapes."
+date: 2026-01-02
+categories: [scatter, grouping]
+---
+
+```{python}
+#| label: fig-scatter-by-location
+#| fig-alt: "Scatter plot grouped by location"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = pd.read_csv("../../assets/DemoData.csv")
+
+sspy.scatter(
+    data,
+    title="Scatter plot grouped by location",
+    hue="LocationID",
+    diagonal_lines=True,
+    alpha=0.7,
+    s=30,
+)
+plt.show()
+```

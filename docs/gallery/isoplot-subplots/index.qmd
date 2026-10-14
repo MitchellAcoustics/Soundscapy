@@ -1,0 +1,32 @@
+---
+title: "ISOPlot subplots by location"
+description: "Split an ISOPlot into panels and colour by session."
+date: 2026-01-08
+categories: [ISOPlot, subplots]
+---
+
+```{python}
+#| label: fig-isoplot-subplots
+#| fig-alt: "ISOPlot panels by location, coloured by session"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = pd.read_csv("../../assets/DemoData.csv")
+
+places = ["CamdenTown", "PancrasLock", "RegentsParkJapan", "RegentsParkFields"]
+subset = data[data["LocationID"].isin(places)]
+
+(
+    sspy.ISOPlot(data=subset, title=None, hue="SessionID")
+    .create_subplots(
+        subplot_by="LocationID",
+        figsize=(4, 4),
+        auto_allocate_axes=True,
+    )
+    .add_scatter()
+    .add_simple_density(fill=False)
+    .style(title_fontsize=14, diagonal_lines=True)
+)
+plt.show()
+```
