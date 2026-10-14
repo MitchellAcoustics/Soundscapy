@@ -110,4 +110,4 @@ Large planned feature additions are:
 
 If you would like to contribute or if you have any bugs you have found while using `Soundscapy', please feel free to get in touch or submit an issue or pull request!
 
-Please see [contribution guidelines](https://github.com/MitchellAcoustics/Soundscapy/blob/agents/initial-setup/docs/user_guide/02-contributing.qmd) for contribution guidelines.
+Please see [contribution guidelines](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/user_guide/02-contributing.qmd) for contribution guidelines.

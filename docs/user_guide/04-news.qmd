@@ -86,7 +86,7 @@ Project tooling has shifted: environment management is now driven by
 publish. See `pixi.toml` for the new task layout (`pixi run lint`,
 `pixi run tests`, `pixi run -e docs docs-build`, etc.). Documentation is
 now built with [great-docs](https://posit-dev.github.io/great-docs/). If you contribute, the
-[contributing guide](https://github.com/MitchellAcoustics/Soundscapy/blob/agents/initial-setup/docs/user_guide/02-contributing.qmd) has the updated workflow.
+[contributing guide](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/user_guide/02-contributing.qmd) has the updated workflow.
 
 ### Full migration guide
 
