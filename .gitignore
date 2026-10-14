@@ -195,7 +195,6 @@ environment.yml.bak
 /.great-docs-build/
 /.great-docs-cache/
 /_great_docs_build/
-site/
 
 # Local, machine-specific direnv overrides (tokens etc.)
 .envrc.local
