@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """Soundscapy is a Python library for soundscape analysis and visualisation."""
 
 # ruff: noqa: E402
@@ -41,7 +44,9 @@ __version__ = version("soundscapy")
 # The adjacent __init__.pyi stub drives both lazy_loader and static type checkers.
 __getattr__, __dir__, _lazy_all = _lazy.attach_stub(__name__, __file__)
 
-__all__ = [  # noqa: PLE0604  # _lazy_all is list[str] from lazy_loader.attach_stub
+# __all__ includes the runtime-computed lazy names from the stub
+# pyrefly: ignore [unresolvable-dunder-all]
+__all__ = [  # noqa: PLE0604 # _lazy_all is list[str] from lazy_loader.attach_stub
     "PAQ_IDS",
     "PAQ_LABELS",
     "ISOPlot",

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Circumplex SEM Analysis for Soundscape Attributes Translation Project (SATP).
 
@@ -28,11 +31,13 @@ CircE : dataclass
     Results container for a fitted circumplex model
 """
 
+# ruff: noqa: PLC0415
+
 import dataclasses
 import warnings
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -43,8 +48,12 @@ from pandera.typing.pandas import DataFrame, Series
 from rpy2.rinterface_lib.embedded import RRuntimeError
 
 import soundscapy.r_wrapper as sspyr
-from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
+from soundscapy.sspylogging import get_logger
 from soundscapy.surveys.processing import ipsatize
+from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
+
+if TYPE_CHECKING:
+    import rpy2.robjects
 
 logger = get_logger()
 
@@ -276,7 +285,8 @@ class CircE:
         circ_model: CircModelE,
         n: int,
     ) -> "CircE":
-        """Create a CircE instance from BFGS fit output.
+        """
+        Create a CircE instance from BFGS fit output.
 
         !!! warning "Deprecated v0.8.4"
             Passing an rpy2 ``ListVector`` as *fit_stats* is deprecated and
@@ -309,7 +319,9 @@ class CircE:
                 DeprecationWarning,
                 stacklevel=2,
             )
-            from soundscapy.r_wrapper._r_wrapper import _extract_bfgs_stats  # noqa: PLC0415
+            from soundscapy.r_wrapper._r_wrapper import (
+                _extract_bfgs_stats,
+            )
 
             fit_stats = _extract_bfgs_stats(fit_stats)
 
@@ -596,7 +608,7 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
         column-wise participant-centred values.
 
     """
-    import warnings  # noqa: PLC0415
+    import warnings
 
     warnings.warn(
         "person_center() is deprecated; use ipsatize(method='column_wise') instead.",
