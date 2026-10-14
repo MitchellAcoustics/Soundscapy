@@ -77,6 +77,7 @@ class TestISDSelection:
         with pytest.raises(
             TypeError, match="Should be either a str, int, list, or tuple"
         ):
+            # pyrefly: ignore [bad-argument-type]
             isd._isd_select(isd_data, "LocationID", {"invalid": "type"})
 
     def test_select_record_ids(self, isd_data):

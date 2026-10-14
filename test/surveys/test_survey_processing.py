@@ -342,7 +342,8 @@ class TestIpsatize:
         with pytest.raises(ValueError, match="method"):
             ipsatize(
                 sample_data,
-                method="bad_method",  # ty:ignore[invalid-argument-type]
+                # pyrefly: ignore [bad-argument-type]
+                method="bad_method",
             )
 
     def test_grand_mean_differs_from_column_wise(self, sample_data):

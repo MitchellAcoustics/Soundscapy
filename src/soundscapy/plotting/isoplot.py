@@ -99,7 +99,7 @@ class ISOPlot:
 
     """
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         data: pd.DataFrame | None = None,
         x: str | np.ndarray | pd.Series | None = "ISOPleasant",
@@ -394,7 +394,7 @@ class ISOPlot:
             msg = "hue must be a string, numpy array, or pandas Series."
             raise TypeError(msg)
 
-    def create_subplots(  # noqa: PLR0917
+    def create_subplots(
         self,
         nrows: int = 1,
         ncols: int = 1,
@@ -1223,7 +1223,6 @@ class ISOPlot:
         --------
         Add a SPI layer to all subplots:
 
-        >>> # xdoctest: +REQUIRES(env:SOUNDSCAPY_HAS_RPY2==1)
         >>> import pandas as pd
         >>> import numpy as np
         >>> from soundscapy.spi import msn
@@ -1253,7 +1252,6 @@ class ISOPlot:
         >>> plot.close()  # Clean up
 
         Add an SPI layer over top of 'real' data:
-        >>> # xdoctest: +REQUIRES(env:SOUNDSCAPY_HAS_RPY2==1)
         >>> plot = (
         ...     ISOPlot(data=data)
         ...     .create_subplots()
@@ -1267,7 +1265,6 @@ class ISOPlot:
         True
 
         Add a SPI layer from spi data:
-        >>> # xdoctest: +REQUIRES(env:SOUNDSCAPY_HAS_RPY2==1)
         >>> # Create a custom distribution
         >>> from soundscapy.spi import MultiSkewNorm
         >>> import soundscapy as sspy

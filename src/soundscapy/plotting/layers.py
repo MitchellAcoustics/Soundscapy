@@ -1,6 +1,3 @@
-# ruff: noqa: D107
-# Constructor parameters are documented on the class docstring so Great Docs
-# doesn't emit an ambiguous `__init__` entry for every layer class.
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (C) 2026  Andrew Mitchell
 
@@ -513,7 +510,8 @@ class SPILayer(Layer):
         spi_params: DirectParams | CentredParams | None,
     ) -> tuple[pd.DataFrame | np.ndarray | None, DirectParams | CentredParams | None]:
         """Validate the right combination of inputs for the SPI plot."""
-        from soundscapy.spi.msn import CentredParams, DirectParams  # noqa: PLC0415 lazy import to avoid triggering R
+        # Lazy import to avoid triggering R
+        from soundscapy.spi.msn import CentredParams, DirectParams
 
         # Input validation
         if spi_data is None and spi_params is None:
@@ -570,7 +568,7 @@ class SPILayer(Layer):
             Prepared data for SPI plotting
 
         """
-        from soundscapy.spi.msn import MultiSkewNorm  # noqa: PLC0415
+        from soundscapy.spi.msn import MultiSkewNorm
 
         # Generate data from parameters if provided
         if spi_params is not None:
@@ -639,7 +637,7 @@ class SPILayer(Layer):
         target_data: pd.DataFrame,
         test_data: pd.DataFrame,
     ) -> int | None:
-        from soundscapy.spi import spi_score  # noqa: PLC0415
+        from soundscapy.spi import spi_score
 
         return spi_score(target=target_data, test=test_data)
 

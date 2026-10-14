@@ -1,5 +1,8 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """Deprecation warnings for v0.7 APIs."""
-# ruff: noqa: ANN002, ARG002, D107, D102
+# ruff: noqa: ANN002, ARG002, D102
 
 import warnings
 from enum import Enum

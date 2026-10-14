@@ -84,6 +84,10 @@ paths.source = ["src"]
 [tool.mypy]
 explicit_package_bases = true
 
+[tool.pyrefly]
+# rpy2 ships no type information; treat it as Any instead of ignoring each call.
+replace-imports-with-any = ["rpy2.*"]
+
 [tool.pyrefly.errors]
 bad-override-mutable-attribute = "ignore"
 
@@ -110,13 +114,12 @@ lint.ignore = [
     # missing kwarg type hinting:
     "ANN401",
     "COM812",  # trailing commas (ruff-format recommended)
-    "D203",    # no-blank-line-before-class
-    "D212",    # multi-line-summary-first-line
     "D407",    # removed dashes lines under sections
-    "D417",    # argument description in docstring (unreliable)
     "FIX002",  # fixme (ruff-format recommended)
     "ISC001",  # simplify implicit str concatenation (ruff-format recommended)
+    "PLC0415", # import not at top of file (deliberate lazy imports for optional deps/R)
     "PLR0913", # too many arguments
+    "PLR0917", # too many positional arguments
     "TD002",   # Missing author in TODO
     "TD003",   # Missing issue link
 ]
@@ -140,7 +143,6 @@ lint.per-file-ignores = { "*.ipynb" = [
     "ERA001",  # Remove commented-out code
     "INP001",  # File is part of an implicit namespace package.
     "PGH003",  # Use specific rule codes
-    "PLC0415", # Import not at top of file
     "PLR2004", # Hardcoded values
     "S101",    # Use of `assert` detected
     "SLF001",  # Private member/module acces
@@ -149,6 +151,7 @@ lint.select = ["ALL"]
 lint.isort.known-first-party = ["soundscapy"]
 lint.mccabe.max-complexity = 18
 lint.pep8-naming.classmethod-decorators = ["classmethod"]
+lint.pydocstyle.convention = "numpy"
 
 [tool.tomlsort]
 all                                                  = true

@@ -105,7 +105,7 @@ def _ver(v: str) -> tuple[int, ...]:
 
 def _r_function_exists(symbol_name: str) -> bool:
     """Return ``True`` when an R function symbol is available in the session."""
-    return bool(robjects.r(f"exists('{symbol_name}', mode='function')")[0])  # type: ignore[index]
+    return bool(robjects.r(f"exists('{symbol_name}', mode='function')")[0])
 
 
 def _embedded_circe_symbols_loaded() -> bool:
@@ -123,11 +123,10 @@ def _source_embedded_circe_scripts() -> None:
         raise ImportError("Embedded CircE scripts are missing: " + ", ".join(missing))
     for path in script_paths:
         try:
-            # pyrefly: ignore [not-callable]
             robjects.r["source"](path.as_posix())
         except Exception as e:
-            msg_0 = f"Failed to source embedded CircE script '{path.name}': {e}"
-            raise ImportError(msg_0) from e
+            msg = f"Failed to source embedded CircE script '{path.name}': {e}"
+            raise ImportError(msg) from e
     missing_syms = [s for s in CIRCE_REQUIRED_SYMBOLS if not _r_function_exists(s)]
     if missing_syms:
         raise ImportError(
@@ -157,15 +156,14 @@ def _initialize_r_session() -> None:
     if _state.active:
         return
 
-    import rpy2.robjects.packages as rpackages  # noqa: PLC0415
+    import rpy2.robjects.packages as rpackages
 
     # Verify R version
     try:
-        # pyrefly: ignore [bad-index]
         r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[
             0
-        ]  # type: ignore[index]
-        logger.debug("R version: %s", robjects.r("R.version.string")[0])  # type: ignore[index]
+        ]
+        logger.debug("R version: %s", robjects.r("R.version.string")[0])
     except Exception as e:
         msg = (
             f"Error querying R version: {e}. "
@@ -173,19 +171,19 @@ def _initialize_r_session() -> None:
         )
         raise ImportError(msg) from e
     if _ver(r_version_str) < _ver(REQUIRED_R_VERSION):
-        msg_0 = (
+        msg = (
             f"R version {r_version_str} is too old; "
             f"requires >= {REQUIRED_R_VERSION}. Please upgrade your R installation."
         )
-        raise ImportError(msg_0)
+        raise ImportError(msg)
 
     # Check and load the sn package
     try:
         sn_pkg = rpackages.importr("sn")
     except rpackages.PackageNotInstalledError as err:
-        msg_1 = "R package 'sn' is not installed. Run in R: install.packages('sn')"
-        raise ImportError(msg_1) from err
-    version = robjects.r('as.character(packageVersion("sn"))')[0]  # type: ignore[index]
+        msg = "R package 'sn' is not installed. Run in R: install.packages('sn')"
+        raise ImportError(msg) from err
+    version = robjects.r('as.character(packageVersion("sn"))')[0]
     logger.debug("R 'sn' package version: %s", version)
     if _ver(version) < (2, 0, 0):
         msg = (
@@ -207,8 +205,8 @@ def _initialize_r_session() -> None:
     except Exception as e:
         logger.exception("Failed to initialize R session")
         reset_r_session()
-        msg_0 = f"Failed to initialize R session: {e}"
-        raise RuntimeError(msg_0) from e
+        msg = f"Failed to initialize R session: {e}"
+        raise RuntimeError(msg) from e
 
 
 def get_r_session() -> RSession:
@@ -251,7 +249,7 @@ def reset_r_session() -> bool:
     global _state  # noqa: PLW0603
 
     try:
-        import gc  # noqa: PLC0415
+        import gc
 
         was_active = _state.active
         _state = RSession()
@@ -337,7 +335,7 @@ def sample_msn(
     return _r2np(r_result)
 
 
-def sample_mtsn(  # noqa: PLR0917
+def sample_mtsn(
     selm_model: RS4 | None = None,
     xi: np.ndarray | None = None,
     omega: np.ndarray | None = None,

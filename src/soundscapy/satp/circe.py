@@ -31,8 +31,6 @@ CircE : dataclass
     Results container for a fitted circumplex model
 """
 
-# ruff: noqa: PLC0415
-
 import dataclasses
 import warnings
 from collections.abc import Mapping
