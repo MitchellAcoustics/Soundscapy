@@ -43,8 +43,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import soundscapy as sspy
+from soundscapy.constants import LANGUAGE_ANGLES, PAQ_IDS
 from soundscapy.databases import isd
-from soundscapy.surveys import LANGUAGE_ANGLES, PAQ_IDS, rename_paqs
+from soundscapy.surveys import rename_paqs
 ```
 
 ## 1. Loading Soundscape Survey Data

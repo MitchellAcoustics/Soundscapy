@@ -258,7 +258,7 @@ Likert plots are a useful way to visualize the distribution of responses to Like
 We can use Soundscapy's `paq_likert` plot to examine the distribution of PAQ responses:
 
 ```{python}
-from soundscapy import PAQ_IDS
+from soundscapy.constants import PAQ_IDS
 
 sspy.paq_likert(data[PAQ_IDS], title="Distribution of PAQ Responses in the Demo Data")
 ```

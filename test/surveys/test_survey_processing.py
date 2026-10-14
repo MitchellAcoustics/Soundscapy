@@ -1,7 +1,11 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 import numpy as np
 import pandas as pd
 import pytest
 
+from soundscapy.constants import LANGUAGE_ANGLES, PAQ_IDS
 from soundscapy.surveys.processing import (
     add_iso_coords,
     calculate_iso_coords,
@@ -9,12 +13,7 @@ from soundscapy.surveys.processing import (
     simulation,
     ssm_metrics,
 )
-from soundscapy.surveys.survey_utils import (
-    LANGUAGE_ANGLES,
-    PAQ_IDS,
-    rename_paqs,
-    return_paqs,
-)
+from soundscapy.surveys.survey_utils import rename_paqs, return_paqs
 
 
 @pytest.fixture
@@ -292,21 +291,19 @@ class TestIpsatize:
     def test_grand_mean_one_scalar_per_participant(self, sample_data):
         """Grand-mean centering must produce zero grand mean per participant."""
         from soundscapy.surveys import ipsatize
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         result = ipsatize(
             sample_data, method="grand_mean", participant_col="participant"
         )
         check = result[PAQ_IDS].assign(participant=sample_data["participant"].values)
         flat_means = check.groupby("participant")[PAQ_IDS].apply(
-            lambda df: float(df.values.mean())
+            lambda df: float(df.to_numpy().mean())
         )
         np.testing.assert_allclose(flat_means.to_numpy(), 0.0, atol=1e-10)
 
     def test_column_wise_zero_per_scale_per_participant(self, sample_data):
         """Column-wise centering must produce zero mean per scale per participant."""
         from soundscapy.surveys import ipsatize
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         result = ipsatize(
             sample_data, method="column_wise", participant_col="participant"
@@ -318,7 +315,6 @@ class TestIpsatize:
     def test_row_wise_zero_per_observation(self, sample_data):
         """Row-wise centering must produce zero mean across scales per row."""
         from soundscapy.surveys import ipsatize
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         result = ipsatize(sample_data, method="row_wise")
         row_means = result[PAQ_IDS].mean(axis=1)
@@ -327,7 +323,6 @@ class TestIpsatize:
     def test_returns_only_scale_columns(self, sample_data):
         """Ipsatize must return only the PAQ scale columns, not participant."""
         from soundscapy.surveys import ipsatize
-        from soundscapy.surveys.survey_utils import PAQ_IDS
 
         result = ipsatize(
             sample_data, method="grand_mean", participant_col="participant"

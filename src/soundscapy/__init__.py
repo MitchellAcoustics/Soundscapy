@@ -14,7 +14,6 @@ logger.disable("soundscapy")
 
 # Always available core modules
 from soundscapy import constants, databases, plotting, surveys
-from soundscapy import databases as db
 from soundscapy._deprecated import moved_to
 from soundscapy.databases import isd
 from soundscapy.plotting import (
@@ -48,14 +47,13 @@ __version__ = version("soundscapy")
 # The adjacent __init__.pyi stub drives both lazy_loader and static type checkers.
 _lazy_getattr, __dir__, _lazy_all = _lazy.attach_stub(__name__, __file__)
 
-_moved_getattr = moved_to(__name__, "soundscapy.constants", ["PAQ_IDS", "PAQ_LABELS"])
-
-
-def __getattr__(name: str) -> object:
-    """Resolve deprecated top-level constants, else lazy subpackages."""
-    if name in {"PAQ_IDS", "PAQ_LABELS"}:
-        return _moved_getattr(name, 3)
-    return _lazy_getattr(name)
+# Deprecated top-level constants warn and forward; everything else is lazy.
+__getattr__ = moved_to(
+    __name__,
+    "soundscapy.constants",
+    ["PAQ_IDS", "PAQ_LABELS"],
+    fallback=_lazy_getattr,
+)
 
 
 # __all__ includes the runtime-computed lazy names from the stub
@@ -67,7 +65,6 @@ __all__ = [  # noqa: PLE0604 # _lazy_all is list[str] from lazy_loader.attach_st
     "constants",
     "create_iso_subplots",
     "databases",
-    "db",
     "density",
     "disable_logging",
     "enable_debug",

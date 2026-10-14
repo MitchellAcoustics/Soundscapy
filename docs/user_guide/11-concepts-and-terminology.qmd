@@ -34,7 +34,7 @@ import pandas as pd
 
 import soundscapy as sspy
 from soundscapy.databases import isd
-from soundscapy.surveys import LANGUAGE_ANGLES, PAQ_IDS, PAQ_LABELS
+from soundscapy.constants import LANGUAGE_ANGLES, PAQ_IDS, PAQ_LABELS
 ```
 
 ## 1. What is a Soundscape?

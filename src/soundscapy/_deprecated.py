@@ -9,8 +9,11 @@ from collections.abc import Callable, Iterable
 
 
 def moved_to(
-    module_name: str, new_module: str, names: Iterable[str]
-) -> Callable[..., object]:
+    module_name: str,
+    new_module: str,
+    names: Iterable[str],
+    fallback: Callable[[str], object] | None = None,
+) -> Callable[[str], object]:
     """
     Build a module ``__getattr__`` that forwards moved names with a warning.
 
@@ -22,23 +25,28 @@ def moved_to(
         Dotted path of the module the names now live in.
     names
         The names that moved.
+    fallback
+        ``__getattr__`` to defer to for any other name (e.g. a lazy loader).
+        If omitted, other names raise ``AttributeError``.
 
     Returns
     -------
-    Callable[..., object]
+    Callable[[str], object]
         A function suitable for assigning to a module-level ``__getattr__``.
 
     """
     moved = frozenset(names)
 
-    def getattr_(name: str, stacklevel: int = 2) -> object:
+    def getattr_(name: str) -> object:
         if name not in moved:
+            if fallback is not None:
+                return fallback(name)
             msg = f"module {module_name!r} has no attribute {name!r}"
             raise AttributeError(msg)
         warnings.warn(
             f"`{module_name}.{name}` has moved to `{new_module}.{name}`.",
             DeprecationWarning,
-            stacklevel=stacklevel,
+            stacklevel=2,
         )
         return getattr(importlib.import_module(new_module), name)
 

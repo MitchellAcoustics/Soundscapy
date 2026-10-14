@@ -17,7 +17,6 @@ from soundscapy import constants
 from soundscapy.databases import isd
 from soundscapy.plotting._warnings import ExperimentalWarning
 from soundscapy.surveys import survey_utils
-from soundscapy.surveys.survey_utils import rename_paqs
 
 
 def paq_radar_plot(
@@ -122,7 +121,7 @@ def paq_radar_plot(
 
     # Filter to only include columns that match PAQ_LABELS
     # This handles cases where the data might have extra columns
-    data = rename_paqs(data, paq_aliases=constants.PAQ_LABELS)
+    data = survey_utils.rename_paqs(data, paq_aliases=constants.PAQ_LABELS)
     data = survey_utils.return_paqs(data, incl_ids=False)
 
     # Create axes if needed
