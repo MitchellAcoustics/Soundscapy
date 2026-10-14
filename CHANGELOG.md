@@ -59,7 +59,7 @@ version. The last user-facing stable release on PyPI was `0.7.8`, so most users
 are upgrading across a much larger gap than the version number suggests.
 
 If you are upgrading from `0.7.x`, please read the
-[migration guide](docs/migration-0.7-to-0.8.md) before installing — there are
+[migration guide](docs/project/01-migration-0.7-to-0.8.qmd) before installing — there are
 several breaking changes, most notably the new `ISOPlot` API.
 
 ### ⚠️ Breaking Changes
@@ -68,7 +68,7 @@ several breaking changes, most notably the new `ISOPlot` API.
   with a layered plotting architecture. The function-style helpers
   (`scatter_plot`, `density_plot`) are still available and have been adapted to
   the new backend, but custom subclasses or direct `CircumplexPlot` use will
-  need to migrate. See the [migration guide](docs/migration-0.7-to-0.8.md).
+  need to migrate. See the [migration guide](docs/project/01-migration-0.7-to-0.8.qmd).
 - **Plotly backend removed**: only the seaborn backend is supported now. The
   `plotly` dependency has been dropped to simplify installation.
 - **RTHORR R package integration removed**: the `rthorr` R package is no longer

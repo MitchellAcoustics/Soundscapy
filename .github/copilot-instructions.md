@@ -43,7 +43,7 @@ pixi run -e docs docs-build     # full build → docs/_site/
 pixi run -e docs docs-preview   # local preview at http://localhost:3000
 ```
 
-The docs site is built with **great-docs** (`docs/great-docs.yml`; all docs sources live under `docs/`). The `docs/_quarto/` build directory is ephemeral and gitignored — never edit files inside it. Narrative pages live in `docs/user_guide/`, and the Gallery (a blog-style Quarto listing) in `docs/gallery/` and are auto-discovered by numeric prefix order.
+The docs site is built with **great-docs** (`docs/great-docs.yml`; all docs sources live under `docs/`). The `docs/_quarto/` build directory is ephemeral and gitignored — never edit files inside it. Narrative user-guide pages live in `docs/user_guide/`, tutorials and papers in `docs/tutorials/`, project pages (news, migration, contributing) in `docs/project/`, and the Gallery (a blog-style Quarto listing of short plot examples) in `docs/gallery/`; pages are auto-discovered and ordered by numeric prefix. Keep user-guide pages explanatory and put plot-variety examples in the Gallery.
 
 ## Architecture
 

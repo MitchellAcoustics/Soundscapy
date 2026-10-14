@@ -19,7 +19,7 @@ pip install soundscapy
 > **Upgrading from 0.7.x?** `v0.8.2` is the long-overdue stable release that
 > consolidates the entire `v0.8.0rc*` and `v0.8.2.dev*` pre-release line.
 > Several APIs have changed (most notably the new `ISOPlot` plotting API).
-> See the [migration guide](https://drandrewmitchell.com/Soundscapy/migration-0.7-to-0.8/)
+> See the [migration guide](https://drandrewmitchell.com/Soundscapy/project/migration-0.7-to-0.8/)
 > before upgrading.
 
 ### Optional Dependencies
@@ -110,4 +110,4 @@ Large planned feature additions are:
 
 If you would like to contribute or if you have any bugs you have found while using `Soundscapy', please feel free to get in touch or submit an issue or pull request!
 
-Please see [contribution guidelines](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/user_guide/02-contributing.qmd) for contribution guidelines.
+Please see [contribution guidelines](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/project/02-contributing.qmd) for contribution guidelines.

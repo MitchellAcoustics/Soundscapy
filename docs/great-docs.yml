@@ -29,9 +29,23 @@ favicon:
 navbar_style: sky
 
 sections:
+  - title: Tutorials
+    dir: tutorials
+    navbar_after: User Guide
+    sidebar_groups:
+      - section: Tutorials
+        contents:
+          - soundscape-assessment-tutorial.qmd
+          - ioa-workshop-worksheet.qmd
+      - section: Papers
+        contents:
+          - how-to-analyse-and-represent-soundscapes.qmd
   - title: Gallery
     dir: gallery
     type: blog
-    navbar_after: User Guide
+    navbar_after: Tutorials
+  - title: Project
+    dir: project
+    navbar_after: Gallery
 
 versions: ["0.8.5"]
