@@ -4,7 +4,7 @@
 """Configure pytest for soundscapy testing."""
 
 import importlib.util
-import os
+from fnmatch import fnmatch
 
 import pytest
 from _pytest.logging import LogCaptureFixture
@@ -17,16 +17,29 @@ collect_ignore_glob: list[str] = []
 _audio_deps = ("acoustic_toolbox", "maad", "mosqito", "tqdm")
 if any(importlib.util.find_spec(dep) is None for dep in _audio_deps):
     collect_ignore_glob.append("src/soundscapy/audio/*")
-# xdoctest's `module:` requirement can't see namespace packages such as rpy2,
-# so doctests that need R gate on this flag instead.
 _has_rpy2 = importlib.util.find_spec("rpy2") is not None
-os.environ["SOUNDSCAPY_HAS_RPY2"] = "1" if _has_rpy2 else "0"
 if not _has_rpy2:
     collect_ignore_glob += [
         "src/soundscapy/spi/*",
         "src/soundscapy/satp/*",
         "src/soundscapy/r_wrapper/*",
     ]
+
+# Doctests outside the R subpackages that still need R, matched on xdoctest
+# item names. Gated here rather than with `# xdoctest: +REQUIRES(module:rpy2)`
+# because xdoctest can't resolve namespace packages such as rpy2, and so the
+# rendered docstrings stay free of test-harness directives.
+_R_DOCTESTS = ("ISOPlot.add_spi:*",)
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Skip doctests that need R when rpy2 isn't installed."""
+    if _has_rpy2:
+        return
+    skip_r = pytest.mark.skip(reason="requires the soundscapy[r] extra")
+    for item in items:
+        if any(fnmatch(item.name, pattern) for pattern in _R_DOCTESTS):
+            item.add_marker(skip_r)
 
 
 @pytest.fixture
