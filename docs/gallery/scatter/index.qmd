@@ -1,0 +1,19 @@
+---
+title: "Scatter plot"
+description: "Each survey response as a point in the ISO circumplex."
+date: 2026-01-01
+categories: [scatter]
+---
+
+```{python}
+#| label: fig-scatter
+#| fig-alt: "Scatter plot of ISO coordinates"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = pd.read_csv("../../assets/DemoData.csv")
+
+sspy.scatter(data, title="ISO coordinates", diagonal_lines=True, alpha=0.7)
+plt.show()
+```

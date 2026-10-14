@@ -1,0 +1,24 @@
+---
+title: "Scatter with density"
+description: "Raw points layered over the overall distribution."
+date: 2026-01-01
+categories: [layers]
+---
+
+```{python}
+#| label: fig-scatter-density
+#| fig-alt: "Scatter points layered over a density surface"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = pd.read_csv("../../assets/DemoData.csv")
+
+sspy.iso_plot(
+    data,
+    title="Scatter and density",
+    plot_layers=["scatter", "density"],
+    diagonal_lines=True,
+)
+plt.show()
+```

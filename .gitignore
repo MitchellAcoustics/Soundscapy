@@ -185,7 +185,14 @@ environment.yml.bak
 
 **/*.quarto_ipynb
 
-# Great Docs build output (ephemeral — regenerated on every build)
-great-docs/_site/
-great-docs/
+# Great Docs build output (ephemeral, regenerated on every build)
+/docs/_quarto/
+/docs/_site/
+/docs/_freeze/
+/docs/.cache/
+/great-docs/
+/.great-docs/
+/.great-docs-build/
+/.great-docs-cache/
+/_great_docs_build/
 site/

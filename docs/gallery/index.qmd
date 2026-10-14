@@ -1,0 +1,13 @@
+---
+title: Gallery
+listing:
+  type: grid
+  contents: "**.qmd"
+  grid-columns: 2
+  image-height: 220px
+  fields: [image, title, description]
+  sort: "date"
+toc: false
+---
+
+Short, self-contained examples of the plots Soundscapy can make. Each one runs on the sample survey data bundled with these docs, so you can copy it and swap in your own data.

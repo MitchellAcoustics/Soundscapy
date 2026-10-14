@@ -1,0 +1,37 @@
+# Great Docs configuration (only non-default settings).
+# Full option list: https://posit-dev.github.io/great-docs/user-guide/configuration.html
+display_name: Soundscapy
+site_url: https://drandrewmitchell.com/Soundscapy/
+
+authors:
+  - name: Andrew Mitchell
+    role: Author
+    affiliation: University College London
+    email: andrew.mitchell.research@gmail.com
+    github: MitchellAcoustics
+    homepage: https://drandrewmitchell.com
+
+exclude:
+  - backends_deprecated
+
+interlinks:
+  sources:
+    numpy:
+      url: https://numpy.org/doc/stable/
+      aliases: [np]
+
+logo:
+  light: assets/logo.png
+  dark: assets/logo-dark.png
+favicon:
+  icon: assets/favicon.png
+
+navbar_style: sky
+
+sections:
+  - title: Gallery
+    dir: gallery
+    type: blog
+    navbar_after: User Guide
+
+versions: ["0.8.5"]

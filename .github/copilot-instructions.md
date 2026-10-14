@@ -39,11 +39,11 @@ pixi run -e test pytest -k "keyword"
 ### Documentation
 
 ```bash
-pixi run -e docs docs-build     # full build → great-docs/_site/
+pixi run -e docs docs-build     # full build → docs/_site/
 pixi run -e docs docs-preview   # local preview at http://localhost:3000
 ```
 
-The docs site is built with **great-docs** (`great-docs.yml` at project root). The `great-docs/` directory is ephemeral and gitignored — never edit files inside it. Narrative pages live in `user_guide/` and are auto-discovered by numeric prefix order.
+The docs site is built with **great-docs** (`docs/great-docs.yml`; all docs sources live under `docs/`). The `docs/_quarto/` build directory is ephemeral and gitignored — never edit files inside it. Narrative pages live in `docs/user_guide/`, and the Gallery (a blog-style Quarto listing) in `docs/gallery/` and are auto-discovered by numeric prefix order.
 
 ## Architecture
 
