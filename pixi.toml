@@ -149,7 +149,8 @@ default-environment = "docs"
 
 [feature.docs.tasks.docs-preview]
 description         = "Preview docs locally at http://localhost:3000"
-cmd                 = "great-docs preview"
+cmd                 = "great-docs preview --port 3000"
+depends-on          = ["docs-build"]
 default-environment = "docs"
 
 [feature.dev.tasks.setup-hooks]
