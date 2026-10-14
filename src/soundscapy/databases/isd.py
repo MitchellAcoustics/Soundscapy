@@ -434,6 +434,10 @@ def select_record_ids(
     :
         Filtered dataframe.
 
+    See Also
+    --------
+    [](`pd.DataFrame.query`): For more complex queries on dataframes.
+
     Examples
     --------
     >>> df = pd.DataFrame({
@@ -500,6 +504,10 @@ def select_session_ids(
     :
         Filtered dataframe.
 
+    See Also
+    --------
+    [](`pd.DataFrame.query`): For more complex queries on dataframes.
+
     Examples
     --------
     >>> df = pd.DataFrame({
@@ -534,6 +542,10 @@ def select_location_ids(
     -------
     :
         Filtered dataframe.
+
+    See Also
+    --------
+    [](`pd.DataFrame.query`): For more complex queries on dataframes.
 
     Examples
     --------
@@ -580,7 +592,7 @@ def describe_location(
 
     Examples
     --------
-    >>> from soundscapy.surveys.processing import add_iso_coords
+    >>> from soundscapy import add_iso_coords
     >>> df = pd.DataFrame({
     ...     'LocationID': ['L1', 'L1', 'L2', 'L2'],
     ...     'PAQ1': [4, 2, 3, 5],
@@ -680,9 +692,13 @@ def soundscapy_describe(
     :
         Summary of the data.
 
+    See Also
+    --------
+    describe_location : Return a summary of the data for a specific location.
+
     Examples
     --------
-    >>> from soundscapy.surveys.processing import add_iso_coords
+    >>> from soundscapy import add_iso_coords
     >>> df = pd.DataFrame({
     ...     'LocationID': ['L1', 'L1', 'L2', 'L2'],
     ...     'PAQ1': [4, 2, 3, 5],

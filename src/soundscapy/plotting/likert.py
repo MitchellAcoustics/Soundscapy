@@ -90,7 +90,7 @@ def paq_radar_plot(
     --------
     >>> import pandas as pd
     >>> import matplotlib.pyplot as plt
-    >>> from soundscapy.plotting.likert import paq_radar_plot
+    >>> from soundscapy import paq_radar_plot
     >>>
     >>> # Sample data with PAQ values for two locations
     >>> data = pd.DataFrame({
@@ -314,7 +314,7 @@ def stacked_likert(
     --------
     >>> import pandas as pd
     >>> import matplotlib.pyplot as plt
-    >>> from soundscapy.plotting.likert import stacked_likert
+    >>> from soundscapy import stacked_likert
     >>>
     >>> # Sample survey data
     >>> data = pd.DataFrame({

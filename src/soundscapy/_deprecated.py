@@ -5,13 +5,12 @@
 
 import importlib
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 
 
 def moved_to(
     module_name: str,
-    new_module: str,
-    names: Iterable[str],
+    moves: Mapping[str, Iterable[str]],
     fallback: Callable[[str], object] | None = None,
 ) -> Callable[[str], object]:
     """
@@ -21,10 +20,8 @@ def moved_to(
     ----------
     module_name
         ``__name__`` of the module the names used to live in.
-    new_module
-        Dotted path of the module the names now live in.
-    names
-        The names that moved.
+    moves
+        Maps the dotted path of each new module to the names that moved there.
     fallback
         ``__getattr__`` to defer to for any other name (e.g. a lazy loader).
         If omitted, other names raise ``AttributeError``.
@@ -35,10 +32,11 @@ def moved_to(
         A function suitable for assigning to a module-level ``__getattr__``.
 
     """
-    moved = frozenset(names)
+    moved = {name: new_module for new_module, names in moves.items() for name in names}
 
     def getattr_(name: str) -> object:
-        if name not in moved:
+        new_module = moved.get(name)
+        if new_module is None:
             if fallback is not None:
                 return fallback(name)
             msg = f"module {module_name!r} has no attribute {name!r}"

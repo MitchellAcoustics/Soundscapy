@@ -3,7 +3,7 @@
 
 """Soundscapy is a Python library for soundscape analysis and visualisation."""
 
-# ruff: noqa: E402
+# ruff: noqa: E402, F401  # F401: re-exports are declared via __init__.pyi, not a literal __all__
 from importlib.metadata import version
 
 import lazy_loader as _lazy
@@ -47,40 +47,39 @@ __version__ = version("soundscapy")
 # The adjacent __init__.pyi stub drives both lazy_loader and static type checkers.
 _lazy_getattr, __dir__, _lazy_all = _lazy.attach_stub(__name__, __file__)
 
-# Deprecated top-level constants warn and forward; everything else is lazy.
+# Deprecated top-level names warn and forward to their subpackage; everything
+# else is lazy. These are deliberately absent from __init__.pyi and __all__.
 __getattr__ = moved_to(
     __name__,
-    "soundscapy.constants",
-    ["PAQ_IDS", "PAQ_LABELS"],
+    {
+        "soundscapy.constants": ["PAQ_IDS", "PAQ_LABELS"],
+        "soundscapy.audio": [
+            "ConfigManager",
+            "add_results",
+            "parallel_process",
+            "prep_multiindex_df",
+            "process_all_metrics",
+        ],
+        "soundscapy.satp": [
+            "CircE",
+            "CircEResults",
+            "CircModelE",
+            "normalize_polar_angles",
+        ],
+        "soundscapy.spi": [
+            "CentredParams",
+            "DirectParams",
+            "MultiSkewNorm",
+            "cp2dp",
+            "dp2cp",
+            "msn",
+            "spi_score",
+        ],
+    },
     fallback=_lazy_getattr,
 )
 
 
-# __all__ includes the runtime-computed lazy names from the stub
+# The public API is declared in __init__.pyi; _lazy_all is every name it imports.
 # pyrefly: ignore [unresolvable-dunder-all]
-__all__ = [  # noqa: PLE0604 # _lazy_all is list[str] from lazy_loader.attach_stub
-    "ISOPlot",
-    "__version__",
-    "add_iso_coords",
-    "constants",
-    "create_iso_subplots",
-    "databases",
-    "density",
-    "disable_logging",
-    "enable_debug",
-    "get_logger",
-    "ipsatize",
-    "isd",
-    "iso_plot",
-    "jointplot",
-    "likert",
-    "paq_likert",
-    "paq_radar_plot",
-    "plotting",
-    "rename_paqs",
-    "scatter",
-    "setup_logging",
-    "stacked_likert",
-    "surveys",
-    *_lazy_all,
-]
+__all__ = ["__version__", *_lazy_all]  # noqa: PLE0604 # _lazy_all is list[str]

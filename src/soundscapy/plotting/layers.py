@@ -35,8 +35,8 @@ from soundscapy.sspylogging import get_logger
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
-    from soundscapy import CentredParams, DirectParams
     from soundscapy.plotting.plot_context import PlotContext
+    from soundscapy.spi import CentredParams, DirectParams
 
 logger = get_logger()
 

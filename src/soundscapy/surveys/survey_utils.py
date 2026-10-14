@@ -22,16 +22,17 @@ AllowNan = partial(pa.Field, nullable=True)
 
 __getattr__ = moved_to(
     __name__,
-    "soundscapy.constants",
-    [
-        "PAQ",
-        "PAQ_IDS",
-        "PAQ_LABELS",
-        "LikertScale",
-        "LIKERT_SCALES",
-        "EQUAL_ANGLES",
-        "LANGUAGE_ANGLES",
-    ],
+    {
+        "soundscapy.constants": [
+            "PAQ",
+            "PAQ_IDS",
+            "PAQ_LABELS",
+            "LikertScale",
+            "LIKERT_SCALES",
+            "EQUAL_ANGLES",
+            "LANGUAGE_ANGLES",
+        ]
+    },
 )
 
 
