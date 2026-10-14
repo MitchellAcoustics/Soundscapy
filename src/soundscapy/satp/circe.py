@@ -606,8 +606,6 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
         column-wise participant-centred values.
 
     """
-    import warnings
-
     warnings.warn(
         "person_center() is deprecated; use ipsatize(method='column_wise') instead.",
         DeprecationWarning,
