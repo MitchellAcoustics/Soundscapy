@@ -1,6 +1,10 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """Configure pytest for soundscapy testing."""
 
 import importlib.util
+import os
 
 import pytest
 from _pytest.logging import LogCaptureFixture
@@ -13,13 +17,15 @@ collect_ignore_glob: list[str] = []
 _audio_deps = ("acoustic_toolbox", "maad", "mosqito", "tqdm")
 if any(importlib.util.find_spec(dep) is None for dep in _audio_deps):
     collect_ignore_glob.append("src/soundscapy/audio/*")
-if importlib.util.find_spec("rpy2") is None:
+# xdoctest's `module:` requirement can't see namespace packages such as rpy2,
+# so doctests that need R gate on this flag instead.
+_has_rpy2 = importlib.util.find_spec("rpy2") is not None
+os.environ["SOUNDSCAPY_HAS_RPY2"] = "1" if _has_rpy2 else "0"
+if not _has_rpy2:
     collect_ignore_glob += [
         "src/soundscapy/spi/*",
         "src/soundscapy/satp/*",
         "src/soundscapy/r_wrapper/*",
-        # iso_plot.py contains xdoctests that import from soundscapy.spi
-        "src/soundscapy/plotting/iso_plot.py",
     ]
 
 
