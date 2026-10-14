@@ -13,25 +13,18 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from soundscapy.databases.isd import (
-    likert_categorical_from_data,
-    match_col_to_likert_scale,
-)
+from soundscapy import constants
+from soundscapy.databases import isd
 from soundscapy.plotting._warnings import ExperimentalWarning
-from soundscapy.surveys import rename_paqs, return_paqs
-from soundscapy.surveys.survey_utils import (
-    EQUAL_ANGLES,
-    LIKERT_SCALES,
-    PAQ_IDS,
-    PAQ_LABELS,
-)
+from soundscapy.surveys import survey_utils
+from soundscapy.surveys.survey_utils import rename_paqs
 
 
 def paq_radar_plot(
     data: pd.DataFrame,
     ax: Axes | None = None,
     index: str | None = None,
-    angles: list[float] | tuple[float, ...] = EQUAL_ANGLES,
+    angles: list[float] | tuple[float, ...] = constants.EQUAL_ANGLES,
     *,
     figsize: tuple[float, float] = (8, 8),
     palette: str | Sequence[str] | None = "colorblind",
@@ -129,8 +122,8 @@ def paq_radar_plot(
 
     # Filter to only include columns that match PAQ_LABELS
     # This handles cases where the data might have extra columns
-    data = rename_paqs(data, paq_aliases=PAQ_LABELS)
-    data = return_paqs(data, incl_ids=False)
+    data = rename_paqs(data, paq_aliases=constants.PAQ_LABELS)
+    data = survey_utils.return_paqs(data, incl_ids=False)
 
     # Create axes if needed
     if ax is None:
@@ -142,7 +135,7 @@ def paq_radar_plot(
     rad_angles = np.deg2rad(angles)
 
     # Draw one axis per variable + add labels
-    plt.xticks(rad_angles, PAQ_LABELS)
+    plt.xticks(rad_angles, constants.PAQ_LABELS)
     ax.tick_params(axis="x", pad=label_pad)
 
     # Draw y-labels
@@ -199,7 +192,7 @@ def paq_radar_plot(
 def paq_likert(
     data: pd.DataFrame,
     title: str = "Stacked Likert Plot",
-    paq_cols: list[str] = PAQ_IDS,
+    paq_cols: list[str] = constants.PAQ_IDS,
     *,
     legend: bool = True,
     ax: Axes | None = None,
@@ -252,14 +245,14 @@ def paq_likert(
     # pyrefly: ignore [no-matching-overload]
     # pandas-stubs have no DataFrame.apply overload returning Categorical
     # works at runtime
-    new_data = new_data.apply(likert_categorical_from_data, axis=0)
+    new_data = new_data.apply(isd.likert_categorical_from_data, axis=0)
 
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 6))
 
     plot_likert.plot_likert(
         new_data,
-        LIKERT_SCALES.paq,
+        constants.LIKERT_SCALES.paq,
         plot_percentage=plot_percentage,
         ax=ax,
         legend=legend,
@@ -346,7 +339,7 @@ def stacked_likert(
     new_data = new_data.dropna()
 
     # Convert to categorical format for Likert plotting
-    new_data = likert_categorical_from_data(new_data)
+    new_data = isd.likert_categorical_from_data(new_data)
 
     # Create new axes if none provided
     if ax is None:
@@ -355,7 +348,7 @@ def stacked_likert(
     # Create the stacked Likert plot
     plot_likert.plot_likert(
         pd.Series(new_data),
-        match_col_to_likert_scale(column),
+        isd.match_col_to_likert_scale(column),
         plot_percentage=plot_percentage,
         ax=ax,
         legend=legend,

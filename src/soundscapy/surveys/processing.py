@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Soundscape survey data processing module.
 
@@ -35,7 +38,8 @@ import pandas as pd
 from loguru import logger
 from scipy import optimize
 
-from soundscapy.surveys.survey_utils import EQUAL_ANGLES, PAQ_IDS, return_paqs
+from soundscapy import constants
+from soundscapy.surveys.survey_utils import return_paqs
 
 np.set_printoptions(legacy="1.21")
 
@@ -93,7 +97,7 @@ class SSMMetrics:
 def calculate_iso_coords(
     results_df: pd.DataFrame,
     val_range: tuple[int, int] = (5, 1),
-    angles: tuple[int, ...] = EQUAL_ANGLES,
+    angles: tuple[int, ...] = constants.EQUAL_ANGLES,
 ) -> tuple[pd.Series, pd.Series]:
     """
     Calculate the projected ISOPleasant and ISOEventful coordinates.
@@ -215,7 +219,7 @@ def add_iso_coords(
     data: pd.DataFrame,
     val_range: tuple[int, int] = (1, 5),
     names: tuple[str, str] = ("ISOPleasant", "ISOEventful"),
-    angles: tuple[int, ...] = EQUAL_ANGLES,
+    angles: tuple[int, ...] = constants.EQUAL_ANGLES,
     *,
     overwrite: bool = False,
 ) -> pd.DataFrame:
@@ -333,6 +337,7 @@ def likert_data_quality(
 
     if invalid_indices:
         logger.info(f"Found {len(invalid_indices)} samples with data quality issues")
+        # pyrefly: ignore [bad-return]
         return invalid_indices
 
     logger.info("PAQ data quality check passed")
@@ -394,7 +399,7 @@ def simulation(
         np.random.default_rng(seed).integers(
             min(val_range), max(val_range) + 1, size=(n, 8)
         ),
-        columns=PAQ_IDS,
+        columns=constants.PAQ_IDS,
     )
 
     if incl_iso_coords:
@@ -406,10 +411,10 @@ def simulation(
 
 def ssm_metrics(
     df: pd.DataFrame,
-    paq_cols: list[str] = PAQ_IDS,
+    paq_cols: list[str] = constants.PAQ_IDS,
     method: str = "cosine",
     val_range: tuple[int, int] = (5, 1),
-    angles: tuple[int, ...] = EQUAL_ANGLES,
+    angles: tuple[int, ...] = constants.EQUAL_ANGLES,
 ) -> pd.DataFrame:
     """
     Calculate the Structural Summary Method (SSM) metrics for each response.
@@ -496,7 +501,7 @@ def ssm_metrics(
 
 def ssm_cosine_fit(
     y: pd.Series,
-    angles: tuple[int, ...] | np.ndarray = EQUAL_ANGLES,
+    angles: tuple[int, ...] | np.ndarray = constants.EQUAL_ANGLES,
     bounds: tuple[list[float], list[float]] = (
         [0, 0, 0, -np.inf],
         [np.inf, 360, np.inf, np.inf],
@@ -693,7 +698,7 @@ def ipsatize(
     [-5.0, 5.0, 5.0, -5.0]
 
     """
-    _scales = scales if scales is not None else PAQ_IDS
+    _scales = scales if scales is not None else constants.PAQ_IDS
 
     if method == "column_wise":
         means = data.groupby(participant_col)[_scales].transform("mean")

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Module for handling the International Soundscape Database (ISD).
 
@@ -29,16 +32,9 @@ from loguru import logger
 from pandas import CategoricalDtype
 from plot_likert.scales import Scale
 
-from soundscapy.surveys.processing import (
-    calculate_iso_coords,
-    likert_data_quality,
-)
-from soundscapy.surveys.survey_utils import (
-    LIKERT_SCALES,
-    PAQ_IDS,
-    PAQ_LABELS,
-    rename_paqs,
-)
+from soundscapy import constants
+from soundscapy.surveys import processing
+from soundscapy.surveys.survey_utils import rename_paqs
 
 # ISD-specific PAQ aliases
 _PAQ_ALIASES = {
@@ -82,7 +78,7 @@ def load(locations: list[str] | None = None) -> pd.DataFrame:
 
     Examples
     --------
-    >>> from soundscapy.surveys.survey_utils import PAQ_IDS
+    >>> from soundscapy.constants import PAQ_IDS
     >>> df = load()
     >>> isinstance(df, pd.DataFrame)
     True
@@ -128,7 +124,7 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
 
     Examples
     --------
-    >>> from soundscapy.surveys.survey_utils import PAQ_IDS  # doctest: +SKIP
+    >>> from soundscapy.constants import PAQ_IDS  # doctest: +SKIP
     >>> df = load_zenodo("v1.0.1")  # doctest: +SKIP
     >>> isinstance(df, pd.DataFrame)  # doctest: +SKIP
     True
@@ -217,7 +213,7 @@ def validate(
     logger.info("Validating ISD data")
     data = rename_paqs(df, paq_aliases)
 
-    invalid_indices = likert_data_quality(
+    invalid_indices = processing.likert_data_quality(
         data, val_range=val_range, allow_na=allow_paq_na
     )
 
@@ -247,23 +243,24 @@ def match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
         Likert scale object.
 
     """
-    if col in PAQ_IDS or col in PAQ_LABELS:
-        return LIKERT_SCALES.paq
-    if col in ["traffic_noise", "other_noise", "human_sounds", "natural_sounds"]:
-        return LIKERT_SCALES.source
-    if col in ["overall_sound_environment"]:
-        return LIKERT_SCALES.overall
-    if col in ["appropriate"]:
-        return LIKERT_SCALES.appropriate
-    if col in ["perceived_loud"]:
-        return LIKERT_SCALES.loud
-    if col in ["visit_often"]:
-        return LIKERT_SCALES.often
-    if col in ["like_to_visit"]:
-        return LIKERT_SCALES.visit
-
-    msg = f"Column {col} does not match any known Likert scale."
-    raise ValueError(msg)
+    match col:
+        case _ if col in constants.PAQ_IDS or col in constants.PAQ_LABELS:
+            return constants.LIKERT_SCALES.paq
+        case "traffic_noise" | "other_noise" | "human_sounds" | "natural_sounds":
+            return constants.LIKERT_SCALES.source
+        case "overall_sound_environment":
+            return constants.LIKERT_SCALES.overall
+        case "appropriate":
+            return constants.LIKERT_SCALES.appropriate
+        case "perceived_loud":
+            return constants.LIKERT_SCALES.loud
+        case "visit_often":
+            return constants.LIKERT_SCALES.often
+        case "like_to_visit":
+            return constants.LIKERT_SCALES.visit
+        case _:
+            msg = f"Column {col} does not match any known Likert scale."
+            raise ValueError(msg)
 
 
 def likert_categorical_from_data(
@@ -537,7 +534,7 @@ def describe_location(
     count = len(loc_df)
 
     if "ISOPleasant" not in loc_df.columns or "ISOEventful" not in loc_df.columns:
-        iso_pleasant, iso_eventful = calculate_iso_coords(loc_df)
+        iso_pleasant, iso_eventful = processing.calculate_iso_coords(loc_df)
         loc_df = loc_df.assign(ISOPleasant=iso_pleasant, ISOEventful=iso_eventful)
 
     pl_count = (loc_df["ISOPleasant"] > pl_threshold).sum()

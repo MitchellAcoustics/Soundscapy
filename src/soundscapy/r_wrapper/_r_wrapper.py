@@ -31,8 +31,8 @@ from rpy2 import robjects
 from rpy2.robjects import numpy2ri, pandas2ri
 from scipy.stats import chi2 as scipy_chi2
 
+from soundscapy import constants
 from soundscapy.sspylogging import get_logger
-from soundscapy.surveys.survey_utils import PAQ_IDS
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -509,7 +509,7 @@ def cp2dp(
 def bfgs_fit(
     data_cor: pd.DataFrame,
     n: int,
-    scales: list[str] = PAQ_IDS,
+    scales: list[str] = constants.PAQ_IDS,
     m_val: int = 3,
     *,
     equal_ang: bool = True,

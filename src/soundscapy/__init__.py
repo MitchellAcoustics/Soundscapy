@@ -13,8 +13,9 @@ from loguru import logger
 logger.disable("soundscapy")
 
 # Always available core modules
-from soundscapy import databases, plotting, surveys
+from soundscapy import constants, databases, plotting, surveys
 from soundscapy import databases as db
+from soundscapy._deprecated import moved_to
 from soundscapy.databases import isd
 from soundscapy.plotting import (
     ISOPlot,
@@ -33,7 +34,6 @@ from soundscapy.sspylogging import (
     setup_logging,
 )
 from soundscapy.surveys import add_iso_coords, ipsatize, processing, rename_paqs
-from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
 
 __version__ = version("soundscapy")
 
@@ -42,16 +42,25 @@ __version__ = version("soundscapy")
 # does not import them; each submodule's gate fires on first access and
 # raises a uniform ImportError if its extras aren't installed.
 # The adjacent __init__.pyi stub drives both lazy_loader and static type checkers.
-__getattr__, __dir__, _lazy_all = _lazy.attach_stub(__name__, __file__)
+_lazy_getattr, __dir__, _lazy_all = _lazy.attach_stub(__name__, __file__)
+
+_moved_getattr = moved_to(__name__, "soundscapy.constants", ["PAQ_IDS", "PAQ_LABELS"])
+
+
+def __getattr__(name: str) -> object:
+    """Resolve deprecated top-level constants, else lazy subpackages."""
+    if name in {"PAQ_IDS", "PAQ_LABELS"}:
+        return _moved_getattr(name, 3)
+    return _lazy_getattr(name)
+
 
 # __all__ includes the runtime-computed lazy names from the stub
 # pyrefly: ignore [unresolvable-dunder-all]
 __all__ = [  # noqa: PLE0604 # _lazy_all is list[str] from lazy_loader.attach_stub
-    "PAQ_IDS",
-    "PAQ_LABELS",
     "ISOPlot",
     "__version__",
     "add_iso_coords",
+    "constants",
     "create_iso_subplots",
     "databases",
     "db",

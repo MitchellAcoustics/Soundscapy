@@ -78,3 +78,14 @@ repos:
             "--dir",
             "src/soundscapy",
           ]
+  # - repo: local
+  #   hooks:
+  #     - id: updatecitation
+  #       name: updateCitation
+  #       entry: updateCitation
+  #       language: python
+  #       additional_dependencies:
+  #         - updateCitation
+  #       files: ^$
+  #       pass_filenames: false
+  #       always_run: true

@@ -48,9 +48,9 @@ from pandera.typing.pandas import DataFrame, Series
 from rpy2.rinterface_lib.embedded import RRuntimeError
 
 import soundscapy.r_wrapper as sspyr
+from soundscapy import constants
 from soundscapy.sspylogging import get_logger
 from soundscapy.surveys.processing import ipsatize
-from soundscapy.surveys.survey_utils import PAQ_IDS, PAQ_LABELS
 
 if TYPE_CHECKING:
     import rpy2.robjects
@@ -66,9 +66,9 @@ logger = get_logger()
 _COLUMN_ALIASES: dict[str, str] = {
     **{
         label.lower(): paq_id
-        for label, paq_id in zip(PAQ_LABELS, PAQ_IDS, strict=False)
+        for label, paq_id in zip(constants.PAQ_LABELS, constants.PAQ_IDS, strict=False)
     },
-    **{paq_id.lower(): paq_id for paq_id in PAQ_IDS},
+    **{paq_id.lower(): paq_id for paq_id in constants.PAQ_IDS},
     "participant": "participant",
 }
 
@@ -195,7 +195,7 @@ def normalize_polar_angles(angles: pd.Series) -> pd.Series:
 
     Examples
     --------
-    >>> from soundscapy.surveys.survey_utils import PAQ_IDS
+    >>> from soundscapy.constants import PAQ_IDS
     >>> import pandas as pd
     >>> reflected = pd.Series(
     >>>     [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0],
@@ -341,7 +341,7 @@ class CircE:
                 else:
                     estimates = pa_df.iloc[:, 0].to_numpy()
                 polar_angles = normalize_polar_angles(
-                    pd.Series(estimates, index=PAQ_IDS)
+                    pd.Series(estimates, index=constants.PAQ_IDS)
                 )
 
         return cls(
@@ -395,7 +395,7 @@ class CircE:
         --------
         >>> import soundscapy as sspy
         >>> data = sspy.isd.load()
-        >>> data_paqs = data[PAQ_IDS]
+        >>> data_paqs = data[sspy.constants.PAQ_IDS]
         >>> data_paqs = data_paqs.dropna()
         >>> data_cor = data_paqs.corr()
         >>> n = len(data_paqs)
@@ -408,7 +408,7 @@ class CircE:
         fit_stats = sspyr.bfgs_fit(
             data_cor=data_cor,
             n=n,
-            scales=PAQ_IDS,
+            scales=constants.PAQ_IDS,
             m_val=3,
             equal_ang=circ_model.equal_ang,
             equal_com=circ_model.equal_com,
@@ -477,7 +477,7 @@ class CircE:
         if self.polar_angles is not None:
             base.update(self.polar_angles.to_dict())  # type: ignore [no-matching-overload]
         else:
-            base.update(dict.fromkeys(PAQ_IDS))
+            base.update(dict.fromkeys(constants.PAQ_IDS))
         return base
 
 
@@ -741,7 +741,7 @@ def fit_circe(
     )
 
     # Use listwise deletion (complete cases only) — consistent with R's na.omit().
-    complete = processed[PAQ_IDS].dropna()
+    complete = processed[constants.PAQ_IDS].dropna()
     n = len(complete)
     if n == 0:
         msg = (
@@ -783,7 +783,7 @@ def fit_circe(
                     "rmsea_l": None,
                     "rmsea_u": None,
                     "gdiff": None,
-                    **dict.fromkeys(PAQ_IDS),
+                    **dict.fromkeys(constants.PAQ_IDS),
                     "error": str(e),
                 }
             )

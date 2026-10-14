@@ -5,6 +5,17 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- Universal constants (`PAQ`, `PAQ_IDS`, `PAQ_LABELS`, `LikertScale`, `LIKERT_SCALES`,
+  `EQUAL_ANGLES`, `LANGUAGE_ANGLES`) now live in `soundscapy.constants`. Importing them
+  from `soundscapy`, `soundscapy.surveys` or `soundscapy.surveys.survey_utils` still
+  works but emits a `DeprecationWarning`.
+- `plotting.iso_plot` module renamed to `plotting.isoplot`.
+- `jointplot` takes `height`; passing `figsize` now warns.
+
 ## 0.8.4 - 2026-05-11
 
 ### Added

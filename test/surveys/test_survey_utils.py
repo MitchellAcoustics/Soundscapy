@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Tests for the survey_utils module.
 
@@ -8,7 +11,7 @@ soundscapy.surveys.survey_utils module.
 import pandas as pd
 import pytest
 
-from soundscapy.surveys.survey_utils import (
+from soundscapy.constants import (
     EQUAL_ANGLES,
     LANGUAGE_ANGLES,
     LIKERT_SCALES,
@@ -16,6 +19,8 @@ from soundscapy.surveys.survey_utils import (
     PAQ_IDS,
     PAQ_LABELS,
     LikertScale,
+)
+from soundscapy.surveys.survey_utils import (
     mean_responses,
     rename_paqs,
     return_paqs,

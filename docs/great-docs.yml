@@ -5,11 +5,11 @@ site_url: https://drandrewmitchell.com/Soundscapy/
 
 authors:
   - name: Andrew Mitchell
-    role: Author
+    role: Honorary Lecturer
     affiliation: University College London
     email: andrew.mitchell.research@gmail.com
     github: MitchellAcoustics
-    homepage: https://drandrewmitchell.com
+    homepage: http://drandrewmitchell.com
 
 exclude:
   - backends_deprecated
