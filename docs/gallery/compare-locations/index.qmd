@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import soundscapy as sspy
 
 data = sspy.isd.load_demo()
-places = ["CamdenTown", "PancrasLock", "RegentsParkJapan", "RegentsParkFields"]
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden", "TateModern"]
 
 sspy.density(
     data[data["LocationID"].isin(places)],

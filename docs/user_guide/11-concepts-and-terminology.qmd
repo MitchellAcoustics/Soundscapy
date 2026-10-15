@@ -19,6 +19,7 @@ Before diving into code, it helps to know the concepts and terminology behind so
 ### Learning Objectives
 
 By the end of this tutorial, you will be able to:
+
 - Define what a soundscape is and why it's important
 - Understand the ISO 12913 standard for soundscape assessment
 - Explain the perceptual attributes used in soundscape evaluation
@@ -46,6 +47,7 @@ The ISO 12913-1:2014 standard defines a soundscape as:
 > "An acoustic environment as perceived or experienced and/or understood by a person or people, in context."
 
 This definition emphasizes three key aspects:
+
 1. **Perception**: How people subjectively experience sounds
 2. **Context**: The physical, social, and cultural environment in which sounds occur
 3. **Understanding**: How people interpret and make meaning from sounds

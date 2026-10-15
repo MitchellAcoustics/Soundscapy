@@ -28,19 +28,21 @@ visible to existing users.
 
 The biggest user-visible change is that the `CircumplexPlot` class has been
 replaced by the new layered `ISOPlot` API. The function-style helpers
-`scatter_plot` and `density_plot` remain available and have been
-re-implemented on the new backend, so the simplest plotting paths still work
-unchanged.
+`scatter_plot` and `density_plot` still work from `soundscapy.plotting` and
+have been re-implemented on the new backend, but they are deprecated in favour
+of `scatter` and `density`.
 
 ### If you used `scatter_plot` / `density_plot`
 
-No changes required. Imports and call sites continue to work:
+Your call sites keep working, but import from `soundscapy.plotting` (they are
+not exported from the top-level package) and expect a deprecation warning.
+Switch to `scatter` and `density` when convenient:
 
 ```python
-from soundscapy import scatter_plot, density_plot
+from soundscapy.plotting import density, scatter
 
-scatter_plot(df, x="ISOPleasant", y="ISOEventful")
-density_plot(df, x="ISOPleasant", y="ISOEventful")
+scatter(df, x="ISOPleasant", y="ISOEventful")
+density(df, x="ISOPleasant", y="ISOEventful")
 ```
 
 ### If you used `CircumplexPlot` directly
@@ -64,9 +66,11 @@ plot.scatter().density().show()
 from soundscapy.plotting import ISOPlot
 
 plot = (
-    ISOPlot.create(df, x="ISOPleasant", y="ISOEventful")
+    ISOPlot(data=df)
+    .create_subplots()
     .add_scatter()
     .add_density()
+    .style()
 )
 plot.show()
 ```
@@ -84,7 +88,8 @@ you can pass the underlying `Matplotlib` `Figure` to your interactive viewer of
 choice.
 
 If you previously imported `Backend` to switch between `Seaborn` and `Plotly`,
-that enum no longer exists.
+it remains importable from `soundscapy.plotting` only as a deprecated stub; it
+no longer selects anything.
 
 ## Optional dependencies overhaul
 
@@ -188,8 +193,8 @@ ipsatize(df, method="column_wise")   # legacy person_center behaviour
 ipsatize(df, method="row_wise")      # circumplex.ipsatize() behaviour
 ```
 
-`person_center()` is retained as a thin wrapper for backward compatibility
-but new code should use `ipsatize()`.
+`person_center()` is deprecated and emits a `DeprecationWarning`; new code
+should use `ipsatize()`.
 
 ## IDE and type-checker support
 
@@ -209,7 +214,7 @@ optional dependency is installed.
 ## Removed APIs
 
 - **`CircumplexPlot`** class (replaced by `ISOPlot`).
-- **`Backend`** enum (only `Seaborn` is supported now).
+- **`Backend`** enum (kept only as a deprecated stub; `Seaborn` is the only backend).
 - **`Plotly` plotting backend** (and the `plotly` dependency).
 - **`rthorr` R package** integration.
 - **CircE-from-GitHub** install requirement (CircE is now bundled).

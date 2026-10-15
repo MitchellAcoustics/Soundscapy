@@ -22,9 +22,9 @@ need to make small code changes.
 - **Plotting: `CircumplexPlot` → `ISOPlot`.** The `CircumplexPlot` class has
   been replaced by the new `ISOPlot` API, which uses a layered architecture
   for combining plot types and integrates SPI visualisation. The function-style
-  helpers `scatter_plot()` and `density_plot()` still work and have been
-  re-implemented on the new backend, so most casual users won't need to change
-  anything. If you were customising `CircumplexPlot` directly, the migration
+  helpers `scatter_plot()` and `density_plot()` still work from
+  `soundscapy.plotting` and have been re-implemented on the new backend, though
+  they are now deprecated in favour of `scatter()` and `density()`. If you were customising `CircumplexPlot` directly, the migration
   guide has before/after snippets.
 - **`Plotly` backend removed.** Only the `Seaborn` backend is supported now.
   Removing `plotly` makes installation lighter and removes a dependency that
@@ -46,7 +46,7 @@ SPI, or `jointplot` layers. It also has first-class subplot support for
 comparing soundscapes across conditions, and integrates the new SPI score
 display directly into the visualisation.
 
-The function-style entry points (`scatter_plot`, `density_plot`) remain the
+The function-style entry points (`scatter`, `density`) remain the
 quickest way to make a single plot, while `ISOPlot` itself is the way to build
 multi-layer or multi-panel figures. The migration guide and the
 [Visualising soundscapes](visualising-soundscapes.qmd) guide walk through both.

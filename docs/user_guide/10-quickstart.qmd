@@ -55,7 +55,7 @@ print(data.shape)
 
 # Validate the dataset with ISD-custom checks
 df, excl = isd.validate(data)
-print(f"Valid samples: {data.shape[0]}, Excluded samples: {excl.shape[0]}")
+print(f"Valid samples: {df.shape[0]}, Excluded samples: {0 if excl is None else excl.shape[0]}")
 ```
 
 ### Calculating $P_{ISO}$ and $E_{ISO}$ Coordinates

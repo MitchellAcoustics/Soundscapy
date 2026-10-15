@@ -14,7 +14,7 @@ import soundscapy as sspy
 
 data = sspy.isd.load_demo()
 
-places = ["CamdenTown", "PancrasLock", "RegentsParkJapan"]
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden"]
 report = data[data["LocationID"].isin(places)]
 
 fig = plt.figure(figsize=(15, 10))

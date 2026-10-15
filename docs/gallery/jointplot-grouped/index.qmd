@@ -14,7 +14,7 @@ import soundscapy as sspy
 
 data = sspy.isd.load_demo()
 
-places = ["CamdenTown", "PancrasLock", "RegentsParkJapan", "RegentsParkFields"]
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden", "TateModern"]
 
 sspy.jointplot(
     data[data["LocationID"].isin(places)],

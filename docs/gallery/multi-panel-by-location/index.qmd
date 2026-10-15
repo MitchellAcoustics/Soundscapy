@@ -14,7 +14,7 @@ import soundscapy as sspy
 
 data = sspy.isd.load_demo()
 
-places = ["CamdenTown", "PancrasLock", "RegentsParkJapan", "RegentsParkFields"]
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden", "TateModern"]
 
 sspy.create_iso_subplots(
     data[data["LocationID"].isin(places)],
