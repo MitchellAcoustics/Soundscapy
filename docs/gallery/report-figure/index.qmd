@@ -1,0 +1,53 @@
+---
+title: "Report-style figure"
+description: "Combine several plots in one Matplotlib grid for a report."
+date: 2026-01-13
+categories: [customisation, subplots]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-report-figure
+#| fig-alt: "Report figure combining scatter, density and per-location panels"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden"]
+report = data[data["LocationID"].isin(places)]
+
+fig = plt.figure(figsize=(15, 10))
+fig.suptitle("Soundscape analysis: comparing urban locations", fontsize=16, y=0.98)
+gs = fig.add_gridspec(2, 2, height_ratios=[1, 1.2])
+
+ax1 = fig.add_subplot(gs[0, 0])
+sspy.scatter(report, title="All locations - scatter", hue="LocationID", diagonal_lines=True, ax=ax1)
+
+ax2 = fig.add_subplot(gs[0, 1])
+sspy.density(
+    report,
+    title="All locations - density",
+    hue="LocationID",
+    density_type="simple",
+    incl_scatter=False,
+    fill=False,
+    diagonal_lines=True,
+    ax=ax2,
+)
+
+ax3 = fig.add_subplot(gs[1, :])
+ax3.axis("off")
+n = len(places)
+for i, place in enumerate(places):
+    subax = ax3.inset_axes([i / n, 0, 1 / n, 1])
+    sspy.iso_plot(
+        report[report["LocationID"] == place],
+        title=place,
+        plot_layers=["scatter", "simple_density"],
+        diagonal_lines=True,
+        ax=subax,
+    )
+plt.tight_layout()
+plt.show()
+```

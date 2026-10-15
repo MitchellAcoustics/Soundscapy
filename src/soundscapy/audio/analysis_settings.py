@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Module for managing audio analysis settings using Pydantic models.
 
@@ -313,7 +316,7 @@ class ConfigManager:
 
     """
 
-    def __init__(self, config_path: str | Path | None = None) -> None:  # noqa: D107
+    def __init__(self, config_path: str | Path | None = None) -> None:
         self.config_path = _ensure_path(config_path) if config_path else None
         self.current_config: AnalysisSettings | None = None
 

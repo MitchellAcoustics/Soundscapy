@@ -1,0 +1,188 @@
+---
+title: 'Quick Start'
+guide-section: "Getting Started"
+author:
+  - name: Andrew Mitchell
+jupyter:
+  jupytext:
+    cell_markers: '"""'
+  kernelspec:
+    display_name: soundscapy (3.12.5)
+    language: python
+    name: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !pip install "soundscapy>=0.8.4"
+---
+
+# Quick Start
+
+This page is the fastest route to a first analysis: install Soundscapy, load a dataset, calculate ISO coordinates, filter the data and draw your first circumplex plots. Each step links to the page that covers it in depth.
+
+## Background
+
+Soundscapy is a Python toolbox for analysing quantitative soundscape data. Urban soundscapes are typically assessed with surveys that ask respondents how they perceive a soundscape. Following ISO 12913, these surveys give quantitative data about soundscape perception. As proposed in [Mitchell, Aletta & Kang (2022)](https://doi.org/10.1121/10.0009794), the perception of a group or location is best described by the *distribution* of responses, and Soundscapy makes it simple to process the data and visualise those distributions. If any terms are unfamiliar, see [Concepts and terminology](concepts-and-terminology.qmd).
+
+The example dataset is the *International Soundscape Database (ISD)* (Mitchell *et al.*, 2021), freely available on [Zenodo](https://zenodo.org/records/6331810). Soundscapy expects data in the ISD format, but can be adapted to similar datasets.
+
+## Installation
+
+```
+pip install soundscapy
+```
+
+Optional extras add psychoacoustic audio analysis (`soundscapy[audio]`) and the R-based SPI and SATP tools (`soundscapy[r]`); see [Concepts and terminology](concepts-and-terminology.qmd#what-soundscapy-provides) for the full table.
+
+## Working with Data
+
+### Loading and Validating Data
+
+Let's start by importing Soundscapy and loading the International Soundscape Database (ISD):
+
+```{python}
+# Import Soundscapy
+import soundscapy as sspy
+from soundscapy.databases import isd
+
+# Load the ISD dataset
+data = isd.load()
+print(data.shape)
+
+# Validate the dataset with ISD-custom checks
+df, excl = isd.validate(data)
+print(f"Valid samples: {df.shape[0]}, Excluded samples: {0 if excl is None else excl.shape[0]}")
+```
+
+### Calculating $P_{ISO}$ and $E_{ISO}$ Coordinates
+
+Next, we'll calculate the $P_{ISO}$, $E_{ISO}$ coordinates:
+
+```{python}
+data = sspy.surveys.add_iso_coords(data)
+data[["ISOPleasant", "ISOEventful"]].round(2).head()
+```
+
+`Soundscapy` expects the PAQ values to be Likert scale values ranging from 1 to 5 by default, as specified in ISO 12913 and the SSID Protocol. However, it is possible to use data which, although structured the same way, has a different range of values. For instance this could be a 7-point Likert scale, or a 0 to 100 scale. By passing these numbers both to `isd.validate()` and `add_iso_coords()` as the `val_range`, `Soundscapy` will check that the data conforms to what is expected and will automatically scale the $P_{ISO}$, $E_{ISO}$ coordinates from -1 to +1 depending on the original value range.
+
+For example:
+
+```{python}
+import pandas as pd
+
+val_range = (0, 100)
+sample_transform = {
+    "RecordID": ["EX1", "EX2"],
+    "pleasant": [40, 25],
+    "vibrant": [45, 31],
+    "eventful": [41, 54],
+    "chaotic": [24, 56],
+    "annoying": [8, 52],
+    "monotonous": [31, 55],
+    "uneventful": [37, 31],
+    "calm": [40, 10],
+}
+sample_transform = pd.DataFrame().from_dict(sample_transform)
+sample_transform = sspy.rename_paqs(sample_transform)
+sample_transform = sspy.add_iso_coords(sample_transform, val_range=val_range)
+sample_transform
+```
+
+### Filtering Data
+
+`Soundscapy` includes methods for several filters that are normally needed within the ISD, such as filtering by `LocationID` or `SessionID`.
+
+```{python}
+# Filter by location
+camden_data = isd.select_location_ids(data, ["CamdenTown"])
+print(f"Camden Town samples: {camden_data.shape[0]}")
+
+# Filter by session
+regent_data = isd.select_session_ids(data, ["RegentsParkJapan1"])
+print(f"Regent's Park Japan session 1 samples: {regent_data.shape[0]}")
+
+# Complex filtering using pandas query
+women_over_50 = df.query("gen00 == 'Female' and age00 > 50")
+print(f"Women over 50: {women_over_50.shape[0]}")
+```
+
+All of these filters can also be chained together. So, for instance, to return surveys from women over 50 taken in Camden Town, we would do:
+
+```{python}
+isd.select_location_ids(data, "CamdenTown").query("gen00 == 'Female' and age00 > 50")
+```
+
+## Plotting
+
+Soundscapy plots on the ISO circumplex: $P_{ISO}$ on the x-axis and $E_{ISO}$ on the y-axis. The function-style API is the quickest way in.
+
+```{python}
+import matplotlib.pyplot as plt
+
+sspy.scatter(
+    isd.select_location_ids(data, "CamdenTown"),
+    title="Camden Town",
+    diagonal_lines=True,
+)
+plt.show()
+```
+
+Use `hue` to compare groups, and `density` to show the distribution rather than individual points:
+
+```{python}
+three = isd.select_location_ids(data, ["CamdenTown", "RussellSq", "PancrasLock"])
+
+sspy.density(
+    three,
+    title="Comparison of three urban spaces",
+    hue="LocationID",
+    density_type="simple",
+    incl_scatter=True,
+)
+plt.show()
+```
+
+`iso_plot()` combines layers in one call, and `create_iso_subplots()` draws one panel per group:
+
+```{python}
+sspy.create_iso_subplots(
+    isd.select_location_ids(
+        data, ["PancrasLock", "TorringtonSq", "RegentsParkFields", "RegentsParkJapan"]
+    ),
+    subplot_by="LocationID",
+    plot_layers=["scatter", "density"],
+    title="Four locations",
+)
+plt.tight_layout()
+plt.show()
+```
+
+For finer control, the layered `ISOPlot` builder composes a figure step by step:
+
+```{python}
+from soundscapy.plotting import ISOPlot
+
+(
+    ISOPlot(data=three, hue="LocationID", palette="husl", title="Three urban spaces")
+    .create_subplots()
+    .add_scatter()
+    .add_simple_density()
+    .style(diagonal_lines=True)
+)
+plt.show()
+```
+
+The [Visualising soundscapes](visualising-soundscapes.qmd) guide explains both APIs in detail, and the [Gallery](../gallery/index.qmd) has ready-to-adapt examples of every plot type.
+
+## Where Next?
+
+- [Concepts and terminology](concepts-and-terminology.qmd): the ISO 12913 framework behind the numbers.
+- [Working with survey data](working-with-survey-data.qmd): validation, `val_range`, language angles and summaries.
+- [Working with databases](working-with-databases.qmd): the ISD, SATP and ARAUS loaders.
+- [Visualising soundscapes](visualising-soundscapes.qmd): the plotting API.
+- [Understanding the SPI](understanding-spi.qmd): comparing soundscape distributions against targets.
+- [Tutorials and papers](../tutorials/soundscape-assessment-tutorial.qmd): end-to-end worked examples.

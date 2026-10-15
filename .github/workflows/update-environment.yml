@@ -16,11 +16,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - uses: prefix-dev/setup-pixi@v0.9.5
+      - uses: prefix-dev/setup-pixi@v0.11.2
         with:
-          pixi-version: v0.68.0
+          pixi-version: v0.81.0
           frozen: true
 
       - name: Export and update environment.yml

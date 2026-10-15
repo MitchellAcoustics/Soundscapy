@@ -1,0 +1,32 @@
+---
+title: "Sound source dominance"
+description: "Mean dominance of each sound source, by location."
+date: 2026-01-17
+categories: [sound sources, seaborn]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-source-dominance
+#| fig-alt: "Mean sound source dominance by location"
+import matplotlib.pyplot as plt
+import seaborn as sns
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+sources = ["traffic_noise", "other_noise", "human_sounds", "natural_sounds"]
+long = (
+    data.groupby("LocationID")[sources]
+    .mean()
+    .reset_index()
+    .melt(id_vars="LocationID", var_name="Source", value_name="Dominance")
+)
+
+sns.barplot(data=long, x="Source", y="Dominance", hue="LocationID", palette="colorblind")
+plt.title("Sound source dominance by location")
+plt.ylabel("Mean dominance rating")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+```

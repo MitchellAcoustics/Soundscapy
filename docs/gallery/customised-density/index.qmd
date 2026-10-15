@@ -1,0 +1,29 @@
+---
+title: "Customised density"
+description: "Filled contours with a custom colormap, levels and threshold."
+date: 2026-01-04
+categories: [density, customisation]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-customised-density
+#| fig-alt: "Customised density plot"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+sspy.density(
+    data,
+    title="Customised density plot",
+    diagonal_lines=True,
+    fill=True,
+    alpha=0.6,
+    levels=8,
+    thresh=0.1,
+    cmap="viridis",
+    incl_scatter=False,
+)
+plt.show()
+```

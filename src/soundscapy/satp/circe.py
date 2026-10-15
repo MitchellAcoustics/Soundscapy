@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Circumplex SEM Analysis for Soundscape Attributes Translation Project (SATP).
 
@@ -32,7 +35,7 @@ import dataclasses
 import warnings
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -43,8 +46,12 @@ from pandera.typing.pandas import DataFrame, Series
 from rpy2.rinterface_lib.embedded import RRuntimeError
 
 import soundscapy.r_wrapper as sspyr
-from soundscapy import PAQ_IDS, PAQ_LABELS, get_logger
+from soundscapy import constants
+from soundscapy.sspylogging import get_logger
 from soundscapy.surveys.processing import ipsatize
+
+if TYPE_CHECKING:
+    import rpy2.robjects
 
 logger = get_logger()
 
@@ -57,9 +64,9 @@ logger = get_logger()
 _COLUMN_ALIASES: dict[str, str] = {
     **{
         label.lower(): paq_id
-        for label, paq_id in zip(PAQ_LABELS, PAQ_IDS, strict=False)
+        for label, paq_id in zip(constants.PAQ_LABELS, constants.PAQ_IDS, strict=False)
     },
-    **{paq_id.lower(): paq_id for paq_id in PAQ_IDS},
+    **{paq_id.lower(): paq_id for paq_id in constants.PAQ_IDS},
     "participant": "participant",
 }
 
@@ -186,7 +193,7 @@ def normalize_polar_angles(angles: pd.Series) -> pd.Series:
 
     Examples
     --------
-    >>> from soundscapy.surveys.survey_utils import PAQ_IDS
+    >>> from soundscapy.constants import PAQ_IDS
     >>> import pandas as pd
     >>> reflected = pd.Series(
     >>>     [0.0, 315.0, 270.0, 225.0, 180.0, 135.0, 90.0, 45.0],
@@ -276,7 +283,8 @@ class CircE:
         circ_model: CircModelE,
         n: int,
     ) -> "CircE":
-        """Create a CircE instance from BFGS fit output.
+        """
+        Create a CircE instance from BFGS fit output.
 
         !!! warning "Deprecated v0.8.4"
             Passing an rpy2 ``ListVector`` as *fit_stats* is deprecated and
@@ -309,7 +317,9 @@ class CircE:
                 DeprecationWarning,
                 stacklevel=2,
             )
-            from soundscapy.r_wrapper._r_wrapper import _extract_bfgs_stats  # noqa: PLC0415
+            from soundscapy.r_wrapper._r_wrapper import (
+                _extract_bfgs_stats,
+            )
 
             fit_stats = _extract_bfgs_stats(fit_stats)
 
@@ -329,7 +339,7 @@ class CircE:
                 else:
                     estimates = pa_df.iloc[:, 0].to_numpy()
                 polar_angles = normalize_polar_angles(
-                    pd.Series(estimates, index=PAQ_IDS)
+                    pd.Series(estimates, index=constants.PAQ_IDS)
                 )
 
         return cls(
@@ -383,7 +393,7 @@ class CircE:
         --------
         >>> import soundscapy as sspy
         >>> data = sspy.isd.load()
-        >>> data_paqs = data[PAQ_IDS]
+        >>> data_paqs = data[sspy.constants.PAQ_IDS]
         >>> data_paqs = data_paqs.dropna()
         >>> data_cor = data_paqs.corr()
         >>> n = len(data_paqs)
@@ -396,7 +406,7 @@ class CircE:
         fit_stats = sspyr.bfgs_fit(
             data_cor=data_cor,
             n=n,
-            scales=PAQ_IDS,
+            scales=constants.PAQ_IDS,
             m_val=3,
             equal_ang=circ_model.equal_ang,
             equal_com=circ_model.equal_com,
@@ -465,7 +475,7 @@ class CircE:
         if self.polar_angles is not None:
             base.update(self.polar_angles.to_dict())  # type: ignore [no-matching-overload]
         else:
-            base.update(dict.fromkeys(PAQ_IDS))
+            base.update(dict.fromkeys(constants.PAQ_IDS))
         return base
 
 
@@ -596,8 +606,6 @@ def person_center(data: pd.DataFrame, by: str = "participant") -> pd.DataFrame:
         column-wise participant-centred values.
 
     """
-    import warnings  # noqa: PLC0415
-
     warnings.warn(
         "person_center() is deprecated; use ipsatize(method='column_wise') instead.",
         DeprecationWarning,
@@ -729,7 +737,7 @@ def fit_circe(
     )
 
     # Use listwise deletion (complete cases only) — consistent with R's na.omit().
-    complete = processed[PAQ_IDS].dropna()
+    complete = processed[constants.PAQ_IDS].dropna()
     n = len(complete)
     if n == 0:
         msg = (
@@ -738,6 +746,10 @@ def fit_circe(
         )
         raise ValueError(msg)
     corr = complete.corr()
+
+    # Fail loudly if R itself can't start, rather than reporting every model as
+    # a failed fit. Only per-model fit errors are caught below.
+    sspyr.get_r_session()
 
     circ_models = models if models is not None else list(CircModelE)
     fitted: list[CircE] = []
@@ -771,7 +783,7 @@ def fit_circe(
                     "rmsea_l": None,
                     "rmsea_u": None,
                     "gdiff": None,
-                    **dict.fromkeys(PAQ_IDS),
+                    **dict.fromkeys(constants.PAQ_IDS),
                     "error": str(e),
                 }
             )

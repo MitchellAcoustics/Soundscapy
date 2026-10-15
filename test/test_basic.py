@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 import pytest
 
 import soundscapy
@@ -19,16 +22,16 @@ def test_soundscapy_audio_module():
     assert hasattr(soundscapy, "Binaural")
     assert hasattr(soundscapy, "AudioAnalysis")
     assert hasattr(soundscapy, "AnalysisSettings")
-    assert hasattr(soundscapy, "ConfigManager")
+    assert hasattr(soundscapy.audio, "ConfigManager")
 
 
 def test_soundscapy_spi_module():
     """Test that the SPI module can be imported when dependencies are available."""
     pytest.importorskip("rpy2")
     assert hasattr(soundscapy, "spi"), "Soundscapy should have an spi module"
-    assert hasattr(soundscapy, "MultiSkewNorm"), "MultiSkewNorm should be available"
-    assert hasattr(soundscapy, "dp2cp"), "dp2cp should be available"
-    assert hasattr(soundscapy, "spi_score"), "spi_score should be available"
+    assert hasattr(soundscapy.spi, "MultiSkewNorm"), "MultiSkewNorm should be available"
+    assert hasattr(soundscapy.spi, "dp2cp"), "dp2cp should be available"
+    assert hasattr(soundscapy.spi, "spi_score"), "spi_score should be available"
 
 
 def test_soundscapy_satp_module():
@@ -36,4 +39,4 @@ def test_soundscapy_satp_module():
     pytest.importorskip("rpy2")
     assert hasattr(soundscapy, "satp"), "Soundscapy should have a satp module"
     assert hasattr(soundscapy, "fit_circe"), "fit_circe should be available"
-    assert hasattr(soundscapy, "CircModelE"), "CircModelE should be available"
+    assert hasattr(soundscapy.satp, "CircModelE"), "CircModelE should be available"

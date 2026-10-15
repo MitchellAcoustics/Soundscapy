@@ -1,0 +1,30 @@
+---
+title: "Eventfulness vs loudness"
+description: "Relate ISOEventful to N5 loudness with a regression line per location."
+date: 2026-01-20
+categories: [acoustic metrics, seaborn]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-eventfulness-vs-loudness
+#| fig-alt: "ISOEventful against N5 by location"
+import matplotlib.pyplot as plt
+import seaborn as sns
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+sns.lmplot(
+    data=data,
+    x="N5",
+    y="ISOEventful",
+    hue="LocationID",
+    palette="colorblind",
+    height=6,
+    aspect=1.5,
+)
+plt.title("Loudness (N5) and eventfulness")
+plt.tight_layout()
+plt.show()
+```

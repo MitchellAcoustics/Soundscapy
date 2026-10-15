@@ -1,0 +1,30 @@
+---
+title: "Circumplex by sound source"
+description: "Colour each location's responses by how much a source dominates."
+date: 2026-01-18
+categories: [sound sources, subplots]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-source-dominance-circumplex
+#| fig-alt: "Natural sound dominance across locations"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+data["natural_sounds"] = pd.cut(
+    data["natural_sounds"], bins=[0, 2, 5], labels=["Low (1-2)", "High (3-5)"]
+)
+
+sspy.create_iso_subplots(
+    data=data,
+    subplot_by="LocationID",
+    hue="natural_sounds",
+    plot_layers=["scatter", "simple_density"],
+    title="Impact of natural sounds on soundscape perception",
+)
+plt.tight_layout()
+plt.show()
+```

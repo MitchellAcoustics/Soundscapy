@@ -1,0 +1,32 @@
+---
+title: "PAQ radar plot"
+description: "Compare the eight PAQs of two soundscapes on a radar chart."
+date: 2026-01-16
+categories: [radar]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-paq-radar
+#| fig-alt: "Radar plot of PAQ ratings for two soundscapes"
+import matplotlib.pyplot as plt
+import pandas as pd
+import soundscapy as sspy
+
+paqs = pd.DataFrame(
+    {
+        "Location": ["Park", "Street"],
+        "pleasant": [4.2, 2.1],
+        "vibrant": [3.5, 4.2],
+        "eventful": [2.8, 4.5],
+        "chaotic": [1.5, 3.9],
+        "annoying": [1.2, 3.7],
+        "monotonous": [2.5, 1.8],
+        "uneventful": [3.1, 1.9],
+        "calm": [4.3, 1.4],
+    }
+)
+
+sspy.paq_radar_plot(paqs, index="Location", title="PAQ profile: park vs street")
+plt.show()
+```

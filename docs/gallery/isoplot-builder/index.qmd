@@ -1,0 +1,33 @@
+---
+title: "ISOPlot builder"
+description: "Compose a grouped figure layer by layer."
+date: 2026-01-06
+categories: [ISOPlot, grouping]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-isoplot-builder
+#| fig-alt: "Layered ISOPlot comparing four locations"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden", "TateModern"]
+subset = data[data["LocationID"].isin(places)]
+
+(
+    sspy.ISOPlot(
+        data=subset,
+        title="Layered ISOPlot",
+        hue="LocationID",
+        palette="husl",
+    )
+    .create_subplots()
+    .add_scatter()
+    .add_simple_density(fill=False)
+    .style(diagonal_lines=True, legend_loc="lower left")
+)
+plt.show()
+```

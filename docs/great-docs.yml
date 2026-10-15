@@ -1,0 +1,173 @@
+# Great Docs configuration (only non-default settings).
+# Full option list: https://posit-dev.github.io/great-docs/user-guide/configuration.html
+display_name: Soundscapy
+site_url: https://drandrewmitchell.com/Soundscapy/
+
+# This Great Docs setup postdates the 0.8.5 PyPI release, so there is no
+# released version whose actual code/docs this site can represent yet. `dev`
+# (main) is the only version and serves the root URL by positional fallback
+# (no entry is marked `latest`; see parse_versions_config). Narrative pages
+# come from main: hide unreleased content from a future stable with
+# frontmatter `versions: ">=0.9"` or `::: {.version-only versions=">=0.9"}`
+# fences.
+# On the 0.9 release: add the new version (git_ref: v0.9.0, latest: true),
+# and relabel `dev` for the next version. release.yml tags after building
+# docs; until the tag exists great-docs warns and documents the checked-out
+# (= release) code instead.
+# Retroactively migrating 0.7-0.8.5 docs to Great Docs is tracked separately
+# (#163) since it needs version-matched narrative content, not just an
+# API-reference git_ref, to avoid examples that use APIs those releases never
+# had.
+versions:
+  - label: "0.9.0a1 (dev)"
+    tag: dev
+    version: "0.9.0" # numeric form for `>=0.9` expressions; "0.9.0a1" won't parse
+    prerelease: true
+
+authors:
+  - name: Andrew Mitchell
+    role: Maintainer
+    affiliation: University College London
+    email: andrew.mitchell.research@gmail.com
+    github: MitchellAcoustics
+    orcid: 0000-0003-0978-5046
+    homepage: https://drandrewmitchell.com
+
+exclude:
+  - backends_deprecated
+
+logo:
+  light: assets/logo.png
+  dark: assets/logo-dark.png
+favicon:
+  icon: assets/favicon.png
+
+# Palette sampled from the logo (cyan #71e5e9, orange #f2a33a, navy #010e20).
+# Light mode uses darkened shades for text contrast; see assets/extras.css.
+accent_color:
+  light: "#0b7f8a"
+  dark: "#71e5e9"
+
+# Flat colours here only steer text/button contrast; the visible background is
+# the animated gradient in assets/extras.css (pastel in light, rich in dark).
+navbar_color:
+  light: "#bdf0f3"
+  dark: "#0a4a5c"
+
+# Hero Section
+# ------------
+# The large header area on the homepage with logo, name, and tagline.
+hero:
+  enabled: true
+  tagline: "Analyse and visualise soundscape assessments in Python."
+  logo_height: 400px # default 200px
+
+# Announcement Banner
+# -------------------
+# Site-wide (every page and version) until the user guide, gallery and
+# tutorials are complete; see ROADMAP.md / #162. `content` is raw HTML.
+# Dismissal lasts one browser session; editing the text re-shows it.
+announcement:
+  content: >-
+    🚧 These docs are under active development: some tutorials and examples
+    may be missing or incomplete. Can't find something?
+    <a href="https://github.com/MitchellAcoustics/Soundscapy/issues">Open an issue</a>.
+  type: warning
+  dismissable: true
+
+# Homepage-only glow under the navbar; the preset only picks the animation, the
+# colours are overridden in assets/extras.css (cyan left, orange right).
+content_style:
+  preset: sky
+  pages: homepage
+
+nav_icons:
+  navbar:
+    User Guide: book-open
+    Gallery: images
+    Tutorials: scroll-text
+    Reference: code
+    Changelog: clock
+  sidebar:
+    Quick Start: rocket
+    Concepts and Terminology: brain
+    Working with Survey Data: grid-2x2-check
+    Working with Soundscape Databases: database-search
+    Visualising Soundscapes: chart-scatter
+    Understanding the Soundscape Perception Index (SPI): arrow-up-1-0
+    News: rss
+    Upgrading from 0.7 to 0.8: circle-fading-arrow-up
+
+site:
+  css:
+    - "assets/extras.css"
+  show_dates: true
+  show_author: true
+
+page_status:
+  enabled: true
+  statuses:
+    legacy:
+      label: "Legacy"
+      icon: archive
+      color: "#9ca3af"
+      description: "Superseded by a newer approach."
+
+tags:
+  enabled: true
+  icons:
+    Tutorial: book-open
+    Visualizations: chart-bar
+    Paper: file-text
+
+# API Reference Settings
+inline_methods: false
+# Source Links
+source:
+  enabled: true
+  placement: usage
+
+interlinks:
+  sources:
+    python:
+      url: https://docs.python.org/3/
+      aliases: [py]
+    numpy:
+      url: https://numpy.org/doc/stable/
+      aliases: [np]
+    pandas:
+      url: https://pandas.pydata.org/pandas-docs/stable/
+      aliases: [pd]
+    mosqito:
+      url: https://mosqito.readthedocs.io/en/stable/
+    acoustic-toolbox:
+      url: https://acoustic-toolbox.readthedocs.io/en/latest/
+      aliases: [acoustic_toolbox]
+    scikit-maad:
+      url: https://scikit-maad.github.io
+      aliases: [maad, scikit_maad]
+    circumplex:
+      url: https://drandrewmitchell.com/circumplex/
+    matplotlib:
+      url: https://matplotlib.org/stable/
+      aliases: [mpl]
+    seaborn:
+      url: https://seaborn.pydata.org
+      aliases: [sns]
+
+sections:
+  - title: Tutorials
+    dir: tutorials
+    navbar_after: User Guide
+    sidebar_groups:
+      - section: Tutorials
+        contents:
+          - soundscape-assessment-tutorial.qmd
+          - ioa-workshop-worksheet.qmd
+      - section: Papers
+        contents:
+          - how-to-analyse-and-represent-soundscapes.qmd
+  - title: Gallery
+    dir: gallery
+    type: blog
+    navbar_after: Tutorials

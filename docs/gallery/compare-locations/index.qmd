@@ -1,0 +1,28 @@
+---
+title: "Comparing locations"
+description: "Outline the distribution of several locations on one plot."
+date: 2026-01-01
+categories: [comparison]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-compare-locations
+#| fig-alt: "Density outlines for four locations"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden", "TateModern"]
+
+sspy.density(
+    data[data["LocationID"].isin(places)],
+    title="Locations compared",
+    hue="LocationID",
+    density_type="simple",
+    incl_scatter=False,
+    fill=False,
+    diagonal_lines=True,
+)
+plt.show()
+```

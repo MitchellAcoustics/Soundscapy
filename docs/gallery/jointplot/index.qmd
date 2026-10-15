@@ -1,0 +1,21 @@
+---
+title: "Joint plot"
+description: "Scatter and density with marginal distributions."
+date: 2026-01-09
+categories: [jointplot]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-jointplot
+#| fig-alt: "Joint plot for Camden Town"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+camden = data[data["LocationID"] == "CamdenTown"]
+
+sspy.jointplot(camden, title="Camden Town", diagonal_lines=True)
+plt.show()
+```

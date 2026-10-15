@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Provides tools for working with audio signals, particularly binaural recordings.
 
@@ -28,9 +31,9 @@ This module requires the `soundscapy[audio]` optional dependencies.
 """
 
 # ruff: noqa: E402
-from soundscapy._optional import require_deps
+from soundscapy._optional import require_deps as _require_deps
 
-require_deps(["acoustic_toolbox", "maad", "mosqito", "tqdm"], extra="audio")
+_require_deps(["acoustic_toolbox", "maad", "mosqito", "tqdm"], extra="audio")
 
 import lazy_loader as _lazy
 

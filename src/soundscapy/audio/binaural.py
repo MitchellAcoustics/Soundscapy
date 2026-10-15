@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Provides tools for working with binaural audio signals.
 
@@ -66,7 +69,7 @@ class Binaural(Signal):
 
     """
 
-    def __new__(
+    def __new__(  # noqa: PYI034 - TODO: return Self
         cls, data: np.ndarray, fs: float | None, recording: str = "Rec"
     ) -> Binaural:
         """
@@ -547,9 +550,9 @@ class Binaural(Signal):
         ),
         label: str | None = None,
         channel: int | tuple | list | str = ("Left", "Right"),
-        as_df: bool = True,
-        return_time_series: bool = False,
-        parallel: bool = True,
+        as_df: bool = True,  # noqa: FBT001, FBT002 - TODO: make keyword-only (breaking API change)
+        return_time_series: bool = False,  # noqa: FBT001, FBT002 - TODO: make keyword-only (breaking API change)
+        parallel: bool = True,  # noqa: FBT001, FBT002 - TODO: make keyword-only (breaking API change)
         metric_settings: MetricSettings | None = None,
         func_args: dict | None = None,
     ) -> dict | pd.DataFrame:
@@ -639,7 +642,7 @@ class Binaural(Signal):
         self,
         metric: Literal["all_temporal_alpha_indices", "all_spectral_alpha_indices"],
         channel: int | tuple | list | str = ("Left", "Right"),
-        as_df: bool = True,
+        as_df: bool = True,  # noqa: FBT001, FBT002 - TODO: make keyword-only (breaking API change)
         metric_settings: MetricSettings | None = None,
         func_args: dict | None = None,
     ) -> dict | pd.DataFrame:
@@ -706,7 +709,7 @@ class Binaural(Signal):
     def process_all_metrics(
         self,
         analysis_settings: AnalysisSettings = DEFAULT_SETTINGS,
-        parallel: bool = True,
+        parallel: bool = True,  # noqa: FBT001, FBT002 - TODO: make keyword-only (breaking API change)
     ) -> pd.DataFrame:
         """
         Process all metrics specified in the analysis settings.

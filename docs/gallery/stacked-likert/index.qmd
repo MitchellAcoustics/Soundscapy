@@ -1,0 +1,19 @@
+---
+title: "Stacked Likert plot"
+description: "Dominance of one sound source across locations."
+date: 2026-01-15
+categories: [likert]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-stacked-likert
+#| fig-alt: "Traffic noise dominance by location"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+sspy.stacked_likert(data, "traffic_noise", title="Traffic noise dominance")
+plt.show()
+```

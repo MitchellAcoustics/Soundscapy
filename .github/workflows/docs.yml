@@ -1,68 +1,96 @@
-name: Documentation
+name: CI Docs
+
+# Builds every version listed under `versions:` in docs/great-docs.yml: the
+# `latest` release is served at the site root (API reference from its git tag),
+# `dev` (main) under /v/dev/. Pushes to main publish to GitHub Pages; PR builds
+# log a `great-docs preview --pr <N>` command for viewing the site locally.
+# release.yml calls this with `deploy: false` as a build gate.
 
 on:
   workflow_call:
+    inputs:
+      deploy:
+        description: "Publish the built site to GitHub Pages (main only)"
+        type: boolean
+        default: true
   push:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 concurrency:
-  group: docs-${{ github.ref }}
+  # In a called workflow, github.workflow is the caller's name, so the release
+  # gate never queues behind (or cancels) the standalone deploy run.
+  group: docs-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
+  build-docs:
+    name: "Build Docs"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Full history + tags: page timestamps and `git_ref` versions
 
-      - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.9.4
+      - uses: prefix-dev/setup-pixi@v0.11.2
         with:
-          pixi-version: v0.68.0
-          cache: true
-          # auth-host: prefix.dev
-          # auth-token: ${{ secrets.PREFIX_DEV_TOKEN }}
-          frozen: true
-          environments: "docs"
+          pixi-version: v0.81.0
+          environments: docs
 
-      - name: Build docs (zensical + quarto tutorials)
-        run: pixi run docs-build
-
-      - name: Commit generated notebooks
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add examples/_site/*.ipynb
-          if git diff --cached --quiet; then
-            echo "No notebook changes to commit."
-          else
-            git commit -m "chore: update rendered notebooks from tutorials [skip ci]"
-            git push origin main
-          fi
-
-      - name: Upload built docs as artifact
-        id: deployment
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+      # API snapshots introspected from each version's git tag. Tags are
+      # immutable, so the cache only goes stale when the versions list changes.
+      - name: Cache versioned API snapshots
+        uses: actions/cache@v6.1.0
         with:
-          path: site
+          path: docs/.cache/snapshots
+          key: gd-snapshots-${{ hashFiles('docs/great-docs.yml') }}
+          restore-keys: gd-snapshots-
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      - name: Build docs
+        run: pixi run docs-build # same command as local; task defaults to the docs env
+        env:
+          # Raises the GitHub API rate limit for the Releases-based changelog
+          # fetch (60/hr unauthenticated -> 5000/hr); without it a rate limit
+          # silently drops the Changelog page instead of failing the build.
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Save docs artifact
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: docs-html
+          path: docs/_site
+          include-hidden-files: true
+
+      - name: How to preview this build locally
+        if: github.event_name == 'pull_request'
+        run: pixi run -e docs great-docs ci notice --run ${{ github.run_id }} --pr ${{ github.event.number }}
+
+  publish-docs:
+    name: "Publish Docs"
+    runs-on: ubuntu-latest
+    needs: "build-docs"
+    # Skip publishing only when the caller explicitly supplies boolean false.
+    if: github.ref == 'refs/heads/main' && toJSON(inputs.deploy) != 'false'
     permissions:
       pages: write
       id-token: write
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name != 'pull_request'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to Github Pages
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: docs-html
+          path: docs/_site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: docs/_site
+          include-hidden-files: true
+
+      - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        uses: actions/deploy-pages@v5.0.1

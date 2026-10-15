@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -26,6 +29,21 @@ class TestISDLoading:
         assert data.shape == (3589, 142)  # Adjust these numbers if they change
         assert all(col in data.columns for col in isd._PAQ_ALIASES.values())
 
+    def test_load_demo(self):
+        """Test the demo subset: four locations, complete PAQs, renamed columns."""
+        data = isd.load_demo()
+        assert data.shape == (456, 37)
+        assert set(data["LocationID"]) == {
+            "CamdenTown",
+            "MarchmontGarden",
+            "PancrasLock",
+            "TateModern",
+        }
+        assert {"traffic_noise", "LAeq", "N5"} <= set(data.columns)
+        assert list(data.columns[:-2]) == list(isd._DEMO_COLUMNS.values())
+        assert list(data.columns[-2:]) == ["ISOPleasant", "ISOEventful"]
+        assert not data[list(isd._PAQ_ALIASES.values())].isna().any().any()
+
     @pytest.mark.slow
     def test_load_zenodo(self):
         """Test loading of ISD data from Zenodo."""
@@ -47,16 +65,27 @@ class TestISDValidation:
         """Test validation of ISD data."""
         df_clean, df_excl = isd.validate(isd_data)
         assert isinstance(df_clean, pd.DataFrame)
-        assert isinstance(df_excl, pd.DataFrame) or df_excl is None
+        # The bundled ISD is known to contain rows that fail the quality checks.
+        assert isinstance(df_excl, pd.DataFrame)
         assert len(df_clean) + len(df_excl) == len(isd_data)
         assert all(col in df_clean.columns for col in isd._PAQ_ALIASES.values())
 
         df_clean, df_excl = isd.validate(df_clean)
         assert df_excl is None
 
+    def test_validate_with_non_default_index(self, isd_data):
+        """Validation must use index labels, not positions."""
+        filtered = isd.select_location_ids(isd_data, ["CamdenTown", "PancrasLock"])
+        assert filtered.index[0] != 0  # a genuinely non-default index
+        df_clean, df_excl = isd.validate(filtered)
+        assert df_excl is not None  # the bundled ISD has rows that fail the checks
+        assert len(df_clean) + len(df_excl) == len(filtered)
+        assert df_excl.index.isin(filtered.index).all()
+        assert not df_clean.index.isin(df_excl.index).any()
+
     def test_validate_allow_na(self, isd_data):
         """Test validation of ISD data allowing NaN values."""
-        df_clean, df_excl = isd.validate(isd_data, allow_paq_na=True)
+        df_clean, _df_excl = isd.validate(isd_data, allow_paq_na=True)
         assert df_clean.isna().sum().sum() > 0
 
 
@@ -74,6 +103,7 @@ class TestISDSelection:
         with pytest.raises(
             TypeError, match="Should be either a str, int, list, or tuple"
         ):
+            # pyrefly: ignore [bad-argument-type]
             isd._isd_select(isd_data, "LocationID", {"invalid": "type"})
 
     def test_select_record_ids(self, isd_data):

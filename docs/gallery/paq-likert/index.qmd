@@ -1,0 +1,20 @@
+---
+title: "PAQ Likert plot"
+description: "Distribution of responses to the eight PAQs."
+date: 2026-01-14
+categories: [likert]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-paq-likert
+#| fig-alt: "Likert plot of PAQ responses"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+from soundscapy.constants import PAQ_IDS
+
+data = sspy.isd.load_demo()
+
+sspy.paq_likert(data[PAQ_IDS], title="Distribution of PAQ responses")
+plt.show()
+```

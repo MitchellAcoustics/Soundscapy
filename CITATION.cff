@@ -1,41 +1,43 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
-
-cff-version: 1.2.0
-title: Soundscapy
-message: >-
-  If you use this software, please cite it using the
-  metadata from this file.
-type: software
 authors:
-  - given-names: Andrew
-    family-names: Mitchell
-    email: a.j.mitchell@ucl.ac.uk
-    affiliation: University College London
-    orcid: "https://orcid.org/0000-0003-0978-5046"
-repository-code: "https://github.com/MitchellAcoustics/Soundscapy"
-url: "https://soundscapy.readthedocs.io/en/latest/"
-repository: "https://pypi.org/project/soundscapy/"
+- given-names: Andrew
+  family-names: Mitchell
+  email: andrew.mitchell.research@gmail.com
+cff-version: 1.2.0
+commit: d55d9a38c210f8d8bc72ad11d84fbd0399997729
+date-released: '2026-05-12'
+identifiers:
+- type: url
+  value: https://github.com/MitchellAcoustics/Soundscapy/releases/tag/v0.8.5
+  description: The URL for soundscapy v0.8.5.
 keywords:
-  - soundscape
-  - acoustics
-  - psychoacoustics
+- acoustics
+- audio analysis
+- psychoacoustics
+- soundscape
 license: BSD-3-Clause
-version: 0.7.4
-date-released: "2024-10-17"
-# preferred-citation:
-#   type: article
-#   authors:
-#   - family-names: "Mitchell"
-#     given-names: "Andrew"
-#     orcid: "https://orcid.org/0000-0003-0978-5046"
-#   - family-names: "Aletta"
-#     given-names: "Francesco"
-#     orcid: "https://orcid.org/0000-0003-0978-5046"
-#   - family-names: "Kang"
-#     given-names: "Jian"
-#     orcid: "https://orcid.org/0000-0001-8995-5636"
-#   doi: "10.1121/10.0009794"
-#   journal: "JASA Express Letters"
-#   title: "How to analyse and represent quantitative soundscape data"
-#   year: 2022
+message: If you use this software, please cite it using the metadata from this 
+  file.
+preferred-citation:
+  type: article
+  title: How to analyse and represent quantitative soundscape data
+  authors:
+  - family-names: Mitchell
+    given-names: Andrew
+  - family-names: Aletta
+    given-names: Francesco
+  - family-names: Kang
+    given-names: Jian
+  journal: JASA Express Letters
+  year: 2022
+  volume: 2
+  issue: 3
+  start: 37201
+  doi: 10.1121/10.0009794
+repository: https://github.com/MitchellAcoustics/Soundscapy
+repository-artifact: https://pypi.org/project/soundscapy/0.9.0a1/
+repository-code: 
+  https://github.com/MitchellAcoustics/Soundscapy/releases/tag/v0.8.5
+title: soundscapy
+type: software
+url: https://drandrewmitchell.com/Soundscapy/
+version: 0.9.0a1

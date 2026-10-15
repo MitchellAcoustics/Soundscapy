@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """Module for wrapping R functionality with rpy2."""
 
 # ruff: noqa: E402
@@ -13,6 +16,7 @@ from ._r_wrapper import (  # noqa: F401
     dp2cp,
     extract_cp,
     extract_dp,
+    get_r_session,
     sample_msn,
     sample_mtsn,
     selm,

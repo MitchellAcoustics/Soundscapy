@@ -1,0 +1,29 @@
+---
+title: "Multi-panel by location"
+description: "One panel per location with scatter and density layers."
+date: 2026-01-07
+categories: [subplots]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-multi-panel-by-location
+#| fig-alt: "One panel per location"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden", "TateModern"]
+
+sspy.create_iso_subplots(
+    data[data["LocationID"].isin(places)],
+    title="Soundscapes across locations",
+    subplot_by="LocationID",
+    nrows=1,
+    ncols=4,
+    plot_layers=["scatter", "simple_density"],
+)
+plt.tight_layout()
+plt.show()
+```

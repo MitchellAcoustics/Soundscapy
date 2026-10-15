@@ -168,9 +168,6 @@ dmypy.json
 # Ignore everything in tests/test_audio_files except .wav files
 tests/test_audio_files/*
 !tests/test_audio_files/*.wav
-/docs/tutorials/updated_config.yaml
-docs/tutorials/acoustic_analysis_results.xlsx
-
 /scratch/
 CLAUDE.local.md
 /.pytest_cache/
@@ -178,7 +175,6 @@ CLAUDE.local.md
 
 # package version
 *_version.py
-/docs/tutorials/SoundscapyResults.xlsx
 CLAUDE.md
 .claude/settings.local.json
 .zed/settings.json
@@ -188,3 +184,19 @@ conda-dist/
 environment.yml.bak
 
 **/*.quarto_ipynb
+
+# Great Docs build output (ephemeral, regenerated on every build)
+/docs/_quarto/
+/docs/_site/
+/docs/_freeze/
+/docs/.cache/
+/great-docs/
+/.great-docs/
+/.great-docs-build/
+/.great-docs-cache/
+/_great_docs_build/
+
+# Local, machine-specific direnv overrides (tokens etc.)
+.envrc.local
+docs/tutorials/SoundscapyResults.xlsx
+docs/tutorials/SoundscapyResults.csv

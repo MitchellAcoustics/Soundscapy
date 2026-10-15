@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Parameter models for plotting functions in soundscapy.
 
@@ -24,7 +27,7 @@ import copy
 import warnings
 from collections.abc import Iterable  # noqa: TC003
 from dataclasses import field, fields
-from typing import Any, ClassVar, Literal, TypeAlias, TypeVar
+from typing import Any, ClassVar, Literal, Self, TypeAlias, TypeVar
 
 import numpy as np  # noqa: TC002
 import pandas as pd  # noqa: TC002
@@ -223,7 +226,7 @@ class ParamModel:
                 dictionary.pop(key, None)
         return dictionary
 
-    def copy(self) -> ParamModel:
+    def copy(self) -> Self:
         """
         Create a deep copy of the parameter model instance.
 
@@ -235,7 +238,7 @@ class ParamModel:
         """
         return copy.deepcopy(self)
 
-    def model_copy(self) -> ParamModel:
+    def model_copy(self) -> Self:
         """
         Create a copy of the parameter model instance.
 

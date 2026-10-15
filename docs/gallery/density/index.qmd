@@ -1,0 +1,18 @@
+---
+title: "Density plot"
+description: "Where responses cluster in the circumplex."
+date: 2026-01-01
+categories: [density]
+---
+
+```{python}
+#| label: fig-density
+#| fig-alt: "Density plot of ISO coordinates"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+sspy.density(data, title="Response density", diagonal_lines=True)
+plt.show()
+```

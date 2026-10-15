@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """Plotting functions for visualizing Likert scale data."""
 
 import warnings
@@ -10,25 +13,17 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from soundscapy.databases.isd import (
-    likert_categorical_from_data,
-    match_col_to_likert_scale,
-)
-from soundscapy.plotting.iso_plot import ExperimentalWarning
-from soundscapy.surveys import rename_paqs, return_paqs
-from soundscapy.surveys.survey_utils import (
-    EQUAL_ANGLES,
-    LIKERT_SCALES,
-    PAQ_IDS,
-    PAQ_LABELS,
-)
+from soundscapy import constants
+from soundscapy.databases import isd
+from soundscapy.plotting._warnings import ExperimentalWarning
+from soundscapy.surveys import survey_utils
 
 
 def paq_radar_plot(
     data: pd.DataFrame,
     ax: Axes | None = None,
     index: str | None = None,
-    angles: list[float] | tuple[float, ...] = EQUAL_ANGLES,
+    angles: list[float] | tuple[float, ...] = constants.EQUAL_ANGLES,
     *,
     figsize: tuple[float, float] = (8, 8),
     palette: str | Sequence[str] | None = "colorblind",
@@ -95,7 +90,7 @@ def paq_radar_plot(
     --------
     >>> import pandas as pd
     >>> import matplotlib.pyplot as plt
-    >>> from soundscapy.plotting.likert import paq_radar_plot
+    >>> from soundscapy import paq_radar_plot
     >>>
     >>> # Sample data with PAQ values for two locations
     >>> data = pd.DataFrame({
@@ -126,8 +121,8 @@ def paq_radar_plot(
 
     # Filter to only include columns that match PAQ_LABELS
     # This handles cases where the data might have extra columns
-    data = rename_paqs(data, paq_aliases=PAQ_LABELS)
-    data = return_paqs(data, incl_ids=False)
+    data = survey_utils.rename_paqs(data, paq_aliases=constants.PAQ_LABELS)
+    data = survey_utils.return_paqs(data, incl_ids=False)
 
     # Create axes if needed
     if ax is None:
@@ -139,7 +134,7 @@ def paq_radar_plot(
     rad_angles = np.deg2rad(angles)
 
     # Draw one axis per variable + add labels
-    plt.xticks(rad_angles, PAQ_LABELS)
+    plt.xticks(rad_angles, constants.PAQ_LABELS)
     ax.tick_params(axis="x", pad=label_pad)
 
     # Draw y-labels
@@ -196,7 +191,7 @@ def paq_radar_plot(
 def paq_likert(
     data: pd.DataFrame,
     title: str = "Stacked Likert Plot",
-    paq_cols: list[str] = PAQ_IDS,
+    paq_cols: list[str] | None = None,
     *,
     legend: bool = True,
     ax: Axes | None = None,
@@ -212,7 +207,7 @@ def paq_likert(
     data
         DataFrame containing PAQ values.
     paq_cols
-        List of column names containing PAQ data, by default PAQ_IDS.
+        List of column names containing PAQ data, by default None, which uses PAQ_IDS.
     title
         Plot title, by default "Stacked Likert Plot".
     legend
@@ -245,15 +240,21 @@ def paq_likert(
         stacklevel=2,
     )
 
+    if paq_cols is None:
+        paq_cols = list(constants.PAQ_IDS)
+
     new_data = data[paq_cols].copy()
-    new_data = new_data.apply(likert_categorical_from_data, axis=0)
+    # pyrefly: ignore [no-matching-overload]
+    # pandas-stubs have no DataFrame.apply overload returning Categorical
+    # works at runtime
+    new_data = new_data.apply(isd.likert_categorical_from_data, axis=0)
 
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 6))
 
     plot_likert.plot_likert(
         new_data,
-        LIKERT_SCALES.paq,
+        list(constants.LIKERT_SCALES.paq),
         plot_percentage=plot_percentage,
         ax=ax,
         legend=legend,
@@ -316,7 +317,7 @@ def stacked_likert(
     --------
     >>> import pandas as pd
     >>> import matplotlib.pyplot as plt
-    >>> from soundscapy.plotting.likert import stacked_likert
+    >>> from soundscapy import stacked_likert
     >>>
     >>> # Sample survey data
     >>> data = pd.DataFrame({
@@ -340,7 +341,7 @@ def stacked_likert(
     new_data = new_data.dropna()
 
     # Convert to categorical format for Likert plotting
-    new_data = likert_categorical_from_data(new_data)
+    new_data = isd.likert_categorical_from_data(new_data)
 
     # Create new axes if none provided
     if ax is None:
@@ -349,7 +350,7 @@ def stacked_likert(
     # Create the stacked Likert plot
     plot_likert.plot_likert(
         pd.Series(new_data),
-        match_col_to_likert_scale(column),
+        isd.match_col_to_likert_scale(column),
         plot_percentage=plot_percentage,
         ax=ax,
         legend=legend,

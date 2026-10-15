@@ -1,5 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """Plotting functions for visualizing circumplex data."""
 
+import re
 import warnings
 from collections.abc import Sequence
 from typing import Any, Literal, cast
@@ -26,7 +30,7 @@ from soundscapy.plotting.defaults import (
     DEFAULT_YCOL,
     RECOMMENDED_MIN_SAMPLES,
 )
-from soundscapy.plotting.iso_plot import ISOPlot
+from soundscapy.plotting.isoplot import ISOPlot
 from soundscapy.plotting.param_models import (
     DensityParams,
     MplLegendLocType,
@@ -410,7 +414,7 @@ def create_iso_subplots(
     return fig, axes
 
 
-def _prepare_subplot_data(
+def _prepare_subplot_data(  # noqa: PLR0912
     data: pd.DataFrame | list[pd.DataFrame],
     x: str,
     y: str,
@@ -946,7 +950,7 @@ def density(
 def _deal_w_default_labels(
     x: str | None,
     y: str | list[str] | None,
-    prim_labels: bool | None,
+    prim_labels: bool | None,  # noqa: FBT001
     style_args: StyleParams,
 ) -> StyleParams:
     """
@@ -993,7 +997,10 @@ def _deal_w_default_labels(
 
 
 def _setup_style_and_subplots_args_from_kwargs(
-    x: str | None, y: str | list[str] | None, prim_labels: bool | None, kwargs: dict
+    x: str | None,
+    y: str | list[str] | None,
+    prim_labels: bool | None,  # noqa: FBT001
+    kwargs: dict,
 ) -> tuple[StyleParams, SubplotsParams, dict]:
     """
     Set up style and subplot parameters from keyword arguments.
@@ -1180,6 +1187,7 @@ def jointplot(
     joint_kws: dict[str, Any] | None = None,
     marginal_kws: dict[str, Any] | None = None,
     marginal_kind: str = "kde",
+    height: float = 6,
     **kwargs,
 ) -> sns.JointGrid:
     """
@@ -1246,10 +1254,14 @@ def jointplot(
     marginal_kind
         Type of plot to draw in the marginal axes, either "kde" for kernel
         density estimation or "hist" for histogram, by default "kde"
+    height
+        Height (and width) of the square joint grid in inches, passed to
+        `seaborn.JointGrid`, by default 6. `figsize` is not used by this
+        function; use `height` instead.
 
     **kwargs
         Additional styling parameters. Common options include `color`,
-        `figsize`, axis label and limit controls such as `xlabel`, `ylabel`,
+        axis label and limit controls such as `xlabel`, `ylabel`,
         `xlim`, `ylim`, legend placement via `legend_loc`, `diagonal_lines`, and
         font settings such as `prim_ax_fontdict`, `fontsize`, `fontweight`,
         `fontstyle`, `family`, `c`, `alpha`, and `parse_math`.
@@ -1289,7 +1301,7 @@ def jointplot(
     ...     incl_scatter=True,
     ...     density_type="simple",
     ...     diagonal_lines=True,
-    ...     figsize=(6, 6),
+    ...     height=6,
     ...     title="Grouped Soundscape Analysis"
     ... )
     >>> plt.show() # doctest: +SKIP
@@ -1299,7 +1311,15 @@ def jointplot(
     # Check if dataset is large enough for density plots
     _valid_density(data)
 
-    style_args, subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
+    if "figsize" in kwargs:
+        warnings.warn(
+            "`figsize` is ignored by `jointplot`; use `height` to set the size "
+            "of the square joint grid.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    style_args, _subplots_args, kwargs = _setup_style_and_subplots_args_from_kwargs(
         x=x, y=y, prim_labels=prim_labels, kwargs=kwargs
     )
 
@@ -1333,6 +1353,7 @@ def jointplot(
         palette=palette,
         xlim=style_args.xlim,
         ylim=style_args.ylim,
+        height=height,
     )
 
     # Add the density plot to the joint plot area
@@ -1581,8 +1602,6 @@ def _primary_lines_and_labels(
     line_weights: float,
     prim_ax_fontdict: dict[str, str] | None = DEFAULT_XY_LABEL_FONTDICT,
 ) -> None:
-    import re
-
     # Add lines and labels for circumplex model
     ## Primary Axes
     ax.axhline(  # Horizontal line

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Soundscape Attributes Translation (SATP) calculation module.
 
@@ -6,9 +9,9 @@ analysis, based on the R implementation. Requires optional dependencies.
 """
 
 # ruff: noqa: E402
-from soundscapy._optional import require_deps
+from soundscapy._optional import require_deps as _require_deps
 
-require_deps(["rpy2"], extra="r")
+_require_deps(["rpy2"], extra="r")
 
 import lazy_loader as _lazy
 

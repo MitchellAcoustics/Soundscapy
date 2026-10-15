@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Layer-based visualization components for plotting.
 
@@ -15,7 +18,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from soundscapy.plotting.defaults import RECOMMENDED_MIN_SAMPLES
+from soundscapy.plotting.defaults import (
+    DEFAULT_SPI_TEXT_KWARGS,
+    RECOMMENDED_MIN_SAMPLES,
+)
 from soundscapy.plotting.param_models import (
     DensityParams,
     ScatterParams,
@@ -29,8 +35,8 @@ from soundscapy.sspylogging import get_logger
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
-    from soundscapy import CentredParams, DirectParams
     from soundscapy.plotting.plot_context import PlotContext
+    from soundscapy.spi import CentredParams, DirectParams
 
 logger = get_logger()
 
@@ -41,6 +47,15 @@ class Layer:
 
     A Layer encapsulates a specific visualization technique and its associated
     parameters. Layers know how to render themselves onto a PlotContext's axes.
+
+    Parameters
+    ----------
+    custom_data
+        Optional custom data for this specific layer, overriding context data
+    param_model
+        The parameter model class to use, by default ``SeabornParams``
+    **params
+        Parameters for the layer
 
     Attributes
     ----------
@@ -57,19 +72,6 @@ class Layer:
         param_model: type[SeabornParams] = SeabornParams,
         **params: Any,
     ) -> None:
-        """
-        Initialize a Layer.
-
-        Parameters
-        ----------
-        custom_data
-            Optional custom data for this specific layer, overriding context data
-        param_model
-            The parameter model class to use, if None uses a generic ParamModel
-        **params
-            Parameters for the layer
-
-        """
         self.custom_data = custom_data
         # Create parameter model instance
         self.params = param_model(**params)
@@ -118,20 +120,19 @@ class Layer:
 
 
 class ScatterLayer(Layer):
-    """Layer for rendering scatter plots."""
+    """
+    Layer for rendering scatter plots.
+
+    Parameters
+    ----------
+    custom_data
+        Optional custom data for this specific layer
+    **params
+        Parameters for the scatter plot
+
+    """
 
     def __init__(self, custom_data: pd.DataFrame | None = None, **params: Any) -> None:
-        """
-        Initialize a ScatterLayer.
-
-        Parameters
-        ----------
-        custom_data
-            Optional custom data for this specific layer
-        **params
-            Parameters for the scatter plot
-
-        """
         super().__init__(custom_data=custom_data, param_model=ScatterParams, **params)
 
     def _render_implementation(
@@ -171,7 +172,21 @@ class ScatterLayer(Layer):
 
 
 class DensityLayer(Layer):
-    """Layer for rendering kernel density plots."""
+    """
+    Layer for rendering kernel density plots.
+
+    Parameters
+    ----------
+    custom_data
+        Optional custom data for this specific layer
+    param_model
+        The parameter model class to use
+    include_outline
+        Whether to include an outline around the density plot
+    **params
+        Parameters for the density plot
+
+    """
 
     def __init__(
         self,
@@ -181,19 +196,6 @@ class DensityLayer(Layer):
         include_outline: bool = False,
         **params: Any,
     ) -> None:
-        """
-        Initialize a DensityLayer.
-
-        Parameters
-        ----------
-        custom_data
-            Optional custom data for this specific layer
-        include_outline
-            Whether to include an outline around the density plot
-        **params
-            Parameters for the density plot
-
-        """
         self.include_outline = include_outline
         self.params: DensityParams
         super().__init__(custom_data=custom_data, param_model=param_model, **params)
@@ -268,7 +270,21 @@ class DensityLayer(Layer):
 
 
 class SimpleDensityLayer(DensityLayer):
-    """Layer for rendering simplified density plots with fewer contour levels."""
+    """
+    Layer for rendering simplified density plots with fewer contour levels.
+
+    Parameters
+    ----------
+    custom_data
+        Optional custom data for this specific layer
+    include_outline
+        Whether to include an outline around the density plot
+    param_model
+        The parameter model class to use
+    **params
+        Parameters for the density plot
+
+    """
 
     def __init__(
         self,
@@ -278,19 +294,6 @@ class SimpleDensityLayer(DensityLayer):
         param_model: type[SimpleDensityParams] = SimpleDensityParams,
         **params: Any,
     ) -> None:
-        """
-        Initialize a SimpleDensityLayer.
-
-        Parameters
-        ----------
-        custom_data
-            Optional custom data for this specific layer
-        include_outline
-            Whether to include an outline around the density plot
-        **params
-            Parameters for the density plot
-
-        """
         super().__init__(
             custom_data=custom_data,
             include_outline=include_outline,  # Could move into params now
@@ -475,8 +478,6 @@ class SPILayer(Layer):
             Additional arguments for the text
 
         """
-        from soundscapy.plotting.defaults import DEFAULT_SPI_TEXT_KWARGS
-
         text_kwargs = DEFAULT_SPI_TEXT_KWARGS.copy()
         text_kwargs.update(**text_kwargs)
         text_kwargs["s"] = f"SPI: {spi_sc}"
@@ -509,6 +510,7 @@ class SPILayer(Layer):
         spi_params: DirectParams | CentredParams | None,
     ) -> tuple[pd.DataFrame | np.ndarray | None, DirectParams | CentredParams | None]:
         """Validate the right combination of inputs for the SPI plot."""
+        # Lazy import to avoid triggering R
         from soundscapy.spi.msn import CentredParams, DirectParams
 
         # Input validation
@@ -641,7 +643,21 @@ class SPILayer(Layer):
 
 
 class SPISimpleLayer(SPILayer, SimpleDensityLayer):
-    """Layer for rendering simplified SPI plots with fewer contour levels."""
+    """
+    Layer for rendering simplified SPI plots with fewer contour levels.
+
+    Parameters
+    ----------
+    spi_target_data
+        Optional SPI target data for this specific layer
+    msn_params
+        Parameters to generate SPI data if no custom data is provided
+    include_outline
+        Whether to include an outline around the density plot
+    **params
+        Parameters for the density plot
+
+    """
 
     def __init__(
         self,
@@ -651,21 +667,6 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
         include_outline: bool = True,
         **params: Any,
     ) -> None:
-        """
-        Initialize an SPISimpleLayer.
-
-        Parameters
-        ----------
-        spi_target_data
-            Optional SPI target data for this specific layer
-        msn_params
-            Parameters to generate SPI data if no custom data is provided
-        include_outline
-            Whether to include an outline around the density plot
-        **params
-            Parameters for the density plot
-
-        """
         self.params: SPISimpleDensityParams
         super().__init__(
             spi_target_data=spi_target_data,
@@ -677,15 +678,18 @@ class SPISimpleLayer(SPILayer, SimpleDensityLayer):
 
 
 class SPIDensityLayer(SPILayer, DensityLayer):
-    """Layer for rendering simplified SPI plots with fewer contour levels."""
+    """
+    Unsupported SPI density layer.
+
+    Instantiating this class is not supported and raises NotImplementedError.
+    Use SPISimpleLayer instead.
+    """
+
+    # Narrowed to satisfy both SPILayer (SPISeabornParams)
+    # and DensityLayer (DensityParams)
+    params: SPISimpleDensityParams
 
     def __init__(self) -> None:
-        """
-        Initialize SPIDensityLayer.
-
-        This initialization is not supported and will raise NotImplementedError.
-        Use SPISimpleLayer instead.
-        """
         msg = (
             "Only the simple density layer type is currently supported for SPI plots. "
             "Please use SPISimpleLayer"
@@ -694,15 +698,14 @@ class SPIDensityLayer(SPILayer, DensityLayer):
 
 
 class SPIScatterLayer(SPILayer, ScatterLayer):
-    """Layer for rendering simplified SPI plots with fewer contour levels."""
+    """
+    Unsupported SPI scatter layer.
+
+    Instantiating this class is not supported and raises NotImplementedError.
+    Use SPISimpleLayer instead.
+    """
 
     def __init__(self) -> None:
-        """
-        Initialize SPIScatterLayer.
-
-        This initialization is not supported and will raise NotImplementedError.
-        Use SPISimpleLayer instead.
-        """
         msg = (
             "Only the simple density layer type is currently supported for SPI plots. "
             "Please use SPISimpleLayer"

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Soundscapy Plotting Module.
 
@@ -6,7 +9,11 @@ It supports various plot types and backends, with a focus on flexibility and eas
 of use.
 """
 
+import sys
+
+from soundscapy._deprecated import moved_module
 from soundscapy.plotting import likert
+from soundscapy.plotting._warnings import ExperimentalWarning
 from soundscapy.plotting.backends_deprecated import (
     Backend,
     CircumplexPlot,
@@ -14,7 +21,16 @@ from soundscapy.plotting.backends_deprecated import (
     PlotType,
     StyleOptions,
 )
-from soundscapy.plotting.iso_plot import ISOPlot
+from soundscapy.plotting.isoplot import ISOPlot
+from soundscapy.plotting.layers import (
+    DensityLayer,
+    Layer,
+    ScatterLayer,
+    SimpleDensityLayer,
+    SPIDensityLayer,
+    SPIScatterLayer,
+    SPISimpleLayer,
+)
 from soundscapy.plotting.likert import paq_likert, paq_radar_plot, stacked_likert
 from soundscapy.plotting.plot_functions import (
     create_circumplex_subplots,
@@ -27,12 +43,29 @@ from soundscapy.plotting.plot_functions import (
     scatter_plot,
 )
 
+# ``iso_plot`` is now a function, so a stub module can't keep the old
+# ``from soundscapy.plotting.iso_plot import ISOPlot`` path alive; use sys.modules.
+sys.modules[f"{__name__}.iso_plot"] = moved_module(
+    f"{__name__}.iso_plot",
+    {
+        "soundscapy.plotting": ["ISOPlot", "ExperimentalWarning"],
+    },
+)
+
 __all__ = [
     "Backend",
     "CircumplexPlot",
     "CircumplexPlotParams",
+    "DensityLayer",
+    "ExperimentalWarning",
     "ISOPlot",
+    "Layer",
     "PlotType",
+    "SPIDensityLayer",
+    "SPIScatterLayer",
+    "SPISimpleLayer",
+    "ScatterLayer",
+    "SimpleDensityLayer",
     "StyleOptions",
     "create_circumplex_subplots",
     "create_iso_subplots",

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 from pathlib import Path
 from typing import Literal
 
@@ -28,10 +31,10 @@ def ensure_output_filepath_exists(
 ) -> Path | Literal[False]:
     filepath = ensure_path_type(filepath)
     if not filepath.exists():
-        logger.info("Output file %s does not exist.", filepath)
+        logger.info("Output file {} does not exist.", filepath)
         if not create_missing:
             return False
-        logger.info("Creating new file at %s", filepath.absolute())
+        logger.info("Creating new file at {}", filepath.absolute())
         filepath.touch()
     return filepath
 
@@ -41,9 +44,9 @@ def ensure_output_dirpath_exists(
 ) -> Path | Literal[False]:
     dirpath = ensure_path_type(dirpath)
     if not dirpath.exists():
-        logger.info("Output directory %s does not exist.", dirpath)
+        logger.info("Output directory {} does not exist.", dirpath)
         if not create_missing:
             return False
-        logger.info("Creating new directory at %s", dirpath.absolute())
+        logger.info("Creating new directory at {}", dirpath.absolute())
         dirpath.mkdir()
     return dirpath

@@ -1,0 +1,30 @@
+---
+title: Start here
+guide-section: "Getting Started"
+---
+
+# Start here
+
+The documentation is organised into five parts. Pick the route that matches what you want to do.
+
+| Section | What it is for |
+|---------|----------------|
+| **User Guide** (this section) | How to use Soundscapy, plus project news and the 0.7 → 0.8 migration guide. |
+| [**Tutorials**](../tutorials/soundscape-assessment-tutorial.qmd) | Longer, end-to-end worked examples and companions to published papers. |
+| [**Gallery**](../gallery/index.qmd) | Copy-and-adapt example figures for every plot type. |
+| **Reference** | The API documentation for every public function and class. |
+
+## Recommended reading path
+
+1. [Quick Start](quickstart.qmd): load data, add ISO coordinates and draw a first figure.
+2. [Concepts and terminology](concepts-and-terminology.qmd): the ISO 12913 framework, the circumplex and why we analyse distributions.
+3. [Working with survey data](working-with-survey-data.qmd): validation, coordinates, grouping and summaries for your own data.
+4. [Working with databases](working-with-databases.qmd): the ISD, SATP and ARAUS loaders.
+5. [Visualising soundscapes](visualising-soundscapes.qmd): the plotting API, from one-line functions to the layered `ISOPlot` builder.
+6. [Understanding the SPI](understanding-spi.qmd): comparing soundscape distributions against targets (requires the R extra).
+
+When you want worked examples, move on to the [Tutorials](../tutorials/soundscape-assessment-tutorial.qmd), or browse the [Gallery](../gallery/index.qmd) for figures to adapt.
+
+## Upgrading from 0.7?
+
+See the [migration guide](migration-0.7-to-0.8.qmd).

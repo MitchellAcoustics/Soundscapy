@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Module for handling the International Soundscape Database (ISD).
 
@@ -29,16 +32,9 @@ from loguru import logger
 from pandas import CategoricalDtype
 from plot_likert.scales import Scale
 
-from soundscapy.surveys.processing import (
-    calculate_iso_coords,
-    likert_data_quality,
-)
-from soundscapy.surveys.survey_utils import (
-    LIKERT_SCALES,
-    PAQ_IDS,
-    PAQ_LABELS,
-    rename_paqs,
-)
+from soundscapy import constants
+from soundscapy.surveys import processing
+from soundscapy.surveys.survey_utils import rename_paqs
 
 # ISD-specific PAQ aliases
 _PAQ_ALIASES = {
@@ -82,7 +78,7 @@ def load(locations: list[str] | None = None) -> pd.DataFrame:
 
     Examples
     --------
-    >>> from soundscapy.surveys.survey_utils import PAQ_IDS
+    >>> from soundscapy.constants import PAQ_IDS
     >>> df = load()
     >>> isinstance(df, pd.DataFrame)
     True
@@ -100,6 +96,79 @@ def load(locations: list[str] | None = None) -> pd.DataFrame:
         data = select_location_ids(data, locations)
 
     return data
+
+
+_DEMO_LOCATIONS = ["CamdenTown", "MarchmontGarden", "PancrasLock", "TateModern"]
+
+# ISD column -> friendlier demo name, in demo column order.
+_DEMO_COLUMNS = {
+    "LocationID": "LocationID",
+    "SessionID": "SessionID",
+    "GroupID": "GroupID",
+    "RecordID": "RecordID",
+    "start_time": "start_time",
+    "end_time": "end_time",
+    "ssi01": "traffic_noise",
+    "ssi02": "other_noise",
+    "ssi03": "human_sounds",
+    "ssi04": "natural_sounds",
+    **{paq: paq for paq in constants.PAQ_IDS},
+    "sss01": "overall_sound_environment",
+    "sss02": "appropriate",
+    "sss03": "perceived_loud",
+    "sss04": "visit_often",
+    "sss05": "like_to_visit",
+    "age00": "age",
+    "gen00": "gender",
+    "misc01": "free_response",
+    "misc03": "tourist_local",
+    "LAeq_L(A)_Max": "LAeq",
+    "LAeq_L10(A)_Max": "LA10",
+    "LAeq_L90(A)_Max": "LA90",
+    "LCeq_L(C)_Max": "LCeq",
+    "N_N5_Max": "N5",
+    "S_S_Max": "sharpness",
+    "R_R_Max": "roughness",
+    "T_TonalityHMS_Max": "tonality",
+}
+
+
+def load_demo() -> pd.DataFrame:
+    """
+    Load a small, tidy subset of the ISD for examples and tutorials.
+
+    The demo dataset contains the four London locations CamdenTown,
+    MarchmontGarden, PancrasLock and TateModern from the bundled ISD. Responses
+    with any missing PAQ are dropped, survey and acoustic columns get short
+    descriptive names (e.g. ``traffic_noise``, ``LAeq``, ``N5``), and the
+    ``ISOPleasant`` and ``ISOEventful`` coordinates are added.
+
+    Returns
+    -------
+    :
+        DataFrame with one row per survey response.
+
+    See Also
+    --------
+    load : Load the full bundled ISD with its original column names.
+
+    Examples
+    --------
+    >>> df = load_demo()
+    >>> sorted(df["LocationID"].unique())
+    ['CamdenTown', 'MarchmontGarden', 'PancrasLock', 'TateModern']
+    >>> {"ISOPleasant", "ISOEventful", "LAeq"}.issubset(df.columns)
+    True
+
+    """
+    data = (
+        load(_DEMO_LOCATIONS)
+        .dropna(subset=constants.PAQ_IDS)
+        .loc[:, list(_DEMO_COLUMNS)]
+        .rename(columns=_DEMO_COLUMNS)
+        .reset_index(drop=True)
+    )
+    return processing.add_iso_coords(data)
 
 
 def load_zenodo(version: str = "latest") -> pd.DataFrame:
@@ -128,7 +197,7 @@ def load_zenodo(version: str = "latest") -> pd.DataFrame:
 
     Examples
     --------
-    >>> from soundscapy.surveys.survey_utils import PAQ_IDS  # doctest: +SKIP
+    >>> from soundscapy.constants import PAQ_IDS  # doctest: +SKIP
     >>> df = load_zenodo("v1.0.1")  # doctest: +SKIP
     >>> isinstance(df, pd.DataFrame)  # doctest: +SKIP
     True
@@ -217,13 +286,14 @@ def validate(
     logger.info("Validating ISD data")
     data = rename_paqs(df, paq_aliases)
 
-    invalid_indices = likert_data_quality(
+    invalid_indices = processing.likert_data_quality(
         data, val_range=val_range, allow_na=allow_paq_na
     )
 
     if invalid_indices:
-        excl_data = data.iloc[invalid_indices]
-        data = data.drop(data.index[invalid_indices])
+        is_invalid = data.index.isin(invalid_indices)
+        excl_data = data[is_invalid]
+        data = data[~is_invalid]
         logger.info(f"Removed {len(invalid_indices)} rows with invalid PAQ data")
     else:
         excl_data = None
@@ -232,7 +302,7 @@ def validate(
     return data, excl_data
 
 
-def match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
+def match_col_to_likert_scale(col: str | None) -> Scale:
     """
     Match a column in the DataFrame to the Likert scale.
 
@@ -247,23 +317,26 @@ def match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
         Likert scale object.
 
     """
-    if col in PAQ_IDS or col in PAQ_LABELS:
-        return LIKERT_SCALES.paq
-    if col in ["traffic_noise", "other_noise", "human_sounds", "natural_sounds"]:
-        return LIKERT_SCALES.source
-    if col in ["overall_sound_environment"]:
-        return LIKERT_SCALES.overall
-    if col in ["appropriate"]:
-        return LIKERT_SCALES.appropriate
-    if col in ["perceived_loud"]:
-        return LIKERT_SCALES.loud
-    if col in ["visit_often"]:
-        return LIKERT_SCALES.often
-    if col in ["like_to_visit"]:
-        return LIKERT_SCALES.visit
-
-    msg = f"Column {col} does not match any known Likert scale."
-    raise ValueError(msg)
+    match col:
+        case _ if col in constants.PAQ_IDS or col in constants.PAQ_LABELS:
+            name = "paq"
+        case "traffic_noise" | "other_noise" | "human_sounds" | "natural_sounds":
+            name = "source"
+        case "overall_sound_environment":
+            name = "overall"
+        case "appropriate":
+            name = "appropriate"
+        case "perceived_loud":
+            name = "loud"
+        case "visit_often":
+            name = "often"
+        case "like_to_visit":
+            name = "visit"
+        case _:
+            msg = f"Column {col} does not match any known Likert scale."
+            raise ValueError(msg)
+    # Hand out a copy so callers can't mutate the shared constant.
+    return list(getattr(constants.LIKERT_SCALES, name))
 
 
 def likert_categorical_from_data(
@@ -364,6 +437,10 @@ def select_record_ids(
     :
         Filtered dataframe.
 
+    See Also
+    --------
+    [](`pd.DataFrame.query`): For more complex queries on dataframes.
+
     Examples
     --------
     >>> df = pd.DataFrame({
@@ -430,6 +507,10 @@ def select_session_ids(
     :
         Filtered dataframe.
 
+    See Also
+    --------
+    [](`pd.DataFrame.query`): For more complex queries on dataframes.
+
     Examples
     --------
     >>> df = pd.DataFrame({
@@ -464,6 +545,10 @@ def select_location_ids(
     -------
     :
         Filtered dataframe.
+
+    See Also
+    --------
+    [](`pd.DataFrame.query`): For more complex queries on dataframes.
 
     Examples
     --------
@@ -510,7 +595,7 @@ def describe_location(
 
     Examples
     --------
-    >>> from soundscapy.surveys.processing import add_iso_coords
+    >>> from soundscapy import add_iso_coords
     >>> df = pd.DataFrame({
     ...     'LocationID': ['L1', 'L1', 'L2', 'L2'],
     ...     'PAQ1': [4, 2, 3, 5],
@@ -537,7 +622,7 @@ def describe_location(
     count = len(loc_df)
 
     if "ISOPleasant" not in loc_df.columns or "ISOEventful" not in loc_df.columns:
-        iso_pleasant, iso_eventful = calculate_iso_coords(loc_df)
+        iso_pleasant, iso_eventful = processing.calculate_iso_coords(loc_df)
         loc_df = loc_df.assign(ISOPleasant=iso_pleasant, ISOEventful=iso_eventful)
 
     pl_count = (loc_df["ISOPleasant"] > pl_threshold).sum()
@@ -610,9 +695,13 @@ def soundscapy_describe(
     :
         Summary of the data.
 
+    See Also
+    --------
+    describe_location : Return a summary of the data for a specific location.
+
     Examples
     --------
-    >>> from soundscapy.surveys.processing import add_iso_coords
+    >>> from soundscapy import add_iso_coords
     >>> df = pd.DataFrame({
     ...     'LocationID': ['L1', 'L1', 'L2', 'L2'],
     ...     'PAQ1': [4, 2, 3, 5],

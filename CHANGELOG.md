@@ -5,6 +5,46 @@ All notable changes to the Soundscapy project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- `isd.load_demo()` returns a small, tidy subset of the bundled ISD (four London
+  locations, descriptive column names, ISO coordinates added) for examples and tutorials.
+
+### Changed
+
+- Universal constants (`PAQ`, `PAQ_IDS`, `PAQ_LABELS`, `LikertScale`, `LIKERT_SCALES`,
+  `EQUAL_ANGLES`, `LANGUAGE_ANGLES`) now live in `soundscapy.constants`. Importing them
+  from `soundscapy`, `soundscapy.surveys` or `soundscapy.surveys.survey_utils` still
+  works but emits a `DeprecationWarning`.
+- `plotting.iso_plot` module renamed to `plotting.isoplot`. `from soundscapy.plotting.iso_plot
+import ISOPlot` (and `ExperimentalWarning`) still works but emits a `DeprecationWarning`.
+- `ExperimentalWarning` now subclasses `UserWarning` and is exported from `soundscapy.plotting`.
+- Optional-subpackage names previously promoted to the top level (`ConfigManager`,
+  `add_results`, `parallel_process`, `prep_multiindex_df`, `process_all_metrics`, `CircE`,
+  `CircEResults`, `CircModelE`, `normalize_polar_angles`, `MultiSkewNorm`, `CentredParams`,
+  `DirectParams`, `cp2dp`, `dp2cp`, `msn`, `spi_score`) now warn and forward to
+  `soundscapy.audio`, `soundscapy.satp` or `soundscapy.spi`. `soundscapy.processing` remains
+  importable but is no longer in `__all__`.
+- `soundscapy.db` is deprecated in favour of `soundscapy.databases`; it warns and forwards.
+- `LikertScale` is frozen and validates that each scale has five distinct points, and
+  `LANGUAGE_ANGLES` is read-only. `ssm_metrics` and `paq_likert` default `paq_cols` to `None`
+  (meaning the PAQ IDs) instead of sharing a mutable list.
+- `jointplot` takes `height`; passing `figsize` now warns.
+- `process_all_metrics` raises a `ValueError` for an unrecognised metric library and names the
+  library and metric when a metric fails.
+- Layer classes (`ScatterLayer`, `DensityLayer`, ...) are exported from `soundscapy.plotting`.
+
+### Fixed
+
+- `isd.validate()` and `surveys.processing.likert_data_quality()` now work with index labels,
+  so filtered or re-ordered DataFrames no longer raise `IndexError` or drop the wrong rows.
+- `fit_circe()` no longer reports a failure to start R as a failed model fit; it raises.
+- Debug messages in the R wrapper and file helpers now show their values (loguru uses `{}`
+  placeholders, not `%s`).
+- `ISOPlot` hue validation no longer raises `TypeError` when the data index has no name.
+
 ## 0.8.4 - 2026-05-11
 
 ### Added
@@ -59,7 +99,7 @@ version. The last user-facing stable release on PyPI was `0.7.8`, so most users
 are upgrading across a much larger gap than the version number suggests.
 
 If you are upgrading from `0.7.x`, please read the
-[migration guide](docs/migration-0.7-to-0.8.md) before installing — there are
+[migration guide](docs/user_guide/91-migration-0.7-to-0.8.qmd) before installing — there are
 several breaking changes, most notably the new `ISOPlot` API.
 
 ### ⚠️ Breaking Changes
@@ -68,7 +108,7 @@ several breaking changes, most notably the new `ISOPlot` API.
   with a layered plotting architecture. The function-style helpers
   (`scatter_plot`, `density_plot`) are still available and have been adapted to
   the new backend, but custom subclasses or direct `CircumplexPlot` use will
-  need to migrate. See the [migration guide](docs/migration-0.7-to-0.8.md).
+  need to migrate. See the [migration guide](docs/user_guide/91-migration-0.7-to-0.8.qmd).
 - **Plotly backend removed**: only the seaborn backend is supported now. The
   `plotly` dependency has been dropped to simplify installation.
 - **RTHORR R package integration removed**: the `rthorr` R package is no longer

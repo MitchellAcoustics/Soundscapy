@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Soundscape survey data processing module.
 
@@ -22,6 +25,7 @@ modules under `soundscape.databases`.
 """
 
 import warnings
+from collections.abc import Hashable
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 
@@ -35,7 +39,8 @@ import pandas as pd
 from loguru import logger
 from scipy import optimize
 
-from soundscapy.surveys.survey_utils import EQUAL_ANGLES, PAQ_IDS, return_paqs
+from soundscapy import constants
+from soundscapy.surveys.survey_utils import return_paqs
 
 np.set_printoptions(legacy="1.21")
 
@@ -93,7 +98,7 @@ class SSMMetrics:
 def calculate_iso_coords(
     results_df: pd.DataFrame,
     val_range: tuple[int, int] = (5, 1),
-    angles: tuple[int, ...] = EQUAL_ANGLES,
+    angles: tuple[int, ...] = constants.EQUAL_ANGLES,
 ) -> tuple[pd.Series, pd.Series]:
     """
     Calculate the projected ISOPleasant and ISOEventful coordinates.
@@ -215,7 +220,7 @@ def add_iso_coords(
     data: pd.DataFrame,
     val_range: tuple[int, int] = (1, 5),
     names: tuple[str, str] = ("ISOPleasant", "ISOEventful"),
-    angles: tuple[int, ...] = EQUAL_ANGLES,
+    angles: tuple[int, ...] = constants.EQUAL_ANGLES,
     *,
     overwrite: bool = False,
 ) -> pd.DataFrame:
@@ -280,7 +285,7 @@ def add_iso_coords(
 
 def likert_data_quality(
     df: pd.DataFrame, val_range: tuple[int, int] = (1, 5), *, allow_na: bool = False
-) -> list[int] | None:
+) -> list[Hashable] | None:
     """
     Perform basic quality checks on PAQ (Likert scale) data.
 
@@ -296,6 +301,8 @@ def likert_data_quality(
     Returns
     -------
     :
+        Index labels (not positions) of rows that failed a check, or None if
+        every row passed. Use with ``.loc`` / ``.drop(index=...)``.
 
     Examples
     --------
@@ -316,8 +323,6 @@ def likert_data_quality(
     invalid_indices = []
 
     for idx, row in paqs.iterrows():
-        # Convert the index to int to ensure type compatibility
-        row_idx = int(idx) if isinstance(idx, str) else idx
         row_array = row.to_numpy()
         is_constant = row_array.shape[0] > 0 and (row_array[0] == row_array).all()
 
@@ -329,7 +334,7 @@ def likert_data_quality(
                 or (is_constant and row.iloc[0] != np.mean(val_range))
             )
         ):
-            invalid_indices.append(row_idx)
+            invalid_indices.append(idx)
 
     if invalid_indices:
         logger.info(f"Found {len(invalid_indices)} samples with data quality issues")
@@ -394,7 +399,7 @@ def simulation(
         np.random.default_rng(seed).integers(
             min(val_range), max(val_range) + 1, size=(n, 8)
         ),
-        columns=PAQ_IDS,
+        columns=constants.PAQ_IDS,
     )
 
     if incl_iso_coords:
@@ -406,10 +411,10 @@ def simulation(
 
 def ssm_metrics(
     df: pd.DataFrame,
-    paq_cols: list[str] = PAQ_IDS,
+    paq_cols: list[str] | None = None,
     method: str = "cosine",
     val_range: tuple[int, int] = (5, 1),
-    angles: tuple[int, ...] = EQUAL_ANGLES,
+    angles: tuple[int, ...] = constants.EQUAL_ANGLES,
 ) -> pd.DataFrame:
     """
     Calculate the Structural Summary Method (SSM) metrics for each response.
@@ -419,7 +424,7 @@ def ssm_metrics(
     df
         DataFrame containing PAQ data
     paq_cols
-        List of PAQ column names, by default PAQ_IDS
+        List of PAQ column names, by default None, which uses PAQ_IDS
     method
         Method to calculate SSM metrics, either "cosine" or "polar", by default "cosine"
     val_range
@@ -461,6 +466,9 @@ def ssm_metrics(
         stacklevel=2,
     )
 
+    if paq_cols is None:
+        paq_cols = list(constants.PAQ_IDS)
+
     if not set(paq_cols).issubset(df.columns):
         msg = f"PAQ columns {paq_cols} not present in DataFrame"
         raise ValueError(msg)
@@ -496,7 +504,7 @@ def ssm_metrics(
 
 def ssm_cosine_fit(
     y: pd.Series,
-    angles: tuple[int, ...] | np.ndarray = EQUAL_ANGLES,
+    angles: tuple[int, ...] | np.ndarray = constants.EQUAL_ANGLES,
     bounds: tuple[list[float], list[float]] = (
         [0, 0, 0, -np.inf],
         [np.inf, 360, np.inf, np.inf],
@@ -693,7 +701,7 @@ def ipsatize(
     [-5.0, 5.0, 5.0, -5.0]
 
     """
-    _scales = scales if scales is not None else PAQ_IDS
+    _scales = scales if scales is not None else constants.PAQ_IDS
 
     if method == "column_wise":
         means = data.groupby(participant_col)[_scales].transform("mean")

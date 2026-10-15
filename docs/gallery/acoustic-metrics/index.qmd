@@ -1,0 +1,30 @@
+---
+title: "Pleasantness vs sound level"
+description: "Relate ISOPleasant to LAeq with a regression line per location."
+date: 2026-01-19
+categories: [acoustic metrics, seaborn]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-acoustic-metrics
+#| fig-alt: "ISOPleasant against LAeq by location"
+import matplotlib.pyplot as plt
+import seaborn as sns
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+sns.lmplot(
+    data=data,
+    x="LAeq",
+    y="ISOPleasant",
+    hue="LocationID",
+    palette="colorblind",
+    height=6,
+    aspect=1.5,
+)
+plt.title("Sound level (LAeq) and pleasantness")
+plt.tight_layout()
+plt.show()
+```

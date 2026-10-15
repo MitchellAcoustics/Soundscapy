@@ -1,0 +1,27 @@
+---
+title: "Grouped joint plot"
+description: "Compare several locations with shared marginals."
+date: 2026-01-11
+categories: [jointplot, grouping]
+tags: [Visualizations]
+---
+
+```{python}
+#| label: fig-jointplot-grouped
+#| fig-alt: "Joint plot grouped by location"
+import matplotlib.pyplot as plt
+import soundscapy as sspy
+
+data = sspy.isd.load_demo()
+
+places = ["CamdenTown", "PancrasLock", "MarchmontGarden", "TateModern"]
+
+sspy.jointplot(
+    data[data["LocationID"].isin(places)],
+    title="Joint plot with grouping",
+    hue="LocationID",
+    density_type="simple",
+    diagonal_lines=True,
+)
+plt.show()
+```

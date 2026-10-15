@@ -1,0 +1,310 @@
+---
+title: 'Concepts and Terminology'
+guide-section: "Getting Started"
+jupyter: python3
+setup-cells:
+  python:
+    language: "python"    # Language assumed for the setup cell
+    code: |
+      # Setup for Colab
+      # Run this cell once to install the required packages
+      # Then restart your session, and you can skip running this cell again
+      !pip install "soundscapy>=0.8.4"
+---
+
+# Concepts and Terminology
+
+Before diving into code, it helps to know the concepts and terminology behind soundscape research. This page gives the theoretical foundation for everything else in the guide: what a soundscape is, how ISO 12913 assesses it, and how Soundscapy turns questionnaire responses into the coordinates and distributions you will plot and compare.
+
+### Learning Objectives
+
+By the end of this tutorial, you will be able to:
+
+- Define what a soundscape is and why it's important
+- Understand the ISO 12913 standard for soundscape assessment
+- Explain the perceptual attributes used in soundscape evaluation
+- Describe the circumplex model of soundscape perception
+- Interpret $P_{ISO}$ and $E_{ISO}$ coordinates
+- Understand why distributions matter in soundscape analysis
+
+Let's begin by importing the necessary libraries:
+
+```{python}
+import matplotlib.pyplot as plt
+import pandas as pd
+
+import soundscapy as sspy
+from soundscapy.databases import isd
+from soundscapy.constants import LANGUAGE_ANGLES, PAQ_IDS, PAQ_LABELS
+```
+
+## 1. What is a Soundscape?
+
+The term "soundscape" refers to the acoustic environment as perceived, experienced, and/or understood by people, in context. Unlike traditional acoustic measurements that focus solely on sound levels (e.g., decibels), soundscape research considers how people perceive and interpret sounds in their environment.
+
+The ISO 12913-1:2014 standard defines a soundscape as:
+
+> "An acoustic environment as perceived or experienced and/or understood by a person or people, in context."
+
+This definition emphasizes three key aspects:
+
+1. **Perception**: How people subjectively experience sounds
+2. **Context**: The physical, social, and cultural environment in which sounds occur
+3. **Understanding**: How people interpret and make meaning from sounds
+
+### Why Soundscapes Matter
+
+Soundscape research is important for several reasons:
+
+- **Urban Planning**: Helps create more livable cities by considering how acoustic environments affect residents
+- **Public Health**: Poor soundscapes can contribute to stress, sleep disturbance, and other health issues
+- **Environmental Quality**: Soundscapes are an important aspect of environmental quality and biodiversity
+- **Cultural Heritage**: Soundscapes can be part of cultural identity and heritage
+- **User Experience**: In designed spaces, soundscapes contribute significantly to overall experience
+
+Traditional noise control approaches focus on reducing sound levels, but soundscape research recognizes that not all sounds are unwanted. Some sounds (like birdsong or flowing water) may be desirable even at higher levels, while others (like mechanical noise) may be annoying even at lower levels.
+
+## 2. The ISO 12913 Standard
+
+The International Organization for Standardization (ISO) has developed a series of standards for soundscape assessment:
+
+- **ISO 12913-1:2014**: Defines the concept of soundscape and its framework
+- **ISO 12913-2:2018**: Provides methods for collecting soundscape data
+- **ISO 12913-3:2019**: Describes data analysis methods for soundscape studies
+
+These standards provide a common framework and methodology for soundscape research, making studies more comparable and reproducible. The `Soundscapy` package is designed to align with these standards, particularly ISO 12913-2 and ISO 12913-3.
+
+### ISO 12913-2: Data Collection
+
+ISO 12913-2 recommends collecting both perceptual data (how people experience the soundscape) and acoustic data (objective measurements of the sound environment). For perceptual data, it suggests using standardized questionnaires that include:
+
+- Perceived Affective Quality (PAQ) scales
+- Overall soundscape quality assessment
+- Sound source identification and dominance
+- Contextual factors
+
+### ISO 12913-3: Data Analysis
+
+ISO 12913-3 provides guidelines for analyzing soundscape data, including:
+
+- Statistical analysis of perceptual data
+- Correlation between perceptual and acoustic data
+- Visualization techniques
+- Reporting methods
+
+The `Soundscapy` package implements many of these recommended analysis methods, making it easier to conduct ISO-compliant soundscape research.
+
+## 3. Perceptual Attributes (PAQs)
+
+Perceived Affective Quality (PAQ) scales are a key component of soundscape assessment. These scales measure how people perceive the emotional qualities of a soundscape. ISO 12913-2 recommends eight attributes, each rated separately (they are unipolar items, not opposite ends of a single scale):
+
+1. **Pleasant**
+2. **Vibrant**
+3. **Eventful**
+4. **Chaotic**
+5. **Annoying**
+6. **Monotonous**
+7. **Uneventful**
+8. **Calm**
+
+In the circumplex they sit at 45° intervals, so that four of them form opposing pairs: pleasant–annoying, vibrant–monotonous, eventful–uneventful and chaotic–calm.
+
+Each is typically rated on a five-point Likert scale (1 = strongly disagree, 5 = strongly agree) for how well it describes the soundscape.
+
+Let's look at how these PAQs are defined in Soundscapy:
+
+```{python}
+# Display the PAQ IDs and labels
+print("PAQ IDs:")
+print(PAQ_IDS)
+print("\nPAQ Labels:")
+print(PAQ_LABELS)
+```
+
+### The Meaning of PAQs
+
+Each PAQ captures a different aspect of how people perceive a soundscape. These attributes are not independent but are related in systematic ways, which leads us to the circumplex model of soundscape perception.
+
+## 4. The Circumplex Model of Soundscape Perception
+
+Research has shown that the eight PAQs can be organized into a circular structure called a "circumplex model." This model suggests that soundscape perception is primarily organized along two main dimensions:
+
+1. **Pleasantness**: How pleasant or unpleasant the soundscape is perceived to be
+2. **Eventfulness**: How eventful or uneventful the soundscape is perceived to be
+
+The circumplex model places these dimensions at right angles to each other, creating a two-dimensional space where the eight PAQs are arranged in a circular pattern.
+
+Let's visualize this circumplex model:
+
+```{python}
+data = pd.DataFrame(
+    {
+        "Location": ["Park", "Street"],
+        "pleasant": [4.2, 2.1],
+        "vibrant": [3.5, 4.2],
+        "eventful": [2.8, 4.5],
+        "chaotic": [1.5, 3.9],
+        "annoying": [1.2, 3.7],
+        "monotonous": [2.5, 1.8],
+        "uneventful": [3.1, 1.9],
+        "calm": [4.3, 1.4],
+    }
+)
+
+sspy.paq_radar_plot(data, title="Circumplex Model of Soundscape Perception")
+plt.show()
+```
+
+### Interpreting the Circumplex Model
+
+The circumplex model divides the perceptual space into four quadrants, each representing a different type of soundscape:
+
+1. **Pleasant and Eventful (top-right)**: Vibrant soundscapes, often found in lively public spaces
+2. **Unpleasant and Eventful (top-left)**: Chaotic soundscapes, often found in noisy urban areas
+3. **Unpleasant and Uneventful (bottom-left)**: Monotonous soundscapes, often found in boring or lifeless spaces
+4. **Pleasant and Uneventful (bottom-right)**: Calm soundscapes, often found in tranquil natural environments
+
+This model helps us understand that soundscape quality isn't just about pleasantness—eventfulness also plays an important role. Some contexts call for vibrant soundscapes (like entertainment districts), while others benefit from calm soundscapes (like residential areas or parks).
+
+## 5. $P_{ISO}$ and $E_{ISO}$ Coordinates
+
+To quantify a soundscape's position in the circumplex model, we calculate two coordinates:
+
+1. **$P_{ISO}$**: A value between -1 and 1 representing the soundscape's position on the pleasantness dimension
+2. **$E_{ISO}$**: A value between -1 and 1 representing the soundscape's position on the eventfulness dimension
+
+These coordinates are calculated from the eight PAQ ratings using a projection method. Each PAQ contributes to both coordinates based on its position in the circumplex.
+
+Let's look at how these coordinates are calculated in Soundscapy:
+
+```{python}
+# Load a sample dataset
+data = isd.load()
+
+# Display a few rows of PAQ data
+sample_data = data[PAQ_IDS].head(5)
+print("Sample PAQ data:")
+print(sample_data)
+
+# Calculate ISO coordinates for the sample data
+iso_pleasant, iso_eventful = sspy.surveys.calculate_iso_coords(sample_data)
+
+# Display the calculated coordinates
+print("\nCalculated ISO coordinates:")
+result_df = pd.DataFrame(
+    {"ISOPleasant": iso_pleasant.round(3), "ISOEventful": iso_eventful.round(3)}
+)
+result_df
+```
+
+### The Mathematics Behind ISO Coordinates
+
+The calculation of ISO coordinates involves projecting the PAQ ratings onto the pleasantness and eventfulness dimensions. Following ISO 12913-3, with each PAQ rating on the 1–5 scale:
+
+$$
+\text{ISOPleasant} = \frac{(\text{pleasant} - \text{annoying}) + \cos 45° \cdot [(\text{calm} - \text{chaotic}) + (\text{vibrant} - \text{monotonous})]}{4 + \sqrt{32}}
+$$
+
+$$
+\text{ISOEventful} = \frac{(\text{eventful} - \text{uneventful}) + \cos 45° \cdot [(\text{chaotic} - \text{calm}) + (\text{vibrant} - \text{monotonous})]}{4 + \sqrt{32}}
+$$
+
+The denominator scales the result to the range $[-1, +1]$. A point at (+1, 0) is a maximally pleasant, neutral-eventfulness soundscape; a point at (−1, +0.5) is an unpleasant, moderately eventful one (like a busy road). For the generalised form with language-specific angles, see the [language-specific angles](#language-specific-angles) below.
+
+In Soundscapy, these calculations are implemented in the `calculate_iso_coords` function, which we just demonstrated above.
+
+### Language-Specific Angles
+
+Research has shown that the exact angles of PAQs in the circumplex can vary slightly across different languages and cultures. Soundscapy accounts for this by providing language-specific angles:
+
+```{python}
+# Display the language-specific angles
+print("Language-specific angles:")
+for language, angles in LANGUAGE_ANGLES.items():
+    print(f"{language}: {angles}")
+```
+
+Using these language-specific angles can improve the accuracy of ISO coordinate calculations, especially when working with multilingual datasets.
+
+## 6. Why Distributions Matter in Soundscape Analysis
+
+When analyzing soundscapes, it's important to consider not just average perceptions but the full distribution of perceptions. This is because:
+
+1. **Individual Variation**: People perceive soundscapes differently based on their preferences, expectations, and sensitivities
+2. **Temporal Variation**: Soundscapes change over time, and a single location may have different acoustic characteristics at different times
+3. **Spatial Variation**: Within a single area, there may be different acoustic zones with distinct soundscape characteristics
+
+By analyzing the distribution of perceptions, we can gain a more nuanced understanding of how a soundscape is experienced by different people or in different conditions.
+
+Let's visualize the distribution of perceptions for a sample location:
+
+```{python}
+# Filter data for a specific location
+location_data = isd.select_location_ids(data, "CamdenTown")
+
+# Calculate ISO coordinates if not already present
+if (
+    "ISOPleasant" not in location_data.columns
+    or "ISOEventful" not in location_data.columns
+):
+    location_data = sspy.surveys.add_iso_coords(location_data)
+
+# Create a scatter plot with density contours
+sspy.iso_plot(
+    location_data,
+    title="Distribution of Soundscape Perceptions in Camden Town",
+    plot_layers=["scatter", "density"],
+    diagonal_lines=True,
+)
+```
+
+### Interpreting Distribution Plots
+
+In the plot above, each point represents one person's perception of the soundscape. The density contours show where perceptions are concentrated. From this visualization, we can observe:
+
+- The overall position of the distribution in the circumplex (which quadrant it falls in)
+- The spread of the distribution (how much variation there is in perceptions)
+- The shape of the distribution (whether it's symmetric, skewed, or multimodal)
+
+This type of analysis provides much richer information than simple averages. For example, a location with a bimodal distribution might indicate that the soundscape is perceived very differently by different groups of people, which could be important for planning and design decisions.
+
+## 7. The Soundscape Perception Index (SPI)
+
+The Soundscape Perception Index (SPI) builds on the distributional view: it quantifies, on a 0–100 scale, how similar a measured soundscape distribution is to a target distribution in the ISO coordinate space. It is useful for evaluating interventions, comparing locations and setting quantitative design targets. See [Understanding the SPI](understanding-spi.qmd) for the method and the API.
+
+## 8. What Soundscapy Provides
+
+Soundscapy is organised into capability tiers based on dependencies:
+
+| Capability | Install | Key entry points |
+|------------|---------|-----------------|
+| Survey data processing | `pip install soundscapy` | `add_iso_coords()`, `ipsatize()`, `isd.load()` |
+| Visualisation | `pip install soundscapy` | `ISOPlot`, `scatter()`, `density()`, `paq_likert()` |
+| Psychoacoustic audio analysis | `pip install "soundscapy[audio]"` | `Binaural`, `AudioAnalysis` |
+| Soundscape Perception Index | `pip install "soundscapy[r]"` + R + `sn` | `spi.MultiSkewNorm` |
+| CircE structural equation model | `pip install "soundscapy[r]"` + R + `sn` | `satp.fit_circe()` |
+
+## Summary
+
+1. **Soundscape**: the acoustic environment as perceived by people, in context.
+2. **ISO 12913**: the international framework for soundscape assessment.
+3. **PAQs**: the eight attributes used to evaluate soundscapes.
+4. **Circumplex model**: the two-dimensional structure organising those attributes.
+5. **ISO coordinates**: a soundscape's position in the circumplex.
+6. **Distributions**: why we analyse the full range of responses, not just means.
+7. **SPI**: a metric for comparing soundscape distributions.
+
+## Next steps
+
+- [Quick Start](quickstart.qmd) for a first analysis in a few minutes.
+- [Working with survey data](working-with-survey-data.qmd) for validation, coordinates and summaries.
+- [How to analyse and represent soundscapes](../tutorials/how-to-analyse-and-represent-soundscapes.qmd) for the paper companion and a deeper treatment of the distributional approach.
+
+## References
+
+1. ISO 12913-1:2014. Acoustics — Soundscape — Part 1: Definition and conceptual framework.
+2. ISO 12913-2:2018. Acoustics — Soundscape — Part 2: Data collection and reporting requirements.
+3. ISO 12913-3:2019. Acoustics — Soundscape — Part 3: Data analysis.
+4. Mitchell, A., Aletta, F., & Kang, J. (2022). How to analyse and represent quantitative soundscape data. JASA Express Letters, 2, 37201. https://doi.org/10.1121/10.0009794
+5. Aletta, F., Oberman, T., Mitchell, A., Erfanian, M., Lionello, M., Kachlicka, M., & Kang, J. (2019). Associations between soundscape experience and self-reported wellbeing in open public urban spaces: a field study. The Lancet, 394, S17.
+6. Axelsson, Ö., Nilsson, M. E., & Berglund, B. (2010). A principal components model of soundscape perception. The Journal of the Acoustical Society of America, 128(5), 2836-2846.

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Module for handling Multi-dimensional Skewed Normal (MSN) distributions.
 
@@ -451,7 +454,7 @@ class MultiSkewNorm:
 
     def sample(
         self, n: int = 1000, *, return_sample: bool = False
-    ) -> None | np.ndarray:
+    ) -> None | np.ndarray:  # noqa: RUF036 - TODO: np.ndarray | None
         """
         Generate a sample from the fitted model.
 
@@ -490,7 +493,7 @@ class MultiSkewNorm:
 
     def sample_mtsn(
         self, n: int = 1000, a: float = -1, b: float = 1, *, return_sample: bool = False
-    ) -> None | np.ndarray:
+    ) -> None | np.ndarray:  # noqa: RUF036 - TODO: np.ndarray | None
         """
         Generate a sample from the multi-dimensional truncated skew-normal distribution.
 
