@@ -81,6 +81,8 @@ repos:
             "--dir",
             "src/soundscapy",
           ]
+        # Without this, prek also passes every staged file (e.g. Dockerfiles).
+        files: ^src/soundscapy/.*\.py$
   - repo: local
     hooks:
       - id: updatecitation
