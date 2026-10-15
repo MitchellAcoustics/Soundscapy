@@ -27,6 +27,6 @@ paqs = pd.DataFrame(
     }
 )
 
-sspy.paq_radar_plot(paqs, title="PAQ profile: park vs street")
+sspy.paq_radar_plot(paqs, index="Location", title="PAQ profile: park vs street")
 plt.show()
 ```
