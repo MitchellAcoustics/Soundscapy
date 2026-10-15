@@ -50,6 +50,11 @@ jobs:
 
       - name: Build docs
         run: pixi run docs-build # same command as local; task defaults to the docs env
+        env:
+          # Raises the GitHub API rate limit for the Releases-based changelog
+          # fetch (60/hr unauthenticated -> 5000/hr); without it a rate limit
+          # silently drops the Changelog page instead of failing the build.
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Save docs artifact
         uses: actions/upload-artifact@v7.0.2
