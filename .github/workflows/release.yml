@@ -57,7 +57,16 @@ jobs:
   docs-pass:
     needs: check
     if: needs.check.outputs.release == 'true'
+    # Build-only gate: docs.yml's own push trigger handles the Pages deploy.
+    # GitHub still checks the called jobs' permissions before evaluating their
+    # `if:`, so grant what publish-docs declares even though it skips.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     uses: ./.github/workflows/docs.yml
+    with:
+      deploy: false
 
   build:
     name: Build PyPI wheel and sdist
@@ -67,13 +76,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: prefix-dev/setup-pixi@v0.9.5
         with:
-          version: "0.7.2"
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          pixi-version: v0.68.0
+          environments: build
 
-      - run: uv build
+      - run: pixi run build-pypi
 
       - uses: actions/upload-artifact@v4
         with:

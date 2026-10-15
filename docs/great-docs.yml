@@ -3,7 +3,23 @@
 display_name: Soundscapy
 site_url: https://drandrewmitchell.com/Soundscapy/
 
-versions: ["0.8.5"]
+# Root URL serves the `latest` release, with its API reference introspected from
+# `git_ref`; main is published under /v/dev/. Narrative pages come from main for
+# every version: hide unreleased content from stable with frontmatter
+# `versions: ">=0.9"` or `::: {.version-only versions=">=0.9"}` fences.
+# On release: add the new version (git_ref: vX.Y.Z, latest: true), drop
+# `latest` from the previous entry (or remove it), and relabel `dev` for the
+# next version. release.yml tags after building docs; until the tag exists
+# great-docs warns and documents the checked-out (= release) code instead.
+versions:
+  - label: "0.9.0a1 (dev)"
+    tag: dev
+    version: "0.9.0" # numeric form for `>=0.9` expressions; "0.9.0a1" won't parse
+    prerelease: true
+  - label: "0.8.5"
+    tag: "0.8.5"
+    git_ref: v0.8.5
+    latest: true
 
 authors:
   - name: Andrew Mitchell

@@ -32,11 +32,15 @@ pixi run docs-build     # Build docs site to docs/_site/
 pixi run docs-preview   # Preview docs locally
 ```
 
+The published site is versioned (the `versions:` list in `docs/great-docs.yml`). The latest release is served at the site root, with its API reference generated from its git tag, and `main` is published under `/v/dev/`. Narrative pages are shared by every version, so hide content about unreleased features from the stable docs with page front matter (`versions: ">=0.9"`) or a fenced block (`::: {.version-only versions=">=0.9"}`). Every push to `main` redeploys the site to GitHub Pages; pull requests build the docs and print a `great-docs preview --pr <N>` command for viewing the result locally.
+
 ## Releases and Versioning
 
 Soundscapy uses [Semantic Versioning](https://semver.org/). The version number is stored in `pyproject.toml` and updated for each release.
 
-Releases are instantiated by pushing a tag to `dev` or `main`. The tag should be in the format `vX.Y.Z` for stable releases and `vX.Y.ZrcN` for release candidates. Pre-release tags should be used for testing and development purposes only. `dev` tags will trigger a workflow that builds the package and publishes it to the test PyPI server. This shouldn't need to happen often - at the moment I'm using it mostly for testing the CI tools. `rc` or no pre-release tags will trigger a workflow that builds the package and publishes it to PyPI.
+Releases are made by merging to `main`. When the version in `pyproject.toml` is a clean `X.Y.Z` (no `.dev`, `a`, `b` or `rc` suffix) and no `vX.Y.Z` tag exists yet, the release workflow runs the tests and a docs build, publishes to PyPI and prefix.dev, then creates the `vX.Y.Z` tag and GitHub release. Pre-release versions on `main` are skipped.
+
+When preparing a release, also update `versions:` in `docs/great-docs.yml`: add an entry for the new version with `git_ref: vX.Y.Z` and `latest: true`, remove `latest` from (or delete) the previous release's entry, and relabel the `dev` entry for the next version. The workflow only creates the tag after the docs build; until then great-docs warns that the tag is missing and documents the checked-out code, which on the release commit is the same code.
 
 Use the `version` Pixi task (a wrapper around `uv version`) to change the version number. It defaults to a dev bump; pass flags to choose another:
 
@@ -65,6 +69,7 @@ Build and publish with the `build`, `pypi-test` and `publish*` tasks (see `pixi 
 
 4. **Pre-release Versions**:
 
+   - Use `a` / `b` for alpha and beta releases (e.g. `0.9.0a1`)
    - Use `rc` for release candidates
    - Use `dev` for development versions
 

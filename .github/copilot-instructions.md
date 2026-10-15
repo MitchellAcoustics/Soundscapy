@@ -45,6 +45,8 @@ pixi run -e docs docs-preview   # local preview at http://localhost:3000
 
 The docs site is built with **great-docs** (`docs/great-docs.yml`; all docs sources live under `docs/`). The `docs/_quarto/` build directory is ephemeral and gitignored — never edit files inside it. Narrative user-guide pages (including the news and migration pages, grouped under the "Project" guide-section) live in `docs/user_guide/`, tutorials and papers in `docs/tutorials/`, and the Gallery (a blog-style Quarto listing of short plot examples) in `docs/gallery/`; pages are auto-discovered and ordered by numeric prefix. Keep user-guide pages explanatory and put plot-variety examples in the Gallery.
 
+The site is versioned via `versions:` in `docs/great-docs.yml`: the latest release is served at the root (API reference from its git tag via `git_ref`) and `main` under `/v/dev/`. Narrative pages are shared across versions, so when documenting an unreleased feature, scope it with front matter `versions: ">=X.Y"` or a `::: {.version-only versions=">=X.Y"}` fence so it stays out of the stable docs. `.github/workflows/docs.yml` deploys to GitHub Pages on every push to `main`; `release.yml` calls it with `deploy: false` as a build check only.
+
 ## Architecture
 
 ```text
@@ -96,6 +98,8 @@ The plotting module is built around the **ISO circumplex** — a 2D space with I
   ```bash
   pixi run version --bump patch   # or minor / major
   ```
+
+  Merging a clean `X.Y.Z` version to `main` triggers `release.yml` (tests, docs build, PyPI + prefix.dev publish, then the `vX.Y.Z` tag). Pre-release versions (`.dev`, `a`, `b`, `rc`) are skipped. In the same release PR, update `versions:` in `docs/great-docs.yml` (see the comment there).
 
 - **Branch strategy:** Feature branches → PR into `dev`. `main` is stable releases only. Docs can be committed directly to `dev` or `main`.
 

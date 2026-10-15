@@ -1,10 +1,29 @@
 name: CI Docs
 
+# Builds every version listed under `versions:` in docs/great-docs.yml: the
+# `latest` release is served at the site root (API reference from its git tag),
+# `dev` (main) under /v/dev/. Pushes to main publish to GitHub Pages; PR builds
+# log a `great-docs preview --pr <N>` command for viewing the site locally.
+# release.yml calls this with `deploy: false` as a build gate.
+
 on:
+  workflow_call:
+    inputs:
+      deploy:
+        description: "Publish the built site to GitHub Pages (main only)"
+        type: boolean
+        default: true
   push:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # In a called workflow, github.workflow is the caller's name, so the release
+  # gate never queues behind (or cancels) the standalone deploy run.
+  group: docs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-docs:
@@ -13,14 +32,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # Full history for accurate page timestamps
+          fetch-depth: 0 # Full history + tags: page timestamps and `git_ref` versions
 
       - uses: prefix-dev/setup-pixi@v0.9.5
         with:
+          pixi-version: v0.68.0
           environments: docs
 
+      # API snapshots introspected from each version's git tag. Tags are
+      # immutable, so the cache only goes stale when the versions list changes.
+      - name: Cache versioned API snapshots
+        uses: actions/cache@v4
+        with:
+          path: docs/.cache/snapshots
+          key: gd-snapshots-${{ hashFiles('docs/great-docs.yml') }}
+          restore-keys: gd-snapshots-
+
       - name: Build docs
-        run: pixi run -e docs docs-build
+        run: pixi run docs-build # same command as local; task defaults to the docs env
 
       - name: Save docs artifact
         uses: actions/upload-artifact@v7
@@ -29,17 +58,16 @@ jobs:
           path: docs/_site
           include-hidden-files: true
 
-      - name: Upload build timings
-        uses: actions/upload-artifact@v7
-        with:
-          name: build-timings
-          path: docs/_site/build-timings.json
+      - name: How to preview this build locally
+        if: github.event_name == 'pull_request'
+        run: pixi run -e docs great-docs ci notice --run ${{ github.run_id }} --pr ${{ github.event.number }}
 
   publish-docs:
     name: "Publish Docs"
     runs-on: ubuntu-latest
     needs: "build-docs"
-    if: github.ref == 'refs/heads/main'
+    # inputs.deploy is null outside workflow_call, so push/dispatch on main deploy.
+    if: github.ref == 'refs/heads/main' && inputs.deploy != false
     permissions:
       pages: write
       id-token: write
@@ -61,41 +89,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-
-  preview-docs:
-    name: "Preview Docs"
-    runs-on: ubuntu-latest
-    needs: "build-docs"
-    if: github.event_name == 'pull_request'
-    permissions:
-      deployments: write
-      pull-requests: write
-    steps:
-      - uses: actions/download-artifact@v7
-        with:
-          name: docs-html
-          path: docs/_site
-
-      # Start deployment
-      - name: Configure pull release name
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          echo "RELEASE_NAME=pr-${{ github.event.number }}" >> $GITHUB_ENV
-
-      - name: Configure branch release name
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          # use branch name, but replace slashes. E.g. feat/a -> feat-a
-          echo "RELEASE_NAME=${GITHUB_REF_NAME//\//-}" >> $GITHUB_ENV
-
-      # Deploy
-      - name: Create Github Deployment
-        uses: bobheadxi/deployments@v1
-        id: deployment
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: ${{ env.RELEASE_NAME }}
-          ref: ${{ github.head_ref }}
-          logs: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
