@@ -25,27 +25,28 @@ repos:
   #       pass_filenames: true # Recommended to do full repo checks. However, you can change this to `true` to only check changed files
   #       language: system # Use system-installed pyrefly
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.44.0
+    rev: v0.49.1
     hooks:
       - id: markdownlint-fix
         args:
           - --dot
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.5
+    rev: v1.5.6
     hooks:
       - id: forbid-tabs
       - id: remove-tabs
 
   # TODO(MitchellAcoustics): Enable linting pre-commit hooks
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.5.3
+    rev: v3.9.10
     hooks:
       - id: prettier
         args:
           - --quote-props=as-needed
-        exclude: ^CITATION\.cff$
+        # pixi.lock is machine-written; reformatting it fights `pixi lock`.
+        exclude: ^(CITATION\.cff|pixi\.lock)$
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-case-conflict
       - id: check-docstring-first
@@ -58,7 +59,7 @@ repos:
       - id: trailing-whitespace
         exclude: ^CITATION\.cff$
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: "0.38.2"
     hooks:
       - id: check-github-issue-forms
         files: ^\.github/ISSUE_TEMPLATE/.*\.yml$
@@ -70,7 +71,7 @@ repos:
       - id: check-github-actions
         files: (^action\.yml$)|(^\.github/actions/.*/action\.yml$)
   - repo: https://github.com/eznix86/python-license
-    rev: v1.0.1
+    rev: v1.2.2
     hooks:
       - id: license-headers
         args: [

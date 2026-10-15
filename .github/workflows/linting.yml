@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.9.4
+        uses: prefix-dev/setup-pixi@v0.11.2
         with:
           pixi-version: v0.81.0
           cache: true
@@ -29,4 +29,6 @@ jobs:
           environments: "default"
 
       - name: Run Prek checks
-        uses: j178/prek-action@v2
+        uses: j178/prek-action@v3.0.1
+        with:
+          prek-version: 0.5.5 # match local pixi env

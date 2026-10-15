@@ -49,7 +49,7 @@ Repository    = "https://github.com/MitchellAcoustics/Soundscapy"
 ####### Packaging ########
 
 [build-system]
-requires      = ["uv_build>=0.11.12,<0.12"]
+requires      = ["uv_build>=0.13.0,<0.14"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]

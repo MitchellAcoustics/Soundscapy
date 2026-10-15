@@ -15,7 +15,7 @@ version = "0.*"
 ignore-pypi-mapping = false
 
 [package.build-dependencies]
-uv = ">=0.9,<1.0"
+uv = ">=0.13.0,<1.0"
 
 ###### Workspace Config ######
 
