@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """Customized functions specifically for the ARAUS dataset."""
 
 import warnings

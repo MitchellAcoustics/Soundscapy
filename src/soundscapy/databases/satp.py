@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+
 """
 Module for handling the Soundscape Attributes Translation Project (SATP) database.
 

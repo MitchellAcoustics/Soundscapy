@@ -73,13 +73,14 @@ repos:
     rev: v1.0.1
     hooks:
       - id: license-headers
-        args:
-          [
+        args: [
             "--fix",
-            "BSD-3-Clause",
-            "Andrew Mitchell",
             "--dir",
             "src/soundscapy",
+            # Positionals last: prek appends filenames, which argparse only
+            # binds to `files` if no option sits between them and `author`.
+            "BSD-3-Clause",
+            "Andrew Mitchell",
           ]
         # Without this, prek also passes every staged file (e.g. Dockerfiles).
         files: ^src/soundscapy/.*\.py$
