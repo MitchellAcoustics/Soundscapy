@@ -115,8 +115,9 @@ inputs     = ["pixi.toml", "pyproject.toml"]
 
 # Build and Publish Tasks
 [tasks.version]
-args = [{ arg = "flags", default = "--bump dev" }]
-cmd  = "uv version --no-sync {{ flags }}"
+args        = [{ arg = "flags", default = "--bump dev" }]
+cmd         = "uv version --no-sync {{ flags }}"
+description = "Bump or set the package version (default: --bump dev; e.g. --bump patch)"
 
 [tasks.build]
 cmd         = "pixi publish --target-dir conda-dist && uv build"

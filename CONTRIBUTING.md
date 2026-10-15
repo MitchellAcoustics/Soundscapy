@@ -6,23 +6,30 @@
 - Try to keep all necessary configurations to `pyproject.toml` where possible. This includes versioning, optional dependencies, tool settings, and other project settings.
 - Wherever possible, centralise operations and metadata. For instance, version is defined in `pyproject.toml` and automatically brought into `soundscapy` metadata in `__init__.py`; optional dependency checks are performed at the `<module>.__init__.py` level, rather than for each individual function.
 
+Run `pixi task list` to see every project task. The tasks are described in `pixi.toml`, so this guide only points to the relevant ones rather than repeating them.
+
 Changes should be made in a feature branch and submitted to `dev` via a pull request. The pull request should be reviewed by at least one other developer before being merged. The `main` branch should only contain stable releases. Docs can be updated directly on `dev` or `main` as needed.
 
 ## Linting and Formatting
 
 Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting and [`Pyrefly`](https://github.com/Pyrefly/pyrefly) for type checking. This will be checked in the CI pipeline, so make sure to run it before committing.
 
-We use [`prek`](https://prek.j178.dev) for pre-commit hooks, configured in `.pre-commit-config.yaml` and `pyproject.toml`.
+```bash
+pixi run lint      # check
+pixi run format    # fix lint issues and format
+```
+
+We use [`prek`](https://prek.j178.dev) for pre-commit hooks, configured in `.pre-commit-config.yaml` and `pyproject.toml`. Install them with `pixi run setup-hooks`.
 
 ## Documentation
 
 Documentation is built with **great-docs**. Configuration lives in `docs/great-docs.yml`, user-guide pages in `docs/user_guide/`, tutorials and papers in `docs/tutorials/`, gallery examples in `docs/gallery/`, API reference pages are generated from source, and the output site is written to `docs/_site/`.
 
-Use the `Pixi` docs tasks for local docs work:
+Use the `Pixi` `docs-*` tasks for local docs work (build, preview, link checking and proofreading), for example:
 
 ```bash
-pixi run -e docs docs-build     # Build docs site to docs/_site/
-pixi run -e docs docs-preview   # Preview docs locally
+pixi run docs-build     # Build docs site to docs/_site/
+pixi run docs-preview   # Preview docs locally
 ```
 
 ## Releases and Versioning
@@ -31,21 +38,15 @@ Soundscapy uses [Semantic Versioning](https://semver.org/). The version number i
 
 Releases are instantiated by pushing a tag to `dev` or `main`. The tag should be in the format `vX.Y.Z` for stable releases and `vX.Y.ZrcN` for release candidates. Pre-release tags should be used for testing and development purposes only. `dev` tags will trigger a workflow that builds the package and publishes it to the test PyPI server. This shouldn't need to happen often - at the moment I'm using it mostly for testing the CI tools. `rc` or no pre-release tags will trigger a workflow that builds the package and publishes it to PyPI.
 
-Developers should use [`bumpver`](https://github.com/mbarkhau/bumpver) to update the version number. This tool automatically increments the version number where needed and can also apply git tags and push release tags. Pre-releases should be incremented with:
+Use the `version` Pixi task (a wrapper around `uv version`) to change the version number. It defaults to a dev bump; pass flags to choose another:
 
 ```bash
-bumpver update --tag-num
+pixi run version                   # bump the dev number (default: --bump dev)
+pixi run version --bump patch      # or minor / major
+pixi run version 0.9.0rc1          # set an explicit version
 ```
 
-For stable releases, use:
-
-```bash
-bumpver update --patch # or --minor or --major
-```
-
-I recommend testing this with `--dry` first to see what changes will be made. Additional options are available for refraining from committing, pushing, or tagging.
-
-The settings for `bumpver` are stored in `pyproject.toml`.
+Build and publish with the `build`, `pypi-test` and `publish*` tasks (see `pixi task list`).
 
 1. **Major Version**:
 
@@ -66,27 +67,6 @@ The settings for `bumpver` are stored in `pyproject.toml`.
 
    - Use `rc` for release candidates
    - Use `dev` for development versions
-
-### Commit messages
-
-Try to use the [Angular commit message format](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines) for commit messages. Mostly this means starting the commit message with a type, followed by a colon and a short description. For example:
-
-```txt
-feat: add new feature
-fix: correct bug in feature
-docs: update documentation
-```
-
-The available types are:
-
-- `feat`: A new feature
-- `fix`: A bug fix
-- `docs`: Documentation only changes
-- `style`: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc.)
-- `refactor`: A code change that neither fixes a bug nor adds a feature
-- `perf`: A code change that improves performance
-- `test`: Adding missing or correcting existing tests
-- `chore`: Changes to the build process or auxiliary tools and libraries such as documentation generation
 
 ## Optional Dependencies System
 
