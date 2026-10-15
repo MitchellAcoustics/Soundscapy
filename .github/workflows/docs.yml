@@ -66,8 +66,8 @@ jobs:
     name: "Publish Docs"
     runs-on: ubuntu-latest
     needs: "build-docs"
-    # inputs.deploy is null outside workflow_call, so push/dispatch on main deploy.
-    if: github.ref == 'refs/heads/main' && inputs.deploy != false
+    # Skip publishing only when the caller explicitly supplies boolean false.
+    if: github.ref == 'refs/heads/main' && toJSON(inputs.deploy) != 'false'
     permissions:
       pages: write
       id-token: write
