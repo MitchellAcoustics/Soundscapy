@@ -109,6 +109,16 @@ html.quarto-dark body,
   background-color: #010e20;
 }
 
+/*
+ * Section-page sidebar: Great Docs' floating sidebar hard-codes a translucent
+ * gray (rgba(30,30,30,.55)) in dark mode. Match it to the navy page background.
+ */
+body.quarto-dark #quarto-sidebar,
+body.quarto-dark #quarto-sidebar.gd-sidebar-float {
+  background: var(--gd-bg-primary);
+  border-color: var(--gd-border-color);
+}
+
 /* Links in prose, plus sidebar / TOC active states */
 a {
   text-underline-offset: 0.15em;

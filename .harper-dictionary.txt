@@ -145,6 +145,13 @@ txt
 # Code terms
 na
 importerror
+df
+
+# Site IDs
+camdentown
+marchmontgarden
+pancraslock
+tatemodern
 
 # Names, places and standards from the references and tutorials
 

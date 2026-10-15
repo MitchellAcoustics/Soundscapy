@@ -67,9 +67,9 @@ src/soundscapy/
 
 Two complementary mechanisms keep `import soundscapy` lightweight:
 
-1. **Gate (`_optional.py`):** Every optional subpackage's `__init__.py` calls `require_deps(["pkg1", "pkg2"], extra="audio")` as its **first statement** before any heavy imports. This raises a uniform `ImportError` with the install hint if deps are missing.
+1. **Gate (`_optional.py`):** Every optional subpackage's `__init__.py` calls `_require_deps(["pkg1", "pkg2"], extra="audio")` as its **first statement** before any heavy imports. This raises a uniform `ImportError` with the install hint if deps are missing.
 
-2. **Lazy loading (SPEC 1):** `lazy_loader.attach_stub(__name__, __file__)` is used at both the top-level and inside each optional subpackage. The adjacent `.pyi` stub file is the **single source of truth** for what names are exposed — it drives both the lazy `__getattr__` at runtime and static type checkers.
+2. **Lazy loading (SPEC 1):** `lazy_loader.attach_stub(__name__, __file__)` is used at both the top-level and inside each optional subpackage. The adjacent `.pyi` stub file is the **source of truth** for what names are exposed — it drives both the lazy `__getattr__` at runtime and static type checkers, and its literal `__all__` is what great-docs reads. At the top level, `__getattr__` is `moved_to(..., fallback=<lazy getattr>)` so deprecated names warn before falling back to lazy loading.
 
 When adding a new optional subpackage, create both `__init__.py` (gate + attach_stub) and `__init__.pyi` (public re-exports), then expose it in `src/soundscapy/__init__.pyi`.
 
@@ -81,30 +81,29 @@ Survey data uses a standardised DataFrame layout:
 - **ISO coordinates:** `ISOPleasant` and `ISOEventful` derived via `add_iso_coords()`
 - Index columns: `LocationID`, `RecordID`, `GroupID`, `SessionID`
 
-The `PAQ_IDS` and `PAQ_LABELS` constants in `survey_utils.py` are the canonical references for PAQ column names and labels.
+The `PAQ_IDS` and `PAQ_LABELS` constants in `soundscapy/constants.py` are the canonical references for PAQ column names and labels.
 
 ### Plotting
 
-The plotting module is built around the **ISO circumplex** — a 2D space with ISOPleasant (x) and ISOEventful (y) axes. The main entry points are `iso_plot()`, `scatter()`, `density()`, `jointplot()`, and `create_iso_subplots()`. Plot parameters use Pydantic models (`param_models.py`). The layered composition system in `layers.py` assembles plots from discrete visual layers.
+The plotting module is built around the **ISO circumplex** — a 2D space with ISOPleasant (x) and ISOEventful (y) axes. The main entry points are `iso_plot()`, `scatter()`, `density()`, `jointplot()`, and `create_iso_subplots()`. Plot parameters are plain dataclasses (`param_models.py`). The layered composition system in `layers.py` assembles plots from discrete visual layers.
 
 ## Key Conventions
 
 - **All project configuration lives in `pyproject.toml`** — versioning, optional deps, tool settings. Use `pixi add --pypi` (not manual edits) to add Python deps; use plain `pixi add` for matching conda-forge packages.
 
-- **Version management:** Use `bumpver` to update versions. Never edit the version string manually.
+- **Version management:** The version is pinned manually in `pyproject.toml`; bump it with the pixi task, which wraps `uv version`.
 
   ```bash
-  bumpver update --patch     # or --minor / --major for stable
-  bumpver update --tag-num   # for pre-releases
+  pixi run version --bump patch   # or minor / major
   ```
 
 - **Branch strategy:** Feature branches → PR into `dev`. `main` is stable releases only. Docs can be committed directly to `dev` or `main`.
 
 - **Commit message format:** Angular style — `feat:`, `fix:`, `docs:`, `refactor:`, `perf:`, `test:`, `chore:`.
 
-- **Optional dep guard placement:** `require_deps(...)` must be the **first statement** in an optional subpackage's `__init__.py`, before any other imports.
+- **Optional dep guard placement:** `_require_deps(...)` must be the **first statement** in an optional subpackage's `__init__.py`, before any other imports.
 
-- **`.pyi` stubs are not optional:** Every subpackage that uses `lazy_loader.attach_stub` must have a corresponding `.pyi` file. Use `from .module import Symbol as Symbol` (with the `as` alias) to mark names as public re-exports per PEP 484.
+- **`.pyi` stubs are not optional:** Every subpackage that uses `lazy_loader.attach_stub` must have a corresponding `.pyi` file. Use `from .module import Symbol as Symbol` (with the `as` alias) to mark names as public re-exports per PEP 484, and add a literal `__all__` listing the same names (great-docs and type checkers cannot evaluate a computed one).
 
 - **Import name ↔ PyPI name mismatches:** Register them in `_DIST_NAME` inside `_optional.py` (e.g. `"acoustic_toolbox": "acoustic-toolbox"`).
 

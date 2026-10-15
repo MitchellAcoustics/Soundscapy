@@ -120,6 +120,7 @@ lint.ignore = [
     "D407",    # removed dashes lines under sections
     "FIX002",  # fixme (ruff-format recommended)
     "ISC001",  # simplify implicit str concatenation (ruff-format recommended)
+    "PLE1205", # logging format args: false positive, we log with loguru ({} placeholders)
     "PLC0415", # import not at top of file (deliberate lazy imports for optional deps/R)
     "PLR0913", # too many arguments
     "PLR0917", # too many positional arguments

@@ -180,9 +180,9 @@ Also add a `Pixi` environment and test task for the new group — follow the `au
 """Module docstring describing the new functionality."""
 
 # ruff: noqa: E402
-from soundscapy._optional import require_deps
+from soundscapy._optional import require_deps as _require_deps
 
-require_deps(["package1", "package2"], extra="new_group")
+_require_deps(["package1", "package2"], extra="new_group")
 
 import lazy_loader as _lazy
 
@@ -195,6 +195,9 @@ __getattr__, __dir__, __all__ = _lazy.attach_stub(__name__, __file__)
 from .feature import NewFeature as NewFeature
 from .utils import helper_fn as helper_fn
 ```
+
+Also add a literal `__all__` to the stub listing the same names; great-docs and type
+checkers can't evaluate a computed one.
 
 The `.pyi` stub is parsed by `lazy_loader` to set up the lazy `__getattr__`, and read
 by type checkers for type information. Use relative imports only (`from .X import Y`);
@@ -210,7 +213,7 @@ from .new_group import NewFeature as NewFeature
 ```
 
 `__init__.py` itself does not need touching — `attach_stub` reads the updated stub
-automatically.
+automatically. Don't re-add names that are deprecated in `__init__.py`'s `moved_to` call.
 
 ### Testing optional dependencies
 
