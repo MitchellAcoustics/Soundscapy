@@ -20,7 +20,7 @@ jobs:
 
       - uses: prefix-dev/setup-pixi@v0.9.5
         with:
-          pixi-version: v0.68.0
+          pixi-version: v0.81.0
           frozen: true
 
       - name: Export and update environment.yml

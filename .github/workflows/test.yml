@@ -39,7 +39,7 @@ jobs:
           RPY2_CFFI_MODE: "ABI"
 
         with:
-          pixi-version: v0.68.0
+          pixi-version: v0.81.0
           environments: >-
             test test-audio test-r test-all
           cache: true
