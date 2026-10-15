@@ -9,6 +9,7 @@ Soundscapy is under active development as we add features and refine the API. Sh
 ## Near Term
 
 - Better methods for cleaning datasets, including robust outlier exclusion and imputation.
+- Restore the audio analysis guide (`Binaural`, `AudioAnalysis`, calibration and batch processing) and the "why distributions, not means" rationale, both lost when the docs moved to Great Docs ([#162](https://github.com/MitchellAcoustics/Soundscapy/issues/162)).
 
 ## Long Term
 
