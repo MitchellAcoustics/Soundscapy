@@ -59,6 +59,19 @@ hero:
   tagline: "Analyse and visualise soundscape assessments in Python."
   logo_height: 400px # default 200px
 
+# Announcement Banner
+# -------------------
+# Site-wide (every page and version) until the user guide, gallery and
+# tutorials are complete; see ROADMAP.md / #162. `content` is raw HTML.
+# Dismissal lasts one browser session; editing the text re-shows it.
+announcement:
+  content: >-
+    🚧 These docs are under active development: some tutorials and examples
+    may be missing or incomplete. Can't find something?
+    <a href="https://github.com/MitchellAcoustics/Soundscapy/issues">Open an issue</a>.
+  type: warning
+  dismissable: true
+
 # Homepage-only glow under the navbar; the preset only picks the animation, the
 # colours are overridden in assets/extras.css (cyan left, orange right).
 content_style:
