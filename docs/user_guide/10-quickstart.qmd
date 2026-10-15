@@ -26,9 +26,9 @@ This page is the fastest route to a first analysis: install Soundscapy, load a d
 
 ## Background
 
-Soundscapy is a Python toolbox for analysing quantitative soundscape data. Urban soundscapes are typically assessed with surveys that ask respondents how they perceive a soundscape. Following ISO 12913, these surveys give quantitative data about soundscape perception. As proposed in [Mitchell, Aletta & Kang (2022)](https://asa.scitation.org/doi/full/10.1121/10.0009794), the perception of a group or location is best described by the *distribution* of responses, and Soundscapy makes it simple to process the data and visualise those distributions. If any terms are unfamiliar, see [Concepts and terminology](concepts-and-terminology.qmd).
+Soundscapy is a Python toolbox for analysing quantitative soundscape data. Urban soundscapes are typically assessed with surveys that ask respondents how they perceive a soundscape. Following ISO 12913, these surveys give quantitative data about soundscape perception. As proposed in [Mitchell, Aletta & Kang (2022)](https://doi.org/10.1121/10.0009794), the perception of a group or location is best described by the *distribution* of responses, and Soundscapy makes it simple to process the data and visualise those distributions. If any terms are unfamiliar, see [Concepts and terminology](concepts-and-terminology.qmd).
 
-The example dataset is the *International Soundscape Database (ISD)* (Mitchell *et al.*, 2021), freely available on [Zenodo](https://zenodo.org/record/6331810). Soundscapy expects data in the ISD format, but can be adapted to similar datasets.
+The example dataset is the *International Soundscape Database (ISD)* (Mitchell *et al.*, 2021), freely available on [Zenodo](https://zenodo.org/records/6331810). Soundscapy expects data in the ISD format, but can be adapted to similar datasets.
 
 ## Installation
 
@@ -40,7 +40,7 @@ Optional extras add psychoacoustic audio analysis (`soundscapy[audio]`) and the 
 
 ## Working with Data
 
-### Loading and validating data
+### Loading and Validating Data
 
 Let's start by importing Soundscapy and loading the International Soundscape Database (ISD):
 
@@ -58,16 +58,16 @@ df, excl = isd.validate(data)
 print(f"Valid samples: {data.shape[0]}, Excluded samples: {excl.shape[0]}")
 ```
 
-### Calculating ISOPleasant and ISOEventful Coordinates
+### Calculating $P_{ISO}$ and $E_{ISO}$ Coordinates
 
-Next, we'll calculate the ISOCoordinate values:
+Next, we'll calculate the $P_{ISO}$, $E_{ISO}$ coordinates:
 
 ```{python}
 data = sspy.surveys.add_iso_coords(data)
 data[["ISOPleasant", "ISOEventful"]].round(2).head()
 ```
 
-`Soundscapy` expects the PAQ values to be Likert scale values ranging from 1 to 5 by default, as specified in ISO 12913 and the SSID Protocol. However, it is possible to use data which, although structured the same way, has a different range of values. For instance this could be a 7-point Likert scale, or a 0 to 100 scale. By passing these numbers both to `isd.validate()` and `add_iso_coords()` as the `val_range`, `Soundscapy` will check that the data conforms to what is expected and will automatically scale the ISOCoordinates from -1 to +1 depending on the original value range.
+`Soundscapy` expects the PAQ values to be Likert scale values ranging from 1 to 5 by default, as specified in ISO 12913 and the SSID Protocol. However, it is possible to use data which, although structured the same way, has a different range of values. For instance this could be a 7-point Likert scale, or a 0 to 100 scale. By passing these numbers both to `isd.validate()` and `add_iso_coords()` as the `val_range`, `Soundscapy` will check that the data conforms to what is expected and will automatically scale the $P_{ISO}$, $E_{ISO}$ coordinates from -1 to +1 depending on the original value range.
 
 For example:
 
@@ -118,7 +118,7 @@ isd.select_location_ids(data, "CamdenTown").query("gen00 == 'Female' and age00 >
 
 ## Plotting
 
-Soundscapy plots on the ISO circumplex: ISOPleasant on the x-axis and ISOEventful on the y-axis. The function-style API is the quickest way in.
+Soundscapy plots on the ISO circumplex: $P_{ISO}$ on the x-axis and $E_{ISO}$ on the y-axis. The function-style API is the quickest way in.
 
 ```{python}
 import matplotlib.pyplot as plt
@@ -178,7 +178,7 @@ plt.show()
 
 The [Visualising soundscapes](visualising-soundscapes.qmd) guide explains both APIs in detail, and the [Gallery](../gallery/index.qmd) has ready-to-adapt examples of every plot type.
 
-## Where next?
+## Where Next?
 
 - [Concepts and terminology](concepts-and-terminology.qmd): the ISO 12913 framework behind the numbers.
 - [Working with survey data](working-with-survey-data.qmd): validation, `val_range`, language angles and summaries.

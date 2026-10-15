@@ -121,11 +121,11 @@ The SPI is based on comparing distributions, and in Soundscapy, these distributi
 
 An MSN distribution is defined by three parameters:
 
-1. **xi (ξ)**: The location parameter, which determines the center of the distribution.
-2. **omega (Ω)**: The scale matrix, which determines the spread and correlation of the distribution.
-3. **alpha (α)**: The shape parameter, which determines the skewness of the distribution.
+1. **xi ($\xi$)**: The location parameter, which determines the centre of the distribution.
+2. **omega ($\Omega$)**: The scale matrix, which determines the spread and correlation of the distribution.
+3. **alpha ($\alpha$)**: The shape parameter, which determines the skewness of the distribution.
 
-These parameters can be specified directly (DirectParams) or derived from more intuitive parameters like mean, standard deviation, and skewness (CentredParams).
+These parameters can be specified directly (`DirectParams`) or derived from more intuitive parameters like mean, standard deviation, and skewness (`CentredParams`).
 
 Let's create an MSN distribution and visualize it:
 
@@ -377,7 +377,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## 4. Using the ISOPlot Class with SPI
+## 4. Using the `ISOPlot` Class with SPI
 
 Soundscapy's `ISOPlot` class provides a convenient way to visualize SPI comparisons. Let's use it to create more sophisticated visualizations:
 

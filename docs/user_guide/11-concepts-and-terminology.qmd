@@ -23,7 +23,7 @@ By the end of this tutorial, you will be able to:
 - Understand the ISO 12913 standard for soundscape assessment
 - Explain the perceptual attributes used in soundscape evaluation
 - Describe the circumplex model of soundscape perception
-- Interpret ISOPleasant and ISOEventful coordinates
+- Interpret $P_{ISO}$ and $E_{ISO}$ coordinates
 - Understand why distributions matter in soundscape analysis
 
 Let's begin by importing the necessary libraries:
@@ -164,12 +164,12 @@ The circumplex model divides the perceptual space into four quadrants, each repr
 
 This model helps us understand that soundscape quality isn't just about pleasantness—eventfulness also plays an important role. Some contexts call for vibrant soundscapes (like entertainment districts), while others benefit from calm soundscapes (like residential areas or parks).
 
-## 5. ISOPleasant and ISOEventful Coordinates
+## 5. $P_{ISO}$ and $E_{ISO}$ Coordinates
 
 To quantify a soundscape's position in the circumplex model, we calculate two coordinates:
 
-1. **ISOPleasant**: A value between -1 and 1 representing the soundscape's position on the pleasantness dimension
-2. **ISOEventful**: A value between -1 and 1 representing the soundscape's position on the eventfulness dimension
+1. **$P_{ISO}$**: A value between -1 and 1 representing the soundscape's position on the pleasantness dimension
+2. **$E_{ISO}$**: A value between -1 and 1 representing the soundscape's position on the eventfulness dimension
 
 These coordinates are calculated from the eight PAQ ratings using a projection method. Each PAQ contributes to both coordinates based on its position in the circumplex.
 

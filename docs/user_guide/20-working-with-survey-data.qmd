@@ -152,7 +152,7 @@ print(out_of_range)
 
 ## 3. Calculating ISO Coordinates
 
-Once you have validated your data, the next step is to calculate the ISO coordinates (ISOPleasant and ISOEventful) from the PAQ ratings. Soundscapy provides functions for this purpose.
+Once you have validated your data, the next step is to calculate the ISO coordinates ($P_{ISO}$ and $E_{ISO}$) from the PAQ ratings. Soundscapy provides functions for this purpose.
 
 ```{python}
 # Calculate ISO coordinates
@@ -238,7 +238,7 @@ print(f"Pleasant soundscapes (ISOPleasant > 0.5): {pleasant_soundscapes.shape[0]
 
 ### Grouping and Summarizing Data
 
-You can use pandas' groupby function to group and summarize soundscape data:
+You can use pandas' `groupby` function to group and summarize soundscape data:
 
 ```{python}
 # Group by location and calculate mean ISO coordinates

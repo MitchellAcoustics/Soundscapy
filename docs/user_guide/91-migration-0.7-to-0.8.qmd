@@ -1,5 +1,6 @@
 ---
 title: "Upgrading from 0.7 to 0.8"
+guide-section: "Project"
 ---
 
 # Upgrading from Soundscapy 0.7 to 0.8.2
@@ -18,7 +19,7 @@ gap than the version number suggests.
 ## Why this matters
 
 `v0.8.2` introduces two major new analysis modules (**SATP** and **SPI**), a
-completely rewritten plotting API (**ISOPlot**), an embedded CircE R runtime,
+completely rewritten plotting API (**`ISOPlot`**), an embedded CircE R runtime,
 and a Scientific Python SPEC 1 lazy-loading architecture for optional
 dependencies. The plotting and optional-dependency changes are the most
 visible to existing users.
@@ -45,7 +46,7 @@ density_plot(df, x="ISOPleasant", y="ISOEventful")
 ### If you used `CircumplexPlot` directly
 
 Migrate to `ISOPlot`. The new API is layered: build a base, then add scatter,
-density, SPI, or jointplot layers.
+density, SPI, or `jointplot` layers.
 
 **Before (0.7.x):**
 
@@ -71,18 +72,18 @@ plot.show()
 ```
 
 Subplots, custom styling, and SPI integration are all part of the new
-`ISOPlot` API. See the [Visualising soundscapes](../user-guide/visualising-soundscapes.qmd)
+`ISOPlot` API. See the [Visualising soundscapes](visualising-soundscapes.qmd)
 guide for a full walkthrough.
 
-## Plotly backend removed
+## `Plotly` backend removed
 
-Only the seaborn backend is supported in `v0.8.2`. The `plotly` dependency has
+Only the `Seaborn` backend is supported in `v0.8.2`. The `plotly` dependency has
 been dropped to keep installation lean. If you need static graphics, use
-matplotlib's export from the seaborn backend; if you need interactive plots,
-you can pass the underlying matplotlib `Figure` to your interactive viewer of
+`Matplotlib` export from the `Seaborn` backend; if you need interactive plots,
+you can pass the underlying `Matplotlib` `Figure` to your interactive viewer of
 choice.
 
-If you previously imported `Backend` to switch between seaborn and plotly,
+If you previously imported `Backend` to switch between `Seaborn` and `Plotly`,
 that enum no longer exists.
 
 ## Optional dependencies overhaul
@@ -94,7 +95,7 @@ The optional-dependency story has been redesigned around
 
 | Install command                          | Includes                                                            |
 | ---------------------------------------- | ------------------------------------------------------------------- |
-| `pip install soundscapy`                 | Core: surveys, plotting, databases. **Slim — no audio or R deps.** |
+| `pip install soundscapy`                 | Core: surveys, plotting, databases. **Slim — no audio or R dependencies.** |
 | `pip install "soundscapy[audio]"`        | Adds `acoustic-toolbox`, `mosqito`, `numba`, `scikit-maad`, `tqdm`. |
 | `pip install "soundscapy[r]"`            | Adds `rpy2` for SPI / SATP. Also requires R + the `sn` R package.  |
 | `pip install "soundscapy[all]"`          | Everything above.                                                   |
@@ -109,7 +110,7 @@ Install with:  pip install 'soundscapy[r]'
 
 ### Renamed extras
 
-The `[spi]` extras name briefly appeared during the rc cycle but has been
+The `[spi]` extras name briefly appeared during the `rc` cycle but has been
 removed in favour of `[r]`. Update your `requirements.txt` / `pyproject.toml`
 accordingly.
 
@@ -136,7 +137,7 @@ pip install "soundscapy[r]"
 R -q -e "install.packages('sn')"
 ```
 
-The only external R package still required is `sn`. RTHORR is no longer
+The only external R package still required is `sn`. `RTHORR` is no longer
 required or supported — it has been removed from the codebase.
 
 ### Quick start: SATP
@@ -149,7 +150,7 @@ results.table   # tidy DataFrame of fit statistics
 ```
 
 `fit_circe` returns a `CircEResults` container holding one `CircE` per fitted
-model variant. `results.table` exposes the tidy DataFrame view; the
+model variant. `results.table` exposes the tidy `DataFrame` view; the
 `_repr_html_` makes it render nicely in Jupyter.
 
 ## `fit_circe` validation behaviour change
@@ -169,12 +170,12 @@ results = fit_circe(df, language="eng", datasource="SATP", errors="warn")
 This emits a `UserWarning` describing the failing rows and continues with the
 valid rows only.
 
-## `ipsatize` centering default change
+## `ipsatize` centring default change
 
 `ipsatize()` (and therefore `fit_circe`) now defaults to **grand-mean**
-centering — one scalar per participant — matching the published SATP
+centring — one scalar per participant — matching the published SATP
 analysis (Aletta et al., 2024) and the original R implementation. The legacy
-`person_center` function performed column-wise centering (eight scalars per
+`person_center` function performed column-wise centring (eight scalars per
 participant), which produced SRMR values off by ~0.005.
 
 The full `method` argument:
@@ -202,17 +203,17 @@ from soundscapy.satp import fit_circe
 from soundscapy.spi import MultiSkewNorm
 ```
 
-now resolve correctly in mypy, pyright, and IDE autocomplete, even before any
+now resolve correctly in `mypy`, `Pyright`, and IDE autocomplete, even before any
 optional dependency is installed.
 
 ## Removed APIs
 
 - **`CircumplexPlot`** class (replaced by `ISOPlot`).
-- **`Backend`** enum (only seaborn is supported now).
-- **Plotly plotting backend** (and the `plotly` dependency).
+- **`Backend`** enum (only `Seaborn` is supported now).
+- **`Plotly` plotting backend** (and the `plotly` dependency).
 - **`rthorr` R package** integration.
 - **CircE-from-GitHub** install requirement (CircE is now bundled).
-- **Pydantic `ParamModels`** (replaced by dataclass-based parameter
+- **`Pydantic` `ParamModels`** (replaced by dataclass-based parameter
   handling).
 
 ## Notes for contributors
@@ -220,12 +221,12 @@ optional dependency is installed.
 If you're contributing to Soundscapy itself, two project-level tooling shifts
 are worth knowing about:
 
-- **Environment management is now driven by [pixi](https://pixi.sh)**.
+- **Environment management is now driven by [`Pixi`](https://pixi.prefix.dev/)**.
   Common tasks: `pixi run lint`, `pixi run tests`, `pixi run -e docs docs-build`.
-  uv is retained for build, version, and PyPI publish (e.g.
+  `uv` is retained for build, version, and PyPI publish (e.g.
   `pixi run version --bump release`, `pixi run build`).
 - **Documentation is now built with
   [great-docs](https://posit-dev.github.io/great-docs/)** with configuration
   in `great-docs.yml`.
 
-See `pixi.toml` and [the contributing guide](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/docs/project/02-contributing.qmd) for the full workflow.
+See `pixi.toml` and [the contributing guide](https://github.com/MitchellAcoustics/Soundscapy/blob/dev/CONTRIBUTING.md) for the full workflow.

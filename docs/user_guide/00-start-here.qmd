@@ -9,11 +9,10 @@ The documentation is organised into five parts. Pick the route that matches what
 
 | Section | What it is for |
 |---------|----------------|
-| **User Guide** (this section) | How to use Soundscapy, and the background and context behind it. |
+| **User Guide** (this section) | How to use Soundscapy, plus project news and the 0.7 → 0.8 migration guide. |
 | [**Tutorials**](../tutorials/soundscape-assessment-tutorial.qmd) | Longer, end-to-end worked examples and companions to published papers. |
 | [**Gallery**](../gallery/index.qmd) | Copy-and-adapt example figures for every plot type. |
 | **Reference** | The API documentation for every public function and class. |
-| **Project** | News, the 0.7 → 0.8 migration guide and how to contribute. |
 
 ## Recommended reading path
 
@@ -28,4 +27,4 @@ When you want worked examples, move on to the [Tutorials](../tutorials/soundscap
 
 ## Upgrading from 0.7?
 
-See the [migration guide](../project/migration-0.7-to-0.8.qmd).
+See the [migration guide](migration-0.7-to-0.8.qmd).

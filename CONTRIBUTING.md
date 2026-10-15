@@ -1,12 +1,8 @@
----
-title: Contributing
----
-
 # Contributing to Soundscapy
 
 ## General Principles
 
-- Use **Pixi** for local environment management and command execution. In a `pyproject.toml` project, `pixi add --pypi` writes normal Python requirements into native `[project.dependencies]`, `[project.optional-dependencies]`, or `[dependency-groups]`. Use plain `pixi add` for the matching conda dependency when conda-forge provides a suitable package. Do not delete dependencies from the native Python tables just to move them into Pixi; matching entries under `[tool.pixi.dependencies]` or `[tool.pixi.feature.<name>.dependencies]` intentionally override those PyPI requirements inside Pixi environments.
+- Use **`Pixi`** for local environment management and command execution. In a `pyproject.toml` project, `pixi add --pypi` writes normal Python requirements into native `[project.dependencies]`, `[project.optional-dependencies]`, or `[dependency-groups]`. Use plain `pixi add` for the matching `conda` dependency when `conda-forge` provides a suitable package. Do not delete dependencies from the native Python tables just to move them into `Pixi`; matching entries under `[tool.pixi.dependencies]` or `[tool.pixi.feature.<name>.dependencies]` intentionally override those PyPI requirements inside `Pixi` environments.
 - Try to keep all necessary configurations to `pyproject.toml` where possible. This includes versioning, optional dependencies, tool settings, and other project settings.
 - Wherever possible, centralise operations and metadata. For instance, version is defined in `pyproject.toml` and automatically brought into `soundscapy` metadata in `__init__.py`; optional dependency checks are performed at the `<module>.__init__.py` level, rather than for each individual function.
 
@@ -14,15 +10,15 @@ Changes should be made in a feature branch and submitted to `dev` via a pull req
 
 ## Linting and Formatting
 
-Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting and [Pyrefly](https://github.com/Pyrefly/pyrefly) for type checking. This will be checked in the CI pipeline, so make sure to run it before committing.
+Soundscapy uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and linting and [`Pyrefly`](https://github.com/Pyrefly/pyrefly) for type checking. This will be checked in the CI pipeline, so make sure to run it before committing.
 
-We use [Prek](https://prek.j178.dev) for pre-commit hooks, configured in `.pre-commit-config.yaml` and `pyproject.toml`.
+We use [`prek`](https://prek.j178.dev) for pre-commit hooks, configured in `.pre-commit-config.yaml` and `pyproject.toml`.
 
 ## Documentation
 
-Documentation is built with **great-docs**. Configuration lives in `docs/great-docs.yml`, user-guide pages in `docs/user_guide/`, tutorials and papers in `docs/tutorials/`, gallery examples in `docs/gallery/`, project pages (news, migration, contributing) in `docs/project/`, API reference pages are generated from source, and the output site is written to `docs/_site/`.
+Documentation is built with **great-docs**. Configuration lives in `docs/great-docs.yml`, user-guide pages in `docs/user_guide/`, tutorials and papers in `docs/tutorials/`, gallery examples in `docs/gallery/`, API reference pages are generated from source, and the output site is written to `docs/_site/`.
 
-Use the Pixi docs tasks for local docs work:
+Use the `Pixi` docs tasks for local docs work:
 
 ```bash
 pixi run -e docs docs-build     # Build docs site to docs/_site/
@@ -31,7 +27,7 @@ pixi run -e docs docs-preview   # Preview docs locally
 
 ## Releases and Versioning
 
-Soundscapy uses [Semantic Versioning](https://semver.org/). The version number is stored in `soundscapy/pyproject.toml` and updated for each release.
+Soundscapy uses [Semantic Versioning](https://semver.org/). The version number is stored in `pyproject.toml` and updated for each release.
 
 Releases are instantiated by pushing a tag to `dev` or `main`. The tag should be in the format `vX.Y.Z` for stable releases and `vX.Y.ZrcN` for release candidates. Pre-release tags should be used for testing and development purposes only. `dev` tags will trigger a workflow that builds the package and publishes it to the test PyPI server. This shouldn't need to happen often - at the moment I'm using it mostly for testing the CI tools. `rc` or no pre-release tags will trigger a workflow that builds the package and publishes it to PyPI.
 
@@ -81,16 +77,16 @@ fix: correct bug in feature
 docs: update documentation
 ```
 
-The avilable types are:
+The available types are:
 
-- feat: A new feature
-- fix: A bug fix
-- docs: Documentation only changes
-- style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
-- refactor: A code change that neither fixes a bug nor adds a feature
-- perf: A code change that improves performance
-- test: Adding missing or correcting existing tests
-- chore: Changes to the build process or auxiliary tools and libraries such as documentation generation
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc.)
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing or correcting existing tests
+- `chore`: Changes to the build process or auxiliary tools and libraries such as documentation generation
 
 ## Optional Dependencies System
 
@@ -100,9 +96,9 @@ complementary tools: a small `_optional.py` helper (for the gate itself) and
 
 ### Design principle
 
-> There are two distinct problems. `require_deps` solves the *gate* problem (any import
+> There are two distinct problems. `require_deps` solves the _gate_ problem (any import
 > path — direct, submodule, or internal — must produce an actionable error message).
-> `lazy_loader` solves the *deferral* problem (`import soundscapy` must pay nothing, and
+> `lazy_loader` solves the _deferral_ problem (`import soundscapy` must pay nothing, and
 > `soundscapy.Binaural` must still work). Neither can replace the other.
 
 ### Core components
@@ -114,6 +110,7 @@ effects) and raises a uniform `ImportError` listing the PyPI install command:
 
 ```python
 from soundscapy._optional import require_deps
+
 require_deps(["mosqito", "maad", "acoustic_toolbox", "tqdm"], extra="audio")
 # ImportError: 'mosqito', 'scikit-maad', 'acoustic-toolbox', 'tqdm' required for
 # soundscapy[audio], not installed. Install with:  pip install 'soundscapy[audio]'
@@ -133,7 +130,7 @@ If you add a package whose import name differs from its PyPI name, add an entry 
 Each optional subpackage and the top-level package use `lazy_loader.attach_stub` to
 defer imports until first use. The stub file (`.pyi`) adjacent to each `__init__.py`
 is the single source of truth: it drives both `lazy_loader` at runtime and static type
-checkers (mypy, pyright) at analysis time.
+checkers (`mypy`, `Pyright`) at analysis time.
 
 ```text
 src/soundscapy/
@@ -174,13 +171,14 @@ pixi add --pypi package1 --feature new_group
 pixi add package1 --feature new_group
 ```
 
-Also add a pixi environment and test task for the new group — follow the `audio` and
+Also add a `Pixi` environment and test task for the new group — follow the `audio` and
 `r` patterns in `pixi.toml`.
 
 #### 2. Implement the gate in `new_group/__init__.py`
 
 ```python
 """Module docstring describing the new functionality."""
+
 # ruff: noqa: E402
 from soundscapy._optional import require_deps
 
@@ -219,11 +217,12 @@ automatically.
 #### Per-directory skip (preferred)
 
 Create a `test/new_group/conftest.py` that calls `pytest.importorskip` for each
-required package. pytest skips the entire directory if any call fails:
+required package. `pytest` skips the entire directory if any call fails:
 
 ```python
 # test/new_group/conftest.py
 import pytest
+
 pytest.importorskip("package1")
 pytest.importorskip("package2")
 ```
@@ -241,6 +240,7 @@ function:
 def test_new_group_available():
     pytest.importorskip("package1")
     import soundscapy
+
     assert hasattr(soundscapy, "NewFeature")
 ```
 
@@ -259,7 +259,7 @@ def test_new_group_gate_hint(monkeypatch):
 
 #### Doctest collection from source
 
-The root `conftest.py` maintains a `collect_ignore_glob` list that prevents xdoctest
+The root `conftest.py` maintains a `collect_ignore_glob` list that prevents `xdoctest`
 from collecting inside optional source directories when their extras are not installed.
 Add a new entry there when adding a new optional subpackage:
 
@@ -280,20 +280,20 @@ warn-and-degrade call site appears). The rule of thumb:
 - User passed a kwarg that **enriches** an otherwise-complete result → `errors="warn"`
   (the function still returns something useful without the enrichment)
 
-## Github Actions
+## GitHub Actions
 
 Soundscapy has two primary workflows: `test.yml` and `linting.yml`. Dependencies and
-environments are managed by **Pixi** across all workflows.
+environments are managed by **`Pixi`** across all workflows.
 
-`test.yml` runs a matrix of pixi tasks across Ubuntu, macOS, and Windows:
+`test.yml` runs a matrix of `Pixi` tasks across Ubuntu, macOS, and Windows:
 
-| Task | Environment | What runs |
-|---|---|---|
-| `test-import-tripwire` | `test` (slim) | `import soundscapy` guard — fails if any optional dep is eagerly imported |
-| `test-base` | `test` (slim) | Core tests + gate-failure tests; optional dirs skipped by `importorskip` |
-| `test-audio` | `test-audio` | All of the above plus `test/audio/` |
-| `test-r` | `test-r` | All of the above plus `test/spi/` and `test/satp/` |
-| `test-all` | `test-all` | Full suite |
+| Task                   | Environment   | What runs                                                                        |
+| ---------------------- | ------------- | -------------------------------------------------------------------------------- |
+| `test-import-tripwire` | `test` (slim) | `import soundscapy` guard — fails if any optional dependency is eagerly imported |
+| `test-base`            | `test` (slim) | Core tests + gate-failure tests; optional dirs skipped by `importorskip`         |
+| `test-audio`           | `test-audio`  | All of the above plus `test/audio/`                                              |
+| `test-r`               | `test-r`      | All of the above plus `test/spi/` and `test/satp/`                               |
+| `test-all`             | `test-all`    | Full suite                                                                       |
 
 To run these locally:
 

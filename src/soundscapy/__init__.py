@@ -40,10 +40,10 @@ from soundscapy.surveys import processing as processing
 
 __version__ = version("soundscapy")
 
-# Optional subpackages (audio, spi, satp) are exposed lazily via SPEC 1
+# Optional sub-packages (audio, spi, satp) are exposed lazily via SPEC 1
 # (https://scientific-python.org/specs/spec-0001/).  ``import soundscapy``
 # does not import them; each submodule's gate fires on first access and
-# raises a uniform ImportError if its extras aren't installed.
+# raises a uniform `ImportError` if its extras aren't installed.
 # The adjacent __init__.pyi stub drives both lazy_loader and static type checkers.
 _lazy_getattr, __dir__, _lazy_all = _lazy.attach_stub(__name__, __file__)
 

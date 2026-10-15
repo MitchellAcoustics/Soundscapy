@@ -1,0 +1,264 @@
+/*
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026  Andrew Mitchell
+*/
+
+/*
+ * Soundscapy docs theme — palette sampled from the logo.
+ *
+ *   cyan   #71e5e9   (the "py" and left blob)
+ *   orange #f2a33a   (right blob)
+ *   navy   #010e20   (wordmark / dark logo background)
+ *
+ * The raw logo colours are too light to use as text on white, so light mode
+ * uses darkened shades of the same hues (teal / burnt orange) that pass
+ * WCAG AA contrast on the page background.
+ *
+ * Great Docs exposes `--gd-accent` (set from `accent_color` in great-docs.yml);
+ * Quarto/Bootstrap exposes `--bs-*`. We set both from a single set of tokens.
+ */
+
+:root,
+:root[data-bs-theme="light"] {
+  --sc-cyan: #71e5e9;
+  --sc-orange: #f2a33a;
+  --sc-navy: #010e20;
+
+  --sc-primary: #0b7f8a;
+  /* teal, ~4.9:1 on white */
+  --sc-primary-hover: #086169;
+  --sc-secondary: #0a5f78;
+  /* deep blue-teal, ~7:1 on white (orange stays the dark-mode accent) */
+  --sc-surface: #f4fbfc;
+  /* faint cyan tint for code/cards */
+  --sc-border: #cfe9ec;
+
+  --bs-primary: var(--sc-primary);
+  --bs-primary-rgb: 11, 127, 138;
+  --bs-link-color: var(--sc-primary);
+  --bs-link-color-rgb: 11, 127, 138;
+  --bs-link-hover-color: var(--sc-primary-hover);
+  --bs-link-hover-color-rgb: 8, 97, 105;
+  --gd-accent-secondary: var(--sc-secondary);
+}
+
+html.quarto-dark,
+:root[data-bs-theme="dark"] {
+  --sc-primary: #71e5e9;
+  /* logo cyan, ~13:1 on navy */
+  --sc-primary-hover: #a6f1f3;
+  --sc-secondary: #f2a33a;
+  /* logo orange */
+  --sc-surface: #071a30;
+  --sc-border: #12304d;
+
+  --bs-body-bg: #010e20;
+  --bs-body-bg-rgb: 1, 14, 32;
+  --bs-body-color: #dbe6f0;
+  --bs-secondary-bg: #071a30;
+  --bs-tertiary-bg: #04152a;
+  --bs-border-color: #12304d;
+  --bs-primary: var(--sc-primary);
+  --bs-primary-rgb: 113, 229, 233;
+  --bs-link-color: var(--sc-primary);
+  --bs-link-color-rgb: 113, 229, 233;
+  --bs-link-hover-color: var(--sc-primary-hover);
+  --bs-link-hover-color-rgb: 166, 241, 243;
+  --gd-accent-secondary: var(--sc-secondary);
+}
+
+/*
+ * Great Docs paints pages from its own --gd-* tokens (not --bs-body-bg), defined
+ * on both `html` and `body`. Override them at the same specificity; this file
+ * loads after Great Docs' stylesheet so ties resolve in our favour.
+ */
+:root {
+  --gd-bg-primary: #fbfeff;
+  --gd-bg-secondary: #f4fbfc;
+  --gd-bg-tertiary: #e6f6f8;
+  --gd-border-color: #cfe9ec;
+  --gd-border-light: #dcf0f2;
+  --gd-link-color: #0b7f8a;
+  --gd-active-link: #0a5f78;
+  --gd-code-bg: #f4fbfc;
+  --gd-blockquote-bg: #e6f6f8;
+  --gd-sidebar-bg: #f4fbfc;
+}
+
+html.quarto-dark,
+body.quarto-dark {
+  --gd-bg-primary: #010e20;
+  --gd-bg-secondary: #04152a;
+  --gd-bg-tertiary: #071a30;
+  --gd-text-primary: #dbe6f0;
+  --gd-text-secondary: #c2d0de;
+  --gd-text-muted: #8da2b8;
+  --gd-border-color: #12304d;
+  --gd-border-light: #0d2640;
+  --gd-link-color: #71e5e9;
+  --gd-active-link: #f2a33a;
+  --gd-code-bg: #071a30;
+  --gd-blockquote-bg: #071a30;
+  --gd-sidebar-bg: #04152a;
+  --gd-navbar-bg: #010e20;
+}
+
+/* Page background (Quarto sets body bg directly in some themes) */
+html.quarto-dark body,
+:root[data-bs-theme="dark"] body {
+  background-color: #010e20;
+}
+
+/* Links in prose, plus sidebar / TOC active states */
+a {
+  text-underline-offset: 0.15em;
+}
+
+.sidebar nav[role="doc-toc"] ul > li > a.active,
+.sidebar-navigation .sidebar-item .active,
+.sidebar-navigation .sidebar-item a.active {
+  color: var(--sc-primary) !important;
+  border-left-color: var(--sc-secondary) !important;
+}
+
+/* Orange is the secondary accent: hover underline and heading rule */
+a:hover {
+  text-decoration-color: var(--sc-secondary);
+}
+
+h1.title,
+.quarto-title h1 {
+  border-bottom: 3px solid var(--sc-secondary);
+  padding-bottom: 0.3em;
+  display: inline-block;
+}
+
+/* Blockquotes, code, and callout-ish surfaces pick up the tinted surface */
+blockquote {
+  border-left: 4px solid var(--sc-secondary);
+  background: var(--sc-surface);
+  padding: 0.5rem 1rem;
+}
+
+pre,
+div.sourceCode {
+  background-color: var(--sc-surface);
+  border: 1px solid var(--sc-border);
+}
+
+/* Buttons */
+.btn-primary {
+  --bs-btn-bg: var(--sc-primary);
+  --bs-btn-border-color: var(--sc-primary);
+  --bs-btn-hover-bg: var(--sc-primary-hover);
+  --bs-btn-hover-border-color: var(--sc-primary-hover);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-color: #fff;
+}
+
+html.quarto-dark .btn-primary,
+:root[data-bs-theme="dark"] .btn-primary {
+  --bs-btn-color: #010e20;
+  --bs-btn-hover-color: #010e20;
+}
+
+/* Function signatures in API reference (recipe pattern) */
+.doc-signature {
+  background-color: var(--sc-surface);
+  padding: 0.5rem 1rem;
+  border-left: 3px solid var(--sc-secondary);
+  font-size: 0.95rem;
+}
+
+/* Selection highlight */
+::selection {
+  background: color-mix(in srgb, var(--sc-cyan) 45%, transparent);
+}
+
+/*
+ * Animated navbar gradient (same technique as Great Docs' `navbar_style`
+ * presets, but built from the logo palette — presets can't take custom colours).
+ *
+ * `navbar_color` in great-docs.yml still drives text/button contrast (dark text
+ * on the pastel light gradient, white text on the rich dark one); here we only
+ * replace its flat background. The extra `body` raises specificity above the
+ * injected navbar_color rule, which is emitted later in the page.
+ */
+html.quarto-light body .navbar,
+:root[data-bs-theme="light"] body .navbar {
+  background: linear-gradient(
+    -45deg,
+    #bdf0f3,
+    #e3fafb,
+    #fde3bd,
+    #a9e8ec
+  ) !important;
+  background-size: 400% 400% !important;
+  animation: gd-gradient-shift 15s ease infinite;
+}
+
+html.quarto-dark body .navbar,
+:root[data-bs-theme="dark"] body .navbar {
+  background: linear-gradient(
+    -45deg,
+    #010e20,
+    #0a4a5c,
+    #0b7f8a,
+    #3a2a12
+  ) !important;
+  background-size: 400% 400% !important;
+  animation: gd-gradient-shift 15s ease infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .navbar {
+    animation: none !important;
+  }
+}
+
+/*
+ * Homepage background (content_style: preset sky, pages: homepage).
+ *
+ * 1. The animated top glow is Great Docs' own; we swap its colours for the logo
+ *    palette: cyan across the left/centre, orange on the right, so it reads as
+ *    a continuation of the navbar gradient fading into the page.
+ * 2. A gentle vertical gradient on the body carries the tint down the page.
+ *    Content pages keep their flat backgrounds. In dark mode Great Docs makes
+ *    the homepage containers transparent, so the body gradient shows through.
+ */
+.gd-content-glow {
+  --gd-glow-color: #7fe6ea;
+  --sc-glow-warm: #f6bd72;
+}
+
+html[data-bs-theme="dark"] .gd-content-glow {
+  --gd-glow-color: #0b7f8a;
+  --sc-glow-warm: #8a5314;
+}
+
+.gd-content-glow .gd-glow-pulse-3 {
+  background: radial-gradient(
+    ellipse 45% 50% at 85% 0%,
+    var(--sc-glow-warm),
+    transparent
+  );
+}
+
+body.gd-homepage {
+  background-image: linear-gradient(
+    180deg,
+    #fbfeff 0%,
+    #eef9fa 55%,
+    #fff5e6 100%
+  );
+}
+
+html.quarto-dark body.gd-homepage,
+body.gd-homepage.quarto-dark {
+  background-image: linear-gradient(
+    180deg,
+    #010e20 0%,
+    #03213a 60%,
+    #0a2230 100%
+  );
+}

@@ -22,7 +22,7 @@ setup-cells:
 
 # Visualising Soundscapes
 
-Soundscapy's plotting module is built around the ISO circumplex: a two-dimensional space with ISOPleasant on the x-axis and ISOEventful on the y-axis. This page explains how the plotting API is organised and which options matter most. For finished, copy-and-adapt examples of each plot type, see the [Gallery](../gallery/index.qmd).
+Soundscapy's plotting module is built around the ISO circumplex: a two-dimensional space with $P_{ISO}$ on the x-axis and $E_{ISO}$ on the y-axis. This page explains how the plotting API is organised and which options matter most. For finished, copy-and-adapt examples of each plot type, see the [Gallery](../gallery/index.qmd).
 
 ```{python}
 import matplotlib.pyplot as plt
@@ -44,7 +44,7 @@ Soundscapy offers two complementary interfaces:
 | **Function style** | One-off plots in a single call | `scatter()`, `density()`, `iso_plot()`, `jointplot()`, `create_iso_subplots()` |
 | **`ISOPlot` builder** | Composing layers step by step, multi-panel figures, adding SPI targets | `ISOPlot(...).create_subplots().add_scatter().add_density().style()` |
 
-Both produce standard Matplotlib figures, so anything Matplotlib can do (annotations, saving, embedding in a larger layout) still works.
+Both produce standard `Matplotlib` figures, so anything `Matplotlib` can do (annotations, saving, embedding in a larger layout) still works.
 
 ## Function-style plots
 
@@ -71,9 +71,9 @@ These are shared across the plotting functions:
 | `title`, `xlabel`, `ylabel` | Labels |
 | `xlim`, `ylim` | Axis limits (default $-1$ to $1$) |
 | `diagonal_lines` | Draw the circumplex diagonals (vibrant/calm/chaotic/monotonous) |
-| `ax` | Draw on an existing Matplotlib axis |
+| `ax` | Draw on an existing `Matplotlib` axis |
 
-Density plots add `density_type` (`"full"` or `"simple"`, which draws fewer, cleaner contours), `levels`, `thresh`, `fill`, `cmap` and `incl_scatter`. Scatter plots pass `color`, `s` and `alpha` through to Matplotlib.
+Density plots add `density_type` (`"full"` or `"simple"`, which draws fewer, cleaner contours), `levels`, `thresh`, `fill`, `cmap` and `incl_scatter`. Scatter plots pass `color`, `s` and `alpha` through to `Matplotlib`.
 
 ### Comparing groups
 
@@ -165,7 +165,7 @@ To give each panel its own data instead, create the subplots grid with explicit 
 
 ## Customising and exporting
 
-Because the output is a Matplotlib figure, you can annotate it, adjust it, or save it with `savefig`:
+Because the output is a `Matplotlib` figure, you can annotate it, adjust it, or save it with `savefig`:
 
 ```{python}
 #| eval: false

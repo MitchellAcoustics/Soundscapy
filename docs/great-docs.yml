@@ -7,11 +7,12 @@ versions: ["0.8.5"]
 
 authors:
   - name: Andrew Mitchell
-    role: Honorary Lecturer
+    role: Maintainer
     affiliation: University College London
     email: andrew.mitchell.research@gmail.com
     github: MitchellAcoustics
-    homepage: http://drandrewmitchell.com
+    orcid: 0000-0003-0978-5046
+    homepage: https://drandrewmitchell.com
 
 exclude:
   - backends_deprecated
@@ -22,7 +23,31 @@ logo:
 favicon:
   icon: assets/favicon.png
 
-navbar_style: sky
+# Palette sampled from the logo (cyan #71e5e9, orange #f2a33a, navy #010e20).
+# Light mode uses darkened shades for text contrast; see assets/extras.css.
+accent_color:
+  light: "#0b7f8a"
+  dark: "#71e5e9"
+
+# Flat colours here only steer text/button contrast; the visible background is
+# the animated gradient in assets/extras.css (pastel in light, rich in dark).
+navbar_color:
+  light: "#bdf0f3"
+  dark: "#0a4a5c"
+
+# Hero Section
+# ------------
+# The large header area on the homepage with logo, name, and tagline.
+hero:
+  enabled: true
+  tagline: "Analyse and visualise soundscape assessments in Python."
+  logo_height: 400px # default 200px
+
+# Homepage-only glow under the navbar; the preset only picks the animation, the
+# colours are overridden in assets/extras.css (cyan left, orange right).
+content_style:
+  preset: sky
+  pages: homepage
 
 nav_icons:
   navbar:
@@ -30,7 +55,6 @@ nav_icons:
     Gallery: images
     Tutorials: scroll-text
     Reference: code
-    Project: message-square-more
     Changelog: clock
   sidebar:
     Quick Start: rocket
@@ -40,10 +64,11 @@ nav_icons:
     Visualising Soundscapes: chart-scatter
     Understanding the Soundscape Perception Index (SPI): arrow-up-1-0
     News: rss
-    Upgrading from Soundscapy 0.7 to 0.8.2: circle-fading-arrow-up
-    Contributing: users
+    Upgrading from 0.7 to 0.8: circle-fading-arrow-up
 
 site:
+  css:
+    - "assets/extras.css"
   show_dates: true
   show_author: true
 
@@ -92,7 +117,7 @@ interlinks:
     circumplex:
       url: https://drandrewmitchell.com/circumplex/
     matplotlib:
-      url: https://matplotlib.org/stable/index.html
+      url: https://matplotlib.org/stable/
       aliases: [mpl]
     seaborn:
       url: https://seaborn.pydata.org
@@ -114,6 +139,3 @@ sections:
     dir: gallery
     type: blog
     navbar_after: Tutorials
-  - title: Project
-    dir: project
-    navbar_after: Reference

@@ -68,7 +68,7 @@ data = sspy.isd.load_demo()
 data.head()
 ```
 
-### Display basic information about the dataset
+### Display Basic Information About the Dataset
 
 Dataset shape:
 
@@ -166,9 +166,9 @@ print("Data with ISO coordinates:")
 valid_data.round(3)
 ```
 
-### Save the data
+### Save the Data
 
-After using Soundscapy to calculate the ISOCoordinates, we can easily save our resulting DataFrame out to a file. We can easily save to an Excel file, allowing you to use the tools you're more comfortable with for additional analysis:
+After using Soundscapy to calculate the $P_{ISO}$, $E_{ISO}$ coordinates, we can easily save our resulting `DataFrame` out to a file. We can easily save to an Excel file, allowing you to use the tools you're more comfortable with for additional analysis:
 
 ```{python}
 valid_data.to_csv("SoundscapyResults.csv", index=False)
@@ -189,7 +189,7 @@ print("Summary statistics for ISO coordinates by location:")
 iso_stats
 ```
 
-### Create a circumplex scatter plot
+### Create a Circumplex Scatter Plot
 
 Creating a scatter plot of the Soundscape data is extremely easy in Soundscapy. Let's start by plotting a single location. Again, we use `sspy.isd.select_location_ids()` to select a single location:
 
@@ -199,9 +199,9 @@ subset_data = sspy.isd.select_location_ids(valid_data, ["CamdenTown", "PancrasLo
 sspy.scatter(subset_data)
 ```
 
-#### Customizing the plot
+#### Customizing the Plot
 
-The Soundscapy plotting functions contain several customization options, such as changing the color, palette, point size, and title:
+The Soundscapy plotting functions contain several customization options, such as changing the colour, palette, point size, and title:
 
 ```{python}
 sspy.scatter(
@@ -215,9 +215,9 @@ sspy.scatter(
 )
 ```
 
-#### Color by location
+#### Colour by Location
 
-One of the most useful settings is the ability to split the plot by some grouping variable. In Soundscape data, this will often be the location, but we can easily select any other categorical variable in the dataset. Simply set the `hue` option to get a different color for each group:
+One of the most useful settings is the ability to split the plot by some grouping variable. In Soundscape data, this will often be the location, but we can easily select any other categorical variable in the dataset. Simply set the `hue` option to get a different colour for each group:
 
 ```{python}
 # Create a basic scatter plot of ISO coordinates
@@ -296,7 +296,7 @@ Try this out with some of the other Likert scaled data:
 sspy.stacked_likert(...)
 ```
 
-In addition to the more specialised Likert plots provided by Soundscapy, we can of course apply more common analyses. For this, we need to do some data processing and plotting in Pandas and Seaborn:
+In addition to the more specialised Likert plots provided by Soundscapy, we can of course apply more common analyses. For this, we need to do some data processing and plotting in Pandas and `Seaborn`:
 
 ```{python}
 # Calculate mean sound source dominance by location
@@ -309,13 +309,13 @@ sound_sources = (
 )
 ```
 
-#### Mean sound source dominance by location:
+#### Mean Sound Source Dominance by Location:
 
 ```{python}
 sound_sources
 ```
 
-Since Soundscapy doesn't implement its own functionality for the more common plots, we fall back to the very nice Seaborn plotting library, which we imported as `sns` to create a barplot of the mean sound source responses (or you can of course do this in something like Excel):
+Since Soundscapy doesn't implement its own functionality for the more common plots, we fall back to the very nice `Seaborn` plotting library, which we imported as `sns` to create a barplot of the mean sound source responses (or you can of course do this in something like Excel):
 
 ```{python}
 # Create a bar chart
@@ -509,7 +509,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## 7. Using the ISOPlot Interface for SPI Analysis
+## 7. Using the `ISOPlot` Interface for SPI Analysis
 
 Soundscapy's `ISOPlot` class provides a more sophisticated interface for creating SPI visualizations. Let's use it to create a comprehensive SPI analysis:
 
@@ -557,11 +557,11 @@ Now that we've analyzed our data and created various visualizations, let's inter
 
 1. **Location Characteristics**:
    - Each location has a distinct soundscape character, as shown by its position in the circumplex model.
-   - Some locations are more pleasant (higher ISOPleasant values), while others are more eventful (higher ISOEventful values).
+   - Some locations are more pleasant (higher $P_{ISO}$ values), while others are more eventful (higher $E_{ISO}$ values).
 
 2. **Sound Source Influence**:
-   - Natural sounds tend to increase pleasantness, as shown by the relationship between natural sound dominance and ISOPleasant values.
-   - Traffic noise tends to decrease pleasantness, as shown by the relationship between traffic noise dominance and ISOPleasant values.
+   - Natural sounds tend to increase pleasantness, as shown by the relationship between natural sound dominance and $P_{ISO}$ values.
+   - Traffic noise tends to decrease pleasantness, as shown by the relationship between traffic noise dominance and $P_{ISO}$ values.
 
 3. **Acoustic Metrics**:
    - Higher sound levels (LAeq) are generally associated with lower pleasantness.
@@ -577,7 +577,7 @@ These insights can inform soundscape design and management decisions, such as:
 - Which sound sources to promote or mitigate at different locations
 - How to design new spaces to achieve desired soundscape characteristics
 
-## 9. More plot types
+## 9. More Plot Types
 
 Soundscapy can draw many more plot types than the ones used above (joint plots, histogram marginals, grouped densities, custom multi-panel figures and more). Browse the [Gallery](../gallery/index.qmd) for ready-to-adapt examples, and see [Visualising soundscapes](../user-guide/visualising-soundscapes.qmd) for the API.
 
@@ -609,7 +609,7 @@ In this tutorial, you've learned how to:
    - Calculate SPI scores
    - Compare locations against different targets
 
-6. **Use the ISOPlot interface**
+6. **Use the `ISOPlot` interface**
    - Create sophisticated SPI visualizations
    - Combine multiple layers in a single plot
    - Customize plot appearance
