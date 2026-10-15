@@ -82,3 +82,29 @@ def test_top_level_falls_back_to_lazy_loader():
     with pytest.raises(AttributeError):
         # pyrefly: ignore [missing-attribute]
         _ = soundscapy.not_a_real_name
+
+
+def test_db_alias_warns_and_forwards():
+    import soundscapy
+
+    with pytest.warns(DeprecationWarning, match="renamed to `soundscapy.databases`"):
+        # pyrefly: ignore [missing-attribute]
+        db = soundscapy.db
+    assert db is soundscapy.databases
+
+
+@pytest.mark.parametrize("name", ["ISOPlot", "ExperimentalWarning"])
+def test_old_iso_plot_module_path_still_imports(name):
+    """``soundscapy.plotting.iso_plot`` was a module before it became a function."""
+    plotting = importlib.import_module("soundscapy.plotting")
+    old = importlib.import_module("soundscapy.plotting.iso_plot")
+    match = rf"has moved to `soundscapy.plotting.{name}`"
+    with pytest.warns(DeprecationWarning, match=match):
+        value = getattr(old, name)
+    assert value is getattr(plotting, name)
+
+
+def test_iso_plot_attribute_is_still_the_function():
+    plotting = importlib.import_module("soundscapy.plotting")
+    importlib.import_module("soundscapy.plotting.iso_plot")  # registers the shim
+    assert callable(plotting.iso_plot)

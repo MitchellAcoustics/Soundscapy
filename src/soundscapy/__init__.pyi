@@ -1,22 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (C) 2026  Andrew Mitchell
 
-# Single source of truth for soundscapy's top-level public API. Read by:
-#   - lazy_loader.attach_stub (runtime): only the ``from . import`` lines are
-#     parsed; names already imported eagerly in __init__.py never hit the lazy
-#     __getattr__, so listing them here is harmless.
-#   - static type checkers (mypy, pyright, pyrefly): a .pyi fully shadows the
-#     .py, so eager re-exports must be declared here too.
-#   - griffe / great-docs (API reference discovery): the literal ``__all__``
-#     below replaces the runtime-computed one, which griffe cannot evaluate.
-# Relative imports are required by lazy_loader's stub parser.
-# The "as X" aliases mark these as public re-exports per PEP 484 convention.
+# Single source of truth for the top-level API. lazy_loader parses relative
+# imports, type checkers use the stub as the full API, and griffe needs the
+# literal ``__all__``. ``as X`` aliases mark public re-exports (PEP 484).
 
-# Names from audio/satp/spi are lazy (gated on optional extras); the rest are
-# imported eagerly in __init__.py. Only flagship objects from the optional
-# subpackages are promoted here; everything else is reached via its subpackage
-# (e.g. ``sspy.spi.MultiSkewNorm``). Formerly promoted names are deprecated in
-# __init__.py's ``moved_to`` call and must not be re-added here.
+# Optional audio/satp/spi exports are lazy; only flagship objects are promoted.
+# Access other names through their subpackage. Deprecated moved_to names stay
+# excluded.
 from . import audio as audio
 from . import constants as constants
 from . import databases as databases

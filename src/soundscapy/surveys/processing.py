@@ -25,6 +25,7 @@ modules under `soundscape.databases`.
 """
 
 import warnings
+from collections.abc import Hashable
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 
@@ -284,7 +285,7 @@ def add_iso_coords(
 
 def likert_data_quality(
     df: pd.DataFrame, val_range: tuple[int, int] = (1, 5), *, allow_na: bool = False
-) -> list[int] | None:
+) -> list[Hashable] | None:
     """
     Perform basic quality checks on PAQ (Likert scale) data.
 
@@ -300,6 +301,8 @@ def likert_data_quality(
     Returns
     -------
     :
+        Index labels (not positions) of rows that failed a check, or None if
+        every row passed. Use with ``.loc`` / ``.drop(index=...)``.
 
     Examples
     --------
@@ -320,8 +323,6 @@ def likert_data_quality(
     invalid_indices = []
 
     for idx, row in paqs.iterrows():
-        # Convert the index to int to ensure type compatibility
-        row_idx = int(idx) if isinstance(idx, str) else idx
         row_array = row.to_numpy()
         is_constant = row_array.shape[0] > 0 and (row_array[0] == row_array).all()
 
@@ -333,11 +334,10 @@ def likert_data_quality(
                 or (is_constant and row.iloc[0] != np.mean(val_range))
             )
         ):
-            invalid_indices.append(row_idx)
+            invalid_indices.append(idx)
 
     if invalid_indices:
         logger.info(f"Found {len(invalid_indices)} samples with data quality issues")
-        # pyrefly: ignore [bad-return]
         return invalid_indices
 
     logger.info("PAQ data quality check passed")
@@ -411,7 +411,7 @@ def simulation(
 
 def ssm_metrics(
     df: pd.DataFrame,
-    paq_cols: list[str] = constants.PAQ_IDS,
+    paq_cols: list[str] | None = None,
     method: str = "cosine",
     val_range: tuple[int, int] = (5, 1),
     angles: tuple[int, ...] = constants.EQUAL_ANGLES,
@@ -424,7 +424,7 @@ def ssm_metrics(
     df
         DataFrame containing PAQ data
     paq_cols
-        List of PAQ column names, by default PAQ_IDS
+        List of PAQ column names, by default None, which uses PAQ_IDS
     method
         Method to calculate SSM metrics, either "cosine" or "polar", by default "cosine"
     val_range
@@ -465,6 +465,9 @@ def ssm_metrics(
         PendingDeprecationWarning,
         stacklevel=2,
     )
+
+    if paq_cols is None:
+        paq_cols = list(constants.PAQ_IDS)
 
     if not set(paq_cols).issubset(df.columns):
         msg = f"PAQ columns {paq_cols} not present in DataFrame"

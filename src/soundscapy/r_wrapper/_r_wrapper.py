@@ -35,6 +35,8 @@ from soundscapy import constants
 from soundscapy.sspylogging import get_logger
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import pandas as pd
     from rpy2.robjects.methods import RS4
 
@@ -163,7 +165,7 @@ def _initialize_r_session() -> None:
         r_version_str = robjects.r("paste(R.version$major, R.version$minor, sep='.')")[
             0
         ]
-        logger.debug("R version: %s", robjects.r("R.version.string")[0])
+        logger.debug("R version: {}", robjects.r("R.version.string")[0])
     except Exception as e:
         msg = (
             f"Error querying R version: {e}. "
@@ -184,7 +186,7 @@ def _initialize_r_session() -> None:
         msg = "R package 'sn' is not installed. Run in R: install.packages('sn')"
         raise ImportError(msg) from err
     version = robjects.r('as.character(packageVersion("sn"))')[0]
-    logger.debug("R 'sn' package version: %s", version)
+    logger.debug("R 'sn' package version: {}", version)
     if _ver(version) < (2, 0, 0):
         msg = (
             f"R 'sn' package version {version} is too old; requires >= 2.0.0. "
@@ -267,7 +269,7 @@ def reset_r_session() -> bool:
 
 def install_r_packages(packages: list[str] | None = None) -> None:  # noqa: ARG001
     """
-    Install R packages via R's install.packages() (Deprecated).
+    Do nothing (deprecated); install the R ``sn`` package from R instead.
 
     .. deprecated::
         This function is a no-op and will be removed in a future release.
@@ -507,7 +509,7 @@ def cp2dp(
 def bfgs_fit(
     data_cor: pd.DataFrame,
     n: int,
-    scales: list[str] = constants.PAQ_IDS,
+    scales: Sequence[str] = tuple(constants.PAQ_IDS),
     m_val: int = 3,
     *,
     equal_ang: bool = True,
@@ -526,7 +528,7 @@ def bfgs_fit(
     n
         Number of observations used to compute ``data_cor``.
     scales
-        List of scale names.
+        Scale names, by default the PAQ IDs.
     m_val
         Number of Fourier dimensions.
     equal_ang

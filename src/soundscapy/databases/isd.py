@@ -291,8 +291,9 @@ def validate(
     )
 
     if invalid_indices:
-        excl_data = data.iloc[invalid_indices]
-        data = data.drop(data.index[invalid_indices])
+        is_invalid = data.index.isin(invalid_indices)
+        excl_data = data[is_invalid]
+        data = data[~is_invalid]
         logger.info(f"Removed {len(invalid_indices)} rows with invalid PAQ data")
     else:
         excl_data = None
@@ -301,7 +302,7 @@ def validate(
     return data, excl_data
 
 
-def match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
+def match_col_to_likert_scale(col: str | None) -> Scale:
     """
     Match a column in the DataFrame to the Likert scale.
 
@@ -318,22 +319,24 @@ def match_col_to_likert_scale(col: str | None) -> Scale:  # noqa: PLR0911
     """
     match col:
         case _ if col in constants.PAQ_IDS or col in constants.PAQ_LABELS:
-            return constants.LIKERT_SCALES.paq
+            name = "paq"
         case "traffic_noise" | "other_noise" | "human_sounds" | "natural_sounds":
-            return constants.LIKERT_SCALES.source
+            name = "source"
         case "overall_sound_environment":
-            return constants.LIKERT_SCALES.overall
+            name = "overall"
         case "appropriate":
-            return constants.LIKERT_SCALES.appropriate
+            name = "appropriate"
         case "perceived_loud":
-            return constants.LIKERT_SCALES.loud
+            name = "loud"
         case "visit_often":
-            return constants.LIKERT_SCALES.often
+            name = "often"
         case "like_to_visit":
-            return constants.LIKERT_SCALES.visit
+            name = "visit"
         case _:
             msg = f"Column {col} does not match any known Likert scale."
             raise ValueError(msg)
+    # Hand out a copy so callers can't mutate the shared constant.
+    return list(getattr(constants.LIKERT_SCALES, name))
 
 
 def likert_categorical_from_data(

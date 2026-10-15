@@ -11,6 +11,7 @@ and analysis modules. Import from here rather than redefining them.
 
 from dataclasses import dataclass, field
 from enum import Enum
+from types import MappingProxyType
 
 from plot_likert.scales import Scale
 
@@ -47,7 +48,7 @@ PAQ_LABELS = [paq.label for paq in PAQ]
 PAQ_IDS = [paq.id for paq in PAQ]
 
 
-@dataclass
+@dataclass(frozen=True)
 class LikertScale:
     """
     Contains different Likert scale options for survey questions.
@@ -57,20 +58,25 @@ class LikertScale:
 
     Attributes
     ----------
-    PAQ
+    paq
         Agreement scale from "Strongly disagree" to "Strongly agree"
-    SOURCE
+    source
         Source perception scale from "Not at all" to "Dominates completely"
-    OVERALL
+    overall
         Quality assessment scale from "Very bad" to "Very good"
-    APPROPRIATE
+    appropriate
         Appropriateness scale from "Not at all" to "Perfectly"
-    LOUD
+    loud
         Loudness perception scale from "Not at all" to "Extremely"
-    OFTEN
+    often
         Frequency scale with first-time option from "Never / This is my first time here" to "Very often"
-    VISIT
+    visit
         Standard frequency scale from "Never" to "Very often"
+
+    Notes
+    -----
+    Instances are frozen, so scales can't be reassigned. The lists themselves are
+    still mutable; take a copy (``list(scale)``) before modifying one.
 
     """  # noqa: E501
 
@@ -138,23 +144,32 @@ class LikertScale:
         ]
     )
 
+    def __post_init__(self) -> None:
+        """Check that every scale has five distinct points."""
+        for name, scale in vars(self).items():
+            if len(scale) != 5 or len(set(scale)) != 5:  # noqa: PLR2004
+                msg = f"Likert scale {name!r} must have 5 distinct points, got {scale}"
+                raise ValueError(msg)
+
 
 LIKERT_SCALES = LikertScale()
 
 EQUAL_ANGLES = (0, 45, 90, 135, 180, 225, 270, 315)
 
 # Language-specific angles for PAQs as defined in Aletta et. al. (2024)
-LANGUAGE_ANGLES = {
-    "eng": (0, 46, 94, 138, 177, 241, 275, 340),
-    "arb": (0, 36, 45, 135, 167, 201, 242, 308),
-    "cmn": (0, 18, 38, 154, 171, 196, 217, 318),
-    "hrv": (0, 84, 93, 160, 173, 243, 273, 354),
-    "nld": (0, 43, 111, 125, 174, 257, 307, 341),
-    "deu": (0, 64, 97, 132, 182, 254, 282, 336),
-    "ell": (0, 72, 86, 133, 161, 233, 267, 328),
-    "ind": (0, 53, 104, 123, 139, 202, 284, 308),
-    "ita": (0, 57, 104, 143, 170, 274, 285, 336),
-    "spa": (0, 41, 103, 147, 174, 238, 279, 332),
-    "swe": (0, 66, 87, 146, 175, 249, 275, 335),
-    "tur": (0, 55, 97, 106, 157, 254, 289, 313),
-}
+LANGUAGE_ANGLES = MappingProxyType(
+    {
+        "eng": (0, 46, 94, 138, 177, 241, 275, 340),
+        "arb": (0, 36, 45, 135, 167, 201, 242, 308),
+        "cmn": (0, 18, 38, 154, 171, 196, 217, 318),
+        "hrv": (0, 84, 93, 160, 173, 243, 273, 354),
+        "nld": (0, 43, 111, 125, 174, 257, 307, 341),
+        "deu": (0, 64, 97, 132, 182, 254, 282, 336),
+        "ell": (0, 72, 86, 133, 161, 233, 267, 328),
+        "ind": (0, 53, 104, 123, 139, 202, 284, 308),
+        "ita": (0, 57, 104, 143, 170, 274, 285, 336),
+        "spa": (0, 41, 103, 147, 174, 238, 279, 332),
+        "swe": (0, 66, 87, 146, 175, 249, 275, 335),
+        "tur": (0, 55, 97, 106, 157, 254, 289, 313),
+    }
+)

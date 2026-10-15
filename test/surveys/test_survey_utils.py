@@ -8,6 +8,9 @@ This module contains tests for the utility functions and classes in the
 soundscapy.surveys.survey_utils module.
 """
 
+from collections.abc import Mapping
+from dataclasses import FrozenInstanceError
+
 import pandas as pd
 import pytest
 
@@ -247,6 +250,15 @@ class TestLikertScale:
             "Very often",
         ]
 
+    def test_likert_scale_is_frozen(self):
+        with pytest.raises(FrozenInstanceError):
+            LIKERT_SCALES.paq = ["a", "b", "c", "d", "e"]  # type: ignore[misc]
+
+    @pytest.mark.parametrize("bad", [list("abcd"), list("aacde")])
+    def test_likert_scale_validates_points(self, bad):
+        with pytest.raises(ValueError, match="5 distinct points"):
+            LikertScale(paq=bad)
+
     def test_likert_scales_constant(self):
         """Test that LIKERT_SCALES is an instance of LikertScale."""
         assert isinstance(LIKERT_SCALES, LikertScale)
@@ -262,8 +274,10 @@ class TestConstants:
 
     def test_language_angles(self):
         """Test that LANGUAGE_ANGLES has the expected structure."""
-        # Check that LANGUAGE_ANGLES is a dictionary
-        assert isinstance(LANGUAGE_ANGLES, dict)
+        # LANGUAGE_ANGLES is a read-only mapping
+        assert isinstance(LANGUAGE_ANGLES, Mapping)
+        with pytest.raises(TypeError):
+            LANGUAGE_ANGLES["eng"] = ()  # type: ignore[index]
 
         # Check that it contains the expected languages
         expected_languages = [

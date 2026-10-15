@@ -53,7 +53,7 @@ class Layer:
     custom_data
         Optional custom data for this specific layer, overriding context data
     param_model
-        The parameter model class to use, if None uses a generic ParamModel
+        The parameter model class to use, by default ``SeabornParams``
     **params
         Parameters for the layer
 

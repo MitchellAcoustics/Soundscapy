@@ -191,7 +191,7 @@ def paq_radar_plot(
 def paq_likert(
     data: pd.DataFrame,
     title: str = "Stacked Likert Plot",
-    paq_cols: list[str] = constants.PAQ_IDS,
+    paq_cols: list[str] | None = None,
     *,
     legend: bool = True,
     ax: Axes | None = None,
@@ -207,7 +207,7 @@ def paq_likert(
     data
         DataFrame containing PAQ values.
     paq_cols
-        List of column names containing PAQ data, by default PAQ_IDS.
+        List of column names containing PAQ data, by default None, which uses PAQ_IDS.
     title
         Plot title, by default "Stacked Likert Plot".
     legend
@@ -240,6 +240,9 @@ def paq_likert(
         stacklevel=2,
     )
 
+    if paq_cols is None:
+        paq_cols = list(constants.PAQ_IDS)
+
     new_data = data[paq_cols].copy()
     # pyrefly: ignore [no-matching-overload]
     # pandas-stubs have no DataFrame.apply overload returning Categorical
@@ -251,7 +254,7 @@ def paq_likert(
 
     plot_likert.plot_likert(
         new_data,
-        constants.LIKERT_SCALES.paq,
+        list(constants.LIKERT_SCALES.paq),
         plot_percentage=plot_percentage,
         ax=ax,
         legend=legend,

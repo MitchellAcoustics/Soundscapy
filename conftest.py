@@ -4,6 +4,7 @@
 """Configure pytest for soundscapy testing."""
 
 import importlib.util
+import os
 from fnmatch import fnmatch
 
 import pytest
@@ -15,7 +16,8 @@ from loguru import logger
 # own conftest.py + pytest.importorskip.
 collect_ignore_glob: list[str] = []
 _audio_deps = ("acoustic_toolbox", "maad", "mosqito", "tqdm")
-if any(importlib.util.find_spec(dep) is None for dep in _audio_deps):
+_has_audio = all(importlib.util.find_spec(dep) is not None for dep in _audio_deps)
+if not _has_audio:
     collect_ignore_glob.append("src/soundscapy/audio/*")
 _has_rpy2 = importlib.util.find_spec("rpy2") is not None
 if not _has_rpy2:
@@ -24,6 +26,14 @@ if not _has_rpy2:
         "src/soundscapy/satp/*",
         "src/soundscapy/r_wrapper/*",
     ]
+
+# The pixi test-audio / test-r / test-all tasks set SOUNDSCAPY_REQUIRE_EXTRAS so
+# that a broken environment fails loudly instead of silently skipping those tests.
+_required_extras = set(os.environ.get("SOUNDSCAPY_REQUIRE_EXTRAS", "").split(","))
+for _extra, _installed in {"audio": _has_audio, "r": _has_rpy2}.items():
+    if _extra in _required_extras and not _installed:
+        msg = f"SOUNDSCAPY_REQUIRE_EXTRAS includes {_extra!r} but its extra is missing"
+        raise pytest.UsageError(msg)
 
 # Doctests outside the R subpackages that still need R, matched on xdoctest
 # item names. Gated here rather than with `# xdoctest: +REQUIRES(module:rpy2)`

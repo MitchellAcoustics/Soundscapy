@@ -77,6 +77,7 @@ __getattr__ = moved_to(
         ],
     },
     fallback=_lazy_getattr,
+    renamed_modules={"db": "soundscapy.databases"},
 )
 
 

@@ -4,5 +4,5 @@
 """Warning classes shared across the plotting subpackage."""
 
 
-class ExperimentalWarning(Warning):
+class ExperimentalWarning(UserWarning):
     """A warning class to signify experimental features."""

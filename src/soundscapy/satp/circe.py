@@ -747,6 +747,10 @@ def fit_circe(
         raise ValueError(msg)
     corr = complete.corr()
 
+    # Fail loudly if R itself can't start, rather than reporting every model as
+    # a failed fit. Only per-model fit errors are caught below.
+    sspyr.get_r_session()
+
     circ_models = models if models is not None else list(CircModelE)
     fitted: list[CircE] = []
     error_rows: list[dict] = []

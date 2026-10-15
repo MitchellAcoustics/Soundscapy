@@ -151,6 +151,16 @@ class TestDataQuality:
         result = likert_data_quality(invalid_df)
         assert result == [0]
 
+    def test_likert_data_quality_returns_index_labels(self):
+        valid_row = [1, 2, 3, 4, 5, 4, 3, 2]
+        df = pd.DataFrame(
+            [valid_row, [6, *valid_row[1:]], valid_row, valid_row],
+            columns=[f"PAQ{i}" for i in range(1, 9)],
+            index=[10, 20, 30, 40],
+        )
+        df.loc[30, "PAQ1"] = np.nan
+        assert likert_data_quality(df) == [20, 30]
+
     def test_likert_data_quality_with_nan(self):
         nan_df = pd.DataFrame(
             {

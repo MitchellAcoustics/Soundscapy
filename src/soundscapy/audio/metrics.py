@@ -1165,6 +1165,7 @@ def process_all_metrics(
     results_df = pd.DataFrame(index=idx)
     results_df.index.names = ["Recording", "Channel"]
 
+    library = metric = None  # for the error message if something fails early
     try:
         for (
             library,
@@ -1188,14 +1189,14 @@ def process_all_metrics(
                     case "scikit-maad" | "scikit_maad":
                         metric_df = b.maad_metric(metric_name, metric_settings=settings)
                     case _:
-                        # Libraries we don't recognise are skipped, as before.
-                        continue
+                        msg = f"Unknown metric library {library!r}"
+                        raise ValueError(msg)  # noqa: TRY301
                 results_df = pd.concat(
                     (results_df, cast("pd.DataFrame", metric_df)), axis=1
                 )
     except Exception as e:
         logger.error(f"Error processing metrics: {e!s}")
-        msg = "Error processing metrics"
+        msg = f"Error processing metrics ({library} / {metric}): {e}"
         raise ValueError(msg) from e
 
     logger.info("All metrics processed successfully")

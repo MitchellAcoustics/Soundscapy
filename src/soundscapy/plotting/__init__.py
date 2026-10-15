@@ -9,7 +9,11 @@ It supports various plot types and backends, with a focus on flexibility and eas
 of use.
 """
 
+import sys
+
+from soundscapy._deprecated import moved_module
 from soundscapy.plotting import likert
+from soundscapy.plotting._warnings import ExperimentalWarning
 from soundscapy.plotting.backends_deprecated import (
     Backend,
     CircumplexPlot,
@@ -39,11 +43,21 @@ from soundscapy.plotting.plot_functions import (
     scatter_plot,
 )
 
+# ``iso_plot`` is now a function, so a stub module can't keep the old
+# ``from soundscapy.plotting.iso_plot import ISOPlot`` path alive; use sys.modules.
+sys.modules[f"{__name__}.iso_plot"] = moved_module(
+    f"{__name__}.iso_plot",
+    {
+        "soundscapy.plotting": ["ISOPlot", "ExperimentalWarning"],
+    },
+)
+
 __all__ = [
     "Backend",
     "CircumplexPlot",
     "CircumplexPlotParams",
     "DensityLayer",
+    "ExperimentalWarning",
     "ISOPlot",
     "Layer",
     "PlotType",
