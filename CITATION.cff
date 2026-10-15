@@ -34,10 +34,10 @@ preferred-citation:
   start: 37201
   doi: 10.1121/10.0009794
 repository: https://github.com/MitchellAcoustics/Soundscapy
-repository-artifact: https://pypi.org/project/soundscapy/0.8.5/
+repository-artifact: https://pypi.org/project/soundscapy/0.9.0a1/
 repository-code: 
   https://github.com/MitchellAcoustics/Soundscapy/releases/tag/v0.8.5
 title: soundscapy
 type: software
 url: https://drandrewmitchell.com/Soundscapy/
-version: 0.8.5
+version: 0.9.0a1
