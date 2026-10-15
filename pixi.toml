@@ -153,6 +153,41 @@ cmd                 = "great-docs preview --port 3000"
 depends-on          = ["docs-build"]
 default-environment = "docs"
 
+[feature.docs.tasks.docs-check-links]
+description = "Check docs/README/source links (DOI and badge redirects are expected, so ignored)"
+cmd = [
+    "great-docs",
+    "check-links",
+    "-i",
+    "doi\\.org",
+    "-i",
+    "badge\\.fury\\.io",
+]
+default-environment = "docs"
+
+[feature.docs.tasks.docs-proofread]
+description = "Spell-check README, CONTRIBUTING, ROADMAP and docs prose with Harper (needs `brew install harper`)"
+# Absolute paths are required for explicit file arguments; globs are expanded by the shell.
+# Spelling only (--only SpellCheck): the grammar/style rules gave too many false positives
+# on code and maths. great-docs sends .qmd text to Harper as plain text, so `inline code`
+# is still spell-checked: every code name and package name must be in .harper-dictionary.txt.
+cmd = [
+    "great-docs",
+    "proofread",
+    "--dialect",
+    "uk",
+    "--dictionary-file",
+    ".harper-dictionary.txt",
+    "--only",
+    "SpellCheck",
+    "$PIXI_PROJECT_ROOT/README.md",
+    "$PIXI_PROJECT_ROOT/CONTRIBUTING.md",
+    "$PIXI_PROJECT_ROOT/ROADMAP.md",
+    "$PIXI_PROJECT_ROOT/docs/user_guide/*.qmd",
+    "$PIXI_PROJECT_ROOT/docs/tutorials/*.qmd",
+]
+default-environment = "docs"
+
 [feature.dev.tasks.setup-hooks]
 cmd         = "prek install --prepare-hooks --overwrite"
 description = "Setup pre-commit hooks for development work."

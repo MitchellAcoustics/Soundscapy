@@ -87,6 +87,9 @@ explicit_package_bases = true
 [tool.pyrefly]
 # rpy2 ships no type information; treat it as Any instead of ignoring each call.
 replace-imports-with-any = ["rpy2.*"]
+# Quarto's temporary cell files live outside the project, so Pyrefly otherwise falls
+# back to whichever Python is first on PATH. Pin the pixi default environment.
+python-interpreter-path = ".pixi/envs/default/bin/python"
 
 [tool.pyrefly.errors]
 bad-override-mutable-attribute = "ignore"
