@@ -23,7 +23,8 @@ first build step is the toolchain, set up as the `house-style` skill describes.
 ## Repo map (target layout)
 
 - `design/`: PRD, architecture plan, specs (`design/specs/`), implementation plans
-  (`design/plans/`) and ADRs (`design/adr/`). Never part of the published docs.
+  (`design/plans/`), ADRs (`design/adr/`) and document reviews (`design/reviews/`).
+  Never part of the published docs.
 - `src/soundscapy/`: the package (src layout).
 - `tests/`: the pytest suite.
 - `docs/`: the great-docs site (`docs/great-docs.yml`). API reference comes from
