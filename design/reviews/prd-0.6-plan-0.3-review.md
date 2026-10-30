@@ -445,3 +445,35 @@ course tutorials and settings provenance.
    23) ADRs at M3 and M4 planning, but the `Signal`-as-window and call-time gating
    decisions are taken now.
 4. Then the Phase 0 / M1 spec.
+
+## Owner responses (2026-10-30), applied in PRD 0.7 and plan 0.4
+
+| Finding | Response |
+| --- | --- |
+| 1. Profile naming | Agreed as proposed. |
+| 2. Example 6 and the KS variant | Agreed. |
+| 3. FR-2.5a renormalisation | Agreed: a constrained Should. |
+| 4. Uncovered-language override | Agreed: three-way, "exclude" recommended. |
+| 5. `Mapping` | Agreed in principle. |
+| 6. Circumplex identity | Agreed. |
+| 7. `Coordinates` shape | Agreed. |
+| 8. N < 30 | Agreed. |
+| 9. Settings model | Agreed. |
+| 10. narwhals boundary | These come from not yet following narwhals' own API and conventions; review them carefully while building. |
+| 11. M1 scope | Agreed. |
+| 12. Audio backends | Drop full Table D.1 coverage as a hard requirement: missing open-source implementations must not block development. Drop the ECMA backend that brings PyQt6. Keep phonometry as an explicit extra. |
+| 13. Table D.1 definitions | As 12. |
+| 14. Pooled predictions | Agreed. |
+| 15. SPI uncertainty | Agreed: an optional multi-seed summary. |
+| 16. Output channel | Revisit "no printing or logging": follow scientific-Python practice for printing and logging, with notebook users in mind and a way to suppress output. Applied as PRD NFR-13. |
+| 17. Warnings | Agreed. |
+| 18. Import gating | Agreed; handle optional imports by current Python best practice. |
+| 19. Project directory | Agreed. |
+| 20. `Signal` | Agreed. |
+| 21. Interfaces | Agreed. |
+| 22. Overlap and shift | Keep only what the soundscape literature uses or other features need. No overlap statistic is defined in the cited literature, so none is planned; the shift vector is in the 2022 paper and Part 4 and stays. |
+| 23. 2021 fallback predictor | Stop deciding the model now. Fix the predictor interface and plugin mechanism so whichever model the owner chooses at M4 can be implemented. |
+| 24. 1.0 at M2 | Every release from M2 is a 1.0 alpha until the owner has evaluated the work; no API is frozen. |
+| 25. Recipes and discovery | Agreed: with the first alpha. |
+| 29. Skew-normal fitting | A Must, at the appropriate milestone (M2). |
+| 26–28, 30–41 | Not yet answered; listed in PRD 0.7 §10.6. |
