@@ -150,3 +150,27 @@ The architecture plan is behind the PRD. Its §3.2 still uses the Aletta 2024 fo
 and angles rather than the canonical projection and SATP v1.5, and its phase 4
 includes report generation, which the PRD puts out of scope. Check it against PRD
 0.4 once the §10.1 decisions are made.
+
+## Owner responses (2026-10-30), applied in PRD 0.5
+
+| Finding | Response |
+| --- | --- |
+| 1. In-browser core | Marimo dropped across the board. Tutorials are Quarto `.qmd` documents, so no in-browser constraint applies. |
+| 2. Predictions to distributions | Prediction stands on its own, not only as an input to SPI. A set of single-response predictions over enough inputs forms a distribution that can be scored. FR-5.9 was rewritten; there is no pooling or refusal rule. |
+| 3. Prediction and design dependencies | Single-response predictors do not block E. E1 and E2 kept. The fallback predictor and the 2021 approach remain open. |
+| 4. Project format | Agreed: a minimal project directory at M1. |
+| 5. Milestones and course | Agreed: the course is ready at M2. |
+| 6. ISO profiles | Profiles kept. The 2024 revision profile with the SATP v1.5 angles is the default. |
+| 7. Angle data | The chapter is open access and redistributable. Angles apply per response. An uncovered language with adjusted angles raises an overridable error; equal angles throughout proceed. |
+| 8. Draft standards | Standards are cited by their public editions. The owner supplies texts and fixtures. |
+| 9. Numeric drift | Tolerances follow the significant figures of each reference value. Floating-point drift within them never holds up development. FR-13.4 is a Must. |
+| 10. Throughput | Performance is a goal, not a criterion. |
+| 11. ArtemiS | The values are publishable. Comparisons are indicative, not requirements. The copyleft question remains open. |
+| 12. API requirements | Left to the architecture stage; NFR-12 (API) removed. Governance remains open. |
+| 13. Extension sequencing | Agreed: recipes are delivered per milestone. |
+| 14. Uncertainty | The APA-style reporting requirement is removed; requirements come from ISO and the Mitchell literature. The SPI test-set uncertainty question remains open. |
+| 15. Plain-terms targets | Dropped. Targets use Azzalini's parameterisation and terminology, and `sn`, as in the SPI paper. |
+| 16. Metric under-specification | Not over-specified here. Each metric surfaces its source library, method and definition. |
+| 17. GUI requirements | Removed. No GUI design is fixed. |
+| 18. Previous-package layout | Removed: no previous-package designs are referenced. |
+| 19. pySQAT | It is a Python package. Libraries on the LISQM list are assessed at implementation. |

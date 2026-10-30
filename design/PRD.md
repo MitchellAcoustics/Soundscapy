@@ -1,7 +1,7 @@
 # Product Requirements: an open-source soundscape assessment, analysis and design package
 
-Status: **draft 0.4 for review** (2026-10-30), revised after a review of 0.3
-(`design/reviews/prd-0.3-review.md`). This document states what the package
+Status: **draft 0.5 for review** (2026-10-30). Draft 0.4 applied the review of 0.3
+(`design/reviews/prd-0.3-review.md`); draft 0.5 records the owner's responses to it. This document states what the package
 must do and for whom. It deliberately says nothing about how it is built; the
 architecture plan is a separate document and must be checked against this one.
 
@@ -54,7 +54,9 @@ notebooks, and as the engine of a graphical application for non-programmers.
 
 ## 2. Scientific and standards baseline
 
-The package implements, and must stay faithful to, the following. The Mitchell papers
+The package implements, and must stay faithful to, the following. Standards are cited
+by their public editions; the owner supplies the texts, formulas and worked examples
+the implementation needs [agreed]. The Mitchell papers
 and chapters are the canonical reference for the methods; where a standard and a
 Mitchell source differ, the Mitchell source is the intended reading and the standard's
 edition is kept as a compatibility option. Only the circumplex portions of ISO/TS
@@ -64,9 +66,9 @@ edition is kept as a compatibility option. Only the circumplex portions of ISO/T
 |---|---|
 | ISO/TS 12913-2:2018 | Method A questionnaire (8 PAQ items, 4 source-dominance items, overall quality, appropriateness); binaural recording and equalisation. Methods B and C are out of scope |
 | ISO/TS 12913-3:2019 | Scale coding (Table A.1), fixed 45° projection divided by (4+√32), median and range, Spearman with ties, binaural metric set (Table D.1), higher-of-channels rule |
-| ISO/AWI TS 12913-3 (2024 revision draft) | General angle projection (A.1 to A.4), per-response projection, mean and SD per group, interquartile range for ordinal items, three named visualisations (scatter; KDE with decile contours; 50th-percentile contour), N < 30 rule, N_rmc, S_50 and IACC added, placeholder section on translated attributes |
+| ISO/TS 12913-3, revised edition (2024) | General angle projection (A.1 to A.4), per-response projection, mean and SD per group, interquartile range for ordinal items, three named visualisations (scatter; KDE with decile contours; 50th-percentile contour), N < 30 rule, N_rmc, S_50 and IACC added, placeholder section on translated attributes |
 | Mitchell 2025, "A robust approach to soundscape circumplex coordinate projections" (blog, adopted into the Part 3 revision) and Mitchell, Oberman, Aletta & Kang 2026, *Soundscape Across Languages* ch. 4 | **Canonical projection**: centre each score at the scale midpoint μ = (min+max)/2, scale by the half-range ρ = (max−min)/2, project with cos θ_i and sin θ_i, and normalise by Σ\|cos θ_i\| and Σ\|sin θ_i\| so that coordinates lie in [−1, 1] for any angle set and neutral responses map to the origin. Reduces to the 2019 formula for 45° angles. Also: the four-step validation (circular order, SEM fit, SSM location, congruence), confidence tiers (High/Medium/Low), the SATP v1.5 adjusted angles for 13 High-confidence languages, grand-mean ipsatisation per participant, and the recommendation not to project Low-tier languages |
-| ISO/CD TS 12913-4 (2025) | Design process: communication framework, Soundscape Design Brief with ambition statement and KPIs, pre- and post-intervention assessment, evaluation report; SPI named as a quantitative KPI; Example 6 (baseline SPI 56 against a tranquil target, success at SPI > 70) |
+| ISO/TS 12913-4 | Design process: communication framework, Soundscape Design Brief with ambition statement and KPIs, pre- and post-intervention assessment, evaluation report; SPI named as a quantitative KPI; Example 6 (baseline SPI 56 against a tranquil target, success at SPI > 70) |
 | SSID Protocol (Mitchell et al. 2020) | Location → Session → Group → Response hierarchy; one 30-s binaural clip per group; item coding; environmental and session metadata; id conventions |
 | Mitchell, Aletta & Kang 2022 | Distributional representation; projection before aggregation; "percent likely to perceive"; 50% contour as provisional |
 | Mitchell & Aletta 2023; Aletta et al. 2024 | The earlier language-specific adjusted-angle set and generalised projection, superseded by the 2026 chapter but still shipped as a selectable version |
@@ -119,9 +121,10 @@ reproducible from a saved configuration.
 information, and a table linking recordings to survey groups.
 *Wants:* the Part 3 Table D.1 metric set and the research feature set, per channel and
 as representative single values, in one tidy table joined to the survey data.
-*Done when:* 1,000 thirty-second recordings process overnight on a laptop
-**[open: binding, or an indicative expectation as NFR-3 says?]**, the run is resumable, the settings are saved with the results, and selected metrics agree
-with reference implementations within stated tolerances.
+*Done when:* the run is resumable, the settings are saved with the results, and an
+indicative comparison of selected metrics with ArtemiS values is published (FR-4.10).
+Batch processing should make runs noticeably faster than processing files one by
+one, but no throughput figure is an acceptance criterion [agreed].
 *Hardest step today:* speed, calibration, trusting the numbers.
 
 ### C. Score a site — Must
@@ -131,8 +134,9 @@ soundscape (a quadrant, a published reference target, or a client-specified shap
 *Wants:* an SPI value with its uncertainty, the target shown against the data, and an
 explanation a client can follow.
 *Done when:* Part 4 Example 6 can be reproduced (baseline SPI 56 against the
-tranquil target) and a user can define a bespoke target in the GUI's terms (centre,
-spread, skew) without knowing skew-normal parameters.
+tranquil target) and a user can define a bespoke target as a bivariate skew-normal
+distribution, in the parameterisation and terminology of Azzalini and the SPI paper
+(FR-6.2).
 *Hardest step today:* defining the target.
 
 ### D. Predict without a survey — Must
@@ -147,9 +151,13 @@ model (SoundAQnet) can be side-loaded as an optional plugin, and a third-party m
 can be added as a plugin without changing the package. Both single-response and
 distributional predictors are supported by the interfaces; which ships first depends
 on suitability (see FR-5.3) [agreed].
+Prediction is a step in its own right, not only an input to scoring: a user may
+predict and stop there. A set of single-response predictions over enough inputs forms
+a response distribution that can be analysed and scored like survey responses
+(FR-5.9) [agreed].
 **[proposed]** The published linear models (FR-5.3a) become the guaranteed fallback
 default, so D is deliverable even if neither probabilistic candidate passes the
-suitability check. Pooling point predictions into a distribution follows FR-5.9.
+suitability check.
 
 ### E. Evaluate a design against a brief — Must
 *Actor:* P2, P3.
@@ -163,9 +171,10 @@ report.
 *Done when:* the full Part 4 Example 6 story (brief → baseline → intervention →
 post-assessment → check against brief) can be executed, both with a post-intervention
 survey and with predicted scenarios.
-**[proposed]** Split delivery: **E1**, the post-intervention survey path, needs only A
-and C and is a Must at M2; **E2**, the predicted-scenario path, depends on D and is a
-Must at M4.
+Split delivery [agreed]: **E1**, the post-intervention survey path, needs only A and
+C and is a Must at M2; **E2**, the predicted-scenario path, depends on D and is a Must
+at M4. Single-response predictors serve E2 when a scenario supplies enough inputs to
+form a distribution (FR-5.9).
 
 ### F. Derive a reference target — Should
 *Actor:* P1.
@@ -181,7 +190,7 @@ languages, settings and dataset identity explicit, compatible with the MOSAIQ sc
 ### H. Train and benchmark a predictor — Later
 ### I. Reproduce a paper — Must
 *Actor:* P1, P5. *Done when:* the figures and tables of the 2022, 2024 (SPI) and 2021
-papers regenerate from the ISD with one notebook each, within documented tolerance.
+papers regenerate from the ISD with one document each, within documented tolerance.
 **[proposed]** For the 2021 paper, regeneration starts from the ISD's published
 feature table, because those features were computed in ArtemiS with metrics that are
 out of scope here (FR-4.5); re-fitting the models is excluded (FR-5.7 is Later).
@@ -197,8 +206,8 @@ of notebooks is handled by the course, not by this package [agreed].
 *Wants:* to run journeys A, C and E on ISD data and then on their own survey export
 during a taught session, with a reduced B where audio was collected; and to produce
 the assessed report (at most eight A4 sides) whose marking rewards ISO 12913-2
-reporting compliance, Part 3 analysis rigour, APA-style statistical reporting,
-visualisation quality and interpretation.
+reporting compliance, Part 3 analysis rigour, statistical reporting, visualisation
+quality and interpretation.
 *Acceptance cases, from the current assessment briefs (indicative, the package will go
 beyond them):*
 1. Two-site comparison (Regent's Park Broadwalk vs Japanese Garden): individual
@@ -212,10 +221,9 @@ beyond them):*
 the documented local path, every course exercise runs unchanged, and each acceptance
 case can be completed with the package's own outputs. "Every course exercise" means
 the exercises rewritten for this package; 0.x exercises are not supported (§8).
-**[proposed]** K becomes course-ready at M2, not M1: acceptance case 1 needs the ISD's
-published psychoacoustic table (FR-10.1), not the audio pipeline, and cases 2 and 3
-need only A and C. **[open]** Does the course adopt the documentation's marimo
-tutorials, or is a separate Jupyter set maintained?
+K becomes course-ready at M2, not M1: acceptance case 1 needs the ISD's published
+psychoacoustic table (FR-10.1), not the audio pipeline, and cases 2 and 3 need only A
+and C [agreed].
 
 ### L. Extend the package — Must (added)
 *Actor:* P6, P1.
@@ -245,7 +253,7 @@ requirement; "should" is desirable.
   language declared, and shall persist that mapping.
 - **FR-1.3a** (A, K; Must) Shall make building that mapping easy for a non-programmer:
   suggest matches from column names and known export schemas (REDCap/SSID codebook,
-  Qualtrics, the previous package's layout), let the user confirm or correct them,
+  Qualtrics), let the user confirm or correct them,
   and save the mapping for reuse on the next export from the same instrument
   [agreed].
 - **FR-1.4** (A, B; Must) Shall represent the SSID hierarchy Location → Session → Group
@@ -299,10 +307,13 @@ requirement; "should" is desirable.
   default, and the Aletta et al. 2024 set as a selectable earlier version; shall
   select the set from the declared survey language, allow the version to be chosen
   per language, and accept user-supplied angle sets with provenance [agreed].
-  **[proposed]** The language is declared per response or per group, not per dataset,
-  because the ISD and course case 2 mix languages. **[open]** For a language in
-  neither shipped set: fall back to 45° with a warning, refuse as for Low tier, or
-  require user-supplied angles?
+  Angles apply per response [agreed]. The user declares one language for a whole
+  dataset, or names a language column, and may supply angle sets for languages the
+  shipped sets lack. If adjusted angles are used for any response and some responses
+  are in a language with no shipped or supplied set, projection stops with an error
+  the user can override. If equal (45°) angles are used for the whole dataset,
+  language does not matter and projection proceeds. The SATP v1.5 set is the default
+  (it is published open access) [agreed].
 - **FR-2.4a** (A; Must) Shall carry each language's confidence tier with its angles:
   High-tier languages project silently; Medium-tier languages project with a
   warning; Low-tier languages (alb, vie, zsm in v1.5) are refused by default with
@@ -316,8 +327,6 @@ requirement; "should" is desirable.
   (location, session, demographic, time, user-defined); shall report mean, SD,
   quantiles and the proportion of responses in any quadrant, half-plane or
   user-defined region ("percent likely to perceive").
-  **[proposed]** Should also report confidence intervals for group means and region
-  proportions, since APA-style reporting (FR-2.6b) needs them.
 - **FR-2.6** (A; Must) Shall provide the Part 3 correlation requirements: Spearman
   with the tied-ranks formula for ordinal items, Pearson for interval data, with
   p-values, including correlations between each psychoacoustic metric and each
@@ -328,9 +337,6 @@ requirement; "should" is desirable.
   Kruskal–Wallis for ordinal items, t-test or ANOVA for coordinates) via the
   scientific Python stack, reporting statistic, degrees of freedom or N, p-value and
   effect size.
-- **FR-2.6b** (A, K; Must) Shall present statistical results in a report-ready form
-  (APA-style sentence and table) so that students and consultants can place them in
-  a report without transcription.
 - **FR-2.6c** (A, K; Must) Shall score the WHO-5 well-being index and summarise
   source-dominance profiles per location, since both appear in standard assessment
   reports (course acceptance cases 2 and 3).
@@ -338,13 +344,13 @@ requirement; "should" is desirable.
   psychoacoustic data as named in the revision's general clause.
 - **FR-2.8** (A; Later) Structural Summary Method metrics on the circumplex
   (amplitude, angle, elevation, fit) for a response or group [agreed].
-- **FR-2.9** (A, C; Must) **[proposed]** Shall offer named analysis profiles
+- **FR-2.9** (A, C; Must) Shall offer named analysis profiles
   selectable in one setting and recorded in every result: an "ISO/TS 12913-3:2019"
   profile (45° angles, 2019 formula, median and range, the 2019 Table D.1) and a
   "2024 revision" profile (canonical projection, adjusted angles, IQR, the 2024
   additions). A consultant can then state exactly which edition a number complies
-  with. **[open]** Which profile is the default, and which angle set does an
-  English-language survey get by default?
+  with. The 2024 revision profile, with the SATP v1.5 angles, is the default; both
+  are defensible, and the chapter will be citable [agreed].
 
 ### 5.3 Distributional representation
 
@@ -359,26 +365,30 @@ requirement; "should" is desirable.
 - **FR-3.4** (C; Must) Shall represent a parametric target distribution (bivariate
   skew-normal in direct parameters), convert to and from centred parameters where
   admissible, validate positive-definiteness, sample it with a seed, and fit it to
-  data. No maintained Python library fits a bivariate skew-normal, so this is
-  implemented here and validated against R `sn` (see NFR-9).
+  data. Parameterisation, terminology and fitting follow Azzalini's papers and the R
+  `sn` package, and the implementation is validated against `sn` (see NFR-9)
+  [agreed].
 
 ### 5.4 Audio and psychoacoustic analysis
 
 - **FR-4.0** (B; Must) Shall not re-implement psychoacoustic, ecoacoustic or
   environmental-acoustics algorithms. Metrics are provided by wrapping existing open
-  libraries (MoSQITo, pySQAT and others catalogued by the LISQM list; scikit-maad for
+  libraries (MoSQITo, pySQAT and others catalogued by the LISQM list,
+  https://github.com/ZhenxianLi/LISQM, assessed for suitability at implementation;
+  scikit-maad for
   ecoacoustics), and the metric set on offer is whatever those libraries provide,
   validated and exposed consistently [agreed]. The package's own contribution is
   calibration, batch orchestration, channel rules, statistics and consistent
-  outputs.
+  outputs. Each metric surfaces its source library, the standard or method it
+  implements and its definition as that library states them; the package provides a
+  unified interface, not a separate specification [agreed].
 - **FR-4.1** (B; Must) Shall accept mono (sound-level-meter or general) and
   two-channel (binaural or general stereo) recordings. Ambisonic and other
   multichannel processing is out of scope [agreed].
 - **FR-4.1a** (B; Must) Shall handle long-duration recordings (long-term sound-level
   meter files of hours) by computing metrics over user-defined time windows as well
   as whole-file, since consultants bring these alongside 30-s binaural clips
-  [agreed]. **[open]** Psychoacoustic metrics over hours of audio are heavy; limit
-  this to level metrics for 1.x, or keep the full metric set?
+  [agreed].
 - **FR-4.2** (B; Must) Shall apply calibration from (a) a known level per channel, or
   (b) a recorded calibrator signal (separate calibration file or a segment at a
   stated level, following the IEC 61672 field-calibration procedure as practised in
@@ -410,12 +420,11 @@ requirement; "should" is desirable.
 - **FR-4.9** (B; Must) Shall return results as one tidy table per recording (and per
   channel) that joins to survey data by group or clip identifier, and shall export to
   CSV and Excel.
-- **FR-4.10** (B; Must) Shall validate selected metrics against reference signals and
-  the ArtemiS reference values the group holds, with stated tolerances, and publish
-  those tolerances [agreed: reference values exist]. **[open]** Can the ArtemiS
-  values and reference signals be committed to the public repository? If not, public
-  tests use ISO 532-1 Annex B and synthetic signals, and the ArtemiS comparison is a
-  maintainer-only check; FR-13.2 then covers only the public set.
+- **FR-4.10** (B; Must) Shall publish an indicative comparison of selected metrics
+  with the ArtemiS values the group holds for its data, which may be published. The
+  comparison shows users that results are broadly consistent; it is not a pass or
+  fail requirement, because values depend on how closely each wrapped library
+  complies with its standard [agreed].
 - **FR-4.11** (B; Should) Should expose metric time series (not only statistics) for
   users who need them, with the frame rate recorded.
 
@@ -448,11 +457,11 @@ requirement; "should" is desirable.
 - **FR-5.6** (D, E; Must) Shall label every prediction with the model that produced
   it and keep predictions separate from measured responses in all tables and exports
   (MOSAIQ prediction layer).
-- **FR-5.9** (D, E; Must) **[proposed]** A predictor shall declare whether it
-  outputs a distribution or one point per clip. SPI, shift vectors and KPI checks
-  shall accept distributional outputs, or point outputs pooled over at least N clips
-  with the pooling rule and N recorded and the result labelled as pooled point
-  predictions; otherwise scoring shall be refused with an explanation.
+- **FR-5.9** (D, E; Must) A predictor shall declare whether it outputs one response
+  per input or a distribution. Prediction stands on its own and does not require a
+  later scoring step. A set of single-response predictions shall be usable wherever
+  a set of survey responses is, including distributions and SPI, subject to the same
+  sample-size rules (FR-3.2), and labelled as predictions (FR-5.6) [agreed].
 - **FR-5.7** (D; Later) The multilevel-model fitting workflow of the 2021 paper
   (feature screening, train/test split by location, stepwise selection, MAE and
   location-mean R²) as reusable steps [agreed].
@@ -467,13 +476,11 @@ requirement; "should" is desirable.
   (for example a bootstrap interval over responses), which journey C's "SPI with its
   uncertainty" implies. The default sample size shall match the 2024 paper so its
   tables reproduce.
-- **FR-6.2** (C; Must) Shall support bespoke targets defined either in direct
-  skew-normal parameters or in plain terms (centre, spread, skew direction, quadrant),
-  and shall show the target as a distribution before scoring. **[open]** No
-  published source maps plain terms to skew-normal parameters, and the mapping
-  becomes a de facto standard once it is in the GUI. Does the owner have a
-  definition, for example quadrant presets derived from the 2024 reference targets?
-  Inadmissible plain-terms inputs shall be rejected with a message.
+- **FR-6.2** (C; Must) Shall support bespoke targets defined as bivariate
+  skew-normal distributions in direct parameters, with conversion to centred
+  parameters where admissible, using the terminology of Azzalini and the SPI paper
+  rather than a simplified vocabulary, and shall show the target as a distribution
+  before scoring [agreed].
 - **FR-6.3** (C; Must) Shall ship a small, versioned library of named targets with
   provenance (at minimum the three demonstration targets of the 2024 paper and the
   Part 4 Example 6 tranquil target), clearly labelled as demonstration or reference.
@@ -485,7 +492,7 @@ requirement; "should" is desirable.
   multi-objective optimisation as published, recording the ranking, objectives,
   optimiser settings and Pareto selection.
 
-### 5.7 Design and intervention (ISO/CD TS 12913-4)
+### 5.7 Design and intervention (ISO/TS 12913-4)
 
 - **FR-7.1** (E; Must) Shall represent a Soundscape Design Brief: ambition statement,
   target distribution, KPI thresholds (for example SPI > 70), assessment method, and
@@ -528,7 +535,7 @@ requirement; "should" is desirable.
   library produce tables and figures that users place in their own reports
   [agreed]. The *content* of a Part 4 evaluation (FR-7.5) is still assembled as
   tables and figures.
-- **FR-9.3** (I; Must) Shall provide a notebook per supported paper that regenerates
+- **FR-9.3** (I; Must) Shall provide a `.qmd` document per supported paper that regenerates
   its figures and tables from the public dataset.
 
 ### 5.10 Datasets
@@ -559,14 +566,10 @@ requirement; "should" is desirable.
 - **FR-12.1** (K; Must) Shall provide a documented, tested path from nothing to a
   first circumplex plot in under an hour for a non-programmer using a local install
   and local notebooks. Hosted-notebook provision is outside the package [agreed].
-  Documentation tutorials are marimo notebooks that run in the reader's browser
-  through great-docs' native marimo integration, with no install [agreed
-  2026-10-30].
+  Tutorials are Quarto `.qmd` documents: plain text, executed when the
+  documentation is built, and runnable locally [agreed].
 - **FR-12.2** (K; Must) Shall provide course-aligned tutorials for journeys A, B, C
-  and E on the bundled dataset, runnable without modification. **[proposed]**
-  Tutorials for A, C and E run in the browser. Tutorials for B and D cannot, because
-  the audio and deep-model dependencies do not run under Pyodide; they are local
-  notebooks, and their pages show results computed at docs build.
+  and E on the bundled dataset, runnable without modification.
 - **FR-12.3** (all; Must) Documentation shall follow a single structure (tutorials,
   how-to, reference, explanation) with one source of truth per topic; the explanation
   section shall carry the science and standards references so that notebooks do not
@@ -584,9 +587,9 @@ requirement; "should" is desirable.
 - **FR-13.3** (L; Must) Shall support third-party extensions as separate installable
   packages (predictors first; metrics and datasets as well) so that research groups
   can publish methods without modifying the core.
-- **FR-13.4** (L; Should) Should document a deprecation and versioning policy so
-  course material and papers can pin a version safely. **[proposed]** Promote to Must,
-  because NFR-4's drift policy depends on it.
+- **FR-13.4** (L; Must) Shall document a deprecation and versioning policy so
+  course material and papers can pin a version safely. Promoted to Must, because
+  NFR-4 depends on it [agreed].
 
 ### 5.14 Readiness for a graphical application
 
@@ -600,19 +603,18 @@ possible without a rewrite.
 - **FR-14.3** (Must) Long-running operations shall report progress and be
   cancellable.
 - **FR-14.4** (Must) The project format (FR-1.7) shall be the unit of exchange
-  between library, CLI and GUI. This conflicts with FR-1.7 being a Should.
-  **[proposed]** A minimal project directory (mapping, settings, result tables,
-  manifest) is a Must at M1; packaging, sharing and GUI opening stay Should.
+  between library, CLI and GUI. A minimal project directory (mapping, settings,
+  result tables, manifest) is a Must at M1; packaging, sharing and opening in a GUI
+  stay Should (FR-1.7) [agreed].
 - **FR-14.5** (Must) A command-line interface shall cover journeys A, B, C and E so
   that each can be run without writing Python.
 - **FR-14.6** (Must) Audio and prediction shall be processable locally; nothing
   shall require uploading audio to a service [agreed, see NFR-5].
-- **FR-14.7** (Must) The core shall support two GUI tiers without change: a web
-  application covering survey analysis, plotting and SPI, and a desktop application
-  adding psychoacoustic analysis and prediction. Neither tier's choice shall shape
-  the core beyond the headless and serialisation requirements above [agreed]. The
-  GUI follows the conventions of technical analysis software: it drives the
-  package's analysis functions and exports CSV/Excel tables and figures.
+- **FR-14.7** (Must) No GUI design is fixed by this document. The core shall not
+  assume any GUI technology beyond the requirements above. As guidance only, the
+  owner expects a GUI to follow the conventions of technical analysis software,
+  driving the package's analysis functions and exporting tables and figures
+  [agreed].
 
 ---
 
@@ -624,30 +626,25 @@ possible without a rewrite.
   optimisation) install as extras or plugins. The package shall also install with a
   single install cell in hosted notebook services that users or the course choose;
   providing hosting is outside the package (FR-12.1).
-- **NFR-1a In-browser core.** **[proposed]** The survey, circumplex, distribution, SPI
-  and plotting core shall run under Pyodide, so its dependencies must ship pure-Python
-  or Pyodide wheels. Audio, optimisation and deep-model extras are exempt. CI shall
-  run the in-browser tutorials under Pyodide. This follows from FR-12.1's in-browser
-  tutorials and also makes a client-side web GUI tier (FR-14.7) possible.
 - **NFR-2 Platforms.** Python 3.11 and later [agreed 2026-10-30]; this is
   deliberately wider than the scientific-Python (SPEC 0) window. Windows is a
-  first-class target because of the consultant and student base. **[proposed]** The
-  test matrix includes the Python version of the Pyodide release used by the docs.
+  first-class target because of the consultant and student base.
 - **NFR-3 Performance.** Consultants bring tens to hundreds of binaural clips or
   long-term sound-level-meter recordings per project; researchers bring thousands of
   clips across surveys [agreed]. Quality of design and implementation comes first;
   no optimisation work is undertaken at this stage beyond what the batch design
-  gives for free (parallel files, resumable runs, caching) [agreed]. Indicative,
+  gives for free (parallel files, resumable runs, caching) [agreed]. Performance
+  improvements from batch processing are a goal, never a gate on development. Indicative,
   non-binding expectations: survey analysis of 10,000 responses stays interactive;
   SPI for one site is near-instant; audio throughput is whatever the wrapped
   libraries deliver, run in parallel.
 - **NFR-4 Reproducibility.** See FR-11; additionally the project shall publish
-  regression baselines and tolerances. **[proposed]** A change beyond a published
-  tolerance requires a major release or a new selectable, recorded method version.
-  Wrapped libraries are pinned to a tested range and baselines name their versions.
-  FR-11.2 applies to the core; plugin predictors state their own reproducibility.
-  (The 0.3 wording, "any numeric drift is a breaking change", cannot hold when
-  upstream metric libraries change numbers.)
+  regression baselines. Each tolerance follows the significant figures of its
+  reference value. Floating-point differences within that precision, whether from
+  library, platform or reasonable algorithm changes, are not regressions and do not
+  hold up development. A change beyond it is recorded with a new method version.
+  Wrapped libraries are pinned to a tested range, and baselines name their versions
+  [agreed].
 - **NFR-5 Privacy and data handling.** Recordings may contain speech and client data;
   the package shall not transmit data anywhere except explicit dataset downloads and
   explicit model-weight downloads, both of which shall state what is fetched
@@ -682,13 +679,7 @@ possible without a rewrite.
   is English for this release [agreed].
 - **NFR-11 Longevity.** Citable releases with DOIs; a software paper after the first
   stable release.
-- **NFR-12 Usable API.** **[proposed]** The brief asks for a core usable by
-  researchers and data analysts. Inputs and outputs are standard dataframes, so no
-  user has to learn a custom container to get their data out **[open: pandas only,
-  or pandas and polars?]**. The public API is one documented namespace under semantic
-  versioning, every public function is typed, and errors name the offending input
-  and the rule it broke.
-- **NFR-13 Governance.** **[open]** A short governance statement: who may cut a
+- **NFR-12 Governance.** **[open]** A short governance statement: who may cut a
   release, how a change that affects scientific results is reviewed, and the release
   cadence.
 
@@ -730,19 +721,19 @@ material.
 | Milestone | Journeys complete | Headline |
 |---|---|---|
 | M1 | A, I (2022 paper) | Survey analysis per the Part 3 revision with adjusted angles; no R |
-| M2 | C, E1, I (SPI paper), K | SPI with targets, in Python; course-ready **[proposed]** |
+| M2 | C, E1, I (SPI paper), K | SPI with targets, in Python; course-ready |
 | M3 | B | Audio pipeline with calibration, Table D.1, parallel and resumable |
 | M4 | D, E2, I (2021 paper) | Predictors, plugins, design-brief evaluation per Part 4 |
 | M5 | L, F, G | Extension recipes, reference-target search, harmonised datasets |
-| GUI | Web tier: A, C, E1; desktop tier adds B, D, E2 | Web tier on the M2 core; desktop tier on the M4 core |
+| GUI | To be designed | Built on the core; no tiers or technology fixed (FR-14.7) |
 
 Given one part-time maintainer, each milestone is scoped to be releasable and
 useful on its own, and M1 to M2 together constitute a usable 1.0 candidate for the
 course even if M3 to M5 slip. **[open]** Is 1.0 released at M2, with M3 to M5 as 1.x
 releases?
 
-**[proposed]** Deliver each extension recipe (FR-13.1) with the milestone that
-introduces that extension type: plot type and dataset loader at M1, metric at M3,
+Each extension recipe (FR-13.1) is delivered with the milestone that introduces that
+extension type [agreed]: plot type and dataset loader at M1, metric at M3,
 predictor at M4, and plugin discovery (FR-13.3) at M1. P6 is a primary persona, so
 contribution should not wait for M5. M5 then holds F, G and the trial in which a new
 contributor completes a recipe in under a day.
@@ -760,42 +751,40 @@ English-only interface (NFR-10); equalisation filter user-supplied (FR-4.3);
 performance targets relaxed in favour of design quality (NFR-3); default predictor to
 be chosen after a suitability check (FR-5.3); MOSAIQ field dictionary treated as
 normative once stable (FR-1.8, FR-10.3). Course acceptance cases are recorded under
-journey K. Decided on 2026-10-30: Python 3.11 floor (NFR-2) and in-browser marimo
-tutorials (FR-12.1).
+journey K.
 
-### 10.1 Owner decisions raised by the review of 0.3
+### 10.1 Decided on review of 0.3 (2026-10-30)
 
-Ranked by how much they change the plan. Each **[proposed]** change in the text is
-covered by one of these. Reasons and alternatives are in
-`design/reviews/prd-0.3-review.md`.
+Python 3.11 floor (NFR-2). Tutorials as Quarto `.qmd` documents, not notebooks run in
+the browser (FR-12.1). Standards cited by their public editions, with texts supplied
+by the owner (§2). Prediction stands on its own, and single-response predictions form
+distributions when there are enough inputs (FR-5.9, journeys D and E). E split into E1
+and E2, and the course ready at M2 (§9). A minimal project directory at M1 (FR-14.4).
+Extension recipes delivered per milestone (§9). The 2024 revision profile with the
+SATP v1.5 angles as default (FR-2.9). Per-response angles with an overridable error
+for uncovered languages (FR-2.4). Tolerances set by significant figures (NFR-4).
+Performance a goal, not a gate (journey B, NFR-3). ArtemiS comparisons indicative and
+publishable (FR-4.10). Metric definitions surfaced from their source libraries
+(FR-4.0). Skew-normal parameterisation and terminology from Azzalini and `sn` (FR-3.4,
+FR-6.2). No GUI design fixed (FR-14.7). API design left to the architecture stage. No
+APA-style reporting requirement. No reference to the previous package's layouts.
 
-1. **In-browser core** (NFR-1a, FR-12.2): accept that the survey, distribution, SPI
-   and plotting core must run under Pyodide, with audio and deep models exempt.
-2. **Predictions to distributions** (FR-5.9, journeys D and E): accept the pooling
-   rule, the E1/E2 split, and the linear models as fallback default predictor.
-3. **Project format** (FR-1.7, FR-14.4, FR-14.5): a minimal project directory as a
-   Must at M1, or demote the FR-14.4 and FR-14.5 Musts.
-4. **Release definition and sequence** (§9): 1.0 at M2 with the course ready, and
-   extension recipes delivered per milestone.
-5. **Analysis profiles and defaults** (FR-2.9): which profile and which English angle
-   set are the defaults.
-6. **Angle data** (FR-2.4): confirm that the SATP v1.5 and Aletta 2024 angle sets,
-   the full tier list and the attribute labels can be bundled under a licence that
-   permits it; choose the policy for a language in neither set.
-7. **Licences** (NFR-7, FR-4.10): LGPL and GPL extras; whether the ArtemiS reference
-   values can be published.
-8. **Plain-terms targets** (FR-6.2): the mapping to skew-normal parameters.
-9. **2021 paper reproduction** (journey I): from the ISD feature table, without
-   re-fitting.
-10. **Audio scope** (journey B, FR-4.1a): whether the overnight figure binds, and the
-    metric scope for long files.
-11. **API and governance** (NFR-12, NFR-13): pandas only, or pandas and polars; the
-    governance statement.
-12. **Course notebooks** (journey K): the course adopts the marimo tutorials, or a
-    Jupyter set is also maintained.
-13. **Uncertainty** (FR-2.5, FR-6.1): accept the added Should items.
+### 10.2 Still open for the owner
 
-### 10.2 Implementation-stage questions (not requirements)
+1. **Release definition** (§9): is 1.0 released at M2, with M3 to M5 as 1.x?
+2. **Fallback predictor** (journey D): accept the linear models of FR-5.3a as the
+   guaranteed default if neither probabilistic candidate passes its suitability check.
+3. **2021 paper reproduction** (journey I): start from the ISD's published feature
+   table, without re-fitting the models.
+4. **SPI uncertainty** (FR-6.1): add the test set's own sampling uncertainty, and
+   adopt the 2024 paper's default sample size.
+5. **Copyleft dependencies** (NFR-7): whether an LGPL dependency through dynamic
+   linking is acceptable (audio file I/O through libsndfile is one), and whether a
+   GPL library may be an optional extra or plugin.
+6. **Governance** (NFR-12): who may cut a release, how a change affecting scientific
+   results is reviewed, and the release cadence.
+
+### 10.3 Implementation-stage questions (not requirements)
 
 1. Which of the two candidate probabilistic predictors becomes the default (FR-5.3).
 2. Which wrapped libraries cover which Table D.1 metrics, and therefore what the 1.0
@@ -807,15 +796,12 @@ covered by one of these. Reasons and alternatives are in
 
 | Assumption or dependency | Risk | Mitigation in this PRD |
 | --- | --- | --- |
-| The Part 3 revision (ISO/AWI) and Part 4 (ISO/CD) are drafts | Formulas, metric lists and Example 6 change before publication | Each edition is a selectable, recorded profile (FR-2.9, NFR-6). Record the draft date implemented. |
-| The builder can see the draft standards' text | Without it, acceptance tests can match only the Mitchell sources, and Example 6 inputs must be rebuilt from the 2024 paper | The owner supplies the formulas, N_rmc, S_50 and IACC definitions and the Example 6 inputs as test fixtures. |
+| The owner supplies the standards' formulas, definitions and worked examples (§2) | Acceptance tests wait on them | Request them before each milestone's tests are written. |
 | The MOSAIQ schema is a draft | Field names change | Treated as normative only once stable (FR-1.8, FR-10.3). |
-| SATP v1.5 angles come from a 2026 book chapter | Publisher copyright may prevent bundling | Decision 6 in §10.1. |
-| MoSQITo and other wrapped libraries cover Table D.1 | Coverage gaps, slow pure-Python metrics, unmaintained code | Gaps documented (FR-4.4); library versions pinned (NFR-4). Check whether "pySQAT" is a Python package (SQAT is MATLAB) before relying on it. |
-| No maintained Python library fits a bivariate skew-normal or computes a 2-D KS distance | Bespoke implementation risk | Permitted under NFR-9 with validation against R `sn` and the published values. |
-| Weights and licences of the candidate predictors (Tong et al. 2026, Ooi et al. 2022, SoundAQnet) | No redistributable default | FR-5.3a linear models as fallback (journey D). |
-| The ISD on Zenodo serves files to browsers (CORS) | In-browser tutorials cannot fetch the full ISD | In-browser tutorials use the bundled subset (FR-10.1), kept to a few MB. |
-| One part-time unfunded maintainer | Milestones slip | Each milestone releasable on its own (§9); 1.0 at M2. |
+| Wrapped libraries (MoSQITo, pySQAT and others on the LISQM list) cover Table D.1 | Coverage gaps, slow metrics, unmaintained code | Gaps documented (FR-4.4); suitability assessed at implementation (FR-4.0); versions pinned (NFR-4). |
+| No maintained Python library fits a bivariate skew-normal or computes a 2-D KS distance | Bespoke implementation risk | Permitted under NFR-9, following Azzalini and validated against `sn` and the published values. |
+| Weights and licences of the candidate predictors (Tong et al. 2026, Ooi et al. 2022, SoundAQnet) | No redistributable default | Open question 2 in §10.2. |
+| One part-time unfunded maintainer | Milestones slip | Each milestone releasable on its own (§9). |
 
 ---
 
@@ -830,7 +816,8 @@ covered by one of these. Reasons and alternatives are in
 | Formulation | The projection formula used: canonical (2025/2026), 2019 or Aletta 2024 (FR-2.3). |
 | Angle set, tier | A versioned set of per-language attribute angles, and each language's confidence tier (FR-2.4, FR-2.4a). |
 | Profile | A named bundle of edition-specific settings (FR-2.9). |
-| Target | A parametric distribution describing the desired soundscape, on one circumplex (FR-3.4, FR-6.2). |
+| Direct, centred parameters | The two skew-normal parameterisations of Azzalini, as used by the R `sn` package and the SPI paper. |
+| Target | A bivariate skew-normal distribution describing the desired soundscape, on one circumplex (FR-3.4, FR-6.2). |
 | SPI | Soundscape Perception Index: 100(1 − D), where D is the 2-D KS distance to a target (FR-6.1). |
 | Scenario | A named set of design inputs and its resulting perception distribution (FR-7.2). |
 | KS | Kolmogorov–Smirnov distance. |
