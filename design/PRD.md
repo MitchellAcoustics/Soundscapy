@@ -155,9 +155,9 @@ Prediction is a step in its own right, not only an input to scoring: a user may
 predict and stop there. A set of single-response predictions over enough inputs forms
 a response distribution that can be analysed and scored like survey responses
 (FR-5.9) [agreed].
-**[proposed]** The published linear models (FR-5.3a) become the guaranteed fallback
-default, so D is deliverable even if neither probabilistic candidate passes the
-suitability check.
+The published linear models (FR-5.3a) are the guaranteed fallback default, so D is
+deliverable even if neither probabilistic candidate passes the suitability check
+[agreed].
 
 ### E. Evaluate a design against a brief — Must
 *Actor:* P2, P3.
@@ -191,8 +191,8 @@ languages, settings and dataset identity explicit, compatible with the MOSAIQ sc
 ### I. Reproduce a paper — Must
 *Actor:* P1, P5. *Done when:* the figures and tables of the 2022, 2024 (SPI) and 2021
 papers regenerate from the ISD with one document each, within documented tolerance.
-**[proposed]** For the 2021 paper, regeneration starts from the ISD's published
-feature table, because those features were computed in ArtemiS with metrics that are
+For the 2021 paper, regeneration starts from the ISD's published feature table
+[agreed], because those features were computed in ArtemiS with metrics that are
 out of scope here (FR-4.5); re-fitting the models is excluded (FR-5.7 is Later).
 
 ### J. Long-term monitoring — Later
@@ -729,8 +729,8 @@ material.
 
 Given one part-time maintainer, each milestone is scoped to be releasable and
 useful on its own, and M1 to M2 together constitute a usable 1.0 candidate for the
-course even if M3 to M5 slip. **[open]** Is 1.0 released at M2, with M3 to M5 as 1.x
-releases?
+course even if M3 to M5 slip. 1.0 is released at M2, and M3 to M5 are 1.x releases
+[agreed].
 
 Each extension recipe (FR-13.1) is delivered with the milestone that introduces that
 extension type [agreed]: plot type and dataset loader at M1, metric at M3,
@@ -767,21 +767,18 @@ Performance a goal, not a gate (journey B, NFR-3). ArtemiS comparisons indicativ
 publishable (FR-4.10). Metric definitions surfaced from their source libraries
 (FR-4.0). Skew-normal parameterisation and terminology from Azzalini and `sn` (FR-3.4,
 FR-6.2). No GUI design fixed (FR-14.7). API design left to the architecture stage. No
-APA-style reporting requirement. No reference to the previous package's layouts.
+APA-style reporting requirement. No reference to the previous package's layouts. 1.0 at M2 (§9). Linear models as the
+fallback default predictor (journey D). The 2021 paper reproduced from the ISD feature
+table (journey I).
 
 ### 10.2 Still open for the owner
 
-1. **Release definition** (§9): is 1.0 released at M2, with M3 to M5 as 1.x?
-2. **Fallback predictor** (journey D): accept the linear models of FR-5.3a as the
-   guaranteed default if neither probabilistic candidate passes its suitability check.
-3. **2021 paper reproduction** (journey I): start from the ISD's published feature
-   table, without re-fitting the models.
-4. **SPI uncertainty** (FR-6.1): add the test set's own sampling uncertainty, and
+1. **SPI uncertainty** (FR-6.1): add the test set's own sampling uncertainty, and
    adopt the 2024 paper's default sample size.
-5. **Copyleft dependencies** (NFR-7): whether an LGPL dependency through dynamic
+2. **Copyleft dependencies** (NFR-7): whether an LGPL dependency through dynamic
    linking is acceptable (audio file I/O through libsndfile is one), and whether a
    GPL library may be an optional extra or plugin.
-6. **Governance** (NFR-12): who may cut a release, how a change affecting scientific
+3. **Governance** (NFR-12): who may cut a release, how a change affecting scientific
    results is reviewed, and the release cadence.
 
 ### 10.3 Implementation-stage questions (not requirements)
@@ -800,7 +797,7 @@ APA-style reporting requirement. No reference to the previous package's layouts.
 | The MOSAIQ schema is a draft | Field names change | Treated as normative only once stable (FR-1.8, FR-10.3). |
 | Wrapped libraries (MoSQITo, pySQAT and others on the LISQM list) cover Table D.1 | Coverage gaps, slow metrics, unmaintained code | Gaps documented (FR-4.4); suitability assessed at implementation (FR-4.0); versions pinned (NFR-4). |
 | No maintained Python library fits a bivariate skew-normal or computes a 2-D KS distance | Bespoke implementation risk | Permitted under NFR-9, following Azzalini and validated against `sn` and the published values. |
-| Weights and licences of the candidate predictors (Tong et al. 2026, Ooi et al. 2022, SoundAQnet) | No redistributable default | Open question 2 in §10.2. |
+| Weights and licences of the candidate predictors (Tong et al. 2026, Ooi et al. 2022, SoundAQnet) | No redistributable default | Linear models of FR-5.3a as the fallback default (journey D). |
 | One part-time unfunded maintainer | Milestones slip | Each milestone releasable on its own (§9). |
 
 ---
