@@ -9,6 +9,7 @@ The code has been cleared out deliberately. The planning documents that drive th
 rewrite live in `design/`:
 
 - `design/PRD.md`: product requirements.
-- `design/greenfield_architecture_plan.md`: architecture plan.
+- `design/greenfield_architecture_plan.md`: architecture plan, out of date until it is
+  rewritten from the PRD.
 
 Development of the previous package continues on `main`.

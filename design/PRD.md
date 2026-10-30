@@ -572,7 +572,7 @@ requirement; "should" is desirable.
   and E on the bundled dataset, runnable without modification.
 - **FR-12.3** (all; Must) Documentation shall follow a single structure (tutorials,
   how-to, reference, explanation) with one source of truth per topic; the explanation
-  section shall carry the science and standards references so that notebooks do not
+  section shall carry the science and standards references so that tutorials do not
   repeat them.
 - **FR-12.4** (all; Must) Every public function shall have a reference entry with
   the standard clause or paper it implements.
@@ -767,9 +767,9 @@ Performance a goal, not a gate (journey B, NFR-3). ArtemiS comparisons indicativ
 publishable (FR-4.10). Metric definitions surfaced from their source libraries
 (FR-4.0). Skew-normal parameterisation and terminology from Azzalini and `sn` (FR-3.4,
 FR-6.2). No GUI design fixed (FR-14.7). API design left to the architecture stage. No
-APA-style reporting requirement. No reference to the previous package's layouts. 1.0 at M2 (§9). Linear models as the
-fallback default predictor (journey D). The 2021 paper reproduced from the ISD feature
-table (journey I).
+APA-style reporting requirement. No reference to the previous package's layouts. 1.0
+at M2 (§9). Linear models as the fallback default predictor (journey D). The 2021
+paper reproduced from the ISD feature table (journey I).
 
 ### 10.2 Still open for the owner
 

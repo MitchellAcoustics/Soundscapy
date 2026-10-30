@@ -12,9 +12,10 @@ soundscape perception, and scoring and design with the Soundscape Perception Ind
 (SPI). It must work as a library, in teaching material, and as the engine of a GUI
 for acoustic engineers, architects and urban designers.
 
-`design/PRD.md` states the requirements. `design/greenfield_architecture_plan.md` is the
-draft architecture. Read both before designing anything, and check every design
-decision against the PRD. Nothing from the previous soundscapy codebase carries over.
+`design/PRD.md` states the requirements; read it before designing anything, and check
+every design decision against it. `design/greenfield_architecture_plan.md` predates
+PRD 0.5 and is being rewritten from it: do not design or plan from it until it says
+it has been updated. Nothing from the previous soundscapy codebase carries over.
 
 **Status:** only the agent setup exists. There is no `pyproject.toml`, `Taskfile.yml`,
 package, test suite or docs site yet, so the `task` commands below do not exist. The
