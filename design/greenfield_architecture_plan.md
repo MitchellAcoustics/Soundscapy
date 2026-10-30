@@ -1,7 +1,9 @@
 # Architecture plan for the soundscapy rewrite
 
 Status: **draft 0.2 for review** (2026-10-30). This draft has been rewritten from PRD
-draft 0.5 (`design/PRD.md`) and supersedes draft 0.1, which predated the PRD. It is
+draft 0.5 (`design/PRD.md`) and supersedes draft 0.1, which predated the PRD. A
+fresh-eyes builder check was run on it; its answerable questions are folded in and
+marked "my call", and the rest are items 8 and 9 of §15. It is
 the document AGENTS.md means by "the architecture plan", and it may now be used for
 design and planning. Nothing in it is fixed except the science; every decision below
 is a proposal with the alternative it beat and the reason, so that each one can be
@@ -139,12 +141,21 @@ class AngleSet(BaseModel, frozen=True):
     languages: Mapping[str, LanguageAngles] # ISO 639-3 -> angles per position + tier
     provenance: Provenance
 
+class AngleSelection(BaseModel, frozen=True):
+    """How angles are resolved per response (FR-2.4): equal angles, or a default set with
+    per-language overrides that may name a shipped version or a user-supplied file."""
+    default: Literal["equal"] | str         # "equal", or an AngleSet name such as "satp-v1.5"
+    per_language: Mapping[str, str] = {}    # ISO 639-3 -> AngleSet name or path to a user set
+    allow_low_confidence: bool = False      # FR-2.4a override, recorded in the result
+    on_uncovered: Literal["error", "equal"] = "error"   # FR-2.4 override
+
 class Profile(BaseModel, frozen=True):
     """A named bundle of edition-specific settings (FR-2.9)."""
     name: str                               # "iso12913-3-2019", "iso12913-3-2024"
     formulation: Literal["canonical", "iso2019", "aletta2024"]
-    angles: Literal["equal"] | str          # "equal" or an AngleSet name
+    angles: AngleSelection
     dispersion: Literal["range", "iqr"]
+    missing_items: Literal["exclude", "renormalise"] = "exclude"   # see §15, decision 8
     metric_set: str                         # name of a Table D.1 edition (used from M3)
 ```
 
@@ -163,6 +174,12 @@ Decisions and the alternatives they beat:
   defines it) and may be overridden per mapping (a survey used 1..7). Projection
   reads `mu` and `rho` from the scale actually used, which is what makes the canonical
   formulation reduce correctly to the 2019 one.
+- **Angles resolve per response.** `AngleSelection` is applied to each response's
+  language: the per-language override first, then the default set, then the
+  `on_uncovered` rule. The projection result records, per response, which set and
+  version supplied its angles, so a nine-language dataset using two shipped versions
+  and one user file is representable and auditable. Deriving angle sets is out of
+  scope (FR-2.4a); a user file is the same TOML format as a shipped set.
 - **Angle sets and profiles are data files, not code.** They ship under
   `soundscapy/_data/` as TOML with provenance, and a user-supplied set is the same
   file format. Adding the next SATP version is a data change plus a test.
@@ -173,13 +190,23 @@ Decisions and the alternatives they beat:
 ### 3.2 Surveys: mappings, tables, quality
 
 ```python
+class Coding(BaseModel, frozen=True):
+    """How raw export values become scale scores (FR-2.1): REDCap 0..4, text anchors,
+    reversed parts. Identity when the export already holds Table A.1 scores."""
+    values: Mapping[str | int, int] | None = None   # raw value -> score; None = numeric as is
+    offset: int = 0                         # e.g. +1 for 0-based exports
+    reverse: bool = False                   # part coded in the opposite direction
+
 class Mapping(BaseModel, frozen=True):
     """Which user column means which construct (FR-1.3), persisted as a file (FR-1.3a)."""
     instrument: str                         # circumplex name
     scale: Scale | None = None              # override of the instrument's scale
     attributes: Mapping[str, str]           # position -> column name
+    coding: Coding | Mapping[str, Coding] = Coding()   # one for all attributes, or per position
     language: str | LanguageColumn          # one language, or {"column": name}
-    ids: Ids                                # response/group/session/location column names, any subset
+    ids: Ids                                # column names for the roles response, group, session,
+                                            #   location (SSID) and participant, stimulus (listening
+                                            #   experiments); any subset
     source_dominance: Mapping[str, str] = {}   # construct -> column
     overall_quality: str | None = None
     appropriateness: str | None = None
@@ -220,9 +247,24 @@ class Dataset:                              # frozen dataclass, plain container
   and recordings cleanly. Most analysis functions take only `responses` and the
   mapping; `Dataset` exists so loaders have one return type and the project directory
   has one layout. It has no behaviour beyond validation and joins.
+- **Coding lives in the mapping, not in a separate step.** Exports arrive as 0..4,
+  1..5, text anchors or reversed parts; `Coding` on the mapping converts them to
+  Table A.1 scores at import, and `suggest_mapping` proposes it from the observed
+  values. This keeps the mapping the single persisted description of an instrument's
+  export (FR-1.3a). My call; the canonical layout (FR-1.2) uses the identity coding.
+- **Id roles are open, not SSID-only.** `Ids` carries the SSID roles and the
+  listening-experiment roles (participant, stimulus), so SATP and ARAUS (M5) and
+  ipsatisation (below) need no schema change after 1.0. My call.
 - **Ipsatisation** (FR-2.4b) is a pure transform `ipsatise(responses, mapping) ->
-  pd.DataFrame` that returns a new frame and is recorded in provenance when used; it
-  is never a default.
+  pd.DataFrame` grouping by the participant id, returning a new frame, recorded in
+  provenance when used; it is never a default.
+- **Missing attribute items.** The canonical formulation normalises over all items,
+  so a response with a missing item cannot be projected without a rule. The default
+  is `missing_items="exclude"`: the coordinate is NaN and the response carries the
+  reason `incomplete_attributes`, so it counts in item-level statistics but not in
+  coordinate statistics. `"renormalise"` projects over the present items with the
+  normaliser recomputed, recorded in provenance. The default is an owner decision
+  (§15, item 8).
 
 ### 3.3 Coordinates and distributions: the central abstractions
 
@@ -234,7 +276,8 @@ class Coordinates:
     circumplex: Circumplex
     source: Literal["survey", "prediction", "sample"]
     labels: pd.DataFrame | None             # optional per-point columns: ids, grouping keys
-    settings: ProjectionSettings | PredictorRef | TargetRef   # what produced them
+    settings: ProjectionSettings | PredictorRef | TargetRef   # what produced them; the *Ref
+                                            #   records live in provenance.py so distribution never imports spi
     # methods: subset(mask), group_by(key) -> dict[key, Coordinates], mean(), sd(), quantiles(),
     #          fraction_in(region) ("percent likely to perceive"), to_frame()
 
@@ -242,7 +285,7 @@ class Coordinates:
 class KernelDensity:
     """A KDE view of Coordinates with an explicit bandwidth (FR-3.1)."""
     coordinates: Coordinates
-    bandwidth: float | tuple[float, float] | Literal["scott", "silverman"]
+    bandwidth: float | Literal["scott", "silverman"]   # scipy gaussian_kde bw_method: a scalar factor
     # methods: grid(resolution) -> DensityGrid, mass_contour(fraction) -> Polygon,
     #          decile_contours() -> list[Polygon], marginals() -> (x, y) densities
 
@@ -270,11 +313,15 @@ class Target(BaseModel, frozen=True):
   shift vectors, SPI, scenario comparison and every plot take `Coordinates`. This is
   the single most important decision in the plan: it makes journeys A, C, D and E
   share one path instead of four.
-- **Regions** (quadrants, half-planes, user polygons) are value objects built on
-  `matplotlib.path.Path` for point-in-polygon, no shapely. Quadrant regions are
-  defined from the circumplex axes so they work for any instrument.
-- **KDE is a view, not a transform.** Bandwidth is explicit and recorded; the default
-  is Scott's rule, stated in every result, with a sensitivity helper. The "50th
+- **Regions** (quadrants, half-planes, user polygons) are value objects with a numpy
+  point-in-polygon test (a few lines of ray casting), so `distribution` imports
+  neither matplotlib nor shapely. Quadrant regions are defined from the circumplex
+  axes so they work for any instrument.
+- **KDE is a view, not a transform.** The estimator is `scipy.stats.gaussian_kde`
+  (Gaussian kernel, bandwidth a scalar factor times the data covariance), the same
+  family seaborn uses, so there is exactly one KDE definition in the package
+  (principle 7). Bandwidth is explicit and recorded; the default is Scott's rule,
+  stated in every result, with a sensitivity helper. The "50th
   percentile contour" is computed from the cumulative mass of the grid so its meaning
   is unambiguous and the fraction is a parameter (FR-3.1). Contour polygons come from
   `contourpy`, which matplotlib already depends on, so geometry needs no figure.
@@ -311,7 +358,9 @@ def evaluate(brief: Brief, baseline: Coordinates, scenarios: Mapping[str, Coordi
 
 - **SPI is explicitly stochastic**, as published: `n_samples` and `rng` are required
   keyword arguments with no defaults in the core function; the profile supplies the
-  paper's defaults when called through settings. Sampling variability is always
+  paper's sample size when called through settings or the CLI, which is how FR-6.1's
+  "default sample size matches the 2024 paper" is met. Needs owner sign-off (§15,
+  item 4). Sampling variability is always
   reported; a bootstrap over the test set is an option (the PRD's open item 1).
 - **Target search** (FR-6.5, Should) lives behind the `optim` extra with pymoo and
   returns a `Target` whose provenance records the ranking, objectives and optimiser
@@ -514,8 +563,9 @@ and CI cost; that still holds. The seams above are kept so that `audio` or `pred
 could be split into their own distributions later without renaming imports.
 
 Extras (`pyproject.toml` `[project.optional-dependencies]`): `audio` (mosqito,
-scikit-maad, soundfile), `optim` (pymoo), `excel` (openpyxl, if pandas' own extra is
-not enough), `all`. Optional imports are gated at module import with one
+scikit-maad, soundfile, matplotlib pinned for MoSQITo, phonometry on 3.13+), `optim`
+(pymoo), `all`. openpyxl is a core dependency because Excel import and export are
+Must requirements at M1 (FR-1.1, FR-9.1). Optional imports are gated at module import with one
 `MissingExtraError("install soundscapy[audio]")`.
 
 ---
@@ -635,8 +685,9 @@ and what a failure means (FR-13.2, NFR-4, NFR-8).
 2. **Literature fixtures** (`tests/science/`, default run, each test docstring cites the
    source and the significant figures that set its tolerance). The ISO worked
    examples supplied by the owner; Part 4 Example 6 (SPI 56); the 2024 paper's tables
-   at the stated seed and sample size; the 2022 paper's figures as geometry (contour
-   vertices and proportions, not pixels); the 2021 models predicting the published
+   at the stated seed and sample size; the 2022 paper's numeric outputs (per-location means, quadrant
+   proportions, contour vertices) against a baseline the owner supplies or approves,
+   since the paper prints figures, not numbers (§15, item 9); the 2021 models predicting the published
    location means from the ISD feature table.
 3. **Cross-implementation references** (`tests/reference/`, marked `reference`, run in
    CI nightly and on demand). Skew-normal fitting and sampling against committed R
@@ -801,7 +852,7 @@ records are written as the decisions are taken, under `design/adr/`.
 | Phase | Deliverables | Exit criterion |
 |---|---|---|
 | 0. Toolchain | `pyproject.toml`, `Taskfile.yml`, prek, CI, docs skeleton, import-linter contracts, ADR-0001 (functional core and records), ADR-0002 (positions and mappings), ADR-0003 (Coordinates as the central type), ADR-0004 (settings files and project directory) | `task check` and `task docs` green on an empty package |
-| M1. Survey analysis | `instrument`, `survey`, `projection`, `distribution` (Coordinates, regions, KDE, ks2d, SkewNormal), `plot` basics, `datasets.isd` with bundled subset, `project` minimal directory, CLI for journey A, recipes for plot type and dataset loader, plugin discovery, tutorial A, reproduction of the 2022 paper | Journey A done-when; 2022 figures regenerate as geometry within tolerance |
+| M1. Survey analysis | `instrument`, `survey`, `projection`, `distribution` (Coordinates, regions, KDE, ks2d, SkewNormal), `plot` basics, `datasets.isd` with bundled subset, `project` minimal directory, CLI for journey A, recipes for plot type and dataset loader, plugin discovery, tutorial A, reproduction of the 2022 paper | Journey A done-when; the 2022 paper's `.qmd` renders its figures and tables from the ISD, and its numeric outputs match the baseline the owner supplies (§15, item 9) |
 | M2. SPI and design (1.0) | `spi` with targets library and bootstrap, `design` with Brief/Scenario/evaluate, CLI for C and E1, tutorials C and E, course acceptance cases 2 and 3, reproduction of the 2024 paper, versioning policy, 1.0 release | Part 4 Example 6 reproduces; course exercises run unchanged |
 | M3. Audio | `audio` (Signal, I/O, calibration, built-in level metrics, MoSQITo and scikit-maad backends, batch runner, manifest), CLI for B, metric recipe, tutorial B, ArtemiS comparison page | Journey B done-when; ISO 532-1 reference signals pass; a 1,000-file batch resumes |
 | M4. Prediction | `predict` (protocol, discovery, LinearPredictor, default probabilistic predictor after suitability check), `soundscapy-soundaqnet` plugin, E2 in `design`, CLI for E2, predictor recipe, reproduction of the 2021 paper | Journey D and E2 done-when |
@@ -846,6 +897,17 @@ Ordered by how much a wrong guess would cost. Each has the plan's recommendation
    moves a regression baseline, and the cadence. The plan assumes a "Scientific
    changes" changelog section and a method version bump need one maintainer's review
    plus a passing reference test, but that is a policy, not a design.
+8. **Responses with missing attribute items** (§3.2). Recommendation: exclude from
+   coordinates with a recorded reason by default, with renormalisation as an explicit
+   option. This is a scientific choice: it changes group means, quadrant proportions
+   and every N, and the standards do not state a rule.
+9. **The 2022-paper acceptance baseline** (§8, §14). The paper prints figures from the
+   0.x pipeline (2019 formula, 45° angles, seaborn's KDE with its bandwidth
+   adjustment, the ISD version of the time). Options: the owner supplies the exact
+   settings and the ISD record version so the plan can regenerate numbers; or the
+   builder regenerates a baseline with 0.x once and the owner approves it, in which
+   case it is a regression baseline rather than a literature fixture. Also whether the
+   2024 revision prescribes a KDE method or bandwidth; the owner holds the text.
 
 ### Inputs the plan still needs from the owner (unchanged from PRD §10.3)
 
