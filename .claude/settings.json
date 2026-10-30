@@ -13,12 +13,6 @@
         "repo": "astral-sh/claude-code-plugins"
       }
     },
-    "posit-dev-skills": {
-      "source": {
-        "source": "github",
-        "repo": "posit-dev/skills"
-      }
-    },
     "claude-plugins-official": {
       "source": {
         "source": "github",
@@ -27,18 +21,15 @@
     }
   },
   "enabledPlugins": {
-    "modern-python@trailofbits": true,
     "astral@astral-sh": true,
-    "posit-dev@posit-dev-skills": true,
-    "github@posit-dev-skills": true,
-    "quarto@posit-dev-skills": true,
-    "code-review@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
+    "modern-python@trailofbits": true,
     "superpowers@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": false,
+    "code-review@claude-plugins-official": false,
+    "cowork-plugin-management@synced": false,
     "data@synced": false,
-    "cowork-plugin-management@synced": false
+    "pr-review-toolkit@claude-plugins-official": false,
+    "pyright-lsp@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": false
   },
   "permissions": {
     "allow": [

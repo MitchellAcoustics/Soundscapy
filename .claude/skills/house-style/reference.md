@@ -133,7 +133,7 @@ review like code, and run wherever the package is installed.
 - A tutorial is done when `great-docs build` renders it with every cell executed,
   without errors and without warnings that the page does not explain.
 - Quarto authoring details (callouts, tabsets, cross-references, figures) are in the
-  `quarto-authoring` skill (posit `quarto` plugin).
+  vendored `quarto-authoring` skill.
 
 ## 3. Commands cheat-sheet
 

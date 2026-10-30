@@ -8,25 +8,20 @@
 # in step with enabledPlugins in .claude/settings.json.
 #
 # Plugins are installed at user scope so the repository's settings file is not
-# rewritten. A failed install is reported but does not fail the session.
+# rewritten. The cloud image pre-installs code-review, pr-review-toolkit and
+# skill-creator; settings.json switches those off, because built-in commands and
+# vendored copies replace them. A failed install is reported but does not fail the session.
 set -uo pipefail
 
 marketplaces=(
   anthropics/claude-plugins-official
   trailofbits/skills
   astral-sh/claude-code-plugins
-  posit-dev/skills
 )
 plugins=(
   modern-python@trailofbits
   astral@astral-sh
-  posit-dev@posit-dev-skills
-  github@posit-dev-skills
-  quarto@posit-dev-skills
-  code-review@claude-plugins-official
-  pr-review-toolkit@claude-plugins-official
   superpowers@claude-plugins-official
-  skill-creator@claude-plugins-official
 )
 
 failed=0
