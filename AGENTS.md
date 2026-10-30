@@ -87,8 +87,17 @@ typecheck, run by the Stop hook), `check`, `docs`, `docs:preview`, `build`,
 
 ## Review
 
-- Run the code-review plugin (`/code-review`) before declaring a PR ready.
-- PRs target `soundscapy-rewrite`.
+Finish each unit of work (a feature, a fix, or one milestone of a plan) in this order:
+
+1. Make it work, with tests; `task check` passes.
+2. Run a simplify pass (`/simplify` in Claude Code) on the change, then run
+   `task check` again. Simplify is the refactor step, so it needs passing tests
+   first, and it is not worth running on every commit while code is still moving.
+3. Run `/code-review` and address the findings, so review sees the final code. If
+   that leads to substantial changes, run one more simplify pass on just those.
+
+Before declaring a PR ready, both passes must have run on its final changes.
+PRs target `soundscapy-rewrite`.
 
 ## Don't
 

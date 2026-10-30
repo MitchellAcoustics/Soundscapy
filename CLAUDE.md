@@ -17,7 +17,8 @@
     `wasm-compatibility`: notebooks. `marimo-pair`: live-kernel editing.
   - `quarto-authoring`: `.qmd` pages. `describe-design`: architecture write-ups.
   - `superpowers`: brainstorming, specs, plans, TDD, systematic debugging.
-  - `/code-review`, `/review-pr`, `critical-code-reviewer`, `review-testing`: review.
+  - `/simplify` then `/code-review` at the end of each unit of work (see AGENTS.md).
+    `/review-pr`, `critical-code-reviewer` and `review-testing` for deeper review.
   - `pr-create`, `pr-threads-address`: pull requests (confirm before pushing).
   - `skill-creator`: creating or improving project skills.
 - `git push` is denied by the project permissions. The user pushes, or approves a push.
