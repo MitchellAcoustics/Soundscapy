@@ -3,7 +3,9 @@
 Status: **draft 0.2 for review** (2026-10-30). This draft has been rewritten from PRD
 draft 0.5 (`design/PRD.md`) and supersedes draft 0.1, which predated the PRD. A
 fresh-eyes builder check was run on it; its answerable questions are folded in and
-marked "my call", and the rest are items 8 and 9 of §15. It is
+marked "my call". Owner decisions taken on the first review (2026-10-30): no copyleft
+restriction on dependencies; dataframe-agnostic through narwhals; click for the CLI;
+progress visible in notebooks as well as the CLI. The remaining questions are in §15. It is
 the document AGENTS.md means by "the architecture plan", and it may now be used for
 design and planning. Nothing in it is fixed except the science; every decision below
 is a proposal with the alternative it beat and the reason, so that each one can be
@@ -57,8 +59,8 @@ for M3 to M5 is built early.
 
 Each principle says what it rules out, because that is what makes it testable.
 
-1. **Functional core.** Computation is pure functions over numpy arrays and pandas
-   DataFrames. No function mutates its input, reads global state, writes files, prints
+1. **Functional core.** Computation is pure functions over numpy arrays and
+   dataframes. No function mutates its input, reads global state, writes files, prints
    or shows a figure. Rules out "analyser" and "manager" classes with mutable state.
 2. **Settings are data; results carry their settings.** Every configurable thing is a
    frozen pydantic model with a stable text form. Every result object holds the
@@ -70,10 +72,13 @@ Each principle says what it rules out, because that is what makes it testable.
    `Protocol` extension points (a metric backend, a predictor, a dataset loader). Rules
    out inheritance from third-party classes, deep hierarchies, and classes whose
    methods are a pipeline in disguise.
-4. **We do not own the user's DataFrame.** Survey data stay in pandas with the user's
-   column names. A `Mapping` says which column is which construct and on what scale.
-   The package validates through the mapping and adds derived columns with documented
-   names. Rules out renaming or reordering user columns and wrapping rows in objects.
+4. **We do not own the user's DataFrame.** Survey data stay in the user's own
+   dataframe library (pandas, polars, pyarrow or any other narwhals-supported eager
+   frame) with the user's column names, and come back in the same library. A
+   `Mapping` says which column is which construct and on what scale. The package
+   validates through the mapping and adds derived columns with documented names.
+   Rules out renaming or reordering user columns, wrapping rows in objects, and
+   pandas-specific code outside the two boundaries named in §6.
 5. **Positions, not words, for attributes.** A circumplex names its attributes by
    position identifier (PAQ1…PAQn, counter-clockwise from the positive x-axis) and
    carries labels per language. The mapping binds user columns to positions
@@ -97,8 +102,11 @@ Each principle says what it rules out, because that is what makes it testable.
    silent coercion and `warnings.warn` with a generic category.
 9. **Headless by construction.** No `plt.show()`, no `print`, no `input`, no implicit
    file writes, logging through the standard library with a `NullHandler`. Progress
-   through a callback, cancellation through a token. Rules out tqdm or rich inside
-   the library (the CLI may use them).
+   goes through a `ProgressReporter` protocol and cancellation through a token; the
+   package ships one default reporter built on `tqdm.auto`, which renders a text bar
+   in a terminal and a widget in a notebook, so notebook users see progress without
+   wiring anything. Rules out any other output from the library, and rules out rich,
+   which the CLI alone may use.
 10. **Dependency direction is enforced.** Lower layers never import higher ones; an
     import-linter contract runs in CI. Rules out the "everything imports everything"
     drift that makes a volunteer refactor frightening.
@@ -215,11 +223,11 @@ class Mapping(BaseModel, frozen=True):
     provenance: Provenance
 
 class Dataset:                              # frozen dataclass, plain container
-    responses: pd.DataFrame
+    responses: IntoFrame                    # any narwhals-supported eager frame; returned in kind
     mapping: Mapping
-    groups: pd.DataFrame | None = None      # one row per group; recording path lives here
-    sessions: pd.DataFrame | None = None
-    locations: pd.DataFrame | None = None
+    groups: IntoFrame | None = None         # one row per group; recording path lives here
+    sessions: IntoFrame | None = None
+    locations: IntoFrame | None = None
     recordings: RecordingIndex | None = None   # from M3; never loads audio
     provenance: Provenance
 ```
@@ -233,7 +241,7 @@ class Dataset:                              # frozen dataclass, plain container
   Decision: a `validate(dataset) -> ValidationReport` function in the package;
   pandera is not used. Revisit only if validation needs grow beyond the mapping.
 - **Quality rules are a list of named rule objects** (FR-1.5), each a small callable
-  `(responses, mapping) -> pd.Series[bool]` with a name and a reason string. `apply_rules`
+  `(responses, mapping) -> boolean mask` with a name and a reason string. `apply_rules`
   adds `included` and `exclusion_reason` columns and returns a new frame. Rules are
   configurable by listing them in settings; the default list is documented. Nothing is
   dropped.
@@ -256,7 +264,7 @@ class Dataset:                              # frozen dataclass, plain container
   listening-experiment roles (participant, stimulus), so SATP and ARAUS (M5) and
   ipsatisation (below) need no schema change after 1.0. My call.
 - **Ipsatisation** (FR-2.4b) is a pure transform `ipsatise(responses, mapping) ->
-  pd.DataFrame` grouping by the participant id, returning a new frame, recorded in
+  frame` grouping by the participant id, returning a new frame, recorded in
   provenance when used; it is never a default.
 - **Missing attribute items.** The canonical formulation normalises over all items,
   so a response with a missing item cannot be projected without a rule. The default
@@ -275,7 +283,7 @@ class Coordinates:
     xy: np.ndarray                          # (n, 2), float64, in [-1, 1]^2
     circumplex: Circumplex
     source: Literal["survey", "prediction", "sample"]
-    labels: pd.DataFrame | None             # optional per-point columns: ids, grouping keys
+    labels: IntoFrame | None                # optional per-point columns: ids, grouping keys, in the input's library
     settings: ProjectionSettings | PredictorRef | TargetRef   # what produced them; the *Ref
                                             #   records live in provenance.py so distribution never imports spi
     # methods: subset(mask), group_by(key) -> dict[key, Coordinates], mean(), sd(), quantiles(),
@@ -325,9 +333,20 @@ class Target(BaseModel, frozen=True):
   percentile contour" is computed from the cumulative mass of the grid so its meaning
   is unambiguous and the fraction is a parameter (FR-3.1). Contour polygons come from
   `contourpy`, which matplotlib already depends on, so geometry needs no figure.
-- **SkewNormal is pure numpy/scipy**, following Azzalini's `sn` for parameterisation,
-  centred/direct conversion, admissibility, sampling and fitting; validated once
-  against `sn` outputs committed as fixtures (NFR-9, FR-3.4). There is no R anywhere.
+- **SkewNormal is implemented here, in numpy and scipy, because nothing suitable
+  exists in Python.** A research pass on 2026-10-30 checked the assumption: scipy's
+  `skewnorm` is univariate only, and the request for a multivariate version (scipy
+  issue 14870) has been open since 2021; no package on PyPI provides a multivariate
+  skew-normal (sixteen plausible names probed); the only GitHub implementation
+  (spc90/multivariate_skew_distributions) has a density and sampler but no fitting,
+  no centred parameters and no licence; PyMC and TensorFlow Probability offer the
+  univariate case only. Azzalini's own site lists Python code for the univariate
+  case alone. So the plan implements, following `sn`: `dmsn` (pdf and log-pdf),
+  `rmsn` (sampling by the conditioning construction), `dp2cp` and `cp2dp` with the
+  admissibility check (Arellano-Valle and Azzalini 2008), and maximum-likelihood
+  fitting on the centred parameters with `scipy.optimize`, as `selm` does. It is a
+  few hundred lines, validated against `sn` outputs committed as fixtures (NFR-9,
+  FR-3.4), generated once by an R script kept beside them. R is not a dependency.
 - **The 2-D KS distance** is a numpy implementation of the published method, chosen to
   match the SPI paper (FR-6.1); the paper's tables are the acceptance test.
 - **N < 30** (FR-3.2) is enforced where a density is requested: `KernelDensity` raises
@@ -343,8 +362,10 @@ def spi(test: Coordinates, target: Target, *, n_samples: int, rng: int | np.rand
 
 def shift(a: Coordinates, b: Coordinates) -> ShiftVector
 def overlap(a: KernelDensity, b: KernelDensity, fraction: float) -> float
-def rank_against(target, scenarios: Mapping[str, Coordinates], **spi_kwargs) -> pd.DataFrame
-def rank_targets(test, targets: Mapping[str, Target], **spi_kwargs) -> pd.DataFrame
+def rank_against(target, scenarios: Mapping[str, Coordinates], **spi_kwargs) -> Frame
+def rank_targets(test, targets: Mapping[str, Target], **spi_kwargs) -> Frame
+# Frame: a table the package creates, in the library of the input frame where there is one,
+# else the `backend=` argument (default pandas); see §5 conventions
 
 class Brief(BaseModel, frozen=True):        # FR-7.1
     ambition: str; target: Target; kpi: KPI; assessment_method: str; scenarios: tuple[str, ...]
@@ -408,9 +429,10 @@ class MetricBackend(Protocol):              # extension point (FR-13.1, recipe a
   scipy (IEC 61672 pole-zero design), Leq, SEL, percentiles, IACC by normalised
   cross-correlation. Everything else is wrapped.
 - **Backends, from an evaluation of every Python entry in the LISQM list** (Appendix
-  C has the full table). Against the hard requirements (pip wheels, no compiler, no
-  MATLAB or R, Python 3.11 and later, no copyleft in the `soundscapy` distribution)
-  the field is small:
+  C has the full table). The hard requirements are pip wheels, no compiler, no MATLAB
+  or R, and Python 3.11 and later. Licence is recorded per backend but is no longer a
+  filter: the owner decided on 2026-10-30 that copyleft dependencies are acceptable
+  (PRD NFR-7 needs amending to match). The field is still small:
   - **MoSQITo 1.2.1** (Apache-2.0; numpy, scipy, pyuff) is the default backend. It
     provides ISO 532-1 stationary and time-varying loudness, DIN 45692 sharpness,
     Daniel–Weber roughness, ECMA-418-2 loudness and roughness (an earlier edition than
@@ -432,35 +454,40 @@ class MetricBackend(Protocol):              # extension point (FR-13.1, recipe a
     use: an optional second backend installed with an environment marker
     (`phonometry; python_version >= "3.13"`), so users on 3.13 gain fluctuation
     strength and ECMA tonality while 3.11 and 3.12 users get MoSQITo only. See §15.
-  - **Excluded from the distribution, with the reason**: `sottek-hearing-model`
-    (AGPL-3 on PyPI, GPL-3 on GitHub; depends on PyQt6; the best-verified ECMA-418-2
-    implementation, translated from the SQAT authors' MATLAB); `MetaSona` (fast C
-    implementation with wheels, but the combined work is GPL-3 and the authors call
-    roughness and tonality experimental); `refmap-psychoacoustics`, `rota-order`,
-    `torch_amt` (GPL-3); `pySQAT` (TU Delft port of SQAT, no licence file, no
-    release, so unusable by anyone); `ecma418-torch` (MIT but requires torch, one
-    commit); `iso532-1-rs` (Apache-2.0 but no wheels, source build); `acoustic-toolbox`
-    (BSD-3 and useful, but it pulls numba and soundfile for level metrics that are
-    thirty lines of scipy here); `PsychoacousticParametersMeasurer`,
+  - **sottek-hearing-model 0.1.14** (AGPL-3 on PyPI; numpy, scipy, bottleneck, plus
+    matplotlib, tqdm and PyQt6 declared as hard dependencies) is the ECMA-418-2
+    backend for the 2025 edition: loudness, roughness, tonality and fluctuation
+    strength, translated from the SQAT authors' verified MATLAB and maintained by the
+    RefMap project. It fills both gaps that MoSQITo leaves on Python 3.11 and 3.12.
+    Its PyQt6 dependency is the one cost (a large wheel in the `audio` extra); the
+    plan asks upstream to make it optional and, failing that, accepts it.
+  - **Not used, with the reason**: `MetaSona` (fast C implementation with wheels on
+    all three OS, but the authors call roughness and tonality experimental and
+    conformance unestablished; a candidate fast backend once validated); `pySQAT`
+    (TU Delft port of SQAT, no licence file and no release, so unusable by anyone
+    until a licence is added; the most complete candidate otherwise); `ecma418-torch`
+    (requires torch, one commit); `iso532-1-rs` (no wheels, source build);
+    `acoustic-toolbox` (useful, but pulls numba and soundfile for level metrics that
+    are thirty lines of scipy here); `refmap-psychoacoustics` (its Python part is
+    detectability only), `rota-order` (PR/TNR, which MoSQITo has), `torch_amt`
+    (torch; not in Table D.1); `PsychoacousticParametersMeasurer`,
     `NumpyLibforPsychoAcoustic`, `LoudnessModel` (no licence, no release, or dormant).
-    A GPL backend can still exist as a separately published plugin that a user
-    installs knowingly, if the owner accepts that (§15).
 - **Coverage statement for Table D.1 at M3, given the above.** Levels (LAeq, LCeq,
   LAF5, LAF95, LA10 − LA90, LCeq − LAeq, SEL, kurtosis) built in; loudness (N5, Navg,
   Nrmc, N95, N5/N95) and sharpness (S5, Savg, S50, S95) from MoSQITo; roughness (R10,
-  R50) from MoSQITo (Daniel–Weber and ECMA); tonality via ECMA-74 PR/TNR from MoSQITo,
-  with ECMA-418-2 tonality only through phonometry on 3.13+; fluctuation strength (F10,
-  F50) only through phonometry on 3.13+; IACC built in. On Python 3.11 and 3.12,
-  fluctuation strength and ECMA-418-2 tonality are documented gaps (FR-4.4), not
-  bespoke implementations.
+  R50) from MoSQITo (Daniel–Weber) and sottek-hearing-model (ECMA-418-2:2025);
+  tonality from sottek-hearing-model (ECMA-418-2) and MoSQITo (ECMA-74 PR and TNR);
+  fluctuation strength (F10, F50) from sottek-hearing-model (ECMA-418-2) and, on
+  3.13+, phonometry (Osses); IACC built in. Every Table D.1 metric therefore has a
+  backend on Python 3.11. Aures tonality has no admissible backend on 3.11 and is a
+  documented gap (FR-4.4); psychoacoustic annoyance (FR-4.5) is phonometry-only.
 - **Calibration is a value object applied once**, when a `Signal` is loaded; metrics
   never see raw full-scale data without knowing it. Loading with no calibration is
   allowed (for inspection and metrics that are level-independent), and a metric that
   needs Pa raises `UncalibratedSignalError`.
 - **Audio I/O.** WAV via `scipy.io.wavfile` in the core (it reads 16-, 24- and 32-bit
   PCM and float, which covers sound-level-meter and binaural recorder exports) and
-  `soundfile` behind the `audio` extra for FLAC and other formats, so the LGPL question
-  (PRD open item 2) affects only the extra. See §15.
+  `soundfile` in the `audio` extra for FLAC and other formats.
 - **Batch runner.** `analyse(recordings: RecordingIndex, metrics: MetricSet, *,
   executor, cache_dir, progress, cancel) -> AudioResults`. Work units are
   `(path, file_hash, calibration, MetricSet)` and are picklable; results are cached per
@@ -480,7 +507,7 @@ class Predictor(Protocol):                  # FR-5.1
 
 @dataclass(frozen=True)
 class Prediction:
-    per_input: pd.DataFrame                 # one row per clip: predicted items/coordinates, labelled by model
+    per_input: Frame                        # one row per clip: predicted items/coordinates, labelled by model
     coordinates: Coordinates                # source="prediction"; pooled from single responses (FR-5.9) or sampled
     predictor: PredictorRef
 ```
@@ -543,7 +570,7 @@ src/soundscapy/
 ├── datasets/            # pooch registry, isd/, satp/, araus/, delta/, bundled subset
 ├── plot/                # circumplex axes, scatter, density, contour, marginals, shift, target, likert, radar, timeseries
 ├── project/             # Project directory: layout, open/save, manifest, settings and mapping files
-├── cli/                 # typer app; one command group per journey
+├── cli/                 # click app; one command group per journey; documented by great-docs
 └── _data/               # instruments/*.toml, angles/*.toml, profiles/*.toml, targets/*.toml,
                          #   schemas/*.toml (SSID, REDCap, Qualtrics), models/*.csv, isd_subset/
 ```
@@ -553,7 +580,7 @@ Layer contracts (enforced by import-linter):
 | Layer | May import |
 |---|---|
 | `errors`, `provenance`, `settings`, `instrument` | numpy, pydantic, stdlib |
-| `survey`, `projection`, `distribution` | the row above, pandas, scipy, contourpy |
+| `survey`, `projection`, `distribution` | the row above, narwhals, scipy, contourpy (pandas and polars only inside `survey.io` and `survey.stats`) |
 | `spi`, `design`, `predict`, `audio`, `datasets` | the rows above (not each other, except `design` → `spi`, `predict` → `audio` contracts) |
 | `plot` | everything above, matplotlib |
 | `project`, `cli` | everything |
@@ -563,9 +590,10 @@ and CI cost; that still holds. The seams above are kept so that `audio` or `pred
 could be split into their own distributions later without renaming imports.
 
 Extras (`pyproject.toml` `[project.optional-dependencies]`): `audio` (mosqito,
-scikit-maad, soundfile, matplotlib pinned for MoSQITo, phonometry on 3.13+), `optim`
-(pymoo), `all`. openpyxl is a core dependency because Excel import and export are
-Must requirements at M1 (FR-1.1, FR-9.1). Optional imports are gated at module import with one
+sottek-hearing-model, scikit-maad, soundfile, matplotlib pinned for MoSQITo,
+phonometry on 3.13+), `optim` (pymoo), `polars` (polars and fastexcel, for users who
+want polars frames back), `all`. openpyxl is a core dependency because Excel import
+and export are Must requirements at M1 (FR-1.1, FR-9.1). Optional imports are gated at module import with one
 `MissingExtraError("install soundscapy[audio]")`.
 
 ---
@@ -607,8 +635,14 @@ result.table                                                      # SPI, shift, 
 
 Conventions:
 
-- Functions take and return DataFrames or records; they never mutate inputs. Derived
-  columns are added to a returned copy with documented names.
+- Functions take and return frames or records; they never mutate inputs. Derived
+  columns are added to a returned copy with documented names, in the caller's own
+  dataframe library.
+- Tables the package creates (`describe`, rankings, audio results) come back in the
+  library of the frame that went in; where nothing went in, `backend=` chooses, with
+  pandas as the default.
+- Long operations take `progress=` (default: the tqdm.auto reporter; `None` for
+  silence; any `ProgressReporter` for a GUI) and `cancel=`.
 - `settings=` or `profile=` keyword arguments accept a model, a name, or a path; the
   resolved model is what the result records.
 - Randomness always takes `rng: int | np.random.Generator`; no function reads global
@@ -619,8 +653,8 @@ Conventions:
 - Every record has `to_frame()` where tabular, `save()`/`load()`, and `settings`.
 - Exceptions derive from `SoundscapyError`; warnings from `SoundscapyWarning`. Each
   specific condition has its own class so tests and GUIs can catch one thing.
-- A pandas accessor (`df.ssp.project()`) is rejected for 1.0: it is magic, hard to type
-  with ty, and hides the mapping argument.
+- A dataframe accessor (`df.ssp.project()`) is rejected for 1.0: it is magic, hard to
+  type with ty, pandas-specific, and hides the mapping argument.
 - Deprecations: `DeprecationWarning` for two minor releases, a changelog entry, and a
   "method version" bump when a scientific result changes beyond tolerance (NFR-4,
   FR-13.4).
@@ -640,14 +674,15 @@ restated here only where the plan relies on it or adds to it.
 | Types | ty; `py.typed` shipped | House style. Pydantic models and plain functions type well; pandas return types are `pd.DataFrame` with documented columns, not typed frames. |
 | Settings and specs | pydantic v2 frozen models | JSON schema for free, which is what a GUI form and the settings-file docs are generated from. Beat dataclasses + hand-written loaders. |
 | Settings files | TOML written by `tomli-w`, read by `tomllib` | Human-editable with comments, standard library reader, no YAML dependency. JSON for machine-written manifests and result sidecars. See §15. |
-| Tables | pandas as the public contract; numpy inside kernels | Researchers, seaborn and statsmodels all speak pandas. polars or narwhals would add an abstraction tax before there is demand; kernels on numpy keep the door open. |
+| Tables | narwhals (`narwhals.stable.v2`) at the boundary; numpy inside kernels; pandas and polars tested in CI | Owner decision. Functions accept any narwhals-supported eager frame and return the same kind. A spike in this session showed the boundary pattern (select mapped columns to numpy, compute, `with_columns` back) is a dozen lines and identical for pandas and polars. Two pandas-only boundaries remain and are documented: statsmodels (convert on the way in) and `read_survey` for Excel (pandas with openpyxl by default, polars with fastexcel via the `polars` extra). No backend-specific code anywhere else; an import-linter contract keeps `pandas` and `polars` imports out of every module except `survey.io` and `survey.stats`. |
 | Numerics | numpy, scipy (stats, signal, optimize), contourpy | Standard. |
 | Statistics | scipy.stats and statsmodels; thin `tidy()` helpers returning statistic, df or N, p, effect size | FR-2.6, FR-2.6a. pingouin was considered and rejected as a dependency for a few effect sizes that are ten lines each. |
-| Audio | scipy.io.wavfile core; mosqito, scikit-maad, soundfile (and phonometry on 3.13+) in the `audio` extra | §3.5 and Appendix C. |
+| Audio | scipy.io.wavfile core; mosqito, sottek-hearing-model, scikit-maad, soundfile (and phonometry on 3.13+) in the `audio` extra | §3.5 and Appendix C. Licence recorded per backend, not a filter. |
 | Optimisation | pymoo in the `optim` extra | FR-6.5 only. |
 | Data fetching | pooch | Standard in scientific Python; hash checks, cache, licence message. |
+| Progress | `ProgressReporter` protocol; default reporter on `tqdm.auto` (core dependency, pure Python) | Notebook users see a widget, terminal users a bar, GUIs bind their own, tests bind a recorder. |
 | Plotting | matplotlib; seaborn only where it saves real code (stacked bars, palettes) | §10. |
-| CLI | typer | Well known to volunteers, typed, generates help; beat argparse (verbose for sub-commands) and cyclopts (less known). |
+| CLI | click | Owner decision: great-docs documents click commands automatically (`cli: enabled: true` in `great-docs.yml`, discovered from `soundscapy.cli`), so the CLI reference is generated like the API reference. |
 | Tests | pytest, hypothesis, pytest-cov, pytest-xdist; `filterwarnings = error` | House style plus §8. |
 | Architecture checks | import-linter contracts in `task lint` | §4. |
 | Docs | great-docs; Quarto `.qmd` tutorials; Diátaxis layout | House style; FR-12. |
@@ -717,10 +752,13 @@ the four extension recipes live under `tests/templates/` and are copied by the r
 - **Resumable by construction.** The per-file cache is the resume mechanism; there is
   no separate checkpoint format. A manifest lists what was computed with which
   versions (FR-4.8, FR-11.4).
-- **Progress and cancellation are protocols**, not libraries: `ProgressReporter`
-  with `start(total)`, `advance(path)`, `finish()`; `CancelToken` with `cancelled()`.
-  The library checks the token between work units (FR-14.3). The CLI binds a rich or
-  tqdm bar; a GUI binds its own; tests bind a recorder.
+- **Progress and cancellation are protocols**: `ProgressReporter` with
+  `start(total)`, `advance(path)`, `finish()`; `CancelToken` with `cancelled()`. The
+  library checks the token between work units (FR-14.3). The default reporter wraps
+  `tqdm.auto`, so a notebook shows a widget and a terminal a text bar with no setup;
+  `progress=None` silences it; the CLI may bind rich instead; a GUI binds its own;
+  tests bind a recorder. Cancellation in a notebook is the kernel interrupt, which
+  the runner catches between work units and turns into a clean partial result.
 - **Target search** (FR-6.5) uses the same two protocols around pymoo's evaluation
   loop.
 - **Everything else is vectorised numpy.** KDE on a 200 × 200 grid for 10,000 points is
@@ -836,7 +874,12 @@ literature a question it leaves open. None changes the science.
    torch out of the course install (NFR-1) and the weights' licences out of the core's.
 9. **Mapping suggestion is data-driven** (§3.2): known export schemas are files, so a
    course tutor can add a new survey platform's layout without a release.
-10. **`Dataset` has almost no behaviour.** Draft 0.1 and the 0.x package both grew
+10. **narwhals is confined to the boundary.** Dataframe-agnosticism is an owner
+    decision; the plan keeps its cost low by allowing narwhals calls only where a
+    user frame enters or leaves (select to numpy, add columns, group keys) and by
+    testing pandas and polars in CI. If a feature needs more than that, it converts
+    to numpy rather than growing a narwhals-wide code path.
+11. **`Dataset` has almost no behaviour.** Draft 0.1 and the 0.x package both grew
     container classes that accumulated methods; this plan keeps the container as a
     record and puts behaviour in functions, so the public surface stays small.
 
@@ -862,59 +905,58 @@ records are written as the decisions are taken, under `design/adr/`.
 
 ## 15. Decisions for the owner
 
-Ordered by how much a wrong guess would cost. Each has the plan's recommendation.
+Taken on the first review (2026-10-30) and now in the plan: copyleft dependencies are
+acceptable, so sottek-hearing-model and soundfile are in the `audio` extra (PRD NFR-7
+and open item 2 to be amended); dataframe-agnostic through narwhals; click for the
+CLI; progress visible in notebooks through the default tqdm reporter.
 
-1. **Copyleft, concretely.** The best-verified Python implementation of the
-   ECMA-418-2 metrics (`sottek-hearing-model`) is AGPL/GPL-3, as are MetaSona,
-   refmap-psychoacoustics and rota-order, and `soundfile` links LGPL libsndfile.
-   Recommendation: no GPL or AGPL code in the core or in any extra of the
-   `soundscapy` distribution; a GPL backend may exist only as a separately published
-   plugin (`soundscapy-shm`, say) that a user installs knowingly; LGPL through dynamic
-   linking is acceptable in the `audio` extra. This decides the M3 metric list. (PRD
-   open item 2.)
-1a. **phonometry and the Python floor.** phonometry is the only permissive package
-   that fills the fluctuation-strength and ECMA-418-2 tonality gaps, and it needs
-   Python 3.13. Options: (i) keep the 3.11 floor and ship phonometry as a
-   3.13-only optional backend (recommended; the gaps are then documented per Python
-   version); (ii) raise the floor to 3.13 for the `audio` extra only; (iii) raise the
-   package floor to 3.13, reversing the NFR-2 decision; (iv) exclude phonometry
-   until it is independently validated. Whichever is chosen, the ArtemiS comparison
-   (FR-4.10) is run per backend so users see how each agrees.
-2. **Project table format.** CSV with sidecars (recommended, §11) or parquet
+Still open, ordered by how much a wrong guess would cost. Each has the plan's
+recommendation.
+
+1. **phonometry and the Python floor.** phonometry (MIT, numpy and scipy only) is the
+   broadest single backend and the only source of Osses fluctuation strength and
+   psychoacoustic annoyance, and it needs Python 3.13. With sottek-hearing-model now
+   admissible, Table D.1 is covered on 3.11 without it. Options: (i) keep the 3.11
+   floor and ship phonometry as a 3.13-only optional backend (recommended; its
+   metrics then show as available per Python version); (ii) raise the package floor
+   to 3.13, reversing NFR-2; (iii) leave it out until independently validated.
+2. **Project table format.** CSV with JSON sidecars (recommended, §11) or parquet
    (adds pyarrow, roughly 100 MB on Windows, but scales to large audio results and
    keeps dtypes natively). A middle path is CSV by default with parquet behind the
-   `audio` extra for audio results.
+   `audio` extra for audio results. Note that with narwhals, polars users can already
+   read the CSV tables natively.
 3. **Settings file format.** TOML (recommended, standard-library reader, comments) or
-   YAML (more familiar to some researchers, needs a dependency, no comment
-   round-trip either way). JSON is used for machine-written records regardless.
-4. **SPI uncertainty** (PRD open item 1). Recommendation: always report the
-   sampling SD from repeated target draws; offer a bootstrap over the test set as an
-   option off by default; the 2024 paper's sample size is the profile default.
-5. **Public table contract.** pandas only for 1.0 (recommended) or dataframe-agnostic
-   via narwhals from the start. The kernels are numpy either way.
-6. **CLI framework.** typer (recommended) or argparse to avoid a dependency.
+   YAML (more familiar to some researchers, needs a dependency). JSON is used for
+   machine-written records regardless.
+4. **SPI uncertainty** (PRD open item 1) and **the missing default in `spi()`**.
+   Recommendation: always report the sampling SD from repeated target draws; offer a
+   bootstrap over the test set as an option off by default; the 2024 paper's sample
+   size is the profile default, and the core function has no default so the choice
+   is visible at the call site. This needs your sign-off because FR-6.1 reads as a
+   function-level default.
+5. **Responses with missing attribute items** (§3.2). Recommendation: exclude from
+   coordinates with a recorded reason by default, with renormalisation as an
+   explicit option. This is a scientific choice: it changes group means, quadrant
+   proportions and every N, and the standards do not state a rule.
+6. **The 2022-paper acceptance baseline** (§8, §14). The paper prints figures from
+   the 0.x pipeline (2019 formula, 45° angles, seaborn's KDE with its bandwidth
+   adjustment, the ISD version of the time). Options: you supply the exact settings
+   and the ISD record version so the plan can regenerate numbers; or the builder
+   regenerates a baseline with 0.x once and you approve it, in which case it is a
+   regression baseline rather than a literature fixture. Also whether the 2024
+   revision prescribes a KDE method or bandwidth; you hold the text.
 7. **Governance** (PRD open item 3): who cuts a release, who reviews a change that
    moves a regression baseline, and the cadence. The plan assumes a "Scientific
    changes" changelog section and a method version bump need one maintainer's review
    plus a passing reference test, but that is a policy, not a design.
-8. **Responses with missing attribute items** (§3.2). Recommendation: exclude from
-   coordinates with a recorded reason by default, with renormalisation as an explicit
-   option. This is a scientific choice: it changes group means, quadrant proportions
-   and every N, and the standards do not state a rule.
-9. **The 2022-paper acceptance baseline** (§8, §14). The paper prints figures from the
-   0.x pipeline (2019 formula, 45° angles, seaborn's KDE with its bandwidth
-   adjustment, the ISD version of the time). Options: the owner supplies the exact
-   settings and the ISD record version so the plan can regenerate numbers; or the
-   builder regenerates a baseline with 0.x once and the owner approves it, in which
-   case it is a regression baseline rather than a literature fixture. Also whether the
-   2024 revision prescribes a KDE method or bandwidth; the owner holds the text.
 
 ### Inputs the plan still needs from the owner (unchanged from PRD §10.3)
 
 The ISD language coverage against the SATP v1.5 tiers; the ISD record versions used by
 each reproduced paper; machine-readable fixtures for Part 4 Example 6 and the 2024
 paper's targets; whether redistributable audio exists; and the features the 2021
-deployable models use.
+deployable models use. Added by this plan: R `sn` must be available once, on the
+owner's or a contributor's machine, to generate the skew-normal reference fixtures.
 
 ---
 
@@ -960,8 +1002,9 @@ SoundscapyWarning
 Every project in the LISQM list (https://github.com/ZhenxianLi/LISQM) with a Python
 interface, checked on 2026-10-30 against the hard requirements for the Python
 environment: installable from PyPI as wheels on Windows, macOS and Linux with no
-compiler, no MATLAB, no R; Python 3.11 and later; no copyleft licence inside the
-`soundscapy` distribution (NFR-1, NFR-2, NFR-7). MATLAB, Julia, Rust-only, C#, Pure
+compiler, no MATLAB, no R; Python 3.11 and later (NFR-1, NFR-2). Licence is recorded
+but, by the owner's decision of the same day, is not a filter; verdicts below reflect
+that. MATLAB, Julia, Rust-only, C#, Pure
 Data and C-only entries (SQAT, AMT, AARAE, ITA-Toolbox, PsySound3, PsychoacousticMetrics.jl,
 Kirin Hypha, Mosqito.NET, SoundPalette, zwickerloudness, epnl, and others) fail the
 first requirement and are not tabulated. LISQM computes nothing itself; coverage
@@ -973,14 +1016,14 @@ claims are the projects' own.
 | phonometry 3.3.0 | MIT | yes; **`>=3.13`**; numpy, scipy | ISO 532-1/2/3, ECMA-418-2 (2025) loudness, roughness, tonality, fluctuation strength; DIN 45692; Osses FS; PA; ECMA-418-1; ISO 1996-2; plus levels, weighting, octave bands | newly released 2026; one maintainer; 1,893 self-reported conformance checks in CI; DOI | **Optional backend on 3.13+** (owner decision 1a) |
 | scikit-maad 1.5.2 | BSD-3 | yes; `>=3.9`; numpy, scipy, pandas, matplotlib, scikit-image, pywavelets | 50+ ecoacoustic indices, SPL | active, maintained | **Backend for FR-4.5 ecoacoustics**, `audio` extra |
 | acoustic-toolbox 0.2.2 | BSD-3 | yes; `>=3.11`; numba, pysoundfile, pyoctaveband, matplotlib, pandas | weighting, Leq, octave bands, ISO 1996-2 tonal audibility | active fork of python-acoustics (archived) | Not used: level metrics are built in without numba; revisit for ISO 1996-2 |
-| sottek-hearing-model 0.1.14 | AGPL-3 (PyPI), GPL-3 (GitHub) | yes; `>=3.11`; numpy, scipy, bottleneck, matplotlib, **PyQt6**, tqdm | ECMA-418-2 (2025) loudness, roughness, tonality, fluctuation strength | active; translated from the SQAT authors' verified MATLAB | Excluded by licence; candidate for a separate plugin |
-| MetaSona 0.2.2 | GPL-3 combined (Apache/BSD/MIT parts) | yes, wheels for all three OS; `>=3.9,<3.15`; numpy, scipy | Zwicker loudness, DIN sharpness, D–W roughness, Aures tonality, ECMA-418-2 (2025) loudness, roughness, tonality; 15–70× faster than MoSQITo | new; authors call roughness and tonality experimental | Excluded by licence and maturity |
+| sottek-hearing-model 0.1.14 | AGPL-3 (PyPI), GPL-3 (GitHub) | yes; `>=3.11`; numpy, scipy, bottleneck, matplotlib, **PyQt6**, tqdm | ECMA-418-2 (2025) loudness, roughness, tonality, fluctuation strength | active; translated from the SQAT authors' verified MATLAB | **ECMA-418-2 backend**, `audio` extra; ask upstream to make PyQt6 optional |
+| MetaSona 0.2.2 | GPL-3 combined (Apache/BSD/MIT parts) | yes, wheels for all three OS; `>=3.9,<3.15`; numpy, scipy | Zwicker loudness, DIN sharpness, D–W roughness, Aures tonality, ECMA-418-2 (2025) loudness, roughness, tonality; 15–70× faster than MoSQITo | new; authors call roughness and tonality experimental | Not yet: maturity; a candidate fast backend (and the only Aures tonality) once validated |
 | pySQAT | **none stated** | no; `requirements.txt` with PySide6 | SQAT's set: ISO 532-1, ECMA-418-2, DIN 45692, D–W, Osses FS, Aures, PA, EPNL | developing; MATLAB-vs-Python validation workflow, no results published | Unusable without a licence; watch |
 | ecma418-torch | MIT | no; requires torch | ECMA-418-2 (2025) roughness, fluctuation strength | one commit | Excluded: torch, unproven |
 | iso532-1-rs | Apache-2.0 | no wheels; maturin source build | ISO 532-1 ZWST/ZWTV, MoSQITo-parity tests | new; author requests review | Excluded: no wheels; a possible fast backend later |
-| refmap-psychoacoustics | GPL-3 | no | aural detectability (Python); SHM metrics via sottek-hearing-model | active | Excluded by licence |
-| rota-order 0.7.0 | GPL-3 | yes | ECMA-418-1 TNR and PR | active | Excluded by licence; MoSQITo covers PR/TNR |
-| torch_amt 0.2.0 | GPL-3 | yes; torch | Moore–Glasberg time-varying loudness | active | Excluded; not in Table D.1 |
+| refmap-psychoacoustics | GPL-3 | no | aural detectability (Python); SHM metrics via sottek-hearing-model | active | Not needed; its metrics come through sottek-hearing-model |
+| rota-order 0.7.0 | GPL-3 | yes | ECMA-418-1 TNR and PR | active | Not needed; MoSQITo covers PR/TNR |
+| torch_amt 0.2.0 | GPL-3 | yes; torch | Moore–Glasberg time-varying loudness | active | Not needed; torch, not in Table D.1 |
 | LoudnessModel | BSD-2 | no release | Moore et al. 2018 time-varying loudness | dormant | Not needed |
 | PyDSM 0.15.2 | GPL-3 | yes | ISO 226 contours | dormant | Not needed |
 | PsychoacousticParametersMeasurer | none stated | no | Zwicker set from the book | legacy, 2021 | Unusable |
@@ -988,8 +1031,9 @@ claims are the projects' own.
 | MoSQITo-FDP, python-acoustics, SUAVE, deeuu/loudness | Apache / BSD-3 / LGPL-2.1 / GPL-3 | archived or dormant | early ECMA-418-2, ISO 1996-2, EPNL, loudness | legacy | Not used |
 | PsyTools | unknown | code not public | unknown | unknown | Not evaluable |
 
-Gaps that no admissible package fills on Python 3.11 and 3.12: fluctuation strength
-(Osses or ECMA-418-2) and ECMA-418-2 tonality. Aures tonality exists only in an unmerged
-MoSQITo pull request and in pySQAT. These are documented as gaps per FR-4.4, and the
-metric-backend registry means a later package, a licence change in pySQAT, or a
-MoSQITo release closes a gap by adding one backend class.
+Gaps on Python 3.11 and 3.12 after the licence decision: Aures tonality (only in an
+unmerged MoSQITo pull request, in unlicensed pySQAT, and in experimental MetaSona),
+Osses fluctuation strength and psychoacoustic annoyance (phonometry, 3.13+). Table D.1
+itself is fully covered. These are documented per FR-4.4, and the metric-backend
+registry means a later package, a licence change in pySQAT, or a MoSQITo release
+closes a gap by adding one backend class.
