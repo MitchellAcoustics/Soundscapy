@@ -21,7 +21,6 @@ docs/_quarto/
 docs/_site/
 docs/.cache/
 .quarto/
-__marimo__/
 
 # Editors and OS
 .idea/

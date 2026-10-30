@@ -5,11 +5,8 @@
 # ///
 """PostToolUse hook: format and lint the single Python file that was just edited.
 
-Reads the hook payload from stdin. For an ordinary ``.py`` file it runs
-``ruff format`` then ``ruff check --fix`` on that file only. For a marimo
-notebook (recognised by its ``marimo.App(`` definition, wherever it lives) it
-runs ``marimo check`` instead, because ruff's fixes can break marimo's cell
-structure. Unfixable problems are
+Reads the hook payload from stdin. For a ``.py`` file it runs ``ruff format``
+then ``ruff check --fix`` on that file only. Unfixable problems are
 printed to stderr with exit code 2 so the agent sees them.
 
 The hook is a no-op until the project has a ``pyproject.toml`` (the tools are
@@ -31,15 +28,6 @@ def _clean_env() -> dict[str, str]:
     env.pop("VIRTUAL_ENV", None)
     return env
 
-
-
-def _is_marimo_notebook(path: Path) -> bool:
-    """Return True when the file defines a marimo app."""
-    try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return False
-    return "import marimo" in text and "marimo.App(" in text
 
 
 def main() -> int:
@@ -68,13 +56,10 @@ def main() -> int:
     if relative.parts and relative.parts[0] == ".claude":
         return 0  # hook scripts and skills are not project code
 
-    if _is_marimo_notebook(path):
-        commands = [["uv", "run", "marimo", "check", str(path)]]
-    else:
-        commands = [
-            ["uv", "run", "ruff", "format", str(path)],
-            ["uv", "run", "ruff", "check", "--fix", str(path)],
-        ]
+    commands = [
+        ["uv", "run", "ruff", "format", str(path)],
+        ["uv", "run", "ruff", "check", "--fix", str(path)],
+    ]
 
     problems: list[str] = []
     for cmd in commands:

@@ -2,11 +2,11 @@
 name: house-style
 description: >
   Project-specific rules for soundscapy's tooling, packaging, tests, docs and
-  notebooks. These rules override the vendor skills (modern-python, astral,
-  prek, great-docs, marimo). Use this skill whenever you create or change
+  tutorials. These rules override the vendor skills (modern-python, astral,
+  prek, great-docs, quarto). Use this skill whenever you create or change
   pyproject.toml, uv.lock, ruff/ty/pytest/coverage settings, Taskfile.yml,
   .pre-commit-config.yaml, CI workflows, great-docs config, the docs site, a
-  test file or a marimo notebook. Also use it when you set the toolchain up
+  test file or a tutorial .qmd page. Also use it when you set the toolchain up
   for the first time, or when a vendor skill's default seems to disagree with
   this repo.
 ---
@@ -17,8 +17,8 @@ The vendor skills are general. This file records what is specific to this repo, 
 it wins wherever the two disagree. Edit this file, never the vendored skills under
 `.claude/skills/` (see `VENDORED.md`), so that updating upstream stays a clean copy.
 
-For the great-docs and marimo details, read `reference.md` beside this file. Read it
-when you configure the docs site, write a user guide, or touch a notebook.
+For the great-docs and tutorial details, read `reference.md` beside this file. Read it
+when you configure the docs site, or write a tutorial or user-guide page.
 
 ## Decisions
 
@@ -51,7 +51,7 @@ Keep the whole configuration in `pyproject.toml`; no `ruff.toml`, `pytest.ini`,
   Optional extras are for users (for example an `audio` extra), not for developers.
   - `dev`: ruff, ty, prek
   - `test`: pytest, pytest-cov, hypothesis
-  - `docs`: great-docs, marimo
+  - `docs`: great-docs, and a Jupyter kernel (`ipykernel`) for executing `.qmd` cells
   - `[tool.uv] default-groups = ["dev", "test"]` so `uv sync` gives a working dev
     environment. `task setup` uses `--all-groups`.
 - Add every dependency with `uv add` or `uv add --group <g>` and commit `uv.lock` in
@@ -80,7 +80,6 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
-"docs/notebooks/**" = ["D", "INP001", "ANN", "B018", "PLR2004", "T201"]  # marimo cell style
 ".claude/hooks/**" = ["INP001", "T201", "S603", "S607"]  # standalone PEP 723 scripts
 ```
 
@@ -110,10 +109,9 @@ CI, so do not rename them.
 | `typecheck` | `uv run ty check` |
 | `test` | `uv run pytest {{.CLI_ARGS}}` |
 | `test:cov` | pytest with coverage and the 80% gate |
-| `notebooks` | `uv run marimo check docs/notebooks/` |
 | `check:fast` | `lint` + `typecheck`; must finish in a few seconds (Stop hook) |
-| `check` | `lint` + `typecheck` + `test:cov` + `notebooks`: the definition of done |
-| `docs` | `uv run great-docs build` |
+| `check` | `lint` + `typecheck` + `test:cov`: the definition of done |
+| `docs` | `uv run great-docs build`, which also executes the tutorials |
 | `docs:preview` | great-docs local preview |
 | `build` | `uv build` |
 | `repo-review` | `uvx sp-repo-review[cli] .` |
@@ -133,11 +131,11 @@ CI, so do not rename them.
 - `docs/` holds the great-docs site. The API reference is generated from docstrings,
   so a public object gets its documentation by writing its docstring well. Use the
   `revise-docstrings` skill for docstring work.
-- Tutorials and user guides are marimo notebooks in `docs/notebooks/*.py`, embedded into
-  `.qmd` pages with great-docs' native marimo shortcode (`marimo: true` in
-  `docs/great-docs.yml`). They run live in the reader's browser via Pyodide, so check each
-  one with the `wasm-compatibility` skill. There is no export step. `reference.md` has the
-  config, shortcode options and the Pyodide constraints.
+- Tutorials are plain-text Quarto `.qmd` documents with executable `{python}` cells in
+  `docs/tutorials/`, a great-docs custom section. How-to and explanation pages live in
+  `docs/user_guide/`. No notebooks (`.ipynb` or marimo): `.qmd` diffs and reviews like
+  code. Cells execute during `task docs`; Quarto's freeze cache (`docs/_freeze/`,
+  committed) skips unchanged pages. `reference.md` has the layout and cell options.
 - `design/` holds the PRD, the architecture plan, specs (`design/specs/`), plans
   (`design/plans/`) and ADRs (`design/adr/`). It is never part of the docs build.
   Superpowers defaults to `docs/superpowers/`; always write its output to `design/`
@@ -147,8 +145,11 @@ CI, so do not rename them.
 
 - Mirror the package layout under `tests/`. Use `hypothesis` for numerical invariants
   (bounds of circumplex coordinates, symmetry, monotonicity).
-- Give every float comparison an explicit tolerance with a comment saying where it
-  comes from (`pytest.approx(x, rel=1e-6)  # ISO 532-1 reference table precision`).
+- Give every float comparison an explicit tolerance set by the significant figures
+  of its reference value, with a comment citing the source
+  (`pytest.approx(x, rel=5e-4)  # reference given to 4 s.f., ISO 532-1 Annex B`).
+  Drift within that precision, from libraries, platforms or reasonable algorithm
+  changes, is not a regression (PRD NFR-4).
 - Pin published reference values from the cited papers and standards as regression
   tests, citing the source in the test docstring.
 

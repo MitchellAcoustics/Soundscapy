@@ -13,12 +13,6 @@
         "repo": "astral-sh/claude-code-plugins"
       }
     },
-    "marimo-pair": {
-      "source": {
-        "source": "github",
-        "repo": "marimo-team/marimo-pair"
-      }
-    },
     "posit-dev-skills": {
       "source": {
         "source": "github",
@@ -35,7 +29,6 @@
   "enabledPlugins": {
     "modern-python@trailofbits": true,
     "astral@astral-sh": true,
-    "marimo-pair@marimo-pair": true,
     "posit-dev@posit-dev-skills": true,
     "github@posit-dev-skills": true,
     "quarto@posit-dev-skills": true,
@@ -60,14 +53,14 @@
       "Bash(uvx:*)",
       "Bash(prek:*)",
       "Bash(great-docs:*)",
-      "Bash(marimo check:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git show:*)",
       "Bash(git blame:*)",
       "Bash(git branch --list:*)",
-      "Bash(git ls-files:*)"
+      "Bash(git ls-files:*)",
+      "Bash(quarto:*)"
     ],
     "deny": [
       "Read(./.env)",

@@ -9,7 +9,7 @@ file. Keep it short; detailed procedures live in skills under `.claude/skills/`.
 open-source scientific Python package for soundscape engineering: ISO 12913 survey
 analysis, psychoacoustic analysis of calibrated recordings, predictive modelling of
 soundscape perception, and scoring and design with the Soundscape Perception Index
-(SPI). It must work as a library, in teaching notebooks, and as the engine of a GUI
+(SPI). It must work as a library, in teaching material, and as the engine of a GUI
 for acoustic engineers, architects and urban designers.
 
 `design/PRD.md` states the requirements. `design/greenfield_architecture_plan.md` is the
@@ -28,14 +28,14 @@ first build step is the toolchain, set up as the `house-style` skill describes.
 - `src/soundscapy/`: the package (src layout).
 - `tests/`: the pytest suite.
 - `docs/`: the great-docs site (`docs/great-docs.yml`). API reference comes from
-  docstrings; tutorials are marimo notebooks in `docs/notebooks/`.
+  docstrings; tutorials are `.qmd` documents in `docs/tutorials/`.
 - `.claude/`: agent settings, hooks and skills. Vendored skills are listed in
   `.claude/skills/VENDORED.md`.
 
 ## Commands
 
 Use `task` for everything; run `task --list` for the entry points. Key tasks: `setup`,
-`fmt`, `lint`, `typecheck`, `test`, `test:cov`, `notebooks`, `check:fast` (lint and
+`fmt`, `lint`, `typecheck`, `test`, `test:cov`, `check:fast` (lint and
 typecheck, run by the Stop hook), `check`, `docs`, `docs:preview`, `build`,
 `repo-review`.
 
@@ -65,17 +65,14 @@ typecheck, run by the Stop hook), `check`, `docs`, `docs:preview`, `build`,
 - Use property-based tests (`hypothesis`) for numerical invariants.
 - Numerical tolerances are explicit and justified in a comment.
 
-## Docs and notebooks
+## Docs and tutorials
 
 - API docs are generated from docstrings by great-docs.
-- A tutorial is a marimo notebook, `docs/notebooks/<topic>.py`, embedded in a `.qmd`
-  page with great-docs' native shortcode `{{< marimo file="notebooks/<topic>.py" >}}`.
-  It runs in the reader's browser, so it must be WASM-compatible.
-- Follow the `marimo-notebook` and `wasm-compatibility` skills.
-- `marimo-pair` lets an agent work inside a running marimo kernel. While such a
-  session is open on a notebook, never edit that notebook's file; change it through
-  the live kernel instead.
-- Run `task notebooks` after editing a notebook.
+- A tutorial is a plain-text Quarto document, `docs/tutorials/NN-<topic>.qmd`, with
+  executable `{python}` cells. No `.ipynb` or marimo notebooks.
+- `task docs` builds the site and executes every tutorial; a tutorial is done when it
+  renders with every cell run and no errors. Commit `docs/_freeze/` with it.
+- Tutorials use the bundled ISD subset so they run offline and in CI.
 
 ## Design workflow
 

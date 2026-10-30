@@ -15,13 +15,11 @@ marketplaces=(
   anthropics/claude-plugins-official
   trailofbits/skills
   astral-sh/claude-code-plugins
-  marimo-team/marimo-pair
   posit-dev/skills
 )
 plugins=(
   modern-python@trailofbits
   astral@astral-sh
-  marimo-pair@marimo-pair
   posit-dev@posit-dev-skills
   github@posit-dev-skills
   quarto@posit-dev-skills

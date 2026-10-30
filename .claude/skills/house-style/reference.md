@@ -1,15 +1,13 @@
-# Reference: great-docs + marimo for a scientific Python package
+# Reference: great-docs and executable .qmd tutorials
 
-Condensed from the vendor sources listed under "Sources". The full vendor skills are installed
-alongside this one; defer to them for anything not covered here:
-`great-docs`, `configure-site`, `revise-docstrings`, `write-user-guide`, `author-skills`
-(posit-dev) and `marimo-notebook`, `wasm-compatibility`, `jupyter-to-marimo`, `anywidget-generator`
-(marimo-team). Items marked "(verify)" are inferred, not read in the sources.
+Condensed from the great-docs sources listed under "Sources". The vendored skills
+`great-docs`, `write-user-guide` and `revise-docstrings` cover more; defer to them for
+anything not here. Items marked "(verify)" were inferred, not read in the sources.
 
 ## 1. great-docs
 
-Requirements: Python 3.11+ and a separate Quarto install. `pip install great-docs`
-(`pip install "great-docs[marimo]"` adds marimo + uv for notebook embedding).
+Requirements: Python 3.11+ and a separate Quarto install. Install great-docs into the
+`docs` dependency group (`uv add --group docs great-docs`).
 
 ### Init, build, preview
 
@@ -31,7 +29,7 @@ docs/
   great-docs.yml      # config (commit)
   user_guide/         # narrative .qmd sources (commit)
   assets/             # docs-only images, logo (commit)
-  notebooks/          # marimo .py notebooks, only when marimo: true (commit)
+  tutorials/          # tutorial .qmd pages, a custom section (commit)
   _freeze/            # cached execution results (commit)
   _quarto/default/    # generated Quarto project: _quarto.yml, index.qmd, reference/, user-guide/ (ignore)
   _site/              # deployable HTML + llms.txt, llms-full.txt, skill.md (ignore)
@@ -66,7 +64,6 @@ metadata and sources are relative to the project root. Never edit files under `d
 | `bibliography`, `csl` | `[]` | Project-wide `.bib`; cite with `[@key]` on any page or docstring. |
 | `markdown_pages: {enabled, widget}` | true | `.md` companion per HTML page. |
 | `skill: {enabled, file, skills, gotchas, best_practices, ...}` | enabled | Emits `skill.md` / SKILL.md for agents. |
-| `marimo: {enabled, version}` | `false` | See section 2. `marimo: true` is shorthand. |
 | `cli: {enabled, module, name}`, `mcp: {...}`, `versions`, `changelog`, `authors`, `announcement`, `page_status`, `tags`, `seo` | — | Not needed for a first site. |
 
 Output dir is not a config key: it is always `<config dir>/_site/` (`docs/_site/`, or
@@ -109,95 +106,36 @@ Output dir is not a config key: it is always `<config dir>/_site/` (`docs/_site/
 
 Generated automatically in build step 3 (after reference config refresh, before `skill.md`), no config key. `llms.txt` = compact index of API items with one-line descriptions and links; `llms-full.txt` = full signatures, complete docstrings, CLI help, user-guide text with frontmatter stripped. Both land in `docs/_site/`. Requires the API reference block in the config (the guide page says `api-reference`; the current key is `reference` — verify) and an importable package at build time. Check with `head -30 docs/_site/llms.txt`.
 
-## 2. marimo notebooks in a great-docs site
+## 2. Tutorials as executable .qmd pages
 
-### (a) Native support — yes, verified
+Decision for this repo: tutorials are plain-text Quarto `.qmd` documents with
+executable `{python}` cells, not notebooks (`.ipynb` or marimo). They diff cleanly,
+review like code, and run wherever the package is installed.
 
-Evidence: `great_docs/_marimo.py`, `great_docs/assets/_extensions/marimo/marimo.lua` (Quarto
-shortcode), `assets/marimo-islands.{js,css}`, `config.py` `marimo_enabled`/`marimo_version`,
-`core.py` lines ~510-605, user guide `45-marimo-notebooks.qmd` (status: experimental), README
-feature "Interactive Marimo notebooks". Neither repo mentions `quarto-marimo`.
+- Tutorials live in `docs/tutorials/NN-slug.qmd`, registered in `docs/great-docs.yml` as
+  a custom section: `sections: [{title: Tutorials, dir: tutorials, index: true}]`.
+  How-to guides and explanation pages live in `docs/user_guide/` (FR-12.3's four-part
+  structure: tutorials, how-to, reference from docstrings, explanation).
+- Code cells are ```` ```{python} ```` fences. They run in the `jupyter` kernel named in
+  `great-docs.yml` (default `python3`) during `great-docs build`, so the package and the
+  tutorial's dependencies must be installed in the docs environment (`uv sync --group
+  docs`).
+- Cell options go on `#|` lines at the top of a cell: `#| echo: false`,
+  `#| eval: false`, `#| output: false`, `#| fig-cap: "..."`, `#| label: fig-name`.
+  Use one hidden setup cell for shared imports.
+- Freeze: keep `freeze: {mode: auto}` and commit `docs/_freeze/`, so unchanged pages are
+  not re-executed on every build and CI does not need audio data or model weights for
+  pages whose source has not changed. Re-run an expensive page with `great-docs freeze
+  <page>`.
+- Data: tutorials use the bundled ISD subset (PRD FR-10.1), so they run offline and in
+  CI. Put tutorial-only files beside the page in a non-`.qmd` subdirectory, which is
+  copied as assets.
+- A tutorial is done when `great-docs build` renders it with every cell executed,
+  without errors and without warnings that the page does not explain.
+- Quarto authoring details (callouts, tabsets, cross-references, figures) are in the
+  `quarto-authoring` skill (posit `quarto` plugin).
 
-How it works:
-- `marimo: true` (or `marimo: {enabled: true, version: "0.23.7"}`) in `great-docs.yml`; `pip install "great-docs[marimo]"`.
-- Notebooks must live in `docs/notebooks/*.py` (the build copies `<config dir>/notebooks` into the Quarto project). Build warns and skips if `marimo` is not installed.
-- Build runs every notebook: `MarimoIslandGenerator` writes `_marimo_islands/<stem>.html` and `<stem>-nocode.html`; it also runs `python -m marimo export html-wasm <nb> -o notebooks/<stem>/ --mode edit` per notebook (needs `uv`) and injects an auto-run script.
-- Embed in any `.qmd`: `{{< marimo file="notebooks/my-demo.py" >}}`. Options: `mode="island"|"iframe"`, `show-code="false"`, `show-copy="false"`, `theme="auto|light|dark"`, `height="600px"` (iframe), `chrome="trimmed|full"` (iframe).
-- Island mode: cells inline, outputs/`mo.ui` live via Pyodide in the reader's browser, code read-only, one shared kernel per page, so at most one island notebook per page. Iframe mode: fully editable notebook, own kernel per embed.
-- Constraints: runs in Pyodide (pure-Python or Pyodide-bundled packages only, 2 GB, no threads, ~15 MB first download); `import marimo as mo` in its own cell; data via `mo.notebook_location() / "public" / "file.csv"`; author with `marimo edit --sandbox`. Heavy scientific stacks that are not in Pyodide will fail in the browser.
-
-### (b) quarto-marimo Quarto extension
-
-Not present in either source tree and not referenced by great-docs. From general knowledge
-(verify before relying on it): a marimo-team Quarto filter that executes ` ```{python} ` / marimo
-cells inside `.qmd` during `quarto render`, with options to run cells in the browser via WASM.
-Unknown here: current install command, option names, interaction with great-docs' generated
-`_quarto.yml` (great-docs owns that file, so an extra filter would have to be wired through a
-supported hook or `include_in_header`, which is not documented for filters). Treat as unsupported.
-
-### (c) Export as a build step (marimo CLI)
-
-Subcommands (`marimo export --help`): `html` (runs notebook, HTML file), `html-wasm`, `ipynb`,
-`md` ("code fenced markdown file"), `pdf`, `script`, `session`, `thumbnail`. Common flags: `-o/--output`,
-`--sandbox` (isolated uv env from PEP 723 header), `--watch`, `-f/--force`, `-y` (auto-yes; goes
-before the subcommand: `marimo -y export ...`), `--` to pass args to the notebook. PDF-only flags
-read in the sources: `--no-include-inputs`, `--no-include-outputs`, `--as=slides`. Whether
-`md`/`ipynb` accept `--include-outputs` is not stated in the skill (verify with `--help`).
-
-Pipeline that needs nothing beyond Quarto's defaults:
-
-```bash
-uvx marimo -y export md --sandbox notebooks/demo.py -o docs/examples/demo.md   # (verify md flags)
-# or: uvx marimo -y export ipynb --sandbox notebooks/demo.py -o docs/examples/demo.ipynb
-great-docs build
-```
-
-Custom `sections:` accept `.qmd` or `.md` pages, so an exported `.md` with a `title:` frontmatter
-drops straight into e.g. `sections: [{title: Examples, dir: examples, index: true}]`. Quarto's
-render globs include `*.ipynb`, so an exported notebook placed in a section dir should also render
-(verify that great-docs copies `.ipynb` from section dirs; the docs only promise `.qmd`/`.md`).
-
-### Decision for this repo: native great-docs integration
-
-Use (a), great-docs' own marimo support. It is the integration great-docs and its Quarto
-extension (`marimo.lua` shortcode) are built around, it needs no export step in `task docs`,
-and readers get live, reactive tutorials instead of static pages.
-
-- `docs/great-docs.yml` sets `marimo: {enabled: true, version: "<pinned marimo>"}`. Pin the
-  version to the one in `uv.lock` so local and browser runtimes agree.
-- Tutorials live in `docs/notebooks/*.py` (great-docs copies `<config dir>/notebooks`). Data
-  files go in `docs/notebooks/public/` and are read with `mo.notebook_location() / "public"`.
-- Each tutorial or guide page is a `.qmd` (user guide or a custom section) that embeds its
-  notebook with the shortcode: island mode by default, `mode="iframe"` when readers should
-  edit code or when a page shows more than one notebook.
-- Author with `marimo edit --sandbox`, so PEP 723 metadata lists the packages the browser
-  kernel installs. Run the `wasm-compatibility` skill on every tutorial.
-- Constraint to design around: notebooks run in Pyodide. NumPy, SciPy, pandas, Polars,
-  scikit-learn and Matplotlib work; compiled packages without a Pyodide or WASM wheel do not.
-  If a tutorial needs one (likely candidates: audio I/O and psychoacoustic libraries), keep
-  that notebook runnable locally, and record in an ADR how its page is handled.
-- Do not use the quarto-marimo extension: great-docs owns the generated `_quarto.yml`, and
-  the native shortcode is already the Quarto integration.
-
-## 3. marimo notebook conventions (the dozen that matter)
-
-See the `marimo-notebook` skill and its `references/*.md` for detail.
-
-1. File skeleton: PEP 723 header, `import marimo`, `__generated_with = "<ver>"`, `app = marimo.App(width="medium")`, cells as `@app.cell def _(deps...): ...; return (defs,)`, and `if __name__ == "__main__": app.run()`.
-2. Dependencies: `# /// script` block with `requires-python` and `dependencies = ["marimo", ...]`; `marimo edit --sandbox nb.py` writes it; `--sandbox` on `edit`/`run`/`export` uses it in an isolated uv env.
-3. Every global is defined by exactly one cell (DAG built from cell parameters = reads, return tuple = writes). Reusing a name in two cells is an error.
-4. Underscore-prefixed names (`_tmp`) are cell-local; use them for one or two temporaries only, not whole cells; prefer a new name.
-5. Only the last top-level expression of a cell is displayed; indented/conditional expressions are not. Assign then put the name on the last line.
-6. Don't mutate across cells (`.append()`, in-place DataFrame ops are invisible to the DAG); create new objects. Mutations inside the defining cell are fine.
-7. Don't guard cells with `if x:` or wrap in try/except for control flow; cells only run when deps exist.
-8. `mo.md("...")` for prose (f-strings for values), `mo.ui.*` for widgets (`slider`, `dropdown`, `table`, `form`, `tabs`, ...); read `.value` in a different cell than the one that creates the widget. `import marimo as mo` in its own cell.
-9. Script-mode: `mo.app_meta().mode == "script"`; keep widgets always displayed and only swap the data source. `mo.stop(cond)` halts a cell; `mo.cache`/`mo.persistent_cache` for expensive steps.
-10. Reusable code: `with app.setup:` (max one) for shared imports, `@app.function` cells holding a single function/class become importable from other modules.
-11. Lint before handing back: `uvx marimo check nb.py` (verify-the-notebook-can-run linter for common mistakes; exact rule list not in the sources). Run headless with `uv run nb.py` or `python nb.py`.
-12. Tests: add `pytest` to deps; cells containing only `test_*` functions / `Test*` classes / `@pytest.fixture` run via `pytest nb.py` (and reactively in the editor; disable with `runtime.reactive_test`). Fixtures must sit in the same cell as the tests or in `app.setup`; `conftest.py` works.
-13. Project-level settings in `pyproject.toml` under `[tool.marimo.*]` (e.g. `[tool.marimo.formatting] line_length = 120`); precedence: PEP 723 block > pyproject > `~/.config/marimo/marimo.toml`.
-
-## 4. Commands cheat-sheet
+## 3. Commands cheat-sheet
 
 | Task | Command |
 | --- | --- |
@@ -209,26 +147,18 @@ See the `marimo-notebook` skill and its `references/*.md` for detail.
 | Full commented config | `great-docs config` |
 | GitHub Pages workflow | `great-docs setup-github-pages` |
 | Cache expensive pages | `great-docs freeze <pages>`; commit `docs/_freeze/` |
-| New notebook | `uvx marimo edit --sandbox docs/notebooks/demo.py` |
-| Run notebook headless | `uv run docs/notebooks/demo.py` |
-| Lint notebook | `uvx marimo check docs/notebooks/demo.py` |
-| Test notebook | `pytest docs/notebooks/demo.py` |
-| Export for the site | `uvx marimo -y export md --sandbox nb.py -o docs/examples/nb.md` (or `ipynb`, `html`) |
-| WASM self-check | `marimo export html-wasm nb.py -o test/` then `python -m http.server -d test/` |
-| marimo API help | `uv --with marimo run python -c "import marimo as mo; help(mo.ui.form)"` |
-| Show marimo config | `marimo config show` / `marimo config describe` |
+| Render one page while writing it | `quarto preview docs/tutorials/<page>.qmd` (verify inside a great-docs project) |
+
 
 ## Sources
 
-great-docs clone root: `/tmp/claude-0/-home-user-Soundscapy/b104c50b-28af-56d5-81b3-f48a1baeb90a/scratchpad/src/posit-dev_great-docs/`
+From https://github.com/posit-dev/great-docs (great-docs 0.17.0, commit recorded in
+`.claude/skills/VENDORED.md`):
+
 - `README.md` (quickstart, config overview, CLI table, feature list)
 - `great_docs/assets/great-docs.default.yml` (all config keys and defaults)
 - `great_docs/cli.py` (`init`, `build`, `preview` options and help)
-- `great_docs/config.py` (`marimo_enabled`, `marimo_version`, `reference` key)
-- `great_docs/core.py` (notebook copy, island + html-wasm generation, render globs, llms.txt)
-- `great_docs/_marimo.py`, `great_docs/assets/_extensions/marimo/marimo.lua`, `_extension.yml`
-- `docs/user_guide/02-quickstart.qmd`, `04-writing-docstrings.qmd`, `06-api-documentation.qmd`, `08-user-guides.qmd`, `09-custom-sections.qmd`, `12-cross-referencing.qmd`, `13-building.qmd`, `39-llms-txt.qmd`, `45-marimo-notebooks.qmd`
-- `docs/skills/{great-docs,configure-site,revise-docstrings,write-user-guide,author-skills}/SKILL.md` (names only)
-
-marimo skills clone: `/tmp/claude-0/-home-user-Soundscapy/b104c50b-28af-56d5-81b3-f48a1baeb90a/scratchpad/src/marimo-team_skills/skills/marimo-notebook/`
-- `SKILL.md`; `references/EXPORTS.md`, `PYTEST.md`, `CONFIGURATION.md`, `DEPLOYMENT.md`, `REACTIVITY.md`, `TOP-LEVEL-IMPORTS.md`, `UI.md`, `EXPENSIVE.md`, `STATE.md` (headings)
+- `great_docs/config.py` (`reference` key) and `great_docs/core.py` (render globs, freeze, llms.txt)
+- `docs/user_guide/02-quickstart.qmd`, `04-writing-docstrings.qmd`, `06-api-documentation.qmd`,
+  `08-user-guides.qmd`, `09-custom-sections.qmd`, `12-cross-referencing.qmd`, `13-building.qmd`,
+  `39-llms-txt.qmd`

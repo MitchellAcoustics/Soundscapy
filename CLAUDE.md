@@ -3,19 +3,15 @@
 ## Claude-specific notes
 
 - Hooks enforce the house rules: after every `Edit`/`Write`, `ruff format` and
-  `ruff check --fix` run on that file (`marimo check` for a marimo notebook). On
-  Stop, `task check:fast` must pass. Both do nothing until the toolchain exists.
+  `ruff check --fix` run on that file. On Stop, `task check:fast` must pass. Both do nothing until the toolchain exists.
 - Reach for these skills and plugins when the task fits:
-  - `house-style`: any change to config, packaging, tests, docs or notebooks. It
+  - `house-style`: any change to config, packaging, tests, docs or tutorials. It
     overrides the vendor defaults below.
   - `modern-python` (Trail of Bits) and `/astral:uv`, `/astral:ruff`, `/astral:ty`:
     Python tooling questions. The ty LSP is provided by the `astral` plugin.
   - `prek`: git hooks. `great-docs`, `write-user-guide`, `revise-docstrings`: docs.
-    The great-docs skills cover its marimo shortcode; `wasm-compatibility` checks
-    that a tutorial will run in the browser.
-  - `marimo-notebook`, `jupyter-to-marimo`, `anywidget-generator`,
-    `wasm-compatibility`: notebooks. `marimo-pair`: live-kernel editing.
-  - `quarto-authoring`: `.qmd` pages. `describe-design`: architecture write-ups.
+  - `quarto-authoring`: tutorial and guide `.qmd` pages. `describe-design`:
+    architecture write-ups.
   - `superpowers`: brainstorming, specs, plans, TDD, systematic debugging.
   - `/simplify` then `/code-review` at the end of each unit of work (see AGENTS.md).
     `/review-pr`, `critical-code-reviewer` and `review-testing` for deeper review.

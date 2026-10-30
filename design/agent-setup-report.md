@@ -18,14 +18,13 @@ CI were deliberately left for the first build step.
 
 ### Plugins (project scope, `.claude/settings.json`)
 
-All ten were installed at project scope in a scratch copy of the repository with an
+All the plugins (ten at the time, nine since marimo-pair was removed) were installed at project scope in a scratch copy of the repository with an
 isolated home directory, to prove that the marketplace names and plugin ids resolve.
 
 | Plugin | Marketplace (`name` from its `marketplace.json`) | Source repo | Version / commit | Skills | Always-on tokens |
 | --- | --- | --- | --- | --- | --- |
 | modern-python | trailofbits | trailofbits/skills | 1.6.2, `2be6433` | 1 | ~77 |
 | astral (uv, ruff, ty skills, ty LSP) | astral-sh | astral-sh/claude-code-plugins | 0.1.0, `f3ce88a` | 3 | ~154 |
-| marimo-pair | marimo-pair | marimo-team/marimo-pair | 0.0.20, `2f1d7ff` | 2 | ~234 |
 | posit-dev | posit-dev-skills | posit-dev/skills | `d614ac4` | 6 | ~641 |
 | github | posit-dev-skills | posit-dev/skills | `d614ac4` | 3 | ~315 |
 | quarto | posit-dev-skills | posit-dev/skills | `d614ac4` | 3 | ~449 |
@@ -41,7 +40,6 @@ basedpyright language server is enabled; the only Python LSP is astral's ty.
 
 | Skill | Source | Why copied rather than installed by its CLI |
 | --- | --- | --- |
-| marimo-notebook, jupyter-to-marimo, anywidget-generator, wasm-compatibility | marimo-team/skills | `npx skills add` writes the same folders; copying verbatim gives a pinned, reviewable result. |
 | prek | j178/prek | `gh skill` needs gh 2.90 or later; this environment has 2.89. |
 | great-docs, write-user-guide, revise-docstrings | posit-dev/great-docs (0.17.0) | `great-docs skill install` needs great-docs installed, which is part of the deferred toolchain. |
 | house-style | written for this project | Project overrides of the vendor skills, with `reference.md`. |
@@ -63,9 +61,6 @@ or system settings.
   the `design/` location overrides its default of `docs/superpowers/`.
 - **astral**'s ty LSP runs `uvx ty@latest server`, so the editor-side ty version floats
   and may differ from the project's pinned ty.
-- **marimo-pair**'s discovery script deletes stale server records under
-  `~/.local/state/marimo/servers`, and its execute script runs code in a live kernel by
-  design.
 - **posit github** helpers install the third-party gh extension `agynio/gh-pr-review` the
   first time they are used. `pr-create` pushes branches after confirmation; in local
   sessions the push guard hook blocks that until the user pushes.
@@ -75,18 +70,17 @@ or system settings.
 ## Hooks and permissions
 
 - **PostToolUse** on `Edit|Write|MultiEdit` runs `.claude/hooks/post_edit.py`. On a `.py`
-  file it runs `ruff format` then `ruff check --fix` on that file only. On a marimo
-  notebook, recognised by its `marimo.App(` definition, it runs `marimo check` instead.
-  Unfixable problems exit 2 so the agent sees them.
+  file it runs `ruff format` then `ruff check --fix` on that file only. Unfixable
+  problems exit 2 so the agent sees them.
 - **Stop** runs `.claude/hooks/stop_check.py`, which runs `task check:fast`, exits 2 on
   failure, and exits 0 at once when `stop_hook_active` is set.
 - Both hooks do nothing until `pyproject.toml` and `Taskfile.yml` exist, so they are safe
   today. Both were tested against a scratch project: an unfixable error blocked with exit
-  2, auto-fixable errors were fixed, a clean notebook passed, and the loop guard worked.
+  2, auto-fixable errors were fixed, and the loop guard worked.
 - The hooks call only `uv run`, which the modern-python shims pass through, so the two do
   not conflict.
 - Permissions allow `task`, `uv run/sync/add/remove/lock/build/tree`, `uvx`, `prek`,
-  `great-docs`, `marimo check` and read-only git. They deny reading `.env*`, `secrets/`,
+  `great-docs`, `quarto` and read-only git. They deny reading `.env*`, `secrets/`,
   `*.pem` and `*.key`, and bare `pip`.
 - **PreToolUse** on `Bash` runs `.claude/hooks/guard_push.py`, which denies `git push`
   in local sessions and allows it in cloud sessions (`CLAUDE_CODE_REMOTE=true`).
@@ -97,7 +91,7 @@ or system settings.
 
 | Check | Result |
 | --- | --- |
-| Plugins resolve and install at project scope | All ten installed and enabled in an isolated scratch copy. |
+| Plugins resolve and install at project scope | All installed and enabled in an isolated scratch copy. |
 | No stray Python LSPs | Only ty, from astral. |
 | Hooks behave as specified | Passed all cases above. |
 | A fresh agent given only AGENTS.md answers the four questions | All four answered correctly. Its list of ambiguities led to one follow-up commit. |
@@ -106,7 +100,7 @@ or system settings.
 
 ### Skill count
 
-The prompt targets 8–12 active skills. This setup has **45**: 36 from plugins and 9 in
+The prompt targets 8–12 active skills. This setup has **39**: 34 from plugins and 5 in
 `.claude/skills/`. The always-on cost is about 4,900 tokens of descriptions plus the
 superpowers injection. The bulk comes from three sources, so the trims below are
 proposals for the product owner, not applied.
@@ -131,10 +125,10 @@ proposals for the product owner, not applied.
   This report and the follow-up review stand in for it.
 - **Branching.** The prompt asked for `chore/agent-setup`. The product owner also asked
   for a `soundscapy-rewrite` root branch, so the setup branch is based on it.
-- **Docs integration.** Notebooks use great-docs' native marimo integration: `marimo:
-  true` in `docs/great-docs.yml`, notebooks in `docs/notebooks/`, and the `marimo`
-  shortcode in `.qmd` pages. An earlier draft exported notebooks to Markdown instead; the
-  product owner rejected it.
+- **Docs integration.** Tutorials are executable Quarto `.qmd` documents in
+  `docs/tutorials/`. marimo was tried first (exported, then native great-docs
+  integration) and dropped on 2026-10-30, with the marimo skills and the marimo-pair
+  plugin removed, so the in-browser (Pyodide) constraints no longer apply.
 - **Python floor.** Set to `>=3.11` by the product owner, wider than the SPEC 0 window
   the prompt suggested.
 - **house-style evals.** Drafted with skill-creator's guidance, but its test-and-review
@@ -148,15 +142,10 @@ proposals for the product owner, not applied.
 
 ## Open decisions
 
-1. **marimo skills.** Install `implement-paper` (builds a notebook from a paper) and
-   `marimo-batch` (batch jobs on Hugging Face Jobs)? Both were left out pending your call.
-2. **Optional extras.** Add the Taskfile skills from `sunsided/taskfile-skills`, or
+1. **Optional extras.** Add the Taskfile skills from `sunsided/taskfile-skills`, or
    Honnibal's `pre-mortem` command? Neither was installed.
-3. **Skill trim.** Which, if any, of the trims above to apply.
-4. **Push rule.** Resolved: agents push in cloud sessions, and not in local ones.
-5. **Browser-only tutorials.** Tutorials run in Pyodide. If the audio or psychoacoustic
-   stack has compiled dependencies without WASM wheels, decide in an ADR how those pages
-   work, for example a locally runnable notebook with pre-rendered output.
+2. **Skill trim.** Which, if any, of the trims above to apply.
+3. **Push rule.** Resolved: agents push in cloud sessions, and not in local ones.
 
 ## Updating the vendor plugins and skills
 
