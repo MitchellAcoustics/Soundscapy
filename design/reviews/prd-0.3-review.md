@@ -1,6 +1,8 @@
 # Review of PRD draft 0.3
 
-Date: 2026-10-30. Outcome: PRD draft 0.4 (`design/PRD.md`).
+Date: 2026-10-30. Outcome: PRD draft 0.4 (`design/PRD.md`). Historical record: the
+items it left open (copyleft, governance, SPI uncertainty) were closed in PRD 0.6, and
+its NFR numbering was changed by 0.5.
 
 ## Method
 

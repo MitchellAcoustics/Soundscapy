@@ -30,11 +30,11 @@ when you configure the docs site, or write a tutorial or user-guide page.
 | Python floor | `requires-python = ">=3.11"`; ruff `target-version = "py311"`; ty `python-version = "3.11"` | Product-owner decision. It is deliberately wider than the SPEC 0 window, so do not raise it to match SPEC 0 or a vendor default. Test every supported version in CI. |
 | Type checker | `ty` | Astral toolchain. Never add mypy, pyright, basedpyright or pyrefly, nor their LSP plugins. |
 | Lint / format | `ruff`, `select = ["ALL"]` with the commented ignores below | Maximum signal; every exemption is visible and justified. |
-| Docstrings | numpy convention | Matches the scientific Python ecosystem and great-docs rendering. |
+| Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports | Matches the scientific Python ecosystem and great-docs rendering. |
 | Git hooks | `prek`, reading `.pre-commit-config.yaml` | Fast drop-in for pre-commit. Never install `pre-commit` itself. |
 | Task runner | `Taskfile.yml` (go-task, `version: '3'`) | One set of entry points for agents, humans and CI. |
 | Coverage gate | `fail_under = 80`, branch coverage on | Matches the Trail of Bits default; raise it, never lower it. |
-| CI | GitHub Actions running `task` targets | CI runs exactly what developers run. |
+| CI | GitHub Actions running `task` targets; a nightly job runs `test:reference` and the dataset downloads; releases publish on tag by PyPI trusted publishing | CI runs exactly what developers run. |
 | Line length | 100 | Room for unit-suffixed names without wrapping every call. |
 
 Where `modern-python` differs: it turns docstring (`D`) rules off by default. Here they
@@ -49,8 +49,9 @@ Keep the whole configuration in `pyproject.toml`; no `ruff.toml`, `pytest.ini`,
   `license-files = ["LICENSE.md"]`. Add no `License ::` classifiers.
 - Dev tooling goes in `[dependency-groups]`, never in `[project.optional-dependencies]`.
   Optional extras are for users (for example an `audio` extra), not for developers.
-  - `dev`: ruff, ty, prek
-  - `test`: pytest, pytest-cov, hypothesis
+  - `dev`: ruff, ty, prek, import-linter (layer contracts from the architecture plan
+    §4, run by `task lint`)
+  - `test`: pytest, pytest-cov, pytest-xdist, hypothesis
   - `docs`: great-docs, and a Jupyter kernel (`ipykernel`) for executing `.qmd` cells
   - `[tool.uv] default-groups = ["dev", "test"]` so `uv sync` gives a working dev
     environment. `task setup` uses `--all-groups`.
@@ -105,12 +106,13 @@ CI, so do not rename them.
 | --- | --- |
 | `setup` | `uv sync --all-groups` then `uv run prek install` |
 | `fmt` | `ruff format` then `ruff check --fix` |
-| `lint` | `ruff format --check` then `ruff check` (no writes) |
+| `lint` | `ruff format --check`, `ruff check` (no writes), then `uv run lint-imports` |
 | `typecheck` | `uv run ty check` |
 | `test` | `uv run pytest {{.CLI_ARGS}}` |
 | `test:cov` | pytest with coverage and the 80% gate |
 | `check:fast` | `lint` + `typecheck`; must finish in a few seconds (Stop hook) |
 | `check` | `lint` + `typecheck` + `test:cov`: the definition of done |
+| `test:reference` | pytest `-m reference`: cross-implementation checks (R `sn` fixtures, ISO 532-1 signals, ArtemiS); nightly in CI and on demand |
 | `docs` | `uv run great-docs build`, which also executes the tutorials |
 | `docs:preview` | great-docs local preview |
 | `build` | `uv build` |
@@ -132,8 +134,9 @@ CI, so do not rename them.
   so a public object gets its documentation by writing its docstring well. Use the
   `revise-docstrings` skill for docstring work.
 - Tutorials are plain-text Quarto `.qmd` documents with executable `{python}` cells in
-  `docs/tutorials/`, a great-docs custom section. How-to and explanation pages live in
-  `docs/user_guide/`. No notebooks (`.ipynb` or marimo): `.qmd` diffs and reviews like
+  `docs/tutorials/`, a great-docs custom section; paper reproductions (PRD FR-9.3) are
+  `.qmd` documents in `docs/papers/`, a second custom section. How-to and explanation
+  pages live in `docs/user_guide/`. No notebooks (`.ipynb` or marimo): `.qmd` diffs and reviews like
   code. Cells execute during `task docs`; Quarto's freeze cache (`docs/_freeze/`,
   committed) skips unchanged pages. `reference.md` has the layout and cell options.
 - `design/` holds the PRD, the architecture plan, specs (`design/specs/`), plans
@@ -143,8 +146,14 @@ CI, so do not rename them.
 
 ## Tests
 
-- Mirror the package layout under `tests/`. Use `hypothesis` for numerical invariants
-  (bounds of circumplex coordinates, symmetry, monotonicity).
+- Mirror the package layout under `tests/` for unit tests. Three further directories
+  carry registered markers (`--strict-markers` requires them in `pyproject.toml`):
+  `tests/science/` (literature fixtures, default run), `tests/reference/` (marker
+  `reference`, cross-implementation checks, nightly) and `tests/regression/` (marker
+  `regression`, golden pipelines against committed baselines, default run).
+  `tests/templates/` holds the test templates the extension recipes copy. Use
+  `hypothesis` for numerical invariants (bounds of circumplex coordinates, symmetry,
+  monotonicity).
 - Give every float comparison an explicit tolerance set by the significant figures
   of its reference value, with a comment citing the source
   (`pytest.approx(x, rel=5e-4)  # reference given to 4 s.f., ISO 532-1 Annex B`).

@@ -7,10 +7,8 @@ the architecture plan (`design/greenfield_architecture_plan.md` §15), which clo
 open item. This document states what the package must do and for whom. It deliberately says nothing about how it is built; the
 architecture plan is a separate document and must be checked against this one.
 
-Decisions taken with the product owner are marked **[agreed]**. Changes proposed by
-the 0.3 review that alter scope or an agreed item are written in place and marked
-**[proposed]**; they stand only once the owner accepts them. As of draft 0.6 no item
-is open or proposed; §10 records how each was closed.
+Decisions taken with the product owner are marked **[agreed]**. As of draft 0.6 no
+item is open or proposed; §10 records how each was closed.
 
 ---
 
@@ -389,7 +387,7 @@ requirement; "should" is desirable.
 
 - **FR-4.0** (B; Must) Shall not re-implement psychoacoustic, ecoacoustic or
   environmental-acoustics algorithms. Metrics are provided by wrapping existing open
-  libraries (MoSQITo, pySQAT and others catalogued by the LISQM list,
+  libraries (MoSQITo and others catalogued by the LISQM list,
   https://github.com/ZhenxianLi/LISQM, assessed for suitability at implementation;
   scikit-maad for
   ecoacoustics), and the metric set on offer is whatever those libraries provide,
@@ -459,7 +457,8 @@ requirement; "should" is desirable.
   al. 2026), which predicts a distribution in the circumplex. The suitability check
   shall consider: whether weights and licence permit redistribution, dependency
   weight, and whether pleasantness-only output is acceptable for SPI (the 2023
-  framework paper argues it is not) [agreed, choice open].
+  framework paper argues it is not) [agreed; the choice itself is an
+  implementation-stage question, §10.4].
 - **FR-5.3a** (D, I; Must) Shall ship the published linear models of Mitchell et
   al. 2021 in deployable (unscaled) form, distinguishing known-location from
   fixed-effects-only prediction; they are cheap and needed to reproduce that paper.
@@ -616,7 +615,10 @@ possible without a rewrite.
 - **FR-14.1** (Must) All functionality shall be available without a display, a
   notebook or user interaction.
 - **FR-14.2** (Must) Every input, setting and result shall be serialisable to a
-  documented text format.
+  documented format that is open and inspectable, with a text form available for every
+  result: settings and mappings as text; computed tables in an open columnar format
+  with a JSON record of their settings and a one-call export to CSV and Excel
+  [agreed 2026-10-30].
 - **FR-14.3** (Must) Long-running operations shall report progress and be
   cancellable.
 - **FR-14.4** (Must) The project format (FR-1.7) shall be the unit of exchange
@@ -762,7 +764,7 @@ contributor completes a recipe in under a day.
 
 ---
 
-## 10. Decisions recorded and points still open
+## 10. Decisions recorded
 
 Decisions resolved in review of drafts 0.1 to 0.2 are tagged **[agreed]** in the text:
 canonical robust projection (FR-2.3); generalised circumplex beyond the eight outdoor

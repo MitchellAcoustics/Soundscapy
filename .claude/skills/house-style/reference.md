@@ -64,7 +64,8 @@ metadata and sources are relative to the project root. Never edit files under `d
 | `bibliography`, `csl` | `[]` | Project-wide `.bib`; cite with `[@key]` on any page or docstring. |
 | `markdown_pages: {enabled, widget}` | true | `.md` companion per HTML page. |
 | `skill: {enabled, file, skills, gotchas, best_practices, ...}` | enabled | Emits `skill.md` / SKILL.md for agents. |
-| `cli: {enabled, module, name}`, `mcp: {...}`, `versions`, `changelog`, `authors`, `announcement`, `page_status`, `tags`, `seo` | — | Not needed for a first site. |
+| `cli: {enabled, module, name}` | — | `enabled: true`; the click app in `soundscapy.cli` is discovered and documented as a CLI reference section (architecture plan §16.1). |
+| `mcp: {...}`, `versions`, `changelog`, `authors`, `announcement`, `page_status`, `tags`, `seo` | — | Not needed for a first site. |
 
 Output dir is not a config key: it is always `<config dir>/_site/` (`docs/_site/`, or
 `website/_site/` with `--config website/great-docs.yml`).
