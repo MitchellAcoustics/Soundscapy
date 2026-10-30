@@ -27,7 +27,7 @@ when you configure the docs site, write a user guide, or touch a notebook.
 | Package / import name | `soundscapy` | Keeps the existing PyPI name and citations. |
 | Layout | `src/soundscapy/`, tests in `tests/` | Stops tests importing the working tree by accident. |
 | Build backend | `uv_build` | One toolchain. No hatchling, setuptools or VCS versioning. |
-| Python floor | `requires-python = ">=3.13"` | SPEC 0 drops a Python 3 years after release; 3.12 left the window in October 2026. Re-check the SPEC 0 table every release. |
+| Python floor | `requires-python = ">=3.11"`; ruff `target-version = "py311"`; ty `python-version = "3.11"` | Product-owner decision. It is deliberately wider than the SPEC 0 window, so do not raise it to match SPEC 0 or a vendor default. Test every supported version in CI. |
 | Type checker | `ty` | Astral toolchain. Never add mypy, pyright, basedpyright or pyrefly, nor their LSP plugins. |
 | Lint / format | `ruff`, `select = ["ALL"]` with the commented ignores below | Maximum signal; every exemption is visible and justified. |
 | Docstrings | numpy convention | Matches the scientific Python ecosystem and great-docs rendering. |

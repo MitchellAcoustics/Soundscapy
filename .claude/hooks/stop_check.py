@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.12"
+# requires-python = ">=3.11"
 # dependencies = []
 # ///
 """Stop hook: run the fast project checks (``task check:fast``) before Claude stops.

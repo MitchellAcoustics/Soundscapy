@@ -131,9 +131,8 @@ proposals for the product owner, not applied.
   true` in `docs/great-docs.yml`, notebooks in `docs/notebooks/`, and the `marimo`
   shortcode in `.qmd` pages. An earlier draft exported notebooks to Markdown instead; the
   product owner rejected it.
-- **Python floor.** Proposed `>=3.13` from the SPEC 0 rule that a Python version is
-  supported for three years, which drops 3.12 in October 2026. The SPEC 0 page is
-  blocked from this environment, so the table itself was not checked.
+- **Python floor.** Set to `>=3.11` by the product owner, wider than the SPEC 0 window
+  the prompt suggested.
 - **house-style evals.** Drafted with skill-creator's guidance, but its test-and-review
   loop was skipped because a draft was requested.
 - **great-docs skills.** Three of its five were copied. `configure-site` (theming) and
@@ -154,7 +153,6 @@ proposals for the product owner, not applied.
 5. **Browser-only tutorials.** Tutorials run in Pyodide. If the audio or psychoacoustic
    stack has compiled dependencies without WASM wheels, decide in an ADR how those pages
    work, for example a locally runnable notebook with pre-rendered output.
-6. **Python floor.** Confirm 3.13 against the published SPEC 0 table.
 
 ## Updating the vendor plugins and skills
 
