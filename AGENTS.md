@@ -42,8 +42,11 @@ typecheck, run by the Stop hook), `check`, `docs`, `docs:preview`, `build`,
 
 ## Environment
 
-- uv only. Never run bare `pip` or `python`. Use `uv run`, `uv add`,
-  `uv add --group <group>` and `uvx`. Commit `uv.lock` with every dependency change.
+- uv only. Never run bare `pip` or `python`; use `uv run` and `uvx`.
+- Runtime dependency: `uv add <pkg>`. Developer-only dependency: `uv add --group
+  <group> <pkg>`, where the group is `dev` (tooling), `test` or `docs`.
+- Commit `uv.lock` with every dependency change, and give the reason in the commit
+  message.
 - Type checker: `ty`. Linter and formatter: `ruff`. Git hooks: `prek`.
 
 ## Code conventions
@@ -64,19 +67,22 @@ typecheck, run by the Stop hook), `check`, `docs`, `docs:preview`, `build`,
 ## Docs and notebooks
 
 - API docs are generated from docstrings by great-docs.
-- Tutorials and user guides are marimo notebooks in `docs/notebooks/`, embedded into
-  great-docs pages with its native marimo integration. They run in the reader's
-  browser, so they must be WASM-compatible.
-- Follow the marimo skills. Never edit a notebook file while a `marimo-pair` session is
-  running on it; make changes through the live kernel instead.
+- A tutorial is a marimo notebook, `docs/notebooks/<topic>.py`, embedded in a `.qmd`
+  page with great-docs' native shortcode `{{< marimo file="notebooks/<topic>.py" >}}`.
+  It runs in the reader's browser, so it must be WASM-compatible.
+- Follow the `marimo-notebook` and `wasm-compatibility` skills.
+- `marimo-pair` lets an agent work inside a running marimo kernel. While such a
+  session is open on a notebook, never edit that notebook's file; change it through
+  the live kernel instead.
 - Run `task notebooks` after editing a notebook.
 
 ## Design workflow
 
-- Use the superpowers planning spine for any non-trivial feature: brainstorm, write a
-  spec, write a plan, then execute it.
-- Write specs to `design/specs/`, plans to `design/plans/` and decisions to
-  `design/adr/`. This overrides superpowers' default of `docs/superpowers/`, which
+- Any feature that spans more than one module or changes a public API goes through
+  the superpowers plugin skills: `brainstorming`, then a spec, then `writing-plans`,
+  then `executing-plans` or `subagent-driven-development`.
+- Write specs to `design/specs/YYYY-MM-DD-<topic>.md`, plans to
+  `design/plans/YYYY-MM-DD-<topic>.md` and decisions to `design/adr/NNNN-<title>.md`. This overrides superpowers' default of `docs/superpowers/`, which
   would leak into the published site.
 
 ## Review
