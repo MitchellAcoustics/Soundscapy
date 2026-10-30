@@ -5,7 +5,9 @@ draft 0.5 (`design/PRD.md`) and supersedes draft 0.1, which predated the PRD. A
 fresh-eyes builder check was run on it; its answerable questions are folded in and
 marked "my call". Owner decisions taken on the first review (2026-10-30): no copyleft
 restriction on dependencies; dataframe-agnostic through narwhals; click for the CLI;
-progress visible in notebooks as well as the CLI. The remaining questions are in §15. It is
+progress visible in notebooks as well as the CLI. On the second review, every
+remaining question in §15 was decided; the plan is now ready for a spec and an
+implementation plan for Phase 0 and M1. It is
 the document AGENTS.md means by "the architecture plan", and it may now be used for
 design and planning. Nothing in it is fixed except the science; every decision below
 is a proposal with the alternative it beat and the reason, so that each one can be
@@ -163,7 +165,7 @@ class Profile(BaseModel, frozen=True):
     formulation: Literal["canonical", "iso2019", "aletta2024"]
     angles: AngleSelection
     dispersion: Literal["range", "iqr"]
-    missing_items: Literal["exclude", "renormalise"] = "exclude"   # see §15, decision 8
+    missing_items: Literal["exclude", "renormalise"] = "exclude"   # "renormalise" canonical only; §3.2
     metric_set: str                         # name of a Table D.1 edition (used from M3)
 ```
 
@@ -270,9 +272,13 @@ class Dataset:                              # frozen dataclass, plain container
   so a response with a missing item cannot be projected without a rule. The default
   is `missing_items="exclude"`: the coordinate is NaN and the response carries the
   reason `incomplete_attributes`, so it counts in item-level statistics but not in
-  coordinate statistics. `"renormalise"` projects over the present items with the
-  normaliser recomputed, recorded in provenance. The default is an owner decision
-  (§15, item 8).
+  coordinate statistics. `"renormalise"` projects over the present items with
+  Σ|cos θ_i| and Σ|sin θ_i| recomputed over those items, which keeps the canonical
+  formulation's guarantees (coordinates in [−1, 1], neutral at the origin) and is
+  recorded in provenance; it is offered only for the canonical formulation, because
+  the 2019 fixed denominator and the Aletta 2024 variant define no such rule, so
+  under those formulations a missing item always excludes the response. Owner
+  decision, 2026-10-30.
 
 ### 3.3 Coordinates and distributions: the central abstractions
 
@@ -392,9 +398,9 @@ class Target(BaseModel, frozen=True):
 ### 3.4 Scoring and design
 
 ```python
-def spi(test: Coordinates, target: Target, *, n_samples: int, rng: int | np.random.Generator,
-        bootstrap: int | None = None) -> SPIResult
-# SPIResult: value, ks_distance, n_samples, seed, sampling_sd, bootstrap_interval, settings, versions
+def spi(test: Coordinates, target: Target, *, rng: int | np.random.Generator,
+        n_samples: int = SPI_PAPER_N_SAMPLES) -> SPIResult
+# SPIResult: value, ks_distance, n_samples, seed, settings, versions
 
 def shift(a: Coordinates, b: Coordinates) -> ShiftVector
 def overlap(a: KernelDensity, b: KernelDensity, fraction: float) -> float
@@ -413,12 +419,15 @@ def evaluate(brief: Brief, baseline: Coordinates, scenarios: Mapping[str, Coordi
 # Evaluation: per-scenario SPI, shift, quadrant proportions, meets_kpi; tables ready for a report (FR-7.3, FR-7.5)
 ```
 
-- **SPI is explicitly stochastic**, as published: `n_samples` and `rng` are required
-  keyword arguments with no defaults in the core function; the profile supplies the
-  paper's sample size when called through settings or the CLI, which is how FR-6.1's
-  "default sample size matches the 2024 paper" is met. Needs owner sign-off (§15,
-  item 4). Sampling variability is always
-  reported; a bootstrap over the test set is an option (the PRD's open item 1).
+- **SPI is computed as published, and no more.** The target is sampled with an
+  explicit seed (`rng` is required) and the paper's sample size as the default, so
+  FR-6.1's default is met at the function level and every score is reproducible.
+  No sampling-variability or bootstrap machinery is built: the SPI paper and Part 4
+  report the index as a number, and the owner ruled (2026-10-30) that uncertainty
+  reporting beyond the methodology is a leftover of the dropped APA-style
+  requirement, so PRD FR-6.1's [proposed] bootstrap clause and open item 1 are
+  withdrawn. A user who wants to see the seed sensitivity calls `spi` with several
+  seeds; nothing in the package hides that this is possible.
 - **Target search** (FR-6.5, Should) lives behind the `optim` extra with pymoo and
   returns a `Target` whose provenance records the ranking, objectives and optimiser
   settings. It is the only place in the package that needs a long-running optimiser,
@@ -710,7 +719,7 @@ restated here only where the plan relies on it or adds to it.
 | Types | ty; `py.typed` shipped | House style. Pydantic models and plain functions type well; pandas return types are `pd.DataFrame` with documented columns, not typed frames. |
 | Settings and specs | pydantic v2 frozen models | JSON schema for free, which is what a GUI form and the settings-file docs are generated from. Beat dataclasses + hand-written loaders. |
 | Settings files | TOML written by `tomli-w`, read by `tomllib` | Human-editable with comments, standard library reader, no YAML dependency. JSON for machine-written manifests and result sidecars. See §15. |
-| Tables | narwhals (`narwhals.stable.v2`) at the boundary; numpy inside kernels; pandas and polars tested in CI | Owner decision. Functions accept any narwhals-supported eager frame and return the same kind. A spike in this session showed the boundary pattern (select mapped columns to numpy, compute, `with_columns` back) is a dozen lines and identical for pandas and polars. Two pandas-only boundaries remain and are documented: statsmodels (convert on the way in) and `read_survey` for Excel (pandas with openpyxl by default, polars with fastexcel via the `polars` extra). No backend-specific code anywhere else; an import-linter contract keeps `pandas` and `polars` imports out of every module except `survey.io` and `survey.stats`. |
+| Tables | narwhals (`narwhals.stable.v2`) at the boundary; numpy inside kernels; pandas and polars tested in CI; pyarrow for parquet results | Owner decision. Functions accept any narwhals-supported eager frame and return the same kind. A spike in this session showed the boundary pattern (select mapped columns to numpy, compute, `with_columns` back) is a dozen lines and identical for pandas and polars. Two pandas-only boundaries remain and are documented: statsmodels (convert on the way in) and `read_survey` for Excel (pandas with openpyxl by default, polars with fastexcel via the `polars` extra). No backend-specific code anywhere else; an import-linter contract keeps `pandas` and `polars` imports out of every module except `survey.io` and `survey.stats`. |
 | Numerics | numpy, scipy (stats, signal, optimize), contourpy | Standard. |
 | Statistics | scipy.stats and statsmodels; thin `tidy()` helpers returning statistic, df or N, p, effect size | FR-2.6, FR-2.6a. pingouin was considered and rejected as a dependency for a few effect sizes that are ten lines each. |
 | Audio | scipy.io.wavfile core; mosqito, sottek-hearing-model, scikit-maad, soundfile (and phonometry on 3.13+) in the `audio` extra | §3.5 and Appendix C. Licence recorded per backend, not a filter. |
@@ -756,10 +765,14 @@ and what a failure means (FR-13.2, NFR-4, NFR-8).
 2. **Literature fixtures** (`tests/science/`, default run, each test docstring cites the
    source and the significant figures that set its tolerance). The ISO worked
    examples supplied by the owner; Part 4 Example 6 (SPI 56); the 2024 paper's tables
-   at the stated seed and sample size; the 2022 paper's numeric outputs (per-location means, quadrant
-   proportions, contour vertices) against a baseline the owner supplies or approves,
-   since the paper prints figures, not numbers (§15, item 9); the 2021 models predicting the published
-   location means from the ISD feature table.
+   at the stated seed and sample size; the 2021 models predicting the published
+   location means from the ISD feature table. The 2022 paper has no numeric
+   fixture (owner decision, 2026-10-30): it prints figures, so its `.qmd` reproduces
+   them by following the methodology, and the test is that it renders with every
+   cell run. Its KDE is the same estimator seaborn's `kdeplot` wraps
+   (`scipy.stats.gaussian_kde`), and seaborn's `bw_adjust` maps onto
+   `KernelDensity.bandwidth` as a multiplier of Scott's factor, which is documented
+   so the paper's settings can be stated exactly.
 3. **Cross-implementation references** (`tests/reference/`, marked `reference`, run in
    CI nightly and on demand). Skew-normal density, conversions, sampling and fitting
    against committed R `sn` outputs (generated once by a script kept beside them;
@@ -843,21 +856,34 @@ my-study/
 ├── project.toml            # name, package version, profile, pointers below
 ├── mapping.toml            # Mapping (FR-1.3), saved and reused across exports
 ├── settings.toml           # resolved analysis settings (angles, bandwidth, seeds, metric set …)
-├── data/
+├── data/                   # tables people write, check or edit by hand: CSV
 │   ├── responses.csv       # the user's table, untouched
 │   ├── groups.csv, sessions.csv, locations.csv      # optional
 │   └── recordings.toml     # RecordingIndex (M3): paths, formats, hashes, calibration refs
-├── results/
-│   ├── projection/         # coordinates.csv + projection.json (settings, versions)
-│   ├── audio/              # one table per recording + manifest.json + cache/
-│   ├── spi/                # spi.csv + spi.json
+├── results/                # tables the package computes: parquet, plus a JSON record each
+│   ├── projection/         # coordinates.parquet + projection.json (settings, versions)
+│   ├── audio/              # results.parquet + units.json + manifest.json + cache/*.parquet
+│   ├── spi/                # spi.parquet + spi.json
 │   └── evaluation/
+├── exports/                # on demand: CSV and Excel copies of any result (FR-9.1)
 └── manifest.json           # hashes of inputs, versions, timestamps for the whole project
 ```
 
-- Tables are CSV with a JSON sidecar declaring dtypes and units, so the folder opens
-  in Excel, diffs in git and needs no pyarrow. Parquet is an option for large audio
-  results behind the `audio` extra. See §15 for the question this raises.
+- **One rule decides the format of a table.** Tables that a person writes, checks or
+  edits by hand (survey exports, group, session and location tables, the recording
+  index, mappings, settings) are CSV or TOML: they open in Excel, diff in git and
+  need no tooling. Tables that the package computes (coordinates, descriptive
+  statistics, audio metrics and their per-file cache, SPI scores, evaluations) are
+  parquet: dtypes and units survive a round trip without a sidecar, a 1,000-file
+  audio run reads back in milliseconds, and nobody should be hand-editing a
+  computed result. Every computed table can be exported to CSV and Excel with one
+  call or one CLI command, into `exports/`, which is how a user checks numbers or
+  places them in a report (FR-9.1). pyarrow is therefore a core dependency; the
+  owner accepted its size (2026-10-30). pandas and polars both read parquet, so the
+  narwhals boundary is unaffected.
+- CSV inputs get a small JSON sidecar only when the package has to pin a dtype the
+  CSV cannot carry (an id column that must stay a string, for example); otherwise the
+  mapping's declared scales and roles are enough.
 - `Project.open(path)`, `.save()`, `.results["projection"]` is the one stateful class;
   everything it holds is the frozen records of §3.8.
 - Settings files (FR-11.3) are the TOML form of the pydantic settings model, with the
@@ -896,12 +922,12 @@ literature a question it leaves open. None changes the science.
    PRD's generalised circumplex makes positions the stable key.
 3. **No `PlotSpec` yet** (§10). Draft 0.1 proposed one for the GUI; the PRD fixes no GUI
    design, and geometry plus settings already give a GUI what it needs.
-4. **CSV, not parquet, as the project table format** (§11), to keep the install light
-   and the folder human-readable. This is a real trade-off for thousands of audio
-   rows; see §15.
-5. **SPI has no default sample size in the core function** (§3.4). The paper's value
-   is supplied by the profile. This keeps "the number depends on n and the seed"
-   visible at the call site, which the PRD's reproducibility requirements want.
+4. **CSV for hand-made tables, parquet for computed ones** (§11), rather than one
+   format for everything: the folder stays readable where people look, and fast and
+   typed where the package looks.
+5. **SPI carries no uncertainty machinery** (§3.4), because the methodology reports
+   a number; the seed is required so reproducibility is explicit rather than
+   statistical.
 6. **KDE bandwidth is a recorded setting with a documented default**, because the
    papers do not state one and it changes the 50% contour. A sensitivity helper is
    provided so a user can show their contour is not an artefact of the default.
@@ -933,68 +959,42 @@ records are written as the decisions are taken, under `design/adr/`.
 | Phase | Deliverables | Exit criterion |
 |---|---|---|
 | 0. Toolchain | `pyproject.toml`, `Taskfile.yml`, prek, CI, docs skeleton, import-linter contracts, ADR-0001 (functional core and records), ADR-0002 (positions and mappings), ADR-0003 (Coordinates as the central type), ADR-0004 (settings files and project directory) | `task check` and `task docs` green on an empty package |
-| M1. Survey analysis | `instrument`, `survey`, `projection`, `distribution` (Coordinates, regions, KDE, ks2d, SkewNormal), `plot` basics, `datasets.isd` with bundled subset, `project` minimal directory, CLI for journey A, recipes for plot type and dataset loader, plugin discovery, tutorial A, reproduction of the 2022 paper | Journey A done-when; the 2022 paper's `.qmd` renders its figures and tables from the ISD, and its numeric outputs match the baseline the owner supplies (§15, item 9) |
-| M2. SPI and design (1.0) | `spi` with targets library and bootstrap, `design` with Brief/Scenario/evaluate, CLI for C and E1, tutorials C and E, course acceptance cases 2 and 3, reproduction of the 2024 paper, versioning policy, 1.0 release | Part 4 Example 6 reproduces; course exercises run unchanged |
+| M1. Survey analysis | `instrument`, `survey`, `projection`, `distribution` (Coordinates, regions, KDE, ks2d, SkewNormal), `plot` basics, `datasets.isd` with bundled subset, `project` minimal directory, CLI for journey A, recipes for plot type and dataset loader, plugin discovery, tutorial A, reproduction of the 2022 paper | Journey A done-when; the 2022 paper's `.qmd` renders its figures and tables from the ISD with every cell run, following the paper's methodology and the same KDE estimator seaborn wraps |
+| M2. SPI and design (1.0) | `spi` with targets library, `design` with Brief/Scenario/evaluate, CLI for C and E1, tutorials C and E, course acceptance cases 2 and 3, reproduction of the 2024 paper, versioning policy, 1.0 release | Part 4 Example 6 reproduces; course exercises run unchanged |
 | M3. Audio | `audio` (Signal, I/O, calibration, built-in level metrics, MoSQITo and scikit-maad backends, batch runner, manifest), CLI for B, metric recipe, tutorial B, ArtemiS comparison page | Journey B done-when; ISO 532-1 reference signals pass; a 1,000-file batch resumes |
 | M4. Prediction | `predict` (protocol, discovery, LinearPredictor, default probabilistic predictor after suitability check), `soundscapy-soundaqnet` plugin, E2 in `design`, CLI for E2, predictor recipe, reproduction of the 2021 paper | Journey D and E2 done-when |
 | M5. Ecosystem | SATP, ARAUS, DeLTA loaders with mappings; MOSAIQ import/export; target search behind `optim`; contributor trial of each recipe | Journeys F, G, L done-when |
 
 ---
 
-## 15. Decisions for the owner
+## 15. Decisions taken by the owner
 
-Taken on the first review (2026-10-30) and now in the plan: copyleft dependencies are
-acceptable, so sottek-hearing-model and soundfile are in the `audio` extra (PRD NFR-7
-and open item 2 to be amended); dataframe-agnostic through narwhals; click for the
-CLI; progress visible in notebooks through the default tqdm reporter.
+All decisions are now taken (Andrew Mitchell, 2026-10-30, two review rounds). They are
+recorded here so the spec and plans can cite them, and so the PRD can be amended
+where noted.
 
-Still open, ordered by how much a wrong guess would cost. Each has the plan's
-recommendation.
+| # | Decision | Where it lands |
+|---|---|---|
+| 1 | Copyleft dependencies are acceptable; licence is recorded per backend, not a filter | §3.5, Appendix C; **PRD NFR-7 and open item 2 to amend** |
+| 2 | Dataframe-agnostic through narwhals, confined to the boundary; pandas and polars tested | §2, §3.2, §6 |
+| 3 | click for the CLI, documented by great-docs | §4, §6 |
+| 4 | Progress visible in notebooks through a default `tqdm.auto` reporter | §2, §9 |
+| 5 | Python floor stays 3.11; phonometry ships as a 3.13-only optional backend | §3.5, Appendix C |
+| 6 | pyarrow accepted; CSV for hand-made tables, parquet for computed tables, CSV and Excel export on demand | §11 |
+| 7 | TOML for settings and mappings; JSON for machine-written records | §6, §11 |
+| 8 | No SPI uncertainty machinery; the paper's sample size is the function default and the seed is required | §3.4; **PRD FR-6.1 [proposed] clause and open item 1 withdrawn** |
+| 9 | Missing attribute items exclude the response by default; renormalisation is an option under the canonical formulation only | §3.1, §3.2 |
+| 10 | The 2022 paper is reproduced by methodology, not by a numeric baseline; same KDE estimator seaborn wraps | §8, §14 |
+| 11 | Governance: Andrew Mitchell cuts releases and reviews every change that affects scientific results; cadence per milestone (§14) | **PRD NFR-12 and open item 3 to amend**; `GOVERNANCE.md` at Phase 0 |
 
-1. **phonometry and the Python floor.** phonometry (MIT, numpy and scipy only) is the
-   broadest single backend and the only source of Osses fluctuation strength and
-   psychoacoustic annoyance, and it needs Python 3.13. With sottek-hearing-model now
-   admissible, Table D.1 is covered on 3.11 without it. Options: (i) keep the 3.11
-   floor and ship phonometry as a 3.13-only optional backend (recommended; its
-   metrics then show as available per Python version); (ii) raise the package floor
-   to 3.13, reversing NFR-2; (iii) leave it out until independently validated.
-2. **Project table format.** CSV with JSON sidecars (recommended, §11) or parquet
-   (adds pyarrow, roughly 100 MB on Windows, but scales to large audio results and
-   keeps dtypes natively). A middle path is CSV by default with parquet behind the
-   `audio` extra for audio results. Note that with narwhals, polars users can already
-   read the CSV tables natively.
-3. **Settings file format.** TOML (recommended, standard-library reader, comments) or
-   YAML (more familiar to some researchers, needs a dependency). JSON is used for
-   machine-written records regardless.
-4. **SPI uncertainty** (PRD open item 1) and **the missing default in `spi()`**.
-   Recommendation: always report the sampling SD from repeated target draws; offer a
-   bootstrap over the test set as an option off by default; the 2024 paper's sample
-   size is the profile default, and the core function has no default so the choice
-   is visible at the call site. This needs your sign-off because FR-6.1 reads as a
-   function-level default.
-5. **Responses with missing attribute items** (§3.2). Recommendation: exclude from
-   coordinates with a recorded reason by default, with renormalisation as an
-   explicit option. This is a scientific choice: it changes group means, quadrant
-   proportions and every N, and the standards do not state a rule.
-6. **The 2022-paper acceptance baseline** (§8, §14). The paper prints figures from
-   the 0.x pipeline (2019 formula, 45° angles, seaborn's KDE with its bandwidth
-   adjustment, the ISD version of the time). Options: you supply the exact settings
-   and the ISD record version so the plan can regenerate numbers; or the builder
-   regenerates a baseline with 0.x once and you approve it, in which case it is a
-   regression baseline rather than a literature fixture. Also whether the 2024
-   revision prescribes a KDE method or bandwidth; you hold the text.
-7. **Governance** (PRD open item 3): who cuts a release, who reviews a change that
-   moves a regression baseline, and the cadence. The plan assumes a "Scientific
-   changes" changelog section and a method version bump need one maintainer's review
-   plus a passing reference test, but that is a policy, not a design.
-
-### Inputs the plan still needs from the owner (unchanged from PRD §10.3)
+### Inputs the plan still needs from the owner (from PRD §10.3)
 
 The ISD language coverage against the SATP v1.5 tiers; the ISD record versions used by
 each reproduced paper; machine-readable fixtures for Part 4 Example 6 and the 2024
-paper's targets; whether redistributable audio exists; and the features the 2021
-deployable models use. Added by this plan: R `sn` must be available once, on the
-owner's or a contributor's machine, to generate the skew-normal reference fixtures.
+paper's targets and sample size; whether redistributable audio exists; and the
+features the 2021 deployable models use. Added by this plan: R `sn` available once
+to generate the skew-normal reference fixtures (the 157 branch shows this has been
+done before).
 
 ---
 
