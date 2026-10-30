@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "extraKnownMarketplaces": {
+    "trailofbits": {
+      "source": {
+        "source": "github",
+        "repo": "trailofbits/skills"
+      }
+    },
+    "astral-sh": {
+      "source": {
+        "source": "github",
+        "repo": "astral-sh/claude-code-plugins"
+      }
+    },
+    "marimo-pair": {
+      "source": {
+        "source": "github",
+        "repo": "marimo-team/marimo-pair"
+      }
+    },
+    "posit-dev-skills": {
+      "source": {
+        "source": "github",
+        "repo": "posit-dev/skills"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "modern-python@trailofbits": true,
+    "astral@astral-sh": true,
+    "marimo-pair@marimo-pair": true,
+    "posit-dev@posit-dev-skills": true,
+    "github@posit-dev-skills": true,
+    "quarto@posit-dev-skills": true,
+    "code-review@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": false,
+    "data@synced": false,
+    "cowork-plugin-management@synced": false
+  }
+}

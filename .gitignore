@@ -1,0 +1,28 @@
+# Claude Code: personal, per-machine settings never belong in the repo
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+
+# great-docs build output (docs/great-docs.yml layout); docs/_freeze/ is committed
+docs/_quarto/
+docs/_site/
+docs/.cache/
+.quarto/
+__marimo__/
+
+# Editors and OS
+.idea/
+.DS_Store
