@@ -1,14 +1,16 @@
 # Product Requirements: an open-source soundscape assessment, analysis and design package
 
-Status: **draft 0.5 for review** (2026-10-30). Draft 0.4 applied the review of 0.3
-(`design/reviews/prd-0.3-review.md`); draft 0.5 records the owner's responses to it. This document states what the package
-must do and for whom. It deliberately says nothing about how it is built; the
+Status: **draft 0.6, baseline for the architecture plan** (2026-10-30). Draft 0.4
+applied the review of 0.3 (`design/reviews/prd-0.3-review.md`); draft 0.5 recorded the
+owner's responses to it; draft 0.6 records the decisions the owner took while reviewing
+the architecture plan (`design/greenfield_architecture_plan.md` §15), which closed every
+open item. This document states what the package must do and for whom. It deliberately says nothing about how it is built; the
 architecture plan is a separate document and must be checked against this one.
 
 Decisions taken with the product owner are marked **[agreed]**. Changes proposed by
 the 0.3 review that alter scope or an agreed item are written in place and marked
-**[proposed]**; they stand only once the owner accepts them. Points still open are
-marked **[open]** and listed in §10.
+**[proposed]**; they stand only once the owner accepts them. As of draft 0.6 no item
+is open or proposed; §10 records how each was closed.
 
 ---
 
@@ -131,8 +133,8 @@ one, but no throughput figure is an acceptance criterion [agreed].
 *Actor:* P1, P2, P3.
 *Has:* observed or predicted perception for a site, and a notion of the desired
 soundscape (a quadrant, a published reference target, or a client-specified shape).
-*Wants:* an SPI value with its uncertainty, the target shown against the data, and an
-explanation a client can follow.
+*Wants:* an SPI value, the target shown against the data, and an explanation a
+client can follow.
 *Done when:* Part 4 Example 6 can be reproduced (baseline SPI 56 against the
 tranquil target) and a user can define a bespoke target as a bivariate skew-normal
 distribution, in the parameterisation and terminology of Azzalini and the SPI paper
@@ -190,7 +192,12 @@ languages, settings and dataset identity explicit, compatible with the MOSAIQ sc
 ### H. Train and benchmark a predictor — Later
 ### I. Reproduce a paper — Must
 *Actor:* P1, P5. *Done when:* the figures and tables of the 2022, 2024 (SPI) and 2021
-papers regenerate from the ISD with one document each, within documented tolerance.
+papers regenerate from the ISD with one document each. For the 2024 and 2021 papers
+the numbers match within documented tolerance. For the 2022 paper, which publishes
+figures rather than numbers, the document follows the paper's methodology (including
+the same kernel density estimator that the plotting library of the time wrapped) and
+is done when it renders with every cell run; no numeric baseline is kept [agreed
+2026-10-30].
 For the 2021 paper, regeneration starts from the ISD's published feature table
 [agreed], because those features were computed in ArtemiS with metrics that are
 out of scope here (FR-4.5); re-fitting the models is excluded (FR-5.7 is Later).
@@ -328,6 +335,14 @@ requirement; "should" is desirable.
   (location, session, demographic, time, user-defined); shall report mean, SD,
   quantiles and the proportion of responses in any quadrant, half-plane or
   user-defined region ("percent likely to perceive").
+- **FR-2.5a** (A; Must) A response with one or more missing circumplex items shall
+  not be projected by default: its coordinates are absent and it carries the reason,
+  so it still counts in item-level statistics but not in coordinate statistics. Under
+  the canonical formulation only, the user may instead choose to project over the
+  present items with the normalisers recomputed over those items; the choice is
+  recorded with the result. The 2019 and Aletta 2024 formulations define no such
+  rule, so under them a missing item always excludes the response [agreed
+  2026-10-30].
 - **FR-2.6** (A; Must) Shall provide the Part 3 correlation requirements: Spearman
   with the tied-ranks formula for ordinal items, Pearson for interval data, with
   p-values, including correlations between each psychoacoustic metric and each
@@ -472,11 +487,12 @@ requirement; "should" is desirable.
 
 - **FR-6.1** (C, E; Must) Shall compute SPI = 100(1 − D) using the two-dimensional
   KS distance between a test distribution (observed or predicted) and a target, with
-  explicit seed and sample size, and shall report the variability due to sampling.
-  **[proposed]** Should also report the sampling uncertainty of the test set itself
-  (for example a bootstrap interval over responses), which journey C's "SPI with its
-  uncertainty" implies. The default sample size shall match the 2024 paper so its
-  tables reproduce.
+  an explicit seed and sample size recorded in the result. The default sample size
+  shall match the 2024 paper so its tables reproduce. No uncertainty reporting beyond
+  the published method is required: the SPI paper and Part 4 report the index as a
+  number, and the earlier "with its uncertainty" wording in journey C was a leftover
+  of the dropped APA-style reporting requirement [agreed 2026-10-30]. Users who want
+  seed sensitivity run the computation with several seeds.
 - **FR-6.2** (C; Must) Shall support bespoke targets defined as bivariate
   skew-normal distributions in direct parameters, with conversion to centred
   parameters where admissible, using the terminology of Azzalini and the SPI paper
@@ -655,13 +671,12 @@ possible without a rewrite.
   recorded.
 - **NFR-7 Licensing.** The scientific core stays open source under a permissive
   licence (BSD-3 today; MIT or Apache-2.0 acceptable) and must remain compatible
-  with every dependency's licence. An open-core model is a possible future, with
-  the Python package open and a GUI licensed commercially, so the core shall avoid
-  copyleft (GPL) dependencies that would constrain that, and shall record each
-  wrapped audio library's licence as part of adopting it. Model weights are
-  redistributed only under licences that permit it [agreed]. **[open]** Is an LGPL
-  dependency used through dynamic linking acceptable (audio file I/O through
-  libsndfile is one), and may a GPL library be an optional extra or plugin?
+  with every dependency's licence. Copyleft dependencies (LGPL, GPL, AGPL) are
+  acceptable in the package and its extras; the best available implementation is
+  chosen on scientific and engineering merit, and each wrapped library's licence is
+  recorded as part of adopting it and surfaced in its metric metadata, so that the
+  licence position can be revisited if an open-core model is ever pursued. Model
+  weights are redistributed only under licences that permit it [agreed 2026-10-30].
 - **NFR-8 Quality.** Automated tests on all supported platforms; scientific fixtures
   from the literature; reference comparisons for audio; documentation built and
   executed in CI.
@@ -680,9 +695,10 @@ possible without a rewrite.
   is English for this release [agreed].
 - **NFR-11 Longevity.** Citable releases with DOIs; a software paper after the first
   stable release.
-- **NFR-12 Governance.** **[open]** A short governance statement: who may cut a
-  release, how a change that affects scientific results is reviewed, and the release
-  cadence.
+- **NFR-12 Governance.** Andrew Mitchell cuts releases and reviews every change
+  that affects scientific results (any change that moves a regression baseline or
+  bumps a method version). Releases follow the milestones of §9; patch releases as
+  needed. A `GOVERNANCE.md` in the repository states this [agreed 2026-10-30].
 
 ---
 
@@ -777,15 +793,18 @@ APA-style reporting requirement. No reference to the previous package's layouts.
 at M2 (§9). Linear models as the fallback default predictor (journey D). The 2021
 paper reproduced from the ISD feature table (journey I).
 
-### 10.2 Still open for the owner
+### 10.2 Decided on review of the architecture plan (2026-10-30)
 
-1. **SPI uncertainty** (FR-6.1): add the test set's own sampling uncertainty, and
-   adopt the 2024 paper's default sample size.
-2. **Copyleft dependencies** (NFR-7): whether an LGPL dependency through dynamic
-   linking is acceptable (audio file I/O through libsndfile is one), and whether a
-   GPL library may be an optional extra or plugin.
-3. **Governance** (NFR-12): who may cut a release, how a change affecting scientific
-   results is reviewed, and the release cadence.
+Nothing remains open. The decisions, also registered in the architecture plan §15:
+copyleft dependencies acceptable (NFR-7); no SPI uncertainty beyond the published
+method, with the paper's sample size as the default (FR-6.1, journey C); governance
+stated (NFR-12); responses with missing circumplex items excluded by default, with
+renormalisation under the canonical formulation only (FR-2.5a); the 2022 paper
+reproduced by methodology rather than numeric baseline (journey I). Implementation
+choices that are not requirements (dataframe-agnostic tables through narwhals, click
+for the CLI, TOML settings, parquet for computed tables and CSV for hand-made ones,
+a default progress reporter for notebooks, the 3.11 floor kept with phonometry as a
+3.13-only backend) are recorded in the plan only.
 
 ### 10.3 Inputs needed from the owner
 
