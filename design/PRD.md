@@ -204,7 +204,7 @@ install the package and walk through a tutorial and an exercise on ISD data, aft
 which students collect their own data in a workshop and analyse it [agreed]. Hosting
 of notebooks is handled by the course, not by this package [agreed].
 *Wants:* to run journeys A, C and E on ISD data and then on their own survey export
-during a taught session, with a reduced B where audio was collected; and to produce
+during a taught session, with a reduced B where audio was collected (from M3); and to produce
 the assessed report (at most eight A4 sides) whose marking rewards ISO 12913-2
 reporting compliance, Part 3 analysis rigour, statistical reporting, visualisation
 quality and interpretation.
@@ -265,7 +265,8 @@ requirement; "should" is desirable.
   never silently dropping rows; rules shall be configurable.
 - **FR-1.6** (B; Must) Shall index audio files without loading them, record their
   format (channels, rate, depth, duration) and link each to a group or clip.
-- **FR-1.7** (A to E, K; Should) Should save and reopen a project: data, mapping,
+- **FR-1.7** (A to E, K; Should, with a minimal project directory a Must at M1 per
+  FR-14.4) Should save and reopen a project: data, mapping,
   settings, results and provenance in a documented on-disk format that the library,
   notebooks, CLI and GUI all read. Settings and mappings alone shall be saveable from
   the start (FR-11.3); whole-project save and sharing is a later GUI concern
@@ -444,7 +445,7 @@ requirement; "should" is desirable.
   shall consider: whether weights and licence permit redistribution, dependency
   weight, and whether pleasantness-only output is acceptable for SPI (the 2023
   framework paper argues it is not) [agreed, choice open].
-- **FR-5.3a** (D, I; Should) Should ship the published linear models of Mitchell et
+- **FR-5.3a** (D, I; Must) Shall ship the published linear models of Mitchell et
   al. 2021 in deployable (unscaled) form, distinguishing known-location from
   fixed-effects-only prediction; they are cheap and needed to reproduce that paper.
 - **FR-5.4** (D; Must) Shall support side-loading large deep models as optional
@@ -494,13 +495,13 @@ requirement; "should" is desirable.
 
 ### 5.7 Design and intervention (ISO/TS 12913-4)
 
-- **FR-7.1** (E; Must) Shall represent a Soundscape Design Brief: ambition statement,
+- **FR-7.1** (E1, E2; Must, from M2) Shall represent a Soundscape Design Brief: ambition statement,
   target distribution, KPI thresholds (for example SPI > 70), assessment method, and
   the scenarios under consideration.
-- **FR-7.2** (E; Must) Shall represent a scenario as a named set of inputs (audio,
+- **FR-7.2** (E1, E2; Must, from M2) Shall represent a scenario as a named set of inputs (audio,
   features, design parameters, or a post-intervention survey) and its resulting
   perception distribution, with the model or survey that produced it.
-- **FR-7.3** (E; Must) Shall compare baseline, scenarios and target: SPI, shift
+- **FR-7.3** (E1, E2; Must, from M2) Shall compare baseline, scenarios and target: SPI, shift
   vectors, quadrant proportions, overlaid contours; shall rank scenarios and flag
   which meet the KPI.
 - **FR-7.4** (E; Should) Should classify interventions with the Part 4 Annex A levels
@@ -723,7 +724,7 @@ material.
 | M1 | A, I (2022 paper) | Survey analysis per the Part 3 revision with adjusted angles; no R |
 | M2 | C, E1, I (SPI paper), K | SPI with targets, in Python; course-ready |
 | M3 | B | Audio pipeline with calibration, Table D.1, parallel and resumable |
-| M4 | D, E2, I (2021 paper) | Predictors, plugins, design-brief evaluation per Part 4 |
+| M4 | D, E2, I (2021 paper) | Predictors, plugins, predicted design scenarios per Part 4 |
 | M5 | L, F, G | Extension recipes, reference-target search, harmonised datasets |
 | GUI | To be designed | Built on the core; no tiers or technology fixed (FR-14.7) |
 
@@ -731,6 +732,11 @@ Given one part-time maintainer, each milestone is scoped to be releasable and
 useful on its own, and M1 to M2 together constitute a usable 1.0 candidate for the
 course even if M3 to M5 slip. 1.0 is released at M2, and M3 to M5 are 1.x releases
 [agreed].
+
+A requirement is delivered with the milestone of the earliest journey it serves, unless
+this section says otherwise. The CLI (FR-14.5) grows the same way: journey A's
+commands at M1, C and E1 at M2, B at M3, E2 at M4. The versioning policy (FR-13.4) is
+in place by M2, since 1.0 needs it.
 
 Each extension recipe (FR-13.1) is delivered with the milestone that introduces that
 extension type [agreed]: plot type and dataset loader at M1, metric at M3,
@@ -781,7 +787,20 @@ paper reproduced from the ISD feature table (journey I).
 3. **Governance** (NFR-12): who may cut a release, how a change affecting scientific
    results is reviewed, and the release cadence.
 
-### 10.3 Implementation-stage questions (not requirements)
+### 10.3 Inputs needed from the owner
+
+Facts and data only the owner holds. None changes a requirement, but each blocks the
+tests of the milestone shown, so request it before that milestone is planned in detail.
+
+| Input | Needed for | Why |
+| --- | --- | --- |
+| Which ISD languages, if any, fall outside the SATP v1.5 and Aletta 2024 sets, and the v1.5 Medium-tier list | M1, M2 (course case 2) | Under the default profile, an uncovered ISD language raises the FR-2.4 error in the headline course exercise. |
+| The ISD record version each reproduced paper used, and whether it is public | M1 (2022), M2 (2024), M4 (2021) | Decides whether the loader must pin versions (journey I, FR-10.1). |
+| Machine-readable fixtures: Part 4 Example 6 data and tranquil target, the 2024 paper's three demonstration targets and sample size | M2 | SPI acceptance is numeric (journey C, FR-6.1, FR-6.3). |
+| Whether redistributable audio exists (clips, a calibrator recording, clips with ArtemiS values) | M3 | Decides whether audio tests, the B tutorial and FR-4.10 use shipped clips or synthetic signals and user files. |
+| The features the deployable 2021 linear models use | M4 | If any is proprietary (FR-4.5), the fallback predictor cannot run from audio (journey D). |
+
+### 10.4 Implementation-stage questions (not requirements)
 
 1. Which of the two candidate probabilistic predictors becomes the default (FR-5.3).
 2. Which wrapped libraries cover which Table D.1 metrics, and therefore what the 1.0
