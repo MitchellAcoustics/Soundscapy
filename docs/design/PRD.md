@@ -1,12 +1,11 @@
 # Product Requirements: an open-source soundscape assessment, analysis and design package
 
-Status: **draft 0.1 for review** (2026-10-30). This document states what the package
+Status: **draft 0.2 for review** (2026-10-30). This document states what the package
 must do and for whom. It deliberately says nothing about how it is built; the
 architecture plan is a separate document and must be checked against this one.
 
-Decisions already taken with the product owner are marked **[agreed]**. Items the
-product owner has not yet ruled on are marked **[assumed]** and listed again in
-§10 for confirmation.
+Decisions taken with the product owner are marked **[agreed]**. The few points still
+open are marked **[open]** and listed in §10.
 
 ---
 
@@ -45,6 +44,8 @@ notebooks, and as the engine of a graphical application for non-programmers.
 - Continued and increased uptake in papers and in the ISO 12913 standards process.
 - The certification course teaches on the new tool, with fewer participants lost at
   installation.
+- New developers contribute, because the rebuild made contribution feasible; today
+  the package is maintained by one unfunded developer as a side project [agreed].
 
 ---
 
@@ -130,10 +131,11 @@ context a chosen model requires.
 *Wants:* predicted perception from a named, versioned model; per-clip predictions and,
 where the model supports it, a predicted distribution; a clear statement of what the
 model was trained on and what it needs.
-*Done when:* at least one published single-response predictor and the published
-linear models run end to end from audio, and a third-party model can be added as a
-plugin without changing the package. Distributional predictors are supported by the
-interfaces but not required to ship [agreed].
+*Done when:* a default predictor ships and runs end to end from audio, a large deep
+model (SoundAQnet) can be side-loaded as an optional plugin, and a third-party model
+can be added as a plugin without changing the package. Both single-response and
+distributional predictors are supported by the interfaces; which ships first depends
+on suitability (see FR-5.3) [agreed].
 
 ### E. Evaluate a design against a brief — Must
 *Actor:* P2, P3.
@@ -168,9 +170,13 @@ papers regenerate from the ISD with one notebook each, within documented toleran
 
 ### K. Complete the course — Must (added)
 *Actor:* P5.
-*Has:* a laptop (often Windows, often locked down) or a browser; no Python.
-*Wants:* to run journeys A, C, E and a reduced B on provided and own data during a
-taught session, and to keep using the tool afterwards.
+*Has:* a browser and a link to a hosted notebook; no Python. Today the course gives
+students Colab notebooks that install the package and walk through a tutorial and an
+exercise on ISD data, after which students collect their own data in a workshop and
+analyse it [agreed].
+*Wants:* to run journeys A, C and E on ISD data and then on their own survey export
+during a taught session, with a reduced B where audio was collected, and to keep
+using the tool afterwards.
 *Done when:* a participant with no Python reaches a first circumplex plot inside the
 first hour by the documented path, and every course exercise runs unchanged in the
 supported environments.
@@ -192,13 +198,19 @@ requirement; "should" is desirable.
 
 ### 5.1 Data intake and project management
 
-- **FR-1.1** (A, K; Must) Shall import survey data from CSV, Excel and REDCap exports.
+- **FR-1.1** (A, K; Must) Shall import survey data from CSV and Excel, which is how
+  REDCap, Qualtrics and hand-built surveys arrive in practice [agreed].
 - **FR-1.2** (A, K; Must) Shall define and document a canonical survey layout (columns,
-  identifiers, coding) that the course teaches and that templates are provided for.
-- **FR-1.3** (A; Must) Shall accept any column naming through an explicit mapping of
-  columns to the standard constructs (the eight attributes, source dominance, overall
-  quality, appropriateness, WHO-5, demographics, identifiers), with the response scale
-  and language declared, and shall persist that mapping with the project.
+  identifiers, coding) that the course teaches, with downloadable templates [agreed].
+- **FR-1.3** (A; Must) Shall accept any column naming and layout through an explicit
+  mapping of columns to the standard constructs (the eight attributes, source
+  dominance, overall quality, appropriateness, WHO-5, demographics, identifiers), with
+  the response scale and language declared, and shall persist that mapping.
+- **FR-1.3a** (A, K; Must) Shall make building that mapping easy for a non-programmer:
+  suggest matches from column names and known export schemas (REDCap/SSID codebook,
+  Qualtrics, the previous package's layout), let the user confirm or correct them,
+  and save the mapping for reuse on the next export from the same instrument
+  [agreed].
 - **FR-1.4** (A, B; Must) Shall represent the SSID hierarchy Location → Session → Group
   → Response and link recordings to groups, environmental logs to sessions and static
   context to locations; shall tolerate datasets that have only some levels.
@@ -208,9 +220,11 @@ requirement; "should" is desirable.
   never silently dropping rows; rules shall be configurable.
 - **FR-1.6** (B; Must) Shall index audio files without loading them, record their
   format (channels, rate, depth, duration) and link each to a group or clip.
-- **FR-1.7** (A to E, K; Must) Shall save and reopen a project: data, mapping,
+- **FR-1.7** (A to E, K; Should) Should save and reopen a project: data, mapping,
   settings, results and provenance in a documented on-disk format that the library,
-  notebooks, CLI and GUI all read.
+  notebooks, CLI and GUI all read. Settings and mappings alone shall be saveable from
+  the start (FR-11.3); whole-project save and sharing is a later GUI concern
+  [agreed].
 - **FR-1.8** (G; Should) Shall import from and export to MOSAIQ-conformant packages,
   preserving item-level responses separately from derived coordinates, explicit
   missingness (present, absent, not reported) and provenance.
@@ -230,8 +244,8 @@ requirement; "should" is desirable.
   record which angles and scale produced every coordinate.
 - **FR-2.4** (A; Must) Shall ship the published language-specific adjusted angles and
   select them from the declared survey language; shall allow user-supplied angle sets
-  with provenance. Deriving new angle sets from translation data is **Later**
-  [assumed].
+  with provenance. Deriving new angle sets from translation data (circumplex SEM
+  fitting) is **out of scope** [agreed].
 - **FR-2.5** (A; Must) Shall project per response, then aggregate by any grouping
   (location, session, demographic, time, user-defined); shall report mean, SD,
   quantiles and the proportion of responses in any quadrant, half-plane or
@@ -262,23 +276,39 @@ requirement; "should" is desirable.
 
 ### 5.4 Audio and psychoacoustic analysis
 
-- **FR-4.1** (B; Must) Shall accept mono, two-channel and multichannel files
-  [assumed: WAV and FLAC; ambisonic files handled as multichannel without decoding].
-- **FR-4.2** (B; Must) Shall apply calibration from (a) a known level per channel,
-  (b) a calibration tone recorded in a separate file or at the head of the file at a
-  stated level, and shall record the calibration method and values in the results
-  [assumed].
+- **FR-4.0** (B; Must) Shall not re-implement psychoacoustic, ecoacoustic or
+  environmental-acoustics algorithms. Metrics are provided by wrapping existing open
+  libraries (MoSQITo, pySQAT and others catalogued by the LISQM list; scikit-maad for
+  ecoacoustics), and the metric set on offer is whatever those libraries provide,
+  validated and exposed consistently [agreed]. The package's own contribution is
+  calibration, batch orchestration, channel rules, statistics and consistent
+  outputs.
+- **FR-4.1** (B; Must) Shall accept mono (sound-level-meter or general) and
+  two-channel (binaural or general stereo) recordings. Ambisonic and other
+  multichannel processing is out of scope [agreed].
+- **FR-4.1a** (B; Must) Shall handle long-duration recordings (long-term sound-level
+  meter files of hours) by computing metrics over user-defined time windows as well
+  as whole-file, since consultants bring these alongside 30-s binaural clips
+  [agreed].
+- **FR-4.2** (B; Must) Shall apply calibration from (a) a known level per channel, or
+  (b) a recorded calibrator signal (separate calibration file or a segment at a
+  stated level, following the IEC 61672 field-calibration procedure as practised in
+  open sound-level-meter tools), and shall record the calibration method and values
+  in the results [agreed].
 - **FR-4.3** (B; Should) Should apply a user-supplied equalisation filter to
   approximate a monaural measurement microphone, as Part 3 clause 7 requires, and
-  record that it was applied [assumed: the filter is not shipped].
-- **FR-4.4** (B; Must) Shall compute the Part 3 Table D.1 set: LAeq, LCeq, LAF5,
-  LAF95; N5, Navg, Nrmc, N95, N5/N95 (ISO 532-1); S5, Savg, S95 (DIN 45692);
-  tonality (ECMA-74); R10, R50; F10, F50; and the 2024 additions S50 and IACC.
-- **FR-4.5** (B, D; Should) Should compute the research feature set used by the
-  published models: ECMA-418-2 roughness, impulsiveness and fluctuation strength,
-  psychoacoustic annoyance, LA10 − LA90, LCeq − LAeq, kurtosis, SEL, and the
-  scikit-maad ecoacoustic indices. Proprietary metrics (relative approach, HMS
-  tonality) are out of scope [assumed].
+  record that it was applied. The filter itself is not shipped [open: confirm].
+- **FR-4.4** (B; Must) Shall offer the Part 3 Table D.1 set to the extent the wrapped
+  libraries provide it: LAeq, LCeq, LAF5, LAF95; N5, Navg, Nrmc, N95, N5/N95
+  (ISO 532-1); S5, Savg, S95 (DIN 45692); tonality; R10, R50; F10, F50; and the
+  2024 additions S50 and IACC. Level metrics and IACC, which are elementary, may be
+  implemented directly. Gaps in library coverage shall be documented, not filled
+  with bespoke implementations.
+- **FR-4.5** (B, D; Should) Should offer the research feature set used by the
+  published models where libraries provide it: ECMA-418-2 loudness, roughness and
+  tonality, fluctuation strength, psychoacoustic annoyance, LA10 − LA90,
+  LCeq − LAeq, kurtosis, SEL, and the scikit-maad ecoacoustic indices. Proprietary
+  metrics (relative approach, HMS tonality) are out of scope.
 - **FR-4.6** (B; Must) Shall compute every metric per channel, shall derive the
   representative single value by the higher-of-channels rule with mean as an option,
   and shall support genuinely cross-channel metrics (IACC) as a distinct kind.
@@ -291,9 +321,9 @@ requirement; "should" is desirable.
 - **FR-4.9** (B; Must) Shall return results as one tidy table per recording (and per
   channel) that joins to survey data by group or clip identifier, and shall export to
   CSV and Excel.
-- **FR-4.10** (B; Must) Shall validate selected metrics against reference signals or
-  reference-implementation values with stated tolerances, and publish those
-  tolerances.
+- **FR-4.10** (B; Must) Shall validate selected metrics against reference signals and
+  the ArtemiS reference values the group holds, with stated tolerances, and publish
+  those tolerances [agreed: reference values exist].
 - **FR-4.11** (B; Should) Should expose metric time series (not only statistics) for
   users who need them, with the frame rate recorded.
 
@@ -306,12 +336,20 @@ requirement; "should" is desirable.
   data, setting, licence).
 - **FR-5.2** (D; Must) Shall discover predictors installed as separate packages
   (plugins) and list them with their requirements.
-- **FR-5.3** (D; Must) Shall ship the published linear models of Mitchell et al. 2021
-  in deployable (unscaled) form, distinguishing known-location from
-  fixed-effects-only prediction.
-- **FR-5.4** (D; Must) Shall ship or fetch at least one validated single-response
-  audio predictor of the SoundAQnet type, with its weights distributed under their
-  licence [assumed: fetched on first use, not bundled].
+- **FR-5.3** (D; Must) Shall ship one default predictor, chosen after a suitability
+  check from: the "Probably Pleasant" ARAUS model (Ooi et al. 2022), which predicts
+  a pleasantness distribution only, and the group-level probabilistic model (Tong et
+  al. 2026), which predicts a distribution in the circumplex. The suitability check
+  shall consider: whether weights and licence permit redistribution, dependency
+  weight, and whether pleasantness-only output is acceptable for SPI (the 2023
+  framework paper argues it is not) [agreed, choice open].
+- **FR-5.3a** (D, I; Should) Should ship the published linear models of Mitchell et
+  al. 2021 in deployable (unscaled) form, distinguishing known-location from
+  fixed-effects-only prediction; they are cheap and needed to reproduce that paper.
+- **FR-5.4** (D; Must) Shall support side-loading large deep models as optional
+  plugins, with SoundAQnet (weights and code public on the SoundSCaper repository)
+  as the first, its weights fetched on first use under their licence rather than
+  bundled [agreed].
 - **FR-5.5** (D; Must) Shall never require perceptual (survey-derived) inputs for a
   deployable predictor, following the 2023 framework; shall degrade gracefully when
   optional inputs are missing.
@@ -380,9 +418,10 @@ requirement; "should" is desirable.
 
 - **FR-9.1** (A to E; Must) Shall export every table to CSV and Excel and every figure
   to PNG, SVG and PDF.
-- **FR-9.2** (A, C, E; Should) Should assemble a formatted report (HTML and PDF or
-  Word) from a project: data summary, Part 3 statistics, figures, SPI results,
-  design-brief comparison, with the settings appendix [assumed].
+- **FR-9.2** (A, C, E; Later) A formatted report is not required; the GUI and
+  library produce tables and figures that users place in their own reports
+  [agreed]. The *content* of a Part 4 evaluation (FR-7.5) is still assembled as
+  tables and figures.
 - **FR-9.3** (I; Must) Shall provide a notebook per supported paper that regenerates
   its figures and tables from the public dataset.
 
@@ -451,8 +490,14 @@ possible without a rewrite.
   between library, CLI and GUI.
 - **FR-14.5** (Must) A command-line interface shall cover journeys A, B, C and E so
   that each can be run without writing Python.
-- **FR-14.6** (Must) Audio shall be processable locally; nothing shall require
-  uploading audio to a service [assumed, see NFR-5].
+- **FR-14.6** (Must) Audio and prediction shall be processable locally; nothing
+  shall require uploading audio to a service [agreed, see NFR-5].
+- **FR-14.7** (Must) The core shall support two GUI tiers without change: a web
+  application covering survey analysis, plotting and SPI, and a desktop application
+  adding psychoacoustic analysis and prediction. Neither tier's choice shall shape
+  the core beyond the headless and serialisation requirements above [agreed]. The
+  GUI follows the conventions of technical analysis software: it drives the
+  package's analysis functions and exports CSV/Excel tables and figures.
 
 ---
 
@@ -465,31 +510,43 @@ possible without a rewrite.
   a single install cell.
 - **NFR-2 Platforms.** Current Python versions per the scientific-Python support
   window; Windows is a first-class target because of the consultant and student base.
-- **NFR-3 Performance.** 1,000 thirty-second binaural recordings through the Table
-  D.1 set overnight on a four-core laptop; survey analysis of 10,000 responses
-  interactive (seconds); SPI of one site in under a second at default sample size
-  [assumed targets].
+- **NFR-3 Performance.** Consultants bring tens to hundreds of binaural clips or
+  long-term sound-level-meter recordings per project; researchers bring thousands of
+  clips across surveys [agreed]. Targets: 1,000 thirty-second binaural recordings
+  through the Table D.1 set overnight on a four-core laptop; an eight-hour mono
+  recording in windowed level metrics in minutes; survey analysis of 10,000
+  responses interactive (seconds); SPI of one site in under a second at default
+  sample size [open: confirm targets].
 - **NFR-4 Reproducibility.** See FR-11; additionally the project shall publish
   regression baselines and tolerances and treat any numeric drift as a breaking
   change.
 - **NFR-5 Privacy and data handling.** Recordings may contain speech and client data;
   the package shall not transmit data anywhere except explicit dataset downloads and
   explicit model-weight downloads, both of which shall state what is fetched
-  [assumed].
+  [agreed].
 - **NFR-6 Standards traceability.** Each implemented procedure shall cite the clause
   or paper; where editions differ, the edition in use shall be selectable and
   recorded.
-- **NFR-7 Licensing.** BSD-3-Clause; no copyleft dependencies in the core; model
-  weights distributed only under licences that permit it [assumed].
+- **NFR-7 Licensing.** The scientific core stays open source under a permissive
+  licence (BSD-3 today; MIT or Apache-2.0 acceptable) and must remain compatible
+  with every dependency's licence. An open-core model is a possible future, with
+  the Python package open and a GUI licensed commercially, so the core shall avoid
+  copyleft (GPL) dependencies that would constrain that, and shall record each
+  wrapped audio library's licence as part of adopting it. Model weights are
+  redistributed only under licences that permit it [agreed].
 - **NFR-8 Quality.** Automated tests on all supported platforms; scientific fixtures
   from the literature; reference comparisons for audio; documentation built and
   executed in CI.
-- **NFR-9 Maintainability.** Maintainable by a small volunteer team of mixed
-  experience: strict public-API boundary, small modules, decision records, no
-  bespoke frameworks where an ecosystem library exists.
+- **NFR-9 Maintainability.** Today one unfunded developer maintains the package as a
+  side project; the rebuild must lower the barrier for new contributors [agreed].
+  Hence: strict public-API boundary, small modules, decision records, no bespoke
+  frameworks where an ecosystem library exists, and no re-implementation of
+  algorithms that exist in maintained libraries. Scope must respect this: the Must
+  list is sequenced so that each milestone is independently releasable and useful
+  (§9).
 - **NFR-10 Accessibility and internationalisation.** Colour-blind-safe defaults;
   attribute labels available in the supported survey languages; interface language
-  is English for this release [assumed].
+  is English for this release [open: confirm].
 - **NFR-11 Longevity.** Citable releases with DOIs; a software paper after the first
   stable release.
 
@@ -498,9 +555,13 @@ possible without a rewrite.
 ## 7. Out of scope for this release
 
 - Field data capture (survey apps, REDCap configuration), beyond importing exports.
-- Ambisonic decoding, spatial rendering, auralisation; VR playback.
+- Ambisonic and any multichannel (more than two channels) processing, spatial
+  rendering, auralisation, VR playback [agreed].
 - Method C qualitative analysis (grounded theory coding).
-- Deriving new translation angle sets (structural equation modelling) [assumed Later].
+- Deriving new translation angle sets (circumplex SEM fitting) [agreed].
+- Re-implementing psychoacoustic or ecoacoustic algorithms [agreed].
+- Formatted report generation [agreed].
+- Backwards compatibility with the 0.x package in any form [agreed].
 - Real-time or sensor-network monitoring (journey J).
 - Benchmark splits and leaderboards (journey H).
 - Soundscape captioning and any LLM dependency.
@@ -510,10 +571,15 @@ possible without a rewrite.
 
 ## 8. Compatibility and migration
 
-[assumed, pending decision] This is a clean rebuild released as a new major version
-under the existing name. Existing scripts are not expected to run unchanged; a
-migration guide maps old functions to new workflows, and the course material is
-rewritten for the new version. The old version remains installable and pinned.
+[agreed] This is a clean rebuild released as `soundscapy` 1.0 (the current package is
+0.x). It is treated as entirely new and separate code: nothing in the 0.x
+architecture, API or naming constrains it, no compatibility shims or migration guide
+are built, and no time is spent on backwards compatibility. Adapter functions with
+deprecation warnings may be added by the maintainer after the rebuild, outside this
+work. Until release, the API and any implemented component may change freely to
+meet the requirements; nothing implemented is treated as fixed if it is not working.
+The 0.x releases remain installable and pinned for existing scripts and course
+material.
 
 ---
 
@@ -526,34 +592,38 @@ rewritten for the new version. The old version remains installable and pinned.
 | M3 | B | Audio pipeline with calibration, Table D.1, parallel and resumable |
 | M4 | D, E, I (2021 paper) | Predictors, plugins, design-brief evaluation per Part 4 |
 | M5 | L, F, G | Extension recipes, reference-target search, harmonised datasets |
-| GUI | K (desktop or web) | Built on the M4 core |
+| GUI | K (web tier: A, C, E; desktop tier adds B, D) | Built on the M4 core |
+
+Given one part-time maintainer, each milestone is scoped to be releasable and
+useful on its own, and M1 to M2 together constitute a usable 1.0 candidate for the
+course even if M3 to M5 slip.
 
 ---
 
-## 10. Assumptions awaiting confirmation
+## 10. Decisions recorded and points still open
 
-1. **Course workflow and environment** (K): hosted notebooks remain the primary
-   teaching path until the GUI exists; local install is the secondary path.
-2. **GUI deployment**: both local desktop and web must remain possible; audio is
-   processed locally in either case (NFR-5, FR-14.6).
-3. **GUI outputs**: figures, tables and a saved project are Must; a formatted report
-   is Should (FR-9.2).
-4. **Audio channels**: mono, two-channel and multichannel accepted; ambisonic
-   decoding out of scope (FR-4.1).
-5. **Calibration**: known per-channel level and calibration-tone file or segment;
-   equalisation filter user-supplied (FR-4.2, FR-4.3).
-6. **Metric set**: Table D.1 is Must; ECMA-418-2 and the lockdown research set are
-   Should; proprietary metrics are out (FR-4.4, FR-4.5). Reference values from
-   ArtemiS are wanted if available.
-7. **Scale**: hundreds of recordings per consultancy project, thousands for research
-   (NFR-3).
-8. **Translation**: apply published angles now; derive new angles later (FR-2.4).
-9. **Inputs**: CSV, Excel, REDCap; a canonical layout taught in the course (FR-1.1,
-   FR-1.2).
-10. **Shipped predictors**: the 2021 linear models and one SoundAQnet-type model with
-    weights fetched on first use (FR-5.3, FR-5.4).
-11. **Clean break**, same name, new major version, migration guide (§8).
-12. **Maintainers**: small core team plus volunteers; no assumption of funded
-    developer time beyond the core team.
-13. **Licence**: BSD-3, no copyleft dependencies in core (NFR-7).
-14. **Method B**: supported in the data model and basic statistics only (FR-1.9).
+Confirmed with the product owner (see tags above): course workflow (K); two GUI
+tiers with local audio processing, not shaping the core (FR-14.6, FR-14.7); GUI
+exports tables and figures, no formatted report, project save later (FR-1.7,
+FR-9.2); mono and two-channel audio only (FR-4.1); calibration by known level or
+calibrator signal (FR-4.2); metrics come from wrapped libraries, never
+re-implemented, and ArtemiS reference values exist (FR-4.0, FR-4.10); long-term
+sound-level-meter recordings are in scope (FR-4.1a); published angles applied,
+none derived (FR-2.4); any survey schema accepted via assisted mapping plus a taught
+canonical layout (FR-1.1 to FR-1.3a); default predictor from the two candidate
+probabilistic models plus side-loaded SoundAQnet (FR-5.3, FR-5.4); clean break as
+`soundscapy` 1.0 with no compatibility work (§8); one unfunded maintainer today
+(NFR-9); permissive open-source core compatible with a possible open-core GUI
+(NFR-7).
+
+Still open:
+
+1. **Equalisation filter** (FR-4.3): confirm the Part 2 monaural-approximation filter
+   is user-supplied and optional, not shipped.
+2. **Performance targets** (NFR-3): confirm or adjust the stated numbers.
+3. **Default predictor** (FR-5.3): the suitability check will produce a
+   recommendation; you decide.
+4. **Interface language** (NFR-10): English only for this release.
+5. **Method B** (FR-1.9): data model and basic statistics only.
+6. **MOSAIQ** (FR-1.8, FR-10.3): the schema repository's field dictionary is treated
+   as normative once it stabilises; until then compatibility is best-effort.
