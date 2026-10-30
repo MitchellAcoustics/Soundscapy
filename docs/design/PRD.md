@@ -1,6 +1,6 @@
 # Product Requirements: an open-source soundscape assessment, analysis and design package
 
-Status: **draft 0.2 for review** (2026-10-30). This document states what the package
+Status: **draft 0.3 for review** (2026-10-30). This document states what the package
 must do and for whom. It deliberately says nothing about how it is built; the
 architecture plan is a separate document and must be checked against this one.
 
@@ -51,18 +51,23 @@ notebooks, and as the engine of a graphical application for non-programmers.
 
 ## 2. Scientific and standards baseline
 
-The package implements, and must stay faithful to, the following. Where two sources
-disagree the later one wins and the earlier one is kept as a compatibility option.
+The package implements, and must stay faithful to, the following. The Mitchell papers
+and chapters are the canonical reference for the methods; where a standard and a
+Mitchell source differ, the Mitchell source is the intended reading and the standard's
+edition is kept as a compatibility option. Only the circumplex portions of ISO/TS
+12913-3 are in scope; Method B and Method C analysis are not [agreed].
 
 | Source | What it fixes |
 |---|---|
-| ISO/TS 12913-2:2018 | Method A questionnaire (8 PAQ items, 4 source-dominance items, overall quality, appropriateness), Method B scales, Method C interviews; binaural recording and equalisation |
+| ISO/TS 12913-2:2018 | Method A questionnaire (8 PAQ items, 4 source-dominance items, overall quality, appropriateness); binaural recording and equalisation. Methods B and C are out of scope |
 | ISO/TS 12913-3:2019 | Scale coding (Table A.1), fixed 45° projection divided by (4+√32), median and range, Spearman with ties, binaural metric set (Table D.1), higher-of-channels rule |
-| ISO/AWI TS 12913-3 (2024 revision draft) | General angle projection with λ scaling (A.1 to A.4), per-response projection, mean and SD per group, interquartile range for ordinal items, three named visualisations (scatter; KDE with decile contours; 50th-percentile contour), N < 30 rule, N_rmc, S_50 and IACC added, placeholder section on translated attributes |
+| ISO/AWI TS 12913-3 (2024 revision draft) | General angle projection (A.1 to A.4), per-response projection, mean and SD per group, interquartile range for ordinal items, three named visualisations (scatter; KDE with decile contours; 50th-percentile contour), N < 30 rule, N_rmc, S_50 and IACC added, placeholder section on translated attributes |
+| Mitchell 2025, "A robust approach to soundscape circumplex coordinate projections" (blog, adopted into the Part 3 revision) and Mitchell, Oberman, Aletta & Kang 2026, *Soundscape Across Languages* ch. 4 | **Canonical projection**: centre each score at the scale midpoint μ = (min+max)/2, scale by the half-range ρ = (max−min)/2, project with cos θ_i and sin θ_i, and normalise by Σ\|cos θ_i\| and Σ\|sin θ_i\| so that coordinates lie in [−1, 1] for any angle set and neutral responses map to the origin. Reduces to the 2019 formula for 45° angles. Also: the four-step validation (circular order, SEM fit, SSM location, congruence), confidence tiers (High/Medium/Low), the SATP v1.5 adjusted angles for 13 High-confidence languages, grand-mean ipsatisation per participant, and the recommendation not to project Low-tier languages |
 | ISO/CD TS 12913-4 (2025) | Design process: communication framework, Soundscape Design Brief with ambition statement and KPIs, pre- and post-intervention assessment, evaluation report; SPI named as a quantitative KPI; Example 6 (baseline SPI 56 against a tranquil target, success at SPI > 70) |
 | SSID Protocol (Mitchell et al. 2020) | Location → Session → Group → Response hierarchy; one 30-s binaural clip per group; item coding; environmental and session metadata; id conventions |
 | Mitchell, Aletta & Kang 2022 | Distributional representation; projection before aggregation; "percent likely to perceive"; 50% contour as provisional |
-| Mitchell & Aletta 2023; Aletta et al. 2024 | Language-specific adjusted angles for the eight attributes |
+| Mitchell & Aletta 2023; Aletta et al. 2024 | The earlier language-specific adjusted-angle set and generalised projection, superseded by the 2026 chapter but still shipped as a selectable version |
+| Torresin et al. 2020 (indoor soundscape circumplex) | Evidence that other attribute sets and circumplexes exist; the tooling must not be tied to the eight outdoor English attributes |
 | Mitchell et al. 2024 (SPI) | Bivariate skew-normal targets (direct parameters), two-dimensional KS distance, SPI = 100(1 − D), bespoke and reference targets, NSGA-II derivation of reference targets from rankings |
 | Mitchell et al. 2021 (lockdown model) | Psychoacoustic feature set and conventions; multilevel model with location effects; evaluation by MAE and location-mean R² |
 | Mitchell et al. 2023 (framework) | Goals (accuracy, automation, comparison) and constraints (measurable inputs only, automatic calculation, generalisability, robustness to missing optional inputs) for predictive models |
@@ -169,17 +174,28 @@ papers regenerate from the ISD with one notebook each, within documented toleran
 ### J. Long-term monitoring — Later
 
 ### K. Complete the course — Must (added)
-*Actor:* P5.
-*Has:* a browser and a link to a hosted notebook; no Python. Today the course gives
-students Colab notebooks that install the package and walk through a tutorial and an
-exercise on ISD data, after which students collect their own data in a workshop and
-analyse it [agreed].
+*Actor:* P5 (Institute of Acoustics Certificate Course in Soundscape Assessment).
+*Has:* a laptop and the course notebooks; today the course provides notebooks that
+install the package and walk through a tutorial and an exercise on ISD data, after
+which students collect their own data in a workshop and analyse it [agreed]. Hosting
+of notebooks is handled by the course, not by this package [agreed].
 *Wants:* to run journeys A, C and E on ISD data and then on their own survey export
-during a taught session, with a reduced B where audio was collected, and to keep
-using the tool afterwards.
-*Done when:* a participant with no Python reaches a first circumplex plot inside the
-first hour by the documented path, and every course exercise runs unchanged in the
-supported environments.
+during a taught session, with a reduced B where audio was collected; and to produce
+the assessed report (at most eight A4 sides) whose marking rewards ISO 12913-2
+reporting compliance, Part 3 analysis rigour, APA-style statistical reporting,
+visualisation quality and interpretation.
+*Acceptance cases, from the current assessment briefs (indicative, the package will go
+beyond them):*
+1. Two-site comparison (Regent's Park Broadwalk vs Japanese Garden): individual
+   responses plotted on the circumplex per site; which site is more likely calm or
+   tranquil; correlations between psychoacoustic metrics and each of the eight scales.
+2. Cross-country ISD analysis: associations between calmness, vibrancy, pleasantness
+   and WHO-5 well-being, compared across countries and cultures, with charts.
+3. City-wide profiles: sound-source dominance profile and attribute scores per
+   location, and a prioritisation of locations for intervention.
+*Done when:* a participant reaches a first circumplex plot inside the first hour by
+the documented local path, every course exercise runs unchanged, and each acceptance
+case can be completed with the package's own outputs.
 
 ### L. Extend the package — Must (added)
 *Actor:* P6, P1.
@@ -203,9 +219,10 @@ requirement; "should" is desirable.
 - **FR-1.2** (A, K; Must) Shall define and document a canonical survey layout (columns,
   identifiers, coding) that the course teaches, with downloadable templates [agreed].
 - **FR-1.3** (A; Must) Shall accept any column naming and layout through an explicit
-  mapping of columns to the standard constructs (the eight attributes, source
-  dominance, overall quality, appropriateness, WHO-5, demographics, identifiers), with
-  the response scale and language declared, and shall persist that mapping.
+  mapping of columns to the constructs of the declared instrument (the circumplex
+  attributes of the chosen circumplex, source dominance, overall quality,
+  appropriateness, WHO-5, demographics, identifiers), with the response scale and
+  language declared, and shall persist that mapping.
 - **FR-1.3a** (A, K; Must) Shall make building that mapping easy for a non-programmer:
   suggest matches from column names and known export schemas (REDCap/SSID codebook,
   Qualtrics, the previous package's layout), let the user confirm or correct them,
@@ -228,36 +245,73 @@ requirement; "should" is desirable.
 - **FR-1.8** (G; Should) Shall import from and export to MOSAIQ-conformant packages,
   preserving item-level responses separately from derived coordinates, explicit
   missingness (present, absent, not reported) and provenance.
-- **FR-1.9** (A; Should) Should support ISO 12913-2 Method B data (continuous 1–5
-  scales, source ranking, free words) in the data model and basic statistics; Method
-  C is out of scope beyond storing transcripts as attachments.
+- **FR-1.9** (A; Out of scope) ISO 12913-2 Method B and Method C data are not
+  supported [agreed]. Non-circumplex items that accompany Method A surveys (source
+  dominance, overall quality, appropriateness, WHO-5, demographics, free text) are
+  carried as columns and summarised, but no Method B or C analysis is provided.
 
-### 5.2 Survey analysis per ISO/TS 12913-3
+### 5.2 Survey analysis: the circumplex
 
+- **FR-2.0** (A, L; Must) Shall define a circumplex as an instrument specification,
+  not as a fixed list of eight English words: a set of attributes identified by
+  generic position identifiers (PAQ1…PAQn, ordered counter-clockwise from the
+  positive x-axis as in the SATP convention), each with an angle, and with labels per
+  language or instrument; two named axes; and a response scale. The outdoor ISO
+  12913 circumplex is the default instance. Other circumplexes, for example the
+  indoor soundscape circumplex of Torresin et al. 2020, shall be usable with every
+  analysis, plot and score in the package without special-casing [agreed].
 - **FR-2.1** (A; Must) Shall code Method A responses exactly as Table A.1 (direction
   per part) and shall reject or flag data that violates the declared scale.
 - **FR-2.2** (A; Must) Shall compute per-item median and interquartile range (2024
   revision) and, as an option, range (2019 edition).
-- **FR-2.3** (A; Must) Shall compute the circumplex projection in the general angle
-  form (A.1 to A.4 of the revision) with ρ derived from the declared scale, shall
-  reproduce the 2019 fixed formula exactly when standard angles are used, and shall
-  record which angles and scale produced every coordinate.
-- **FR-2.4** (A; Must) Shall ship the published language-specific adjusted angles and
-  select them from the declared survey language; shall allow user-supplied angle sets
-  with provenance. Deriving new angle sets from translation data (circumplex SEM
-  fitting) is **out of scope** [agreed].
+- **FR-2.3** (A; Must) Shall compute the circumplex projection with the canonical
+  robust formulation (Mitchell 2025; chapter 4, 2026): scores centred at the scale
+  midpoint and divided by the half-range, projected with cos θ_i and sin θ_i, and
+  normalised by Σ|cos θ_i| and Σ|sin θ_i|, so that coordinates lie within [−1, 1] for
+  any angle set and a neutral response maps to the origin. Shall reproduce the 2019
+  fixed formula exactly when the standard 45° angles are used, shall offer the 2019
+  and the Aletta et al. 2024 formulations as selectable legacy variants for
+  reproduction of older work, and shall record which formulation, angles and scale
+  produced every coordinate [agreed].
+- **FR-2.4** (A; Must) Shall ship the published language-specific adjusted-angle sets
+  as versioned data: the SATP v1.5 set from the 2026 chapter (13 High-confidence
+  languages: arb, deu, ell, eng, hrv, ind, ita, nld, pol, spa, swe, tur, yue) as the
+  default, and the Aletta et al. 2024 set as a selectable earlier version; shall
+  select the set from the declared survey language, allow the version to be chosen
+  per language, and accept user-supplied angle sets with provenance [agreed].
+- **FR-2.4a** (A; Must) Shall carry each language's confidence tier with its angles:
+  High-tier languages project silently; Medium-tier languages project with a
+  warning; Low-tier languages (alb, vie, zsm in v1.5) are refused by default with
+  an explicit override, following the chapter's recommendation. Deriving new angle
+  sets from translation data (circumplex SEM fitting) is **out of scope** [agreed].
+- **FR-2.4b** (A, G; Should) Should offer grand-mean ipsatisation per participant
+  (subtract each participant's mean over all attributes and stimuli) as an explicit
+  pre-processing option for listening-experiment data, recorded in provenance; it is
+  not applied by default to field surveys.
 - **FR-2.5** (A; Must) Shall project per response, then aggregate by any grouping
   (location, session, demographic, time, user-defined); shall report mean, SD,
   quantiles and the proportion of responses in any quadrant, half-plane or
   user-defined region ("percent likely to perceive").
 - **FR-2.6** (A; Must) Shall provide the Part 3 correlation requirements: Spearman
   with the tied-ranks formula for ordinal items, Pearson for interval data, with
-  p-values; regression and ANOVA through the standard scientific Python stack rather
-  than re-implemented.
+  p-values, including correlations between each psychoacoustic metric and each
+  attribute (course acceptance case 1); regression and ANOVA through the standard
+  scientific Python stack rather than re-implemented.
+- **FR-2.6a** (A, K; Must) Shall provide comparisons between sites or groups with
+  the appropriate tests for the measurement level (for example Mann–Whitney or
+  Kruskal–Wallis for ordinal items, t-test or ANOVA for coordinates) via the
+  scientific Python stack, reporting statistic, degrees of freedom or N, p-value and
+  effect size.
+- **FR-2.6b** (A, K; Must) Shall present statistical results in a report-ready form
+  (APA-style sentence and table) so that students and consultants can place them in
+  a report without transcription.
+- **FR-2.6c** (A, K; Must) Shall score the WHO-5 well-being index and summarise
+  source-dominance profiles per location, since both appear in standard assessment
+  reports (course acceptance cases 2 and 3).
 - **FR-2.7** (A; Should) Should provide site clustering on perceptual and
   psychoacoustic data as named in the revision's general clause.
-- **FR-2.8** (A; Should) Should compute Structural Summary Method metrics on the
-  circumplex (amplitude, angle, elevation, fit) for a response or group.
+- **FR-2.8** (A; Later) Structural Summary Method metrics on the circumplex
+  (amplitude, angle, elevation, fit) for a response or group [agreed].
 
 ### 5.3 Distributional representation
 
@@ -297,7 +351,7 @@ requirement; "should" is desirable.
   in the results [agreed].
 - **FR-4.3** (B; Should) Should apply a user-supplied equalisation filter to
   approximate a monaural measurement microphone, as Part 3 clause 7 requires, and
-  record that it was applied. The filter itself is not shipped [open: confirm].
+  record that it was applied. The filter itself is not shipped [agreed].
 - **FR-4.4** (B; Must) Shall offer the Part 3 Table D.1 set to the extent the wrapped
   libraries provide it: LAeq, LCeq, LAF5, LAF95; N5, Navg, Nrmc, N95, N5/N95
   (ISO 532-1); S5, Savg, S95 (DIN 45692); tonality; R10, R50; F10, F50; and the
@@ -356,10 +410,9 @@ requirement; "should" is desirable.
 - **FR-5.6** (D, E; Must) Shall label every prediction with the model that produced
   it and keep predictions separate from measured responses in all tables and exports
   (MOSAIQ prediction layer).
-- **FR-5.7** (D; Should) Should provide the multilevel-model fitting workflow of the
-  2021 paper (feature screening, train/test split by location, stepwise selection,
-  MAE and location-mean R²) as reusable steps for researchers fitting their own
-  models.
+- **FR-5.7** (D; Later) The multilevel-model fitting workflow of the 2021 paper
+  (feature screening, train/test split by location, stepwise selection, MAE and
+  location-mean R²) as reusable steps [agreed].
 - **FR-5.8** (H; Later) Standard benchmark splits and evaluation protocols.
 
 ### 5.6 Soundscape Perception Indices
@@ -451,8 +504,8 @@ requirement; "should" is desirable.
 ### 5.12 Teaching and documentation
 
 - **FR-12.1** (K; Must) Shall provide a documented, tested path from nothing to a
-  first circumplex plot in under an hour for a non-programmer, in each supported
-  environment (local install, hosted notebook).
+  first circumplex plot in under an hour for a non-programmer using a local install
+  and local notebooks. Hosted-notebook provision is outside the package [agreed].
 - **FR-12.2** (K; Must) Shall provide course-aligned tutorials for journeys A, B, C
   and E on the bundled dataset, runnable without modification.
 - **FR-12.3** (all; Must) Documentation shall follow a single structure (tutorials,
@@ -512,11 +565,12 @@ possible without a rewrite.
   window; Windows is a first-class target because of the consultant and student base.
 - **NFR-3 Performance.** Consultants bring tens to hundreds of binaural clips or
   long-term sound-level-meter recordings per project; researchers bring thousands of
-  clips across surveys [agreed]. Targets: 1,000 thirty-second binaural recordings
-  through the Table D.1 set overnight on a four-core laptop; an eight-hour mono
-  recording in windowed level metrics in minutes; survey analysis of 10,000
-  responses interactive (seconds); SPI of one site in under a second at default
-  sample size [open: confirm targets].
+  clips across surveys [agreed]. Quality of design and implementation comes first;
+  no optimisation work is undertaken at this stage beyond what the batch design
+  gives for free (parallel files, resumable runs, caching) [agreed]. Indicative,
+  non-binding expectations: survey analysis of 10,000 responses stays interactive;
+  SPI for one site is near-instant; audio throughput is whatever the wrapped
+  libraries deliver, run in parallel.
 - **NFR-4 Reproducibility.** See FR-11; additionally the project shall publish
   regression baselines and tolerances and treat any numeric drift as a breaking
   change.
@@ -546,7 +600,7 @@ possible without a rewrite.
   (§9).
 - **NFR-10 Accessibility and internationalisation.** Colour-blind-safe defaults;
   attribute labels available in the supported survey languages; interface language
-  is English for this release [open: confirm].
+  is English for this release [agreed].
 - **NFR-11 Longevity.** Citable releases with DOIs; a software paper after the first
   stable release.
 
@@ -557,7 +611,7 @@ possible without a rewrite.
 - Field data capture (survey apps, REDCap configuration), beyond importing exports.
 - Ambisonic and any multichannel (more than two channels) processing, spatial
   rendering, auralisation, VR playback [agreed].
-- Method C qualitative analysis (grounded theory coding).
+- ISO 12913-2 Method B and Method C data and analysis [agreed].
 - Deriving new translation angle sets (circumplex SEM fitting) [agreed].
 - Re-implementing psychoacoustic or ecoacoustic algorithms [agreed].
 - Formatted report generation [agreed].
@@ -602,28 +656,19 @@ course even if M3 to M5 slip.
 
 ## 10. Decisions recorded and points still open
 
-Confirmed with the product owner (see tags above): course workflow (K); two GUI
-tiers with local audio processing, not shaping the core (FR-14.6, FR-14.7); GUI
-exports tables and figures, no formatted report, project save later (FR-1.7,
-FR-9.2); mono and two-channel audio only (FR-4.1); calibration by known level or
-calibrator signal (FR-4.2); metrics come from wrapped libraries, never
-re-implemented, and ArtemiS reference values exist (FR-4.0, FR-4.10); long-term
-sound-level-meter recordings are in scope (FR-4.1a); published angles applied,
-none derived (FR-2.4); any survey schema accepted via assisted mapping plus a taught
-canonical layout (FR-1.1 to FR-1.3a); default predictor from the two candidate
-probabilistic models plus side-loaded SoundAQnet (FR-5.3, FR-5.4); clean break as
-`soundscapy` 1.0 with no compatibility work (§8); one unfunded maintainer today
-(NFR-9); permissive open-source core compatible with a possible open-core GUI
-(NFR-7).
+All points raised in review have been resolved and are tagged **[agreed]** in the
+text: canonical robust projection (FR-2.3); generalised circumplex beyond the eight
+outdoor English attributes (FR-2.0); two shipped angle-set versions with the 2026
+SATP v1.5 set as default and confidence tiers enforced (FR-2.4, FR-2.4a); Methods B
+and C out (FR-1.9, §7); FR-2.8 and FR-5.7 moved to Later; local notebooks only
+(FR-12.1); English-only interface (NFR-10); equalisation filter user-supplied
+(FR-4.3); performance targets relaxed in favour of design quality (NFR-3); default
+predictor to be chosen after a suitability check (FR-5.3); MOSAIQ field dictionary
+treated as normative once stable (FR-1.8, FR-10.3). Course acceptance cases are
+recorded under journey K.
 
-Still open:
+Remaining open items are implementation-stage questions, not requirements:
 
-1. **Equalisation filter** (FR-4.3): confirm the Part 2 monaural-approximation filter
-   is user-supplied and optional, not shipped.
-2. **Performance targets** (NFR-3): confirm or adjust the stated numbers.
-3. **Default predictor** (FR-5.3): the suitability check will produce a
-   recommendation; you decide.
-4. **Interface language** (NFR-10): English only for this release.
-5. **Method B** (FR-1.9): data model and basic statistics only.
-6. **MOSAIQ** (FR-1.8, FR-10.3): the schema repository's field dictionary is treated
-   as normative once it stabilises; until then compatibility is best-effort.
+1. Which of the two candidate probabilistic predictors becomes the default (FR-5.3).
+2. Which wrapped libraries cover which Table D.1 metrics, and therefore what the 1.0
+   metric list is (FR-4.0, FR-4.4).
