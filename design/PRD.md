@@ -5,9 +5,11 @@ applied the review of 0.3 (`design/reviews/prd-0.3-review.md`); draft 0.5 record
 owner's responses to it; draft 0.6 recorded the decisions the owner took while reviewing
 the architecture plan; draft 0.7 applies the owner's responses to the review of 0.6 and
 plan 0.3 (`design/reviews/prd-0.6-plan-0.3-review.md`, §10.5). This document states what
-the package must do and for whom. It deliberately says nothing about how it is built; the
-architecture plan (`design/greenfield_architecture_plan.md`) is a separate document and
-must be checked against this one.
+the package must do and for whom. It deliberately says nothing about how it is built;
+the architecture plan (`design/greenfield_architecture_plan.md`) is a separate document
+and must be checked against this one. From plan draft 0.5 the register of owner
+decisions is the plan's §9, and proposed PRD changes from the plan review await the
+owner in plan §9.2.
 
 Decisions taken with the product owner are marked **[agreed]**. The minor findings of
 the 0.6 review that the owner has not yet answered are listed in §10.6; nothing else is
@@ -866,16 +868,17 @@ paper reproduced from the ISD feature table (journey I).
 
 ### 10.2 Decided on review of the architecture plan (2026-10-30)
 
-Nothing remains open. The decisions, also registered in the architecture plan §15:
-copyleft dependencies acceptable (NFR-7); no SPI uncertainty beyond the published
-method, with the paper's sample size as the default (FR-6.1, journey C); governance
-stated (NFR-12); responses with missing circumplex items excluded by default, with
-renormalisation under the canonical formulation only (FR-2.5a); the 2022 paper
-reproduced by methodology rather than numeric baseline (journey I). Implementation
-choices that are not requirements (dataframe-agnostic tables through narwhals, click
-for the CLI, TOML settings, parquet for computed tables and CSV for hand-made ones,
-a default progress reporter for notebooks, the 3.11 floor kept with phonometry as a
-3.13-only backend) are recorded in the plan only.
+Nothing remains open. The decisions, also registered in the architecture plan (§15 in
+drafts 0.2 to 0.4, §9 from draft 0.5): copyleft dependencies acceptable (NFR-7); no
+SPI uncertainty beyond the published method, with the paper's sample size as the
+default (FR-6.1, journey C); governance stated (NFR-12); responses with missing
+circumplex items excluded by default, with renormalisation under the canonical
+formulation only (FR-2.5a); the 2022 paper reproduced by methodology rather than
+numeric baseline (journey I). Implementation choices that are not requirements
+(dataframe-agnostic tables through narwhals, click for the CLI, TOML settings, parquet
+for computed tables and CSV for hand-made ones, a default progress reporter for
+notebooks, the 3.11 floor kept with phonometry as a 3.13-only backend) are recorded in
+the plan only.
 
 ### 10.3 Inputs needed from the owner
 

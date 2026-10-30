@@ -14,8 +14,8 @@ for acoustic engineers, architects and urban designers.
 
 `design/PRD.md` (draft 0.6) states the requirements; read it before designing
 anything, and check every design decision against it.
-`design/greenfield_architecture_plan.md` (draft 0.3) is the architecture: it was
-written from the PRD and its §15 registers the owner's decisions. Specs and plans are
+`design/greenfield_architecture_plan.md` (draft 0.5) is the architecture: it was
+written from the PRD and its §9 registers the owner's decisions. Specs and plans are
 derived from both. Nothing from the previous soundscapy codebase carries over.
 
 **Status:** only the agent setup exists. There is no `pyproject.toml`, `Taskfile.yml`,
@@ -25,8 +25,8 @@ first build step is the toolchain, set up as the `house-style` skill describes.
 ## Repo map (target layout)
 
 - `design/`: PRD, architecture plan, specs (`design/specs/`), implementation plans
-  (`design/plans/`), ADRs (`design/adr/`) and document reviews (`design/reviews/`).
-  Never part of the published docs.
+  (`design/plans/`), ADRs (`design/adr/`), document reviews (`design/reviews/`) and dated
+  research notes (`design/research/`). Never part of the published docs.
 - `src/soundscapy/`: the package (src layout).
 - `tests/`: the pytest suite.
 - `docs/`: the great-docs site (`docs/great-docs.yml`). API reference comes from

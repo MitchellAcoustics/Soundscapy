@@ -93,7 +93,13 @@ belong in named module constants with units in the name, so the rule stays on th
   key names against the ty docs (`/astral:ty`) because ty is pre-1.0.
 - `[tool.pytest.ini_options]`: `testpaths = ["tests"]`, `addopts = ["--strict-markers",
   "--strict-config", "--import-mode=importlib", "-ra"]`, `xfail_strict = true`,
-  `filterwarnings = ["error"]`.
+  `filterwarnings = ["error"]`. A third-party `DeprecationWarning` that would break CI on
+  an upstream release may get a per-module `ignore` entry naming that module, with a
+  comment; never a blanket ignore. Every expected `SoundscapyWarning` is asserted with
+  `pytest.warns`.
+- `[tool.ruff.lint.flake8-type-checking]`: `runtime-evaluated-base-classes =
+  ["pydantic.BaseModel"]` from the first commit, so ruff's `TC` rules never move an
+  import a pydantic model needs at runtime.
 - `[tool.coverage.run]`: `branch = true`, `source = ["soundscapy"]`.
   `[tool.coverage.report]`: `fail_under = 80`, `show_missing = true`.
 
@@ -139,6 +145,8 @@ CI, so do not rename them.
   pages live in `docs/user_guide/`. No notebooks (`.ipynb` or marimo): `.qmd` diffs and reviews like
   code. Cells execute during `task docs`; Quarto's freeze cache (`docs/_freeze/`,
   committed) skips unchanged pages. `reference.md` has the layout and cell options.
+  Paper reproductions need the full ISD download, so they stay frozen during `task docs`
+  (which must run offline) and are re-executed nightly in CI or on demand.
 - `design/` holds the PRD, the architecture plan, specs (`design/specs/`), plans
   (`design/plans/`) and ADRs (`design/adr/`). It is never part of the docs build.
   Superpowers defaults to `docs/superpowers/`; always write its output to `design/`

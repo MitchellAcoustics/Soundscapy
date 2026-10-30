@@ -10,6 +10,6 @@ rewrite live in `design/`:
 
 - `design/PRD.md`: product requirements.
 - `design/greenfield_architecture_plan.md`: architecture plan, written from the PRD;
-  its §15 registers the owner's decisions.
+  its §9 registers the owner's decisions.
 
 Development of the previous package continues on `main`.
