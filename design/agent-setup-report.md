@@ -67,8 +67,8 @@ or system settings.
   `~/.local/state/marimo/servers`, and its execute script runs code in a live kernel by
   design.
 - **posit github** helpers install the third-party gh extension `agynio/gh-pr-review` the
-  first time they are used. `pr-create` pushes branches after confirmation, but the
-  project's push rule blocks that until the user approves.
+  first time they are used. `pr-create` pushes branches after confirmation; in local
+  sessions the push guard hook blocks that until the user pushes.
 - **skill-creator**'s eval scripts spawn `claude -p`, briefly write a command file into
   `.claude/commands/`, and the review server kills whatever holds port 3117.
 
@@ -87,7 +87,11 @@ or system settings.
   not conflict.
 - Permissions allow `task`, `uv run/sync/add/remove/lock/build/tree`, `uvx`, `prek`,
   `great-docs`, `marimo check` and read-only git. They deny reading `.env*`, `secrets/`,
-  `*.pem` and `*.key`, bare `pip`, and `git push`.
+  `*.pem` and `*.key`, and bare `pip`.
+- **PreToolUse** on `Bash` runs `.claude/hooks/guard_push.py`, which denies `git push`
+  in local sessions and allows it in cloud sessions (`CLAUDE_CODE_REMOTE=true`).
+  Permission rules cannot be scoped by session type, so a hook does it. This replaced
+  a blanket `Bash(git push:*)` deny on 2026-10-30.
 
 ## Verification
 
@@ -149,7 +153,7 @@ proposals for the product owner, not applied.
 2. **Optional extras.** Add the Taskfile skills from `sunsided/taskfile-skills`, or
    Honnibal's `pre-mortem` command? Neither was installed.
 3. **Skill trim.** Which, if any, of the trims above to apply.
-4. **Push rule.** Keep `git push` denied for agents, or allow it so PR helpers can push.
+4. **Push rule.** Resolved: agents push in cloud sessions, and not in local ones.
 5. **Browser-only tutorials.** Tutorials run in Pyodide. If the audio or psychoacoustic
    stack has compiled dependencies without WASM wheels, decide in an ADR how those pages
    work, for example a locally runnable notebook with pre-rendered output.
@@ -162,3 +166,17 @@ proposals for the product owner, not applied.
 - Vendored skills: re-copy each folder from the upstream path listed in
   `.claude/skills/VENDORED.md` at a newer commit, review the diff, and update the commit
   in that table. Never edit vendored skills in place; put overrides in `house-style`.
+
+## Cloud sessions
+
+Claude Code cloud sessions do not install the plugins that `.claude/settings.json`
+enables, by design (see the cloud environments page of the Claude Code docs). Only
+plugins pre-installed in the cloud image load: code-review, pr-review-toolkit and
+skill-creator. `.claude/cloud/setup.sh` installs the full set at user scope. Paste it
+into the cloud environment's Setup script field (environment menu in the session title
+bar, then Edit). It took about 23 seconds in testing, inside the five-minute limit for
+caching. Keep its plugin list in step with `enabledPlugins`.
+
+The account-synced `github` plugin's MCP server (`api.githubcopilot.com`) is blocked by
+the default cloud network policy. Cloud sessions already have a working built-in GitHub
+connection, so it is redundant there.

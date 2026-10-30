@@ -76,11 +76,22 @@
       "Read(**/*.pem)",
       "Read(**/*.key)",
       "Bash(pip:*)",
-      "Bash(pip3:*)",
-      "Bash(git push:*)"
+      "Bash(pip3:*)"
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard_push.py",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",

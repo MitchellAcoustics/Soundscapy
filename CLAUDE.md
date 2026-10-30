@@ -21,4 +21,7 @@
     `/review-pr`, `critical-code-reviewer` and `review-testing` for deeper review.
   - `pr-create`, `pr-threads-address`: pull requests (confirm before pushing).
   - `skill-creator`: creating or improving project skills.
-- `git push` is denied by the project permissions. The user pushes, or approves a push.
+- Pushing: in cloud sessions agents push their own branches. In local sessions a
+  hook blocks `git push`, and the user pushes or approves the push.
+- Cloud sessions do not install the plugins above on their own; the environment's
+  setup script must run `.claude/cloud/setup.sh`.
