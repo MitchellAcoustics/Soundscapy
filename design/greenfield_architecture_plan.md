@@ -337,16 +337,52 @@ class Target(BaseModel, frozen=True):
   exists in Python.** A research pass on 2026-10-30 checked the assumption: scipy's
   `skewnorm` is univariate only, and the request for a multivariate version (scipy
   issue 14870) has been open since 2021; no package on PyPI provides a multivariate
-  skew-normal (sixteen plausible names probed); the only GitHub implementation
-  (spc90/multivariate_skew_distributions) has a density and sampler but no fitting,
-  no centred parameters and no licence; PyMC and TensorFlow Probability offer the
-  univariate case only. Azzalini's own site lists Python code for the univariate
-  case alone. So the plan implements, following `sn`: `dmsn` (pdf and log-pdf),
-  `rmsn` (sampling by the conditioning construction), `dp2cp` and `cp2dp` with the
-  admissibility check (Arellano-Valle and Azzalini 2008), and maximum-likelihood
-  fitting on the centred parameters with `scipy.optimize`, as `selm` does. It is a
-  few hundred lines, validated against `sn` outputs committed as fixtures (NFR-9,
-  FR-3.4), generated once by an R script kept beside them. R is not a dependency.
+  skew-normal (sixteen plausible names probed); `mvskew` (MIT, PyPI) is samplers
+  only; the one GitHub implementation (spc90/multivariate_skew_distributions) has a
+  density and sampler but no fitting, no centred parameters and no licence; PyMC and
+  TensorFlow Probability offer the univariate case only. Azzalini's own site lists
+  Python code for the univariate case alone.
+- **What the 0.x branches already did, and what is folded in.** Two 0.x branches
+  explored this (reviewed with their history on 2026-10-30):
+  - `scipy-msn` (April 2025, one WIP commit on top of the rpy2 SPI work): a 1,800-line
+    scipy-style `multivariate_skew_normal_gen` with pdf, cdf, rvs, dp2cp, cp2dp and
+    MLE, plus a plan to contribute it to scipy. Run in this session against scipy
+    1.17: it imports private scipy internals (`_PSD.whiten`, `pinvh(rcond=)`) that
+    have since been removed, so 13 of 15 tests fail on import or call; after patching
+    those, `dp2cp` matches R `sn` to 2e-9 and `rvs` reproduces the R mean and
+    covariance, but `cp2dp` is not the inverse of `dp2cp` (round-trip error 6e-2)
+    and `fit` returns the starting values with alpha = 0 on a strongly skewed sample.
+    Its author labelled it "failing first passes". **Not adopted as code.** Its test
+    design (pdf/logpdf consistency, cdf equal to the multivariate normal at alpha = 0,
+    sample moments, dp/cp round trip, MLE recovery) is adopted as the test list, and
+    its sampler is the same conditioning construction the plan uses.
+  - `157-remove-r-sn-dependency-for-spi` (May–June 2026, two commits): `_mvskew.py`,
+    a faithful Python translation of `sn`'s internal `msn.dp2cp` and `mst.dp2cp`
+    (with `zeta`, `b(nu)`, cumulants and Mardia measures) wired into `dp2cp` for the
+    SN, ESN, ST and SC families, with a committed R-derived baseline. Run in this
+    session on scipy 1.17 and numpy 2: all 13 pure tests pass and the SN result
+    matches R to 2e-9. It stops there: `cp2dp`, sampling and fitting still go through
+    rpy2. **Adopted**: the SN and ESN part of `msn_dp2cp` becomes
+    `distribution/skewnormal.py`'s `dp2cp` after cleaning (drop `np.matrix`, drop the
+    skew-t and skew-Cauchy paths the PRD does not need, add types), together with its
+    R baseline values as the first reference fixture. This fits the planned design
+    without change: `SkewNormal` stays a frozen value object and the conversions stay
+    pure functions.
+  - **Is the planned implementation better than either?** Yes, because it is the only
+    one that is complete: `dmsn` (pdf and log-pdf), `rmsn` (sampling by the
+    conditioning construction, with an optional rejection step to truncate to the
+    circumplex square, which the 0.x R wrapper offered as `sample_mtsn`), `dp2cp`
+    (from the 157 port), `cp2dp` by the closed-form inverse for the SN family
+    (marginal skewness to delta, then alpha from the scaled Omega; Azzalini and
+    Capitanio 1999, `sn` `msn.cp2dp`) with the admissibility check (Arellano-Valle and
+    Azzalini 2008), and maximum-likelihood fitting on the centred parameters with
+    `scipy.optimize` from method-of-moments starting values, as `selm` does. It is a
+    few hundred lines against the 1,800 of the scipy-style draft because it does not
+    carry scipy's generic multivariate framework, and it uses no private scipy API.
+    Every function is validated against `sn` outputs committed as fixtures (NFR-9,
+    FR-3.4), generated once by an R script kept beside them; the 157 branch shows the
+    pattern. R is not a dependency. Contributing to scipy later is possible because
+    the API mirrors scipy's, but it is not on the path to 1.0.
 - **The 2-D KS distance** is a numpy implementation of the published method, chosen to
   match the SPI paper (FR-6.1); the paper's tables are the acceptance test.
 - **N < 30** (FR-3.2) is enforced where a density is requested: `KernelDensity` raises
@@ -725,8 +761,10 @@ and what a failure means (FR-13.2, NFR-4, NFR-8).
    since the paper prints figures, not numbers (§15, item 9); the 2021 models predicting the published
    location means from the ISD feature table.
 3. **Cross-implementation references** (`tests/reference/`, marked `reference`, run in
-   CI nightly and on demand). Skew-normal fitting and sampling against committed R
-   `sn` outputs (generated once by a script kept beside them); ISO 532-1 reference
+   CI nightly and on demand). Skew-normal density, conversions, sampling and fitting
+   against committed R `sn` outputs (generated once by a script kept beside them;
+   the 0.x branch `157-remove-r-sn-dependency-for-spi` supplies the first baseline
+   and the pattern); ISO 532-1 reference
    signals against MoSQITo (to catch a wrapped-library regression); selected metrics
    against ArtemiS tables where shareable (FR-4.10).
 4. **Golden pipelines** (`tests/regression/`, marked `regression`). ISD subset →
