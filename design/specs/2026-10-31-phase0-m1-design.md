@@ -2147,7 +2147,7 @@ floors.
 | pooch | 1.8 | BSD-3-Clause | ISD download and cache |
 | tqdm | 4.66 | MPL-2.0 AND MIT | pooch's progress bar needs it, and owner decision #4 makes `tqdm.auto` the default reporter; so core at M1, not M3 (a call made here, §11.2; a plan §5 edit, §11.1) |
 | click | 8.2 | BSD-3-Clause | CLI; 8.2 is the first with `CliRunner` stderr always separate |
-| tomlkit | 0.13 | MIT | writing mapping drafts with TODO comments |
+| tomlkit | 0.13.1 | MIT | writing mapping drafts with TODO comments. (Amended at S1 Task 12, 2026-10-31: 0.13.0 writes different bytes for a mapping with non-default fields, so `write_mapping` does not round-trip byte for byte; 0.13.1 to 0.14.0 match.) |
 | openpyxl | 3.1 | MIT | Excel read and write (one library; called directly, so no Pandas4Warning) |
 
 The licence column records each runtime dependency's licence (NFR-7), read from PyPI metadata on

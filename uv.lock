@@ -3434,7 +3434,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26" },
     { name = "pandas", specifier = ">=2.2.1" },
     { name = "pydantic", specifier = ">=2.7" },
-    { name = "tomlkit", specifier = ">=0.13" },
+    { name = "tomlkit", specifier = ">=0.13.1" },
 ]
 
 [package.metadata.requires-dev]
