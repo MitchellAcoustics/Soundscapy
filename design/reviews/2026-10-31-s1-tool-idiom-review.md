@@ -20,10 +20,12 @@ Upstream documentation was read in four research passes, one per group of tools.
 
 Limits of this pass:
 
-- **No command ran.** The cloud image's uv (0.11.32) is older than `required-version`, so the
-  `PreToolUse` hook failed on every shell call (F1). Claims about runtime behaviour come from
-  code, upstream docs and upstream source, not from execution. Items marked **verify** need a
-  run before anyone acts on them.
+- **Commands ran only at the end.** The cloud image's uv (0.11.32) is older than
+  `required-version`, so while the review was written the `PreToolUse` hook failed on every
+  shell call (F1). Its claims come from code, upstream docs and upstream source. Applying F1's
+  fix restored the shell, and the checks marked *run* were then executed at `94f594e`, where
+  `task check` passes (461 tests, 99% coverage). Items still marked **verify** have not been
+  run.
 - **The documentation sites were unreachable.** The session's network policy blocks
   matplotlib.org, docs.python.org, docs.astral.sh, docs.pytest.org, taskfile.dev and
   narwhals-dev.github.io. Where a statement is marked *source*, it was read from the file the
@@ -49,9 +51,12 @@ import-linter contract for each architectural rule. The deviations fall into fou
    restating: pyplot-free figures for `ax=None` (F5), and a library logger with its own handler
    and level (F8).
 
+Several of these trace back to the house rules themselves. "House rules that are misspecified"
+(H1 to H10) proposes new wording for each.
+
 | ID | Area | Finding | Priority |
 |---|---|---|---|
-| F1 | Agent hooks | An old uv refuses every shell call via `required-version`; the Stop hook cannot exit | P1 |
+| F1 | Agent hooks | An old uv refuses every shell call via `required-version`; the Stop hook cannot exit | P1, applied |
 | F2 | narwhals | Frames typed `Any` (12 `noqa: ANN401`) instead of narwhals' `IntoDataFrameT` | P1 |
 | F3 | narwhals | pandas special cases are justified; express them the documented way | P3 |
 | F4 | narwhals | `to_eager` relies on an undocumented `TypeError` | P3 |
@@ -151,13 +156,19 @@ assertion for the nested calls.
 - *Recommendation.*
   1. Start the hooks with `uv run --no-config --script ...`. `--no-config` "disables the
      discovery of any persistent configuration" (*paraphrase*, uv "Configuration files"), and
-     the project's `[tool.uv]` table is such configuration. The docs do not say this for
-     `--script` in particular, so **verify** that it skips `required-version`. The hook
-     scripts need nothing from the project's uv settings: they are stdlib-only
-     (`dependencies = []`), and they start their own `uv run` for project tools.
+     the project's `[tool.uv]` table is such configuration. *Run*: with uv 0.11.32,
+     `uv run --script .claude/hooks/guard_push.py` exits 2, which Claude Code treats as a
+     block; with `--no-config` it runs and exits 0. The hook scripts need nothing from the
+     project's uv settings: they are stdlib-only (`dependencies = []`), and they start their
+     own `uv run` for project tools.
   2. Put the guard's cloud short-circuit in the command string:
      `[ "$CLAUDE_CODE_REMOTE" = true ] || uv run ...`. That removes the failure where it is
      most likely, since cloud images lag uv releases, and saves a uv start on every Bash call.
+
+  *Applied:* recommendations 1 and 2 are in `.claude/settings.json`. Editing the
+  PreToolUse command restored this session's shell without a restart. With a stale uv, the
+  Stop hook now starts, and its own `uv run task check:fast` fails with the version message.
+  It blocks once, and `stop_hook_active` lets the next stop through instead of looping.
   3. Let `post_edit` and `stop_check` fail open, with a message, when their launcher fails.
      Only the push guard should fail closed, and only in local sessions.
   4. Keep `setup.sh`, and make sure the environment's setup script calls it.
@@ -321,7 +332,8 @@ pattern (Owner, P2; decide before the next plot function).**
   - Keep the marker cycle manual, since `scatter` does not take markers from the property
     cycle.
   - Group colours stay stable across plots, because every group, empty or not, still makes one
-    `scatter` call (**verify** that an empty call advances the cycle).
+    `scatter` call. *Run*: an empty `scatter` call takes a colour from the cycle, and the
+    next call gets the following one.
 
   The owner decides whether a user's global style should beat petroff10 when `ax=None`. FR-8.3
   reads as yes.
@@ -414,8 +426,8 @@ points:
   (*paraphrase*, sp-repo-review on PyPI; repo-review docs).
 - *Recommendation.* Replace the local hook with that one, still at `stages: [manual]`, so that
   `prek auto-update` bumps it like every other hook. Then point the task at the same hook
-  (`uv run prek run sp-repo-review --hook-stage manual --all-files`; **verify** prek's flag
-  spelling), so a single pin serves both.
+  (`uv run prek run sp-repo-review --stage manual --all-files`; prek's flag is `--stage`),
+  so a single pin serves both.
 
 **F11. `check:fast` stops at the first failing step (P3).**
 
@@ -476,7 +488,8 @@ docs at the versions in `uv.lock`: ruff 0.17.3, ty 0.0.95 and pytest 9.2.0 (*sou
   `if TYPE_CHECKING:` block)". `select = ["ALL"]` already enables it, and it matches
   submodules.
 - *Recommendation.* Add `[tool.ruff.lint.flake8-tidy-imports] banned-module-level-imports =
-  ["matplotlib"]` and delete the three comments. ruff then enforces the rule at edit time,
+  ["matplotlib"]` and delete the three comments. *Run*: with that setting, ruff reports all
+  three comments as unused (`RUF100`). ruff then enforces the rule at edit time,
   through the PostToolUse hook, as well as at `task lint`. When `audio` and `predict` arrive,
   add their heavy dependencies to the same list; plan §5 says those are always imported
   lazily.
@@ -486,7 +499,8 @@ docs at the versions in `uv.lock`: ruff 0.17.3, ty 0.0.95 and pytest 9.2.0 (*sou
 `plot/circumplex.py` carries `**kwargs: Any,  # noqa: ANN401` for keywords forwarded to
 `Axes.scatter`. ruff's `lint.flake8-annotations.allow-star-arg-any` controls "whether to
 suppress `ANN401` for dynamically typed `*args` and `**kwargs` arguments", and every plot
-function will forward keywords the same way. Set it, and delete the comment.
+function will forward keywords the same way. Set it, and delete the comment. *Run*: with the
+option set, ruff reports the comment as unused.
 
 - The other ANN401 comments are the frame annotations of F2. Those should be fixed, not
   configured away.
@@ -500,7 +514,8 @@ function will forward keywords the same way. Set it, and delete the comment.
   when it exists and is not a package (ty configuration reference).
 
 So `python-version = "3.11"` and `root = ["./src", "."]` both repeat the defaults, including
-the `.` that the comment says `tests._helpers` needs. Delete the table. Keep
+the `.` that the comment says `tests._helpers` needs. *Run*: `ty check` passes with the
+table deleted. Delete the table. Keep
 `[tool.ty.src] exclude`, and keep the override until F5 is settled. House-style's "set the
 Python version and source roots only" becomes "set only what ty cannot derive". ty already
 reports unused suppressions (`unused-ignore-comment`, a warning by default), so the
@@ -532,7 +547,9 @@ reports unused suppressions (`unused-ignore-comment`, a warning by default), so 
 - `[tool.pytest]`, with native TOML types, has been supported since 9.0 beside
   `[tool.pytest.ini_options]`. The docs do not prefer either.
 
-Adopt `strict = true`; the `minversion = "9.2"` already in place covers it. Moving to the new
+*Run*: `pytest -o strict=true --co` collects all 461 tests, so strict parametrisation ids break
+nothing today. Adopt `strict = true`; the `minversion = "9.2"` already in place covers it.
+Moving to the new
 table is optional. House-style's pytest bullet changes with it.
 
 **F20. import-linter pre-registers ignores for imports that do not exist (P3).**
@@ -594,6 +611,85 @@ great-docs finds the repository from `[project.urls]` (`Repository`, `Source`, `
 `site_url`. Without either, the build leaves `<site-url>` placeholders. Add `Documentation`
 once the site has an address.
 
+## House rules that are misspecified
+
+Several findings above are not agent mistakes: the code does what AGENTS.md, CLAUDE.md or the
+`house-style` skill told it to do. An agent that fixes the code without the rule will see the
+rule again and undo the fix. Each item below names the rule, what is wrong with it, and the
+proposed wording. The rules are the owner's, so these are proposals; none is applied here,
+except the hook command of H1.
+
+**H1. "uv only. Never run bare `pip` or `python`" made the hooks depend on project settings
+(AGENTS.md, CLAUDE.md, house-style hook paragraph).** The rule is right for agents' commands.
+Applied to the hook launchers, it put every hook behind `uv run --script`, which honours
+`required-version` (F1). Proposed addition to CLAUDE.md: "Hooks start with
+`uv run --no-config --script`, so no project setting can stop the agent's tools. The push
+guard skips uv entirely in cloud sessions." The `.claude/settings.json` part is applied.
+
+**H2. "Fix the code, or add a narrowly scoped ignore with a comment" prefers a per-line
+`noqa` to the tool's own option (AGENTS.md, Don't).** Read literally, the rule offers two
+choices, and F15 and F16 show the gap between them. ruff's `banned-module-level-imports`
+enforces lazy matplotlib everywhere, while three `noqa` comments only excuse three lines.
+Proposed wording: "Weaken lint or type rules to make errors go away. Fix the code. Where the
+tool has a documented option for the pattern (a module that must be imported lazily,
+forwarded `**kwargs`), use the option. Otherwise add a narrowly scoped ignore with a comment
+giving the reason."
+
+**H3. `PLR0913` is ignored globally (house-style, ruff ignores).** The stated reason is that
+"scientific functions legitimately take many keyword arguments". *Run*: at ruff's default
+`max-args = 5`, one function in `src/` trips the rule, `provenance.envelope`, which already
+carries a comment giving its reason. A global ignore for one function contradicts the skill's
+own "prefer a per-file ignore to a global one". The M1 plot signatures (spec §6.15) will exceed
+five, so the proposal is to keep a ceiling rather than none: drop `PLR0913` from `ignore` and
+set `[tool.ruff.lint.pylint] max-args` to the largest signature the spec fixes, with that as
+the comment.
+
+**H4. "`env: {MPLBACKEND: Agg}` is set globally" (house-style, Taskfile).** The variable
+misses `uv run pytest` and IDE runners, loses to a value already in the shell, and leaks into
+the docs kernel (F7). Proposed: "The test suite sets matplotlib's backend in
+`tests/conftest.py`; the Taskfile sets no environment."
+
+**H5. "`[tool.ty]`: set the Python version and source roots only" (house-style, other tool
+sections).** ty derives both (F17, *run*). Proposed: "Set only what ty cannot derive. Today that
+is `[tool.ty.src] exclude` and any per-file override, each with a comment."
+
+**H6. The pytest bullet lists `--strict-markers`, `--strict-config` and `xfail_strict = true`
+(house-style).** pytest 9 replaces the three with `strict = true` (F19, *run*). Proposed:
+"`strict = true` (pytest ≥ 9.0, pinned by `uv.lock`)", with the rest of the bullet unchanged.
+
+**H7. The skill specifies the one unpinned tool (house-style, Taskfile table and prek
+section).** The `repo-review` row says `uvx 'sp-repo-review[cli]' .`, and the prek section
+describes it as a local hook. That contradicts the same section's "pin every `rev`" (F10).
+Proposed: the upstream `sp-repo-review` hook at `stages: [manual]`, with the task running
+`uv run prek run sp-repo-review --stage manual --all-files`.
+
+**H8. "Coverage gate `fail_under = 80`; raise it, never lower it" (house-style).** *Run*:
+coverage at `94f594e` is 99.09%. A gate nineteen points below the real figure would let a fifth
+of the package lose its tests before CI noticed. The rule already says "raise it". Proposed:
+`fail_under = 95` now, reviewed at each milestone, with the reason that the gate sits just
+below the current figure.
+
+**H9. great-docs keys and the plot-display convention (house-style `reference.md`).** The
+keys table invites restating defaults, and its `cli` row describes `enabled: true`, the S8
+intent, as if it were current (F21). Proposed: list only the keys the site sets, and mark
+`cli` "from S8". The "Plot display" bullet (`ax.figure` at the end of every cell) stands or
+falls with F5.
+
+**H10. prek specifics (house-style, prek section).** Two notes, from the prek section of the
+findings: say that `.pre-commit-config.yaml` is prek-only, because `repo: builtin` already rules
+out `pre-commit`; and say that the `uv-lock` hook's `rev` moves with `required-version`.
+
+Rules that hold up under the same reading, and should stay:
+
+- the Python floor;
+- `uv_build`;
+- numpy docstrings with a `References` section;
+- dependency groups for tooling;
+- `uv run task` as the entry point (see the challenged suggestions above);
+- prek's builtin hooks;
+- `filterwarnings = ["error"]` with scoped exceptions;
+- the src layout.
+
 ## What is already idiomatic, and should stay
 
 So that a later tidy-up does not undo them:
@@ -632,9 +728,9 @@ House-style dictates several of the settings above (the Taskfile's `MPLBACKEND`,
 environment table, pytest's flags, the great-docs keys). Change house-style in the same PR as
 each setting, or the next agent will put the setting back.
 
-1. **One tooling PR, with no behaviour change:** F1, F10, F13 to F21. Each is a few lines.
-   `task check` and `task repo-review` must still pass. F1's `--no-config` and F18's
-   `pythonpath` need their **verify** runs.
+1. **One tooling PR, with no behaviour change:** F10, F13 to F21, with H1 to H10 changing the
+   rules in the same PR. Each is a few lines. `task check` and `task repo-review` must still
+   pass. F1's hook commands are already applied.
 2. **Frame typing, before S2's Task 4 adds `Survey.to_frame` and `take_rows`:** F2, with F3
    and F4 if wanted.
 3. **Owner decisions, before the next plot function:**
