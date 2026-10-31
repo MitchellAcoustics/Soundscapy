@@ -4,6 +4,7 @@ This is the only module that imports :mod:`hashlib`. Every hash is
 ``h1-sha256:<64 lowercase hex>``.
 """
 
+import copy
 import datetime as dt
 import hashlib
 import importlib.metadata
@@ -294,7 +295,7 @@ def envelope(  # the spec's normative keys are separate inputs
         "mapping_hash": mapping_hash,
         "settings_hash": hash_json(settings),
         "upstream_run": upstream_run,
-        **extra,
+        **{key: copy.deepcopy(value) for key, value in extra.items()},
     }
 
 

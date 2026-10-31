@@ -90,9 +90,21 @@ def test_columns_out_of_order_are_put_in_position_order():
 def test_label_and_position_same_item_raises(tmp_path):
     raw = _raw()
     raw["groups"]["attributes"]["columns"]["PAQ1"] = "other"
-    with pytest.raises(MappingError, match="pleasant") as info:
+    with pytest.raises(
+        MappingError, match=re.escape("groups.attributes.columns: attribute keys 'pleasant'")
+    ) as info:
         read_mapping(_write_raw(tmp_path, raw))
     assert "PAQ1" in str(info.value)
+
+
+def test_unmapped_attribute_names_the_field_path():
+    raw = _raw()
+    del raw["groups"]["attributes"]["columns"]["calm"]
+    with pytest.raises(
+        ValidationError,
+        match=re.escape("groups.attributes.columns: attribute PAQ8 ('calm') is not mapped"),
+    ):
+        SurveyMapping.model_validate(raw)
 
 
 def test_reverse_label_and_position_alike():
@@ -113,7 +125,16 @@ def test_reverse_is_put_in_position_order():
 
 
 @pytest.mark.parametrize(
-    ("reverse", "fragment"), [(["loud"], "loud"), (["calm", "PAQ8"], "repeat PAQ8")]
+    ("reverse", "fragment"),
+    [
+        (["loud"], "loud"),
+        (
+            ["calm", "PAQ8"],
+            re.escape(
+                "groups.attributes.coding.reverse: reverse keys 'calm' and 'PAQ8' repeat PAQ8"
+            ),
+        ),
+    ],
 )
 def test_reverse_unknown_key_raises(reverse, fragment):
     with pytest.raises(ValidationError, match=fragment):

@@ -125,6 +125,14 @@ def test_foreign_code_raises():
         Status(np.array([False]), (("not_a_reason",),), ((),))  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
 
 
+def test_reason_in_flags_row_raises():
+    # Reason.UNDER_AGE equals Flag.UNDER_AGE as a str; the enum type must still match.
+    with pytest.raises(ValueError, match="enum order"):
+        Status(np.array([True]), ((),), ((Reason.UNDER_AGE,),))  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
+    with pytest.raises(ValueError, match="enum order"):
+        Status(np.array([False]), ((Flag.UNDER_AGE,),), ((),))  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
+
+
 def test_bad_mask_raises():
     with pytest.raises(ValueError, match="boolean array"):
         Status.all_included(2).with_reason([True], Reason.NO_CONSENT)

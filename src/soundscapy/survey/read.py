@@ -6,6 +6,7 @@ against the response scale and records each response's inclusion status.
 """
 
 import codecs
+import copy
 import os
 import re
 from collections import Counter
@@ -137,8 +138,8 @@ def _frozen(values: NDArray[Any], dtype: type) -> NDArray[Any]:
 class Survey:
     """A survey read and coded against its mapping, one entry per response.
 
-    Built by :func:`read_survey`. The arrays are copied and made read-only on
-    construction.
+    Built by :func:`read_survey`. The arrays are copied and made read-only, and the
+    provenance deep-copied, on construction.
 
     Parameters
     ----------
@@ -183,7 +184,8 @@ class Survey:
     provenance: dict[str, object]
 
     def __post_init__(self) -> None:
-        """Copy the arrays read-only and check they agree in length."""
+        """Copy the arrays read-only and the provenance deeply; check array lengths."""
+        object.__setattr__(self, "provenance", copy.deepcopy(self.provenance))
         object.__setattr__(self, "response_id", _frozen(self.response_id, object))
         object.__setattr__(self, "language", _frozen(self.language, object))
         scores = {name: _frozen(v, np.float64) for name, v in self.scores.items()}
@@ -254,7 +256,7 @@ def read_survey(
     TypeError
         If ``source`` is not a path, or ``mapping`` is neither a mapping nor a path.
     SettingsError
-        If ``read_options`` fails validation.
+        If ``read_options`` is neither a ReadOptions nor a mapping, or fails validation.
     FileFormatError
         If the format cannot be told from the suffix, or the file is malformed.
     EncodingError
@@ -299,6 +301,9 @@ def _read_options(value: ReadOptions | Mapping[str, object] | _Unset) -> ReadOpt
         return ReadOptions()
     if isinstance(value, ReadOptions):
         return value
+    if not isinstance(value, Mapping):
+        msg = f"read_options must be a ReadOptions or a mapping, got {type(value).__name__}"
+        raise SettingsError(msg)
     try:
         return ReadOptions.model_validate(dict(value))
     except ValidationError as err:

@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["tomlkit>=0.13"]
+# dependencies = ["tomlkit>=0.13.1"]
 # ///
 """Make the bundled ISD subset, its sidecar and the ISD dataset registry.
 

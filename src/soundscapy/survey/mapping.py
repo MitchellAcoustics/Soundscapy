@@ -271,12 +271,14 @@ def _normalise_columns(
         position = circ.position_for(key)
         if position in by_position:
             other = by_position[position][0]
-            msg = f"attribute keys {other!r} and {key!r} both map {position}"
+            msg = "groups.attributes.columns: "
+            msg += f"attribute keys {other!r} and {key!r} both map {position}"
             raise ValueError(msg)
         by_position[position] = (key, column)
     for position in circ.positions:
         if position not in by_position:
-            msg = f"attribute {position} ({circ.label(position)!r}) is not mapped"
+            msg = "groups.attributes.columns: "
+            msg += f"attribute {position} ({circ.label(position)!r}) is not mapped"
             raise ValueError(msg)
     return tuple((p, by_position[p][1]) for p in circ.positions)
 
@@ -291,7 +293,8 @@ def _normalise_reverse(reverse: object, circ: Circumplex) -> object:
     for key in reverse:
         position = circ.position_for(key)
         if position in positions:
-            msg = f"reverse keys {positions[position]!r} and {key!r} repeat {position}"
+            msg = "groups.attributes.coding.reverse: "
+            msg += f"reverse keys {positions[position]!r} and {key!r} repeat {position}"
             raise ValueError(msg)
         positions[position] = key
     return tuple(p for p in circ.positions if p in positions)

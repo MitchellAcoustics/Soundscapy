@@ -1,5 +1,6 @@
 """plot.scatter: responses on the circumplex, asserted on artist data, never on pixels."""
 
+import dataclasses
 from pathlib import Path
 
 import matplotlib as mpl
@@ -143,3 +144,59 @@ def test_saves_png_svg_pdf(coords, tmp_path: Path, suffix):
     assert isinstance(figure, Figure)
     figure.savefig(path)
     assert path.stat().st_size > 0
+
+
+def test_c_keyword_replaces_the_colour_cycle(coords):
+    ax = plot.scatter(coords, by="location", c="k")
+    collections = _collections(ax)
+    assert len(collections) == 15
+    for collection in collections:
+        # Exact: "k" is stored as pure black.
+        np.testing.assert_array_equal(collection.get_facecolor()[0], to_rgba("k"))
+
+
+def _relabel(coords, location: str, rows: slice) -> Coordinates:
+    """Return ``coords`` with the location label of ``rows`` set to ``location``."""
+    column = coords.provenance["id_columns"]["location"]
+    values = coords.labels[column].copy()
+    values[rows] = location
+    return dataclasses.replace(coords, labels={**coords.labels, column: values})
+
+
+def _legend_texts(ax) -> list[str]:
+    legend = ax.get_legend()
+    assert legend is not None
+    return [t.get_text() for t in legend.get_texts()]
+
+
+def test_blank_group_key_is_labelled_blank(coords):
+    ax = plot.scatter(_relabel(coords, "", slice(0, 5)), by="location")
+    texts = _legend_texts(ax)
+    assert texts[0] == "(blank)"
+    assert len(texts) == len(_collections(ax)) == 16
+
+
+def test_underscore_group_key_is_shown_with_repr(coords):
+    ax = plot.scatter(_relabel(coords, "_hidden", slice(0, 5)), by="location")
+    texts = _legend_texts(ax)
+    assert repr("_hidden") in texts
+    assert len(texts) == len(_collections(ax)) == 16
+
+
+def test_by_ssp_reasons_labels_the_included_points(coords):
+    ax = plot.scatter(coords, by="ssp_reasons")
+    assert _legend_texts(ax) == ["(blank)", "incomplete_attributes"]
+    # Exact: the blank-reason group is every included row, passed unchanged.
+    np.testing.assert_array_equal(_collections(ax)[0].get_offsets(), coords.xy[valid_mask(coords)])
+
+
+def test_by_ssp_flags_draws_one_labelled_group(coords):
+    ax = plot.scatter(coords, by="ssp_flags")
+    assert _legend_texts(ax) == ["(blank)"]
+
+
+def test_empty_coordinates_draw_without_legend_or_warning(coords):
+    empty = coords.select(np.zeros(coords.n(), dtype=bool))
+    ax = plot.scatter(empty, by="location")
+    assert _collections(ax) == []
+    assert ax.get_legend() is None

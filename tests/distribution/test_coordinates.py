@@ -174,3 +174,28 @@ def test_split_rejects_malformed_id_columns(coords):
     broken = _rebuild(coords, provenance={**coords.provenance, "id_columns": ["LocationID"]})
     with pytest.raises(TypeError, match="id_columns"):
         broken.split("location")
+
+
+def _id_columns(provenance: dict[str, object]) -> dict:
+    ids = provenance["id_columns"]
+    assert isinstance(ids, dict)
+    return ids
+
+
+def test_provenance_is_not_shared_with_the_survey_or_parent():
+    survey = isd.load(subset=True)
+    coords = project(survey)
+    location = _id_columns(survey.provenance)["location"]
+    _id_columns(coords.provenance)["location"] = "X"
+    assert _id_columns(survey.provenance)["location"] == location
+    fresh = project(survey)
+    group = next(iter(fresh.split("location").values()))
+    _id_columns(group.provenance)["location"] = "X"
+    assert _id_columns(fresh.provenance)["location"] == location
+
+
+def test_constructor_deep_copies_provenance(coords):
+    provenance = {**coords.provenance, "id_columns": {"location": "LocationID"}}
+    rebuilt = _rebuild(coords, provenance=provenance)
+    provenance["id_columns"]["location"] = "X"
+    assert rebuilt.provenance["id_columns"] == {"location": "LocationID"}

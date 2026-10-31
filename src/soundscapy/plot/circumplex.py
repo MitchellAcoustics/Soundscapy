@@ -18,6 +18,16 @@ __all__ = ["scatter"]
 # (colour, marker) pair is unique for up to 30 groups.
 _MARKERS = ("o", "s", "^")
 
+# Keywords of Axes.scatter that set the face colour; any one of them replaces the cycle.
+_COLOUR_KEYWORDS = frozenset({"c", "color", "facecolor", "facecolors", "fc"})
+
+
+def _legend_label(key: str) -> str:
+    """Return a label matplotlib keeps in the legend: it drops ``""`` and ``"_..."``."""
+    if key == "":
+        return "(blank)"
+    return repr(key) if key.startswith("_") else key
+
 
 def scatter(
     coords: "Coordinates",
@@ -30,12 +40,15 @@ def scatter(
     """Draw projected responses on the circumplex, one series per group.
 
     Only valid rows (see :func:`~soundscapy.distribution.coordinates.valid_mask`) are
-    drawn. Groups are drawn in sorted key order, each labelled with its key in a legend.
-    Group colours follow matplotlib's ``petroff10`` colour sequence; on each full pass
-    through its ten colours the marker changes (``"o"``, ``"s"``, ``"^"``, in turn), so
-    up to 30 groups stay distinguishable. A ``color`` or ``marker`` keyword overrides
-    this cycle for every group. A group with no valid rows still gets an empty labelled
-    series, so each group keeps its colour and marker across plots of the same groups.
+    drawn. Groups are drawn in sorted key order, each labelled with its key in a legend:
+    a blank key is labelled ``(blank)`` and a key starting with ``_`` is shown quoted
+    (``'_x'``), as matplotlib would otherwise leave both out of the legend. Group
+    colours follow matplotlib's ``petroff10`` colour sequence; on each full pass through
+    its ten colours the marker changes (``"o"``, ``"s"``, ``"^"``, in turn), so up to 30
+    groups stay distinguishable. A ``c``, ``color`` or ``facecolor`` keyword replaces the
+    colour cycle, and a ``marker`` keyword the marker cycle, for every group. A group
+    with no valid rows still gets an empty labelled series, so each group keeps its
+    colour and marker across plots of the same groups.
 
     Parameters
     ----------
@@ -83,11 +96,13 @@ def scatter(
     styles = ((colour, marker) for marker in cycle(_MARKERS) for colour in colours)
     for (key, group), (colour, marker) in zip(groups.items(), styles, strict=False):
         xy = group.xy[valid_mask(group)]
-        options: dict[str, Any] = {"color": colour, "marker": marker, **kwargs}
+        options: dict[str, Any] = {"marker": marker, **kwargs}
+        if _COLOUR_KEYWORDS.isdisjoint(kwargs):
+            options["color"] = colour
         if group_by:
-            options["label"] = key
+            options["label"] = _legend_label(key)
         ax.scatter(xy[:, 0], xy[:, 1], **options)
     circumplex_axes(ax, coords.circumplex, label_language)
-    if group_by:
+    if group_by and groups:
         ax.legend()
     return ax

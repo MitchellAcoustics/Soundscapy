@@ -123,6 +123,11 @@ def test_from_toml_bad_value_raises_settings_error():
         from_toml(_Box, 'x = "nope"\n')
 
 
+def test_from_toml_syntax_error_raises_settings_error():
+    with pytest.raises(SettingsError, match="not valid TOML"):
+        from_toml(_Box, "a = ")
+
+
 def test_from_toml_unknown_key_raises_settings_error():
     with pytest.raises(SettingsError, match="extra"):
         from_toml(_Box, "extra = 1.0\n")

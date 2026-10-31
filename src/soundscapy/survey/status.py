@@ -55,6 +55,11 @@ class Flag(enum.StrEnum):
 
 def _ordered_unique(codes: Iterable[Any], order: type[enum.StrEnum]) -> bool:
     """Return whether ``codes`` are members of ``order``, unique and in enum order."""
+    codes = tuple(codes)
+    # StrEnum members equal their str values, so Reason and Flag codes (and plain str)
+    # would match each other in index(); require the enum type itself.
+    if not all(isinstance(c, order) for c in codes):
+        return False
     members = list(order)
     try:
         positions = [members.index(c) for c in codes]

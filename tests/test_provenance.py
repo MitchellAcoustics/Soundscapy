@@ -140,6 +140,15 @@ def test_envelope_accepts_optional_keys_and_rejects_typos() -> None:
         envelope(**common, qualty_skipped=[])  # ty: ignore[invalid-argument-type]  # dict unpack of mixed values
 
 
+def test_envelope_deep_copies_extra_values() -> None:
+    id_columns = {"location": "LocationID"}
+    env = envelope(
+        operation="project", settings=_Settings(), input_hash=hash_bytes(b""), id_columns=id_columns
+    )
+    id_columns["location"] = "X"
+    assert env["id_columns"] == {"location": "LocationID"}
+
+
 def test_show_versions_returns_and_never_prints(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

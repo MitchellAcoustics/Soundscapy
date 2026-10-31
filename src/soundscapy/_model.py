@@ -174,9 +174,14 @@ def from_toml(cls: type[M], text: str) -> M:
     Raises
     ------
     SettingsError
-        If the text fails validation; the message keeps pydantic's field paths.
+        If the text is not valid TOML, or fails validation; a validation message keeps
+        pydantic's field paths.
     """
-    data = tomllib.loads(text)
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as err:
+        msg = f"not valid TOML: {err}"
+        raise SettingsError(msg) from err
     try:
         return cls.model_validate(data)
     except ValidationError as err:

@@ -4,6 +4,7 @@
 and of the two counts; every consumer calls them.
 """
 
+import copy
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -64,7 +65,7 @@ class Coordinates:
     """Responses projected onto the two circumplex axes, one row per response.
 
     Rows align with the rows of the survey they were projected from. The arrays are
-    copied and made read-only on construction.
+    copied and made read-only, and the provenance deep-copied, on construction.
 
     Parameters
     ----------
@@ -102,7 +103,7 @@ class Coordinates:
     provenance: dict[str, object]
 
     def __post_init__(self) -> None:
-        """Copy the arrays read-only and check their shapes and the origin counts."""
+        """Copy the arrays read-only and the provenance deeply; check shapes and counts."""
         xy = np.asarray(self.xy)
         if xy.dtype != np.float64:
             msg = f"xy must be a float64 array, got {xy.dtype}"
@@ -124,7 +125,7 @@ class Coordinates:
         labels = {name: _frozen(values) for name, values in self.labels.items()}
         object.__setattr__(self, "labels", labels)
         object.__setattr__(self, "origin", tuple(self.origin))
-        object.__setattr__(self, "provenance", dict(self.provenance))
+        object.__setattr__(self, "provenance", copy.deepcopy(self.provenance))
 
     def n(self) -> int:
         """Return the number of rows; see :func:`n`."""

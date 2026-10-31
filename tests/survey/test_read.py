@@ -234,6 +234,21 @@ def test_bad_read_options_raise_settings_error():
         read_survey(KEY_CSV, _mapping(), read_options={"format": "xlsx"})
 
 
+def test_read_options_not_a_mapping_raises_settings_error():
+    with pytest.raises(
+        SettingsError, match="read_options must be a ReadOptions or a mapping, got str"
+    ):
+        read_survey(KEY_CSV, _mapping(), read_options="csv")  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime SettingsError
+
+
+def test_survey_constructor_deep_copies_provenance():
+    survey = read_survey(KEY_CSV, _mapping())
+    provenance = {**survey.provenance, "id_columns": {"location": "LocationID"}}
+    rebuilt = dataclasses.replace(survey, provenance=provenance)
+    provenance["id_columns"]["location"] = "X"
+    assert rebuilt.provenance["id_columns"] == {"location": "LocationID"}
+
+
 def test_unknown_encoding_raises_settings_error():
     with pytest.raises(SettingsError, match="unknown encoding 'latin-99'"):
         read_survey(KEY_CSV, _mapping(), read_options={"encoding": "latin-99"})
@@ -268,7 +283,12 @@ def test_mapping_path_validation_error_is_mapping_error(tmp_path):
     raw["groups"]["attributes"]["columns"]["PAQ1"] = "other"  # pleasant and PAQ1 both map PAQ1
     path = tmp_path / "mapping.toml"
     path.write_text(tomlkit.dumps(raw), encoding="utf-8")
-    with pytest.raises(MappingError, match="'pleasant' and 'PAQ1' both map PAQ1") as info:
+    with pytest.raises(
+        MappingError,
+        match=re.escape(
+            "groups.attributes.columns: attribute keys 'pleasant' and 'PAQ1' both map PAQ1"
+        ),
+    ) as info:
         read_survey(KEY_CSV, path)
     assert str(path) in str(info.value)
 
