@@ -22,8 +22,9 @@ Before implementing or changing a scientific procedure, read its source in
 
 **Status:** Phase 0 is in place: the toolchain (`pyproject.toml`, `uv.lock`,
 `Taskfile.yml`, prek hooks), CI and the docs skeleton exist, on an empty package with a
-small test suite. M1 (survey analysis) is next. `uv run task check` passing is the
-definition of done.
+small test suite. M1 slice S1 (contracts and the thin path `load_isd` → `project` →
+`plot.scatter`/`attach`, plan `design/plans/2026-10-31-m1-s1-thin-slice.md`) is in place;
+slice S2 is next. `uv run task check` passing is the definition of done.
 
 ## Repo map (target layout)
 
