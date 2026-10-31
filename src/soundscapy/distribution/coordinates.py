@@ -25,7 +25,7 @@ _XY_COLUMNS = 2
 class OriginSegment(FrozenModel):
     """Where a run of rows of :class:`Coordinates` came from.
 
-    Parameters
+    Attributes
     ----------
     kind : {"survey"}
         The kind of source.

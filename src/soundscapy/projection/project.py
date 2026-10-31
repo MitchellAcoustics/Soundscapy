@@ -29,7 +29,7 @@ _EQUAL: Final = "equal"
 class ProjectionSettings(FrozenModel):
     """Settings of :func:`project`.
 
-    Parameters
+    Attributes
     ----------
     formulation : {"canonical", "iso2019"}, optional
         The projection formula; see

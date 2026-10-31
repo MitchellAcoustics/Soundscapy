@@ -14,7 +14,7 @@ __all__ = ["Scale"]
 class Scale(FrozenModel):
     """A response scale.
 
-    Parameters
+    Attributes
     ----------
     minimum : float
         Lowest response value.

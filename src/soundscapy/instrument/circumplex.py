@@ -21,7 +21,7 @@ _FULL_TURN_DEG = 360.0
 class Attribute(FrozenModel):
     """One perceptual attribute of a circumplex.
 
-    Parameters
+    Attributes
     ----------
     position : str
         Position name, ``PAQ`` followed by a number without leading zero.
@@ -47,7 +47,7 @@ class Attribute(FrozenModel):
 class Axis(FrozenModel):
     """An axis of the circumplex, running from a negative to a positive attribute.
 
-    Parameters
+    Attributes
     ----------
     id : str
         Identifier, used in column names (for example ``ISOPleasant``).
@@ -67,7 +67,7 @@ class Axis(FrozenModel):
 class Translation(FrozenModel):
     """Attribute labels of one non-reference language.
 
-    Parameters
+    Attributes
     ----------
     language : str
         ISO 639-3 code (or the code the angle sets use).
@@ -89,7 +89,7 @@ class Circumplex(FrozenModel):
     A changed copy is built with
     ``Circumplex.model_validate({**c.model_dump(), **changes})``.
 
-    Parameters
+    Attributes
     ----------
     schema_name : str
         Always ``"soundscapy.circumplex"``; the file key is ``schema``.

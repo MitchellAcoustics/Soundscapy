@@ -10,7 +10,7 @@ __all__ = ["AngleSelection"]
 class AngleSelection(FrozenModel):
     """The angle set each response is projected with.
 
-    Parameters
+    Attributes
     ----------
     default : {"equal"}, optional
         The angle set of every response. ``"equal"`` uses the circumplex's nominal angles

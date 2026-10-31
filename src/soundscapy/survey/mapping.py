@@ -50,7 +50,7 @@ _NUMBER = {
 class IdSpec(FrozenModel):
     """Which columns identify a response, and which hold its location, session and group.
 
-    Parameters
+    Attributes
     ----------
     response : str, optional
         Column holding a unique response id. Not together with ``response_key``.
@@ -88,7 +88,7 @@ class IdSpec(FrozenModel):
 class LanguageSpec(FrozenModel):
     """Where each response's language comes from.
 
-    Parameters
+    Attributes
     ----------
     column : str, optional
         Column holding the language. Not together with ``value``.
@@ -125,7 +125,7 @@ class LanguageSpec(FrozenModel):
 class Coding(FrozenModel):
     """How the texts of an item group's columns become numbers.
 
-    Parameters
+    Attributes
     ----------
     missing_values : tuple of str, optional
         Texts, after stripping whitespace, that mean a missing response.
@@ -149,7 +149,7 @@ class Coding(FrozenModel):
 class ItemGroup(FrozenModel):
     """A group of survey items: their columns, response scale and coding.
 
-    Parameters
+    Attributes
     ----------
     columns : pairs of str
         Item key to column name, read from and written as a table.
@@ -168,7 +168,7 @@ class ItemGroup(FrozenModel):
 class Groups(FrozenModel):
     """The item groups a survey maps.
 
-    Parameters
+    Attributes
     ----------
     attributes : ItemGroup
         The perceptual attributes. Keys are positions (``PAQ1``) or reference-language
@@ -186,7 +186,7 @@ class SurveyMapping(FrozenModel):
     position order, so ``pleasant = "x"`` and ``PAQ1 = "x"`` give equal models with
     equal hashes. A missing attribute scale is filled in from the instrument.
 
-    Parameters
+    Attributes
     ----------
     schema_name : str
         Always ``"soundscapy.mapping"``; the file key is ``schema``.

@@ -66,7 +66,7 @@ class Citation(FrozenModel):
 
     Every field is an empty string when unknown.
 
-    Parameters
+    Attributes
     ----------
     citation : str
         Full reference text.

@@ -56,7 +56,7 @@ _Texts = Callable[[str], NDArray[np.object_]]
 class ReadOptions(FrozenModel):
     """How a survey file is read.
 
-    Parameters
+    Attributes
     ----------
     format : {"auto", "csv", "tsv"}, optional
         The file format; ``"auto"`` takes it from the file suffix (``.csv`` or ``.tsv``).
@@ -99,7 +99,7 @@ class ReadOptions(FrozenModel):
 class ImportSettings(FrozenModel):
     """Settings of :func:`read_survey`.
 
-    Parameters
+    Attributes
     ----------
     on_scale_violation : {"error", "exclude"}, optional
         What a coded value outside the response scale does. In this version a violation
@@ -112,7 +112,7 @@ class ImportSettings(FrozenModel):
 class SourceRef(FrozenModel):
     """The file a survey was read from.
 
-    Parameters
+    Attributes
     ----------
     name : str
         The file name, without its directory.
