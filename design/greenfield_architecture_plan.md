@@ -1,6 +1,6 @@
 # Architecture plan for the soundscapy rewrite
 
-Status: **draft 0.5** (2026-10-30), in step with PRD draft 0.7. This is the document AGENTS.md means
+Status: **draft 0.5** (2026-10-30, register updated 2026-10-31), in step with PRD draft 0.8. This is the document AGENTS.md means
 by "the architecture plan". Draft 0.5 separates the load-bearing architecture from deferred detail.
 Draft 0.4 had the right shape, but it specified field lists, signatures and flags for five
 milestones in the same voice as the M1 contracts, and it missed several decisions M1 needs. A review
@@ -124,7 +124,7 @@ The only list of things that are not open. "Binds from" is the milestone whose c
 | # | Commitment | Binds from | § |
 |---|---|---|---|
 | 1 | Functional core; frozen results; arrays read-only, frames copied on construction | M1 | 4.1 |
-| 2 | The circumplex is an instrument defined by its content; instrument and effective scale recorded separately | M1 | 4.2 |
+| 2 | The circumplex is an instrument defined by its content; scale, angles and labels recorded with the projection; coordinates, targets and comparisons bind to the axis space, cross-axis comparison refused unless overridden | M1 | 4.2 |
 | 3 | `Coordinates` is the one point type; rows aligned to responses; `origin` a sequence of segments | M1 | 4.3 |
 | 4 | `SurveyMapping` is the schema; stored responses are raw; coding applied once, in a fixed order | M1 | 4.4 |
 | 5 | One per-response status (`included`, `reasons`, `flags`); a `response_id` rule; a derived-column namespace; one `n` and `n_valid` | M1 | 4.5 |
@@ -166,11 +166,16 @@ accumulated methods; this beat them.
 - Every analysis works on generic positions. The circumplex owns its axis names, so nothing
   hard-codes `pleasant`. Labels resolve to positions only at entry points: mapping construction,
   region selection and plot labels.
-- Records keep the instrument and the effective scale used as separate fields. That keeps both
-  readings of FR-6.3 open: whether a 1..7 survey is the same instrument as a 1..5 one for scoring
-  is a PRD clarification (§9.2 #1) due before targets ship.
-- Identity is by content. At M1 circumplexes compare by value and results embed the full circumplex;
-  the persisted fingerprint arrives with target files at M2.
+- The scale, angles and labels belong to the projection: records keep the instrument, the
+  effective scale and the angle set used as separate fields (FR-2.3).
+- **Projected coordinates live in an axis space**, the pair of named axes. Coordinates in the same
+  axis space are cross-comparable whatever their original scale, labels or angle set, so a 1..7
+  survey is scored against a target fitted to 1..5 data without conversion (owner, FR-6.3).
+  Targets, shifts and comparisons bind to the axis space, not to the instrument. Comparing across
+  axis spaces (an indoor against an outdoor circumplex) is an open scientific question: refused by
+  default, allowed by an explicit override that the result records.
+- Identity is by content, never by name alone. At M1 values compare directly and results embed the
+  full circumplex; the persisted axis-space fingerprint arrives with target files at M2.
 - A circumplex names a reference language, whose labels are the default for plots (NFR-10) and the
   aliases accepted at entry points.
 
@@ -187,8 +192,9 @@ user set uses the same file format and is registered first. Deriving angle sets 
 
 **Formulations** are canonical, ISO 12913-3:2019 and Aletta 2024 (FR-2.3). Projection reads the
 midpoint and half-range from the effective scale, which is what makes the canonical formulation
-reduce to the 2019 one. The Aletta 2024 kernel needs an owner worked example before the M1 spec
-(§9.2). The adjusted angle set stays an M1 Must either way.
+reduce to the 2019 one. The Aletta 2024 formulation is a Must only if the owner supplies a worked
+example before the M1 spec, otherwise a Should (PRD FR-2.3). The Aletta 2024 angle set stays an M1
+Must either way.
 
 **Why.** Draft 0.1 keyed attributes by English name. The generalised circumplex (FR-2.0) and the
 translation work make positions the stable thing and labels the variable thing.
@@ -539,7 +545,7 @@ Each milestone adds modules. Nothing here fixes fields, flags or library version
 |---|---|---|---|---|
 | Phase 0. Toolchain | The toolchain per `house-style`; the §5 protections; test markers; `GOVERNANCE.md`, `CITATION.cff`, `CONTRIBUTING.md`; the docs build with tutorials and paper reproductions separated (§6) | – | – | `task check` and `task docs` green on an empty package; a clean no-compiler install on three OS (NFR-1) |
 | M1. Survey analysis (A; I for the 2022 paper) | `errors`, `provenance`, `_frames`, `_data`, `instrument`, `survey` (mapping, import, quality, Part 3 statistics), `projection`, `distribution` (points, regions, describe, KDE geometry), `plot` basics, the ISD loader and bundled subset, a minimal `workspace`, journey A's CLI, the canonical layout as a CSV template (FR-1.2), the install quick-start, tutorial A, the 2022 reproduction | *Mechanisms for what §4 fixes:* the `response_id` mechanism, status and namespace column names, the hashing format, the profile identifiers, reference and file names. *Open for the spec:* whether a scale violation raises or flags, the region-boundary rule, KDE grid extent and normalisation, the top-level names, required survey labels, quality defaults, the ISD record version, the default CSV copy versus an `export` command | The Aletta 2024 worked example; ISD languages outside SATP v1.5 and Aletta 2024, and the Medium-tier list; ISD record versions; the 2022 KDE settings and angle choice; ISD exclusion counts | Journey A done; the 2022 `.qmd` renders with every cell run, following the paper's methodology; no numeric baseline for that paper (owner decision) |
-| M2. SPI and design, first alpha (C, E1, K; I for the 2024 paper) | The skew-normal and the KS distance; `spi` with a versioned targets library; `design` with briefs, scenario records and evaluation; the ISD feature table on the shared vocabulary; tutorials C and E; course acceptance cases; the 2024 reproduction with the SPI acceptance test last; the versioning policy; plugin discovery with the plot-type and dataset recipes; the C and E1 CLI (FR-14.5; narrowing proposed in §9.2) | Circumplex identity for scoring and the fingerprint; skew-normal and fit types; SPI settings and the multi-seed helper; ranking table shape; target fields from fixtures; format compatibility; feature syntax and name lists; scenario and KPI fields | Example 6 data and target; the 2024 targets and sample size; the KS variant, direction combination, tie rule and truncation; one R `sn` run | The 2024 tables reproduce within tolerance; Example 6 runs; course exercises run unchanged |
+| M2. SPI and design, first alpha (C, E1, K; I for the 2024 paper) | The skew-normal and the KS distance; `spi` with a versioned targets library; `design` with briefs, scenario records and evaluation; the ISD feature table on the shared vocabulary; tutorials C and E; course acceptance cases; the 2024 reproduction with the SPI acceptance test last; the versioning policy; plugin discovery with the plot-type and dataset recipes; the C and E1 CLI: scoring against target files and `evaluate` with a brief (FR-14.5) | The axis-space fingerprint and the cross-axis override; skew-normal and fit types; SPI settings and the multi-seed helper; ranking table shape; target fields from fixtures; format compatibility; feature syntax and name lists; scenario and KPI fields | Example 6 data and target; the 2024 targets and sample size; the KS variant, direction combination, tie rule and truncation; one R `sn` run | The 2024 tables reproduce within tolerance; Example 6 runs; course exercises run unchanged |
 | M3. Audio (B) | `audio` with windowed reads, calibration applied once and recorded, built-in level metrics and IACC; MoSQITo as the default psychoacoustic backend, scikit-maad for ecoacoustic indices, phonometry as an opt-in extra, no backend that depends on PyQt6; a batch runner whose per-file cache is the resume mechanism; the metrics plugin group; journey B's CLI; the metric recipe; tutorial B; the ArtemiS comparison page | Signal and calibration types from real recorder files (at most two channels); the audio reader; metric attributes after two wrappers; the backend collision rule (MoSQITo and phonometry both offer ISO 532-1 and DIN 45692); the runner and its executor; progress, cancellation and whether partial results are needed; the backend roster, re-running the research note; Windows cache paths; audio formats; equalisation filter forms | Redistributable audio; which tonality each Table D.1 edition names | Journey B done; ISO 532-1 reference signals pass; a large batch resumes |
 | M4. Prediction (D, E2; I for the 2021 paper) | `predict` with the predictor contract as code; the predictors plugin group; the default model chosen at M4 planning; a linear predictor for the 2021 reproduction; the SoundAQnet plugin package; E2 and its CLI; the predictor recipe | Payload types against two real predictors; scenario inputs; the default model; weight fetching | The features the deployable 2021 models use | Journeys D and E2 done |
 | M5. Ecosystem (L, F, G) | SATP, ARAUS and DeLTA loaders; MOSAIQ import and export; target search behind an `optim` extra, returning a target with provenance; the contributor trial of each recipe | Participant and stimulus roles; the MOSAIQ boundary | – | Journeys F, G and L done |
@@ -550,7 +556,7 @@ Each milestone adds modules. Nothing here fixes fields, flags or library version
 | Decision | Trigger | Already binding |
 |---|---|---|
 | Persisted circumplex fingerprint [G2-03] | M2 spec, with target files | Identity by content; canonical hash |
-| Scale in circumplex identity [G2-04] | FR-6.3 clarification, before M2 | Instrument and effective scale recorded separately |
+| Cross-axis-space scoring [G2-04] | If the science settles it | Refused by default; explicit override recorded (FR-6.3, owner 2026-10-31) |
 | KDE grid extent and normalisation [G4-07] | M1 spec at the latest | Recorded settings; the normalisation domain defines the meaning of the fraction contour; a seaborn match needs the same clip; 2022 settings if supplied |
 | Participant and stimulus roles [G3-05] | FR-2.4b or M5 loaders | Id roles are open |
 | Group, session, recordings tables [G3-06] | Groups at M2; others at M3 | Keyed by id column names |
@@ -570,7 +576,7 @@ Each milestone adds modules. Nothing here fixes fields, flags or library version
 | Batch runner [G6-05] | M3 spec, measured runtimes | Cache is the resume; top-level work functions |
 | Time-series cache [G6-06] | FR-4.11 scheduled | Series in memory |
 | Progress reporting [G6-09] | M3 batch runner | `tqdm.auto` default (owner); work-unit label, not a path |
-| Cancellation, partial results [G6-10] | M3 runner spec | FR-14.3; downloads per §9.2 #4 |
+| Cancellation, partial results [G6-10] | M3 runner spec | FR-14.3; downloads report progress and are not cancellable (owner) |
 | Method versions [G7-03] | First beyond-tolerance drift of a baselined procedure | Baselined procedures only; profiles unversioned |
 | Readers per record [G7-06] | Results read back (M3 or GUI) | One generic serialisation path |
 | Staleness over lineage [G7-07] | GUI planning | Lineage keys from M1 |
@@ -650,23 +656,24 @@ PRD §10 decisions that bind the architecture, not already above:
 PRD §10.3 inputs are listed per milestone in §7. PRD §10.6 findings are applied as answered; those
 touching this plan are in §8.
 
-### 9.2 Proposed PRD changes awaiting the owner
+### 9.2 PRD changes accepted on 2026-10-31
 
-Until the owner accepts one, the PRD binds and the plan follows it.
+The review of plan 0.4 proposed six PRD changes. The owner accepted all six, and PRD 0.8 applies
+them (§10.5a). They are registered here as rows 35 to 40.
 
-| # | PRD item | Proposed change | Why |
-|---|---|---|---|
-| 1 | FR-6.3 | State whether the scale is part of circumplex identity for scoring, or identity is positions, angles and axes with the scale recorded. Before M2. | Otherwise a 1..7 survey can never be scored against a 1..5 target (FR-6.4). |
-| 2 | FR-2.3 | Aletta 2024 formulation conditional on a worked example added to §10.3; Should if none by the M1 spec. | Untestable without one. The angle set stays an M1 Must. |
-| 3 | FR-14.5 | M2 CLI narrowed to E1 `evaluate` with a brief file, plus scoring against shipped or bespoke targets. Target fitting and editing wait for GUI planning. | The course runs in notebooks; C's fitting commands have no M2 user. |
-| 4 | FR-14.3 | Downloads report progress through pooch and are not cancellable; recorded as an exception. | pooch's `downloader=` hook makes this a later fix if a GUI needs it. |
-| 5 | FR-1.5 | Untestable thresholds become "defaults that reproduce the ISD's published processing"; ISD exclusion counts added to §10.3. | Testable against published numbers. |
-| 6 | FR-2.4 | Per-language version choice scoped to registered sets by name and version, no paths. | Portable references (§4.7). |
+| # | Decision | In the plan |
+|---|---|---|
+| 35 | The scale belongs to the projection; coordinates on the same two named axes are cross-comparable regardless of original scale, labels or angles; scoring across axis spaces (indoor against outdoor) is an open scientific question, refused by default with a recorded override (FR-6.3) | §3 #2, §4.2, §8 |
+| 36 | The Aletta 2024 formulation is a Must only with a worked example before the M1 spec, otherwise a Should (FR-2.3) | §4.2, §7 |
+| 37 | The M2 CLI for C and E1 is scoring against target files and `evaluate` with a brief; fitting and editing targets wait for GUI planning (FR-14.5) | §7 |
+| 38 | Downloads report progress but are not cancellable (FR-14.3) | §8 |
+| 39 | Default quality rules reproduce the ISD's published processing, tested against its exclusion counts (FR-1.5) | §4.4, §7 |
+| 40 | Per-language angle-set choice is from registered sets by name and version; user sets are registered into the project first (FR-2.4) | §4.2, §4.7 |
 
-Considered and not changed: FR-14.2's columnar format, FR-6.1's multi-seed Should, the FR-1.3
-construct list. The review also argued for plugin discovery at M4 and renormalisation as Later;
-both contradict decisions the owner took on 2026-10-30 (PRD §9, FR-2.5a), so the plan follows
-those decisions and does not re-propose them.
+Not proposed: FR-14.2's columnar format, FR-6.1's multi-seed Should and the FR-1.3 construct list
+were considered and kept. The review also argued for plugin discovery at M4 and renormalisation as
+Later; both contradict decisions the owner took on 2026-10-30 (PRD §9, FR-2.5a), so the plan
+follows those decisions.
 
 ## Appendix A. M1 type sketches (non-normative)
 
@@ -743,7 +750,8 @@ M5 contributor trial can test the one-day goal.
 |---|---|
 | Position | An attribute's stable id in a circumplex (PAQ1 to PAQn, counter-clockwise from +x). |
 | Instrument | A circumplex: attributes with angles and labels, two named axes, a default scale. Identity by content. |
-| Effective scale | The scale a survey actually used, recorded beside the instrument. |
+| Effective scale | The scale a survey actually used, recorded with the projection. |
+| Axis space | The pair of named axes projected coordinates live in. Coordinates, targets and comparisons in one axis space are cross-comparable. |
 | Angle set | Versioned per-language angles with a confidence tier per language. |
 | Formulation | The projection formula: canonical, ISO 12913-3:2019 or Aletta 2024. |
 | Profile | A named bundle of per-operation settings records in one TOML file. |

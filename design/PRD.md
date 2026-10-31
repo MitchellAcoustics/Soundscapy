@@ -1,15 +1,15 @@
 # Product Requirements: an open-source soundscape assessment, analysis and design package
 
-Status: **draft 0.7, baseline for the architecture plan** (2026-10-30). Draft 0.4
+Status: **draft 0.8, baseline for the architecture plan** (2026-10-31). Draft 0.4
 applied the review of 0.3 (`design/reviews/prd-0.3-review.md`); draft 0.5 recorded the
 owner's responses to it; draft 0.6 recorded the decisions the owner took while reviewing
-the architecture plan; draft 0.7 applies the owner's responses to the review of 0.6 and
-plan 0.3 (`design/reviews/prd-0.6-plan-0.3-review.md`, §10.5). This document states what
-the package must do and for whom. It deliberately says nothing about how it is built;
-the architecture plan (`design/greenfield_architecture_plan.md`) is a separate document
-and must be checked against this one. From plan draft 0.5 the register of owner
-decisions is the plan's §9, and proposed PRD changes from the plan review await the
-owner in plan §9.2.
+the architecture plan; draft 0.7 applied the owner's responses to the review of 0.6 and
+plan 0.3 (`design/reviews/prd-0.6-plan-0.3-review.md`, §10.5); draft 0.8 applies the
+owner's acceptance of the PRD changes proposed by the review of plan 0.4 (§10.5a). This
+document states what the package must do and for whom. It deliberately says nothing
+about how it is built; the architecture plan (`design/greenfield_architecture_plan.md`)
+is a separate document and must be checked against this one. From plan draft 0.5 the
+register of owner decisions is the plan's §9.
 
 Decisions taken with the product owner are marked **[agreed]**. The minor findings of
 the 0.6 review that the owner has not yet answered are listed in §10.6; nothing else is
@@ -277,7 +277,9 @@ requirement; "should" is desirable.
 - **FR-1.5** (A; Must) Shall apply documented quality rules (ISO coding checks,
   all-identical attribute responses, excessive missingness, age and consent flags,
   test and paper-input flags) producing an inclusion decision and reason per response,
-  never silently dropping rows; rules shall be configurable. Every other reason a
+  never silently dropping rows; rules shall be configurable. The default rules and
+  thresholds shall reproduce the ISD's published processing, which is their acceptance
+  test (§10.3) [agreed 2026-10-31]. Every other reason a
   response is left out of a coordinate statistic (a missing item, FR-2.5a; an
   uncovered or Low-tier language, FR-2.4) shall be written to the same per-response
   status and reason, so one column explains every absence and a GUI can show it
@@ -318,15 +320,21 @@ requirement; "should" is desirable.
   normalised by Σ|cos θ_i| and Σ|sin θ_i|, so that coordinates lie within [−1, 1] for
   any angle set and a neutral response maps to the origin. Shall reproduce the 2019
   fixed formula exactly when the standard 45° angles are used, shall offer the 2019
-  and the Aletta et al. 2024 formulations as selectable legacy variants for
-  reproduction of older work, and shall record which formulation, angles and scale
-  produced every coordinate [agreed].
+  formulation as a selectable legacy variant for reproduction of older work, and shall
+  record which formulation, angles and scale produced every coordinate [agreed]. The
+  Aletta et al. 2024 formulation is a Must only if the owner supplies a worked example
+  to test it against before the M1 spec (§10.3); otherwise it is a Should, added when
+  one exists. The Aletta 2024 angle set (FR-2.4) stays a Must either way [agreed
+  2026-10-31].
 - **FR-2.4** (A; Must) Shall ship the published language-specific adjusted-angle sets
   as versioned data: the SATP v1.5 set from the 2026 chapter (13 High-confidence
   languages: arb, deu, ell, eng, hrv, ind, ita, nld, pol, spa, swe, tur, yue) as the
   default, and the Aletta et al. 2024 set as a selectable earlier version; shall
   select the set from the declared survey language, allow the version to be chosen
-  per language, and accept user-supplied angle sets with provenance [agreed].
+  per language from the registered sets by name and version, and accept user-supplied
+  angle sets with provenance, which are registered (copied into the project) before
+  use so that no result refers to a path on one machine [agreed; registration agreed
+  2026-10-31].
   Angles apply per response [agreed]. The user declares one language for a whole
   dataset, or names a language column, and may supply angle sets for languages the
   shipped sets lack. If adjusted angles are used for any response and some responses
@@ -556,10 +564,15 @@ requirement; "should" is desirable.
   Part 4 Example 6 tranquil target), clearly labelled as demonstration or reference.
   Each target and each angle set (FR-2.4) carries a version; a result records the
   versions it used; a superseded version is never removed, so an old result stays
-  reproducible after a data update. A target belongs to one circumplex (FR-2.0),
-  identified by its content (attributes, angles, axes, scale) and not only by its
-  name; scoring against a target defined on a different circumplex shall be refused
-  [agreed 2026-10-30].
+  reproducible after a data update. The response scale, angles and labels belong to the
+  projection, which records them (FR-2.3); once projected, coordinates on the same two
+  named axes are cross-comparable whatever the original scale, labels or angle set, so
+  a 1..7 survey is scored against a target fitted to 1..5 data without conversion. A
+  target therefore belongs to the coordinate space of one pair of named axes,
+  identified by content and not only by name. Scoring coordinates on a different axis
+  pair (for example an indoor circumplex against an outdoor target) is an open
+  scientific question: it is refused by default, and an explicit override is recorded
+  in the result [agreed 2026-10-31].
 - **FR-6.4** (C, E; Must) Shall score many sites or scenarios against one target and
   one site against many targets, producing rankings.
 - **FR-6.5** (F; Should) Should derive a reference target from an a-priori ranking by
@@ -680,13 +693,17 @@ possible without a rewrite.
   with a JSON record of their settings and a one-call export to CSV and Excel
   [agreed 2026-10-30].
 - **FR-14.3** (Must) Long-running operations shall report progress and be
-  cancellable.
+  cancellable. Dataset and model-weight downloads are the one exception: they report
+  progress but are not cancellable, until a GUI needs it [agreed 2026-10-31].
 - **FR-14.4** (Must) The project format (FR-1.7) shall be the unit of exchange
   between library, CLI and GUI. A minimal project directory (mapping, settings,
   result tables, manifest) is a Must at M1; packaging, sharing and opening in a GUI
   stay Should (FR-1.7) [agreed].
 - **FR-14.5** (Must) A command-line interface shall cover journeys A, B, C and E so
-  that each can be run without writing Python.
+  that each can be run without writing Python. For C and E1 at M2 this means scoring
+  against shipped or bespoke target files and `evaluate` with a brief file; fitting
+  and editing targets from the CLI wait for GUI planning, because the course runs in
+  notebooks [agreed 2026-10-31].
 - **FR-14.6** (Must) Audio and prediction shall be processable locally; nothing
   shall require uploading audio to a service [agreed, see NFR-5].
 - **FR-14.7** (Must) No GUI design is fixed by this document. The core shall not
@@ -822,9 +839,9 @@ later milestones will probably ship before any non-alpha version, so no API is
 frozen by M2 [agreed 2026-10-30].
 
 A requirement is delivered with the milestone of the earliest journey it serves, unless
-this section says otherwise. The CLI (FR-14.5) grows the same way: journey A's
-commands at M1, C and E1 at M2, B at M3, E2 at M4. The versioning policy (FR-13.4) is
-in place by M2, since 1.0 needs it.
+this section says otherwise. The CLI (FR-14.5) grows the same way: journey A's commands
+at M1, C and E1 at M2 (as FR-14.5 scopes them), B at M3, E2 at M4. The versioning
+policy (FR-13.4) is in place by M2, since 1.0 needs it.
 
 Each extension recipe (FR-13.1) is delivered with the milestone that first has a user
 for that extension type [agreed 2026-10-30]: plot type, dataset loader and plugin
@@ -895,6 +912,8 @@ tests of the milestone shown, so request it before that milestone is planned in 
 | The 2-D KS variant, direction combination, tie rule, truncation and sample size the 2024 paper used; the 2022 paper's KDE settings and whether it used equal angles | M2 (SPI), M1 (2022 reproduction) | FR-6.1's tables reproduce only with the same statistic; the 2022 figures only with the same estimator settings. |
 | One R `sn` run to generate the skew-normal reference fixtures | M2 | FR-3.4 is validated against `sn` (NFR-9). |
 | A worked example of the canonical projection with adjusted angles, from the chapter or blog | M1 | Without it M1's headline feature has no literature fixture; property tests and hand-computed 2019 values cover the rest. |
+| A worked example of the Aletta et al. 2024 formulation | M1 spec | Decides whether that formulation is a Must or a Should (FR-2.3). |
+| The ISD's published exclusion counts per quality rule | M1 | The acceptance test of the default quality rules (FR-1.5). |
 
 ### 10.4 Implementation-stage questions (not requirements)
 
@@ -924,6 +943,17 @@ C, E at M2 and B at M3 (FR-12.2). CLI commands always have a non-interactive mod
 (§9). Implementation notes recorded in the plan only: M1 re-scoped; the narwhals
 boundary to follow narwhals' own API conventions, reviewed while building; optional
 imports and lazy loading per current Python practice.
+
+### 10.5a Decided on review of plan 0.4 (2026-10-31)
+
+The six proposals of plan 0.5 §9.2 were accepted, with the owner's reading of the
+first: the scale belongs to the projection, coordinates on the same two named axes are
+cross-comparable, and scoring across axis pairs is refused by default as an open
+scientific question (FR-6.3). The Aletta 2024 formulation is conditional on a worked
+example (FR-2.3). The M2 CLI for C and E1 is scoring and `evaluate` (FR-14.5).
+Downloads report progress but are not cancellable (FR-14.3). Default quality rules
+reproduce the ISD's published processing (FR-1.5). Per-language angle-set choice is
+from registered sets, with user sets registered first (FR-2.4).
 
 ### 10.6 Minor findings of the 0.6 review not yet answered by the owner
 

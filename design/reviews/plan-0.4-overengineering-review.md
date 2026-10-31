@@ -366,3 +366,13 @@ Content belongs in the plan only if at least one of these holds:
 Everything else goes in the spec of the milestone that first needs it. That includes field lists, defaults, signatures, flags, thresholds, library choices and versions, file layouts beyond the M1 subset, and recipe text.
 
 One exception: a default fixed by the PRD or the cited science may appear in the plan with its source cited. Code in the plan is always labelled illustrative. When the plan and a spec disagree, the spec wins for its milestone, and the plan is updated in the same change.
+---
+
+## Owner responses (2026-10-31), applied in PRD 0.8 and plan 0.5 §9.2
+
+The six proposed PRD changes in plan 0.5 §9.2 were all accepted. On the first, the owner's
+reading: the scale is part of the projection's identity. Once projected, coordinates on the
+same two axes are cross-comparable whatever their original scales or labels. Whether
+coordinates are comparable across axis pairs (for example indoor against outdoor
+circumplexes) is an open scientific question. The plan therefore refuses cross-axis-space
+scoring by default and records an explicit override.
