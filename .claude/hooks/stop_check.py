@@ -41,15 +41,17 @@ def main() -> int:
     project = Path(os.environ.get("CLAUDE_PROJECT_DIR") or payload.get("cwd") or os.getcwd())
     if not (project / "Taskfile.yml").exists():
         return 0
-    if shutil.which("task") is None:
+    cmd = ["task", "check:fast"] if shutil.which("task") else ["uv", "run", "task", "check:fast"]
+    if shutil.which(cmd[0]) is None:
         print(
-            "stop_check hook: `task` (go-task) is not on PATH; skipped check:fast", file=sys.stderr
+            "stop_check hook: neither `task` nor `uv` is on PATH; skipped check:fast",
+            file=sys.stderr,
         )
         return 1
 
     try:
         result = subprocess.run(
-            ["task", "check:fast"],
+            cmd,
             cwd=project,
             capture_output=True,
             text=True,
