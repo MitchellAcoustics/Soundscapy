@@ -2480,6 +2480,7 @@ docs = [
 ]
 test = [
     { name = "hypothesis" },
+    { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
@@ -2502,6 +2503,7 @@ docs = [
 ]
 test = [
     { name = "hypothesis", specifier = ">=6.170.14" },
+    { name = "packaging", specifier = ">=26.3" },
     { name = "pytest", specifier = ">=9.2" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },

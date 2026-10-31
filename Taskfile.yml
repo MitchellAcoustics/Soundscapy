@@ -60,8 +60,7 @@ tasks:
   check:
     desc: Lint, type-check and test with coverage (done means this passes)
     cmds:
-      - task: lint
-      - task: typecheck
+      - task: check:fast
       - task: test:cov
 
   docs:

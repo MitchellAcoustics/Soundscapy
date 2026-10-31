@@ -23,7 +23,7 @@ def test_later_m_overrides_addopts(tmp_path):
     )
 
     def run(*args):
-        return subprocess.run(  # noqa: S603
+        return subprocess.run(
             [sys.executable, "-m", "pytest", "-q", *args],
             cwd=tmp_path,
             capture_output=True,

@@ -27,7 +27,13 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = ["go-task-bin>=3.54.0", "import-linter>=2.15", "prek>=0.5.9", "ruff>=0.17.3", "ty>=0.0.95"]
-test = ["hypothesis>=6.170.14", "pytest>=9.2", "pytest-cov>=7.1.0", "pytest-xdist>=3.8.0"]
+test = [
+  "hypothesis>=6.170.14",
+  "packaging>=26.3",
+  "pytest>=9.2",
+  "pytest-cov>=7.1.0",
+  "pytest-xdist>=3.8.0",
+]
 docs = ["great-docs", "ipykernel>=7.4.0", "quarto-cli==1.10.20"]
 
 [tool.uv]
@@ -71,7 +77,7 @@ convention = "numpy"
 runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
+"tests/**" = ["S101", "S603", "PLR2004", "D", "ANN", "INP001"]  # asserts, subprocess calls, literals
 # Standalone PEP 723 hook scripts, kept short and dependency-free.
 ".claude/hooks/**" = [
   "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",

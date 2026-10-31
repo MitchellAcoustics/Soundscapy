@@ -20,8 +20,6 @@ jobs:
   check:
     name: check (${{ matrix.os }}, ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -42,8 +40,6 @@ jobs:
     # Proves the runtime floors of spec §6.19. The variable, not a `--resolution` flag, keeps
     # the later `uv run` from re-resolving to the newest versions (spec §5.6.1).
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     env:
       UV_RESOLUTION: lowest-direct
     steps:
@@ -62,8 +58,6 @@ jobs:
   docs:
     # ubuntu x 3.14 is the canonical platform for frozen output.
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -99,8 +93,6 @@ jobs:
   hooks:
     # The prek hooks over the whole tree, as a contributor's commit would run them.
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -118,8 +110,6 @@ jobs:
 
   citation:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -133,15 +123,24 @@ jobs:
 
   install:
     # Covers Windows and macOS for installation, import and the quick-start script (NFR-1).
+    # The windows-11-arm cell uses x64 Python, which runs emulated and installs win_amd64
+    # wheels: the route a course participant on a Windows Arm laptop takes. Native arm64
+    # Python is not tested (pyarrow ships no win_arm64 wheel). That cell records the state
+    # rather than gating, because emulated runs on a new runner image are not yet a stable
+    # signal (spec §5.6.1).
     name: install (${{ matrix.os }}, ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
+    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python: ["3.11", "3.14"]
+        include:
+          - os: windows-11-arm
+            python: "3.13"
+            arch: x86_64
+            experimental: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -149,6 +148,7 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: ${{ matrix.python }}
+          python-arch: ${{ matrix.arch }}
           enable-cache: true
       - run: uv build
       - name: Install the wheel in a fresh venv
@@ -167,72 +167,21 @@ jobs:
           else
             py="$RUNNER_TEMP/install-venv/bin/python"
           fi
-          cd "$RUNNER_TEMP"
-          "$py" -c "import soundscapy"
-          "$py" "$GITHUB_WORKSPACE/docs/user_guide/_quickstart.py"
-      - name: Parse _quickstart.ps1 with PowerShell 7 (no execution)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $errors = $null
-          $path = (Resolve-Path 'docs/user_guide/_quickstart.ps1').Path
-          $null = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errors)
-          if ($errors) { $errors; exit 1 }
-      - name: Parse _quickstart.ps1 with Windows PowerShell 5.1 (no execution)
-        # The install page tells users to run the script with `powershell`, i.e. 5.1.
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          $errors = $null
-          $path = (Resolve-Path 'docs/user_guide/_quickstart.ps1').Path
-          $null = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errors)
-          if ($errors) { $errors; exit 1 }
-
-  install-win-arm:
-    # The `install` steps on a Windows Arm runner with x64 Python, which runs emulated and
-    # installs win_amd64 wheels: the route a course participant on a Windows Arm laptop takes.
-    # Native arm64 Python is not tested (pyarrow ships no win_arm64 wheel). It records the
-    # state rather than gating, because emulated runs on a new runner image are not yet a
-    # stable signal (spec §5.6.1).
-    runs-on: windows-11-arm
-    continue-on-error: true
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          python-version: "3.13"
-          python-arch: x86_64
-          enable-cache: true
-      - run: uv build
-      - name: Install the wheel in a fresh venv
-        shell: bash
-        run: |
-          uv venv "$RUNNER_TEMP/install-venv"
-          uv pip install --python "$RUNNER_TEMP/install-venv" --only-binary :all: dist/*.whl
-      - name: Import soundscapy and run the quick-start script
-        # `soundscapy --version` is added here from M1 slice S8, when the CLI arrives.
-        shell: bash
-        run: |
-          py="$RUNNER_TEMP/install-venv/Scripts/python.exe"
           "$py" -c "import platform, sys; print(sys.version, platform.machine())"
           cd "$RUNNER_TEMP"
           "$py" -c "import soundscapy"
           "$py" "$GITHUB_WORKSPACE/docs/user_guide/_quickstart.py"
-      - name: Parse _quickstart.ps1 with PowerShell 7 (no execution)
+      - name: Parse _quickstart.ps1 with PowerShell 7 and Windows PowerShell 5.1 (no execution)
+        # The install page tells users to run the script with `powershell`, i.e. 5.1.
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $errors = $null
-          $path = (Resolve-Path 'docs/user_guide/_quickstart.ps1').Path
-          $null = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errors)
-          if ($errors) { $errors; exit 1 }
-      - name: Parse _quickstart.ps1 with Windows PowerShell 5.1 (no execution)
-        shell: powershell
-        run: |
-          $errors = $null
-          $path = (Resolve-Path 'docs/user_guide/_quickstart.ps1').Path
-          $null = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errors)
-          if ($errors) { $errors; exit 1 }
+          $parse = {
+            $errors = $null
+            $path = (Resolve-Path 'docs/user_guide/_quickstart.ps1').Path
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errors)
+            if ($errors) { $errors; exit 1 }
+          }
+          & $parse
+          powershell -NoProfile -Command $parse
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }

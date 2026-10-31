@@ -16,7 +16,7 @@ def _run_hook(tmp_path: Path, path_dir: Path) -> subprocess.CompletedProcess[str
     project.mkdir()
     (project / "Taskfile.yml").write_text("")
     env = {**os.environ, "PATH": str(path_dir), "CLAUDE_PROJECT_DIR": str(project)}
-    return subprocess.run(  # noqa: S603
+    return subprocess.run(
         [sys.executable, str(HOOK)],
         input="{}",
         capture_output=True,
