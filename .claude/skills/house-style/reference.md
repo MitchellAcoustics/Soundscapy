@@ -134,9 +134,10 @@ review like code, and run wherever the package is installed.
 - Plot display: with `ax=None` a soundscapy plot function builds a pyplot-free `Figure()`,
   which Jupyter does not show on its own. Every tutorial plot cell, the quick-start and every
   docs example therefore ends with the expression `ax.figure` (or
-  `sspy.plot.scatter(...).figure`). A docs test reads `docs/_freeze/` and fails a tutorial
-  cell that calls `sspy.plot` without an image output.
-- Freeze: keep `freeze: {mode: auto}` and commit `docs/_freeze/`, so unchanged pages are
+  `sspy.plot.scatter(...).figure`). From M1 (spec §6.15) a docs test reads `docs/_freeze/`
+  and fails a tutorial cell that calls `sspy.plot` without an image output.
+- Freeze: keep `freeze: {mode: auto}` and commit `docs/_freeze/`, including
+  `docs/_freeze/site_libs/` (Quarto output the frozen pages load), so unchanged pages are
   not re-executed on every build and CI does not need audio data or model weights for
   pages whose source has not changed. Re-run an expensive page with `great-docs freeze
   <page>`.

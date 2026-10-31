@@ -40,11 +40,11 @@ definition of done.
 
 ## Commands
 
-Use `task` for everything; run `task --list` for the entry points.
-If `task` is not on PATH, run `uv run task <name>`; go-task comes with the dev group. Key tasks: `setup`,
-`fmt`, `lint`, `typecheck`, `test`, `test:cov`, `check:fast` (lint and
-typecheck, run by the Stop hook), `check`, `docs`, `docs:preview`, `build`,
-`repo-review`.
+Run everything as `uv run task <name>` (go-task comes with the dev group); bare `task` works
+only with the venv active. `uv run task --list` shows the entry points. Key tasks: `setup`,
+`fmt`, `lint`, `typecheck`, `test`, `test:cov`, `test:reference`, `test:network`,
+`check:fast` (lint and typecheck, run by the Stop hook), `check`, `docs`, `docs:papers`,
+`docs:preview`, `build`, `repo-review`.
 
 **Done means `task check` passes.**
 

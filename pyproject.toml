@@ -43,8 +43,13 @@ great-docs = { git = "https://github.com/posit-dev/great-docs", rev = "af17c76d6
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-# design/ holds prose documents whose code blocks are illustrative or normative text, not package code.
-extend-exclude = ["design"]
+extend-exclude = [
+  # design/ holds prose documents whose code blocks are illustrative or normative text, not package code.
+  "design",
+  # Vendored skills and agents are copied verbatim from upstream (see .claude/skills/VENDORED.md).
+  ".claude/skills",
+  ".claude/agents",
+]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -106,7 +111,7 @@ show_missing = true
 [tool.repo-review]
 ignore = [
   "PY007",  # task runner is Taskfile.yml (go-task), which repo-review does not recognise
-  "GH200",  # no Dependabot: pins move via prek auto-update, uv lock --upgrade and reviewed PRs
+  "GH200",  # no Dependabot: SHA-pinned Actions are bumped by hand in reviewed commits (resolve the new SHA with `git ls-remote`)
   "PC100",  # hygiene hooks use prek's builtin repo, not pre-commit/pre-commit-hooks
   "PC140",  # ty is not a hook: it needs the project env; runs in task check:fast and CI
   "PC160",  # no spell-checker hook adopted; prose is reviewed by hand

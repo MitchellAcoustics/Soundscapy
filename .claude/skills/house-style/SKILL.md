@@ -34,7 +34,7 @@ when you configure the docs site, or write a tutorial or user-guide page.
 | Git hooks | `prek`, reading `.pre-commit-config.yaml` | Fast drop-in for pre-commit. Never install `pre-commit` itself. |
 | Task runner | `Taskfile.yml` (go-task, `version: '3'`), run as `uv run task <name>` | One set of entry points for agents, humans and CI. go-task comes from `go-task-bin` in the `dev` group, so contributors install only uv and git. Bare `task` works only with the venv activated. |
 | Coverage gate | `fail_under = 80`, branch coverage on | Matches the Trail of Bits default; raise it, never lower it. |
-| CI | GitHub Actions running `task` targets; a nightly job runs `test:reference` and the dataset downloads; releases publish on tag by PyPI trusted publishing | CI runs exactly what developers run. |
+| CI | GitHub Actions running `task` targets; the nightly workflow runs `test:reference`, `test:network`, `docs:papers` and the quick-start scripts on pushes to `soundscapy-rewrite` touching those paths, and on a schedule once the rewrite is the default branch; releases publish on tag by PyPI trusted publishing | CI runs exactly what developers run. Scheduled runs start only from the default branch, still `main`. |
 | Line length | 100 | Room for unit-suffixed names without wrapping every call. |
 
 Where `modern-python` differs: it turns docstring (`D`) rules off by default. Here they
@@ -99,8 +99,10 @@ and carry no docstrings, so they stay standalone. The `docs/**/*.py` scripts (su
 `docs/user_guide/_quickstart.py`) are what a user copies and runs; they print by design
 and belong to no package.
 
-`design/` is excluded from ruff (`[tool.ruff] extend-exclude = ["design"]`): it holds
-prose documents whose code blocks are illustrative or normative text, not package code.
+`design/` is excluded from ruff (`[tool.ruff] extend-exclude`): it holds prose documents
+whose code blocks are illustrative or normative text, not package code. The vendored
+`.claude/skills/` and `.claude/agents/` are excluded too, because they are copied verbatim
+(see `VENDORED.md`). `.claude/hooks/` stays linted.
 
 ### Other tool sections
 
@@ -109,6 +111,7 @@ prose documents whose code blocks are illustrative or normative text, not packag
 - `[tool.pytest.ini_options]`: `minversion = "9.2"`, `testpaths = ["tests"]`,
   `addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib", "-ra",
   "-m", "not reference and not network"]`, `xfail_strict = true`,
+  `log_level = "INFO"` (captured logs shown on failure; repo-review PP304),
   `filterwarnings = ["error"]`. A later `-m` on the command line overrides the one in
   `addopts`, which is how `test:reference` and `test:network` select their markers
   (`tests/test_markers.py` proves it).
@@ -215,7 +218,7 @@ below so the next agent does not re-litigate it. `task repo-review` must exit 0.
 Recorded ignores (check id: reason):
 
 - PY007: the task runner is `Taskfile.yml` (go-task), which repo-review does not recognise.
-- GH200: no Dependabot. Pins move through `prek auto-update`, `uv lock --upgrade` and reviewed PRs.
+- GH200: no Dependabot. SHA-pinned Actions are bumped by hand in reviewed commits (resolve the new SHA with `git ls-remote`).
 - PC100: the hygiene hooks use prek's `builtin` repo, not `pre-commit/pre-commit-hooks`.
 - PC140: ty is not a hook. It needs the project environment; it runs in `task check:fast` and CI.
 - PC160: no spell-checker hook is adopted; prose is reviewed by hand.

@@ -405,6 +405,8 @@ For each failing check: fix it if house style agrees; otherwise add its id to `[
 
 Run: `uv run task repo-review; echo $?` → `0`. Run: `uv run task check` → PASS. Confirm on GitHub that `ci.yml` is green on the pushed head. Each remaining §5.10 row is shown by a file or test from Tasks 1 to 7.
 
+Evidence (recorded at close-out): `tests/test_hooks.py` stands in for a manual Stop-hook run (it runs `.claude/hooks/stop_check.py` with `uv` but no `task` on PATH, and with neither). The `uv run task repo-review; echo $?` output showing exit 0 is recorded in the body of the Phase 0 close-out commit.
+
 - [ ] **Step 4: Commit and push**
 
 ```bash

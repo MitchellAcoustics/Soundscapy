@@ -22,11 +22,20 @@ set -uo pipefail
 uv_min=0.13.6
 uv_current=$(uv --version 2>/dev/null | awk '{print $2}')
 if [ -z "$uv_current" ] || [ "$(printf '%s\n%s\n' "$uv_min" "$uv_current" | sort -V | head -n1)" != "$uv_min" ]; then
-  if uv tool install --force "uv>=${uv_min}" >/dev/null 2>&1 && hash -r; then
-    echo "installed uv $(uv --version 2>/dev/null | awk '{print $2}') (was ${uv_current:-missing})"
+  log=$(mktemp)
+  if uv tool install --force "uv>=${uv_min}" >/dev/null 2>"$log"; then
+    hash -r
+    uv_new=$(uv --version 2>/dev/null | awk '{print $2}')
+    if [ -n "$uv_new" ] && [ "$(printf '%s\n%s\n' "$uv_min" "$uv_new" | sort -V | head -n1)" = "$uv_min" ]; then
+      echo "installed uv ${uv_new} (was ${uv_current:-missing})"
+    else
+      echo "installed uv>=${uv_min}, but uv on PATH is still ${uv_new:-missing} ($(command -v uv)); put uv's tool bin directory first on PATH" >&2
+    fi
   else
     echo "FAILED to install uv>=${uv_min} (found ${uv_current:-none}); uv run will refuse this project" >&2
+    tail -n 20 "$log" >&2
   fi
+  rm -f "$log"
 fi
 
 marketplaces=(
