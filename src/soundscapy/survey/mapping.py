@@ -7,7 +7,6 @@ A :class:`SurveyMapping` names the id, language and item columns of a user's exp
 
 import os
 import re
-import tomllib
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -18,9 +17,9 @@ import numpy as np
 import pydantic
 import tomlkit
 from numpy.typing import NDArray
-from pydantic import Field, StrictFloat, StrictStr, ValidationError, model_validator
+from pydantic import Field, StrictFloat, StrictStr, model_validator
 
-from soundscapy._model import FloatPairs, FrozenModel, StrPairs
+from soundscapy._model import FloatPairs, FrozenModel, StrPairs, _to_pairs, parse_toml, validate
 from soundscapy.errors import CodingError, MappingError, _shown
 from soundscapy.instrument import Circumplex, Scale, circumplex
 
@@ -245,12 +244,15 @@ def _as_dict(value: object) -> dict[str, Any] | None:
 
 
 def _pairs(value: object) -> list[tuple[str, Any]] | None:
-    """Key-value pairs of a table or pair sequence with string keys; ``None`` if malformed."""
-    if isinstance(value, Mapping):
-        items = list(value.items())
-    elif isinstance(value, Sequence) and not isinstance(value, str):
-        items = list(value)
-    else:
+    """Key-value pairs of a table or pair sequence with string keys; ``None`` if malformed.
+
+    For ``None`` pydantic's own validation of the field reports the problem.
+    """
+    try:
+        items = _to_pairs(value)
+    except ValueError:  # a repeated key
+        return None
+    if not isinstance(items, tuple):
         return None
     if all(isinstance(p, tuple | list) and len(p) == 2 and isinstance(p[0], str) for p in items):  # noqa: PLR2004  # a pair
         return [(p[0], p[1]) for p in items]
@@ -375,9 +377,8 @@ def apply_coding(
         hint = "add a value_map entry for label responses, or a missing_values code"
         raise CodingError(msg, hint=hint)
     out += coding.offset
-    for j, key in enumerate(keys):
-        if key in coding.reverse:
-            out[:, j] = scale.minimum + scale.maximum - out[:, j]
+    reversed_columns = [j for j, key in enumerate(keys) if key in coding.reverse]
+    out[:, reversed_columns] = scale.minimum + scale.maximum - out[:, reversed_columns]
     return out
 
 
@@ -453,17 +454,12 @@ def read_mapping(path: str | os.PathLike[str]) -> SurveyMapping:
     DataReferenceError
         If the instrument does not ship.
     """
-    try:
-        data = tomllib.loads(Path(path).read_text(encoding="utf-8"))
-    except tomllib.TOMLDecodeError as err:
-        msg = f"{os.fspath(path)} is not valid TOML: {err}"
-        raise MappingError(msg) from err
-    _check_no_blanks(data, "")
-    try:
-        return SurveyMapping.model_validate(data)
-    except ValidationError as err:
-        msg = f"invalid mapping {os.fspath(path)}: {err}"
-        raise MappingError(msg) from err
+    text = Path(path).read_text(encoding="utf-8")
+    data = parse_toml(text, error=MappingError, source=os.fspath(path))
+    _check_no_blanks(data, "")  # before validation, which would hide a blank behind its own error
+    return validate(
+        SurveyMapping, data, error=MappingError, context=f"invalid mapping {os.fspath(path)}"
+    )
 
 
 def write_mapping(mapping: SurveyMapping, path: str | os.PathLike[str]) -> None:

@@ -67,7 +67,6 @@ _LIBRARIES: Final = (
     "contourpy",
 )
 _HEX_DIGITS: Final = frozenset("0123456789abcdef")
-_CHUNK: Final = 1 << 20
 _DIGEST_LEN: Final = 64
 
 
@@ -107,13 +106,8 @@ def hash_file(path: str | os.PathLike[str]) -> str:
     str
         The ``h1`` hash of the file's bytes.
     """
-
-    def chunks() -> Iterable[bytes]:
-        with Path(path).open("rb") as handle:
-            while chunk := handle.read(_CHUNK):
-                yield chunk
-
-    return hash_bytes(chunks())
+    with Path(path).open("rb") as handle:
+        return HASH_PREFIX + hashlib.file_digest(handle, "sha256").hexdigest()
 
 
 def _check_json(value: object, path: str) -> None:

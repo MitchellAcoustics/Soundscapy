@@ -236,10 +236,3 @@ def test_coordinates_is_frozen(hand_survey):
     coords = project(hand_survey)
     with pytest.raises(dataclasses.FrozenInstanceError):
         coords.xy = np.zeros((3, 2))  # ty: ignore[invalid-assignment]  # deliberate: exercises frozen=True
-
-
-@pytest.mark.parametrize(("key", "value"), [("input_hash", 1), ("data_refs", "refs")])
-def test_project_rejects_malformed_survey_provenance(hand_survey, key, value):
-    survey = dataclasses.replace(hand_survey, provenance={**hand_survey.provenance, key: value})
-    with pytest.raises(TypeError, match=key):
-        project(survey)

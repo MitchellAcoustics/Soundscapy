@@ -12,7 +12,7 @@ import pydantic
 import tomlkit
 from pydantic import BeforeValidator, PlainSerializer, StrictFloat, StrictStr, ValidationError
 
-from soundscapy.errors import SettingsError
+from soundscapy.errors import SettingsError, SoundscapyError
 
 # --- Derived-column namespace (spec 6.3.3) -----------------------------------------------------
 
@@ -156,15 +156,52 @@ def to_toml(model: FrozenModel) -> str:
     return tomlkit.dumps(model.model_dump(mode="json", by_alias=True))
 
 
-def from_toml(cls: type[M], text: str) -> M:
-    """Read a model from TOML text.
+def parse_toml(
+    text: str, *, error: type[SoundscapyError] = SettingsError, source: str = ""
+) -> dict[str, Any]:
+    """Parse TOML text into a table.
+
+    Parameters
+    ----------
+    text : str
+        TOML text.
+    error : type[SoundscapyError], optional
+        The error raised for invalid TOML.
+    source : str, optional
+        Where the text came from, such as a file path; it starts the message.
+
+    Returns
+    -------
+    dict
+        The parsed table.
+
+    Raises
+    ------
+    SoundscapyError
+        ``error``, if the text is not valid TOML.
+    """
+    try:
+        return tomllib.loads(text)
+    except tomllib.TOMLDecodeError as err:
+        msg = f"{source} is not valid TOML: {err}" if source else f"not valid TOML: {err}"
+        raise error(msg) from err
+
+
+def validate(
+    cls: type[M], data: object, *, error: type[SoundscapyError] = SettingsError, context: str = ""
+) -> M:
+    """Validate data into a model, raising a soundscapy error on failure.
 
     Parameters
     ----------
     cls : type[FrozenModel]
         The model class to build.
-    text : str
-        TOML text.
+    data : object
+        The data, such as a parsed TOML table.
+    error : type[SoundscapyError], optional
+        The error raised when validation fails.
+    context : str, optional
+        What is validated; it starts the message as ``"<context>: "``.
 
     Returns
     -------
@@ -173,16 +210,36 @@ def from_toml(cls: type[M], text: str) -> M:
 
     Raises
     ------
-    SettingsError
-        If the text is not valid TOML, or fails validation; a validation message keeps
-        pydantic's field paths.
+    SoundscapyError
+        ``error``, if validation fails; the message keeps pydantic's field paths.
     """
-    try:
-        data = tomllib.loads(text)
-    except tomllib.TOMLDecodeError as err:
-        msg = f"not valid TOML: {err}"
-        raise SettingsError(msg) from err
     try:
         return cls.model_validate(data)
     except ValidationError as err:
-        raise SettingsError(str(err)) from err
+        raise error(f"{context}: {err}" if context else str(err)) from err
+
+
+def from_toml(cls: type[M], text: str, *, error: type[SoundscapyError] = SettingsError) -> M:
+    """Read a model from TOML text.
+
+    Parameters
+    ----------
+    cls : type[FrozenModel]
+        The model class to build.
+    text : str
+        TOML text.
+    error : type[SoundscapyError], optional
+        The error raised on failure.
+
+    Returns
+    -------
+    FrozenModel
+        An instance of ``cls``.
+
+    Raises
+    ------
+    SoundscapyError
+        ``error`` (by default :class:`SettingsError`), if the text is not valid TOML or
+        fails validation; a validation message keeps pydantic's field paths.
+    """
+    return validate(cls, parse_toml(text, error=error), error=error)

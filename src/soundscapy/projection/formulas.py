@@ -1,7 +1,7 @@
 """The projection kernel: attribute scores to (x, y) circumplex coordinates."""
 
 import math
-from typing import Literal
+from typing import Final, Literal, get_args
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,7 +11,10 @@ from soundscapy.instrument.scale import Scale
 
 __all__ = ["project_scores"]
 
-_FORMULATIONS = ("canonical", "iso2019")
+Formulation = Literal["canonical", "iso2019"]
+"""The projection formulas :func:`project_scores` implements."""
+
+_FORMULATIONS: Final = get_args(Formulation)
 _NOMINAL_ANGLES_DEG = np.arange(0.0, 360.0, 45.0)
 # Below any real angle set's sums, which are O(1), and far above the float64 residues
 # (up to 1.8e-16 per term) that cos and sin leave at multiples of 90 degrees.
@@ -22,7 +25,7 @@ def project_scores(
     scores: NDArray[np.float64],
     angles_deg: NDArray[np.float64],
     scale: Scale,
-    formulation: Literal["canonical", "iso2019"],
+    formulation: Formulation,
 ) -> NDArray[np.float64]:
     """Project attribute scores onto the x (pleasant) and y (eventful) axes.
 

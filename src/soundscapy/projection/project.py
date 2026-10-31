@@ -1,6 +1,6 @@
 """Projecting a survey's attribute scores into circumplex :class:`Coordinates`."""
 
-from typing import Final, Literal
+from typing import Any, Final, Literal
 
 import numpy as np
 
@@ -16,14 +16,24 @@ from soundscapy.distribution.coordinates import Coordinates, OriginSegment
 from soundscapy.errors import SettingsError
 from soundscapy.instrument import circumplex
 from soundscapy.instrument.angles import AngleSelection
-from soundscapy.projection.formulas import project_scores
+from soundscapy.projection.formulas import _FORMULATIONS, Formulation, project_scores
 from soundscapy.provenance import envelope, hash_json
 from soundscapy.survey.read import Survey
 
 __all__ = ["ProjectionSettings", "project"]
 
-_FORMULATIONS: Final = ("canonical", "iso2019")
 _EQUAL: Final = "equal"
+# Provenance keys a projection carries over from the survey's envelope unchanged.
+_CARRIED: Final = (
+    "input_hash",
+    "mapping_hash",
+    "data_refs",
+    "response_id_source",
+    "read",
+    "id_columns",
+    "response_id_columns",
+    "response_key_blank_ok",
+)
 
 
 class ProjectionSettings(FrozenModel):
@@ -38,7 +48,7 @@ class ProjectionSettings(FrozenModel):
         The angle set each response is projected with.
     """
 
-    formulation: Literal["canonical", "iso2019"] = "canonical"
+    formulation: Formulation = "canonical"
     angles: AngleSelection = AngleSelection()
 
 
@@ -47,7 +57,7 @@ def _quoted(values: tuple[str, ...]) -> str:
 
 
 def _settings(
-    formulation: Literal["canonical", "iso2019"] | _Unset,
+    formulation: Formulation | _Unset,
     angles: Literal["equal"] | AngleSelection | _Unset,
 ) -> ProjectionSettings:
     """Check the arguments in soundscapy's own words and build the settings."""
@@ -74,18 +84,10 @@ def _settings(
     return ProjectionSettings.model_validate(fields)
 
 
-def _text(provenance: dict[str, object], key: str) -> str:
-    value = provenance[key]
-    if not isinstance(value, str):
-        msg = f"survey provenance[{key!r}] must be a str, got {type(value).__name__}"
-        raise TypeError(msg)
-    return value
-
-
 def project(
     survey: Survey,
     *,
-    formulation: Literal["canonical", "iso2019"] | _Unset = _UNSET,
+    formulation: Formulation | _Unset = _UNSET,
     angles: Literal["equal"] | AngleSelection | _Unset = _UNSET,
 ) -> Coordinates:
     """Project a survey's attribute scores onto the two circumplex axes.
@@ -145,30 +147,15 @@ def project(
         **{getattr(survey.mapping.ids, role): values for role, values in survey.ids.items()},
     }
 
-    prov = survey.provenance
-    input_hash, mapping_hash = _text(prov, "input_hash"), _text(prov, "mapping_hash")
-    data_refs = prov["data_refs"]
-    if not isinstance(data_refs, list):
-        msg = f'survey provenance["data_refs"] must be a list, got {type(data_refs).__name__}'
-        raise TypeError(msg)
-    provenance = envelope(
-        operation="project",
-        settings=settings,
-        input_hash=input_hash,
-        mapping_hash=mapping_hash,
-        data_refs=data_refs,
-        response_id_source=prov["response_id_source"],
-        read=prov["read"],
-        id_columns=prov["id_columns"],
-        response_id_columns=prov["response_id_columns"],
-        response_key_blank_ok=prov["response_key_blank_ok"],
-    )
+    # read_survey wrote these keys with the types envelope takes; Any passes them on as is.
+    carried: dict[str, Any] = {key: survey.provenance[key] for key in _CARRIED}
+    provenance = envelope(operation="project", settings=settings, **carried)
     segment = OriginSegment(
         kind="survey",
         dataset=survey.source.name,
         n=survey.n(),
-        input_hash=input_hash,
-        mapping_hash=mapping_hash,
+        input_hash=carried["input_hash"],
+        mapping_hash=carried["mapping_hash"],
         effective_scale=scale,
         angle_sets=(_EQUAL,),
         settings_hash=hash_json(settings),

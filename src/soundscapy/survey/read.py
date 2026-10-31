@@ -16,12 +16,12 @@ from typing import Any, Final, Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import StrictStr, ValidationError, field_validator
+from pydantic import StrictStr, field_validator
 
 from soundscapy import _data
 from soundscapy._frames import column_text, read_text_table, readonly_copy, to_eager
 from soundscapy._log import logger
-from soundscapy._model import _UNSET, SSP_PREFIX, FrozenModel, _Unset
+from soundscapy._model import _UNSET, SSP_PREFIX, FrozenModel, _Unset, validate
 from soundscapy.errors import (
     ColumnCollisionError,
     DuplicateResponseIdError,
@@ -298,11 +298,7 @@ def _read_options(value: ReadOptions | Mapping[str, object] | _Unset) -> ReadOpt
     if not isinstance(value, Mapping):
         msg = f"read_options must be a ReadOptions or a mapping, got {type(value).__name__}"
         raise SettingsError(msg)
-    try:
-        return ReadOptions.model_validate(dict(value))
-    except ValidationError as err:
-        msg = f"invalid read_options: {err}"
-        raise SettingsError(msg) from err
+    return validate(ReadOptions, dict(value), context="invalid read_options")
 
 
 def _resolve(options: ReadOptions, path: Path) -> ReadOptions:
