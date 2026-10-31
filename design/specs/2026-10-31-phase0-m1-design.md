@@ -770,8 +770,9 @@ tuple fields). Collections are tuples; mappings that must hash are `tuple[tuple[
 exposed through a property returning a `dict`. A changed settings record is derived with
 `Model.model_validate({**old.model_dump(), **changes})`, never `model_copy(update=)` (which skips
 validation). Every optional field has a non-`None` default, because TOML cannot store `None`
-(commitment 6). Serialisation to TOML is `model_dump(mode="json")` written by tomlkit; reading is
-`tomllib` then `model_validate`.
+(commitment 6). Serialisation to TOML is `model_dump(mode="json", by_alias=True)` written by
+tomlkit; reading is `tomllib` then `model_validate`. (Amended at S1 plan review, 2026-10-31:
+`by_alias=True`, because every `schema` key is a field aliased `schema`, §6.4.1.)
 
 Records that hold arrays or frames are `@dataclass(frozen=True, eq=False, slots=True)`: `Survey`,
 `Status`, `Coordinates`, `Density`, `ContourSet`, `Table`, `MappingDraft`. Their constructors copy
@@ -989,8 +990,8 @@ identical numbers; recomputing after a settings edit is a new run.
 | Input | Bytes hashed |
 |---|---|
 | A file | its raw bytes |
-| A pydantic model or plain JSON value | `json.dumps(model.model_dump(mode="json"), sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")` |
-| An in-memory frame (`_frames.frame_hash`) | Normalise first, then hash. Every numeric column (integer or float, nullable or not) becomes `float64` with null as NaN; every boolean column without nulls stays `bool`; every other column, including a boolean column with nulls, becomes text with null as the sentinel U+0000. Datetime values become ISO-8601 text, categorical values their text, any other value `str()`. Then hash a header, the canonical JSON of `{"columns": [...], "dtypes": [...], "n_rows": n}` with dtype names `float64`, `bool` or `string`, then a 0x00 byte, then per column: `float64` as little-endian bytes with every NaN written as the quiet NaN `0x7FF8000000000000`; `bool` as `uint8`; text as UTF-8 values joined by U+001F |
+| A pydantic model or plain JSON value | `json.dumps(model.model_dump(mode="json", by_alias=True), sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")` (`by_alias=True` amended at S1 plan review, 2026-10-31, §6.2.1) |
+| An in-memory frame (`_frames.frame_hash`) | Normalise first, then hash. Every numeric column (integer or float, nullable or not) becomes `float64` with null as NaN; every boolean column without nulls stays `bool`; every other column, including a boolean column with nulls, becomes text with nulls kept as nulls. Nulls (None, NaN, NaT, `pd.NA`) are found first; text comes from each value's Python form (the series' `to_list()`, never a backend cast to string): `str` as is, datetime, date and time values by `.isoformat()`, categorical values their text, any other value `str()` (so booleans are `True`/`False` in every backend). Then hash a header, the canonical JSON of `{"columns": [...], "dtypes": [...], "n_rows": n}` with dtype names `float64`, `bool` or `string`, then a 0x00 byte, then per column: `float64` as little-endian bytes with every NaN written as the quiet NaN `0x7FF8000000000000`; `bool` as `uint8`; text value by value, a non-null value as its UTF-8 byte length (little-endian `uint64`) followed by its UTF-8 bytes, a null as the `uint64` `0xFFFFFFFFFFFFFFFF` alone. (Amended at S1 plan review, 2026-10-31: the earlier "UTF-8 values joined by U+001F, null as U+0000" let different frames hash alike, across columns, on values holding U+001F, and between null and `"\x00"`.) |
 | A numeric array record (`Density`) | The canonical JSON of `{"arrays": ["x", "y", "z", "z_points", "covariance"], "shapes": [...]}`, a 0x00 byte, then each array in that order as C-order little-endian `float64` with NaN canonicalised as above |
 | A set of densities (`Densities`) | The canonical JSON of `{"groups": [keys in group order], "arrays": ["x", "y", "z", "z_points", "covariance"], "shapes": [[...] per group]}`, a 0x00 byte, then for each group in group order its five arrays in the `Density` order. Used as the upstream hash of a `ContourSet` (§6.12) |
 
@@ -1018,7 +1019,9 @@ Golden vectors, pinned in `tests/test_provenance.py`:
 
 (The third value is the hash of the bytes `{"a":1,"b":[1.5,"é"]}`, which shows key sorting and
 `ensure_ascii=False`. All four values recomputed for draft 0.2.) The builder adds the frame
-vectors once `frame_hash` is written to the normalisation above, and pins them: one content (an
+vectors once `frame_hash` is written to the normalisation above, and pins them (amended at S1
+plan review, 2026-10-31: the frame vector is pinned, and added to this table, in S1 under the
+amended text encoding; the `Density` and `Densities` vectors in S5): one content (an
 integer column with one missing value, a float column and a text column with a null) held as a
 pandas frame, where the integer column becomes `float64`, and as a polars frame, where it stays
 `Int64`, with one hash; one `Density` vector (its arrays include `z_points`); and one `Densities`
@@ -1044,6 +1047,7 @@ built by `provenance.envelope(...)`. **Normative** keys:
 | `quality_skipped` | on a `Survey` and results derived from it: the list of quality rules skipped because their columns are not mapped (§6.7), `[]` when none |
 | `profile`, `profile_inherited`, `overrides` | §6.3.4; `profile` is `{id, version, hash}`, `profile_inherited` is present only when an explicit profile replaced the input's |
 | `response_id_source`, `read` | on survey-derived results: §6.3.2, and the resolved `ReadOptions` |
+| `id_columns`, `response_id_columns`, `response_key_blank_ok` | on survey-derived results: `{role: user column}` for each mapped id role (how `split(by=<role>)` finds its column, §6.10); the columns the response id was built from (`[response]` for `column`, the `response_key` columns in key order for `key`, `[]` for `row`); the key columns that may be blank. `attach` rebuilds ids from exactly these (§6.16). (Amended at S1 plan review, 2026-10-31: §6.10 and §6.16 named no place for them.) |
 
 No `seed` key exists at M1 (no random function). The mapping can only gain keys. `show_versions()`
 returns a multi-line string of the version keys and never prints.
@@ -1069,7 +1073,7 @@ file cannot be edited silently (plan rule 15). A corrected table ships as a new 
 | `to_native(frame)` | The user's library out |
 | `with_columns(frame, columns)` | Adds columns; raises `ColumnCollisionError` on an existing name |
 | `new_frame(columns, like=None)` | pandas, or the library of `like` |
-| `read_text_table(path, options)`, `read_xlsx_text(path, options)`, `write_csv`, `write_xlsx`, `write_parquet`, `read_parquet` | §6.5, §6.16 |
+| `read_text_table(path, *, encoding, delimiter)`, `read_xlsx_text(path, options)`, `write_csv`, `write_xlsx`, `write_parquet`, `read_parquet` | §6.5, §6.16. (Amended at S1 plan review, 2026-10-31: `read_text_table` takes keywords, because `ReadOptions` lives in `survey`, above `_frames`; S7 settles `read_xlsx_text` the same way.) |
 | `frame_hash(frame)` | §6.3.5 |
 
 narwhals errors (`InvalidOperationError`, `ColumnNotFoundError`, `DuplicateError`) are re-raised as
@@ -1129,7 +1133,7 @@ which is why the integrity error is `DataIntegrityError` (not `IntegrityError`, 
 | `ScaleViolationError` | ValueError | coded values outside the declared scale (§6.4.3) |
 | `MissingResponseIdError`, `DuplicateResponseIdError` | ValueError | §6.3.2 |
 | `UncoveredLanguageError`, `LowConfidenceLanguageError` | ValueError | §6.8.3; the uncovered message names a tier-only language's tier |
-| `FormulationError` | ValueError | `iso2019` on a scale other than 1..5 or with non-nominal angles (`canonical` and `aletta2024` accept any scale and angles) |
+| `FormulationError` | ValueError | `iso2019` on a scale other than 1..5 or with non-nominal angles (`canonical` and `aletta2024` accept any scale and angles); also any formulation given angles whose Σ\|cos θ_i\| or Σ\|sin θ_i\| is below 1e-9, which only a bare kernel call can pass (amended at S1 plan review, 2026-10-31) |
 | `ProfileConstraintError` | ValueError | §6.3.4 |
 | `SettingsError` | ValueError | a settings file or section fails validation |
 | `DataReferenceError` | LookupError | unknown circumplex, angle set, profile or dataset version |
@@ -1158,7 +1162,7 @@ list; each has one raising condition at M1.
 
 | Model | Fields |
 |---|---|
-| `SurveyMapping` | `schema: Literal["soundscapy.mapping"]`, `schema_version: Literal[1]`, `instrument: str = "iso-12913-outdoor"`, `instrument_version: str = "1"`, `ids: IdSpec`, `language: LanguageSpec`, `groups: Groups`, `age: str = ""`, `flags: FlagSpecs`, `carry: tuple[str, ...] = ()` |
+| `SurveyMapping` | `schema: Literal["soundscapy.mapping"]` (amended at S1 plan review, 2026-10-31: the Python field is `schema_name` with `Field(alias="schema")` and `populate_by_name=True`, because a field named `schema` warns "shadows an attribute in parent BaseModel", fatal under `filterwarnings = ["error"]`; the TOML and hashed key stays `schema`, and every model with a `schema` key, circumplex, angle set, profile, dataset sidecar and registry, does the same), `schema_version: Literal[1]`, `instrument: str = "iso-12913-outdoor"`, `instrument_version: str = "1"`, `ids: IdSpec`, `language: LanguageSpec`, `groups: Groups`, `age: str = ""`, `flags: FlagSpecs`, `carry: tuple[str, ...] = ()` |
 | `IdSpec` | `response: str = ""`, `response_key: tuple[str, ...] = ()` (not both), `response_key_blank_ok: tuple[str, ...] = ()` (key columns that may be blank, a proper subset of `response_key`, §6.3.2), `location`, `session`, `group`, `record: str = ""` |
 | `LanguageSpec` | `column: str = ""` or `value: str = ""` (not both), `coding: tuple[tuple[str, str], ...] = ()` mapping raw text to ISO 639-3. Every resulting code must match `^[a-z]{3}$`, else `MappingError`. A blank cell is unmapped and gives `""`; it matters only for a row that is projected with adjusted angles (§6.8.3) |
 | `Groups` | `attributes: ItemGroup` (required), `source_dominance`, `overall_quality`, `appropriateness`, `who5: ItemGroup` (each optional: an empty group with no columns means not mapped) |
@@ -2129,11 +2133,11 @@ floors.
 | numpy | 1.26 | BSD-3-Clause (bundled parts 0BSD, MIT, Zlib, CC0-1.0) | arrays inside the core |
 | scipy | 1.15 | BSD-3-Clause | `gaussian_kde`, `stats` tests |
 | contourpy | 1.2 | BSD-3-Clause | contour polygons without matplotlib (the core imports it, so it is declared) |
-| pandas | 2.2 | BSD-3-Clause | frames from paths; Anaconda course laptops have 2.2 |
+| pandas | 2.2.1 | BSD-3-Clause | frames from paths; Anaconda course laptops have 2.2. (Amended at S1 plan review, 2026-10-31: 2.2.0 warns on import without pyarrow, fatal in the `lowest` job under `filterwarnings = ["error"]`; 2.2.1 does not.) |
 | pyarrow | 15 | Apache-2.0 | parquet (owner row #6) |
 | narwhals | 2.0 | MIT | the boundary (`stable.v2`) |
 | pydantic | 2.7 | MIT | settings and value types |
-| matplotlib | 3.10 | Matplotlib licence (PSF-based) | plotting; `petroff10` |
+| matplotlib | 3.10.7 | Matplotlib licence (PSF-based) | plotting; `petroff10`. (Amended at S1 plan review, 2026-10-31: 3.10.0 to 3.10.6 emit `PyparsingDeprecationWarning` on import against pyparsing 3.3.) |
 | pooch | 1.8 | BSD-3-Clause | ISD download and cache |
 | tqdm | 4.66 | MPL-2.0 AND MIT | pooch's progress bar needs it, and owner decision #4 makes `tqdm.auto` the default reporter; so core at M1, not M3 (a call made here, §11.2; a plan §5 edit, §11.1) |
 | click | 8.2 | BSD-3-Clause | CLI; 8.2 is the first with `CliRunner` stderr always separate |
@@ -2430,7 +2434,7 @@ The 36 rows without attribute answers are never dropped: they stay in the status
 reasons, and the page reports them.
 
 It uses a settings file committed beside it: profile `iso-12913-3-2019` (45°, the 2019 formula,
-the paper's Eq. 2), the 2021 quality rules, and density with seaborn's KDE defaults and
+the paper's Eqs. 1 and 2; amended at S1 plan review, 2026-10-31), the 2021 quality rules, and density with seaborn's KDE defaults and
 `bw_adjust=1.2` (`bw_method="scott"`, `gridsize=200`, `extent="data"`, `cut=3`), `clip="none"` and
 per-group normalisation (owner decision, §4.3; the 0.x code at commit ece4e0c, which drew the
 figures, sets `default_bw_adjust = 1.2`). Panels, as drawn by the ece4e0c notebook:
@@ -2481,7 +2485,7 @@ Property tests use hypothesis. **Named invariants**:
 | neutral to origin | under canonical and iso2019 only: all items at the midpoint map to (0, 0) for any angle set | `1e-12` |
 | constant shift | under canonical and iso2019 only: adding c to every item (staying in scale) moves x by `c·Σcos θ_i / (h·Σ|cos θ_i|)` and y likewise; this is the 0.x bug's test | `1e-12` |
 | neutral off the origin (aletta2024) | the opposite property: under aletta2024 a neutral response maps off the origin whenever Σ cos θ_i ≠ 0 (x = μ·Σcos θ_i / λ_P, so x ≠ 0), and likewise for y with Σ sin θ_i | `1e-12` on the value; the generated angle sets keep \|Σcos θ_i\| above 1e-6 so the sign is unambiguous |
-| row-order invariance | permuting rows permutes xy, status and ids identically; describe output is unchanged | exact for ids, `1e-12` for statistics |
+| row-order invariance | permuting rows permutes xy, status and ids identically, for `column` and `key` ids (`row-<n>` ids follow physical position, §6.3.2 rule 3; amended at S1 plan review, 2026-10-31); describe output is unchanged | exact for ids, `1e-12` for statistics |
 | coding order | value map, offset and reverse applied in the §6.4.2 order; reverse is an involution | exact |
 | TOML round-trip | every FrozenModel survives TOML write and read with an equal value and equal hash; the shipped `isd_mapping.toml` round-trips byte for byte (§6.4.4) | exact |
 | finite floats | every FrozenModel float field rejects ±inf and NaN; `"none"` is the only no-limit value | exact |
@@ -2666,7 +2670,7 @@ slice ends with the AGENTS.md sequence: `task check`, then `/simplify`, then `/c
 | S0 Phase 0 | §5 | §5.10 |
 | S1 Thin slice, contracts first | (a) errors, `_model`, hashing with golden vectors, provenance envelope, `_log`, `_frames`, `Status`, namespace constants, `_data` registry with hash pins; (b) `Scale`, `Axis`, `Circumplex`, `iso-12913-outdoor/1.toml`; (c) the projection kernel on bare numpy; (d) the subset generator and CSV, a minimal `SurveyMapping` (attributes, ids, language), `read_survey` from a path, `response_id`, `Coding`; (e) `project` with equal angles, `Coordinates`, `OriginSegment`, `attach`; (f) `plot.scatter`, `load_isd(subset=True)`, the new `_quickstart.py`. Then ADRs: Coordinates carries settings, response_id, the `ssp_` namespace, h1 hashing | the science tests for exhaustive equality, bounds, neutral, constant shift and 2019 hand values pass; hash vectors, TOML round-trips, pandas 2.2, pandas 3.x and polars frame tests and the lazy-frame `TypeError` pass; `sspy.plot.scatter(sspy.project(sspy.load_isd(subset=True), angles="equal"), by="location")` returns Axes whose offsets equal xy; import is silent; `task check` passes |
 | S2 Status, quality, full mapping | all construct groups, flags, carry; missing codes, value maps, reverse; `ScaleViolationError` and `exclude`; `QualitySettings` with every rule; the course dataset, its generator, mapping and loader (§6.20.4) | subset counts 1552/16/0/10/8 pinned in the default run; full-ISD counts pinned in the nightly `network` test; the row-count property holds; every rule × action tested; the FR-1.5 acceptance test passes on the subset (default run) and is in place nightly on the full ISD; the course dataset reads through its mapping |
-| S3 Angle sets, profiles, settings, labels | `AngleSet` with tier-only languages, `AngleSelection`, the resolver, `aletta-2024@1` and its generator (with the Table 2 tiers), `satp@1.5` from the chapter notes, the three profiles as versioned files (`<id>@1`, `sal-2026@1` on `satp@1.5`), the precedence rule, overrides and profile carry-over, `save_settings`, `register_angle_set`, `angle_sets=` recorded in full, the synthetic three-tier set (`qaa` to `qad`); the `aletta2024` formulation in the kernel and the `Literal` (§6.9.1); the translated labels of §6.2.3 transcribed into `iso-12913-outdoor/1.toml`, then checked cell by cell by the second agent pass | the committed aletta and satp files match their pins and their sources offline (§7.2), and the aletta file regenerates byte-identically in the nightly `reference` run; error, exclude and equal paths tested on the synthetic three-tier set and the mixed-language subset sites; tier-only languages resolve as uncovered and name their tier; the 2019 profile carry-over test passes; the Medium warning fires once for cmn; `iso2019` refused on 1..7; the aletta2024 formulation passes its hand values, its 45° reduction and its neutral-off-origin property, and the ISO profiles refuse it; the 18 sourced languages have labels with a citation and the gap languages fall back to English; every model round-trips through TOML with an equal hash |
+| S3 Angle sets, profiles, settings, labels | `AngleSet` with tier-only languages, `AngleSelection`, the resolver, `aletta-2024@1` and its generator (with the Table 2 tiers), `satp@1.5` from the chapter notes, the three profiles as versioned files (`<id>@1`, `sal-2026@1` on `satp@1.5`), the precedence rule, overrides and profile carry-over, `save_settings`, `register_angle_set`, `angle_sets=` recorded in full, the synthetic three-tier set (`qaa` to `qad`); the `aletta2024` formulation in the kernel and the `Literal` (§6.9.1); the translated labels of §6.2.3 transcribed into `iso-12913-outdoor/1.toml`, then checked cell by cell by the second agent pass; the §11.4 Table A.1 fixture `tests/science/fixtures/iso12913_3_table_a1.csv` (scale labels and direction per part, the 0.x wording until the owner's check) and a test comparing the shipped `[scale.labels]` with it (amended at S1 plan review, 2026-10-31: §11.4's row was in no slice) | the committed aletta and satp files match their pins and their sources offline (§7.2), and the aletta file regenerates byte-identically in the nightly `reference` run; error, exclude and equal paths tested on the synthetic three-tier set and the mixed-language subset sites; tier-only languages resolve as uncovered and name their tier; the 2019 profile carry-over test passes; the Medium warning fires once for cmn; `iso2019` refused on 1..7; the aletta2024 formulation passes its hand values, its 45° reduction and its neutral-off-origin property, and the ISO profiles refuse it; the 18 sourced languages have labels with a citation and the gap languages fall back to English; every model round-trips through TOML with an equal hash |
 | S4 Workspace | §6.18, `export`, `export_run`, `add_table` and `join_context` on `Survey` and `Coordinates` (§6.5.1), the precedence rule with `settings.toml` at rank 3 | init, add, project, save, then reopening and reading the run gives identical coordinates; re-running uses current settings and never the old sidecar; tampered raw raises; each sidecar validates back into its settings model (`read_coordinates` into `ProjectionSettings`); a location table joins without changing the row count |
 | S5 Distribution and density plots | `Region`, `describe`, `density` returning `Densities` (grouped by the `DensitySettings.by` field, with `z_points`), `contours` per group, `ContourSettings`, `marginals`, the per-group parquet and set sidecar of §6.12, the `Density` and `Densities` hash vectors, `save_figure`, the N rule, `plot.density`, `plot.fraction_contour`, `plot.joint` | seaborn grid, levels and line contours match to 1e-9; `enclosed_share` equals the share of points with `z_points >= level`; Σ quadrant proportion + `boundary_share` = 1; `read_density` and `read_contours` rebuild equal records; N < 30 warn, refuse and fallback tested; import contracts kept |
 | S6 Part 3 statistics and item plots | `item_statistics`, `response_shares`, `correlate`, `compare_groups`, `who5`, `source_profile`, each with every number-changing argument a settings field (§6.13, §6.14), the shared inclusion rule, `plot.likert`, `plot.radar` with `AxesError`, the statsmodels how-to | Spearman identity; `include` and every other choice recorded on every result; effect-size hand cases; FR-2.6a fields present; the WHO-5 network test passes nightly |
