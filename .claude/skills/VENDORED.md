@@ -4,15 +4,21 @@ These skill directories are copied verbatim from upstream. Do not edit them;
 project-specific overrides live in `house-style/`. To update, re-copy from the
 upstream path at a newer commit and bump the row here.
 
-| Skill directory | Upstream | Path in upstream | Commit (shallow clone, 2026-10-30) |
+| Skill directory | Upstream | Path in upstream | Commit |
 | --- | --- | --- | --- |
 | prek | https://github.com/j178/prek | skills/prek | 48c8a3ec465a8e98bb8b5b88c8bfacaca84cf84b |
-| great-docs | https://github.com/posit-dev/great-docs | docs/skills/great-docs (great-docs 0.17.0) | 4232670877842d7c1489dbef72a076459e767229 |
-| write-user-guide | https://github.com/posit-dev/great-docs | docs/skills/write-user-guide | 4232670877842d7c1489dbef72a076459e767229 |
-| revise-docstrings | https://github.com/posit-dev/great-docs | docs/skills/revise-docstrings | 4232670877842d7c1489dbef72a076459e767229 |
+| great-docs | https://github.com/posit-dev/great-docs | docs/skills/great-docs (main, merge of PR #487; the docs group's pin) | af17c76d6ab2c775e438c6804c3b1b6feceef57e |
+| write-user-guide | https://github.com/posit-dev/great-docs | docs/skills/write-user-guide | af17c76d6ab2c775e438c6804c3b1b6feceef57e |
+| revise-docstrings | https://github.com/posit-dev/great-docs | docs/skills/revise-docstrings | af17c76d6ab2c775e438c6804c3b1b6feceef57e |
 | quarto-authoring | https://github.com/posit-dev/skills | quarto/quarto-authoring | d614ac4fc7f8862bba5e041ab6237113e02aa86a |
 | review-testing | https://github.com/posit-dev/skills | posit-dev/review-testing | d614ac4fc7f8862bba5e041ab6237113e02aa86a |
 | describe-design | https://github.com/posit-dev/skills | posit-dev/describe-design | d614ac4fc7f8862bba5e041ab6237113e02aa86a |
+
+The prek and posit-dev/skills rows were copied from shallow clones on 2026-10-30. The
+three great-docs rows were re-copied on 2026-10-31 at the commit the `docs` group pins in
+`pyproject.toml` (`[tool.uv.sources]`), so the skills describe the great-docs that `uv.lock`
+installs; keep them at that pin when it moves. Their files did not change between
+`4232670` (the previous copy) and `af17c76`.
 
 ## Vendored agents (`.claude/agents/`)
 
