@@ -1,0 +1,16 @@
+parser: numpy
+dynamic: true
+jupyter: python3
+user_guide: user_guide
+sections:
+  - title: Tutorials
+    dir: tutorials
+    index: true
+  - title: Papers
+    dir: papers
+    index: true
+bibliography: references.bib
+freeze:
+  mode: auto
+cli:
+  enabled: false

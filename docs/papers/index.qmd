@@ -1,0 +1,11 @@
+---
+title: "Papers"
+---
+
+These pages reproduce the analyses of published soundscape papers with soundscapy.
+
+Each reproduction downloads the version of the International Soundscape Database (ISD)
+that its paper used, so the numbers match the paper: the 2022 paper used ISD v0.2.3.
+That download needs the network, so the pages are frozen: the site shows the results
+stored in `docs/_freeze/` and an ordinary docs build does not re-run them. A nightly job
+re-runs every reproduction and reports any change in its results.

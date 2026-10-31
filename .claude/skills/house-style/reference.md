@@ -150,6 +150,21 @@ review like code, and run wherever the package is installed.
 | Cache expensive pages | `great-docs freeze <pages>`; commit `docs/_freeze/` |
 | Render one page while writing it | `quarto preview docs/tutorials/<page>.qmd` (verify inside a great-docs project) |
 
+## 4. Verified behaviour (dated)
+
+- **2026-10-31, great-docs `af17c76`, Quarto 1.10.20: `great-docs freeze <page>` re-executes a
+  `freeze: true` page (spec §5.9 fallback step 1 works; steps 2 and 3 not needed).** Probe: a
+  `docs/papers/` page with `freeze: true` and a cell printing `time.time_ns()`. `great-docs build`
+  executed it once and wrote `docs/_freeze/papers/<page>/`; a second build kept the stored
+  timestamp; `great-docs freeze docs/papers/<page>.qmd` changed it; the next build showed the new
+  value. `task docs:papers` therefore runs step 1.
+- Quarto ignores `.qmd` files whose names start with `_`: a `_probe.qmd` page is copied as a file,
+  not rendered. Use `_` only for include files such as `docs/user_guide/_quickstart.sh`.
+- `great-docs build` does not prune pages deleted from `docs/`: their output stays in the
+  git-ignored `docs/_quarto/` and `docs/_site/` until those are removed.
+- Offline build: `task docs` succeeds with the network off. great-docs tries `api.github.com`
+  for releases, logs the failure and continues. In an `unshare -rn` namespace bring loopback up
+  first, or the Jupyter kernel (TCP on 127.0.0.1) times out after 60 s.
 
 ## Sources
 

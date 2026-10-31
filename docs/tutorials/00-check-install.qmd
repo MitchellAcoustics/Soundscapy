@@ -1,0 +1,11 @@
+---
+title: "Check your install"
+---
+
+Run this cell to check that soundscapy imports and to see which version you have.
+
+```{python}
+import soundscapy as sspy
+
+print(sspy.__version__)
+```

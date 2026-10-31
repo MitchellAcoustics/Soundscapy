@@ -1,0 +1,59 @@
+---
+title: "Install soundscapy"
+guide-section: "How-to"
+---
+
+This page installs soundscapy into a new project folder and checks that it works. You
+need only a terminal; the scripts install [uv](https://docs.astral.sh/uv/), which
+provides Python for you.
+
+## On your own computer
+
+Open a terminal in an empty folder for your project and run the script for your system.
+It installs uv if it is missing, creates a project in the current folder, adds
+soundscapy and JupyterLab to it, and runs the first-plot code below.
+
+::: {.panel-tabset}
+
+## Windows (PowerShell)
+
+```powershell
+{{< include _quickstart.ps1 >}}
+```
+
+## macOS and Linux
+
+```bash
+{{< include _quickstart.sh >}}
+```
+
+:::
+
+The scripts run this code, saved in the same folder as `_quickstart.py`:
+
+```python
+{{< include _quickstart.py >}}
+```
+
+The pin `soundscapy==1.0.0.dev1` names a pre-release exactly, so uv installs it without
+needing `--prerelease`.
+
+Then open JupyterLab in the project and paste the same code into a notebook cell:
+
+```bash
+uv run jupyter lab
+```
+
+## Hosted notebook
+
+In a hosted notebook such as Google Colab, install soundscapy with one cell:
+
+```python
+%pip install 'soundscapy==1.0.0.dev1'
+```
+
+Then run the same first-plot code in the next cell:
+
+```python
+{{< include _quickstart.py >}}
+```
