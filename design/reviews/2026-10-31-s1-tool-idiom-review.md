@@ -58,7 +58,7 @@ Several of these trace back to the house rules themselves. "House rules that are
 |---|---|---|---|
 | F1 | Agent hooks | An old uv refuses every shell call via `required-version`; the Stop hook cannot exit | P1, applied |
 | F2 | narwhals | Frames typed `Any` (12 `noqa: ANN401`) instead of narwhals' `IntoDataFrameT` | P1 |
-| F3 | narwhals | pandas special cases are justified; superseded by the extras design above | P3 |
+| F3 | narwhals | Drop the pandas branch in `with_columns` for narwhals-native nulls | P2, owner decision |
 | F4 | narwhals | `to_eager` relies on an undocumented `TypeError` | P3 |
 | F5 | matplotlib | Pyplot-free `ax=None` departs from matplotlib's library pattern | Owner, P2 |
 | F6 | matplotlib | Hard-coded petroff10 ignores style sheets and property cycles (FR-8.3) | P2 |
@@ -82,7 +82,7 @@ Several of these trace back to the house rules themselves. "House rules that are
 
 ## Two suggestions in the brief, challenged
 
-### "Follow narwhals' guidance and do not declare a dataframe library as a dependency"
+### "Follow narwhals' guidance and do not declare a dataframe library as a dependency" (decided: keep pandas)
 
 What narwhals says (*source*, narwhals `docs/installation.md` on `main`): it "has no required
 dependencies: it only ever uses the dataframe libraries you pass into it". A library that lists
@@ -101,36 +101,38 @@ for those, whatever is installed. *Run*: with pandas and polars both installed a
 `nw.from_dict({...})` raises "Calling `from_dict` without `backend` is only supported if all
 input values are already Narwhals Series", and `nw.read_csv(path)` requires `backend`.
 
-The first draft of this review recommended keeping pandas required for that reason. **The
-owner overruled it (2026-10-31), and the guidance supports the owner.** The page's advice
-covers this case too: consumers "bring their own backend" and opt in through extras. The
-choice for created frames is a separate question, and an explicit argument answers it.
-The design that follows narwhals' guidance:
+**Decision (owner, 2026-10-31): follow scikit-lego, narwhals' own showcase project. pandas
+stays a required dependency, and frames soundscapy creates are pandas.** The discussion
+that led there, recorded so it is not re-run:
 
-- `dependencies` names no dataframe library. The extras `soundscapy[pandas]` and
-  `soundscapy[polars]` re-expose narwhals' own (`pandas = ["narwhals[pandas]"]`), and the
-  backends the tests need go in the `test` group.
-- A function given the user's frame returns the user's library, as `attach` and
-  `to_frame(like=...)` already do.
-- A function that creates a frame from a path or from nothing takes `backend=`, the argument
-  plan §8 defers, with default `"pandas"`. When the backend is not installed, it raises one
-  error naming the extra to install, per plan §6's convention for optional dependencies. It
-  never detects what happens to be installed: most polars users also have pandas (Jupyter and
-  seaborn pull it in), and the same script would return different types on different
-  machines.
-- Nulls follow narwhals and the backend's own model, so the pandas branch in `with_columns`
-  goes (F3). Masked columns are built with `nw.when(valid).then(...)`. *Run*: for classic
-  pandas dtypes this gives `Object` for a masked boolean and `Float64` for a masked integer;
-  polars keeps `Boolean` and `Int64` with nulls. `nw.new_series([True, None],
-  dtype=nw.Boolean, backend="pandas")` returns `[True, False]`, silently, so that call must
-  never be used for masked data, and a test should pin this.
-- `import soundscapy` must not import pandas, so `_frames` imports nothing from a backend
-  at module level. The existing import test extends to pandas.
+- *Evidence from scikit-lego* (`pyproject.toml`, `sklego/datasets.py`,
+  `sklego/pandas_utils.py`, `sklego/preprocessing/pandastransformers.py` on `main`; its
+  Quansight Labs write-up, "How Narwhals and scikit-lego came together to achieve
+  dataframe-agnosticism", sits behind a browser check this session could not pass):
+  - It declares `narwhals`, `numpy`, `pandas` and `scikit-learn` as dependencies, and polars
+    and pyarrow only in its `test` extra.
+  - Its dataset loaders call `pd.read_csv` and return pandas.
+  - Frames users pass in go through explicit `nw.from_native(...)` and `nw.to_native(...)`.
+  - No module checked uses `@nw.narwhalify`.
 
-Costs: a plain `pip install soundscapy` cannot run the quick-start. The install page,
-`_quickstart.sh` and `.ps1`, the hosted-notebook cell and the course material install
-`soundscapy[pandas]`. The change reopens owner decisions 2 and 21 and plan §4.10, so it
-needs an ADR, a spec amendment and a change to the S2 plan's Task 4.
+  That is the shape of the S1 code.
+- *No dataframe library in `dependencies`* was considered and dropped. A plain
+  `pip install soundscapy` could not run the quick-start, and the teaching material would
+  need an extra. narwhals' advice to keep backends out of dependencies fits a library that
+  only receives frames.
+- *polars as the internal library* was considered and dropped, with or without a hidden
+  conversion to pandas. *Run*: polars' `to_pandas()` needs pyarrow, and gives `object`
+  booleans and `float64` integers. `use_pyarrow_extension_array=True` keeps nulls, but gives
+  `bool[pyarrow]`-style dtypes. Either way users would carry polars, pyarrow and pandas,
+  while the clean nulls stop at the boundary, and our computation, in numpy with masks,
+  gains nothing.
+- *`@nw.narwhalify`* was considered and dropped. It is typed `-> Callable[..., Any]`; by
+  default it passes non-frames and lazy frames through; and narwhals' typing page prefers
+  `from_native`/`to_native` as "better at preserving type hints".
+
+What changes as a result: frame types (F2), narwhals-native nulls in `with_columns` (F3), and
+`backend=` only if a user asks (plan §8 unchanged). If true nulls for pandas users are wanted
+later, the lever is which pandas dtypes we emit (nullable or pyarrow-backed), not polars.
 
 ### "Put `uv run` inside the tasks instead of calling `uv run task`"
 
@@ -248,25 +250,27 @@ narwhals `docs/` on `main`; `uv.lock` has 2.28.0):
 
   The comments then go, and ty checks the boundary.
 
-**F3. The pandas special cases are justified; express them the documented way (P3).**
+**F3. Use narwhals-native nulls in `with_columns`, not a pandas branch (P2, owner decision).**
 
-- `with_columns` builds pandas columns itself, so that a masked row holds `NaN`, `pd.NA` or
-  `None` in a dtype that can hold it. narwhals does not do this for us. For pandas,
-  `new_series` maps `nw.Int64` and `nw.Boolean` to numpy `int64` and `bool` (*source*,
-  `_pandas_like/utils.py`), which cannot hold nulls. The docs add that a dtype that cannot hold
-  nulls "will therefore coerce or raise on those missing values" (`from_dicts` notes). The
-  branch handles something outside narwhals' scope, so it stays.
-- The datetime case in `_value_text`, where `pd.Timestamp` loses its nanoseconds, also stays.
-  narwhals warns that even with one format string, "different tools may return a different
-  number of trailing zeros" (`dt.to_string` docs), so the normalisation has to be ours.
-- *Recommendation.*
-  - Test the backend with `eager.implementation.is_pandas()` rather than
-    `isinstance(native, pd.DataFrame)`. narwhals documents `implementation` for "special-casing
-    for features outside of Narwhals' scope".
-  - Create frames through narwhals, with `backend="pandas"` held in one module constant. Today
-    `read_text_table` builds a `pd.DataFrame` directly, and `new_frame` passes the module `pd`.
-
-  That keeps the pandas choice in one place for the `backend=` argument that plan §8 defers.
+- *What we do.* `with_columns` builds pandas columns itself (`_pandas_column`), so that a
+  masked row holds `pd.NA` in a nullable `boolean` or `Int64` column. For other backends it
+  uses `nw.new_series`.
+- *What upstream documents.* narwhals has no null model of its own. It gives one API over
+  each backend's, and "the classic pandas dtypes make no distinction" between null and NaN
+  (*source*, `docs/concepts/null_handling.md`).
+- *Decision.* Build masked columns one way for every backend, with
+  `nw.when(valid).then(...)`, and let each library represent nulls as it does. *Run*: on
+  classic pandas dtypes a masked boolean becomes `Object` and a masked integer `Float64`;
+  polars keeps `Boolean` and `Int64` with nulls. The `_pandas_column` branch and its
+  `isinstance(native, pd.DataFrame)` test go. Pandas users get `ssp_included` as an object
+  column where a row matched nothing. The spec does not fix that dtype; only the docstring
+  and `test_with_columns_valid_mask_gives_nulls` change.
+- *A trap to pin with a test.* `nw.new_series([True, None], dtype=nw.Boolean,
+  backend="pandas")` returns `[True, False]`, silently. Masked data must never go through
+  `new_series` with a dtype.
+- *Unchanged.* The datetime normalisation in `_value_text` stays. narwhals warns that formats
+  differ across tools, so the normalisation has to be ours. `new_frame` and `read_text_table`
+  stay pandas, per the decision above.
 
 **F4. `to_eager` classifies a refusal by catching an undocumented `TypeError` (P3).**
 
