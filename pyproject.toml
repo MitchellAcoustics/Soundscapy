@@ -16,7 +16,14 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Typing :: Typed",
 ]
-dependencies = []
+dependencies = [
+    "matplotlib>=3.10.7",
+    "narwhals>=2.0",
+    "numpy>=1.26",
+    "pandas>=2.2.1",
+    "pydantic>=2.7",
+    "tomlkit>=0.13",
+]
 
 [project.urls]
 Source = "https://github.com/MitchellAcoustics/Soundscapy"
@@ -26,10 +33,18 @@ requires = ["uv_build>=0.13.6,<0.14"]
 build-backend = "uv_build"
 
 [dependency-groups]
-dev = ["go-task-bin>=3.54.0", "import-linter>=2.15", "prek>=0.5.9", "ruff>=0.17.3", "ty>=0.0.95"]
+dev = [
+    "go-task-bin>=3.54.0",
+    "import-linter>=2.15",
+    "pandas-stubs>=3.1.0.261029",
+    "prek>=0.5.9",
+    "ruff>=0.17.3",
+    "ty>=0.0.95",
+]
 test = [
   "hypothesis>=6.170.14",
   "packaging>=26.3",
+  "polars>=2.1.0",
   "pytest>=9.2",
   "pytest-cov>=7.1.0",
   "pytest-xdist>=3.8.0",

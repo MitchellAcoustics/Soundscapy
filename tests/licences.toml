@@ -1,0 +1,18 @@
+# Runtime dependency licences, read from PyPI metadata on 2026-10-31 (spec section 6.19, NFR-7).
+# scipy declares only the classifier "BSD License"; its LICENSE.txt is BSD-3-Clause.
+# tqdm's MPL-2.0 part is file-level copyleft and is used unmodified.
+# Rows for dependencies later slices add are listed now so those slices only edit pyproject.toml.
+[licences]
+numpy = "BSD-3-Clause (bundled parts 0BSD, MIT, Zlib, CC0-1.0)"
+scipy = "BSD-3-Clause"
+contourpy = "BSD-3-Clause"
+pandas = "BSD-3-Clause"
+pyarrow = "Apache-2.0"
+narwhals = "MIT"
+pydantic = "MIT"
+matplotlib = "Matplotlib licence (PSF-based)"
+pooch = "BSD-3-Clause"
+tqdm = "MPL-2.0 AND MIT"
+click = "BSD-3-Clause"
+tomlkit = "MIT"
+openpyxl = "MIT"
