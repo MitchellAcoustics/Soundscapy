@@ -214,4 +214,13 @@ below so the next agent does not re-litigate it. `task repo-review` must exit 0.
 
 Recorded ignores (check id: reason):
 
-- None yet.
+- PY007: the task runner is `Taskfile.yml` (go-task), which repo-review does not recognise.
+- GH200: no Dependabot. Pins move through `prek auto-update`, `uv lock --upgrade` and reviewed PRs.
+- PC100: the hygiene hooks use prek's `builtin` repo, not `pre-commit/pre-commit-hooks`.
+- PC140: ty is not a hook. It needs the project environment; it runs in `task check:fast` and CI.
+- PC160: no spell-checker hook is adopted; prose is reviewed by hand.
+- PC170: there is no reStructuredText in the repo (numpy docstrings, Quarto docs).
+- PC180: no markdown formatter; `design/` prose and vendored skills are kept verbatim.
+- PC901, PC902, PC903: pre-commit.ci is not used; prek runs locally and in CI.
+- RF002: ruff `target-version = "py311"` is set explicitly beside `requires-python` (Python floor row).
+- SEC001: workflows are linted with actionlint; zizmor is not adopted in Phase 0.

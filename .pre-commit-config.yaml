@@ -18,7 +18,7 @@ repos:
     rev: v0.17.3
     hooks:
       - id: ruff-check
-        args: [--fix]
+        args: [--fix, --show-fixes]
       - id: ruff-format
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.13.6

@@ -86,6 +86,7 @@ addopts = [
   "-m", "not reference and not network",
 ]
 xfail_strict = true
+log_level = "INFO"  # show captured logs on failure (repo-review PP304)
 filterwarnings = ["error"]
 markers = [
   "science: literature fixtures and committed cross-implementation fixtures (default run)",
@@ -103,7 +104,18 @@ fail_under = 80
 show_missing = true
 
 [tool.repo-review]
-ignore = []  # each entry added with a trailing comment giving the reason (§5.6.4)
+ignore = [
+  "PY007",  # task runner is Taskfile.yml (go-task), which repo-review does not recognise
+  "GH200",  # no Dependabot: pins move via prek auto-update, uv lock --upgrade and reviewed PRs
+  "PC100",  # hygiene hooks use prek's builtin repo, not pre-commit/pre-commit-hooks
+  "PC140",  # ty is not a hook: it needs the project env; runs in task check:fast and CI
+  "PC160",  # no spell-checker hook adopted; prose is reviewed by hand
+  "PC170",  # no reStructuredText in the repo (docstrings are numpy style, docs are Quarto)
+  "PC180",  # no markdown formatter: design/ prose and vendored skills are kept verbatim
+  "PC901", "PC902", "PC903",  # pre-commit.ci is not used; prek runs locally and in CI
+  "RF002",  # house style sets ruff target-version py311 explicitly alongside requires-python
+  "SEC001",  # workflows are linted with actionlint; zizmor is not adopted in Phase 0
+]
 
 [tool.importlinter]
 root_package = "soundscapy"
