@@ -84,6 +84,10 @@ jobs:
         run: |
           sudo --preserve-env unshare --net -- sh -c '
             ip link set lo up &&
+            if curl -s --max-time 5 -o /dev/null https://pypi.org; then
+              echo "the network is reachable inside the namespace" >&2
+              exit 1
+            fi &&
             exec sudo --preserve-env -u "$1" env PATH="$2" uv run --locked task docs
           ' sh "$(id -un)" "$PATH"
       - name: Fail if a page's freeze is stale
