@@ -12,7 +12,7 @@ soundscape perception, and scoring and design with the Soundscape Perception Ind
 (SPI). It must work as a library, in teaching material, and as the engine of a GUI
 for acoustic engineers, architects and urban designers.
 
-`design/PRD.md` (draft 0.8) states the requirements; read it before designing
+`design/PRD.md` (draft 0.9) states the requirements; read it before designing
 anything, and check every design decision against it.
 `design/greenfield_architecture_plan.md` (draft 0.5) is the architecture: it was
 written from the PRD and its §9 registers the owner's decisions. Specs and plans are

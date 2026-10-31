@@ -1,11 +1,12 @@
 # Product Requirements: an open-source soundscape assessment, analysis and design package
 
-Status: **draft 0.8, baseline for the architecture plan** (2026-10-31). Draft 0.4
+Status: **draft 0.9, baseline for the architecture plan** (2026-10-31). Draft 0.4
 applied the review of 0.3 (`design/reviews/prd-0.3-review.md`); draft 0.5 recorded the
 owner's responses to it; draft 0.6 recorded the decisions the owner took while reviewing
 the architecture plan; draft 0.7 applied the owner's responses to the review of 0.6 and
 plan 0.3 (`design/reviews/prd-0.6-plan-0.3-review.md`, §10.5); draft 0.8 applies the
-owner's acceptance of the PRD changes proposed by the review of plan 0.4 (§10.5a). This
+owner's acceptance of the PRD changes proposed by the review of plan 0.4 (§10.5a); draft
+0.9 records the owner's answers while the Phase 0 and M1 spec was written (§10.5b). This
 document states what the package must do and for whom. It deliberately says nothing
 about how it is built; the architecture plan (`design/greenfield_architecture_plan.md`)
 is a separate document and must be checked against this one. From plan draft 0.5 the
@@ -277,9 +278,12 @@ requirement; "should" is desirable.
 - **FR-1.5** (A; Must) Shall apply documented quality rules (ISO coding checks,
   all-identical attribute responses, excessive missingness, age and consent flags,
   test and paper-input flags) producing an inclusion decision and reason per response,
-  never silently dropping rows; rules shall be configurable. The default rules and
-  thresholds shall reproduce the ISD's published processing, which is their acceptance
-  test (§10.3) [agreed 2026-10-31]. Every other reason a
+  never silently dropping rows; rules shall be configurable. The default rules shall
+  reproduce the processing the 0.x tutorials applied to ISD v1.0, which is their
+  acceptance test: 56 responses excluded, 37 with a missing attribute item and 19 that
+  give one non-midpoint answer to all eight attributes. The ISD publishes no exclusion
+  counts of its own; a "more than half missing" rule appears only in the 2021 paper's
+  text and stays configurable [agreed 2026-10-31]. Every other reason a
   response is left out of a coordinate statistic (a missing item, FR-2.5a; an
   uncovered or Low-tier language, FR-2.4) shall be written to the same per-response
   status and reason, so one column explains every absence and a GUI can show it
@@ -322,9 +326,9 @@ requirement; "should" is desirable.
   fixed formula exactly when the standard 45° angles are used, shall offer the 2019
   formulation as a selectable legacy variant for reproduction of older work, and shall
   record which formulation, angles and scale produced every coordinate [agreed]. The
-  Aletta et al. 2024 formulation is a Must only if the owner supplies a worked example
-  to test it against before the M1 spec (§10.3); otherwise it is a Should, added when
-  one exists. The Aletta 2024 angle set (FR-2.4) stays a Must either way [agreed
+  Aletta et al. 2024 formulation (its Eqs. 1 to 3: no centring, λ = (ρ/2) Σ|cos θ_i|
+  with ρ the scale range) is also offered as a legacy variant, tested against values
+  computed by hand from those equations; no further worked example is needed [agreed
   2026-10-31].
 - **FR-2.4** (A; Must) Shall ship the published language-specific adjusted-angle sets
   as versioned data: the SATP v1.5 set from the 2026 chapter (13 High-confidence
@@ -407,7 +411,10 @@ requirement; "should" is desirable.
 - **FR-3.1** (A, C, E; Must) Shall treat a set of projected responses as a bivariate
   distribution and provide: kernel density estimate with explicit bandwidth, decile
   contours, the contour enclosing a stated fraction of responses (default 50%,
-  parameter not constant), marginal distributions, and overlays of several groups.
+  parameter not constant), marginal distributions, and overlays of several groups. The
+  50% contour is the 50th-percentile contour of Mitchell, Aletta & Kang 2022, the
+  simplified view of a soundscape's distribution; users may choose another percentile
+  [agreed 2026-10-31].
 - **FR-3.2** (A; Must) Shall apply the N < 30 rule, where N is the number of
   projected responses after exclusions: a density requested for fewer than 30 points
   warns, records the N and the override, and a plot of many groups draws scatter for
@@ -912,8 +919,6 @@ tests of the milestone shown, so request it before that milestone is planned in 
 | The 2-D KS variant, direction combination, tie rule, truncation and sample size the 2024 paper used; the 2022 paper's KDE settings and whether it used equal angles | M2 (SPI), M1 (2022 reproduction) | FR-6.1's tables reproduce only with the same statistic; the 2022 figures only with the same estimator settings. |
 | One R `sn` run to generate the skew-normal reference fixtures | M2 | FR-3.4 is validated against `sn` (NFR-9). |
 | A worked example of the canonical projection with adjusted angles, from the chapter or blog | M1 | Without it M1's headline feature has no literature fixture; property tests and hand-computed 2019 values cover the rest. |
-| A worked example of the Aletta et al. 2024 formulation | M1 spec | Decides whether that formulation is a Must or a Should (FR-2.3). |
-| The ISD's published exclusion counts per quality rule | M1 | The acceptance test of the default quality rules (FR-1.5). |
 
 ### 10.4 Implementation-stage questions (not requirements)
 
@@ -943,6 +948,17 @@ C, E at M2 and B at M3 (FR-12.2). CLI commands always have a non-interactive mod
 (§9). Implementation notes recorded in the plan only: M1 re-scoped; the narwhals
 boundary to follow narwhals' own API conventions, reviewed while building; optional
 imports and lazy loading per current Python practice.
+
+### 10.5b Decided while specifying Phase 0 and M1 (2026-10-31)
+
+The Aletta 2024 formulation is a full M1 Must, specified by the paper's own equations
+(FR-2.3). The FR-1.5 acceptance test is the 0.x tutorials' 56 exclusions on ISD v1.0.
+The ISD loader defaults to the latest version registered from Zenodo. The 2022 paper is
+reproduced from ISD v0.2.3, with Russell Square for panel (a), seaborn's default KDE with
+`bw_adjust=1.2`, and a 63 dB split over the whole v0.2.3 dataset. The 50% contour is the
+2022 paper's 50th-percentile contour, with the percentile selectable (FR-3.1). The
+SATP v1.5 tiers and angles come from the 2026 chapter (FR-2.4). The chapter's PDF is
+not redistributed. Reference literature lives in `design/literature/`.
 
 ### 10.5a Decided on review of plan 0.4 (2026-10-31)
 

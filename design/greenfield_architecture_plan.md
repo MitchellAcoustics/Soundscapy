@@ -670,6 +670,11 @@ them (§10.5a). They are registered here as rows 35 to 40.
 | 39 | Default quality rules reproduce the ISD's published processing, tested against its exclusion counts (FR-1.5) | §4.4, §7 |
 | 40 | Per-language angle-set choice is from registered sets by name and version; user sets are registered into the project first (FR-2.4) | §4.2, §4.7 |
 
+Later on 2026-10-31 (PRD 0.9 §10.5b): row 36 is superseded, because Aletta et al. 2024 states the
+formulation in its own Eqs. 1 to 3, so it is a full M1 Must tested against hand-computed values; row
+39's acceptance test is the 0.x tutorials' 56 exclusions on ISD v1.0, because the ISD publishes no
+counts of its own.
+
 Not proposed: FR-14.2's columnar format, FR-6.1's multi-seed Should and the FR-1.3 construct list
 were considered and kept. The review also argued for plugin discovery at M4 and renormalisation as
 Later; both contradict decisions the owner took on 2026-10-30 (PRD §9, FR-2.5a), so the plan
