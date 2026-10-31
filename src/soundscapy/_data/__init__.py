@@ -23,6 +23,18 @@ PINS: Final[Mapping[str, str]] = {
     "circumplexes/iso-12913-outdoor/1.toml": (
         "h1-sha256:4ef2208390747505a2ddb326802995891e8481927fa0832e7e99740d444b8686"
     ),
+    "datasets/isd/isd_mapping.toml": (
+        "h1-sha256:0a602d47a260ea9dc0f6fe9e76b6f6c1c047c307760f554b140b0f478a24103c"
+    ),
+    "datasets/isd/registry.toml": (
+        "h1-sha256:16118d3824d5a43feb8c5e383315a449b5326a76c46140bb991a0540927d783c"
+    ),
+    "datasets/isd/subset-v1.0.csv": (
+        "h1-sha256:5bd19f7909750eddd8812350300267e974638e35ababc92660816435538783fb"
+    ),
+    "datasets/isd/subset-v1.0.toml": (
+        "h1-sha256:5e68eaadad19212470b07159affb340ba58547fd55b4adc52144013fe745ebef"
+    ),
 }
 """Posix path relative to ``_data/`` mapped to the ``h1`` hash of the file's bytes."""
 

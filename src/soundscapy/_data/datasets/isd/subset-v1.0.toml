@@ -1,0 +1,90 @@
+schema = "soundscapy.dataset_sidecar"
+schema_version = 1
+name = "isd-subset"
+source_version = "1.0.1-alpha.1"
+source_record = "10672568"
+source_file = "ISD v1.0 Data.csv"
+source_sha256 = "27e54cde99fba274c0be32d1d81e944ad35d7402cf4a40ed763bbf4dae90f735"
+subset_hash = "h1-sha256:5bd19f7909750eddd8812350300267e974638e35ababc92660816435538783fb"
+n_rows = 1552
+locations = [
+    "CamdenTown",
+    "EustonTap",
+    "MarchmontGarden",
+    "PancrasLock",
+    "RegentsParkFields",
+    "RegentsParkJapan",
+    "RussellSq",
+    "StPaulsCross",
+    "StPaulsRow",
+    "TateModern",
+    "TorringtonSq",
+    "CampoPrincipe",
+    "SanMarco",
+    "Noorderplantsoen",
+    "PingshanPark",
+]
+columns = [
+    "LocationID",
+    "SessionID",
+    "GroupID",
+    "RecordID",
+    "start_time",
+    "Language",
+    "Survey_Version",
+    "ssi01",
+    "ssi02",
+    "ssi03",
+    "ssi04",
+    "pleasant",
+    "chaotic",
+    "vibrant",
+    "uneventful",
+    "calm",
+    "annoying",
+    "eventful",
+    "monotonous",
+    "sss01",
+    "sss02",
+    "sss03",
+    "sss04",
+    "sss05",
+    "who01",
+    "who02",
+    "who03",
+    "who04",
+    "who05",
+    "age00",
+    "LCeq_L(C)",
+    "LAeq_L(A)",
+    "LAeq_L10(A)",
+    "LAeq_L90(A)",
+    "N_N5",
+    "S_S",
+    "R_R",
+    "T_TonalityHMS",
+    "FS_F",
+    "I_I",
+]
+
+[features]
+columns = [
+    "LCeq_L(C)",
+    "LAeq_L(A)",
+    "LAeq_L10(A)",
+    "LAeq_L90(A)",
+    "N_N5",
+    "S_S",
+    "R_R",
+    "T_TonalityHMS",
+    "FS_F",
+    "I_I",
+]
+units_verified = false
+
+[citation]
+citation = "Mitchell, A., Oberman, T., Aletta, F., Erfanian, M., Kachlicka, M., Lionello, M., Fang, X., and Kang, J. (2024). The International Soundscape Database: An integrated multimedia database of urban soundscape surveys -- questionnaires with acoustical and contextual information (version 1.0.1-alpha.1) [Data set]. Zenodo."
+doi_or_url = "https://doi.org/10.5281/zenodo.10672568"
+licence = "CC-BY-4.0"
+date = "2024-02-16"
+notes = "Subset of ISD 1.0.1-alpha.1 (Zenodo record 10672568; all versions: concept DOI 10.5281/zenodo.5578572). 15 locations and 40 columns, cell text unchanged. Made by scripts/make_isd_subset.py."
