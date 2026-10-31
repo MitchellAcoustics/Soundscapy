@@ -2,7 +2,7 @@
 
 ## 1. Status
 
-**Spec draft 0.4, 2026-10-31.** Derived from PRD draft 0.9 (`design/PRD.md`) and architecture
+**Spec draft 0.5, 2026-10-31.** Derived from PRD draft 0.9 (`design/PRD.md`) and architecture
 plan draft 0.5 (`design/greenfield_architecture_plan.md`). It covers Phase 0 (the toolchain, CI,
 docs skeleton and governance files) and M1 (survey analysis: journey A, and journey I for the 2022
 paper). Draft 0.2 applied the consistency check and the builder check of draft 0.1, the owner's
@@ -10,7 +10,9 @@ great-docs pin, and the ISD record facts read from the Zenodo API on 2026-10-31.
 the owner's answers of 2026-10-31 (§4.3), the SATP v1.5 tables of the 2026 chapter, and the builder
 and consistency checks of draft 0.2. Draft 0.4 rebases the spec on PRD 0.9 (its §10.5b, FR-1.5,
 FR-2.3 and FR-3.1), applies the owner's second round of answers of 2026-10-31, and the third
-consistency and builder checks. After it, no owner input blocks M1 (§10).
+consistency and builder checks. After it, no owner input blocks M1 (§10). Draft 0.5 applies the
+S1 plan review (2026-10-31), marked "Amended at S1 plan review" where it lands: §6.2.1, §6.2.3,
+§6.3.5, §6.3.6, §6.3.8, §6.3.10, §6.4.1, §6.9.1, §6.19, §6.23, §7.1, §9 (S3) and §11.2.
 
 The sources to cite are in `design/literature/` (its `README.md` lists them):
 Mitchell, Aletta and Kang 2022 (JASA Express Letters), Aletta et al. 2024 (Applied Acoustics) and
@@ -801,7 +803,7 @@ Derived properties: `midpoint = (minimum + maximum) / 2`, `half_range = (maximum
 |---|---|
 | `Attribute` | `position: StrictStr` matching `^PAQ[1-9][0-9]*$`; `angle_deg: StrictFloat` in `[0, 360)`; `labels: tuple[tuple[str, str], ...]` keyed by ISO 639-3 code |
 | `Axis` | `id: StrictStr` (an identifier, used in column names); `positive: str` and `negative: str` (positions at the axis ends); `labels` by language |
-| `Circumplex` | `name`, `version` (StrictStr); `attributes: tuple[Attribute, ...]` with positions PAQ1..PAQn contiguous in order and angles strictly increasing; `axes: tuple[Axis, Axis]` (x then y); `scale: Scale` (the default scale); `quadrants: tuple[tuple[str, str], ...]` mapping a sign key (`"++"`, `"-+"`, `"--"`, `"+-"`, x sign first) to a position whose label names the quadrant; `reference_language: str = "eng"`; `citation` block (§6.3.7) |
+| `Circumplex` | `schema: Literal["soundscapy.circumplex"]` and `schema_version: Literal[1]`, required, the identity keys of the file, with the field alias of §6.4.1 (amended at S1 plan review, 2026-10-31); `name`, `version` (StrictStr); `attributes: tuple[Attribute, ...]` with positions PAQ1..PAQn contiguous in order and angles strictly increasing; `axes: tuple[Axis, Axis]` (x then y); `scale: Scale` (the default scale); `quadrants: tuple[tuple[str, str], ...]` mapping a sign key (`"++"`, `"-+"`, `"--"`, `"+-"`, x sign first) to a position whose label names the quadrant; `reference_language: str = "eng"`; `citation` block (§6.3.7) |
 
 `Circumplex` methods: `positions`, `angles_deg` (the nominal angles), `label(position, language)`
 (falls back to the reference language), `position_for(key)` (accepts a position or a reference
@@ -991,7 +993,7 @@ identical numbers; recomputing after a settings edit is a new run.
 |---|---|
 | A file | its raw bytes |
 | A pydantic model or plain JSON value | `json.dumps(model.model_dump(mode="json", by_alias=True), sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")` (`by_alias=True` amended at S1 plan review, 2026-10-31, §6.2.1) |
-| An in-memory frame (`_frames.frame_hash`) | Normalise first, then hash. Every numeric column (integer or float, nullable or not) becomes `float64` with null as NaN; every boolean column without nulls stays `bool`; every other column, including a boolean column with nulls, becomes text with nulls kept as nulls. Nulls (None, NaN, NaT, `pd.NA`) are found first; text comes from each value's Python form (the series' `to_list()`, never a backend cast to string): `str` as is, datetime, date and time values by `.isoformat()`, categorical values their text, any other value `str()` (so booleans are `True`/`False` in every backend). Then hash a header, the canonical JSON of `{"columns": [...], "dtypes": [...], "n_rows": n}` with dtype names `float64`, `bool` or `string`, then a 0x00 byte, then per column: `float64` as little-endian bytes with every NaN written as the quiet NaN `0x7FF8000000000000`; `bool` as `uint8`; text value by value, a non-null value as its UTF-8 byte length (little-endian `uint64`) followed by its UTF-8 bytes, a null as the `uint64` `0xFFFFFFFFFFFFFFFF` alone. (Amended at S1 plan review, 2026-10-31: the earlier "UTF-8 values joined by U+001F, null as U+0000" let different frames hash alike, across columns, on values holding U+001F, and between null and `"\x00"`.) |
+| An in-memory frame (`_frames.frame_hash`) | Normalise first, then hash. Every numeric column (integer or float, nullable or not) becomes `float64` with null as NaN; every boolean column without nulls stays `bool`; every other column, including a boolean column with nulls, becomes text with nulls kept as nulls. Nulls (None, NaN, NaT, `pd.NA`) are found first; text comes from each value's Python form (the series' `to_list()`, never a backend cast to string): `str` as is, datetime, date and time values truncated to whole microseconds and then `.isoformat()` (backends differ below a microsecond), a categorical value by these same rules applied to its category's value, any other value `str()` (so booleans are `True`/`False` in every backend). Then hash a header, the canonical JSON of `{"columns": [...], "dtypes": [...], "n_rows": n}` with dtype names `float64`, `bool` or `string`, then a 0x00 byte, then per column: `float64` as little-endian bytes with every NaN written as the quiet NaN `0x7FF8000000000000`; `bool` as `uint8`; text value by value, a non-null value as its UTF-8 byte length (little-endian `uint64`) followed by its UTF-8 bytes, a null as the `uint64` `0xFFFFFFFFFFFFFFFF` alone. (Amended at S1 plan review, 2026-10-31: the earlier "UTF-8 values joined by U+001F, null as U+0000" let different frames hash alike, across columns, on values holding U+001F, and between null and `"\x00"`.) |
 | A numeric array record (`Density`) | The canonical JSON of `{"arrays": ["x", "y", "z", "z_points", "covariance"], "shapes": [...]}`, a 0x00 byte, then each array in that order as C-order little-endian `float64` with NaN canonicalised as above |
 | A set of densities (`Densities`) | The canonical JSON of `{"groups": [keys in group order], "arrays": ["x", "y", "z", "z_points", "covariance"], "shapes": [[...] per group]}`, a 0x00 byte, then for each group in group order its five arrays in the `Density` order. Used as the upstream hash of a `ContourSet` (§6.12) |
 
@@ -1047,7 +1049,7 @@ built by `provenance.envelope(...)`. **Normative** keys:
 | `quality_skipped` | on a `Survey` and results derived from it: the list of quality rules skipped because their columns are not mapped (§6.7), `[]` when none |
 | `profile`, `profile_inherited`, `overrides` | §6.3.4; `profile` is `{id, version, hash}`, `profile_inherited` is present only when an explicit profile replaced the input's |
 | `response_id_source`, `read` | on survey-derived results: §6.3.2, and the resolved `ReadOptions` |
-| `id_columns`, `response_id_columns`, `response_key_blank_ok` | on survey-derived results: `{role: user column}` for each mapped id role (how `split(by=<role>)` finds its column, §6.10); the columns the response id was built from (`[response]` for `column`, the `response_key` columns in key order for `key`, `[]` for `row`); the key columns that may be blank. `attach` rebuilds ids from exactly these (§6.16). (Amended at S1 plan review, 2026-10-31: §6.10 and §6.16 named no place for them.) |
+| `id_columns`, `response_id_columns`, `response_key_blank_ok` | on survey-derived results: `{role: user column}` for each mapped id role, `{}` when none (how `split(by=<role>)` finds its column, §6.10); the columns the response id was built from (`[response]` for `column`, the `response_key` columns in key order for `key`, `[]` for `row`); the key columns that may be blank (`[]` unless the source is `key`). `attach` rebuilds ids from exactly these (§6.16). (Amended at S1 plan review, 2026-10-31: §6.10 and §6.16 named no place for them.) |
 
 No `seed` key exists at M1 (no random function). The mapping can only gain keys. `show_versions()`
 returns a multi-line string of the version keys and never prints.
@@ -1073,7 +1075,7 @@ file cannot be edited silently (plan rule 15). A corrected table ships as a new 
 | `to_native(frame)` | The user's library out |
 | `with_columns(frame, columns)` | Adds columns; raises `ColumnCollisionError` on an existing name |
 | `new_frame(columns, like=None)` | pandas, or the library of `like` |
-| `read_text_table(path, *, encoding, delimiter)`, `read_xlsx_text(path, options)`, `write_csv`, `write_xlsx`, `write_parquet`, `read_parquet` | §6.5, §6.16. (Amended at S1 plan review, 2026-10-31: `read_text_table` takes keywords, because `ReadOptions` lives in `survey`, above `_frames`; S7 settles `read_xlsx_text` the same way.) |
+| `read_text_table(path, *, encoding, delimiter)`, `read_xlsx_text(path, options)`, `write_csv`, `write_xlsx`, `write_parquet`, `read_parquet` | §6.5, §6.16. (Amended at S1 plan review, 2026-10-31: `read_text_table` takes keywords, because `ReadOptions` lives in `survey`, above `_frames`; S7 adds `header_row` and `skip_rows` keywords to it when `ReadOptions` gains them, and `read_xlsx_text`'s signature is provisional until S7 gives it the same keyword form plus `sheet`.) |
 | `frame_hash(frame)` | §6.3.5 |
 
 narwhals errors (`InvalidOperationError`, `ColumnNotFoundError`, `DuplicateError`) are re-raised as
@@ -1133,7 +1135,7 @@ which is why the integrity error is `DataIntegrityError` (not `IntegrityError`, 
 | `ScaleViolationError` | ValueError | coded values outside the declared scale (§6.4.3) |
 | `MissingResponseIdError`, `DuplicateResponseIdError` | ValueError | §6.3.2 |
 | `UncoveredLanguageError`, `LowConfidenceLanguageError` | ValueError | §6.8.3; the uncovered message names a tier-only language's tier |
-| `FormulationError` | ValueError | `iso2019` on a scale other than 1..5 or with non-nominal angles (`canonical` and `aletta2024` accept any scale and angles); also any formulation given angles whose Σ\|cos θ_i\| or Σ\|sin θ_i\| is below 1e-9, which only a bare kernel call can pass (amended at S1 plan review, 2026-10-31) |
+| `FormulationError` | ValueError | `iso2019` on a scale other than 1..5 or with non-nominal angles (`canonical` and `aletta2024` accept any scale and any non-degenerate angles); any formulation given angles whose Σ\|cos θ_i\| or Σ\|sin θ_i\| is below 1e-9 (§6.9.1; amended at S1 plan review, 2026-10-31) |
 | `ProfileConstraintError` | ValueError | §6.3.4 |
 | `SettingsError` | ValueError | a settings file or section fails validation |
 | `DataReferenceError` | LookupError | unknown circumplex, angle set, profile or dataset version |
@@ -1162,7 +1164,7 @@ list; each has one raising condition at M1.
 
 | Model | Fields |
 |---|---|
-| `SurveyMapping` | `schema: Literal["soundscapy.mapping"]` (amended at S1 plan review, 2026-10-31: the Python field is `schema_name` with `Field(alias="schema")` and `populate_by_name=True`, because a field named `schema` warns "shadows an attribute in parent BaseModel", fatal under `filterwarnings = ["error"]`; the TOML and hashed key stays `schema`, and every model with a `schema` key, circumplex, angle set, profile, dataset sidecar and registry, does the same), `schema_version: Literal[1]`, `instrument: str = "iso-12913-outdoor"`, `instrument_version: str = "1"`, `ids: IdSpec`, `language: LanguageSpec`, `groups: Groups`, `age: str = ""`, `flags: FlagSpecs`, `carry: tuple[str, ...] = ()` |
+| `SurveyMapping` | `schema: Literal["soundscapy.mapping"]` (amended at S1 plan review, 2026-10-31: the Python field is `schema_name` with `Field(alias="schema")` and `populate_by_name=True`, because a field named `schema` warns "shadows an attribute in parent BaseModel", fatal under `filterwarnings = ["error"]`; the TOML and hashed key stays `schema`, and every model with a `schema` key, circumplex (§6.2.3), angle set, profile and dataset registry, does the same), `schema_version: Literal[1]`, `instrument: str = "iso-12913-outdoor"`, `instrument_version: str = "1"`, `ids: IdSpec`, `language: LanguageSpec`, `groups: Groups`, `age: str = ""`, `flags: FlagSpecs`, `carry: tuple[str, ...] = ()` |
 | `IdSpec` | `response: str = ""`, `response_key: tuple[str, ...] = ()` (not both), `response_key_blank_ok: tuple[str, ...] = ()` (key columns that may be blank, a proper subset of `response_key`, §6.3.2), `location`, `session`, `group`, `record: str = ""` |
 | `LanguageSpec` | `column: str = ""` or `value: str = ""` (not both), `coding: tuple[tuple[str, str], ...] = ()` mapping raw text to ISO 639-3. Every resulting code must match `^[a-z]{3}$`, else `MappingError`. A blank cell is unmapped and gives `""`; it matters only for a row that is projected with adjusted angles (§6.8.3) |
 | `Groups` | `attributes: ItemGroup` (required), `source_dominance`, `overall_quality`, `appropriateness`, `who5: ItemGroup` (each optional: an empty group with no columns means not mapped) |
@@ -1642,7 +1644,10 @@ y = Σ_i sin θ_i σ_i / λ_E,   λ_E = (ρ/2) Σ_i |sin θ_i|
 at the unit circle and nothing clamps. At 45° on 1..5 the two are algebraically identical
 (Σ cos θ_i = Σ sin θ_i = 0 and Σ|cos θ_i| = 2 + 2√2); the exhaustive test of §7.2 checks all
 390,625 responses. Sums are taken in position order with `numpy` float64 so results match across
-platforms to 1e-12.
+platforms to 1e-12. Every formulation raises `FormulationError` naming the axis when, in any row,
+Σ|cos θ_i| or Σ|sin θ_i| is below 1e-9 (a degenerate angle set; cos and sin of multiples of 90° leave
+float64 residues up to 1.8e-16, so no exact zero test is used). Angle-set and circumplex validation
+do not bound these sums, so the check is the kernel's (amended at S1 plan review, 2026-10-31).
 
 `aletta2024` does not centre the scores, so the canonical formulation's guarantees do not hold for
 it. When Σ cos θ_i ≠ 0 a neutral response does not map to the origin: under `aletta-2024@1`'s eng
@@ -1650,7 +1655,7 @@ angles, all items at 3 on 1..5 give (0.08155, 0.10640). That offset is the defec
 formulation fixes. For the same reason its coordinates can leave the [−1, 1] square: with the eng
 angles x reaches 1.0815 and y 1.1064 on the 1..5 grid. At 45° on 1..5 Σ cos θ_i = Σ sin θ_i = 0 and
 λ_P = λ_E = 4 + √32, so it reduces to the 2019 formula exactly. It accepts any declared scale and
-any angle set, and it emits no warning: choosing it is deliberate (a call made here, §11.2). No
+any non-degenerate angle set (above), and it emits no warning: choosing it is deliberate (a call made here, §11.2). No
 profile uses it by default; the ISO profiles refuse it (§6.3.4). It exists for reproducing work
 done with Aletta et al. 2024's equations.
 
@@ -2133,7 +2138,7 @@ floors.
 | numpy | 1.26 | BSD-3-Clause (bundled parts 0BSD, MIT, Zlib, CC0-1.0) | arrays inside the core |
 | scipy | 1.15 | BSD-3-Clause | `gaussian_kde`, `stats` tests |
 | contourpy | 1.2 | BSD-3-Clause | contour polygons without matplotlib (the core imports it, so it is declared) |
-| pandas | 2.2.1 | BSD-3-Clause | frames from paths; Anaconda course laptops have 2.2. (Amended at S1 plan review, 2026-10-31: 2.2.0 warns on import without pyarrow, fatal in the `lowest` job under `filterwarnings = ["error"]`; 2.2.1 does not.) |
+| pandas | 2.2.1 | BSD-3-Clause | frames from paths; Anaconda course laptops have 2.2. (Amended at S1 plan review, 2026-10-31: 2.2.0 warns on import when pyarrow is absent, which it is in the `lowest` job until slice S4 adds pyarrow, and the warning is fatal under `filterwarnings = ["error"]`; 2.2.1 does not warn.) |
 | pyarrow | 15 | Apache-2.0 | parquet (owner row #6) |
 | narwhals | 2.0 | MIT | the boundary (`stable.v2`) |
 | pydantic | 2.7 | MIT | settings and value types |
@@ -2485,7 +2490,7 @@ Property tests use hypothesis. **Named invariants**:
 | neutral to origin | under canonical and iso2019 only: all items at the midpoint map to (0, 0) for any angle set | `1e-12` |
 | constant shift | under canonical and iso2019 only: adding c to every item (staying in scale) moves x by `c·Σcos θ_i / (h·Σ|cos θ_i|)` and y likewise; this is the 0.x bug's test | `1e-12` |
 | neutral off the origin (aletta2024) | the opposite property: under aletta2024 a neutral response maps off the origin whenever Σ cos θ_i ≠ 0 (x = μ·Σcos θ_i / λ_P, so x ≠ 0), and likewise for y with Σ sin θ_i | `1e-12` on the value; the generated angle sets keep \|Σcos θ_i\| above 1e-6 so the sign is unambiguous |
-| row-order invariance | permuting rows permutes xy, status and ids identically, for `column` and `key` ids (`row-<n>` ids follow physical position, §6.3.2 rule 3; amended at S1 plan review, 2026-10-31); describe output is unchanged | exact for ids, `1e-12` for statistics |
+| row-order invariance | permuting rows permutes xy and status identically for every id source, and ids identically for `column` and `key` ids (`row-<n>` ids follow physical position, §6.3.2 rule 3; amended at S1 plan review, 2026-10-31); describe output is unchanged | exact for ids, `1e-12` for statistics |
 | coding order | value map, offset and reverse applied in the §6.4.2 order; reverse is an involution | exact |
 | TOML round-trip | every FrozenModel survives TOML write and read with an equal value and equal hash; the shipped `isd_mapping.toml` round-trips byte for byte (§6.4.4) | exact |
 | finite floats | every FrozenModel float field rejects ±inf and NaN; `"none"` is the only no-limit value | exact |
@@ -2786,7 +2791,7 @@ calls made in this spec (§11.2).
 | Angle set named `aletta-2024@1` (was owner's call 17) | §6.8.2 | names the paper the angles come from |
 | Profile carry-over: `profile` unset inherits the input's profile; an explicit different profile is recorded as `profile`, with the input's in `profile_inherited`, and `overrides` stays empty (§6.3.4 wins; R7) | §6.3.4 | a 2019 pipeline named once stays 2019; a change of profile is visible in provenance without being mistaken for a field override (consistency check B6) |
 | No ±inf sentinels: `allow_inf_nan=False` on `FrozenModel`, and `"none"` for no clip or no box | §6.2.1 | canonical JSON cannot hash ±inf; a literal is simpler than a string serialiser for infinities (consistency check B3) |
-| Mapping TOML table form is normative, with a before-validator and serializer; the shipped mapping round-trips byte for byte | §6.4.4 | the file users edit is the readable form. The mapping hash covers `model_dump(mode="json")`, in which the serializer writes the key-to-name fields as tables; canonical JSON sorts their keys, and attribute keys stay positions, so `pleasant = "x"` and `PAQ1 = "x"` hash alike (B4, K9) |
+| Mapping TOML table form is normative, with a before-validator and serializer; the shipped mapping round-trips byte for byte | §6.4.4 | the file users edit is the readable form. The mapping hash covers `model_dump(mode="json", by_alias=True)` (amended at S1 plan review, 2026-10-31), in which the serializer writes the key-to-name fields as tables; canonical JSON sorts their keys, and attribute keys stay positions, so `pleasant = "x"` and `PAQ1 = "x"` hash alike (B4, K9) |
 | `frame_hash` normalises numerics to float64 with null as NaN before hashing | §6.3.5 | pandas turns an int column with a missing value into float; the same content must hash alike (C6) |
 | `attach` aligns by id for mapped ids and by position only for `row-<n>` ids; no hash fallback | §6.16 | the alignment rule follows from §6.3.2; a hash comparison could not align a re-sorted frame (C3) |
 | Default run offline: only the generated aletta file and the subset are committed and checked by hash; regeneration and source-row checks run nightly | §6.8.2, §6.20.1, §7.5 | §3.3's anti-goal on network use (B5) |
