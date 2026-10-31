@@ -29,8 +29,8 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/soundscapy-data
-          key: soundscapy-data-${{ hashFiles('src/soundscapy/**/registry*') }}
-          restore-keys: soundscapy-data-
+          key: soundscapy-data-reference-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
+          restore-keys: soundscapy-data-reference-
       - run: uv sync --locked
       - run: uv run task test:reference
 
@@ -51,8 +51,8 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/soundscapy-data
-          key: soundscapy-data-${{ hashFiles('src/soundscapy/**/registry*') }}
-          restore-keys: soundscapy-data-
+          key: soundscapy-data-network-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
+          restore-keys: soundscapy-data-network-
       - run: uv sync --locked
       - run: uv run task test:network
 
@@ -76,10 +76,17 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/soundscapy-data
-          key: soundscapy-data-${{ hashFiles('src/soundscapy/**/registry*') }}
-          restore-keys: soundscapy-data-
+          key: soundscapy-data-papers-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
+          restore-keys: soundscapy-data-papers-
       - run: uv sync --locked --group docs
-      - run: uv run task docs:papers
+      - name: Re-execute the paper pages
+        # Guarded until the first paper page lands; the freeze-diff step below still runs.
+        run: |
+          if [ ! -f docs/papers/2022-how-to-analyse.qmd ]; then
+            echo "no paper page yet; skipping"
+            exit 0
+          fi
+          uv run task docs:papers
       - name: Open an issue if docs/_freeze changed
         env:
           GH_TOKEN: ${{ github.token }}
@@ -138,10 +145,20 @@ jobs:
         env:
           SHA: ${{ github.sha }}
         run: |
-          if curl -fsS -o /dev/null https://pypi.org/pypi/soundscapy/1.0.0.dev1/json; then
-            echo "soundscapy==1.0.0.dev1 is on PyPI; the scripts run unchanged."
-            exit 0
-          fi
+          # 200: released; 404: not yet released; anything else is a PyPI or network fault,
+          # which fails the job rather than silently testing the wrong requirement.
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://pypi.org/pypi/soundscapy/1.0.0.dev1/json)
+          case "$code" in
+            200)
+              echo "soundscapy==1.0.0.dev1 is on PyPI; the scripts run unchanged."
+              exit 0
+              ;;
+            404) ;;
+            *)
+              echo "PyPI check failed with HTTP status '$code'" >&2
+              exit 1
+              ;;
+          esac
           tag=$(git tag --list 'v[1-9]*' --sort=-v:refname | head -n 1)
           ref="${tag:-$SHA}"
           spec="soundscapy @ git+https://github.com/MitchellAcoustics/Soundscapy@$ref"

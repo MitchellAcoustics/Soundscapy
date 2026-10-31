@@ -41,12 +41,15 @@ tasks:
   test:reference:
     desc: Run the reference-value tests
     cmds:
-      - uv run pytest -m reference {{.CLI_ARGS}}
+      # pytest exits 5 when no test carries the marker; that is not a failure while none
+      # exist yet (M1 adds them), so the nightly job stays green. Any other code fails.
+      - uv run pytest -m reference {{.CLI_ARGS}} || test $? -eq 5
 
   test:network:
     desc: Run the tests that need network access
     cmds:
-      - uv run pytest -m network {{.CLI_ARGS}}
+      # Exit code 5 (no test carries the marker) counts as success; see test:reference.
+      - uv run pytest -m network {{.CLI_ARGS}} || test $? -eq 5
 
   check:fast:
     desc: Lint and type-check (offline, a few seconds)
