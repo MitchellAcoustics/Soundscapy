@@ -1,6 +1,6 @@
 # Architecture plan for the soundscapy rewrite
 
-Status: **draft 0.5** (2026-10-30, register updated 2026-10-31), in step with PRD draft 0.8. This is the document AGENTS.md means
+Status: **draft 0.5** (2026-10-30, register updated 2026-10-31, §10 amendments from the Phase 0 and M1 spec), in step with PRD draft 0.9. This is the document AGENTS.md means
 by "the architecture plan". Draft 0.5 separates the load-bearing architecture from deferred detail.
 Draft 0.4 had the right shape, but it specified field lists, signatures and flags for five
 milestones in the same voice as the M1 contracts, and it missed several decisions M1 needs. A review
@@ -679,6 +679,25 @@ Not proposed: FR-14.2's columnar format, FR-6.1's multi-seed Should and the FR-1
 were considered and kept. The review also argued for plugin discovery at M4 and renormalisation as
 Later; both contradict decisions the owner took on 2026-10-30 (PRD §9, FR-2.5a), so the plan
 follows those decisions.
+
+## 10. Amendments carried by the Phase 0 and M1 spec (2026-10-31)
+
+`design/specs/2026-10-31-phase0-m1-design.md` (spec draft 0.4, from PRD 0.9) is authoritative for
+Phase 0 and M1 where this plan leaves a choice to the spec, and it changes the following plan
+statements. Each overrides the text it names; the spec's §11.1 gives the detail.
+
+| Plan section | Amendment |
+|---|---|
+| §5 | tqdm is core from M1 (pooch's progress bar; owner decision #4). `_log`, `_model` and `tables` join the bottom layer. `cli` is a layer above `workspace`. An import contract keeps GUI toolkits out of the core (FR-14.7). The ISD registry holds 1.0.1-alpha.1 (default), 1.0.1-alpha and 0.2.3, each with its own mapping, and "latest" is resolved at release time. The course dataset ships as `datasets.course_demo`. |
+| §6 | great-docs is pinned as a git source at `af17c76` (owner decision) until the first PyPI release after 0.17.0; fallback `095db9b`. |
+| §4.2 | M1 formulations are canonical, iso2019 and aletta2024 (Aletta 2024 Eqs. 1 to 3; selectable, refused by ISO profiles, default in no profile). `satp@1.5` ships at M1 and `sal-2026@1` uses it. An angle set may list tier-only languages, which resolve as uncovered. |
+| §4.4 | Hierarchy at M1 is `survey.join_context` and `workspace.add_table`. Default quality rules reproduce the 0.x tutorials' 56 exclusions on ISD v1.0; `excessive_missing` stays configurable. |
+| §4.6 and §8 G7-03 | Profiles are versioned data (`<id>@<version>`), recorded as `{id, version, hash}`. One settings precedence rule (spec §6.3.4). |
+| §4.9 | Strict quadrant membership with a reported `boundary_share` (Σ proportions + boundary_share = 1). `density` returns `Densities`, one `Density` per group with `z_points`. `ContourSet` carries settings and provenance. `marginals` and `response_shares` are geometry. The 50% contour is the 2022 paper's 50th-percentile contour. |
+| §4.11 | A run's sidecar records the settings it ran with; re-running uses the current inputs and settings; a sidecar is never an input. |
+| §8 G3-06 | Location and session tables join at M1 through `join_context`. |
+| Appendix A | `ProjectionResult` is dropped; `Coordinates` carries settings and provenance; its labels are read-only numpy arrays converted at returns. |
+| §9.1 | #36 superseded by PRD 0.9 FR-2.3; #39's test is the 56 exclusions (PRD 0.9 FR-1.5). |
 
 ## Appendix A. M1 type sketches (non-normative)
 
