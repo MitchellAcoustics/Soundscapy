@@ -5,7 +5,6 @@ canonical formulation is Mitchell et al. (2026), chapter 4, proof p. 23, section
 Items are in position order (p, v, e, ch, a, m, u, ca) = PAQ1..PAQ8 at 0, 45, ..., 315 degrees.
 """
 
-import itertools
 import math
 
 import numpy as np
@@ -15,11 +14,10 @@ from hypothesis import strategies as st
 
 from soundscapy.instrument.scale import Scale
 from soundscapy.projection.formulas import project_scores
+from tests._helpers import NOMINAL_ANGLES_DEG, SCALE_1_5
 
 pytestmark = pytest.mark.science
 
-_NOMINAL = np.arange(0.0, 360.0, 45.0)
-_ISO_SCALE = Scale(minimum=1.0, maximum=5.0)
 _SQRT2 = math.sqrt(2.0)
 
 
@@ -53,7 +51,7 @@ def test_iso2019_hand_values(scores, expected, formulation):
     x = (2 + 4c + 4c) / (4 + sqrt 32) = (1 + 2 sqrt 2) / (2 + 2 sqrt 2) and
     y = (-2 - 4c + 4c) / (4 + sqrt 32) = -1 / (2 + 2 sqrt 2), with c = cos 45 degrees.
     """
-    x, y = _one(scores, _NOMINAL, _ISO_SCALE, formulation)
+    x, y = _one(scores, NOMINAL_ANGLES_DEG, SCALE_1_5, formulation)
     assert x == pytest.approx(
         expected[0], abs=1e-12
     )  # float64 sums of 8 terms; closed forms are exact
@@ -69,11 +67,11 @@ def test_canonical_equals_iso2019_exhaustively():
     algebraically to Eqs. 1 and 2 of Mitchell, Aletta & Kang (2022), since the cosines and sines
     sum to 0 and their absolute values to 2 + 2 sqrt 2.
     """
-    scores = np.array(list(itertools.product(range(1, 6), repeat=8)), dtype=np.float64)
+    scores = np.indices((5,) * 8, dtype=np.float64).reshape(8, -1).T + 1.0
     assert scores.shape == (390_625, 8)
-    angles = np.broadcast_to(_NOMINAL, scores.shape)
-    canon = project_scores(scores, angles, _ISO_SCALE, "canonical")
-    iso = project_scores(scores, angles, _ISO_SCALE, "iso2019")
+    angles = np.broadcast_to(NOMINAL_ANGLES_DEG, scores.shape)
+    canon = project_scores(scores, angles, SCALE_1_5, "canonical")
+    iso = project_scores(scores, angles, SCALE_1_5, "iso2019")
     np.testing.assert_allclose(canon, iso, rtol=0, atol=1e-12)  # spec §7.2; measured max 2.8e-16
 
 
@@ -158,7 +156,7 @@ def test_neutral_maps_to_origin_canonical(case):
 
 def test_neutral_maps_to_origin_iso2019():
     """All items at 3 on 1..5 map to (0, 0) under Eqs. 1 and 2 of Mitchell et al. (2022)."""
-    x, y = _one([3.0] * 8, _NOMINAL, _ISO_SCALE, "iso2019")
+    x, y = _one([3.0] * 8, NOMINAL_ANGLES_DEG, SCALE_1_5, "iso2019")
     assert x == pytest.approx(0.0, abs=1e-12)  # float rounding of sums of 8 terms
     assert y == pytest.approx(0.0, abs=1e-12)  # float rounding of sums of 8 terms
 
@@ -190,7 +188,7 @@ def test_constant_shift_iso2019(case):
     Σcos θ_i = Σsin θ_i = 0 at 45 degree steps.
     """
     scores, shift = case
-    x0, y0 = _one(scores, _NOMINAL, _ISO_SCALE, "iso2019")
-    x1, y1 = _one([s + shift for s in scores], _NOMINAL, _ISO_SCALE, "iso2019")
+    x0, y0 = _one(scores, NOMINAL_ANGLES_DEG, SCALE_1_5, "iso2019")
+    x1, y1 = _one([s + shift for s in scores], NOMINAL_ANGLES_DEG, SCALE_1_5, "iso2019")
     assert x1 - x0 == pytest.approx(0.0, abs=1e-12)  # float rounding of sums of 8 terms
     assert y1 - y0 == pytest.approx(0.0, abs=1e-12)  # float rounding of sums of 8 terms

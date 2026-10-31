@@ -11,29 +11,24 @@ from soundscapy.survey.read import Survey
 _MAPPING = "datasets/isd/isd_mapping.toml"
 
 
-@pytest.fixture(scope="module")
-def survey() -> Survey:
-    return isd.load(subset=True)
+def test_load_subset(isd_survey):
+    assert isinstance(isd_survey, Survey)
+    assert isd_survey.n() == 1552
+    assert isd_survey.provenance["response_id_source"] == "key"
+    assert len(set(isd_survey.response_id)) == isd_survey.n()
 
 
-def test_load_subset(survey):
-    assert isinstance(survey, Survey)
-    assert survey.n() == 1552
-    assert survey.provenance["response_id_source"] == "key"
-    assert len(set(survey.response_id)) == survey.n()
-
-
-def test_load_subset_records_the_dataset(survey):
+def test_load_subset_records_the_dataset(isd_survey):
     assert {
         "kind": "dataset",
         "name": "isd-subset",
         "version": "1.0.1-alpha.1",
         "hash": _data.pin("datasets/isd/subset-v1.0.csv"),
-    } in survey.provenance["data_refs"]
+    } in isd_survey.provenance["data_refs"]
 
 
-def test_load_subset_incomplete_attributes(survey):
-    assert survey.status.counts()["reason:incomplete_attributes"] == 16
+def test_load_subset_incomplete_attributes(isd_survey):
+    assert isd_survey.status.counts()["reason:incomplete_attributes"] == 16
 
 
 def test_load_subset_explicit_default_version():

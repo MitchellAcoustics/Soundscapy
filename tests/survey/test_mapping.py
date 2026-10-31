@@ -26,24 +26,19 @@ from soundscapy.survey.mapping import (
     read_mapping,
     write_mapping,
 )
+from tests._helpers import LABELS, raw_mapping
 
 FIXTURES = Path(__file__).parent / "fixtures"
 MINIMAL = FIXTURES / "minimal_mapping.toml"
 NONDEFAULT = FIXTURES / "nondefault_mapping.toml"
-LABELS = ("pleasant", "vibrant", "eventful", "chaotic", "annoying", "monotonous", "uneventful")
-LABELS += ("calm",)
 POSITIONS = tuple(f"PAQ{i}" for i in range(1, 9))
 
 
 def _raw(**attributes: object) -> dict:
     """A minimal raw mapping dict whose attribute group holds the given fields."""
-    group = {"columns": {label: label for label in LABELS}, **attributes}
-    return {
-        "schema": "soundscapy.mapping",
-        "schema_version": 1,
-        "ids": {"response": "ID"},
-        "groups": {"attributes": group},
-    }
+    raw = raw_mapping({"response": "ID"})
+    raw["groups"]["attributes"].update(attributes)
+    return raw
 
 
 def _write_raw(tmp_path: Path, raw: dict) -> Path:

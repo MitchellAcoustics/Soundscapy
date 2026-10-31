@@ -11,8 +11,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from soundscapy._model import COL_ANGLE_SET, COL_INCLUDED, COL_REASONS, COL_RESPONSE_ID
-from soundscapy.datasets import isd
-from soundscapy.distribution.coordinates import Coordinates, n, n_valid, valid_mask
+from soundscapy.distribution.coordinates import n, n_valid, valid_mask
 from soundscapy.errors import FormulationError, SettingsError
 from soundscapy.instrument import circumplex
 from soundscapy.instrument.angles import AngleSelection
@@ -39,11 +38,6 @@ HAND_XY = np.array(
 @pytest.fixture(scope="module")
 def hand_survey():
     return read_survey(HAND_CSV, MAPPING)
-
-
-@pytest.fixture(scope="module")
-def subset_coords() -> Coordinates:
-    return project(isd.load(subset=True))
 
 
 def test_hand_values_iso2019(hand_survey):
@@ -189,7 +183,8 @@ def test_all_rows_excluded_projects_nothing(tmp_path):
     assert n_valid(coords) == 0
 
 
-@settings(deadline=None)  # per-example file I/O
+# Each example writes and reads a file: no deadline, and 25 of the 5040 permutations.
+@settings(deadline=None, max_examples=25)
 @given(st.permutations(range(7)))
 def test_project_row_order_invariance(perm):
     lines = ORDER_CSV.read_text(encoding="utf-8").splitlines()
@@ -210,17 +205,17 @@ def test_project_row_order_invariance(perm):
 # --- the ISD subset ----------------------------------------------------------------------------
 
 
-def test_subset_counts(subset_coords):
-    assert subset_coords.n() == n(subset_coords) == 1552
-    assert subset_coords.n_valid() == n_valid(subset_coords) == 1536
-    mask = valid_mask(subset_coords)
+def test_subset_counts(isd_coords):
+    assert isd_coords.n() == n(isd_coords) == 1552
+    assert isd_coords.n_valid() == n_valid(isd_coords) == 1536
+    mask = valid_mask(isd_coords)
     assert int(mask.sum()) == 1536
-    assert not mask[~subset_coords.labels[COL_INCLUDED]].any()
-    np.testing.assert_array_equal(subset_coords.valid_mask(), mask)
+    assert not mask[~isd_coords.labels[COL_INCLUDED]].any()
+    np.testing.assert_array_equal(isd_coords.valid_mask(), mask)
 
 
-def test_subset_square_bounds(subset_coords):
-    for v in (subset_coords.xy[:, 0], subset_coords.xy[:, 1]):
+def test_subset_square_bounds(isd_coords):
+    for v in (isd_coords.xy[:, 0], isd_coords.xy[:, 1]):
         finite = v[np.isfinite(v)]
         assert finite.size == 1536
         # spec §7.1 square-bound tolerance: float rounding of sums of 8 terms can put |x|
@@ -228,8 +223,8 @@ def test_subset_square_bounds(subset_coords):
         assert (np.abs(finite) <= 1 + 1e-12).all()
 
 
-def test_subset_labels_carry_the_id_columns(subset_coords):
-    assert list(subset_coords.labels)[6:] == ["LocationID", "SessionID", "GroupID", "RecordID"]
+def test_subset_labels_carry_the_id_columns(isd_coords):
+    assert list(isd_coords.labels)[6:] == ["LocationID", "SessionID", "GroupID", "RecordID"]
 
 
 def test_coordinates_is_frozen(hand_survey):

@@ -24,19 +24,16 @@ from soundscapy.provenance import envelope, hash_file
 from soundscapy.survey.mapping import SurveyMapping
 from soundscapy.survey.read import ImportSettings, ReadOptions, read_survey
 from soundscapy.survey.status import Reason
+from tests._helpers import CSV_ORDER, ONES, raw_mapping, write_csv
 
 FIXTURES = Path(__file__).parent / "fixtures"
 KEY_CSV = FIXTURES / "survey_key.csv"
 COLUMN_CSV = FIXTURES / "survey_column.csv"
 ROW_CSV = FIXTURES / "survey_row.csv"
 SCALE_0_4_CSV = FIXTURES / "survey_0_4.csv"
-# The ISD's CSV order, which is not position order.
-CSV_ORDER = ("pleasant", "chaotic", "vibrant", "uneventful", "calm", "annoying", "eventful")
-CSV_ORDER += ("monotonous",)
 KEY = ("LocationID", "SessionID", "GroupID", "RecordID")
 HEADER = ",".join((*KEY, "Language", *CSV_ORDER))
 ID_HEADER = ",".join(("ID", *CSV_ORDER))
-ONES = ",".join(["1"] * 8)
 KEY_IDS = {
     "response_key": list(KEY),
     "location": "LocationID",
@@ -47,12 +44,7 @@ KEY_IDS = {
 
 
 def _raw(ids: dict | None = None, language: dict | None = None) -> dict:
-    raw: dict = {
-        "schema": "soundscapy.mapping",
-        "schema_version": 1,
-        "ids": ids if ids is not None else {"response_key": list(KEY)},
-        "groups": {"attributes": {"columns": {label: label for label in CSV_ORDER}}},
-    }
+    raw = raw_mapping(ids if ids is not None else {"response_key": list(KEY)}, columns=CSV_ORDER)
     if language is not None:
         raw["language"] = language
     return raw
@@ -63,9 +55,7 @@ def _mapping(ids: dict | None = None, language: dict | None = None) -> SurveyMap
 
 
 def _csv(tmp_path: Path, *rows: str, header: str = HEADER, name: str = "survey.csv") -> Path:
-    path = tmp_path / name
-    path.write_text("\n".join((header, *rows)) + "\n", encoding="utf-8")
-    return path
+    return write_csv(tmp_path, header, *rows, name=name)
 
 
 # --- reading by name ---------------------------------------------------------------------------

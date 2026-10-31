@@ -102,7 +102,7 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.Froze
 
 [tool.ty.environment]
 python-version = "3.11"
-root = ["./src"]
+root = ["./src", "."]  # "." resolves tests._helpers, the shared test constants
 
 [tool.pytest.ini_options]
 minversion = "9.2"
