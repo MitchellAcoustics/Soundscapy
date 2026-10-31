@@ -29,7 +29,6 @@ def _clean_env() -> dict[str, str]:
     return env
 
 
-
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
@@ -64,7 +63,9 @@ def main() -> int:
     problems: list[str] = []
     for cmd in commands:
         try:
-            result = subprocess.run(cmd, cwd=project, capture_output=True, text=True, timeout=50, env=_clean_env())
+            result = subprocess.run(
+                cmd, cwd=project, capture_output=True, text=True, timeout=50, env=_clean_env()
+            )
         except (OSError, subprocess.TimeoutExpired) as exc:
             print(f"post_edit hook could not run {' '.join(cmd[:3])}: {exc}", file=sys.stderr)
             return 1  # non-blocking: tool missing or hung, surface it without stopping work

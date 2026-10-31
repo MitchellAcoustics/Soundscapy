@@ -42,12 +42,19 @@ def main() -> int:
     if not (project / "Taskfile.yml").exists():
         return 0
     if shutil.which("task") is None:
-        print("stop_check hook: `task` (go-task) is not on PATH; skipped check:fast", file=sys.stderr)
+        print(
+            "stop_check hook: `task` (go-task) is not on PATH; skipped check:fast", file=sys.stderr
+        )
         return 1
 
     try:
         result = subprocess.run(
-            ["task", "check:fast"], cwd=project, capture_output=True, text=True, timeout=170, env=_clean_env()
+            ["task", "check:fast"],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            timeout=170,
+            env=_clean_env(),
         )
     except subprocess.TimeoutExpired:
         print("stop_check hook: `task check:fast` timed out", file=sys.stderr)
