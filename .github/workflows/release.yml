@@ -1,0 +1,31 @@
+# Spec design/specs/2026-10-31-phase0-m1-design.md §5.6.3. Publishes to PyPI by trusted
+# publishing on a `v*` tag. The owner configures the PyPI trusted publisher (this repository,
+# workflow release.yml, environment `pypi`) when a dev release is ready; until then no `v*`
+# tag is pushed from this codebase and the workflow does not run.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          # No cache in the publishing job: a restored cache is a cache-poisoning route into
+          # the built artifacts, and a release build gains nothing from it.
+          enable-cache: false
+      - run: uv build
+      - run: uv publish --trusted-publishing always
