@@ -58,7 +58,7 @@ Several of these trace back to the house rules themselves. "House rules that are
 |---|---|---|---|
 | F1 | Agent hooks | An old uv refuses every shell call via `required-version`; the Stop hook cannot exit | P1, applied |
 | F2 | narwhals | Frames typed `Any` (12 `noqa: ANN401`) instead of narwhals' `IntoDataFrameT` | P1 |
-| F3 | narwhals | pandas special cases are justified; express them the documented way | P3 |
+| F3 | narwhals | pandas special cases are justified; superseded by the extras design above | P3 |
 | F4 | narwhals | `to_eager` relies on an undocumented `TypeError` | P3 |
 | F5 | matplotlib | Pyplot-free `ax=None` departs from matplotlib's library pattern | Owner, P2 |
 | F6 | matplotlib | Hard-coded petroff10 ignores style sheets and property cycles (FR-8.3) | P2 |
@@ -94,20 +94,43 @@ We already follow this for every library except pandas. polars is in the `test` 
 pyarrow is not a dependency yet. Nothing outside `_frames` may import a dataframe library (an
 import-linter contract), and a test proves `import soundscapy` works without polars or pyarrow.
 
-pandas is a different case, which the guidance does not address. Its pages cover a library that
-consumes the user's frames. Soundscapy also produces frames where there is no user frame to
-copy: `load_isd(subset=True).data`, `read_survey(path).data`, `Coordinates.to_frame()` and
-`Status.to_frame()`. For that case narwhals' own creation functions (`read_csv`, `new_series`,
-`from_numpy`) take a required `backend` with no default (*source*,
-`src/narwhals/functions.py`). The library has to choose. Plan §4.10 chose pandas, and §8
-defers a `backend=` argument until a user asks (owner decisions 2 and 21).
+pandas is the one exception, because soundscapy also creates frames where there is no user
+frame to copy: `load_isd(subset=True).data`, `read_survey(path).data`, `Coordinates.to_frame()`,
+`Status.to_frame()`, and S2's planned `Survey.to_frame()`. narwhals does not choose a library
+for those, whatever is installed. *Run*: with pandas and polars both installed and imported,
+`nw.from_dict({...})` raises "Calling `from_dict` without `backend` is only supported if all
+input values are already Narwhals Series", and `nw.read_csv(path)` requires `backend`.
 
-Making pandas an extra would mean `pip install soundscapy`, then the quick-start's
-`load_isd(subset=True)`, fails until the user installs `soundscapy[pandas]`. Journey A, the
-course material and hosted notebooks would pay for a saving that only polars users get.
-**Recommendation: keep pandas as a required dependency.** What is worth taking from the
-guidance is to keep the choice of pandas in one place (F3), so that the deferred `backend=`
-argument, or an optional pandas, becomes a small change later.
+The first draft of this review recommended keeping pandas required for that reason. **The
+owner overruled it (2026-10-31), and the guidance supports the owner.** The page's advice
+covers this case too: consumers "bring their own backend" and opt in through extras. The
+choice for created frames is a separate question, and an explicit argument answers it.
+The design that follows narwhals' guidance:
+
+- `dependencies` names no dataframe library. The extras `soundscapy[pandas]` and
+  `soundscapy[polars]` re-expose narwhals' own (`pandas = ["narwhals[pandas]"]`), and the
+  backends the tests need go in the `test` group.
+- A function given the user's frame returns the user's library, as `attach` and
+  `to_frame(like=...)` already do.
+- A function that creates a frame from a path or from nothing takes `backend=`, the argument
+  plan §8 defers, with default `"pandas"`. When the backend is not installed, it raises one
+  error naming the extra to install, per plan §6's convention for optional dependencies. It
+  never detects what happens to be installed: most polars users also have pandas (Jupyter and
+  seaborn pull it in), and the same script would return different types on different
+  machines.
+- Nulls follow narwhals and the backend's own model, so the pandas branch in `with_columns`
+  goes (F3). Masked columns are built with `nw.when(valid).then(...)`. *Run*: for classic
+  pandas dtypes this gives `Object` for a masked boolean and `Float64` for a masked integer;
+  polars keeps `Boolean` and `Int64` with nulls. `nw.new_series([True, None],
+  dtype=nw.Boolean, backend="pandas")` returns `[True, False]`, silently, so that call must
+  never be used for masked data, and a test should pin this.
+- `import soundscapy` must not import pandas, so `_frames` imports nothing from a backend
+  at module level. The existing import test extends to pandas.
+
+Costs: a plain `pip install soundscapy` cannot run the quick-start. The install page,
+`_quickstart.sh` and `.ps1`, the hosted-notebook cell and the course material install
+`soundscapy[pandas]`. The change reopens owner decisions 2 and 21 and plan §4.10, so it
+needs an ADR, a spec amendment and a change to the S2 plan's Task 4.
 
 ### "Put `uv run` inside the tasks instead of calling `uv run task`"
 
