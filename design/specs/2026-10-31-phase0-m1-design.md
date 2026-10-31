@@ -1018,12 +1018,13 @@ Golden vectors, pinned in `tests/test_provenance.py`:
 | JSON `{"b": [1.5, "é"], "a": 1}` | `h1-sha256:2bb202b35963ad9e57f87e5828e072cc53f4720ecd10a7d625f850411a31c4c6` |
 | JSON `{"clip": "none"}` (the no-limit literal) | `h1-sha256:7c457b553a03102b7220154eb95650e02d2840d02f397a2d226afba1fa85a1dd` |
 | JSON `{"a": inf}` | raises `ValueError` (no hash) |
+| frame `{"i": [1, None, 3], "f": [0.5, 1.5, -2.0], "t": ["a", None, "é"]}` (pandas or polars) | `h1-sha256:0ef558dd8a05e2aa709ff3e49550a1d91eb4aeab621fde47153bfd3be5028ee8` |
 
 (The third value is the hash of the bytes `{"a":1,"b":[1.5,"é"]}`, which shows key sorting and
-`ensure_ascii=False`. All four values recomputed for draft 0.2.) The builder adds the frame
-vectors once `frame_hash` is written to the normalisation above, and pins them (amended at S1
-plan review, 2026-10-31: the frame vector is pinned, and added to this table, in S1 under the
-amended text encoding; the `Density` and `Densities` vectors in S5): one content (an
+`ensure_ascii=False`. All four values recomputed for draft 0.2.) The frame vector was pinned in S1
+Task 3 under the amended text rule, in `tests/test_frames.py`, where the hand-computed value and
+`frame_hash` agree; the builder adds the `Density` and `Densities` vectors in S5 and pins them
+(amended at S1 plan review, 2026-10-31). The vectors are: one content (an
 integer column with one missing value, a float column and a text column with a null) held as a
 pandas frame, where the integer column becomes `float64`, and as a polars frame, where it stays
 `Int64`, with one hash; one `Density` vector (its arrays include `z_points`); and one `Densities`
