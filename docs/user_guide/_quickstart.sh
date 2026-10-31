@@ -21,6 +21,6 @@ if ! command -v uv >/dev/null 2>&1; then
     export PATH
 fi
 
-[ -f pyproject.toml ] || uv init --bare
+[ -f pyproject.toml ] || uv init --bare --name soundscape-project
 uv add "$SPEC" jupyterlab
 uv run python _quickstart.py

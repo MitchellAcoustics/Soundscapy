@@ -41,8 +41,13 @@ def main() -> int:
     project = Path(os.environ.get("CLAUDE_PROJECT_DIR") or payload.get("cwd") or os.getcwd())
     if not (project / "Taskfile.yml").exists():
         return 0
-    cmd = ["task", "check:fast"] if shutil.which("task") else ["uv", "run", "task", "check:fast"]
-    if shutil.which(cmd[0]) is None:
+    # Prefer the go-task pinned in uv.lock; a bare `task` on PATH may be another version or
+    # another program (Taskwarrior installs a `task` binary).
+    if shutil.which("uv"):
+        cmd = ["uv", "run", "task", "check:fast"]
+    elif shutil.which("task"):
+        cmd = ["task", "check:fast"]
+    else:
         print(
             "stop_check hook: neither `task` nor `uv` is on PATH; skipped check:fast",
             file=sys.stderr,

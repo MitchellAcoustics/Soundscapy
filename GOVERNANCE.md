@@ -20,8 +20,8 @@ change affects scientific results if it does any of the following:
 - bumps a method version.
 
 A pull request that does any of these carries the label `science` and is not merged
-without the owner's approval. `.github/CODEOWNERS` names `@MitchellAcoustics` on
-`src/soundscapy/_data/`, `tests/science/`, `tests/regression/` and `design/`, so GitHub
-requests the owner's review whenever those paths change.
+without the owner's approval. `.github/CODEOWNERS` lists the paths (the bundled data,
+the science and regression tests, `design/` and `.github/`) on which GitHub requests the
+owner's review; that file is the authority.
 
 Other changes follow the usual review described in `CONTRIBUTING.md`.

@@ -485,8 +485,13 @@ stable line (PyPI `quarto-cli` is 1.10.20; v1.11 tags are prereleases).
 command selection to:
 
 ```python
-cmd = ["task", "check:fast"] if shutil.which("task") else ["uv", "run", "task", "check:fast"]
-if shutil.which(cmd[0]) is None:
+# Amended at Phase 0 code review: uv first, so the go-task pinned in uv.lock runs rather
+# than whatever `task` is on PATH (Taskwarrior installs one).
+if shutil.which("uv"):
+    cmd = ["uv", "run", "task", "check:fast"]
+elif shutil.which("task"):
+    cmd = ["task", "check:fast"]
+else:
     print("stop_check hook: neither `task` nor `uv` is on PATH; skipped check:fast", file=sys.stderr)
     return 1
 ```

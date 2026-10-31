@@ -42,13 +42,15 @@ tasks:
     desc: Run the reference-value tests
     cmds:
       # pytest exits 5 when no test carries the marker; that is not a failure while none
-      # exist yet (M1 adds them), so the nightly job stays green. Any other code fails.
+      # exist yet, so the nightly job stays green. Any other code fails. Remove this
+      # tolerance in the commit that adds the first reference test (M1 slice S1 plan).
       - uv run pytest -m reference {{.CLI_ARGS}} || test $? -eq 5
 
   test:network:
     desc: Run the tests that need network access
     cmds:
       # Exit code 5 (no test carries the marker) counts as success; see test:reference.
+      # Remove it in the commit that adds the first network test.
       - uv run pytest -m network {{.CLI_ARGS}} || test $? -eq 5
 
   check:fast:

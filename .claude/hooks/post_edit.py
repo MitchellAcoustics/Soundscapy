@@ -52,8 +52,8 @@ def main() -> int:
         relative = path.resolve().relative_to(project.resolve())
     except ValueError:
         return 0  # edited file is outside the project
-    if relative.parts and relative.parts[0] == ".claude":
-        return 0  # hook scripts and skills are not project code
+    if relative.parts[:2] in {(".claude", "skills"), (".claude", "agents")}:
+        return 0  # vendored verbatim and excluded from ruff; hook scripts are linted
 
     commands = [
         ["uv", "run", "ruff", "format", str(path)],

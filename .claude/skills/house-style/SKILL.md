@@ -132,8 +132,8 @@ whose code blocks are illustrative or normative text, not package code. The vend
 
 Every task has a `desc`, every command runs through `uv run`, and `env: {MPLBACKEND: Agg}`
 is set globally. These names are referenced by AGENTS.md, the Stop hook and CI, so do not
-rename them. Document and invoke them as `uv run task <name>` (the Stop hook falls back to
-that form when `task` is not on PATH).
+rename them. Document and invoke them as `uv run task <name>` (the Stop hook uses that form,
+and bare `task` only when `uv` is not on PATH).
 
 | Task | Runs |
 | --- | --- |

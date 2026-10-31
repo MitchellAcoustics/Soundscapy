@@ -16,7 +16,7 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
 }
 
 if (-not (Test-Path -PathType Leaf "pyproject.toml")) {
-    uv init --bare
+    uv init --bare --name soundscape-project
     if ($LASTEXITCODE -ne 0) { throw "uv init failed (exit code $LASTEXITCODE)." }
 }
 uv add "$Spec" jupyterlab

@@ -28,8 +28,8 @@ def _run_hook(tmp_path: Path, path_dir: Path) -> subprocess.CompletedProcess[str
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="the fake uv is a /bin/sh script")
-def test_stop_hook_falls_back_to_uv_run_task(tmp_path):
-    # PATH holds only a fake uv, so `task` is missing and the hook must call
+def test_stop_hook_runs_uv_run_task(tmp_path):
+    # PATH holds only a fake uv that records its arguments; the hook must call
     # `uv run task check:fast`.
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
