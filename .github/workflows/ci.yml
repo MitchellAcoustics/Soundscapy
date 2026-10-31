@@ -13,7 +13,8 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded PR runs only; every push to the branch keeps its own complete record.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
@@ -72,12 +73,44 @@ jobs:
           python-version: "3.14"
           enable-cache: true
       - run: uv sync --locked --group docs
-      - run: uv run task docs
+      - name: Build the docs with no network
+        # `task docs` must run offline (spec §5.9): the paper pages stay frozen and tutorials
+        # use bundled data. The build runs in a new network namespace with only loopback up
+        # (the Jupyter kernel talks TCP on 127.0.0.1; without lo it times out after 60 s, see
+        # house-style reference.md §4), dropped back to the runner user. UV_OFFLINE stops uv
+        # from trying to re-resolve. sudo resets PATH, so the runner's PATH is passed through.
+        env:
+          UV_OFFLINE: "1"
+        run: |
+          sudo --preserve-env unshare --net -- sh -c '
+            ip link set lo up &&
+            exec sudo --preserve-env -u "$1" env PATH="$2" uv run --locked task docs
+          ' sh "$(id -un)" "$PATH"
       - name: Fail if a page's freeze is stale
         # --intent-to-add makes new, untracked freeze entries show up in the diff too.
         run: |
           git add --intent-to-add docs/_freeze
           git diff --exit-code docs/_freeze
+
+  hooks:
+    # The prek hooks over the whole tree, as a contributor's commit would run them.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/prek
+          key: prek-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: uv run prek run --all-files --show-diff-on-failure
 
   citation:
     runs-on: ubuntu-latest

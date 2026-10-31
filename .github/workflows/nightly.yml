@@ -1,12 +1,23 @@
 # Spec design/specs/2026-10-31-phase0-m1-design.md §5.6.2: reference and network tests, the
 # paper re-execution with a freeze-diff check, and the user-facing quick-start scripts run
-# end to end on clean runners. Scheduled workflows run from the default branch only.
+# end to end on clean runners. Scheduled and manual runs start from the default branch
+# only, and the default branch is still `main` (the previous codebase), so until the rewrite
+# becomes the default branch the jobs run on pushes to soundscapy-rewrite that touch the
+# files they exercise.
 name: Nightly
 
 on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+  push:
+    branches: [soundscapy-rewrite]
+    paths:
+      - .github/workflows/nightly.yml
+      - docs/user_guide/_quickstart.*
+      - docs/papers/**
+      - tests/**/test_*network*
+      - tests/**/test_*reference*
 
 permissions:
   contents: read

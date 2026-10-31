@@ -42,7 +42,10 @@ on Windows, macOS and Linux with Python 3.11 to 3.14.
 | Reference tests: slow or external cross-implementation runs | `uv run task test:reference` |
 | Network tests: tests that download a dataset | `uv run task test:network` |
 
-The default run deselects the `reference` and `network` markers; CI runs them nightly.
+The default run deselects the `reference` and `network` markers. The nightly workflow runs
+them on pushes to `soundscapy-rewrite` that touch the nightly paths (the workflow itself, the
+quick-start scripts, `docs/papers/`, and network or reference test files), and on a schedule
+once the rewrite is the default branch.
 
 ## Docs
 
