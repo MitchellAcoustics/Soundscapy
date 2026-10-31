@@ -72,7 +72,15 @@ def _ordered_unique(codes: Iterable[Any], order: type[enum.StrEnum]) -> bool:
 def _add_code(
     rows: tuple[tuple[_E, ...], ...], mask: NDArray[np.bool_], code: _E, order: type[_E]
 ) -> tuple[tuple[_E, ...], ...]:
-    """Return ``rows`` with ``code`` added where ``mask`` is true, in enum order."""
+    """Return ``rows`` with ``code`` added where ``mask`` is true, in enum order.
+
+    The result skips the per-row checks, so ``code`` is checked here, once per call:
+    StrEnum members equal their str values, so without the type check a Flag (or a
+    plain str) would pass as a Reason.
+    """
+    if not isinstance(code, order):
+        msg = f"code must be a {order.__name__}, got {code!r} ({type(code).__name__})"
+        raise ValueError(msg)  # noqa: TRY004  # Status reports every bad code as ValueError, as its constructor does
     members = list(order)
     return tuple(
         tuple(sorted({*row, code}, key=members.index)) if hit else row
@@ -189,7 +197,9 @@ class Status:
         Raises
         ------
         ValueError
-            If ``mask`` is not a boolean array with one entry per response.
+            If ``mask`` is not a boolean array with one entry per response, or
+            ``reason`` is not a :class:`Reason` (a :class:`Flag` or a plain str is
+            rejected).
         """
         hit = self._mask(mask)
         reasons = _add_code(self.reasons, hit, reason, Reason)
@@ -213,7 +223,8 @@ class Status:
         Raises
         ------
         ValueError
-            If ``mask`` is not a boolean array with one entry per response.
+            If ``mask`` is not a boolean array with one entry per response, or ``flag``
+            is not a :class:`Flag` (a :class:`Reason` or a plain str is rejected).
         """
         hit = self._mask(mask)
         return self._unchecked(self.included, self.reasons, _add_code(self.flags, hit, flag, Flag))

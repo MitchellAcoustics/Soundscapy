@@ -1,5 +1,6 @@
 """Tests for the frame boundary, the CSV text reader and ``frame_hash``."""
 
+import csv
 import datetime as dt
 import subprocess
 import sys
@@ -300,6 +301,23 @@ def test_read_text_table_ragged_rows(tmp_path):
     path.write_text("a,b\n1,2\n1,2,3\n", encoding="utf-8")
     with pytest.raises(FileFormatError, match="record 3"):
         read_text_table(path, encoding="utf-8", delimiter=",")
+
+
+@pytest.fixture
+def small_field_limit():
+    """Lower csv.field_size_limit to 8 characters for one test, then restore it."""
+    previous = csv.field_size_limit(8)
+    yield
+    csv.field_size_limit(previous)
+
+
+@pytest.mark.usefixtures("small_field_limit")
+def test_read_text_table_csv_error_is_file_format_error(tmp_path):
+    path = tmp_path / "big.csv"
+    path.write_text("a,b\n1,2\n3,123456789\n", encoding="utf-8")
+    with pytest.raises(FileFormatError, match=r"record 3 of .*big\.csv.*field larger") as info:
+        read_text_table(path, encoding="utf-8", delimiter=",")
+    assert isinstance(info.value.__cause__, csv.Error)
 
 
 def test_read_text_table_duplicate_header(tmp_path):

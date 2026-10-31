@@ -12,7 +12,13 @@ import pydantic
 import tomlkit
 from pydantic import BeforeValidator, PlainSerializer, StrictFloat, StrictStr, ValidationError
 
-from soundscapy.errors import SettingsError, SoundscapyError
+from soundscapy.errors import (
+    DataIntegrityError,
+    DataReferenceError,
+    MappingError,
+    SettingsError,
+    SoundscapyError,
+)
 
 # --- Derived-column namespace (spec 6.3.3) -----------------------------------------------------
 
@@ -212,11 +218,33 @@ def validate(
     ------
     SoundscapyError
         ``error``, if validation fails; the message keeps pydantic's field paths.
+    DataIntegrityError, DataReferenceError, MappingError
+        Unchanged, when a validator raised one (for example while loading the
+        instrument a mapping names); pydantic would otherwise wrap it.
     """
     try:
         return cls.model_validate(data)
     except ValidationError as err:
-        raise error(f"{context}: {err}" if context else str(err)) from err
+        failure = err
+    # Outside the except block, so the original keeps its own cause and context.
+    original = _passthrough_error(failure)
+    if original is not None:
+        raise original
+    raise error(f"{context}: {failure}" if context else str(failure)) from failure
+
+
+# Errors a validator can raise that are not about the validated data's shape: they reach
+# the caller as raised, not as a field error of the model.
+_PASSTHROUGH: Final = (DataIntegrityError, DataReferenceError, MappingError)
+
+
+def _passthrough_error(err: ValidationError) -> SoundscapyError | None:
+    """Return the first error of a :data:`_PASSTHROUGH` class that ``err`` wraps."""
+    for detail in err.errors():
+        original = detail.get("ctx", {}).get("error")
+        if isinstance(original, _PASSTHROUGH):
+            return original
+    return None
 
 
 def from_toml(cls: type[M], text: str, *, error: type[SoundscapyError] = SettingsError) -> M:

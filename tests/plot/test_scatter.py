@@ -148,6 +148,37 @@ def test_c_keyword_replaces_the_colour_cycle(isd_coords):
         np.testing.assert_array_equal(collection.get_facecolor()[0], to_rgba("k"))
 
 
+def test_per_point_colours_follow_the_valid_rows(isd_coords):
+    n = isd_coords.n()
+    valid = valid_mask(isd_coords)
+    assert not valid.all()
+    values = np.arange(n, dtype=float)
+    (collection,) = _collections(plot.scatter(isd_coords, c=values))
+    # Exact: the valid rows' values are passed to matplotlib unchanged.
+    np.testing.assert_array_equal(collection.get_array(), values[valid])
+    faces = np.array([to_rgba("k"), to_rgba("r")])[np.arange(n) % 2]
+    (collection,) = _collections(plot.scatter(isd_coords, facecolors=faces))
+    # Exact: to_rgba values are the colours matplotlib stores.
+    np.testing.assert_array_equal(collection.get_facecolor(), faces[valid])
+
+
+def test_per_point_colours_with_by_raise(isd_coords):
+    n = isd_coords.n()
+    with pytest.raises(ValueError, match=r"c=.*one colour per response") as info:
+        plot.scatter(isd_coords, by="location", c=np.zeros(n))
+    assert "single colour" in str(info.value)
+    with pytest.raises(ValueError, match=r"color=.*one colour per response"):
+        plot.scatter(isd_coords, by="location", color=["k"] * n)
+
+
+def test_single_colour_with_by_is_not_per_point(isd_coords):
+    # An RGB tuple is one colour, whatever its length.
+    ax = plot.scatter(isd_coords, by="location", color=(1.0, 0.0, 0.0))
+    for collection in _collections(ax):
+        # Exact: to_rgba of the tuple is the colour matplotlib stores.
+        np.testing.assert_array_equal(collection.get_facecolor()[0], to_rgba((1.0, 0.0, 0.0)))
+
+
 def _relabel(isd_coords, location: str, rows: slice) -> Coordinates:
     """Return ``isd_coords`` with the location label of ``rows`` set to ``location``."""
     column = isd_coords.provenance["id_columns"]["location"]

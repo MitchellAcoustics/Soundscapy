@@ -453,6 +453,8 @@ def read_mapping(path: str | os.PathLike[str]) -> SurveyMapping:
         fails validation; the message keeps pydantic's field paths.
     DataReferenceError
         If the instrument does not ship.
+    DataIntegrityError
+        If the shipped instrument file does not match its pinned hash.
     """
     text = Path(path).read_text(encoding="utf-8")
     data = parse_toml(text, error=MappingError, source=os.fspath(path))

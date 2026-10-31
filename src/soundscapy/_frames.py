@@ -394,12 +394,18 @@ def read_text_table(path: str | os.PathLike[str], *, encoding: str, delimiter: s
     EncodingError
         If the file cannot be decoded with ``encoding``.
     FileFormatError
-        If the file has no header, the header repeats a name, or a record has more cells
-        than the header.
+        If the file has no header, the header repeats a name, a record has more cells
+        than the header, or the CSV parser rejects a record (for example a field longer
+        than ``csv.field_size_limit()``).
     """
+    records: list[list[str]] = []
     try:
         with Path(path).open(encoding=encoding, newline="") as handle:
-            records = list(csv.reader(handle, delimiter=delimiter))
+            records.extend(csv.reader(handle, delimiter=delimiter))
+    except csv.Error as err:
+        # The failing record is the one after the last record read; the header is 1.
+        msg = f"record {len(records) + 1} of {os.fspath(path)!r} cannot be parsed: {err}"
+        raise FileFormatError(msg) from err
     except UnicodeDecodeError as err:
         msg = f"{os.fspath(path)!r} cannot be decoded as {encoding}: {err.reason}"
         raise EncodingError(

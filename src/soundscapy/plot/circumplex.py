@@ -1,7 +1,10 @@
 """Plots of projected responses on the circumplex."""
 
+from collections.abc import Mapping
 from itertools import cycle
 from typing import TYPE_CHECKING, Any
+
+import numpy as np
 
 from soundscapy._model import _UNSET, _Unset
 from soundscapy.distribution.coordinates import valid_mask
@@ -27,6 +30,35 @@ def _legend_label(key: str) -> str:
     if key == "":
         return "(blank)"
     return repr(key) if key.startswith("_") else key
+
+
+def _per_point(value: object, n_rows: int) -> bool:
+    """Return whether a colour keyword's value gives one colour (or value) per row."""
+    import matplotlib.colors as mcolors  # noqa: PLC0415  # matplotlib is imported lazily
+
+    if isinstance(value, str) or mcolors.is_color_like(value):
+        return False
+    return np.shape(value)[:1] == (n_rows,)
+
+
+def _per_point_colours(
+    kwargs: Mapping[str, Any], coords: "Coordinates", *, grouped: bool
+) -> dict[str, Any]:
+    """Return the per-point colour keywords of ``kwargs``, cut to the valid rows."""
+    options: dict[str, Any] = {}
+    for keyword in _COLOUR_KEYWORDS.intersection(kwargs):
+        value = kwargs[keyword]
+        if not _per_point(value, coords.n()):
+            continue
+        if grouped:
+            msg = (
+                f"{keyword}= gives one colour per response, which cannot be split across "
+                "the groups of by=; pass a single colour, or select each group and plot "
+                "it separately"
+            )
+            raise ValueError(msg)
+        options[keyword] = np.asarray(value)[valid_mask(coords)]
+    return options
 
 
 def scatter(
@@ -75,6 +107,8 @@ def scatter(
     ------
     MappingError
         If ``by`` names no id role, label column or ``"language"``.
+    ValueError
+        If ``by`` is set and a colour keyword gives one colour per response.
 
     References
     ----------
@@ -91,12 +125,13 @@ def scatter(
     if ax is None:
         ax = new_axes()
     group_by = "" if isinstance(by, _Unset) else by
+    per_point = _per_point_colours(kwargs, coords, grouped=bool(group_by))
     groups = coords.split(group_by) if group_by else {"": coords}
     colours = mpl.color_sequences["petroff10"]
     styles = ((colour, marker) for marker in cycle(_MARKERS) for colour in colours)
     for (key, group), (colour, marker) in zip(groups.items(), styles, strict=False):
         xy = group.xy[valid_mask(group)]
-        options: dict[str, Any] = {"marker": marker, **kwargs}
+        options: dict[str, Any] = {"marker": marker, **kwargs, **per_point}
         if _COLOUR_KEYWORDS.isdisjoint(kwargs):
             options["color"] = colour
         if group_by:

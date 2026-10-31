@@ -60,7 +60,9 @@ It saves your first plot, a scatter of the bundled ISD subset by location, as
 The pin `soundscapy==1.0.0.dev1` names a pre-release exactly, so uv installs it without
 needing `--prerelease`.
 
-Then open JupyterLab in the project and paste the same code into a notebook cell:
+Then open JupyterLab in the project and paste this into a notebook cell. It is the
+script's code, except that it ends in `.figure`, so the notebook
+shows the plot instead of saving it:
 
 ```bash
 uv run jupyter lab
@@ -81,7 +83,8 @@ In a hosted notebook such as Google Colab, install soundscapy with one cell:
 %pip install 'soundscapy==1.0.0.dev1'
 ```
 
-Then run the same code in the next cell:
+Then run this in the next cell; like the JupyterLab cell, it
+shows the plot instead of saving it:
 
 ```python
 import soundscapy as sspy

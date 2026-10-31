@@ -135,6 +135,20 @@ def test_reason_in_flags_row_raises():
         Status(np.array([False]), ((Flag.UNDER_AGE,),), ((),))  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
 
 
+def test_with_methods_reject_codes_of_the_wrong_enum():
+    # StrEnum equality makes Flag.UNDER_AGE == Reason.UNDER_AGE == "under_age"; the
+    # with_* methods skip the per-row checks, so they must check the code's type.
+    status = Status.all_included(1)
+    with pytest.raises(ValueError, match="must be a Reason"):
+        status.with_reason([True], Flag.UNDER_AGE)  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
+    with pytest.raises(ValueError, match="must be a Reason"):
+        status.with_reason([True], "no_consent")  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
+    with pytest.raises(ValueError, match="must be a Flag"):
+        status.with_flag([True], Reason.UNDER_AGE)  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
+    with pytest.raises(ValueError, match="must be a Flag"):
+        status.with_flag([True], "all_midpoint")  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
+
+
 def test_public_constructor_still_validates_derived_fields():
     # with_reason and with_flag skip the per-row checks; the dataclass constructor must not.
     derived = Status.all_included(2).with_reason([True, False], Reason.NO_CONSENT)

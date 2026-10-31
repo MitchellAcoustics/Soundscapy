@@ -12,9 +12,17 @@ from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
-from soundscapy.errors import CodingError, DataReferenceError, MappingError
+from soundscapy._model import validate
+from soundscapy.errors import (
+    CodingError,
+    DataIntegrityError,
+    DataReferenceError,
+    MappingError,
+    SettingsError,
+)
 from soundscapy.instrument import Scale, circumplex
 from soundscapy.provenance import hash_json
+from soundscapy.survey import mapping as mapping_module
 from soundscapy.survey.mapping import (
     Coding,
     Groups,
@@ -220,6 +228,24 @@ def test_unknown_attribute_key_raises(tmp_path):
 def test_unknown_instrument_raises():
     with pytest.raises(DataReferenceError, match="indoor"):
         SurveyMapping.model_validate({**_raw(), "instrument": "indoor"})
+
+
+@pytest.mark.parametrize("raised", [DataIntegrityError, MappingError])
+def test_read_mapping_reraises_instrument_errors_unchanged(tmp_path, monkeypatch, raised):
+    # Both subclass ValueError, so pydantic would wrap them inside the before-validator.
+    original = raised("hash mismatch: expected h1-sha256:aa, got h1-sha256:bb")
+
+    def broken(*_args: object, **_kwargs: object) -> None:
+        raise original
+
+    monkeypatch.setattr(mapping_module, "circumplex", broken)
+    path = _write_raw(tmp_path, _raw())
+    with pytest.raises(raised) as info:
+        read_mapping(path)
+    assert info.value is original
+    with pytest.raises(raised) as info:
+        validate(SurveyMapping, _raw(), error=SettingsError)
+    assert info.value is original
 
 
 def test_bad_language_code_raises(tmp_path):

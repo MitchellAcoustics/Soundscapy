@@ -36,10 +36,10 @@ def _mapping(ids: dict) -> SurveyMapping:
     return SurveyMapping.model_validate(raw_mapping(ids))
 
 
-def _attach_log(caplog: pytest.LogCaptureFixture) -> str:
+def _attach_log(caplog: pytest.LogCaptureFixture, level: int = logging.INFO) -> str:
     records = [r for r in caplog.records if r.name == "soundscapy" and "attach" in r.getMessage()]
     assert len(records) == 1
-    assert records[0].levelno == logging.INFO
+    assert records[0].levelno == level
     return records[0].getMessage()
 
 
@@ -104,9 +104,10 @@ def test_attach_partial_frame(isd_survey, isd_coords, caplog):
     assert list(out.index) == list(half.index)
     # Exact: the values are copied, not computed.
     np.testing.assert_array_equal(out[X].to_numpy(), coords.xy[::2, 0])
-    message = _attach_log(caplog)
+    message = _attach_log(caplog, logging.WARNING)
     assert "id" in message
     assert "776 of 776" in message
+    assert "776 survey responses matched no frame row" in message
 
 
 def test_attach_blank_id_part_is_unmatched(isd_survey, isd_coords, caplog):
@@ -117,7 +118,42 @@ def test_attach_blank_id_part_is_unmatched(isd_survey, isd_coords, caplog):
         out = attach(frame, coords)
     assert out.loc[3, list(ADDED)].isna().all()
     assert out.drop(index=3)[COL_INCLUDED].notna().all()
-    assert "1551 of 1552" in _attach_log(caplog)
+    message = _attach_log(caplog, logging.WARNING)
+    assert "1551 of 1552" in message
+    assert "1 survey response matched no frame row" in message
+
+
+def test_attach_no_unmatched_survey_rows_logs_info(isd_survey, isd_coords, caplog):
+    with caplog.at_level(logging.INFO, logger="soundscapy"):
+        attach(isd_survey.data, isd_coords)
+    assert "1552 of 1552" in _attach_log(caplog, logging.INFO)
+
+
+def test_attach_unmatched_survey_rows_warning_names_the_remedy(tmp_path, caplog):
+    # A user re-reading the CSV with pd.read_csv turns "007" into 7; that is not
+    # recoverable, so the warning names the cause and the remedy.
+    header = ",".join(("ID", *LABELS))
+    path = write_csv(tmp_path, header, f"007,{ONES}", f"8,{FIVES}")
+    coords = project(read_survey(path, _mapping({"response": "ID"})))
+    with caplog.at_level(logging.INFO, logger="soundscapy"):
+        out = attach(pd.read_csv(path), coords)
+    assert out[COL_INCLUDED].isna().tolist() == [True, False]
+    message = _attach_log(caplog, logging.WARNING)
+    assert "1 survey response matched no frame row" in message
+    assert "leading zeros" in message
+    assert "pd.read_csv(path, dtype=str)" in message
+    out = attach(pd.read_csv(path, dtype=str), coords)
+    assert out[COL_INCLUDED].notna().all()
+
+
+def test_attach_no_match_hint_names_the_remedy(tmp_path):
+    header = ",".join(("ID", *LABELS))
+    path = write_csv(tmp_path, header, f"007,{ONES}", f"008,{FIVES}")
+    coords = project(read_survey(path, _mapping({"response": "ID"})))
+    with pytest.raises(AlignmentError, match="no frame row") as info:
+        attach(pd.read_csv(path), coords)
+    assert "leading zeros" in info.value.hint
+    assert "pd.read_csv(path, dtype=str)" in info.value.hint
 
 
 def test_attach_never_overwrites(isd_survey, isd_coords):
@@ -193,6 +229,28 @@ def test_attach_key_not_equal_to_roles(tmp_path):
     out = attach(frame, coords)
     # Exact: the values are copied, not computed.
     np.testing.assert_array_equal(out[X].to_numpy(), coords.xy[[2, 0, 1], 0])
+
+
+def test_attach_integer_ids_made_float_by_a_null(tmp_path):
+    # pd.read_csv turns an integer column with a blank cell into float64 (1 -> 1.0);
+    # the frame id must still read "1", as the survey's CSV cell does.
+    header = ",".join(("site", "resp_no", *LABELS))
+    path = write_csv(tmp_path, header, f"s1,1,{ONES}", f"s1,2,{FIVES}", f"s2,1,{FIVES}")
+    coords = project(read_survey(path, _mapping({"response_key": ["site", "resp_no"]})))
+    frame = pd.DataFrame({"site": ["s2", "s1", "s1", "s1"], "resp_no": [1, 1, 2, None]})
+    assert frame["resp_no"].dtype == np.float64
+    out = attach(frame, coords)
+    assert out[COL_INCLUDED].isna().tolist() == [False, False, False, True]
+    # Exact: the values are copied, not computed.
+    np.testing.assert_array_equal(out[X].to_numpy()[:3], coords.xy[[2, 0, 1], 0])
+
+
+def test_attach_non_integral_float_ids_keep_their_text(tmp_path):
+    header = ",".join(("ID", *LABELS))
+    path = write_csv(tmp_path, header, f"1.5,{ONES}", f"2,{FIVES}")
+    coords = project(read_survey(path, _mapping({"response": "ID"})))
+    out = attach(pd.DataFrame({"ID": [2.0, 1.5, np.nan]}), coords)
+    assert out[COL_INCLUDED].isna().tolist() == [False, False, True]
 
 
 def test_attach_blank_ok_key_part_matches(tmp_path):

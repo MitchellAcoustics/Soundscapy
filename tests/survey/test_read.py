@@ -22,7 +22,7 @@ from soundscapy.errors import (
 )
 from soundscapy.provenance import envelope, hash_file
 from soundscapy.survey.mapping import SurveyMapping
-from soundscapy.survey.read import ImportSettings, ReadOptions, read_survey
+from soundscapy.survey.read import ImportSettings, ReadOptions, check_unique, read_survey
 from soundscapy.survey.status import Reason
 from tests._helpers import CSV_ORDER, ONES, raw_mapping, write_csv
 
@@ -107,6 +107,20 @@ def test_blank_key_part_raises(tmp_path):
     assert "row 3" in str(info.value)
 
 
+def test_blank_key_parts_in_several_columns_are_reported_together(tmp_path):
+    path = _csv(
+        tmp_path,
+        f"L1,S1,G1,7,eng,{ONES}",
+        f"L1,S1,G1, ,eng,{ONES}",
+        f"L1,S1,,8,eng,{ONES}",
+    )
+    with pytest.raises(MissingResponseIdError) as info:
+        read_survey(path, _mapping())
+    message = str(info.value)
+    assert "rows 3, 4" in message
+    assert "'GroupID', 'RecordID'" in message
+
+
 def test_blank_key_part_allowed(tmp_path):
     path = _csv(tmp_path, f"L1,S1,G1,7,eng,{ONES}", f"L1,S1,G1,,eng,{ONES}")
     ids = {"response_key": list(KEY), "response_key_blank_ok": ["RecordID"]}
@@ -126,6 +140,28 @@ def test_duplicate_ids_raise(tmp_path):
     with pytest.raises(DuplicateResponseIdError, match="'a'") as info:
         read_survey(path, _mapping({"response": "ID"}))
     assert "rows 2, 4" in str(info.value)
+
+
+def test_check_unique_lists_repeats_with_their_rows():
+    seen: list[list[tuple[str, list[int]]]] = []
+
+    def describe(repeated: list[tuple[str, list[int]]]) -> str:
+        seen.append(repeated)
+        return "repeats"
+
+    check_unique(["a", "b"], [2, 3], error=SettingsError, describe=describe)
+    assert seen == []
+    with pytest.raises(SettingsError, match="repeats") as info:
+        check_unique(
+            ["b", "a", "b", "a", "c"],
+            [2, 3, 4, 5, 6],
+            error=SettingsError,
+            describe=describe,
+            hint="fix it",
+        )
+    assert info.value.hint == "fix it"
+    # First-occurrence order, each value with every row it is at.
+    assert seen == [[("b", [2, 4]), ("a", [3, 5])]]
 
 
 def test_key_part_with_slash_raises(tmp_path):

@@ -35,6 +35,18 @@ def test_quickstart_is_the_first_plot():
     assert 'savefig("first-plot.png")' in text
 
 
+def test_install_page_says_the_notebook_cell_shows_the_plot():
+    # The notebook cells end in .figure, which shows the plot, where the script saves it;
+    # the prose must not call them "the same code".
+    text = (GUIDE / "01-install.qmd").read_text()
+    script = (GUIDE / "_quickstart.py").read_text()
+    notebook = script.replace('.figure.savefig("first-plot.png")', ".figure")
+    assert notebook != script
+    assert "the same code" not in text
+    assert text.count(f"```python\n{notebook}```") == 2
+    assert text.count("shows the plot instead of saving it") == 2
+
+
 def test_quickstart_runs(tmp_path: Path):
     result = subprocess.run(
         [sys.executable, str(GUIDE / "_quickstart.py")],

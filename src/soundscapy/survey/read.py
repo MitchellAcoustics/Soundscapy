@@ -9,10 +9,10 @@ import codecs
 import copy
 import os
 from collections import Counter
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final, Literal
+from typing import Any, Final, Literal, NoReturn
 
 import numpy as np
 from numpy.typing import NDArray
@@ -30,6 +30,7 @@ from soundscapy.errors import (
     MissingResponseIdError,
     ScaleViolationError,
     SettingsError,
+    SoundscapyError,
     _plural,
     _shown,
 )
@@ -489,12 +490,11 @@ def _response_ids(
         source, columns = "column", [ids.response]
     elif ids.response_key:
         parts = {column: stripped[column] for column in ids.response_key}
+        values, blank = join_id_parts(parts, ids.response_key_blank_ok)
+        if blank.any():
+            _raise_blank_key(parts, blank, rows, ids.response_key_blank_ok)
         for column, part in parts.items():
-            if column not in ids.response_key_blank_ok:
-                hint = "fill in every key part, or list the column in ids.response_key_blank_ok"
-                _check_not_blank(part, rows, f"the response key column {column!r}", hint)
             _check_no_slash(part, rows, column)
-        values, _ = join_id_parts(parts, ids.response_key_blank_ok)  # blanks checked above
         source, columns = "key", list(ids.response_key)
     else:
         values = np.empty(len(rows), dtype=object)
@@ -502,6 +502,25 @@ def _response_ids(
         source, columns = "row", []
     _check_unique(values, rows)
     return values, source, columns
+
+
+def _raise_blank_key(
+    parts: Mapping[str, NDArray[np.object_]],
+    blank: NDArray[np.bool_],
+    rows: NDArray[np.int64],
+    blank_ok: Collection[str],
+) -> NoReturn:
+    """Raise for the rows ``blank`` marks, naming the key columns blank there."""
+    columns = [
+        column
+        for column, part in parts.items()
+        if column not in blank_ok and not all(part[blank].tolist())
+    ]
+    where = _rows(rows[blank].tolist())
+    msg = f"the response key is blank at {where}, in {_plural(len(columns), 'column')} "
+    msg += ", ".join(map(repr, columns))
+    hint = "fill in every key part, or list the column in ids.response_key_blank_ok"
+    raise MissingResponseIdError(msg, hint=hint)
 
 
 def _check_no_slash(part: NDArray[np.object_], rows: NDArray[np.int64], column: str) -> None:
@@ -512,16 +531,55 @@ def _check_no_slash(part: NDArray[np.object_], rows: NDArray[np.int64], column: 
         raise MappingError(msg, hint="map a response column instead, or clean the key column")
 
 
-def _check_unique(values: NDArray[np.object_], rows: NDArray[np.int64]) -> None:
+def check_unique(
+    values: Sequence[str],
+    rows: Sequence[int],
+    *,
+    error: type[SoundscapyError],
+    describe: Callable[[list[tuple[str, list[int]]]], str],
+    hint: str = "",
+) -> None:
+    """Raise when a response id repeats.
+
+    Parameters
+    ----------
+    values : sequence of str
+        The ids.
+    rows : sequence of int
+        Each id's row number, as the message should show it.
+    error : type[SoundscapyError]
+        The error raised.
+    describe : callable
+        Turns the repeats, ``(id, rows)`` pairs in first-occurrence order, into the
+        error message.
+    hint : str, optional
+        The error's hint.
+
+    Raises
+    ------
+    SoundscapyError
+        ``error``, if any id repeats.
+    """
     where: dict[str, list[int]] = {}
-    for value, row in zip(values.tolist(), rows.tolist(), strict=True):
+    for value, row in zip(values, rows, strict=True):
         where.setdefault(value, []).append(row)
     repeated = [(value, numbers) for value, numbers in where.items() if len(numbers) > 1]
     if repeated:
+        raise error(describe(repeated), hint=hint)
+
+
+def _check_unique(values: NDArray[np.object_], rows: NDArray[np.int64]) -> None:
+    def describe(repeated: list[tuple[str, list[int]]]) -> str:
         shown = _shown([f"{value!r} at {_rows(numbers)}" for value, numbers in repeated], sep="; ")
-        msg = f"response ids must be unique; {len(repeated)} repeat: {shown}"
-        hint = "map a response column that is unique, or more columns into ids.response_key"
-        raise DuplicateResponseIdError(msg, hint=hint)
+        return f"response ids must be unique; {len(repeated)} repeat: {shown}"
+
+    check_unique(
+        values.tolist(),
+        rows.tolist(),
+        error=DuplicateResponseIdError,
+        describe=describe,
+        hint="map a response column that is unique, or more columns into ids.response_key",
+    )
 
 
 def _languages(
