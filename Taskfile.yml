@@ -1,0 +1,87 @@
+version: '3'
+
+env:
+  MPLBACKEND: Agg
+
+tasks:
+  setup:
+    desc: Install every dependency group and the git hooks
+    cmds:
+      - uv sync --all-groups
+      - uv run prek install
+
+  fmt:
+    desc: Format and auto-fix the code
+    cmds:
+      - uv run ruff format
+      - uv run ruff check --fix
+
+  lint:
+    desc: Check formatting, lint rules and import contracts
+    cmds:
+      - uv run ruff format --check
+      - uv run ruff check
+      - uv run lint-imports
+
+  typecheck:
+    desc: Type-check with ty
+    cmds:
+      - uv run ty check
+
+  test:
+    desc: Run the test suite (extra pytest arguments after --)
+    cmds:
+      - uv run pytest {{.CLI_ARGS}}
+
+  test:cov:
+    desc: Run the test suite with a coverage report
+    cmds:
+      - uv run pytest --cov --cov-report=term-missing {{.CLI_ARGS}}
+
+  test:reference:
+    desc: Run the reference-value tests
+    cmds:
+      - uv run pytest -m reference {{.CLI_ARGS}}
+
+  test:network:
+    desc: Run the tests that need network access
+    cmds:
+      - uv run pytest -m network {{.CLI_ARGS}}
+
+  check:fast:
+    desc: Lint and type-check (offline, a few seconds)
+    cmds:
+      - task: lint
+      - task: typecheck
+
+  check:
+    desc: Lint, type-check and test with coverage (done means this passes)
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test:cov
+
+  docs:
+    desc: Build the docs site offline (papers stay frozen)
+    cmds:
+      - uv run --group docs great-docs build
+
+  docs:papers:
+    desc: Re-execute and freeze the paper pages (needs network)
+    cmds:
+      - uv run --group docs great-docs freeze docs/papers/2022-how-to-analyse.qmd
+
+  docs:preview:
+    desc: Preview the docs site locally
+    cmds:
+      - uv run --group docs great-docs preview
+
+  build:
+    desc: Build the sdist and wheel
+    cmds:
+      - uv build
+
+  repo-review:
+    desc: Run sp-repo-review against the repository
+    cmds:
+      - uvx 'sp-repo-review[cli]' .
