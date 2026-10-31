@@ -1,0 +1,97 @@
+schema = "soundscapy.circumplex"
+schema_version = 1
+name = "iso-12913-outdoor"
+version = "1"
+reference_language = "eng"
+translations = []
+
+[[attributes]]
+position = "PAQ1"
+angle_deg = 0.0
+
+[attributes.labels]
+eng = "pleasant"
+
+[[attributes]]
+position = "PAQ2"
+angle_deg = 45.0
+
+[attributes.labels]
+eng = "vibrant"
+
+[[attributes]]
+position = "PAQ3"
+angle_deg = 90.0
+
+[attributes.labels]
+eng = "eventful"
+
+[[attributes]]
+position = "PAQ4"
+angle_deg = 135.0
+
+[attributes.labels]
+eng = "chaotic"
+
+[[attributes]]
+position = "PAQ5"
+angle_deg = 180.0
+
+[attributes.labels]
+eng = "annoying"
+
+[[attributes]]
+position = "PAQ6"
+angle_deg = 225.0
+
+[attributes.labels]
+eng = "monotonous"
+
+[[attributes]]
+position = "PAQ7"
+angle_deg = 270.0
+
+[attributes.labels]
+eng = "uneventful"
+
+[[attributes]]
+position = "PAQ8"
+angle_deg = 315.0
+
+[attributes.labels]
+eng = "calm"
+
+[[axes]]
+id = "ISOPleasant"
+positive = "PAQ1"
+negative = "PAQ5"
+
+[axes.labels]
+
+[[axes]]
+id = "ISOEventful"
+positive = "PAQ3"
+negative = "PAQ7"
+
+[axes.labels]
+
+[scale]
+minimum = 1.0
+maximum = 5.0
+kind = "ordinal"
+
+[scale.labels]
+eng = ["Strongly disagree", "Somewhat disagree", "Neutral", "Somewhat agree", "Strongly agree"]
+
+[quadrants]
+"++" = "PAQ2"
+"-+" = "PAQ4"
+-- = "PAQ6"
+"+-" = "PAQ8"
+
+[citation]
+citation = "ISO/TS 12913-2:2018, Acoustics - Soundscape - Part 2: Data collection and reporting requirements (the attribute set); ISO/TS 12913-3:2019, Acoustics - Soundscape - Part 3: Data analysis (the 45 degree angles)."
+doi_or_url = ""
+licence = "BSD-3-Clause (this file)"
+date = "2019"
+notes = "The standards are paywalled, so no DOI or URL is given. The scale wording is taken from soundscapy 0.x and awaits the owner's check against Table A.1 of ISO/TS 12913-2:2018."
