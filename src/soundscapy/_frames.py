@@ -20,7 +20,7 @@ import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from narwhals.stable.v2.typing import IntoDataFrame
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 from soundscapy.errors import (
     CodingError,
@@ -39,6 +39,7 @@ __all__ = [
     "frame_hash",
     "new_frame",
     "read_text_table",
+    "readonly_copy",
     "to_eager",
     "to_native",
     "with_columns",
@@ -50,6 +51,26 @@ Frame: TypeAlias = IntoDataFrame
 _LAZY_MESSAGE: Final = "lazy frames are not accepted; call .collect() first"
 _QUIET_NAN: Final = np.uint64(0x7FF8000000000000)
 _NULL_TEXT: Final = struct.pack("<Q", 0xFFFFFFFFFFFFFFFF)
+
+
+def readonly_copy(values: ArrayLike, dtype: DTypeLike | None = None) -> NDArray[Any]:
+    """Return a read-only copy of an array.
+
+    Parameters
+    ----------
+    values : array-like
+        The values to copy.
+    dtype : numpy dtype, optional
+        The dtype of the copy; that of ``values`` when omitted.
+
+    Returns
+    -------
+    numpy.ndarray
+        A new array that does not share memory with ``values``, with writing disabled.
+    """
+    out = np.array(values, dtype=dtype, copy=True)
+    out.setflags(write=False)
+    return out
 
 
 def to_eager(obj: object) -> nw.DataFrame[Any]:
@@ -404,11 +425,9 @@ def read_text_table(path: str | os.PathLike[str], *, encoding: str, delimiter: s
             raise FileFormatError(msg)
         rows.append(record + [""] * (len(header) - len(record)))
         numbers.append(number)
-    row_numbers = np.array(numbers, dtype=np.int64)
-    row_numbers.setflags(write=False)
     return TextTable(
         frame=pd.DataFrame(rows, columns=header, dtype=object),
-        row_numbers=row_numbers,
+        row_numbers=readonly_copy(numbers, np.int64),
         n_blank=len(records) - 1 - len(rows),
         delimiter=delimiter,
         encoding=encoding,

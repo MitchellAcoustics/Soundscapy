@@ -8,9 +8,8 @@ against the response scale and records each response's inclusion status.
 import codecs
 import copy
 import os
-import re
 from collections import Counter
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Final, Literal
@@ -20,7 +19,7 @@ from numpy.typing import NDArray
 from pydantic import StrictStr, ValidationError, field_validator
 
 from soundscapy import _data
-from soundscapy._frames import column_text, read_text_table, to_eager
+from soundscapy._frames import column_text, read_text_table, readonly_copy, to_eager
 from soundscapy._log import logger
 from soundscapy._model import _UNSET, SSP_PREFIX, FrozenModel, _Unset
 from soundscapy.errors import (
@@ -31,9 +30,13 @@ from soundscapy.errors import (
     MissingResponseIdError,
     ScaleViolationError,
     SettingsError,
+    _plural,
+    _shown,
 )
 from soundscapy.provenance import envelope, hash_file, hash_json
 from soundscapy.survey.mapping import (
+    _LANGUAGE_CODE,
+    _NOT_LANGUAGE_CODE,
     IdSpec,
     ItemGroup,
     LanguageSpec,
@@ -46,12 +49,8 @@ from soundscapy.survey.status import Reason, Status
 __all__ = ["ImportSettings", "ReadOptions", "SourceRef", "Survey", "read_survey"]
 
 _ROLES: Final = ("location", "session", "group", "record")
-_LANGUAGE_CODE: Final = re.compile(r"^[a-z]{3}$")
 _SUFFIX_FORMATS: Final[Mapping[str, Literal["csv", "tsv"]]] = {".csv": "csv", ".tsv": "tsv"}
 _DEFAULT_DELIMITERS: Final[Mapping[str, str]] = {"csv": ",", "tsv": "\t"}
-_MAX_SHOWN: Final = 5
-
-_Texts = Callable[[str], NDArray[np.object_]]
 
 
 class ReadOptions(FrozenModel):
@@ -128,12 +127,6 @@ class SourceRef(FrozenModel):
     read_options: ReadOptions
 
 
-def _frozen(values: NDArray[Any], dtype: type) -> NDArray[Any]:
-    out = np.array(values, dtype=dtype, copy=True)
-    out.setflags(write=False)
-    return out
-
-
 @dataclass(frozen=True, eq=False, slots=True)
 class Survey:
     """A survey read and coded against its mapping, one entry per response.
@@ -186,11 +179,12 @@ class Survey:
     def __post_init__(self) -> None:
         """Copy the arrays read-only and the provenance deeply; check array lengths."""
         object.__setattr__(self, "provenance", copy.deepcopy(self.provenance))
-        object.__setattr__(self, "response_id", _frozen(self.response_id, object))
-        object.__setattr__(self, "language", _frozen(self.language, object))
-        scores = {name: _frozen(v, np.float64) for name, v in self.scores.items()}
+        object.__setattr__(self, "response_id", readonly_copy(self.response_id, object))
+        object.__setattr__(self, "language", readonly_copy(self.language, object))
+        scores = {name: readonly_copy(v, np.float64) for name, v in self.scores.items()}
         object.__setattr__(self, "scores", scores)
-        object.__setattr__(self, "ids", {role: _frozen(v, object) for role, v in self.ids.items()})
+        ids = {role: readonly_copy(v, object) for role, v in self.ids.items()}
+        object.__setattr__(self, "ids", ids)
         lengths = {
             "response_id": len(self.response_id),
             "language": len(self.language),
@@ -341,15 +335,18 @@ def _read_survey(
     table = read_text_table(path, encoding=options.encoding, delimiter=options.delimiter)
     frame = to_eager(table.frame)
     _check_columns(list(frame.columns), mapping)
-
-    def texts(name: str) -> NDArray[np.object_]:
-        return column_text(frame, name)
-
+    ids = mapping.ids
+    role_columns = {role: getattr(ids, role) for role in _mapped_roles(ids)}
+    stripped = {
+        column: stripped_text(frame, column)
+        for column in (ids.response, *ids.response_key, *role_columns.values())
+        if column
+    }
     rows = table.row_numbers
-    response_id, id_source, id_columns = _response_ids(mapping.ids, texts, rows)
-    language = _languages(mapping.language, texts, response_id)
+    response_id, id_source, id_columns = _response_ids(ids, stripped, rows)
+    language = _languages(mapping.language, frame, response_id)
     group = mapping.groups.attributes
-    scores = _code_group(group, texts, response_id)
+    scores = _code_group(group, frame, response_id)
     status = Status.all_included(len(response_id)).with_reason(
         np.isnan(scores).any(axis=1), Reason.INCOMPLETE_ATTRIBUTES
     )
@@ -363,8 +360,7 @@ def _read_survey(
         "version": mapping.instrument_version,
         "hash": _data.pin(f"circumplexes/{mapping.instrument}/{mapping.instrument_version}.toml"),
     }
-    blank_ok = set(mapping.ids.response_key_blank_ok)
-    role_columns = {role: getattr(mapping.ids, role) for role in _mapped_roles(mapping.ids)}
+    blank_ok = set(ids.response_key_blank_ok)
     provenance = envelope(
         operation="read_survey",
         settings=settings,
@@ -375,14 +371,14 @@ def _read_survey(
         read=options.model_dump(mode="json"),
         id_columns=role_columns,
         response_id_columns=id_columns,
-        response_key_blank_ok=[c for c in mapping.ids.response_key if c in blank_ok],
+        response_key_blank_ok=[c for c in ids.response_key if c in blank_ok],
     )
     return Survey(
         data=table.frame,
         mapping=mapping,
         scores={"attributes": scores},
         response_id=response_id,
-        ids={role: _stripped(texts(column)) for role, column in role_columns.items()},
+        ids={role: stripped[column] for role, column in role_columns.items()},
         language=language,
         status=status,
         settings=settings,
@@ -418,17 +414,9 @@ def _check_columns(header: list[str], mapping: SurveyMapping) -> None:
         raise MappingError(msg, hint=f"the file's columns are {header}")
 
 
-def _stripped(values: NDArray[np.object_]) -> NDArray[np.object_]:
-    out = np.empty(len(values), dtype=object)
-    out[:] = [value.strip() for value in values.tolist()]
-    return out
-
-
 def _rows(numbers: Sequence[int]) -> str:
     """``row 3`` or ``rows 3, 5``, at most five numbers then how many more."""
-    shown = ", ".join(str(n) for n in numbers[:_MAX_SHOWN])
-    more = f" and {len(numbers) - _MAX_SHOWN} more" if len(numbers) > _MAX_SHOWN else ""
-    return f"{'row' if len(numbers) == 1 else 'rows'} {shown}{more}"
+    return f"{_plural(len(numbers), 'row')} {_shown(numbers)}"
 
 
 def _check_not_blank(
@@ -440,26 +428,77 @@ def _check_not_blank(
         raise MissingResponseIdError(msg, hint=hint)
 
 
+def stripped_text(frame: Any, name: str) -> NDArray[np.object_]:  # noqa: ANN401  # a narwhals frame
+    """Read an id column as text, each cell stripped of surrounding whitespace.
+
+    Parameters
+    ----------
+    frame : narwhals.stable.v2.DataFrame
+        The frame.
+    name : str
+        The column.
+
+    Returns
+    -------
+    numpy.ndarray of str
+        One stripped text per row, ``""`` for a null.
+    """
+    out = np.empty(len(frame), dtype=object)
+    out[:] = [text.strip() for text in column_text(frame, name).tolist()]
+    return out
+
+
+def join_id_parts(
+    parts: Mapping[str, NDArray[np.object_]], blank_ok: Collection[str]
+) -> tuple[NDArray[np.object_], NDArray[np.bool_]]:
+    """Join response-key parts into response ids, the way :func:`read_survey` builds them.
+
+    Parameters
+    ----------
+    parts : mapping of str to numpy.ndarray of str
+        Per key column, in key order, its stripped texts; every array has one entry per
+        row.
+    blank_ok : collection of str
+        The key columns that may be blank.
+
+    Returns
+    -------
+    ids : numpy.ndarray of str
+        Each row's parts joined with ``/``.
+    blank : numpy.ndarray of bool
+        Whether the row has a blank part in a column not in ``blank_ok``.
+    """
+    texts = [part.tolist() for part in parts.values()]
+    n_rows = len(texts[0]) if texts else 0
+    blank = np.zeros(n_rows, dtype=np.bool_)
+    for column, part in parts.items():
+        if column not in blank_ok:
+            blank |= np.array([not text for text in part.tolist()], dtype=np.bool_)
+    ids = np.empty(n_rows, dtype=object)
+    ids[:] = ["/".join(key) for key in zip(*texts, strict=True)]
+    return ids, blank
+
+
 def _response_ids(
-    ids: IdSpec, texts: _Texts, rows: NDArray[np.int64]
+    ids: IdSpec, stripped: Mapping[str, NDArray[np.object_]], rows: NDArray[np.int64]
 ) -> tuple[NDArray[np.object_], str, list[str]]:
-    """Return the response ids, the rule used and the columns they were built from."""
+    """Return the response ids, the rule used and the columns they were built from.
+
+    ``stripped`` holds the stripped text of every mapped id column.
+    """
     if ids.response:
-        values = _stripped(texts(ids.response))
+        values = stripped[ids.response]
         hint = "fill in every id, or map a response_key instead"
         _check_not_blank(values, rows, f"the response id column {ids.response!r}", hint)
         source, columns = "column", [ids.response]
     elif ids.response_key:
-        parts = []
-        for column in ids.response_key:
-            part = _stripped(texts(column))
+        parts = {column: stripped[column] for column in ids.response_key}
+        for column, part in parts.items():
             if column not in ids.response_key_blank_ok:
                 hint = "fill in every key part, or list the column in ids.response_key_blank_ok"
                 _check_not_blank(part, rows, f"the response key column {column!r}", hint)
             _check_no_slash(part, rows, column)
-            parts.append(part.tolist())
-        values = np.empty(len(rows), dtype=object)
-        values[:] = ["/".join(key) for key in zip(*parts, strict=True)]
+        values, _ = join_id_parts(parts, ids.response_key_blank_ok)  # blanks checked above
         source, columns = "key", list(ids.response_key)
     else:
         values = np.empty(len(rows), dtype=object)
@@ -472,7 +511,7 @@ def _response_ids(
 def _check_no_slash(part: NDArray[np.object_], rows: NDArray[np.int64], column: str) -> None:
     hits = [i for i, value in enumerate(part.tolist()) if "/" in value]
     if hits:
-        shown = ", ".join(f"{part[i]!r} at row {rows[i]}" for i in hits[:_MAX_SHOWN])
+        shown = _shown([f"{part[i]!r} at row {rows[i]}" for i in hits])
         msg = f"the response key column {column!r} holds '/', which joins the key parts: {shown}"
         raise MappingError(msg, hint="map a response column instead, or clean the key column")
 
@@ -483,17 +522,16 @@ def _check_unique(values: NDArray[np.object_], rows: NDArray[np.int64]) -> None:
         where.setdefault(value, []).append(row)
     repeated = [(value, numbers) for value, numbers in where.items() if len(numbers) > 1]
     if repeated:
-        shown = "; ".join(
-            f"{value!r} at {_rows(numbers)}" for value, numbers in repeated[:_MAX_SHOWN]
-        )
-        more = f" and {len(repeated) - _MAX_SHOWN} more" if len(repeated) > _MAX_SHOWN else ""
-        msg = f"response ids must be unique; {len(repeated)} repeat: {shown}{more}"
+        shown = _shown([f"{value!r} at {_rows(numbers)}" for value, numbers in repeated], sep="; ")
+        msg = f"response ids must be unique; {len(repeated)} repeat: {shown}"
         hint = "map a response column that is unique, or more columns into ids.response_key"
         raise DuplicateResponseIdError(msg, hint=hint)
 
 
 def _languages(
-    spec: LanguageSpec, texts: _Texts, response_ids: NDArray[np.object_]
+    spec: LanguageSpec,
+    frame: Any,  # noqa: ANN401  # a narwhals frame
+    response_ids: NDArray[np.object_],
 ) -> NDArray[np.object_]:
     """Return each response's ISO 639-3 code, ``""`` where blank or not mapped."""
     out = np.empty(len(response_ids), dtype=object)
@@ -504,7 +542,7 @@ def _languages(
     bad: Counter[str] = Counter()
     bad_rows: list[int] = []
     codes = []
-    for i, cell in enumerate(texts(spec.column).tolist()):
+    for i, cell in enumerate(column_text(frame, spec.column).tolist()):
         text = cell.strip()
         code = coding.get(text, text) if text else ""
         if code and not _LANGUAGE_CODE.match(code):
@@ -513,9 +551,9 @@ def _languages(
         codes.append(code)
     if bad:
         listed = ", ".join(f"{text!r} x{count}" for text, count in bad.items())
-        ids = ", ".join(str(response_ids[i]) for i in bad_rows[:_MAX_SHOWN])
+        ids = _shown([response_ids[i] for i in bad_rows])
         msg = (
-            f"the language column {spec.column!r} holds texts that are not ISO 639-3 codes: "
+            f"in the language column {spec.column!r}, each of these texts {_NOT_LANGUAGE_CODE}: "
             f"{listed} (responses {ids})"
         )
         hint = "add a [language.coding] entry giving each text's ISO 639-3 code"
@@ -525,12 +563,14 @@ def _languages(
 
 
 def _code_group(
-    group: ItemGroup, texts: _Texts, response_ids: NDArray[np.object_]
+    group: ItemGroup,
+    frame: Any,  # noqa: ANN401  # a narwhals frame
+    response_ids: NDArray[np.object_],
 ) -> NDArray[np.float64]:
     """Code an item group's columns and check the non-missing values against its scale."""
     cells = np.empty((len(response_ids), len(group.columns)), dtype=object)
     for j, (_, column) in enumerate(group.columns):
-        cells[:, j] = texts(column)
+        cells[:, j] = column_text(frame, column)
     keys = [key for key, _ in group.columns]
     scores = apply_coding(
         cells, group.coding, group.scale, item_keys=keys, response_ids=response_ids
@@ -544,7 +584,7 @@ def _code_group(
                 continue
             counts = Counter(scores[hit, j].tolist())
             listed = ", ".join(f"{value:g} x{counts[value]}" for value in sorted(counts))
-            ids = ", ".join(str(v) for v in response_ids[hit][:_MAX_SHOWN].tolist())
+            ids = _shown(response_ids[hit].tolist())
             failures.append(f"{column!r} ({key}): {listed} (responses {ids})")
         scale = group.scale
         msg = f"coded values outside the {scale.minimum:g}..{scale.maximum:g} scale: " + "; ".join(
@@ -568,10 +608,10 @@ def _log_summary(name: str, n_blank: int, status: Status) -> None:
     logger.info(
         "read_survey: %d %s read from %s, %d blank %s skipped; %d included, %d excluded (%s)",
         counts["n"],
-        "row" if counts["n"] == 1 else "rows",
+        _plural(counts["n"], "row"),
         name,
         n_blank,
-        "row" if n_blank == 1 else "rows",
+        _plural(n_blank, "row"),
         counts["included"],
         counts["excluded"],
         ", ".join(by_reason) or "none",

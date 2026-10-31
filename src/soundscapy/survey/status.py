@@ -14,7 +14,7 @@ from typing import Any, Self, TypeVar
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from soundscapy._frames import new_frame
+from soundscapy._frames import new_frame, readonly_copy
 from soundscapy._model import COL_FLAGS, COL_INCLUDED, COL_REASONS
 
 __all__ = ["Flag", "Reason", "Status"]
@@ -68,11 +68,6 @@ def _ordered_unique(codes: Iterable[Any], order: type[enum.StrEnum]) -> bool:
     return all(a < b for a, b in itertools.pairwise(positions))
 
 
-def _readonly(array: NDArray[Any]) -> NDArray[Any]:
-    array.flags.writeable = False
-    return array
-
-
 def _add_code(
     rows: tuple[tuple[_E, ...], ...], mask: NDArray[np.bool_], code: _E, order: type[_E]
 ) -> tuple[tuple[_E, ...], ...]:
@@ -111,7 +106,7 @@ class Status:
 
     def __post_init__(self) -> None:
         """Validate the invariants and freeze the ``included`` array."""
-        included = np.array(self.included, dtype=np.bool_, copy=True)
+        included = readonly_copy(self.included, np.bool_)
         if included.ndim != 1:
             msg = f"included must be one-dimensional, got {included.ndim} dimensions"
             raise ValueError(msg)
@@ -133,7 +128,7 @@ class Status:
             if not _ordered_unique(row, Flag):
                 msg = f"flag codes must be unique and in enum order, got {row!r}"
                 raise ValueError(msg)
-        object.__setattr__(self, "included", _readonly(included))
+        object.__setattr__(self, "included", included)
 
     @classmethod
     def all_included(cls, n: int) -> Self:
@@ -259,4 +254,5 @@ class Status:
 def _joined(rows: tuple[tuple[enum.StrEnum, ...], ...]) -> NDArray[np.object_]:
     out = np.empty(len(rows), dtype=object)
     out[:] = [";".join(row) for row in rows]
-    return _readonly(out)
+    out.setflags(write=False)
+    return out

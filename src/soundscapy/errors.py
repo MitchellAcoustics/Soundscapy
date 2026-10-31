@@ -6,6 +6,9 @@ message and :attr:`SoundscapyError.hint` carries an optional second line for the
 shadows a standard-library one.
 """
 
+from collections.abc import Sequence
+from typing import Final
+
 __all__ = [
     "AlignmentError",
     "AxesError",
@@ -209,3 +212,20 @@ class PointsOutsideGridWarning(SoundscapyWarning):
 
     Issued once per density call; only a user-set clip narrower than the data can cause it.
     """
+
+
+# --- Message helpers (private): one rule for listing offenders ---------------------------------
+
+_MAX_SHOWN: Final = 5
+
+
+def _plural(n: int, word: str) -> str:
+    """Return ``word`` for one of it, ``word`` with an ``s`` for any other count."""
+    return word if n == 1 else f"{word}s"
+
+
+def _shown(items: Sequence[object], *, sep: str = ", ") -> str:
+    """Join the texts of at most five items, then say how many more there are."""
+    shown = sep.join(str(item) for item in items[:_MAX_SHOWN])
+    rest = len(items) - _MAX_SHOWN
+    return f"{shown} and {rest} more" if rest > 0 else shown

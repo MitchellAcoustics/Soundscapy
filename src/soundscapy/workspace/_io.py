@@ -6,7 +6,7 @@ from typing import Any, Final
 import numpy as np
 from numpy.typing import NDArray
 
-from soundscapy._frames import Frame, column_text, to_eager, with_columns
+from soundscapy._frames import Frame, to_eager, with_columns
 from soundscapy._log import logger
 from soundscapy._model import (
     COL_ANGLE_SET,
@@ -18,12 +18,12 @@ from soundscapy._model import (
     axis_column,
 )
 from soundscapy.distribution.coordinates import Coordinates, n
-from soundscapy.errors import AlignmentError
+from soundscapy.errors import AlignmentError, _plural, _shown
+from soundscapy.survey.read import join_id_parts, stripped_text
 
 __all__ = ["attach"]
 
 _LABELS: Final = (COL_INCLUDED, COL_REASONS, COL_FLAGS, COL_LANGUAGE, COL_ANGLE_SET)
-_MAX_SHOWN: Final = 5
 
 
 def attach(frame: Frame, result: Coordinates) -> Any:  # noqa: ANN401  # the user's own frame type
@@ -79,7 +79,7 @@ def attach(frame: Frame, result: Coordinates) -> Any:  # noqa: ANN401  # the use
     if source == "row":
         if n_rows != n(result):
             msg = "aligning by position needs the survey's row count: the frame has "
-            msg += f"{n_rows} {'row' if n_rows == 1 else 'rows'}; the survey has {n(result)}"
+            msg += f"{n_rows} {_plural(n_rows, 'row')}; the survey has {n(result)}"
             raise AlignmentError(msg, hint="attach to survey.data, which always aligns")
         alignment, index, matched = "position", np.arange(n_rows), np.ones(n_rows, dtype=bool)
     elif source in ("column", "key"):
@@ -118,15 +118,10 @@ def _match_ids(eager: Any, result: Coordinates) -> tuple[NDArray[np.intp], NDArr
         msg += f"the result's ids were built from {id_columns}"
         raise AlignmentError(msg, hint="attach to survey.data, which always aligns")
     n_rows = len(eager)
-    usable = np.ones(n_rows, dtype=bool)
-    parts = []
-    for column in id_columns:
-        part = [text.strip() for text in column_text(eager, column).tolist()]
-        if column not in blank_ok:
-            usable &= np.array([bool(text) for text in part], dtype=bool)
-        parts.append(part)
-    ids = ["/".join(key) for key in zip(*parts, strict=True)]
-    _check_unique([ids[i] for i in np.flatnonzero(usable)])
+    parts = {column: stripped_text(eager, column) for column in id_columns}
+    ids, blank = join_id_parts(parts, blank_ok)
+    usable = ~blank
+    _check_unique(ids[usable].tolist())
     position = {rid: i for i, rid in enumerate(result.labels[COL_RESPONSE_ID].tolist())}
     index = np.zeros(n_rows, dtype=np.intp)
     matched = np.zeros(n_rows, dtype=bool)
@@ -143,7 +138,5 @@ def _match_ids(eager: Any, result: Coordinates) -> tuple[NDArray[np.intp], NDArr
 def _check_unique(ids: list[str]) -> None:
     repeated = sorted(rid for rid, count in Counter(ids).items() if count > 1)
     if repeated:
-        shown = ", ".join(repr(rid) for rid in repeated[:_MAX_SHOWN])
-        more = f" and {len(repeated) - _MAX_SHOWN} more" if len(repeated) > _MAX_SHOWN else ""
-        msg = f"the frame's response ids are not unique: {shown}{more} repeat"
+        msg = f"the frame's response ids are not unique: {_shown(list(map(repr, repeated)))} repeat"
         raise AlignmentError(msg)

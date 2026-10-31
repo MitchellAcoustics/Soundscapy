@@ -13,7 +13,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from pydantic import Field, StrictInt, StrictStr
 
-from soundscapy._frames import new_frame
+from soundscapy._frames import new_frame, readonly_copy
 from soundscapy._model import COL_INCLUDED, COL_LANGUAGE, FrozenModel, axis_column
 from soundscapy.errors import MappingError
 from soundscapy.instrument import Circumplex, Scale
@@ -52,12 +52,6 @@ class OriginSegment(FrozenModel):
     effective_scale: Scale
     angle_sets: tuple[StrictStr, ...]
     settings_hash: StrictStr
-
-
-def _frozen(values: NDArray[Any]) -> NDArray[Any]:
-    out = np.array(values, copy=True)
-    out.setflags(write=False)
-    return out
 
 
 @dataclass(frozen=True, eq=False, slots=True)
@@ -121,8 +115,8 @@ class Coordinates:
         if total != rows:
             msg = f"the origin segments count {total} rows, but xy has {rows}"
             raise ValueError(msg)
-        object.__setattr__(self, "xy", _frozen(xy))
-        labels = {name: _frozen(values) for name, values in self.labels.items()}
+        object.__setattr__(self, "xy", readonly_copy(xy))
+        labels = {name: readonly_copy(values) for name, values in self.labels.items()}
         object.__setattr__(self, "labels", labels)
         object.__setattr__(self, "origin", tuple(self.origin))
         object.__setattr__(self, "provenance", copy.deepcopy(self.provenance))

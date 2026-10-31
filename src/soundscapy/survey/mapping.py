@@ -21,7 +21,7 @@ from numpy.typing import NDArray
 from pydantic import Field, StrictFloat, StrictStr, ValidationError, model_validator
 
 from soundscapy._model import FloatPairs, FrozenModel, StrPairs
-from soundscapy.errors import CodingError, MappingError
+from soundscapy.errors import CodingError, MappingError, _shown
 from soundscapy.instrument import Circumplex, Scale, circumplex
 
 __all__ = [
@@ -37,10 +37,10 @@ __all__ = [
 ]
 
 _LANGUAGE_CODE = re.compile(r"^[a-z]{3}$")
+_NOT_LANGUAGE_CODE = "is not an ISO 639-3 code (three lowercase letters)"
 _DEFAULT_INSTRUMENT = "iso-12913-outdoor"
 _DEFAULT_INSTRUMENT_VERSION = "1"
 _IDENTITY_FIELDS = frozenset({"schema_name", "schema_version", "instrument", "instrument_version"})
-_MAX_IDS_SHOWN = 5
 _NUMBER = {
     ".": re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$"),
     ",": re.compile(r"^[+-]?(?:\d+(?:,\d*)?|,\d+)(?:[eE][+-]?\d+)?$"),
@@ -108,16 +108,11 @@ class LanguageSpec(FrozenModel):
             msg = "name a language column or a language value, not both"
             raise ValueError(msg)
         if self.value and not _LANGUAGE_CODE.match(self.value):
-            msg = (
-                f"language value {self.value!r} is not an ISO 639-3 code (three lowercase letters)"
-            )
+            msg = f"language value {self.value!r} {_NOT_LANGUAGE_CODE}"
             raise ValueError(msg)
         for text, code in self.coding:
             if not _LANGUAGE_CODE.match(code):
-                msg = (
-                    f"language coding {text!r} = {code!r}: {code!r} is not an ISO 639-3 code "
-                    "(three lowercase letters)"
-                )
+                msg = f"language coding {text!r} = {code!r}: {code!r} {_NOT_LANGUAGE_CODE}"
                 raise ValueError(msg)
         return self
 
@@ -431,8 +426,7 @@ def _code_column(
     if not bad:
         return ""
     listed = ", ".join(f"{text!r} x{count}" for text, count in bad.items())
-    ids = ", ".join(str(response_ids[i]) for i in bad_rows[:_MAX_IDS_SHOWN])
-    return f"{key}: {listed} (responses {ids})"
+    return f"{key}: {listed} (responses {_shown([response_ids[i] for i in bad_rows])})"
 
 
 # --- TOML ------------------------------------------------------------------------------------

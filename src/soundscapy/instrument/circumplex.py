@@ -1,5 +1,6 @@
 """Circumplex instruments: attributes at angles, axes, quadrants and the shipped data."""
 
+import functools
 import itertools
 import re
 from typing import Literal, Self
@@ -249,8 +250,12 @@ class Circumplex(FrozenModel):
         raise MappingError(msg, hint=f"positions: {self.positions}")
 
 
+@functools.cache
 def circumplex(name: str = "iso-12913-outdoor", version: str = "1") -> Circumplex:
     """Load a shipped circumplex instrument.
+
+    The instrument is immutable, so each name and version is read and verified once per
+    process and the same object returned after that.
 
     Parameters
     ----------
