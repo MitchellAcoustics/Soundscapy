@@ -7,6 +7,7 @@ of :class:`Flag` codes (the row is kept, with a note).
 
 import enum
 import itertools
+from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Self, TypeVar
@@ -131,6 +132,20 @@ class Status:
         object.__setattr__(self, "included", included)
 
     @classmethod
+    def _unchecked(
+        cls,
+        included: NDArray[np.bool_],
+        reasons: tuple[tuple[Reason, ...], ...],
+        flags: tuple[tuple[Flag, ...], ...],
+    ) -> Self:
+        """Build a status that is valid by construction, skipping the per-row checks."""
+        status = object.__new__(cls)
+        object.__setattr__(status, "included", readonly_copy(included, np.bool_))
+        object.__setattr__(status, "reasons", reasons)
+        object.__setattr__(status, "flags", flags)
+        return status
+
+    @classmethod
     def all_included(cls, n: int) -> Self:
         """Return a status in which all ``n`` responses are included and unflagged.
 
@@ -144,7 +159,7 @@ class Status:
         Status
             Every response included, with no reasons and no flags.
         """
-        return cls(np.ones(n, dtype=np.bool_), ((),) * n, ((),) * n)
+        return cls._unchecked(np.ones(n, dtype=np.bool_), ((),) * n, ((),) * n)
 
     def _mask(self, mask: ArrayLike) -> NDArray[np.bool_]:
         array = np.asarray(mask)
@@ -178,7 +193,7 @@ class Status:
         """
         hit = self._mask(mask)
         reasons = _add_code(self.reasons, hit, reason, Reason)
-        return type(self)(self.included & ~hit, reasons, self.flags)
+        return self._unchecked(self.included & ~hit, reasons, self.flags)
 
     def with_flag(self, mask: ArrayLike, flag: Flag) -> Self:
         """Return a new status with ``flag`` added where ``mask`` is true.
@@ -201,7 +216,7 @@ class Status:
             If ``mask`` is not a boolean array with one entry per response.
         """
         hit = self._mask(mask)
-        return type(self)(self.included, self.reasons, _add_code(self.flags, hit, flag, Flag))
+        return self._unchecked(self.included, self.reasons, _add_code(self.flags, hit, flag, Flag))
 
     def counts(self) -> dict[str, int]:
         """Count responses overall, by reason and by flag.
@@ -219,10 +234,11 @@ class Status:
             "included": n_included,
             "excluded": len(self.included) - n_included,
         }
-        for reason in Reason:
-            out[f"reason:{reason.value}"] = sum(reason in row for row in self.reasons)
-        for flag in Flag:
-            out[f"flag:{flag.value}"] = sum(flag in row for row in self.flags)
+        # Codes are unique within a row, so counting codes counts rows.
+        reasons = Counter(code for row in self.reasons for code in row)
+        flags = Counter(code for row in self.flags for code in row)
+        out.update({f"reason:{reason.value}": reasons[reason] for reason in Reason})
+        out.update({f"flag:{flag.value}": flags[flag] for flag in Flag})
         return out
 
     def label_arrays(self) -> dict[str, NDArray[Any]]:

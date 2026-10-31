@@ -21,7 +21,6 @@ import csv
 import hashlib
 import io
 import sys
-import tempfile
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -200,12 +199,10 @@ def registry(source: bytes, feature_columns: list[str]) -> str:
     return tomlkit.dumps(doc)
 
 
-def _download(directory: Path) -> Path:
-    path = directory / "isd-source.csv"
+def _download() -> bytes:
     print(f"downloading {SOURCE_URL}")
     with urllib.request.urlopen(SOURCE_URL) as response:  # fixed https URL
-        path.write_bytes(response.read())
-    return path
+        return response.read()
 
 
 def main() -> None:
@@ -213,12 +210,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--source", type=Path, help=f"a local copy of {SOURCE_FILE!r}")
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory() as tmp:
-        path = args.source or _download(Path(tmp))
-        source = path.read_bytes()
+    source = args.source.read_bytes() if args.source else _download()
     digest = hashlib.sha256(source).hexdigest()
     if digest != SOURCE_SHA256:
-        sys.exit(f"refusing {path}: sha256 {digest}, expected {SOURCE_SHA256}")
+        sys.exit(f"refusing {args.source or SOURCE_URL}: sha256 {digest}, expected {SOURCE_SHA256}")
     subset, columns, features, n_rows = subset_csv(source)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     outputs = {

@@ -1,5 +1,7 @@
 """Status: normative codes, ordering, counts, text columns and invariants."""
 
+import dataclasses
+
 import numpy as np
 import pytest
 from hypothesis import given
@@ -131,6 +133,15 @@ def test_reason_in_flags_row_raises():
         Status(np.array([True]), ((),), ((Reason.UNDER_AGE,),))  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
     with pytest.raises(ValueError, match="enum order"):
         Status(np.array([False]), ((Flag.UNDER_AGE,),), ((),))  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
+
+
+def test_public_constructor_still_validates_derived_fields():
+    # with_reason and with_flag skip the per-row checks; the dataclass constructor must not.
+    derived = Status.all_included(2).with_reason([True, False], Reason.NO_CONSENT)
+    with pytest.raises(ValueError, match="no exclusion reason"):
+        dataclasses.replace(derived, included=~derived.included)
+    with pytest.raises(ValueError, match="enum order"):
+        dataclasses.replace(derived, flags=((Flag.PAPER_INPUT, Flag.ALL_MIDPOINT), ()))
 
 
 def test_bad_mask_raises():
