@@ -10,8 +10,6 @@ import pytest
 
 HOOK = Path(__file__).resolve().parents[1] / ".claude" / "hooks" / "stop_check.py"
 
-pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="the fake uv is a /bin/sh script")
-
 
 def _run_hook(tmp_path: Path, path_dir: Path) -> subprocess.CompletedProcess[str]:
     project = tmp_path / "project"
@@ -29,6 +27,7 @@ def _run_hook(tmp_path: Path, path_dir: Path) -> subprocess.CompletedProcess[str
     )
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="the fake uv is a /bin/sh script")
 def test_stop_hook_falls_back_to_uv_run_task(tmp_path):
     # PATH holds only a fake uv, so `task` is missing and the hook must call
     # `uv run task check:fast`.
@@ -44,6 +43,8 @@ def test_stop_hook_falls_back_to_uv_run_task(tmp_path):
 
 
 def test_stop_hook_reports_when_neither_tool_is_on_path(tmp_path):
+    # Runs on every OS: PATH is one empty directory, and the hook is started through the
+    # absolute sys.executable, so no lookup on PATH is needed to launch it.
     empty = tmp_path / "empty"
     empty.mkdir()
     result = _run_hook(tmp_path, empty)
