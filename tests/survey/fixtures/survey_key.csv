@@ -1,0 +1,5 @@
+LocationID,SessionID,GroupID,RecordID,Language,pleasant,chaotic,vibrant,uneventful,calm,annoying,eventful,monotonous
+L1,S1,G1,7,eng,1,2,3,4,5,1,2,3
+L1,S1,G1,8,eng,5,4,3,2,1,5,4,3
+L1,S2,G2,9,cmn,3,3,3,3,3,3,3,3
+L2,S1,G1,7,eng,2,2,2,2,2,2,2,2
