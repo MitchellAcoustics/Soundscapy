@@ -1,0 +1,339 @@
+# M1 Slice S2 (Status, Quality, Full Mapping) Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Widen the S1 survey path to every construct group, flag, age and carried column; give `read_survey` its quality rules, the `exclude` scale-violation path and its settings keywords; ship the course dataset; and pin the FR-1.5 acceptance counts on the subset (default run) and on the full ISD (nightly).
+
+**Architecture:** S2 extends the S1 code; it rewrites nothing. `survey.mapping` gains the optional groups, `FlagSpecs`, `age` and `carry`; a new `survey.quality` holds `QualitySettings` and the rules as pure numpy functions over coded scores; `survey.read` codes every mapped group, applies the scale check (error or exclude), then the rules, and records `quality_skipped`. `projection.project` gains `carry`. `datasets.isd` passes the settings keywords through and carries the subset's features; `datasets.course_demo` is new. A bottom-layer `_model.merge_settings` resolves keyword, `settings=` and default layers, so S3 only adds the profile layer.
+
+**Tech Stack:** Python 3.11+, numpy, pydantic 2, narwhals (`stable.v2`), pandas, tomlkit and `tomllib`, pytest and hypothesis, stdlib `urllib` (network tests only); uv, ruff, ty, import-linter. No dependency is added in S2.
+
+**Spec:** `design/specs/2026-10-31-phase0-m1-design.md` (draft 0.5), §9 row "S2 Status, quality, full mapping", with §6.3.1, §6.3.4, §6.3.6, §6.4.1 to §6.4.4, §6.5, §6.7, §6.9.2 (`carry`), §6.10, §6.20.1 to §6.20.4, §6.21, §7.1, §7.2, §7.5, §8 (FR-1.3, FR-1.5, FR-2.1, FR-10.1) and §11.4. Also `design/plans/2026-10-31-m1-s1-thin-slice.md` (its Global Constraints still hold, and its "Carried forward" S2 items are all placed below). Read each section a task cites before starting it.
+
+**Branch and PR (owner instruction).** The build happens on its own branch, `m1-s2-status-quality`, created from the tip of `soundscapy-rewrite` at the start of execution (Task 1 Step 0). Every task commits there. The slice ends with a PR targeting `soundscapy-rewrite`, after the AGENTS.md review sequence (`task check`, `/simplify`, `task check`, `/code-review`); Task 10 makes the branch PR-ready and the controller opens the PR.
+
+## Global Constraints
+
+- Branch `m1-s2-status-quality`, created from the tip of `soundscapy-rewrite`; never commit to `soundscapy-rewrite` directly; PR target `soundscapy-rewrite`; the controller opens the PR.
+- Every S1 Global Constraint holds unchanged (uv only; `task check` is done; `_UNSET` defaults; frame-library and `hashlib` import rules; numpy docstrings with `References`; `StrictFloat`; explicit tolerances; `pytest.warns`; `re.escape` in `match=`; the ty-ignore convention for deliberate misuse; `uv.lock` with every dependency change; no reformatting of untouched files).
+- **Deliberate misuse and ty**, restated because S2 adds many cases: untyped input stays untyped (`QualitySettings.model_validate({...})`, a `settings={...}` mapping, TOML through `from_toml`) and needs no ignore; a typed call misused on purpose carries one line, `# ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime SettingsError`. Prefer the untyped form in the rule × action matrix.
+- **Widened signatures.** S2 adds keywords to S1 functions; the S1 parameters keep their names, order and defaults, and every new one is keyword-only with an `_UNSET` default. Because they are keyword-only, the S2 keyword set is a subsequence of the final M1 signature in its order (§6.5, §6.9.2, §6.20.2); the keywords still missing are named per task with their slice.
+- Every new `FrozenModel` gets a non-default instance in `tests/test_toml_round_trip.py` in the task that creates it (`test_round_trip_covers_every_model` fails otherwise).
+- Every shipped data file is pinned in `_data.PINS` in the commit that adds or changes it.
+- Network tests carry `pytest.mark.network` and live in files matching `tests/**/test_*network*` (the nightly push trigger, `.github/workflows/nightly.yml`).
+- No dependency is added. The network tests download with `urllib.request` (stdlib), so pooch and tqdm stay S9's (S1 Plan call 3).
+- Quality-rule sources: the 2021 rules (`all_identical`, `all_midpoint`, `excessive_missing`) cite the 2021 JASA paper `[@mitchell2021lockdown]` (Task 1; owner question 1 covers its metadata) and the FR-1.5 counts cite the 0.x tutorials' processing via spec §6.7; `incomplete_attributes` cites `[@mitchell2022how]` as S1 does.
+
+## Review Focus
+
+1. **A construct key misspelled in a mapping** (`trafic_noise`, `who5_6`, `Overall_Quality`). Expected: `MappingError` from `read_mapping` naming the key, its group and the group's allowed keys, never a silently unmapped item. Pinned in Task 2 (`test_unknown_construct_key_raises`).
+2. **An age column holding text that is not a number** (`"prefer not to say"`, `"25 years"`). Expected (Plan call): `CodingError` naming the age column, the texts with counts and up to five response ids, with a hint to map a numeric column or leave `age` unmapped; never a silent "not under age". Pinned in Task 3 (`test_age_text_not_a_number_raises`).
+3. **`carry="start_time"` passed to `project` as one string.** A `str` is a `Sequence[str]`, so it would carry `s`, `t`, ... Expected: `TypeError` naming `carry` and asking for a list. Pinned in Task 5 (`test_project_carry_rejects_a_bare_string`).
+4. **An out-of-scale attribute cell under `on_scale_violation="exclude"`.** Expected: the cell becomes missing, so the row holds both `scale_violation` and `incomplete_attributes` (in enum order) and is not projected, and no warning fires. Pinned in Task 3 (`test_exclude_path_records_both_reasons`).
+5. **A partly mapped source-dominance group** (two of its four keys). Expected (Plan call): it reads; `scores["source_dominance"]` has two columns in key order; the `excessive_missing` denominator is 8 + 2 = 10, so 6 missing items (share 0.6) fire and 5 (share 0.5) do not. Pinned in Task 1 (`test_excessive_missing_denominator_counts_mapped_items`) and Task 3 (`test_partial_source_dominance_reads`).
+
+---
+
+### Task 1: `merge_settings`, `QualitySettings`, the rules
+
+**Files:**
+- Create: `src/soundscapy/survey/quality.py`, `tests/survey/test_quality.py`
+- Modify: `src/soundscapy/_model.py`, `tests/test_model.py`, `tests/test_toml_round_trip.py`, `docs/references.bib`
+
+**Interfaces:**
+- Consumes: `FrozenModel`, `validate`, `SettingsError` (S1); `Status`, `Reason`, `Flag` (S1 `survey.status`).
+- Produces:
+  - `soundscapy._model.settings_layer(value: object, *, model: type[FrozenModel], name: str) -> dict[str, Any]`: an instance of `model` gives `value.model_dump(mode="json", by_alias=True, exclude_unset=True)`; a `Mapping` gives a deep copy as nested `dict`s; anything else raises `SettingsError` naming `name`, the expected model and the type given.
+  - `soundscapy._model.merge_settings(model: type[M], layers: Sequence[Mapping[str, Any]], *, context: str) -> M`: deep-merges the layers in order (a later layer wins; nested dicts merge key by key, any other value replaces), then `validate(model, merged, error=SettingsError, context=context)`. Plan call: it lives in `_model` (bottom layer) because every operation's settings use it; S3 prepends the base-profile layer and derives `overrides` from the same layers. An instance contributes only its fields set (`exclude_unset`), so `ImportSettings(quality=QualitySettings(min_age=16.0))` sets one leaf.
+  - `soundscapy.survey.quality`:
+    - `Action: TypeAlias = Literal["exclude", "flag", "off"]`.
+    - `QualitySettings(FrozenModel)`, fields in this order (Plan call: each threshold follows its rule): `all_identical: Literal["exclude", "off"] = "exclude"`, `all_midpoint: Literal["flag", "off"] = "flag"`, `excessive_missing: Literal["exclude", "off"] = "exclude"`, `excessive_missing_share: StrictFloat = 0.5` (validator: `0.0 <= share <= 1.0`), `no_consent: Literal["exclude", "off"] = "exclude"`, `test_response: Literal["exclude", "off"] = "exclude"`, `paper_input: Action = "flag"`, `under_age: Action = "flag"`, `min_age: StrictFloat = 18.0`. Plan call (spec defect 1): the per-rule `Literal`s allow only actions for which a code exists in §6.3.1 (`all_identical`, `excessive_missing`, `no_consent`, `test_response` are only `Reason` codes; `all_midpoint` is only a `Flag` code); `incomplete_attributes` has no field ("always", §6.7), so `{"incomplete_attributes": "off"}` is an extra key and fails validation.
+    - `RULES: Final = ("all_identical", "all_midpoint", "excessive_missing", "incomplete_attributes", "no_consent", "test_response", "paper_input", "under_age")` (§6.7 table order).
+    - `QualityInputs` frozen dataclass (`slots=True`): `attributes: NDArray[np.float64]` (n, k), coded, a scale-violating cell already NaN under `exclude`; `midpoint: float` (the attribute scale's); `source_dominance: NDArray[np.float64] | None` ((n, m), `None` when the group is unmapped); `consent`, `test`, `paper_input: NDArray[np.bool_] | None` (the stripped cell is in `true_values`; `None` when unmapped); `age: NDArray[np.float64] | None` (NaN where missing; `None` when unmapped).
+    - `apply_quality(status: Status, inputs: QualityInputs, settings: QualitySettings) -> tuple[Status, tuple[str, ...]]`: returns the status with every rule's codes added and the `quality_skipped` names, in `RULES` order. Definitions, §6.7 exactly: complete = no attribute NaN; constant = complete and every attribute equal to the first; `all_identical` = constant and value ≠ `midpoint`; `all_midpoint` = constant and value == `midpoint`; `excessive_missing` = NaN share over the attribute columns plus the mapped source-dominance columns `> excessive_missing_share`; `incomplete_attributes` = any attribute NaN (always, reason); `no_consent` = `~consent`; `test_response` = `test`; `paper_input` = `paper_input`; `under_age` = `age < min_age` (NaN never fires). The code follows the action: `exclude` adds the `Reason` of the rule's name, `flag` the `Flag`, `off` nothing. Every rule runs on every row, so a row collects every code that applies. Plan calls: a rule is skipped (and listed) only when it is not `off` and its input is `None`; an `off` rule is never listed (the settings record it); exact float equality is right because coded scores are the parsed numbers (plus `offset`, reversed against integer-valued bounds).
+  - `docs/references.bib` gains `mitchell2021lockdown`: Mitchell, A., Oberman, T., Aletta, F., Kachlicka, M., Lionello, M., Erfanian, M. and Kang, J. (2021). Investigating urban soundscapes of the COVID-19 lockdown: A predictive soundscape modeling approach. *JASA* 150(6), 4474–4488, doi 10.1121/10.0008928 (owner question 1: the metadata could not be checked from the planning session, where doi.org and Crossref are blocked; the builder resolves the DOI if the build session can, and the PR description asks the owner to confirm it either way). `apply_quality`'s `References`: the 2021 rules `[@mitchell2021lockdown]`; `incomplete_attributes` `[@mitchell2022how]`; the defaults reproduce the 0.x tutorials' processing of ISD v1.0 (FR-1.5).
+
+- [ ] **Step 0: Create the branch.**
+
+```bash
+git fetch origin soundscapy-rewrite
+git switch soundscapy-rewrite && git status --short   # expect clean
+test "$(git rev-parse HEAD)" = "$(git rev-parse origin/soundscapy-rewrite)"
+git switch -c m1-s2-status-quality
+```
+
+- [ ] **Step 1: Write the failing tests**
+  - `tests/test_model.py`: `test_merge_settings_later_layer_wins` (`[{"a": 1, "q": {"x": 1, "y": 2}}, {"q": {"y": 3}}]` on a small test model gives `a=1, q.x=1, q.y=3`); `test_settings_layer_instance_contributes_set_fields_only`; `test_settings_layer_rejects_other_types` (`SettingsError` naming the argument); `test_merge_settings_bad_value_is_settings_error` (message keeps the field path).
+  - `tests/survey/test_quality.py` builds `QualityInputs` by hand: 1..5 attributes, midpoint 3.0. Rows: 0 clean `(1,2,3,4,5,4,3,2)`; 1 all 4 (all_identical); 2 all 3 (all_midpoint); 3 one NaN; 4 seven NaN with all four source items NaN (11/12 missing); 5 consent False; 6 test True; 7 paper True; 8 age 16.0; 9 age NaN.
+  - `test_rule_action_matrix`, parametrised over the 14 valid (rule, action) pairs, with `settings = QualitySettings.model_validate({rule: action})`: the expected code (`Reason(rule)` under exclude, `Flag(rule)` under flag, none under off) appears on exactly the trigger row(s) above and nowhere else (rows 3 and 4 always carry `incomplete_attributes`, which the test removes from its comparison except for that rule).
+  - `test_rule_action_refused`, parametrised over the 7 invalid pairs (`all_identical`/`excessive_missing`/`no_consent`/`test_response` with `"flag"`, `all_midpoint` with `"exclude"`) and `{"incomplete_attributes": "off"}`: `QualitySettings.model_validate(...)` raises `pydantic.ValidationError`; through `merge_settings` it is `SettingsError` naming the field.
+  - `test_defaults_on_the_fixture`: default settings give row reasons `[(), (all_identical,), (), (incomplete_attributes,), (excessive_missing, incomplete_attributes), (no_consent,), (test_response,), (), (), ()]` and flags `all_midpoint` on 2, `paper_input` on 7, `under_age` on 8; `included` false exactly on 1, 3, 4, 5, 6.
+  - `test_skipped_rules`: with `source_dominance`, `consent`, `test`, `paper_input`, `age` all `None`, skipped is `("no_consent", "test_response", "paper_input", "under_age")` (`excessive_missing` still runs on attributes alone); with `{"no_consent": "off"}` it is not listed.
+  - `test_excessive_missing_denominator_counts_mapped_items` (Review Focus 5): 8 attributes plus a 2-column source group; 6 NaN (0.6) fires, 5 NaN (0.5) does not, with the default share; share `1.0` never fires; share `0.0` fires on any NaN; share `1.5` and `-0.1` raise `ValidationError`.
+  - `test_under_age_boundary`: age 17.9 fires, 18.0 does not (strict `<`, §6.7); `min_age=16.0` moves it.
+  - Hypothesis `test_quality_invariants` (§7.1 status invariants): attributes drawn as integers 1..5 or NaN (`st.sampled_from([1.0, 2.0, 3.0, 4.0, 5.0, nan])`), n in 0..30, random valid settings; assert `all_identical` and `all_midpoint` never share a row; their union equals the complete constant rows (when both rules are on); `incomplete_attributes` rows equal rows with any NaN; raising `excessive_missing_share` never adds an `excessive_missing` row (monotone); `len(status.reasons) == n`; `included == (len(reasons) == 0)`. Exact: the masks are boolean.
+  - `tests/test_toml_round_trip.py`: add `QualitySettings(all_midpoint="off", excessive_missing_share=0.25, under_age="exclude", min_age=16.0, paper_input="exclude")` to `MODELS`, and a hypothesis variant drawing each field from its `Literal` and the two floats from finite ranges (`st.floats(0, 1)`, `st.floats(0, 120)`).
+- [ ] **Step 2: Run them to verify they fail**: `uv run pytest tests/test_model.py tests/survey/test_quality.py tests/test_toml_round_trip.py -v`, expected FAIL (import errors).
+- [ ] **Step 3: Implement** `settings_layer`, `merge_settings` and `survey/quality.py` to the interfaces; add the bib entry.
+- [ ] **Step 4: Run the tests to verify they pass**; `uv run task check` green.
+- [ ] **Step 5: Commit** `feat: QualitySettings, the quality rules and settings merging`.
+
+---
+
+### Task 2: The full `SurveyMapping`: groups, flags, age, carry
+
+**Files:**
+- Modify: `src/soundscapy/survey/mapping.py`, `tests/survey/test_mapping.py`, `tests/test_toml_round_trip.py`
+- Create: `tests/survey/fixtures/full_mapping.toml`
+- Not modified: `tests/survey/fixtures/minimal_mapping.toml` stays the S1 minimal file (S1 carry-forward), and keeps its byte round-trip test.
+
+**Interfaces:**
+- Consumes: S1 `SurveyMapping`, `ItemGroup`, `Coding`, `Scale`, `write_mapping` helpers.
+- Produces (§6.4.1):
+  - `GROUP_KEYS: Final[Mapping[str, tuple[str, ...]]]`: `source_dominance: ("traffic_noise", "other_noise", "human_sounds", "natural_sounds")`, `overall_quality: ("overall_quality",)`, `appropriateness: ("appropriateness",)`, `who5: ("who5_1", "who5_2", "who5_3", "who5_4", "who5_5")`. `GROUP_SCALES`: 1..5 ordinal for the first three, 0..5 ordinal for `who5`.
+  - `Groups` gains, after `attributes`, `source_dominance`, `overall_quality`, `appropriateness`, `who5: ItemGroup`, each defaulting to `ItemGroup(columns=(), scale=GROUP_SCALES[name])` (empty means not mapped). A `mode="before"` validator on `Groups` (Plan call: these groups do not depend on the instrument, so `Groups` owns them; `SurveyMapping` keeps the attribute step) fills a missing `scale` with the group default, rejects a key not in `GROUP_KEYS[name]` with `ValueError` naming the key, the group and the allowed keys ("unknown construct key", §6.3.10), puts keys in `GROUP_KEYS` order, and normalises `coding.reverse` the same way (a reverse key that is not a mapped key of that group raises). Plan call: a group may map a subset of its keys (Review Focus 5); §6.7's "12 items when both groups are mapped" is the full-mapping case.
+  - `FlagSpec(FrozenModel)`: `column: StrictStr = ""`, `true_values: tuple[StrictStr, ...] = ()`; validator: `column` and `true_values` are both set or both empty; each true value is non-blank and equals its stripped form (cells are compared stripped). `FlagSpecs(FrozenModel)`: `consent`, `test`, `paper_input: FlagSpec = FlagSpec()`.
+  - `SurveyMapping` gains, after `groups` (§6.4.1 order): `age: StrictStr = ""`, `flags: FlagSpecs = FlagSpecs()`, `carry: tuple[StrictStr, ...] = ()`. After-validator: `carry` entries non-blank and unique, and none is a mapped id-role column (`ids.location` ... `ids.record`), which is already a label (Plan call: `MappingError` via `read_mapping`, naming the entry).
+  - `write_mapping`: for each group, `scale` is omitted when it equals that group's default (the circumplex scale for attributes, `GROUP_SCALES` for the rest); unmapped groups, `FlagSpecs()` and default `FlagSpec`s are omitted by the existing pruning; plain keys come before tables, so the top level writes `schema`, `schema_version`, `instrument`, `instrument_version`, `age`, `carry`, then `[ids]`, `[language]`, `[groups.*]`, `[flags.*]`, matching §6.4.4's example.
+- `tests/survey/fixtures/full_mapping.toml`: every S2 field set: the ISD ids and language; attributes by label with `reverse = ["calm"]`; all four other groups; `[groups.overall_quality.coding.value_map]` with the five Table A.1 labels to 1.0 .. 5.0; `[groups.who5.scale]` 1..6 interval (a non-default scale, written as a table); `age`; `carry`; `[flags.consent]` (`column = "consent"`, `true_values = ["yes"]`), `[flags.test]`, `[flags.paper_input]`. Written by hand, then regenerated with `write_mapping` if the bytes differ (the writer's form is authoritative).
+
+- [ ] **Step 1: Write the failing tests** in `tests/survey/test_mapping.py`:
+  - `test_full_mapping_byte_round_trip` and add `full_mapping.toml` to the `test_mapping_model_round_trip` parametrisation.
+  - `test_unknown_construct_key_raises` (Review Focus 1), parametrised over `("source_dominance", "trafic_noise")`, `("who5", "who5_6")`, `("overall_quality", "Overall_Quality")`: `read_mapping` raises `MappingError` whose message holds the key, the group and every allowed key of the group.
+  - `test_group_keys_in_canonical_order` (keys written out of order read back in `GROUP_KEYS` order and hash alike); `test_group_default_scales` (`source_dominance` 1..5, `who5` 0..5, and an explicit scale kept); `test_unmapped_groups_are_empty_and_not_written`; `test_reverse_in_other_group` (`reverse = ["overall_quality"]` validates; `reverse = ["traffic_noise"]` when only `other_noise` is mapped raises).
+  - `test_flag_spec_rules`, parametrised: column without true values, true values without column, a blank or padded (`" yes"`) true value, each raises `ValidationError` naming the field.
+  - `test_carry_rules`: a repeated entry, a blank entry, and `carry = ["LocationID"]` with `location = "LocationID"` each raise `MappingError` via `read_mapping`; `carry = ["Language"]` validates (the raw language column is not a label).
+  - `test_write_mapping_field_order`: a mapping with `age`, `carry` and `flags` writes `age` and `carry` before `[ids]` and `[flags.*]` after `[groups.*]`.
+  - `tests/test_toml_round_trip.py`: add `FlagSpec(column="consent", true_values=("yes", "Yes"))`, `FlagSpecs(consent=..., test=..., paper_input=...)`; replace the S1 `Groups` and `SurveyMapping` instances with ones mapping every group, `age`, `flags` and `carry`.
+- [ ] **Step 2: Run to verify they fail.** **Step 3: Implement.** **Step 4: Pass**; S1's mapping tests still pass unchanged; `uv run task check` green.
+- [ ] **Step 5: Commit** `feat: full survey mapping with every construct group, flags, age and carry`.
+
+---
+
+### Task 3: `read_survey` with every group, the scale-violation paths, quality and settings
+
+**Files:**
+- Modify: `src/soundscapy/survey/read.py`, `tests/survey/test_read.py`, `tests/test_toml_round_trip.py`
+- Create: `tests/survey/test_read_quality.py`, `tests/survey/fixtures/labelled_export.csv`, `tests/survey/fixtures/labelled_mapping.toml`
+
+**Interfaces:**
+- Consumes: Task 1 (`QualitySettings`, `QualityInputs`, `apply_quality`, `merge_settings`, `settings_layer`); Task 2 (the full mapping); S1 `apply_coding`, `stripped_text`, `column_text`.
+- Produces:
+  - `ImportSettings(FrozenModel)`: `quality: QualitySettings = QualitySettings()`, then the S1 `on_scale_violation` (§6.3.4 field order). Docstring: `exclude` makes each violating cell missing with reason `scale_violation`.
+  - `read_survey(source, mapping, *, read_options=_UNSET, quality: QualitySettings | Mapping[str, object] | _Unset = _UNSET, on_scale_violation: Literal["error", "exclude"] | _Unset = _UNSET, settings: ImportSettings | Mapping[str, object] | _Unset = _UNSET) -> Survey`. Still missing: `profile` (S3) and in-memory sources (S7).
+  - `resolve_import_settings(*, quality, on_scale_violation, settings) -> ImportSettings` (same three types as above), in `read.py`, used by `read_survey` and both dataset loaders: `merge_settings(ImportSettings, [settings layer, {"quality": quality layer}, {"on_scale_violation": value}], context="invalid import settings")`, each layer present only when its argument is set (ranks 1 and 2 of §6.3.4; the profile rank is S3's, and today every profile's `[import]` section is empty, so the model defaults stand in for it). Plan call: `settings=` given as a path raises `SettingsError` saying settings files arrive with profiles (S3); an invalid `on_scale_violation` raises `SettingsError` naming it.
+  - `_read_survey(source, mapping, *, read_options: ReadOptions, settings: ImportSettings, data_refs=()) -> Survey`: `settings` is now required.
+  - `Survey.scores` holds one entry per mapped group (`"attributes"` and each non-empty optional group), `(n, k)` in key order; unmapped groups are absent (Plan call).
+  - **Behaviour, in order** (S1's order, widened):
+    1. `ssp_` collision check (unchanged).
+    2. Mapped columns missing from the header: S1's list plus every optional group column (`groups.<group>.columns.<key>`), `age`, each mapped flag column (`flags.<name>.column`) and each `carry` entry (`carry[<i>]`); one `MappingError` listing all.
+    3. Response ids, then language (unchanged).
+    4. Every mapped group coded with `apply_coding`, attributes first, then `Groups` field order; the first group with a `CodingError` raises.
+    5. Scale check on every group's non-missing cells. Under `"error"`, one `ScaleViolationError` lists every offending column of every group (S1 format: `'<column>' (<key>): <value> x<count> (responses ...)`), and the hint now names all three fixes: a missing code, `offset`, or `on_scale_violation="exclude"` (§6.4.3). Under `"exclude"`, each violating cell becomes NaN in its group's scores and the row gets `scale_violation`; no warning (plan rule 10).
+    6. Age (when mapped): stripped texts coded with `apply_coding(texts[:, None], Coding(), <attribute scale>, item_keys=("age",), response_ids=...)` (no reverse, so the scale is unused); a `CodingError` is re-raised naming the age column, with the hint "map age to a column of numbers, or leave age unmapped" (Plan call, Review Focus 2). Flags: `np.isin(stripped_text(frame, column), true_values)`, so a blank consent cell is not consent (§6.7 "value not in true_values"; Plan call).
+    7. `apply_quality(status, QualityInputs(...), settings.quality)`; `quality_skipped` recorded.
+    8. INFO summary: S1's line plus flagged counts by flag (Plan call: `"; flagged (all_midpoint: 10, under_age: 8)"`, or `"none"`).
+  - Provenance: S1's keys plus `quality_skipped=list(skipped)` (§6.3.6; S1 carry-forward); `settings` is the resolved `ImportSettings`.
+- `tests/survey/fixtures/labelled_export.csv` and `labelled_mapping.toml` (FR-1.3 "missing codes, value maps, reverse" on a realistic export): `ID`, the eight attributes as Table A.1 text labels (`Strongly disagree` .. `Strongly agree`, mixed case as one exporter writes them, mapped with `value_map` entries for each spelling present), `-99` and `Don't know` as missing codes, `calm` reversed, `overall_quality` as numbers with `offset = 1.0` (a 0..4 export), four rows.
+
+- [ ] **Step 1: Write the failing tests.** `tests/survey/test_read.py`: change `test_scale_violation_raises` to assert `on_scale_violation` is in the hint, and add `test_scale_violation_lists_every_group` (a 0..4 `who01` and a 6 in `ssi01` in one file: one error naming both columns). New `tests/survey/test_read_quality.py`:
+  - `test_exclude_path_records_both_reasons` (Review Focus 4): `survey_0_4.csv` with `on_scale_violation="exclude"`: rows a, b, c each have reasons `("scale_violation", "incomplete_attributes")`; `scores["attributes"]` is NaN exactly at the violating cells (a: pleasant, annoying; b: calm; c: pleasant, and the blank annoying); `survey.settings.on_scale_violation == "exclude"`; no warning (`filterwarnings = ["error"]` would fail the test); `project(survey).n_valid() == 0`.
+  - `test_offset_fixes_the_0_4_export`: the same file with `offset = 1.0`: a and b included, c `incomplete_attributes` only.
+  - `test_labelled_export_reads`: exact `scores` for the four rows (labels to 1..5, `-99` and `Don't know` to NaN, calm reversed to `6 - v`, overall quality shifted by 1), and the reasons that follow.
+  - `test_every_rule_through_read_survey`: one hand-written CSV (`ID`, attributes, `ssi01`..`ssi04`, `age`, `consent`, `test`, `paper`) whose rows match Task 1's fixture rows 0 to 9, with every flag mapped (`true_values = ["yes"]`); default settings give exactly Task 1's `test_defaults_on_the_fixture` status; a row with a blank consent cell is `no_consent`; `" yes "` in `test` matches.
+  - `test_partial_source_dominance_reads` (Review Focus 5); `test_age_text_not_a_number_raises` (Review Focus 2: `"prefer not to say"` raises `CodingError` naming `age`, the text, its count and the response id); `test_missing_flag_column_raises` (`MappingError` naming `flags.consent.column`); `test_missing_carry_column_raises`.
+  - `test_quality_skipped_recorded`: no flags and no age mapped gives `["no_consent", "test_response", "paper_input", "under_age"]`; everything mapped gives `[]`.
+  - `test_settings_precedence`: `settings={"quality": {"min_age": 16.0, "under_age": "exclude"}}` with `quality={"under_age": "off"}` resolves to `min_age == 16.0` and `under_age == "off"`; `on_scale_violation="exclude"` beats `settings={"on_scale_violation": "error"}`; an instance `settings=ImportSettings(on_scale_violation="exclude")` works; `quality={"all_identical": "flag"}` raises `SettingsError` naming `quality.all_identical`; `on_scale_violation="drop"` raises `SettingsError` (ty ignore per Global Constraints); `settings="settings.toml"` raises `SettingsError` naming S3's settings files.
+  - `test_rerun_with_recorded_settings` (§7.1): `read_survey(path, mapping, settings=survey.settings)` gives equal `status.reasons`, `status.flags` and `scores` (exact) and an equal `provenance["settings_hash"]`.
+  - `test_info_summary_names_flags` (`caplog`).
+  - Hypothesis `test_row_count_property` (§9 S2 done-when, §7.1 status invariants): draw n in 1..12 rows of the eight attributes plus `ssi01`..`ssi04` and `age`, each cell from `["", "1", "2", "3", "4", "5", "0", "NA"]` (age from `["", "12", "17", "18", "40"]`), random blank lines between rows, a random `QualitySettings` and `on_scale_violation="exclude"`; write the CSV inside the test body under `tempfile.TemporaryDirectory()` (`@settings(deadline=None)  # per-example file I/O`); assert `survey.n()` equals the number of non-blank data rows, `len(status.reasons) == len(status.flags) == n`, `included == (len(reasons) == 0)`, and `project(survey).n() == n` (Task 4 adds `len(survey.to_frame()) == n`).
+  - `tests/test_toml_round_trip.py`: the `ImportSettings` instance gains a non-default `quality`; its hypothesis variant draws `quality` from Task 1's strategy.
+- [ ] **Step 2: Run to verify they fail.** **Step 3: Implement.** Refactor S1's `_code_group` into a coder returning `(scores, outside_mask)` per group and one function that builds the error message across groups; no other S1 behaviour changes. **Step 4: Pass**; `uv run task check` green.
+- [ ] **Step 5: Commit** `feat: read_survey codes every group, applies quality rules and the exclude path`.
+
+---
+
+### Task 4: `Survey.to_frame`, `Survey.select`, `Status.select`
+
+**Files:**
+- Modify: `src/soundscapy/survey/read.py`, `src/soundscapy/survey/status.py`, `src/soundscapy/_frames.py`, `tests/survey/test_read.py`, `tests/survey/test_status.py`, `tests/test_frames.py`
+
+**Interfaces:**
+- Produces (§6.5; S1 Plan call 15 deferred them here):
+  - `_frames.take_rows(frame: object, mask: NDArray[np.bool_]) -> Any`: native in, same library out, rows where `mask` is true in order (narwhals `filter` with the mask as a list); a pandas result gets a fresh `RangeIndex` (Plan call: a selected survey's `data` looks like a fresh read). A mask of the wrong length or dtype raises `ValueError`.
+  - `Status.select(mask: ArrayLike) -> Status` (Plan call: a public method beside `with_reason`, so `Survey.select` needs no private access).
+  - `Survey.to_frame() -> Any`: `_frames.with_columns(self.data, {COL_RESPONSE_ID: self.response_id, **self.status.label_arrays()})`, pandas for a file source (§6.5: "the data with `ssp_response_id` and status columns").
+  - `Survey.select(mask: ArrayLike) -> Survey`: every per-response array, every `scores` and `ids` entry, the status and `data` restricted to `mask`; `mapping`, `settings`, `source` and `provenance` unchanged (Plan call, as `Coordinates.select` does in S1; S4's provenance guards revisit it).
+- [ ] **Step 1: Write the failing tests**: `test_take_rows` (`frame_lib`: rows and order kept; pandas index is `0..k-1`; bad mask raises); `test_status_select` (codes follow their rows; invariants hold); `test_survey_to_frame` (subset: 40 + 4 columns, `ssp_response_id` equals `response_id`, `ssp_reasons` equals `label_arrays()`; the survey's `data` unchanged); `test_survey_select` (subset rows at CamdenTown: `n()` equals the mask sum, `select(m).to_frame()[COL_RESPONSE_ID]` equals `response_id[m]` row by row, `scores` and status follow); `test_survey_select_bad_mask_raises`. Extend Task 3's `test_row_count_property` with `len(survey.to_frame()) == n`.
+- [ ] **Step 2: Run to verify they fail.** **Step 3: Implement.** **Step 4: Pass**; `uv run task check` green.
+- [ ] **Step 5: Commit** `feat: Survey.to_frame and Survey.select`.
+
+---
+
+### Task 5: `project(carry=)` and carried labels
+
+**Files:**
+- Modify: `src/soundscapy/projection/project.py`, `tests/projection/test_project.py`, `tests/distribution/test_coordinates.py`
+
+**Interfaces:**
+- Consumes: `survey.mapping.carry` (Task 2), `survey.data`, `_frames.to_eager`, `column_text`.
+- Produces: `project(survey, *, formulation=_UNSET, angles=_UNSET, carry: Sequence[str] | _Unset = _UNSET) -> Coordinates`. Still missing: `on_uncovered`, `on_low_confidence`, `angle_sets`, `settings`, `profile` (S3). Labels gain, after the id roles, one text label per carried column: the mapping's `carry` in order, then `carry=` entries not already present (Plan call: a union, the mapping's order first). Values are the column's cell text verbatim through `column_text` (nulls `""`), never parsed (§6.5: carried columns stay text; Plan call: read from `survey.data`, so `Survey` gains no field). `carry` is not a settings field (§6.9.2) and changes no number. Errors: a bare `str` raises `TypeError` naming `carry` (Review Focus 3); a name not in `survey.data` raises `MappingError` listing the data's columns; a name that is already a label (an id-role column) raises `MappingError` naming it. `provenance` copies `quality_skipped` from the survey with the S1 keys (`_CARRIED`).
+- [ ] **Step 1: Write the failing tests**: `test_project_carries_mapping_columns` (subset: after Task 6 the subset carries 15 columns; in this task use a fixture survey with `carry = ["start_time"]`: `labels["start_time"]` equals the CSV texts, unstripped); `test_project_carry_keyword_adds` (`carry=["Survey_Version"]` adds after the mapping's; repeating a mapping entry adds nothing); `test_project_carry_rejects_a_bare_string` (ty ignore per Global Constraints); `test_project_carry_unknown_column_raises`; `test_project_carry_label_column_raises` (`carry=["LocationID"]`); `test_split_by_carried_column` (keys are the sorted distinct texts); `test_provenance_carries_quality_skipped`. Update S1's `test_subset_labels_carry_the_id_columns` to slice `[6:10]`, and `tests/distribution/test_coordinates.py`'s `to_frame` test still compares against `[*labels, ...]`, so it holds.
+- [ ] **Step 2: Run to verify they fail.** **Step 3: Implement.** **Step 4: Pass**; `uv run task check` green.
+- [ ] **Step 5: Commit** `feat: project carries survey columns into the labels`.
+
+---
+
+### Task 6: The ISD mapping in full, `isd.load` pass-through, the subset FR-1.5 test
+
+**Files:**
+- Modify: `src/soundscapy/_data/datasets/isd/isd_mapping.toml`, `src/soundscapy/_data/__init__.py` (re-pin), `src/soundscapy/datasets/isd.py`, `src/soundscapy/__init__.py`, `tests/datasets/test_isd.py`, `tests/science/test_isd_subset.py`, `tests/test_package.py`
+- Create: `tests/science/test_fr15_subset.py`
+
+**Interfaces:**
+- Consumes: Tasks 1 to 5; `resolve_import_settings`, `_read_survey`.
+- Produces:
+  - `isd_mapping.toml` becomes the §6.4.4 normative example byte for byte (still under `_data/datasets/isd/`, §11.4), and its pin is updated. `tests/survey/fixtures/minimal_mapping.toml` is not touched.
+  - `datasets.isd.load(*, subset=False, version=_UNSET, quality=_UNSET, on_scale_violation=_UNSET, settings=_UNSET) -> Survey`, the three new keywords typed as in Task 3 and passed through `resolve_import_settings` unchanged (§6.20.2). Still missing: `locations` (S9), `profile` (S3). For the subset, the mapping read from the registry entry is derived with `carry` extended by the sidecar's `[features] columns` in sidecar order (`SurveyMapping.model_validate({**mapping.model_dump(by_alias=True), "carry": [*mapping.carry, *features]})`), so `survey.mapping` and `mapping_hash` describe what was read (Plan call: the sidecar, not the registry's 96 `feature_columns`, because the subset holds 10; §6.4.4).
+  - `soundscapy.QualitySettings` (§6.21 Types tier); `soundscapy.survey.quality` re-exported names stay module-level.
+- [ ] **Step 1: Write the failing tests**
+  - `tests/datasets/test_isd.py`: `test_isd_mapping_is_the_normative_example` (the shipped bytes equal the §6.4.4 block, copied into the test as a string constant); the existing byte round-trip test stays; `test_load_subset_carries_features` (`survey.mapping.carry` is the five mapping entries then the ten sidecar features; `project(survey).labels` holds `LAeq_L(A)` as text); `test_load_passes_settings_through` (`quality={"all_midpoint": "off"}` gives no `all_midpoint` flag; `settings={"quality": {"under_age": "exclude"}}` gives 8 `under_age` reasons and 24 excluded (the 8 under-age rows are all complete; checked while planning); `on_scale_violation="exclude"` gives the same counts as the default, since the ISD has no violations); `test_registry_feature_columns` (S1 carry-forward: the 1.0.1-alpha.1 entry lists 96 unique names, the first `LZeq_L`, and contains each of the sidecar's ten features).
+  - `tests/science/test_isd_subset.py`: `test_sidecar_features` (S1 carry-forward: `[features] columns` equals the last ten of `columns` in order, and `units_verified is False`).
+  - `tests/science/test_fr15_subset.py` (`science` marker; docstring cites §6.7 and PRD FR-1.5): `test_fr15_subset_counts` on `isd.load(subset=True)` with default settings: `counts["n"] == 1552`, `reason:incomplete_attributes == 16`, `reason:all_identical == 0`, `flag:all_midpoint == 10`, `reason:excessive_missing == 0`, `flag:under_age == 8`, `excluded == 16`, `included == 1536`; every other reason and flag 0; `provenance["quality_skipped"] == ["no_consent", "test_response", "paper_input"]`; `scores` keys are the five groups. Exact counts. (Checked while writing this plan on the committed subset: 16, 0, 10, 0, 8, 16 excluded.)
+  - `tests/test_package.py`: rename `S1_NAMES` to `S2_NAMES` with `QualitySettings` added; `test_all_is_the_s2_surface` asserts 24 names.
+- [ ] **Step 2: Run to verify they fail.** **Step 3: Implement**: write the TOML, pin it (`uv run python -c "from soundscapy.provenance import hash_file; print(hash_file('src/soundscapy/_data/datasets/isd/isd_mapping.toml'))"`), extend `isd.load` and the root `__init__`. If `write_mapping` does not reproduce the normative block, the writer is wrong (§6.4.4 records a prototype that does); fix it, not the file. **Step 4: Pass**; S1's `test_thin_slice` still passes (1536 valid rows); `uv run task check` green.
+- [ ] **Step 5: Commit** `feat: full ISD mapping, load pass-through keywords and the subset FR-1.5 counts` (body: re-pinned `isd_mapping.toml`).
+
+---
+
+### Task 7: The course dataset
+
+**Files:**
+- Create: `scripts/make_course_demo.py`, `src/soundscapy/_data/datasets/course_demo/course_demo.csv`, `src/soundscapy/_data/datasets/course_demo/course_demo.toml`, `src/soundscapy/_data/datasets/course_demo/mapping.toml`, `src/soundscapy/datasets/course_demo.py`, `tests/datasets/test_course_demo.py`, `tests/science/test_course_demo.py`
+- Modify: `src/soundscapy/_data/__init__.py` (three pins), `src/soundscapy/datasets/__init__.py`
+
+**Source (found while planning, §6.20.4):** `examples/data/DemoData.csv` on 0.x `origin/main` (tip `1af6c11f6bfa18a08aeca8c780d4c549e1ba90d7`; last changed in `325e97c1aff124b7d2d426af24592d8a8357b67f`; git blob `f821ed4a36630f998e573a18a88dc11f2a1061b0`), sha256 `d6d4f937b53f02f4bdaa28e8401fe90061d0d9fde9da89c0ec898baaa4fcdd3a`, 93,202 bytes, LF, no BOM, ASCII. 456 rows (TateModern 152, CamdenTown 105, MarchmontGarden 105, PancrasLock 94), 37 columns; double quotes occur only in `free_response`. Every row matches an ISD 1.0.1-alpha.1 row on the four-part key; the two ISD rows at those sites it lacks are `PancrasLock/PancrasLock2/PL202/410` and `TateModern/TateModern1/TM124/663`; the ISD records 454 rows eng and 2 spa (`CamdenTown/CamdenTown3/CT323/10009` and `/10010`). All compared columns are numerically equal to the ISD's (text differs: `4` against `4.0`). Licence: CC BY 4.0 with ISD attribution (spec §4.3 owner decision; the rows are ISD rows). The other 0.x data files (`DemoData.xlsx`, `SoundscapyResults.*`, `acoustic_analysis_results.xlsx`, the `*.yaml` settings) are not shipped.
+
+**Interfaces:**
+- **Generator** (PEP 723, `dependencies = ["tomlkit>=0.13.1"]`): `--source PATH`, or `--git-ref REF` (default `origin/main`) read with `git show REF:examples/data/DemoData.csv` (`subprocess.run(..., check=True, capture_output=True, stdin=subprocess.DEVNULL)`); refuses unless the sha256 is the pinned one. Reads with `csv`, drops `free_response`, `ISOPleasant`, `ISOEventful`, writes the rest with `csv.writer(lineterminator="\n")` (minimal quoting), UTF-8 without BOM. Expected output (checked while writing this plan with exactly these rules): 456 rows, 34 columns, 74,332 bytes, sha256 `7f9e0933a0b6da290a612659420586617c0a1b0ddcd74d69c4e66c314c8b7386`. Also writes the sidecar; running twice gives identical bytes in both files.
+- **Sidecar `course_demo.toml`** (Plan call, mirroring the ISD sidecar): `schema = "soundscapy.dataset_sidecar"`, `schema_version = 1`, `name = "course-demo"`, `version = "1"`, `source_file = "examples/data/DemoData.csv"`, `source_ref = "soundscapy 0.x main, commit 325e97c1aff124b7d2d426af24592d8a8357b67f"`, `source_sha256`, `copy_hash` (`h1-sha256:` of the copy), `n_rows = 456`, `dropped_columns = ["free_response", "ISOPleasant", "ISOEventful"]`, `locations` (the four, in first-appearance order), `columns` (the 34), `[features] columns = ["LAeq", "LA10", "LA90", "LCeq", "N5", "sharpness", "roughness", "tonality"]`, `units_verified = false`, then `[citation]`: `citation` = the §6.20.1 ISD 1.0.1-alpha.1 citation text, `doi_or_url = "https://doi.org/10.5281/zenodo.10672568"`, `licence = "CC-BY-4.0"`, `date = "2024-02-16"`, `notes` = "Renamed extract of the ISD used in the IoA soundscape course (examples/data/DemoData.csv on soundscapy 0.x main): the ISD 1.0.1-alpha.1 rows of CamdenTown, MarchmontGarden, PancrasLock and TateModern through the four-part key, less PancrasLock/PancrasLock2/PL202/410 and TateModern/TateModern1/TM124/663. All versions: concept DOI 10.5281/zenodo.5578572. free_response, ISOPleasant and ISOEventful dropped; other cells unchanged. The file has no language column: the ISD records 454 rows as eng and 2 as spa (CamdenTown/CamdenTown3/CT323/10009 and 10010); the mapping sets eng for all. Made by scripts/make_course_demo.py."
+- **`mapping.toml`** (hand-written in the §6.4.4 form, then checked by byte round-trip): the identity keys; `age = "age"`; `carry = ["start_time", "end_time", "perceived_loud", "visit_often", "like_to_visit", "gender", "tourist_local", "LAeq", "LA10", "LA90", "LCeq", "N5", "sharpness", "roughness", "tonality"]`; `[ids]` the four-part `response_key` with the four roles; `[language] value = "eng"`; `[groups.attributes.columns]` `pleasant = "PAQ1"` .. `calm = "PAQ8"`; `[groups.source_dominance.columns]` each key to the same-named column; `[groups.overall_quality.columns] overall_quality = "overall_sound_environment"`; `[groups.appropriateness.columns] appropriateness = "appropriate"`; no WHO-5.
+- `datasets.course_demo.load(*, quality=_UNSET, on_scale_violation=_UNSET, settings=_UNSET) -> Survey` (types as Task 3; `profile` is S3's): reads `mapping.toml` and `course_demo.csv` through `_data.as_path`, calls `_read_survey` with `ReadOptions()` and `resolve_import_settings(...)`, and adds `{"kind": "dataset", "name": "course-demo", "version": "1", "hash": pin("datasets/course_demo/course_demo.csv")}` to `data_refs`. Docstring `References`: `[@isd2024]`. `soundscapy.datasets` imports `course_demo`.
+- [ ] **Step 1: Generate and check determinism** (`$SCRATCH` is any directory outside the repository):
+
+```bash
+git fetch origin main
+uv run scripts/make_course_demo.py
+sha256sum src/soundscapy/_data/datasets/course_demo/course_demo.csv src/soundscapy/_data/datasets/course_demo/course_demo.toml > "$SCRATCH/first.sha"
+uv run scripts/make_course_demo.py
+sha256sum -c "$SCRATCH/first.sha"
+```
+
+Expected: both `OK`, and the CSV's sha256 is `7f9e0933...8b7386`. Write `mapping.toml`, then pin the three files.
+- [ ] **Step 2: Write the failing tests**
+  - `tests/science/test_course_demo.py` (`science`; §7.2 row): the CSV matches its pin; 456 rows, 34 columns equal to the sidecar's `columns`; site counts `{"TateModern": 152, "CamdenTown": 105, "MarchmontGarden": 105, "PancrasLock": 94}`; the sidecar's `copy_hash` equals the pin, `source_sha256` the source's, `dropped_columns` the three, `units_verified is False`, licence `CC-BY-4.0`; `load()` reads with no `CodingError`.
+  - `tests/datasets/test_course_demo.py`: `load()` gives `n() == 456`, `response_id_source == "key"`, every `language == "eng"`, `scores` keys `{"attributes", "source_dominance", "overall_quality", "appropriateness"}`, the dataset `data_refs` entry; quality counts with the defaults (checked while planning): excluded 0, `flag:all_midpoint == 2`, `flag:under_age == 0`, `quality_skipped == ["no_consent", "test_response", "paper_input"]`; `project(load()).labels` hold the 15 carried columns; `test_course_mapping_byte_round_trip`; `test_course_attributes_by_position` (the mapping reads PAQ1..PAQ8 columns into positions PAQ1..PAQ8 in order); `test_load_passes_settings_through` (`quality={"all_midpoint": "off"}`: no flags).
+- [ ] **Step 3: Run to verify they fail.** **Step 4: Implement** `course_demo.py`. **Step 5: Pass**; `uv run task check` green; `uv run task build` then `unzip -l dist/*.whl | grep course_demo` lists the three data files.
+- [ ] **Step 6: Commit** `feat: bundled course dataset, its generator, mapping and loader` (body: source path, commit and sha256; CC BY 4.0 with ISD attribution).
+
+---
+
+### Task 8: Nightly network tests: FR-1.5 on the full ISD, course rows against the ISD
+
+**Files:**
+- Create: `tests/_downloads.py`, `tests/science/test_fr15_network.py`
+- Modify: `Taskfile.yml`
+
+**Interfaces:**
+- Plan call (how the nightly test gets the file): `tests/_downloads.py` holds `ISD_FILES: Final[Mapping[str, tuple[str, str]]]` with the two §6.20.3 rows, `"1.0.1-alpha.1"` (`https://zenodo.org/records/10672568/files/ISD%20v1.0%20Data.csv`, `27e54cde...f735`) and `"1.0.1-alpha"` (`https://zenodo.org/records/10639661/files/ISD%20v1.0%20Data.csv`, `1e54e41c...e3cf`), and `isd_csv(version: str, cache: Path) -> Path`: reuses `cache/isd/<version>/ISD v1.0 Data.csv` when its `hash_file` matches `"h1-sha256:" + sha256`; otherwise downloads with `urllib.request.urlopen(url, timeout=120)` (`# noqa: S310  # fixed https URL from the spec's registry table`) to a temporary name, checks the hash, renames; a mismatch raises `AssertionError` naming both hashes. A session fixture `isd_cache` in the test module uses `$SOUNDSCAPY_DATA_DIR/test-downloads` when the variable is set (the nightly job sets and caches it, `.github/workflows/nightly.yml`) and `tmp_path_factory.mktemp("downloads")` otherwise. Plan call: a plain stdlib download, because `datasets.isd.fetch` and pooch are S9's; S9 replaces `isd_csv` with `fetch` and deletes `tests/_downloads.py`. The 1.0.1-alpha row is a test constant, not a registry entry, until S9 registers it.
+- `tests/science/test_fr15_network.py`: `pytestmark = [pytest.mark.science, pytest.mark.network]`; the file name matches the nightly push trigger.
+- [ ] **Step 1: Write the tests** (they need the network; the default run deselects them):
+  - `test_fr15_full_isd`, parametrised over both versions: `read_survey(isd_csv(v), <shipped isd_mapping.toml>)` with default settings gives `n == 3589`, `reason:incomplete_attributes == 37`, `reason:all_identical == 19`, `flag:all_midpoint == 53`, `reason:excessive_missing == 0`, `flag:under_age == 52`, `excluded == 56`, `included == 3533` (§6.7; checked while planning on both downloads). Exact. Docstring cites PRD FR-1.5 and §6.7.
+  - `test_registry_feature_columns_match_the_header` (§6.20.3): the 1.0.1-alpha.1 header's 96 columns after `RecordingLength` equal the registry entry's `feature_columns`, in order.
+  - `test_course_rows_equal_isd_rows` (§7.5): every course row joins one 1.0.1-alpha.1 row on the four-part key (456 matches); the attributes (PAQ1..PAQ8 against pleasant, vibrant, eventful, chaotic, annoying, monotonous, uneventful, calm), source items (`ssi01`..`ssi04`), `sss01`..`sss05` against `overall_sound_environment`, `appropriate`, `perceived_loud`, `visit_often`, `like_to_visit`, `age` against `age00`, and the eight features against `LAeq_L(A)`, `LAeq_L10(A)`, `LAeq_L90(A)`, `LCeq_L(C)`, `N_N5`, `S_S`, `R_R`, `T_TonalityHMS` are equal as numbers (`float(text)`, both blank counting as equal; exact, since both files hold the same decimal values, `4` and `4.0` alike); `start_time` equal as text; the two ISD rows of those sites without a course row are exactly the §6.20.4 pair.
+- [ ] **Step 2: Remove the exit-5 tolerance** in `Taskfile.yml` `test:network`: the command becomes `uv run pytest -m network {{.CLI_ARGS}}` and its two comment lines go (S1 carry-forward; `test:reference` keeps its clause until S3).
+- [ ] **Step 3: Run them**: `uv run task test:network`. Expected: 4 passed (2 parametrised + 2), on a machine with access to zenodo.org. Then `uv run task check` green (the network tests are deselected there).
+- [ ] **Step 4: Commit** `test: nightly FR-1.5 counts on the full ISD and course rows against the ISD` (body: the first network tests, so `test:network` no longer tolerates exit 5).
+
+---
+
+### Task 9: S2 done-when check
+
+**Files:**
+- Create: `tests/science/test_s2_done.py`
+
+- [ ] **Step 1: Write** `test_s2_done` (`science`): one test that runs the done-when path end to end: `isd.load(subset=True)` counts 1552/16/0/10/0/8 and 16 excluded (as Task 6); `course_demo.load().n() == 456` with no exclusion; `read_survey(SCALE_0_4_CSV, ..., on_scale_violation="exclude")` records `scale_violation` on all three rows; `project(isd.load(subset=True)).n_valid() == 1536`. It duplicates assertions on purpose: it is the one command that shows the slice's done-when (`uv run pytest tests/science/test_s2_done.py`), as `test_s1_done.py` does for S1.
+- [ ] **Step 2: Run it**: PASS.
+- [ ] **Step 3: Commit** `test: S2 done-when`.
+
+---
+
+### Task 10: PR-ready finish
+
+**Files:**
+- Modify: `AGENTS.md` (Status), `docs/_freeze/` if `task docs` changes it, anything the review passes change
+
+- [ ] **Step 1: Full gate, floors and docs**
+
+```bash
+uv run task check
+UV_RESOLUTION=lowest-direct UV_PROJECT_ENVIRONMENT="$SCRATCH/lowest-venv" uv run --python 3.11 pytest -p no:cacheprovider
+git restore uv.lock
+uv run task docs
+git status --short docs/_freeze
+```
+
+Expected: `task check` green with coverage at 80% or more; the floor run passes the whole suite (CI's `lowest` job); `task docs` renders offline and the API reference lists `QualitySettings`, `datasets.course_demo` and the new mapping models; commit any `docs/_freeze/` change. If great-docs flags a docstring, fix the docstring.
+
+- [ ] **Step 2: AGENTS.md Status**: "M1 slice S2 (status, quality, full mapping, the course dataset; plan `design/plans/2026-10-31-m1-s2-status-quality.md`) is in place; slice S3 is next." Commit `docs: AGENTS.md status after M1 slice S2`.
+- [ ] **Step 3: `/simplify`** on the branch's change (`git diff soundscapy-rewrite...HEAD`), then `uv run task check`; commit `refactor: S2 simplify pass`.
+- [ ] **Step 4: `/code-review`** on the same range; address the findings; `uv run task check`; commit `fix: S2 code-review findings`. If that changes much, one more `/simplify` on just those changes.
+- [ ] **Step 5: Hand-off for the PR**: the working tree is clean on `m1-s2-status-quality`; give the controller a PR body that lists the tasks, the plan calls, owner question 1 (the `mitchell2021lockdown` metadata), the re-pinned `isd_mapping.toml`, the three new course pins, and the commands that prove the done-when (`uv run task check`, `uv run pytest tests/science/test_s2_done.py`, `uv run task test:network`). The PR targets `soundscapy-rewrite`; the controller opens it.
+
+---
+
+## Plan calls
+
+Each is marked "Plan call:" where it is made.
+
+1. `merge_settings` and `settings_layer` live in `_model`; an instance contributes only its set fields; S2 resolves keyword and `settings=` ranks over model defaults, and a settings file path is refused until S3 (Tasks 1, 3).
+2. Per-rule `Literal`s allow only the actions §6.3.1 has codes for; `incomplete_attributes` has no field; thresholds follow their rule in field order (Task 1; spec defect 1).
+3. A rule is listed in `quality_skipped` only when enabled and unmapped; an `off` rule never is; every rule runs on every row (Task 1).
+4. `Groups` owns the optional groups' defaults and keys; a group may map a subset of its keys, and `excessive_missing` counts the mapped items (Task 2).
+5. `FlagSpec` needs `column` and `true_values` together, with stripped, non-blank true values; `carry` refuses repeats, blanks and id-role columns (Task 2).
+6. Unmapped groups are absent from `Survey.scores` (Task 3).
+7. A non-numeric age text raises `CodingError` naming the age column; a blank consent cell is not consent; flag cells compare stripped and case-sensitive (Task 3; spec defect 3).
+8. Under `exclude`, a violating cell is missing before the rules run, so it also counts for `incomplete_attributes` and `excessive_missing` (Task 3).
+9. The INFO summary adds flagged counts (Task 3).
+10. `_frames.take_rows` resets a pandas index; `Status.select` is public; `Survey.select` keeps provenance unchanged (Task 4).
+11. `project` reads carried columns verbatim from `survey.data`; `carry=` is unioned after the mapping's; a bare string, an unknown column and an id-role column raise (Task 5).
+12. `isd.load` extends the subset's `carry` with the sidecar's ten features and records the derived mapping (Task 6).
+13. The course sidecar's keys, `name = "course-demo"`, `version = "1"`, and the generator's `--git-ref` default `origin/main` (Task 7).
+14. The nightly full-ISD tests download with stdlib `urllib` into `$SOUNDSCAPY_DATA_DIR/test-downloads`, with the 1.0.1-alpha URL and hash as test constants until S9 (Task 8).
+15. The course-row network check lands in S2 with the course dataset, though §9 does not list it (Task 8).
+
+## Spec defects found while planning
+
+Proposed amendments, to apply at plan review (not edited here):
+
+1. **§6.7, `QualitySettings`.** "One `Action` (`"exclude"`, `"flag"` or `"off"`) per rule" and "every rule × action tested" (§7.1, §9 S2) cannot hold: §6.3.1 has no `Flag` for `all_identical`, `excessive_missing`, `no_consent` or `test_response`, and no `Reason` for `all_midpoint`. Amend §6.7 after the table: "Each rule takes the actions its codes allow: `all_identical`, `excessive_missing`, `no_consent` and `test_response` take `exclude` or `off`; `all_midpoint` takes `flag` or `off`; `paper_input` and `under_age` take all three. `incomplete_attributes` has no settings field. 'Every rule × action' means every allowed pair, and each disallowed pair is refused with `SettingsError`."
+2. **§9 S2 Done when.** "subset counts 1552/16/0/10/8" leaves the columns implicit and omits `excessive_missing` and the excluded total. Amend to "subset counts pinned in the default run: 1552 rows, 16 `incomplete_attributes`, 0 `all_identical`, 10 `all_midpoint`, 0 `excessive_missing`, 8 `under_age`, 16 excluded (§6.7)".
+3. **§6.7 `under_age` and the flag rules.** "Parsed as a number" does not say what a non-numeric age text does, and "value not in `true_values`" does not say whether cells are stripped or what a blank consent cell means. Amend: "Age texts are coded with the default `Coding` (missing tokens are missing); any other text that is not a number raises `CodingError` naming the age column. Flag cells are compared with `true_values` after stripping, case-sensitively; a blank consent cell is not consent."
+4. **§6.4.1 `Groups`.** Silent on whether an optional group must map all of its keys, while §6.7 counts "mapped attribute and source-dominance items". Amend: "An optional group may map any subset of its keys; an unknown key raises `MappingError`; keys are normalised to the order listed here."
+5. **§6.3.4 and §6.5.** `settings=` "a settings file" depends on `extends`, which arrives with profiles (S3). Amend §9 S2 Delivers: "`read_survey`'s `quality`, `on_scale_violation` and `settings` (a model or a mapping; settings files arrive in S3)".
+6. **§6.20.4.** The course sidecar's keys beyond the citation block are not specified (as for the ISD sidecar in S1). Amend with Plan call 13's key list.
+7. **§7.5 and §9.** The course-row network check (§7.5) belongs to no slice row. Amend §9 S2 Done when to add "each course row equals its ISD row nightly (§7.5)".
+
+## Owner questions
+
+1. **The 2021 paper behind the quality rules** (§6.7: "the 2021 JASA paper"). The plan reads it as Mitchell, Oberman, Aletta, Kachlicka, Lionello, Erfanian and Kang (2021), "Investigating urban soundscapes of the COVID-19 lockdown: A predictive soundscape modeling approach", *JASA* 150(6), 4474, doi 10.1121/10.0008928 (PRD §2's "Mitchell et al. 2021 (lockdown model)"). The DOI and pages could not be checked from the planning session. Please confirm, or give the right reference; nothing else waits on it.
+
+No question is open on the course dataset: its source, hash and licence are settled by §6.20.4 and the owner decision of §4.3, and were checked against `origin/main` above.
+
+## Notes for later slices
+
+- S3: `merge_settings` gains the base-profile layer and the `overrides` diff; decide whether a model instance passed as `settings=` counts every field as set (S2 uses `exclude_unset`); `settings=` paths with `extends`; `profile` on `read_survey`, `isd.load` and `course_demo.load`; `project` gains `on_uncovered`, `on_low_confidence`, `angle_sets`, `settings`, `profile`.
+- S4: `Survey.select` keeps the source's provenance unchanged; the workspace's provenance guards decide what a selected survey records.
+- S6: the shared `include="quality_passed"` rule reads the status S2 writes; `who5` and `source_profile` read `scores["who5"]` and `scores["source_dominance"]`.
+- S7: in-memory sources need carried columns from the frame (Task 5 reads `survey.data`, which works for both).
+- S9: replace `tests/_downloads.py` with `datasets.isd.fetch`; register 1.0.1-alpha; `load(subset=False)` carries the registry's 96 `feature_columns`; the v0.2.3 mapping's recording-only rows fire `excessive_missing` (§11.4).
