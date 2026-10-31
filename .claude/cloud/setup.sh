@@ -13,6 +13,22 @@
 # vendored copies replace them. A failed install is reported but does not fail the session.
 set -uo pipefail
 
+# pyproject.toml sets [tool.uv] required-version = ">=0.13.6". With an older uv on PATH
+# every `uv run` in the repository fails, including the hooks that guard each Bash call,
+# so the session cannot run commands at all. The cloud image has shipped uv 0.11.32.
+# `uv self update` fails on a uv that was not installed standalone, so install a new uv
+# as a uv tool instead. It goes to uv's tool bin directory (~/.local/bin by default), which
+# is on PATH in the cloud image; this is what worked on 2026-10-31.
+uv_min=0.13.6
+uv_current=$(uv --version 2>/dev/null | awk '{print $2}')
+if [ -z "$uv_current" ] || [ "$(printf '%s\n%s\n' "$uv_min" "$uv_current" | sort -V | head -n1)" != "$uv_min" ]; then
+  if uv tool install --force "uv>=${uv_min}" >/dev/null 2>&1 && hash -r; then
+    echo "installed uv $(uv --version 2>/dev/null | awk '{print $2}') (was ${uv_current:-missing})"
+  else
+    echo "FAILED to install uv>=${uv_min} (found ${uv_current:-none}); uv run will refuse this project" >&2
+  fi
+fi
+
 marketplaces=(
   anthropics/claude-plugins-official
   trailofbits/skills
