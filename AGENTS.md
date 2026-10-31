@@ -17,6 +17,8 @@ anything, and check every design decision against it.
 `design/greenfield_architecture_plan.md` (draft 0.5) is the architecture: it was
 written from the PRD and its §9 registers the owner's decisions. Specs and plans are
 derived from both. Nothing from the previous soundscapy codebase carries over.
+Before implementing or changing a scientific procedure, read its source in
+`design/literature/` (or the PRD §2 citation if no file is there) and cite it.
 
 **Status:** only the agent setup exists. There is no `pyproject.toml`, `Taskfile.yml`,
 package, test suite or docs site yet, so the `task` commands below do not exist. The
@@ -25,8 +27,9 @@ first build step is the toolchain, set up as the `house-style` skill describes.
 ## Repo map (target layout)
 
 - `design/`: PRD, architecture plan, specs (`design/specs/`), implementation plans
-  (`design/plans/`), ADRs (`design/adr/`), document reviews (`design/reviews/`) and dated
-  research notes (`design/research/`). Never part of the published docs.
+  (`design/plans/`), ADRs (`design/adr/`), document reviews (`design/reviews/`), dated
+  research notes (`design/research/`) and reference literature (`design/literature/`, indexed
+  in its README). Never part of the published docs.
 - `src/soundscapy/`: the package (src layout).
 - `tests/`: the pytest suite.
 - `docs/`: the great-docs site (`docs/great-docs.yml`). API reference comes from
