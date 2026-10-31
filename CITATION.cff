@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "soundscapy"
+abstract: >-
+  An open-source Python package for soundscape engineering: ISO 12913 survey analysis,
+  psychoacoustic analysis of calibrated recordings, predictive modelling of soundscape
+  perception, and scoring and design with the Soundscape Perception Index (SPI).
+type: software
+authors:
+  - given-names: Andrew
+    family-names: Mitchell
+    orcid: "https://orcid.org/0000-0003-0978-5046"
+license: BSD-3-Clause
+repository-code: "https://github.com/MitchellAcoustics/Soundscapy"
+keywords:
+  - soundscape
+  - ISO 12913
+  - psychoacoustics
+  - acoustics
