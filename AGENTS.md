@@ -20,9 +20,10 @@ derived from both. Nothing from the previous soundscapy codebase carries over.
 Before implementing or changing a scientific procedure, read its source in
 `design/literature/` (or the PRD §2 citation if no file is there) and cite it.
 
-**Status:** only the agent setup exists. There is no `pyproject.toml`, `Taskfile.yml`,
-package, test suite or docs site yet, so the `task` commands below do not exist. The
-first build step is the toolchain, set up as the `house-style` skill describes.
+**Status:** Phase 0 is in place: the toolchain (`pyproject.toml`, `uv.lock`,
+`Taskfile.yml`, prek hooks), CI and the docs skeleton exist, on an empty package with a
+small test suite. M1 (survey analysis) is next. `uv run task check` passing is the
+definition of done.
 
 ## Repo map (target layout)
 
@@ -39,7 +40,8 @@ first build step is the toolchain, set up as the `house-style` skill describes.
 
 ## Commands
 
-Use `task` for everything; run `task --list` for the entry points. Key tasks: `setup`,
+Use `task` for everything; run `task --list` for the entry points.
+If `task` is not on PATH, run `uv run task <name>`; go-task comes with the dev group. Key tasks: `setup`,
 `fmt`, `lint`, `typecheck`, `test`, `test:cov`, `check:fast` (lint and
 typecheck, run by the Stop hook), `check`, `docs`, `docs:preview`, `build`,
 `repo-review`.

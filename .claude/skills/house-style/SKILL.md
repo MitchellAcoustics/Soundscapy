@@ -32,7 +32,7 @@ when you configure the docs site, or write a tutorial or user-guide page.
 | Lint / format | `ruff`, `select = ["ALL"]` with the commented ignores below | Maximum signal; every exemption is visible and justified. |
 | Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports | Matches the scientific Python ecosystem and great-docs rendering. |
 | Git hooks | `prek`, reading `.pre-commit-config.yaml` | Fast drop-in for pre-commit. Never install `pre-commit` itself. |
-| Task runner | `Taskfile.yml` (go-task, `version: '3'`) | One set of entry points for agents, humans and CI. |
+| Task runner | `Taskfile.yml` (go-task, `version: '3'`), run as `uv run task <name>` | One set of entry points for agents, humans and CI. go-task comes from `go-task-bin` in the `dev` group, so contributors install only uv and git. Bare `task` works only with the venv activated. |
 | Coverage gate | `fail_under = 80`, branch coverage on | Matches the Trail of Bits default; raise it, never lower it. |
 | CI | GitHub Actions running `task` targets; a nightly job runs `test:reference` and the dataset downloads; releases publish on tag by PyPI trusted publishing | CI runs exactly what developers run. |
 | Line length | 100 | Room for unit-suffixed names without wrapping every call. |
@@ -50,9 +50,10 @@ Keep the whole configuration in `pyproject.toml`; no `ruff.toml`, `pytest.ini`,
 - Dev tooling goes in `[dependency-groups]`, never in `[project.optional-dependencies]`.
   Optional extras are for users (for example an `audio` extra), not for developers.
   - `dev`: ruff, ty, prek, import-linter (layer contracts from the architecture plan
-    §4, run by `task lint`)
+    §4, run by `task lint`), go-task-bin (the `task` command)
   - `test`: pytest, pytest-cov, pytest-xdist, hypothesis
-  - `docs`: great-docs, and a Jupyter kernel (`ipykernel`) for executing `.qmd` cells
+  - `docs`: great-docs, a Jupyter kernel (`ipykernel`) for executing `.qmd` cells, and
+    `quarto-cli` (pinned exactly; it fetches the Quarto binary great-docs runs)
   - `[tool.uv] default-groups = ["dev", "test"]` so `uv sync` gives a working dev
     environment. `task setup` uses `--all-groups`.
 - Add every dependency with `uv add` or `uv add --group <g>` and commit `uv.lock` in
@@ -68,6 +69,7 @@ new one only with a comment, and prefer a per-file ignore to a global one.
 select = ["ALL"]
 ignore = [
   "COM812", "ISC001",  # conflict with the ruff formatter
+  "CPY001",            # no per-file copyright headers; LICENSE.md covers the package
   "D105",              # magic-method docstrings add nothing
   "D107",              # numpy style documents __init__ parameters on the class
   "N803", "N806",      # mathematical names such as X, Pa, ISOPl match the papers
@@ -81,32 +83,54 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
-".claude/hooks/**" = ["INP001", "T201", "S603", "S607"]  # standalone PEP 723 scripts
+# Standalone PEP 723 hook scripts, kept short and dependency-free.
+".claude/hooks/**" = [
+  "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",
+]
+"scripts/**" = ["INP001", "T201"]  # standalone PEP 723 generators that report
+"docs/**/*.py" = ["INP001", "T201"]  # standalone user-facing scripts shown in the docs
 ```
 
 Think before keeping `PLR2004` (magic numbers) on in package code. Physical constants
 belong in named module constants with units in the name, so the rule stays on there.
 
+The hook scripts read `subprocess.run` return codes (no `check=True`), keep `os.getcwd()`
+and carry no docstrings, so they stay standalone. The `docs/**/*.py` scripts (such as
+`docs/user_guide/_quickstart.py`) are what a user copies and runs; they print by design
+and belong to no package.
+
+`design/` is excluded from ruff (`[tool.ruff] extend-exclude = ["design"]`): it holds
+prose documents whose code blocks are illustrative or normative text, not package code.
+
 ### Other tool sections
 
 - `[tool.ty]`: keep it minimal. Set the Python version and source roots only; verify
   key names against the ty docs (`/astral:ty`) because ty is pre-1.0.
-- `[tool.pytest.ini_options]`: `testpaths = ["tests"]`, `addopts = ["--strict-markers",
-  "--strict-config", "--import-mode=importlib", "-ra"]`, `xfail_strict = true`,
-  `filterwarnings = ["error"]`. A third-party `DeprecationWarning` that would break CI on
-  an upstream release may get a per-module `ignore` entry naming that module, with a
-  comment; never a blanket ignore. Every expected `SoundscapyWarning` is asserted with
-  `pytest.warns`.
+- `[tool.pytest.ini_options]`: `minversion = "9.2"`, `testpaths = ["tests"]`,
+  `addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib", "-ra",
+  "-m", "not reference and not network"]`, `xfail_strict = true`,
+  `filterwarnings = ["error"]`. A later `-m` on the command line overrides the one in
+  `addopts`, which is how `test:reference` and `test:network` select their markers
+  (`tests/test_markers.py` proves it).
+- A third-party warning that would break CI on an upstream release may get a scoped
+  `ignore` entry with a comment; never a blanket ignore. Scope it by the soundscapy module
+  that calls the library, or by matching the message. Never scope it by the third-party
+  module: a warning raised with `stacklevel` 2 or more is attributed to the caller, so a
+  filter naming the library's own module does not match. Every expected
+  `SoundscapyWarning` is asserted with `pytest.warns`.
 - `[tool.ruff.lint.flake8-type-checking]`: `runtime-evaluated-base-classes =
-  ["pydantic.BaseModel"]` from the first commit, so ruff's `TC` rules never move an
-  import a pydantic model needs at runtime.
+  ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]` from the first commit, so
+  ruff's `TC` rules never move an import a pydantic model (or a `FrozenModel` record)
+  needs at runtime.
 - `[tool.coverage.run]`: `branch = true`, `source = ["soundscapy"]`.
   `[tool.coverage.report]`: `fail_under = 80`, `show_missing = true`.
 
 ## Taskfile task names
 
-Every task has a `desc`. These names are referenced by AGENTS.md, the Stop hook and
-CI, so do not rename them.
+Every task has a `desc`, every command runs through `uv run`, and `env: {MPLBACKEND: Agg}`
+is set globally. These names are referenced by AGENTS.md, the Stop hook and CI, so do not
+rename them. Document and invoke them as `uv run task <name>` (the Stop hook falls back to
+that form when `task` is not on PATH).
 
 | Task | Runs |
 | --- | --- |
@@ -119,16 +143,24 @@ CI, so do not rename them.
 | `check:fast` | `lint` + `typecheck`; must finish in a few seconds (Stop hook) |
 | `check` | `lint` + `typecheck` + `test:cov`: the definition of done |
 | `test:reference` | pytest `-m reference`: cross-implementation checks (R `sn` fixtures, ISO 532-1 signals, ArtemiS); nightly in CI and on demand |
-| `docs` | `uv run great-docs build`, which also executes the tutorials |
+| `test:network` | pytest `-m network`: tests that download a dataset; nightly in CI and on demand |
+| `docs` | `uv run --group docs great-docs build`, which also executes the tutorials; offline, so the paper pages stay frozen |
+| `docs:papers` | `uv run --group docs great-docs freeze docs/papers/2022-how-to-analyse.qmd`: re-executes the frozen paper pages (needs the network; nightly in CI). See `reference.md` §4 for why `freeze` suffices |
 | `docs:preview` | great-docs local preview |
 | `build` | `uv build` |
-| `repo-review` | `uvx sp-repo-review[cli] .` |
+| `repo-review` | `uvx 'sp-repo-review[cli]' .` |
 
 ## prek configuration
 
 - Hooks: ruff (`ruff-check --fix`, `ruff-format`) from `astral-sh/ruff-pre-commit`;
   the standard hygiene hooks (trailing whitespace, end of file, check-toml, check-yaml,
-  large files, merge conflicts); `uv-lock` from `astral-sh/uv-pre-commit`.
+  large files, merge conflicts) from prek's `repo: builtin`, which needs no download;
+  `uv-lock` from `astral-sh/uv-pre-commit`; `actionlint` for the CI workflows from
+  `Mateusz-Grzelinski/actionlint-py`, a Python package whose build fetches the
+  actionlint binary, so no Go toolchain or Docker is needed. prek caches it after the
+  first run.
+- The hygiene hooks that rewrite files exclude the vendored `.claude/skills/` and
+  `.claude/agents/` (copied verbatim) and `docs/_freeze/` (written by Quarto).
 - `sp-repo-review` runs at `stages: [manual]`. It is advisory, not a commit blocker.
 - ty is **not** a prek hook. It needs the project environment and is slower than a
   commit hook should be; it runs in `task check:fast` (the Stop hook) and in CI.
@@ -158,10 +190,12 @@ CI, so do not rename them.
   carry registered markers (`--strict-markers` requires them in `pyproject.toml`):
   `tests/science/` (literature fixtures, default run), `tests/reference/` (marker
   `reference`, cross-implementation checks, nightly) and `tests/regression/` (marker
-  `regression`, golden pipelines against committed baselines, default run).
-  `tests/templates/` holds the test templates the extension recipes copy. Use
-  `hypothesis` for numerical invariants (bounds of circumplex coordinates, symmetry,
-  monotonicity).
+  `regression`, golden pipelines against committed baselines, default run). A fourth
+  marker, `network`, marks any test that needs a download (a dataset fetch); it is
+  deselected by default and runs nightly and in `task test:network`.
+  `tests/templates/` holds the test templates the extension recipes copy. It is created
+  at M2 with the first extension recipe (FR-13.1), not before. Use `hypothesis` for
+  numerical invariants (bounds of circumplex coordinates, symmetry, monotonicity).
 - Give every float comparison an explicit tolerance set by the significant figures
   of its reference value, with a comment citing the source
   (`pytest.approx(x, rel=5e-4)  # reference given to 4 s.f., ISO 532-1 Annex B`).
@@ -174,5 +208,10 @@ CI, so do not rename them.
 
 `task repo-review` runs sp-repo-review against the Scientific Python development
 guide. Treat its findings as suggestions to evaluate against this file. Apply a finding
-when it fits; when it does not, record the reason in this skill so the next agent does
-not re-litigate it.
+when it fits; when it does not, add its check id to `[tool.repo-review] ignore` in
+`pyproject.toml` with a trailing comment giving the reason, and record the same reason
+below so the next agent does not re-litigate it. `task repo-review` must exit 0.
+
+Recorded ignores (check id: reason):
+
+- None yet.

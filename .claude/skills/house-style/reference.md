@@ -6,20 +6,22 @@ anything not here. Items marked "(verify)" were inferred, not read in the source
 
 ## 1. great-docs
 
-Requirements: Python 3.11+ and a separate Quarto install. Install great-docs into the
-`docs` dependency group (`uv add --group docs great-docs`).
+Requirements: Python 3.11+ and Quarto. Upstream asks for a separate Quarto install; here
+the `docs` dependency group carries `quarto-cli` (pinned exactly), which fetches the Quarto
+binary, and great-docs finds it on PATH inside `uv run`. great-docs itself is in the `docs`
+group as a git source pinned to a main commit (`[tool.uv.sources]` in `pyproject.toml`).
 
 ### Init, build, preview
 
 | Command | Effect |
 | --- | --- |
-| `great-docs init` | Run once. Detects package (pyproject/setup.cfg/src layout), docstring style, public API; writes `docs/great-docs.yml`; adds `docs/_quarto/` and `docs/_site/` to `.gitignore`. Refuses to overwrite; `--force` resets, `--project-path DIR`, `--config PATH` for a non-`docs/` layout. |
+| `great-docs init` | Run once. Detects package (pyproject/setup.cfg/src layout), docstring style, public API; writes `docs/great-docs.yml`; offers to add `/docs/_quarto/`, `/docs/_site/`, `/docs/.cache/`, `/.great-docs-build/` and `/.great-docs/` to `.gitignore` (asks on stdin unless forced). Refuses to overwrite; `--force` resets, `--project-path DIR`, `--config PATH` for a non-`docs/` layout. |
 | `great-docs build` | The only day-to-day/CI command. Generates a Quarto project in `docs/_quarto/default/`, renders, assembles the deployable site in `docs/_site/`. Flags: `--watch`, `--no-refresh` (skip API re-discovery), `--jobs N|auto` (parallel Quarto, experimental), `--versions a,b`, `--latest-only`, `--from-repo URL [--branch] [--shallow] [--output-dir] [--preview]`, `--config PATH`. |
 | `great-docs preview` | Local server with live reload, port 3000 (`--port N`); `--site-dir DIR` serves a prebuilt site; `--pr N` / `--run ID` / `--branch NAME` fetch a CI artifact (needs `GITHUB_TOKEN` or `--use-gh`). |
 | `great-docs scan [--verbose]` | Lists discovered exports and marks `[x]` those present in the `reference` config. |
 | `great-docs config` | Writes a fully commented config template (every key at its default). |
 | `great-docs lint` / `proofread` / `check-examples` / `check-links` / `seo` | Quality checks (missing docstrings + broken xrefs; spelling; run docstring/page examples; links in built site; sitemap/meta). |
-| `great-docs freeze [pages]` | Execute selected pages and persist their `_freeze/` cache. |
+| `great-docs freeze [pages]` | Execute selected pages and persist their `_freeze/` cache. `--info` lists frozen, cached and stale pages; `--clean` deletes `_freeze/` first; `--freeze-dir DIR` moves it. Re-executes a `freeze: true` page (§4). |
 | `great-docs setup-github-pages` | Writes a `.github/workflows/` file that builds and deploys on push to `main`. |
 
 ### Resulting layout (commit vs ignore)
@@ -48,7 +50,7 @@ metadata and sources are relative to the project root. Never edit files under `d
 | `parser` | `numpy` | `numpy` / `google` / `sphinx`. Auto-detected by `init`. |
 | `dynamic` | `true` | Runtime introspection; `false` = static only. |
 | `jupyter` | `python3` | Kernel for executable `{python}` cells, incl. docstring examples. |
-| `exclude` / `auto_include` / `no_auto_exclude` | `[]` / `[]` / `false` | Names dropped from discovery (`init`, `scan`) and never documented. Built-in auto-excludes: `main, cli, version, VERSION, core, utils, helpers, logger, log`. |
+| `exclude` / `auto_include` / `no_auto_exclude` | `[]` / `[]` / `false` | Names dropped from discovery (`init`, `scan`) and never documented. Built-in auto-excludes (`AUTO_EXCLUDE` in `core.py`): `main, cli, version, VERSION, VERSION_INFO, core, utils, helpers, constants, config, settings, PackageNotFoundError, typing, annotations, TYPE_CHECKING, logger, log, logging`; `auto_include` brings one back. Note `config` and `settings`: a public `soundscapy.settings` would need `auto_include`. |
 | `reference` | `[]` (auto by type) | Explicit API sections: list of `{title, desc, contents: [name | {name, members: false}]}`. A listed submodule expands to all its public members. Names must match exports exactly; a typo silently yields an empty page. |
 | `inline_methods` | `5` | Methods inline on the class page up to N, split to own pages above; `true`/`false` force. |
 | `ref_section_order` | `[]` | Order of `python`, `cli`, `mcp` tabs in Reference. |
@@ -56,7 +58,7 @@ metadata and sources are relative to the project root. Never edit files under `d
 | `sections` | `[]` | Extra navbar sections: `{title, dir, index: true, index_columns, navbar_after, type: blog}`. Accepts `.qmd` or `.md` pages. |
 | `homepage` | `index` | `user_guide` makes the first guide page the landing page. |
 | `site` | `theme: flatly, toc: true, toc-depth: 2, html-math-method: katex, lang: en` | Passed to Quarto. |
-| `navbar_style`, `content_style`, `accent_color`, `dark_mode_toggle`, `logo: {light, dark, show_title}`, `favicon` | theming | See `configure-site` skill. |
+| `navbar_style`, `content_style`, `accent_color`, `dark_mode_toggle`, `logo: {light, dark, show_title}`, `favicon` | theming | See upstream's `configure-site` skill (`docs/skills/configure-site`, not vendored). |
 | `interlinks.sources` | `{}` | `numpy: {url: https://numpy.org/doc/stable/, aliases: [np]}`; reads `<url>/objects.inv`. `interlinks.add_function_parentheses: true`. |
 | `source: {enabled, branch, path}` | enabled | "View source" links to GitHub. |
 | `repo`, `site_url`, `pypi`, `github_style` | auto | Repo URL override, canonical site URL, PyPI link, `widget`/`icon`. |
@@ -73,7 +75,7 @@ Output dir is not a config key: it is always `<config dir>/_site/` (`docs/_site/
 ### Adding a user-guide page
 
 1. Create `docs/user_guide/NN-slug.qmd` (numeric prefix orders the sidebar and is stripped from URL/title).
-2. Frontmatter: `title: "..."` and `guide-section: "Getting Started"`; pages sharing a `guide-section` are grouped; section order follows the first file in each.
+2. Frontmatter: `title: "..."` and `guide-section: "..."`; pages sharing a `guide-section` are grouped in the sidebar; section order follows the first file (by sort order) in each. great-docs uses this key to avoid Quarto's own `section`. **House rule:** the value is one of `How-to`, `Explanation` or `Reference` (FR-12.3; `01-install.qmd` is `How-to`); tutorials are the fourth part, by directory. A docs test fails on a missing or unknown value.
 3. Alternative: subdirectories, each with an `index.qmd` whose title names the section; root `index.qmd` lands the "User Guide" navbar link.
 4. Subdirs without `.qmd` (e.g. `images/`, `data/`) are copied as assets.
 5. Links: other guide pages `[x](installation.qmd)`, API pages `[X](../reference/X.qmd)`, both validated at build. Executable cells: ```` ```{python} ```` with `#| echo: false`, `#| eval: false`, `#| output: false`, `#| fig-cap:`.
@@ -105,7 +107,7 @@ Output dir is not a config key: it is always `<config dir>/_site/` (`docs/_site/
 
 ### llms.txt
 
-Generated automatically in build step 3 (after reference config refresh, before `skill.md`), no config key. `llms.txt` = compact index of API items with one-line descriptions and links; `llms-full.txt` = full signatures, complete docstrings, CLI help, user-guide text with frontmatter stripped. Both land in `docs/_site/`. Requires the API reference block in the config (the guide page says `api-reference`; the current key is `reference` — verify) and an importable package at build time. Check with `head -30 docs/_site/llms.txt`.
+Generated automatically in build step 3 (after reference config refresh, before `skill.md`), no config key. `llms.txt` = compact index of API items with one-line descriptions and links; `llms-full.txt` = full signatures, complete docstrings, CLI help, user-guide text with frontmatter stripped. Both land in `docs/_site/`. Requires an `api-reference` block, with a `package` and at least one section, in the generated `docs/_quarto/default/_quarto.yml`; great-docs writes that block from the user-facing `reference` key (or from auto-discovery), so `api-reference` is not a `great-docs.yml` key. The package must be importable at build time. Check with `head -30 docs/_site/llms.txt`.
 
 ## 2. Tutorials as executable .qmd pages
 
@@ -124,6 +126,16 @@ review like code, and run wherever the package is installed.
 - Cell options go on `#|` lines at the top of a cell: `#| echo: false`,
   `#| eval: false`, `#| output: false`, `#| fig-cap: "..."`, `#| label: fig-name`.
   Use one hidden setup cell for shared imports.
+- Shared code: code that a page shows and something else also runs (the quick-start
+  scripts, run by CI) lives in a file beside the page and is pulled in with
+  `{{< include _file.py >}}` on a bare line; great-docs fences a code-file include itself
+  (§4). Prefix such files with `_` so Quarto does not render them as pages. A `#| file:`
+  cell option does not work for this.
+- Plot display: with `ax=None` a soundscapy plot function builds a pyplot-free `Figure()`,
+  which Jupyter does not show on its own. Every tutorial plot cell, the quick-start and every
+  docs example therefore ends with the expression `ax.figure` (or
+  `sspy.plot.scatter(...).figure`). A docs test reads `docs/_freeze/` and fails a tutorial
+  cell that calls `sspy.plot` without an image output.
 - Freeze: keep `freeze: {mode: auto}` and commit `docs/_freeze/`, so unchanged pages are
   not re-executed on every build and CI does not need audio data or model weights for
   pages whose source has not changed. Re-run an expensive page with `great-docs freeze
@@ -174,13 +186,16 @@ review like code, and run wherever the package is installed.
 
 ## Sources
 
-From https://github.com/posit-dev/great-docs (great-docs 0.17.0, commit recorded in
-`.claude/skills/VENDORED.md`):
+From https://github.com/posit-dev/great-docs, main at
+`af17c76d6ab2c775e438c6804c3b1b6feceef57e` (the merge of PR #487, the commit the `docs`
+group pins and `.claude/skills/VENDORED.md` records; not the 0.17.0 PyPI release). The
+statements above were re-checked against that commit on 2026-10-31:
 
 - `README.md` (quickstart, config overview, CLI table, feature list)
 - `great_docs/assets/great-docs.default.yml` (all config keys and defaults)
 - `great_docs/cli.py` (`init`, `build`, `preview` options and help)
 - `great_docs/config.py` (`reference` key) and `great_docs/core.py` (render globs, freeze, llms.txt)
-- `docs/user_guide/02-quickstart.qmd`, `04-writing-docstrings.qmd`, `06-api-documentation.qmd`,
-  `08-user-guides.qmd`, `09-custom-sections.qmd`, `12-cross-referencing.qmd`, `13-building.qmd`,
+- `docs/user_guide/02-quickstart.qmd`, `03-authoring-qmd-files.qmd` (includes),
+  `04-writing-docstrings.qmd`, `06-api-documentation.qmd`, `08-user-guides.qmd`,
+  `09-custom-sections.qmd`, `12-cross-referencing.qmd`, `13-building.qmd`, `37-freeze.qmd`,
   `39-llms-txt.qmd`
