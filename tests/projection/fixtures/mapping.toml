@@ -1,0 +1,20 @@
+schema = "soundscapy.mapping"
+schema_version = 1
+instrument = "iso-12913-outdoor"
+instrument_version = "1"
+
+[ids]
+response = "ID"
+
+[language]
+column = "Language"
+
+[groups.attributes.columns]
+pleasant = "pleasant"
+vibrant = "vibrant"
+eventful = "eventful"
+chaotic = "chaotic"
+annoying = "annoying"
+monotonous = "monotonous"
+uneventful = "uneventful"
+calm = "calm"

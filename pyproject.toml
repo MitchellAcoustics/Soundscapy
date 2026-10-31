@@ -192,5 +192,11 @@ source_modules = ["soundscapy"]
 forbidden_modules = ["tkinter", "PyQt5", "PyQt6", "PySide2", "PySide6", "wx", "gi", "kivy", "toga"]
 allow_indirect_imports = true
 
+[[tool.importlinter.contracts]]
+name = "distribution never imports survey"
+type = "forbidden"
+source_modules = ["soundscapy.distribution"]
+forbidden_modules = ["soundscapy.survey"]
+
 [tool.ty.src]
 exclude = ["scripts"]
