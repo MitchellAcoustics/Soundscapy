@@ -43,6 +43,8 @@ great-docs = { git = "https://github.com/posit-dev/great-docs", rev = "af17c76d6
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# design/ holds prose documents whose code blocks are illustrative or normative text, not package code.
+extend-exclude = ["design"]
 
 [tool.ruff.lint]
 select = ["ALL"]
