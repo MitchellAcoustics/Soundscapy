@@ -168,6 +168,26 @@ def test_with_columns_valid_mask_gives_nulls(frame_lib):
         assert str(frame.to_native()["b"].dtype) == "boolean"
 
 
+@pytest.mark.parametrize("n_rows", [0, 3])
+def test_with_columns_all_masked_keeps_dtypes(frame_lib, n_rows):
+    columns = {
+        "f": np.arange(n_rows, dtype=np.float64),
+        "b": np.ones(n_rows, dtype=bool),
+        "t": np.array(["x"] * n_rows, dtype=object),
+    }
+    native = frame_lib({"a": [1.0] * n_rows})
+    populated = to_eager(with_columns(native, columns)).schema
+    masked = to_eager(with_columns(native, columns, valid=np.zeros(n_rows, dtype=bool)))
+    for name in columns:
+        assert masked.schema[name] == populated[name], name
+        assert masked[name].is_null().all()  # vacuously true with no rows
+    assert masked.schema["f"] == nw.Float64
+    assert masked.schema["b"] == nw.Boolean
+    floats = columns_float(masked, ["f"])
+    assert floats.shape == (n_rows, 1)
+    assert np.isnan(floats).all()
+
+
 def test_new_frame_follows_like():
     columns = {"x": np.array([1.0, 2.0]), "t": np.array(["a", "b"], dtype=object)}
     default = new_frame(columns)

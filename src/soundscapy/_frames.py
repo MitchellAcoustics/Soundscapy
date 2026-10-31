@@ -224,6 +224,18 @@ def _pandas_column(
     return pd.Series(objects, index=index, dtype=object)
 
 
+def _nw_dtype(values: NDArray[Any]) -> Any:  # noqa: ANN401  # a narwhals dtype class
+    """Return the narwhals dtype of an added column, so all-null columns keep their type."""
+    kind = values.dtype.kind
+    if kind == "f":
+        return nw.Float64
+    if kind == "b":
+        return nw.Boolean
+    if kind in "iu":
+        return nw.Int64
+    return nw.String
+
+
 def _list_with_nulls(values: NDArray[Any], valid: NDArray[np.bool_] | None) -> list[Any]:
     """Return the values as a Python list with ``None`` where ``valid`` is False."""
     items = values.tolist()
@@ -282,7 +294,9 @@ def with_columns(
         return native.assign(**added)
     backend = nw.get_native_namespace(eager)
     series = [
-        nw.new_series(name, _list_with_nulls(values, valid), backend=backend)
+        nw.new_series(
+            name, _list_with_nulls(values, valid), dtype=_nw_dtype(values), backend=backend
+        )
         for name, values in columns.items()
     ]
     return to_native(eager.with_columns(*series))
