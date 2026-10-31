@@ -1,0 +1,257 @@
+"""Per-response inclusion status: why a response is excluded and what is flagged.
+
+No response row is ever dropped. Each row carries a tuple of exclusion
+:class:`Reason` codes (the row is included exactly when the tuple is empty) and a tuple
+of :class:`Flag` codes (the row is kept, with a note).
+"""
+
+import enum
+import itertools
+from collections.abc import Iterable
+from dataclasses import dataclass
+from typing import Any, Self, TypeVar
+
+import numpy as np
+from numpy.typing import ArrayLike, NDArray
+
+from soundscapy._frames import new_frame
+from soundscapy._model import COL_FLAGS, COL_INCLUDED, COL_REASONS
+
+__all__ = ["Flag", "Reason", "Status"]
+
+_E = TypeVar("_E", bound=enum.StrEnum)
+
+
+class Reason(enum.StrEnum):
+    """Why a response is excluded from analysis.
+
+    The members are listed in their normative order; codes inside a row's tuple follow it.
+    """
+
+    SCALE_VIOLATION = "scale_violation"
+    ALL_IDENTICAL = "all_identical"
+    EXCESSIVE_MISSING = "excessive_missing"
+    NO_CONSENT = "no_consent"
+    TEST_RESPONSE = "test_response"
+    UNDER_AGE = "under_age"
+    PAPER_INPUT = "paper_input"
+    INCOMPLETE_ATTRIBUTES = "incomplete_attributes"
+    UNCOVERED_LANGUAGE = "uncovered_language"
+    LOW_CONFIDENCE_LANGUAGE = "low_confidence_language"
+
+
+class Flag(enum.StrEnum):
+    """A note on a response that is kept in the analysis.
+
+    The members are listed in their normative order; codes inside a row's tuple follow it.
+    """
+
+    ALL_MIDPOINT = "all_midpoint"
+    UNDER_AGE = "under_age"
+    PAPER_INPUT = "paper_input"
+    MEDIUM_CONFIDENCE_LANGUAGE = "medium_confidence_language"
+    EQUAL_ANGLES_FALLBACK = "equal_angles_fallback"
+
+
+def _ordered_unique(codes: Iterable[Any], order: type[enum.StrEnum]) -> bool:
+    """Return whether ``codes`` are members of ``order``, unique and in enum order."""
+    members = list(order)
+    try:
+        positions = [members.index(c) for c in codes]
+    except ValueError:
+        return False
+    return all(a < b for a, b in itertools.pairwise(positions))
+
+
+def _readonly(array: NDArray[Any]) -> NDArray[Any]:
+    array.flags.writeable = False
+    return array
+
+
+def _add_code(
+    rows: tuple[tuple[_E, ...], ...], mask: NDArray[np.bool_], code: _E, order: type[_E]
+) -> tuple[tuple[_E, ...], ...]:
+    """Return ``rows`` with ``code`` added where ``mask`` is true, in enum order."""
+    members = list(order)
+    return tuple(
+        tuple(sorted({*row, code}, key=members.index)) if hit else row
+        for row, hit in zip(rows, mask, strict=True)
+    )
+
+
+@dataclass(frozen=True, eq=False, slots=True)
+class Status:
+    """Inclusion status of every response.
+
+    Parameters
+    ----------
+    included : numpy.ndarray of bool
+        Whether each response is included; read-only after construction. True exactly
+        when the response has no exclusion reason.
+    reasons : tuple of tuple of Reason
+        Per response, the exclusion reasons: unique and in enum order.
+    flags : tuple of tuple of Flag
+        Per response, the flags: unique and in enum order.
+
+    Raises
+    ------
+    ValueError
+        If the three sequences differ in length, ``included`` disagrees with
+        ``reasons``, or a row's codes are repeated or out of enum order.
+    """
+
+    included: NDArray[np.bool_]
+    reasons: tuple[tuple[Reason, ...], ...]
+    flags: tuple[tuple[Flag, ...], ...]
+
+    def __post_init__(self) -> None:
+        """Validate the invariants and freeze the ``included`` array."""
+        included = np.array(self.included, dtype=np.bool_, copy=True)
+        if included.ndim != 1:
+            msg = f"included must be one-dimensional, got {included.ndim} dimensions"
+            raise ValueError(msg)
+        if not len(included) == len(self.reasons) == len(self.flags):
+            msg = (
+                "included, reasons and flags must have the same length, got "
+                f"{len(included)}, {len(self.reasons)} and {len(self.flags)}"
+            )
+            raise ValueError(msg)
+        expected = np.array([len(r) == 0 for r in self.reasons], dtype=np.bool_)
+        if not np.array_equal(included, expected):
+            msg = "included must be true exactly where a response has no exclusion reason"
+            raise ValueError(msg)
+        for row in self.reasons:
+            if not _ordered_unique(row, Reason):
+                msg = f"reason codes must be unique and in enum order, got {row!r}"
+                raise ValueError(msg)
+        for row in self.flags:
+            if not _ordered_unique(row, Flag):
+                msg = f"flag codes must be unique and in enum order, got {row!r}"
+                raise ValueError(msg)
+        object.__setattr__(self, "included", _readonly(included))
+
+    @classmethod
+    def all_included(cls, n: int) -> Self:
+        """Return a status in which all ``n`` responses are included and unflagged.
+
+        Parameters
+        ----------
+        n : int
+            Number of responses.
+
+        Returns
+        -------
+        Status
+            Every response included, with no reasons and no flags.
+        """
+        return cls(np.ones(n, dtype=np.bool_), ((),) * n, ((),) * n)
+
+    def _mask(self, mask: ArrayLike) -> NDArray[np.bool_]:
+        array = np.asarray(mask)
+        if array.shape != self.included.shape or (array.size and array.dtype != np.bool_):
+            msg = (
+                f"mask must be a boolean array of shape {self.included.shape}, "
+                f"got {array.dtype} {array.shape}"
+            )
+            raise ValueError(msg)
+        return array.astype(np.bool_)
+
+    def with_reason(self, mask: ArrayLike, reason: Reason) -> Self:
+        """Return a new status with ``reason`` added where ``mask`` is true.
+
+        Parameters
+        ----------
+        mask : array-like of bool
+            Which responses to exclude; one entry per response.
+        reason : Reason
+            The exclusion reason. A response that already has it keeps one copy.
+
+        Returns
+        -------
+        Status
+            A new status; ``self`` is unchanged.
+
+        Raises
+        ------
+        ValueError
+            If ``mask`` is not a boolean array with one entry per response.
+        """
+        hit = self._mask(mask)
+        reasons = _add_code(self.reasons, hit, reason, Reason)
+        return type(self)(self.included & ~hit, reasons, self.flags)
+
+    def with_flag(self, mask: ArrayLike, flag: Flag) -> Self:
+        """Return a new status with ``flag`` added where ``mask`` is true.
+
+        Parameters
+        ----------
+        mask : array-like of bool
+            Which responses to flag; one entry per response.
+        flag : Flag
+            The flag. A response that already has it keeps one copy.
+
+        Returns
+        -------
+        Status
+            A new status; ``self`` is unchanged.
+
+        Raises
+        ------
+        ValueError
+            If ``mask`` is not a boolean array with one entry per response.
+        """
+        hit = self._mask(mask)
+        return type(self)(self.included, self.reasons, _add_code(self.flags, hit, flag, Flag))
+
+    def counts(self) -> dict[str, int]:
+        """Count responses overall, by reason and by flag.
+
+        Returns
+        -------
+        dict of str to int
+            ``"n"``, ``"included"`` and ``"excluded"``, then ``"reason:<code>"`` for every
+            :class:`Reason` and ``"flag:<code>"`` for every :class:`Flag`, zero when absent.
+            The keys do not depend on the data.
+        """
+        n_included = int(self.included.sum())
+        out = {
+            "n": len(self.included),
+            "included": n_included,
+            "excluded": len(self.included) - n_included,
+        }
+        for reason in Reason:
+            out[f"reason:{reason.value}"] = sum(reason in row for row in self.reasons)
+        for flag in Flag:
+            out[f"flag:{flag.value}"] = sum(flag in row for row in self.flags)
+        return out
+
+    def label_arrays(self) -> dict[str, NDArray[Any]]:
+        """Return the three status columns as read-only arrays.
+
+        Returns
+        -------
+        dict of str to numpy.ndarray
+            ``ssp_included`` as a bool array; ``ssp_reasons`` and ``ssp_flags`` as object
+            arrays of codes joined with ``";"``, the empty string when none.
+        """
+        return {
+            COL_INCLUDED: self.included,
+            COL_REASONS: _joined(self.reasons),
+            COL_FLAGS: _joined(self.flags),
+        }
+
+    def to_frame(self) -> Any:  # noqa: ANN401  # a pandas frame
+        """Return the status as a pandas data frame.
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per response with the columns of :meth:`label_arrays`.
+        """
+        return new_frame(self.label_arrays())
+
+
+def _joined(rows: tuple[tuple[enum.StrEnum, ...], ...]) -> NDArray[np.object_]:
+    out = np.empty(len(rows), dtype=object)
+    out[:] = [";".join(row) for row in rows]
+    return _readonly(out)
