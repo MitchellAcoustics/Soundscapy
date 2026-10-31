@@ -1,0 +1,155 @@
+[project]
+name = "soundscapy"
+version = "1.0.0.dev0"
+description = "Soundscape survey analysis and assessment following ISO 12913"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.md"]
+authors = [{ name = "Andrew Mitchell" }]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Source = "https://github.com/MitchellAcoustics/Soundscapy"
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["go-task-bin>=3.54.0", "import-linter>=2.15", "prek>=0.5.9", "ruff>=0.17.3", "ty>=0.0.95"]
+test = ["hypothesis>=6.170.14", "pytest>=9.2", "pytest-cov>=7.1.0", "pytest-xdist>=3.8.0"]
+docs = ["great-docs", "ipykernel>=7.4.0", "quarto-cli==1.10.20"]
+
+[tool.uv]
+required-version = ">=0.13.6"
+default-groups = ["dev", "test"]
+
+[tool.uv.sources]
+# great-docs main at the merge of PR #487 (owner decision, 2026-10-31); the vendored skills in
+# .claude/skills/VENDORED.md are copied at the same commit. 0.17.0 on PyPI lacks the docs/
+# layout house-style uses. Move to the first PyPI release after 0.17.0 when it exists.
+great-docs = { git = "https://github.com/posit-dev/great-docs", rev = "af17c76d6ab2c775e438c6804c3b1b6feceef57e" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "COM812", "ISC001",  # conflict with the ruff formatter
+  "CPY001",            # no per-file copyright headers; LICENSE.md covers the package
+  "D105",              # magic-method docstrings add nothing
+  "D107",              # numpy style documents __init__ parameters on the class
+  "N803", "N806",      # mathematical names such as X, Pa, ISOPl match the papers
+  "PLR0913",           # scientific functions legitimately take many keyword arguments
+  "TD002", "TD003",    # TODOs need no author or issue link while the rewrite is young
+  "FIX002",            # allow TODO comments; review them before each release
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
+# Standalone PEP 723 hook scripts, kept short and dependency-free.
+".claude/hooks/**" = [
+  "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",
+]
+"scripts/**" = ["INP001", "T201"]  # standalone PEP 723 generators that report
+
+[tool.ty.environment]
+python-version = "3.11"
+root = ["./src"]
+
+[tool.pytest.ini_options]
+minversion = "9.2"
+testpaths = ["tests"]
+addopts = [
+  "--strict-markers", "--strict-config", "--import-mode=importlib", "-ra",
+  "-m", "not reference and not network",
+]
+xfail_strict = true
+filterwarnings = ["error"]
+markers = [
+  "science: literature fixtures and committed cross-implementation fixtures (default run)",
+  "regression: golden pipelines against committed baselines (default run)",
+  "reference: slow or external cross-implementation runs (nightly, task test:reference)",
+  "network: needs a download (nightly, task test:network)",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["soundscapy"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.repo-review]
+ignore = []  # each entry added with a trailing comment giving the reason (§5.6.4)
+
+[tool.importlinter]
+root_package = "soundscapy"
+include_external_packages = true
+exclude_type_checking_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Layers (plan section 5)"
+type = "layers"
+containers = ["soundscapy"]
+layers = [
+  "(cli)",
+  "(workspace)",
+  "(plot)",
+  "(datasets)",
+  "(projection)",
+  "(survey) : (distribution)",
+  "(instrument)",
+  "(errors) : (provenance) : (_frames) : (_data) : (_model) : (_log) : (tables)",
+]
+
+[[tool.importlinter.contracts]]
+name = "Core never imports matplotlib"
+type = "forbidden"
+source_modules = ["soundscapy"]
+forbidden_modules = ["matplotlib"]
+ignore_imports = ["soundscapy.plot -> matplotlib", "soundscapy.plot.** -> matplotlib"]
+allow_indirect_imports = true
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "Dataframe libraries only in soundscapy._frames"
+type = "forbidden"
+source_modules = ["soundscapy"]
+forbidden_modules = ["pandas", "polars", "pyarrow"]
+ignore_imports = [
+  "soundscapy._frames -> pandas",
+  "soundscapy._frames -> pyarrow",
+  "soundscapy._frames -> polars",
+]
+allow_indirect_imports = true
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "No GUI toolkit (FR-14.7)"
+type = "forbidden"
+source_modules = ["soundscapy"]
+forbidden_modules = ["tkinter", "PyQt5", "PyQt6", "PySide2", "PySide6", "wx", "gi", "kivy", "toga"]
+allow_indirect_imports = true
+
+[tool.ty.src]
+exclude = ["scripts"]

@@ -1,0 +1,6 @@
+* text=auto
+*.qmd text eol=lf
+*.toml text eol=lf
+src/soundscapy/_data/** -text
+tests/**/fixtures/** -text
+tests/regression/baselines/** -text
