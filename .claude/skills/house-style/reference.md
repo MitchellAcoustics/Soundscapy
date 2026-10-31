@@ -160,6 +160,12 @@ review like code, and run wherever the package is installed.
   value. `task docs:papers` therefore runs step 1.
 - Quarto ignores `.qmd` files whose names start with `_`: a `_probe.qmd` page is copied as a file,
   not rendered. Use `_` only for include files such as `docs/user_guide/_quickstart.sh`.
+- great-docs expands `{{< include file >}}` for a code file (anything but `.qmd`/`.md`) into
+  its own fenced block, with the language taken from the extension (`.py`, `.sh`; not `.ps1`,
+  which needs `lang="powershell"`). Put the shortcode on a bare line: wrapped in a fence of your
+  own it nests fences and swallows the rest of the page.
+- A top-level `freeze: false` page is still listed under "Using N page(s) from the freeze
+  cache": great-docs only rewrites the shorthand to `execute: freeze:`; nothing is restored.
 - `great-docs build` does not prune pages deleted from `docs/`: their output stays in the
   git-ignored `docs/_quarto/` and `docs/_site/` until those are removed.
 - Offline build: `task docs` succeeds with the network off. great-docs tries `api.github.com`

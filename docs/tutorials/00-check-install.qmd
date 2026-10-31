@@ -1,5 +1,7 @@
 ---
 title: "Check your install"
+# Prints the installed version, so a frozen result would go stale on every release.
+freeze: false
 ---
 
 Run this cell to check that soundscapy imports and to see which version you have.

@@ -9,31 +9,52 @@ provides Python for you.
 
 ## On your own computer
 
-Open a terminal in an empty folder for your project and run the script for your system.
-It installs uv if it is missing, creates a project in the current folder, adds
-soundscapy and JupyterLab to it, and runs the first-plot code below.
+### Step 1: save the first-plot code
+
+Make an empty folder for your project and save this code in it as `_quickstart.py`:
+
+{{< include _quickstart.py >}}
+
+### Step 2: save the install script
+
+Save the script for your system in the same folder, as `_quickstart.ps1` on Windows or
+`_quickstart.sh` on macOS and Linux. It installs uv if it is missing, creates a project in
+the folder, adds soundscapy and JupyterLab to it, and runs `_quickstart.py`.
 
 ::: {.panel-tabset}
 
-## Windows (PowerShell)
+#### Windows (PowerShell)
+
+{{< include _quickstart.ps1 lang="powershell" >}}
+
+#### macOS and Linux
+
+{{< include _quickstart.sh >}}
+
+:::
+
+### Step 3: run it
+
+Open a terminal in the folder and run the script. On Windows, the `Bypass` flag lets a
+saved script run under PowerShell's default execution policy.
+
+::: {.panel-tabset}
+
+#### Windows (PowerShell)
 
 ```powershell
-{{< include _quickstart.ps1 >}}
+powershell -ExecutionPolicy Bypass -File _quickstart.ps1
 ```
 
-## macOS and Linux
+#### macOS and Linux
 
 ```bash
-{{< include _quickstart.sh >}}
+sh _quickstart.sh
 ```
 
 :::
 
-The scripts run this code, saved in the same folder as `_quickstart.py`:
-
-```python
-{{< include _quickstart.py >}}
-```
+It prints the installed soundscapy version. Running it again in the same folder is safe.
 
 The pin `soundscapy==1.0.0.dev1` names a pre-release exactly, so uv installs it without
 needing `--prerelease`.
@@ -52,8 +73,6 @@ In a hosted notebook such as Google Colab, install soundscapy with one cell:
 %pip install 'soundscapy==1.0.0.dev1'
 ```
 
-Then run the same first-plot code in the next cell:
+Then run the same code in the next cell:
 
-```python
 {{< include _quickstart.py >}}
-```
