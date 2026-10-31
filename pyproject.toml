@@ -200,3 +200,11 @@ forbidden_modules = ["soundscapy.survey"]
 
 [tool.ty.src]
 exclude = ["scripts"]
+
+# matplotlib types Axes.figure as Figure | SubFigure (SubFigure has no savefig), and the spec
+# fixes the three quick-start lines, which call .figure.savefig on a plot function's Axes.
+[[tool.ty.overrides]]
+include = ["docs/user_guide/_quickstart.py"]
+
+[tool.ty.overrides.rules]
+unresolved-attribute = "ignore"

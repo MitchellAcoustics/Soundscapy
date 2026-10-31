@@ -54,7 +54,8 @@ sh _quickstart.sh
 
 :::
 
-It prints the installed soundscapy version. Running it again in the same folder is safe.
+It saves your first plot, a scatter of the bundled ISD subset by location, as
+`first-plot.png`. Running it again in the same folder is safe.
 
 The pin `soundscapy==1.0.0.dev1` names a pre-release exactly, so uv installs it without
 needing `--prerelease`.
@@ -63,6 +64,13 @@ Then open JupyterLab in the project and paste the same code into a notebook cell
 
 ```bash
 uv run jupyter lab
+```
+
+```python
+import soundscapy as sspy
+
+coords = sspy.project(sspy.load_isd(subset=True), angles="equal")
+sspy.plot.scatter(coords, by="location").figure
 ```
 
 ## Hosted notebook
@@ -75,4 +83,9 @@ In a hosted notebook such as Google Colab, install soundscapy with one cell:
 
 Then run the same code in the next cell:
 
-{{< include _quickstart.py >}}
+```python
+import soundscapy as sspy
+
+coords = sspy.project(sspy.load_isd(subset=True), angles="equal")
+sspy.plot.scatter(coords, by="location").figure
+```

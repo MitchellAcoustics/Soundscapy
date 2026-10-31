@@ -1,3 +1,4 @@
 import soundscapy as sspy
 
-print(f"soundscapy {sspy.__version__} is installed")
+coords = sspy.project(sspy.load_isd(subset=True), angles="equal")
+sspy.plot.scatter(coords, by="location").figure.savefig("first-plot.png")

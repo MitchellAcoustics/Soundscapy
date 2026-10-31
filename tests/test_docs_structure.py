@@ -1,6 +1,9 @@
 """Structure checks for the docs sources (FR-12.3's four-part structure)."""
 
+import os
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 GUIDE = Path(__file__).resolve().parents[1] / "docs" / "user_guide"
@@ -23,3 +26,25 @@ def test_install_page_pins_the_release_and_includes_the_quickstart_files():
     for name in ("_quickstart.py", "_quickstart.sh", "_quickstart.ps1"):
         # great-docs expands a code-file include into its own fenced block.
         assert re.search(rf"^\{{\{{< include {re.escape(name)}[ >]", text, re.MULTILINE), name
+
+
+def test_quickstart_is_the_first_plot():
+    text = (GUIDE / "_quickstart.py").read_text()
+    for fragment in ("load_isd(subset=True)", 'angles="equal"', 'by="location"'):
+        assert fragment in text, fragment
+    assert 'savefig("first-plot.png")' in text
+
+
+def test_quickstart_runs(tmp_path: Path):
+    result = subprocess.run(
+        [sys.executable, str(GUIDE / "_quickstart.py")],
+        cwd=tmp_path,
+        env={**os.environ, "MPLBACKEND": "Agg"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    # stderr is not asserted: matplotlib's first-run font-cache message may appear there.
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == ""
+    assert (tmp_path / "first-plot.png").exists()
