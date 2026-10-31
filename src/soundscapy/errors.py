@@ -1,6 +1,6 @@
-"""Errors and warnings raised by soundscapy (spec section 6.3.10).
+"""Errors and warnings raised by soundscapy.
 
-Every error subclasses :class:`SoundscapyError` and the built-in named in the spec table, so
+Every error subclasses :class:`SoundscapyError` and the built-in named in its docstring, so
 callers can catch either. Every error takes ``(message, *, hint="")``; ``str(err)`` is the
 message and :attr:`SoundscapyError.hint` carries an optional second line for the CLI. No name
 shadows a standard-library one.
@@ -61,112 +61,151 @@ class SoundscapyWarning(UserWarning):
 
 
 class MappingError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``MappingError``)."""
+    """A survey mapping is invalid or incomplete.
+
+    It also covers an unknown construct key or a bad language code.
+    """
 
 
 class CodingError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``CodingError``)."""
+    """A text value matches no missing token, value-map key or number."""
 
 
 class EncodingError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``EncodingError``)."""
+    """A file cannot be decoded.
+
+    The hint suggests an explicit encoding such as ``encoding="cp1252"``.
+    """
 
 
 class FileFormatError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``FileFormatError``)."""
+    """A file's format cannot be determined.
+
+    Its delimiter cannot be resolved, its suffix is unknown, or a multi-sheet workbook is read
+    without naming a sheet.
+    """
 
 
 class ColumnCollisionError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``ColumnCollisionError``)."""
+    """An input column collides with a derived column.
+
+    An input column starts with the reserved ``ssp_`` prefix, or attaching or joining
+    results would overwrite an existing column.
+    """
 
 
 class AxesError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``AxesError``)."""
+    """A plot function is given an ``ax`` of the wrong kind.
+
+    For example, a radar plot needs polar axes.
+    """
 
 
 class AlignmentError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``AlignmentError``)."""
+    """A result cannot be aligned with the frame it is attached to."""
 
 
 class ScaleViolationError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``ScaleViolationError``)."""
+    """Coded values fall outside the declared response scale."""
 
 
 class MissingResponseIdError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``MissingResponseIdError``)."""
+    """A response has no identifier where one is required."""
 
 
 class DuplicateResponseIdError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``DuplicateResponseIdError``)."""
+    """Two or more responses share the same identifier."""
 
 
 class UncoveredLanguageError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``UncoveredLanguageError``)."""
+    """A language has no angle set available.
+
+    The message names the tier of a tier-only language.
+    """
 
 
 class LowConfidenceLanguageError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``LowConfidenceLanguageError``)."""
+    """A language has only low-confidence angles and the settings do not allow them."""
 
 
 class FormulationError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``FormulationError``)."""
+    """A projection formulation cannot be applied.
+
+    ``iso2019`` needs a 1 to 5 scale with nominal angles, and any formulation rejects
+    angles whose summed absolute cosines or sines are below 1e-9.
+    """
 
 
 class ProfileConstraintError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``ProfileConstraintError``)."""
+    """A setting conflicts with a field locked by the chosen profile."""
 
 
 class SettingsError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``SettingsError``)."""
+    """A settings file or section fails validation."""
 
 
 class DataReferenceError(SoundscapyError, LookupError):
-    """Raised for the condition named in spec section 6.3.10 (``DataReferenceError``)."""
+    """A named circumplex, angle set, profile or dataset version does not exist."""
 
 
 class SmallSampleError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``SmallSampleError``)."""
+    """A group has too few valid responses for the requested operation."""
 
 
 class DensityEstimationError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``DensityEstimationError``)."""
+    """A density cannot be estimated because the points are collinear or identical."""
 
 
 class DataIntegrityError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``DataIntegrityError``)."""
+    """A content hash does not match its expected value. The message names both hashes."""
 
 
 class HashSchemeError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``HashSchemeError``)."""
+    """A hash string carries an unknown scheme prefix."""
 
 
 class DownloadError(SoundscapyError, OSError):
-    """Raised for the condition named in spec section 6.3.10 (``DownloadError``)."""
+    """A download fails because of an HTTP or connection error."""
 
 
 class ProjectFormatError(SoundscapyError, ValueError):
-    """Raised for the condition named in spec section 6.3.10 (``ProjectFormatError``)."""
+    """Project files are missing, malformed or of an unknown format version."""
 
 
 class RunExistsError(SoundscapyError, FileExistsError):
-    """Raised for the condition named in spec section 6.3.10 (``RunExistsError``)."""
+    """A run is saved to a location that already holds one and overwriting was not requested."""
 
 
 class OutputFileLockedError(SoundscapyError, PermissionError):
-    """Raised for the condition named in spec section 6.3.10 (``OutputFileLockedError``)."""
+    """The target file is open elsewhere and cannot be written.
+
+    The hint suggests closing it, for example in Excel.
+    """
 
 
 class MediumConfidenceLanguageWarning(SoundscapyWarning):
-    """Warning ``MediumConfidenceLanguageWarning`` (spec section 6.3.10)."""
+    """Responses use medium-confidence languages.
+
+    Issued once per projection; the message names those languages and their counts.
+    """
 
 
 class EqualAnglesFallbackWarning(SoundscapyWarning):
-    """Warning ``EqualAnglesFallbackWarning`` (spec section 6.3.10)."""
+    """Equal angles replaced a missing angle set.
+
+    Issued once per projection; the message names the languages and counts.
+    """
 
 
 class SmallSampleWarning(SoundscapyWarning):
-    """Warning ``SmallSampleWarning`` (spec section 6.3.10)."""
+    """A group has fewer than 30 valid responses.
+
+    Issued once per call when the caller has not opted in.
+    """
 
 
 class PointsOutsideGridWarning(SoundscapyWarning):
-    """Warning ``PointsOutsideGridWarning`` (spec section 6.3.10)."""
+    """Valid points fall outside the clip box.
+
+    Issued once per density call; only a user-set clip narrower than the data can cause it.
+    """
