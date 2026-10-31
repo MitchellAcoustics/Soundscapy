@@ -492,3 +492,13 @@ Withdrawn: the draft's §6.8.1 entry (integer `angles_deg` against `StrictFloat`
 - S3: integer `angles_deg` in angle-set TOML validate to floats under `StrictFloat`; ship the Table A.1 fixture and test (§9 S3 as amended); add the `aletta2024` `Literal` member; widen `AngleSelection.default`.
 - S4: adding pyarrow 15 changes pandas 3's default string backend; rerun the frame and hash tests on both.
 - S9: the registry entry's `mapping` and `read_options` drive `load` already; the new versions only add entries.
+
+## Carried forward from the S1 build and reviews
+
+Recorded when S1 closed (the build ledger is not kept). Each later plan should take its items.
+
+- S2: write the optional envelope key `quality_skipped` with the quality rules; keep `tests/survey/fixtures/minimal_mapping.toml` minimal when `isd_mapping.toml` is extended and re-pinned (they are byte-identical in S1 and nothing ties them); `ImportSettings.on_scale_violation="exclude"` gains its behaviour; tests for the registry's `feature_columns` and the sidecar's `units_verified`.
+- S3: the aletta2024 `Formulation` member (one `Literal` in `projection.formulas`); the translation TOML form (§6.2.3 `[translations.<code>]` against the `[[translations]]` a tuple serialises to) and tests of the translation paths in `Circumplex`; re-export `Citation` from `instrument` (clears the great-docs "Cannot find Citation" warning caused by the `circumplex` function shadowing its module); the Aletta 2024 bib entry, and `circumplex_axes` citing it; the `apply_coding` References sentence that the coding order is soundscapy's own design.
+- S4: `to_frame` and `attach` give the same columns different pandas dtypes (numpy bool and StringDtype against nullable boolean and object); provenance guards for a Survey read back from a workspace (the S1 `project` trusts `read_survey`'s provenance); provenance as an immutable record instead of deep copies; adding pyarrow changes pandas 3's string backend under the frame and hash tests.
+- S7: read the survey file once (it is read and hashed two or three times in S1); consider `pd.read_csv(dtype=str)` or a column-wise build for large files; vectorise per-cell coding; `ReadOptions` sniffing.
+- Open everywhere: `frame_hash` text for timedelta values differs between pandas and polars (a gap in the §6.3.5 `str()` rule); a lone surrogate in any `StrictStr` field makes `canonical_json` raise a bare `UnicodeEncodeError`; `split` sorts numeric keys as text ("10" before "2"); `plot.scatter` repeats (colour, marker) pairs beyond 30 groups without a warning; the docs skeleton's `site_url` and its two dead links (`migration-0.7-to-0.8.qmd`, `CONTRIBUTING.md`).
