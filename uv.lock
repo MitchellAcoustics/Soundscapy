@@ -431,15 +431,11 @@ wheels = [
 [[package]]
 name = "mosqito"
 version = "1.2.1"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/MitchellAcoustics/MoSQITo?branch=stack%2F5-numba#a2e426be7228fc9d9f9c720fb7ed16bc03f42e2e" }
 dependencies = [
     { name = "numpy" },
     { name = "pyuff" },
     { name = "scipy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/91/a1/e3e210dd7669ed7a3a35e89600821d555f4ae203d53b7b8b653882a52bcc/mosqito-1.2.1.tar.gz", hash = "sha256:50c0ebdc5102c67cfe4362178ce07d7e6b3211d7cb3e6051082e503ff019f16f", size = 107690, upload-time = "2024-04-22T07:17:27.326Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4c/6c/3443f0ed85e1091bfad146afb426c30109b765ce15101a6fdc7f9df9e727/mosqito-1.2.1-py3-none-any.whl", hash = "sha256:c5370a729b12cb986ff39c71499e51201551b445623b5ca86aed66539d3cfe83", size = 158692, upload-time = "2024-04-22T07:17:25.075Z" },
 ]
 
 [[package]]
@@ -971,14 +967,14 @@ wheels = [
 
 [[package]]
 name = "pyuff"
-version = "2.4.6"
+version = "2.5.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/01/38/128679438e149b3bc81431c8d7784c8509a68c7843739ac81870ba5b4e5d/pyuff-2.4.6.tar.gz", hash = "sha256:98d14df0324db36d50c02defeff5cef1b9a854c7bb8cbb1c0025c67dbc7134d0", size = 51343, upload-time = "2025-01-16T05:19:07.363Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3d/03/9a90aae2ddbf57027fa065c41f316e8f49275497ed0b6e75c10d3e2ce25f/pyuff-2.5.8.tar.gz", hash = "sha256:42ed104e0b267b185b27a9cc149038b5f897571e1ca9d3546fd7c1d4cfa54e97", size = 56028, upload-time = "2026-09-25T05:43:08.106Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f7/cb/e4bfd84df949da956f34a169fdf321f8c1b08699eeb9e34010cb3ff7fe4b/pyuff-2.4.6-py3-none-any.whl", hash = "sha256:dd3d858622c3973392d9fef6f3cba14aa37131c154534c500c729a38e6f188e6", size = 62956, upload-time = "2025-01-16T05:19:03.899Z" },
+    { url = "https://files.pythonhosted.org/packages/44/92/bba8fa744fba3f6b84c65841247e7c60b667d2af9f9fcf262aca616723be/pyuff-2.5.8-py3-none-any.whl", hash = "sha256:d71a86d69c74c6249b3ad2d43adb0ac20e47a6022322af0df6290ebe7486cf78", size = 69617, upload-time = "2026-09-25T05:43:06.538Z" },
 ]
 
 [[package]]
@@ -1232,6 +1228,7 @@ dependencies = [
     { name = "pandera", extra = ["io", "mypy", "pandas"] },
     { name = "plot-likert" },
     { name = "pydantic" },
+    { name = "pyuff" },
     { name = "pyyaml" },
     { name = "scipy" },
     { name = "seaborn" },
@@ -1262,13 +1259,14 @@ requires-dist = [
     { name = "acoustic-toolbox", marker = "extra == 'audio'", specifier = ">=0.1.2" },
     { name = "lazy-loader", specifier = ">=0.4" },
     { name = "loguru", specifier = ">=0.7.2" },
-    { name = "mosqito", marker = "extra == 'audio'", specifier = ">=1.2.1" },
+    { name = "mosqito", marker = "extra == 'audio'", git = "https://github.com/MitchellAcoustics/MoSQITo?branch=stack%2F5-numba" },
     { name = "numba", marker = "extra == 'audio'", specifier = ">=0.59" },
     { name = "numpy", specifier = ">=2.1.3,<2.4" },
     { name = "pandas", extras = ["excel"], specifier = ">=2.2.2,<3.0" },
     { name = "pandera", extras = ["io", "mypy", "pandas"], specifier = ">=0.26.1" },
     { name = "plot-likert", specifier = ">=0.5.0" },
     { name = "pydantic", specifier = ">=2.8.2" },
+    { name = "pyuff", specifier = ">=2.5.7" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "rpy2", marker = "extra == 'r'", specifier = ">=3.5.0" },
     { name = "scikit-maad", marker = "extra == 'audio'", specifier = ">=1.4.3" },

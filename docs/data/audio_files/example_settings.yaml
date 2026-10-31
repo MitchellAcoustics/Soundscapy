@@ -1,0 +1,126 @@
+# Settings file for batch acoustic analysis.
+# Split up according to which library performs which analysis.
+
+version: "1.1"
+
+# Acoustic Toolbox Settings
+# Supported metrics: LAeq, LZeq, LCeq, SEL
+# Supported stats: avg/mean, max, min, kurt, skew, any integer from 1-99
+AcousticToolbox:
+  # A-weighted equivalent continuous sound level
+  LAeq:
+    run: true # Set to false to skip this metric
+    main: "avg" # Main statistic to calculate
+    statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"] # List of statistics to calculate
+    channel: ["Left", "Right"] # Channels to analyze
+    label: "LAeq" # Label for the metric in output
+    func_args: # Additional arguments for the metric function
+      time: 0.125 # Time interval for calculation (seconds)
+      method: "average" # Method for calculating Leq
+
+  # Z-weighted (unweighted) equivalent continuous sound level
+  LZeq:
+    run: true
+    main: "avg"
+    statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
+    channel: ["Left", "Right"]
+    label: "LZeq"
+    func_args:
+      time: 0.125
+      method: "average"
+
+  # C-weighted equivalent continuous sound level
+  LCeq:
+    run: true
+    main: "avg"
+    statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
+    channel: ["Left", "Right"]
+    label: "LCeq"
+    func_args:
+      time: 0.125
+      method: "average"
+
+  # Sound Exposure Level
+  SEL:
+    run: true
+    channel: ["Left", "Right"]
+    label: "SEL"
+    # Note: SEL doesn't use main or statistics as it's a single value metric
+
+# MoSQITo Library Settings
+# Supported metrics: loudness_zwtv, sharpness_din_from_loudness, sharpness_din_perseg, sharpness_din_tv, roughness_dw
+# Supported statistics: avg/mean, max, min, kurt, skew, any integer from 1-99
+MoSQITo:
+  # Zwicker Time-Varying Loudness
+  loudness_zwtv:
+    run: false # Disabled by default as it's used in sharpness calculation
+    main: 5 # N5 (loudness exceeded 5% of the time)
+    statistics: [10, 50, 90, 95, "min", "max", "kurt", "skew", "avg"]
+    channel: ["Left", "Right"]
+    label: "N"
+    parallel: true # Enable parallel processing
+    func_args:
+      field_type: "free" # Free field condition
+
+  # Sharpness (DIN 45692) calculated from Zwicker Loudness
+  sharpness_din_from_loudness:
+    run: false
+    main: "avg"
+    statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
+    channel: ["Left", "Right"]
+    label: "S_L"
+    parallel: true
+    func_args:
+      weighting: "din" # DIN 45692 weighting
+      field_type: "free"
+
+  # Sharpness (DIN 45692) calculated per segment
+  sharpness_din_perseg:
+    run: false
+    main: "avg"
+    statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
+    channel: ["Left", "Right"]
+    label: "S_perseg"
+    parallel: false # Parallel processing not necessary for this method
+    func_args:
+      weighting: "din"
+      nperseg: 4096 # Number of samples per segment
+      field_type: "free"
+
+  # Sharpness (DIN 45692) time-varying
+  # Note: It's recommended to use sharpness_din_from_loudness instead
+  sharpness_din_tv:
+    run: false
+    main: "avg"
+    statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
+    channel: ["Left", "Right"]
+    label: "S_din_tv"
+    parallel: true
+    func_args:
+      weighting: "din"
+      field_type: "free"
+      skip: 0.5 # Skip time at the beginning (seconds)
+
+  # Roughness (Daniel & Weber method)
+  roughness_dw:
+    run: false
+    main: "avg"
+    statistics: [5, 10, 50, 90, 95, "min", "max", "kurt", "skew"]
+    channel: ["Left", "Right"]
+    label: "R"
+    parallel: true
+
+# scikit-maad Library Settings
+# These are collections of multiple acoustic indices
+scikit-maad:
+  # Temporal alpha diversity indices
+  all_temporal_alpha_indices:
+    run: true
+    channel: ["Left", "Right"]
+    # Note: This calculates multiple indices, so no individual statistics are specified
+
+  # Spectral alpha diversity indices
+  all_spectral_alpha_indices:
+    run: true
+    channel: ["Left", "Right"]
+    # Note: This calculates multiple indices, so no individual statistics are specified

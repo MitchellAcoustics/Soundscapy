@@ -26,6 +26,7 @@ dependencies = [
     "pandera[io,mypy,pandas]>=0.26.1",
     "plot-likert>=0.5.0",
     "pydantic>=2.8.2",
+    "pyuff>=2.5.7",
     "pyyaml>=6.0.2",
     "scipy>=1.14.1",
     "seaborn>=0.13.2",
@@ -73,6 +74,9 @@ publish-url = "https://upload.pypi.org/legacy/"
 name        = "test-pypi"
 url         = "https://test.pypi.org/simple"
 publish-url = "https://test.pypi.org/legacy/"
+
+[tool.uv.sources]
+mosqito = { git = "https://github.com/MitchellAcoustics/MoSQITo", branch = "stack/5-numba" }
 
 ######## Tool Configurations ########
 
@@ -135,6 +139,7 @@ lint.per-file-ignores = { "*.ipynb" = [
     'ANN201',
     'ERA001',
     'PLR2004',
+    'CPY001',  # copyright notice
 ], "*test*.py" = [
     "ANN001",  # Missing type annotation for function argument
     "ANN001",  # Missing type annotation
