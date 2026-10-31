@@ -1,0 +1,39 @@
+schema = "soundscapy.mapping"
+schema_version = 1
+instrument = "iso-12913-outdoor"
+instrument_version = "1"
+
+[ids]
+response = "ID"
+
+[language]
+column = "Lang"
+
+[language.coding]
+English = "eng"
+Deutsch = "deu"
+
+[groups.attributes.columns]
+pleasant = "q1"
+vibrant = "q2"
+eventful = "q3"
+chaotic = "q4"
+annoying = "q5"
+monotonous = "q6"
+uneventful = "q7"
+calm = "q8"
+
+[groups.attributes.scale]
+minimum = 1.0
+maximum = 7.0
+kind = "interval"
+
+[groups.attributes.coding]
+missing_values = ["", "-99"]
+decimal = ","
+offset = 1.0
+reverse = ["calm"]
+
+[groups.attributes.coding.value_map]
+"Strongly disagree" = 0.0
+"Strongly agree" = 6.0
