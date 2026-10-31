@@ -133,12 +133,7 @@ show_missing = true
 ignore = [
   "PY007",  # task runner is Taskfile.yml (go-task), which repo-review does not recognise
   "GH200",  # no Dependabot: SHA-pinned Actions are bumped by hand in reviewed commits (resolve the new SHA with `git ls-remote`)
-  "PC100",  # hygiene hooks use prek's builtin repo, not pre-commit/pre-commit-hooks
-  "PC140",  # ty is not a hook: it needs the project env; runs in task check:fast and CI
-  "PC160",  # no spell-checker hook adopted; prose is reviewed by hand
-  "PC170",  # no reStructuredText in the repo (docstrings are numpy style, docs are Quarto)
-  "PC180",  # no markdown formatter: design/ prose and vendored skills are kept verbatim
-  "PC901", "PC902", "PC903",  # pre-commit.ci is not used; prek runs locally and in CI
+  "PY006",  # hooks are configured in prek.toml (prek's native format), which repo-review does not read; its PC checks are skipped too
   "RF002",  # house style sets ruff target-version py311 explicitly alongside requires-python
   "SEC001",  # workflows are linted with actionlint; zizmor is not adopted in Phase 0
 ]

@@ -69,7 +69,7 @@ Several of these trace back to the house rules themselves. "House rules that are
 | F11 | Taskfile | `check:fast` stops at the first failing step | P3 |
 | F12 | CI | Release job holds `id-token` through `task check`; no `--no-sources` | P2 |
 | F13 | CI | `--locked` per command rather than `UV_LOCKED` per job | P3 |
-| F14 | CI | prek cache key leaves out the prek version | P3 |
+| F14 | CI | prek cache key leaves out the prek version | P3, applied |
 | F15 | ruff | `banned-module-level-imports` replaces three `noqa: PLC0415` and enforces lazy imports | P2 |
 | F16 | ruff | `allow-star-arg-any` for forwarded `**kwargs` | P3 |
 | F17 | ty | `[tool.ty.environment]` restates ty's defaults | P3 |
@@ -469,7 +469,8 @@ setup-uv), so CI and local uv agree.
 The `hooks` job keys its cache on `.pre-commit-config.yaml` alone. prek's CI docs say cache
 correctness depends on "prek version, platform, config, and hook revisions" (*paraphrase*, prek
 CI docs). prek's version comes from `uv.lock`, so add `hashFiles('uv.lock')` to the key. Keep
-`uv run prek` rather than the official `j178/prek-action`, so `uv.lock` stays the one pin.
+`uv run prek` rather than the official `j178/prek-action`, so `uv.lock` stays the one pin. *Applied*
+with the move to `prek.toml`: the key is `hashFiles('prek.toml', 'uv.lock')`.
 
 ### ruff, ty, pytest, import-linter
 
@@ -563,15 +564,29 @@ adds its ignore line in the same reviewed commit.
 
 ### prek
 
-The configuration is idiomatic apart from F10 and F14. Two notes for house-style:
+*Applied* (owner request, after the first draft of this review): the hooks are configured in
+prek's native `prek.toml`, and `.pre-commit-config.yaml` is gone.
 
-- `repo: builtin` already makes `.pre-commit-config.yaml` unusable by the standard `pre-commit`
-  tool: builtin configs "are not compatible with the standard pre-commit tool" (*paraphrase*,
-  prek docs). prek's docs prefer a native `prek.toml` for new configurations. Keeping the YAML
-  file is still reasonable, because repo-review's `PC` checks and editor schemas read it.
-  House-style should say the file is prek-only, so nobody tries `pre-commit run`.
-- The `uv-lock` hook runs `uv lock` at its `rev`, so that `rev` must satisfy
-  `required-version`. Bump the two together. This is an inference; the uv docs do not say so.
+- *Why.* `repo: builtin` already made the YAML file unusable by the standard `pre-commit`
+  tool: builtin configs "are not compatible with the standard pre-commit tool" (prek docs).
+  So YAML bought no compatibility, and prek's docs and its vendored skill prefer `prek.toml`
+  for a new setup. The file is plain TOML 1.0 (`[[repos.hooks]]` tables). The converter
+  `prek util yaml-to-toml` emits TOML 1.1 multiline inline tables, which Python's `tomllib`
+  cannot read.
+- *uv version.* `astral-sh/uv-pre-commit` installs `uv==<rev>` in its own hook environment
+  ("rev: uv version", uv's pre-commit guide). That made two uv versions,
+  `required-version` and the hook's `rev`, with nothing linking them. prek has no setting that
+  reads `[tool.uv]`. It finds a compatible uv on PATH for Python hook environments, or
+  installs one (`PREK_UV_SOURCE`, `PREK_UV_VERSION`), but that uv only builds hook
+  environments. The `uv-lock` hook is now a `repo = "local"`, `language = "system"` hook
+  running `uv lock`. It uses the project's own uv, which `required-version` already checks,
+  so `pyproject.toml` is the one place the uv version lives. With a uv below the floor, the
+  hook fails with uv's own "Required uv version" message, the intended behaviour.
+- *Cost.* repo-review looks for `.pre-commit-config.yaml`. Its PY006 now fails, and is ignored
+  with a reason. Its `PC` checks are skipped, so their nine ignores went too; the `PC` checks
+  that used to pass (ruff-format present, ruff shows fixes) are no longer reported.
+- *Run.* `prek validate-config prek.toml` succeeds, `prek run --all-files` passes, and
+  `task repo-review` exits 0.
 
 ### great-docs and Quarto
 
@@ -617,7 +632,7 @@ Several findings above are not agent mistakes: the code does what AGENTS.md, CLA
 `house-style` skill told it to do. An agent that fixes the code without the rule will see the
 rule again and undo the fix. Each item below names the rule, what is wrong with it, and the
 proposed wording. The rules are the owner's, so these are proposals; none is applied here,
-except the hook command of H1.
+except the hook command of H1 and the prek rules of H10.
 
 **H1. "uv only. Never run bare `pip` or `python`" made the hooks depend on project settings
 (AGENTS.md, CLAUDE.md, house-style hook paragraph).** The rule is right for agents' commands.
@@ -675,9 +690,8 @@ intent, as if it were current (F21). Proposed: list only the keys the site sets,
 `cli` "from S8". The "Plot display" bullet (`ax.figure` at the end of every cell) stands or
 falls with F5.
 
-**H10. prek specifics (house-style, prek section).** Two notes, from the prek section of the
-findings: say that `.pre-commit-config.yaml` is prek-only, because `repo: builtin` already rules
-out `pre-commit`; and say that the `uv-lock` hook's `rev` moves with `required-version`.
+**H10. prek specifics (house-style, prek section).** *Applied*: house-style now names
+`prek.toml`, TOML 1.0 tables, and a local `uv lock` hook in place of `astral-sh/uv-pre-commit`.
 
 Rules that hold up under the same reading, and should stay:
 

@@ -5,7 +5,7 @@ description: >
   tutorials. These rules override the vendor skills (modern-python, astral,
   prek, great-docs, quarto). Use this skill whenever you create or change
   pyproject.toml, uv.lock, ruff/ty/pytest/coverage settings, Taskfile.yml,
-  .pre-commit-config.yaml, CI workflows, great-docs config, the docs site, a
+  prek.toml, CI workflows, great-docs config, the docs site, a
   test file or a tutorial .qmd page. Also use it when you set the toolchain up
   for the first time, or when a vendor skill's default seems to disagree with
   this repo.
@@ -31,7 +31,7 @@ when you configure the docs site, or write a tutorial or user-guide page.
 | Type checker | `ty` | Astral toolchain. Never add mypy, pyright, basedpyright or pyrefly, nor their LSP plugins. |
 | Lint / format | `ruff`, `select = ["ALL"]` with the commented ignores below | Maximum signal; every exemption is visible and justified. |
 | Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports | Matches the scientific Python ecosystem and great-docs rendering. |
-| Git hooks | `prek`, reading `.pre-commit-config.yaml` | Fast drop-in for pre-commit. Never install `pre-commit` itself. |
+| Git hooks | `prek`, configured in its native `prek.toml` | The `builtin` hooks already make the setup prek-only, so a pre-commit-compatible YAML file buys nothing. Never install `pre-commit` itself. |
 | Task runner | `Taskfile.yml` (go-task, `version: '3'`), run as `uv run task <name>` | One set of entry points for agents, humans and CI. go-task comes from `go-task-bin` in the `dev` group, so contributors install only uv and git. Bare `task` works only with the venv activated. |
 | Coverage gate | `fail_under = 80`, branch coverage on | Matches the Trail of Bits default; raise it, never lower it. |
 | CI | GitHub Actions running `task` targets; the nightly workflow runs `test:reference`, `test:network`, `docs:papers` and the quick-start scripts on pushes to `soundscapy-rewrite` touching those paths, and on a schedule once the rewrite is the default branch; releases publish on tag by PyPI trusted publishing | CI runs exactly what developers run. Scheduled runs start only from the default branch, still `main`. |
@@ -158,13 +158,19 @@ and bare `task` only when `uv` is not on PATH).
 - Hooks: ruff (`ruff-check --fix`, `ruff-format`) from `astral-sh/ruff-pre-commit`;
   the standard hygiene hooks (trailing whitespace, end of file, check-toml, check-yaml,
   large files, merge conflicts) from prek's `repo: builtin`, which needs no download;
-  `uv-lock` from `astral-sh/uv-pre-commit`; `actionlint` for the CI workflows from
+  `uv lock` as a `repo = "local"`, `language = "system"` hook; `actionlint` for the CI workflows from
   `Mateusz-Grzelinski/actionlint-py`, a Python package whose build fetches the
   actionlint binary, so no Go toolchain or Docker is needed. prek caches it after the
   first run.
 - The hygiene hooks that rewrite files exclude the vendored `.claude/skills/` and
   `.claude/agents/` (copied verbatim) and `docs/_freeze/` (written by Quarto).
-- `sp-repo-review` runs at `stages: [manual]`. It is advisory, not a commit blocker.
+- Write `prek.toml` as plain TOML 1.0 (`[[repos.hooks]]` tables, not the multiline inline
+  tables `prek util yaml-to-toml` emits), so Python's `tomllib` can read it.
+- `uv lock` runs the project's own uv, never `astral-sh/uv-pre-commit`. That hook installs
+  `uv==<rev>` in its own environment, a second uv version beside `[tool.uv]
+  required-version`, and nothing keeps the two in step. `required-version` in
+  `pyproject.toml` is the one place the uv version lives.
+- `sp-repo-review` runs at `stages = ["manual"]`. It is advisory, not a commit blocker.
 - ty is **not** a prek hook. It needs the project environment and is slower than a
   commit hook should be; it runs in `task check:fast` (the Stop hook) and in CI.
 - Pin every `rev` to a released tag and update with `prek auto-update`.
@@ -219,11 +225,8 @@ Recorded ignores (check id: reason):
 
 - PY007: the task runner is `Taskfile.yml` (go-task), which repo-review does not recognise.
 - GH200: no Dependabot. SHA-pinned Actions are bumped by hand in reviewed commits (resolve the new SHA with `git ls-remote`).
-- PC100: the hygiene hooks use prek's `builtin` repo, not `pre-commit/pre-commit-hooks`.
-- PC140: ty is not a hook. It needs the project environment; it runs in `task check:fast` and CI.
-- PC160: no spell-checker hook is adopted; prose is reviewed by hand.
-- PC170: there is no reStructuredText in the repo (numpy docstrings, Quarto docs).
-- PC180: no markdown formatter; `design/` prose and vendored skills are kept verbatim.
-- PC901, PC902, PC903: pre-commit.ci is not used; prek runs locally and in CI.
+- PY006: hooks are configured in `prek.toml`, which repo-review does not read (it looks for
+  `.pre-commit-config.yaml`). Its `PC` checks are skipped for the same reason, so they need
+  no ignores.
 - RF002: ruff `target-version = "py311"` is set explicitly beside `requires-python` (Python floor row).
 - SEC001: workflows are linted with actionlint; zizmor is not adopted in Phase 0.

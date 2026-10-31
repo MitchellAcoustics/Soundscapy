@@ -105,7 +105,8 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/prek
-          key: prek-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          # prek's own version comes from uv.lock, and the cache depends on it too.
+          key: prek-${{ runner.os }}-${{ hashFiles('prek.toml', 'uv.lock') }}
       - run: uv run prek run --all-files --show-diff-on-failure
 
   citation:
