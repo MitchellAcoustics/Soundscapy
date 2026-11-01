@@ -164,9 +164,22 @@ def test_with_columns_valid_mask_gives_nulls(frame_lib):
     assert frame["f"].to_list()[::2] == [0.5, 2.5]
     assert frame["t"].to_list()[::2] == ["x", "z"]
     assert frame["i"].to_list()[::2] == [1, 3]
-    assert frame.schema["b"] == nw.Boolean
+    # Nulls follow the library's own model, as narwhals presents it (review F3): polars keeps
+    # the types; pandas' classic dtypes hold a null boolean as object, a null integer as float.
     if isinstance(native, pd.DataFrame):
-        assert str(frame.to_native()["b"].dtype) == "boolean"
+        assert frame.schema["b"] == nw.Object
+        assert frame.schema["i"] == nw.Float64
+    else:
+        assert frame.schema["b"] == nw.Boolean
+        assert frame.schema["i"] == nw.Int64
+
+
+def test_new_series_with_dtype_turns_a_pandas_null_boolean_false():
+    # The trap with_columns avoids by masking after building: narwhals' pandas new_series
+    # with a Boolean dtype silently turns None into False. If narwhals changes this, the
+    # masking in with_columns can be revisited.
+    series = nw.new_series("b", [True, None], dtype=nw.Boolean, backend="pandas")
+    assert series.to_list() == [True, False]
 
 
 @pytest.mark.parametrize("n_rows", [0, 3])
@@ -180,10 +193,15 @@ def test_with_columns_all_masked_keeps_dtypes(frame_lib, n_rows):
     populated = to_eager(with_columns(native, columns)).schema
     masked = to_eager(with_columns(native, columns, valid=np.zeros(n_rows, dtype=bool)))
     for name in columns:
-        assert masked.schema[name] == populated[name], name
         assert masked[name].is_null().all()  # vacuously true with no rows
-    assert masked.schema["f"] == nw.Float64
-    assert masked.schema["b"] == nw.Boolean
+    assert masked.schema["f"] == populated["f"] == nw.Float64
+    assert masked.schema["t"] == populated["t"]
+    if isinstance(native, pd.DataFrame) and n_rows:
+        # pandas' classic dtypes hold an all-null boolean as an object column of NaN, which
+        # narwhals reads as String (review F3). attach never masks every row: no match raises.
+        assert masked.schema["b"] == nw.String
+    else:
+        assert masked.schema["b"] == populated["b"] == nw.Boolean
     floats = columns_float(masked, ["f"])
     assert floats.shape == (n_rows, 1)
     assert np.isnan(floats).all()

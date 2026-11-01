@@ -23,7 +23,6 @@ import io
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Any
 
 import tomlkit
 
@@ -122,7 +121,7 @@ REGISTRY_TAIL = {
 }
 
 
-def _lines(values: list[str]) -> Any:  # noqa: ANN401  # a tomlkit array
+def _lines(values: list[str]) -> tomlkit.items.Array:
     array = tomlkit.array()
     array.extend(values)
     return array.multiline(multiline=True)

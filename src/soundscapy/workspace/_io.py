@@ -3,9 +3,10 @@
 from typing import Any, Final
 
 import numpy as np
+from narwhals.stable.v2.typing import IntoDataFrameT
 from numpy.typing import NDArray
 
-from soundscapy._frames import Frame, to_eager, with_columns
+from soundscapy._frames import EagerFrame, to_eager, with_columns
 from soundscapy._log import logger
 from soundscapy._model import (
     COL_ANGLE_SET,
@@ -30,7 +31,7 @@ _REREAD_REMEDY: Final = (
 )
 
 
-def attach(frame: Frame, result: Coordinates) -> Any:  # noqa: ANN401  # the user's own frame type
+def attach(frame: IntoDataFrameT, result: Coordinates) -> IntoDataFrameT:
     """Append a result's ``ssp_`` columns to the user's own frame.
 
     Appends ``ssp_<axis id>`` for the x and the y axis (for example ``ssp_ISOPleasant``
@@ -65,8 +66,10 @@ def attach(frame: Frame, result: Coordinates) -> Any:  # noqa: ANN401  # the use
 
     Returns
     -------
-    object
-        A new frame of the same library as ``frame``, with the added columns last.
+    pandas.DataFrame or polars.DataFrame
+        A new frame of the same library as ``frame``, with the added columns last. Rows that
+        match no response are null in every added column, in the library's own way: with
+        pandas' classic dtypes, ``ssp_included`` is then an ``object`` column.
 
     Raises
     ------
@@ -122,7 +125,9 @@ def _str_list(result: Coordinates, key: str) -> list[str]:
     return list(value)
 
 
-def _match_ids(eager: Any, result: Coordinates) -> tuple[NDArray[np.intp], NDArray[np.bool_]]:  # noqa: ANN401  # a narwhals frame
+def _match_ids(
+    eager: EagerFrame, result: Coordinates
+) -> tuple[NDArray[np.intp], NDArray[np.bool_]]:
     """Return, per frame row, its row in the result (0 if none) and whether it matched."""
     id_columns = _str_list(result, "response_id_columns")
     blank_ok = set(_str_list(result, "response_key_blank_ok"))
@@ -151,7 +156,7 @@ def _match_ids(eager: Any, result: Coordinates) -> tuple[NDArray[np.intp], NDArr
     return index, matched
 
 
-def _id_text(eager: Any, column: str) -> NDArray[np.object_]:  # noqa: ANN401  # a narwhals frame
+def _id_text(eager: EagerFrame, column: str) -> NDArray[np.object_]:
     """Read a frame's id column as :func:`stripped_text` does, whole floats as integers.
 
     pandas stores an integer column that holds a null as float64, so ``1`` comes back as

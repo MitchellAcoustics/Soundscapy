@@ -10,13 +10,16 @@ import itertools
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Self, TypeVar
+from typing import TYPE_CHECKING, Any, Self, TypeVar
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from soundscapy._frames import new_frame, readonly_copy
 from soundscapy._model import COL_FLAGS, COL_INCLUDED, COL_REASONS
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 __all__ = ["Flag", "Reason", "Status"]
 
@@ -267,7 +270,7 @@ class Status:
             COL_FLAGS: _joined(self.flags),
         }
 
-    def to_frame(self) -> Any:  # noqa: ANN401  # a pandas frame
+    def to_frame(self) -> "pd.DataFrame":
         """Return the status as a pandas data frame.
 
         Returns

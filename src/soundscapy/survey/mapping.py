@@ -495,7 +495,8 @@ def write_mapping(mapping: SurveyMapping, path: str | os.PathLike[str]) -> None:
             circ.label(p) for p in mapping.groups.attributes.coding.reverse
         ]
     _check_no_blanks(data, "")
-    text = tomlkit.dumps(_tables_last(data))
+    # tomlkit places plain keys before tables itself when it builds a document.
+    text = tomlkit.dumps(data)
     Path(path).write_text(text, encoding="utf-8", newline="\n")
 
 
@@ -514,13 +515,6 @@ def _prune(model: pydantic.BaseModel, dumped: dict[str, Any]) -> dict[str, Any]:
         entry = dumped[key]
         out[key] = _prune(value, entry) if isinstance(value, pydantic.BaseModel) else entry
     return out
-
-
-def _tables_last(data: dict[str, Any]) -> dict[str, Any]:
-    """Plain keys before tables (TOML needs them first), each kept in field order."""
-    plain = {k: v for k, v in data.items() if not isinstance(v, dict)}
-    tables = {k: _tables_last(v) for k, v in data.items() if isinstance(v, dict)}
-    return plain | tables
 
 
 def _check_no_blanks(data: Mapping[str, Any], prefix: str) -> None:

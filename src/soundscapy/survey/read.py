@@ -12,14 +12,14 @@ from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final, Literal, NoReturn
+from typing import TYPE_CHECKING, Final, Literal, NoReturn
 
 import numpy as np
 from numpy.typing import NDArray
 from pydantic import StrictStr, field_validator
 
 from soundscapy import _data
-from soundscapy._frames import column_text, read_text_table, readonly_copy, to_eager
+from soundscapy._frames import EagerFrame, column_text, read_text_table, readonly_copy, to_eager
 from soundscapy._log import logger
 from soundscapy._model import _UNSET, SSP_PREFIX, FrozenModel, _Unset, validate
 from soundscapy.errors import (
@@ -46,6 +46,9 @@ from soundscapy.survey.mapping import (
     read_mapping,
 )
 from soundscapy.survey.status import Reason, Status
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 __all__ = ["ImportSettings", "ReadOptions", "SourceRef", "Survey", "read_survey"]
 
@@ -166,7 +169,7 @@ class Survey:
         If the per-response arrays and the status differ in length.
     """
 
-    data: Any
+    data: "pd.DataFrame"
     mapping: SurveyMapping
     scores: dict[str, NDArray[np.float64]]
     response_id: NDArray[np.object_]
@@ -425,7 +428,7 @@ def _check_not_blank(
         raise MissingResponseIdError(msg, hint=hint)
 
 
-def stripped_text(frame: Any, name: str) -> NDArray[np.object_]:  # noqa: ANN401  # a narwhals frame
+def stripped_text(frame: EagerFrame, name: str) -> NDArray[np.object_]:
     """Read an id column as text, each cell stripped of surrounding whitespace.
 
     Parameters
@@ -584,7 +587,7 @@ def _check_unique(values: NDArray[np.object_], rows: NDArray[np.int64]) -> None:
 
 def _languages(
     spec: LanguageSpec,
-    frame: Any,  # noqa: ANN401  # a narwhals frame
+    frame: EagerFrame,
     response_ids: NDArray[np.object_],
 ) -> NDArray[np.object_]:
     """Return each response's ISO 639-3 code, ``""`` where blank or not mapped."""
@@ -618,7 +621,7 @@ def _languages(
 
 def _code_group(
     group: ItemGroup,
-    frame: Any,  # noqa: ANN401  # a narwhals frame
+    frame: EagerFrame,
     response_ids: NDArray[np.object_],
 ) -> NDArray[np.float64]:
     """Code an item group's columns and check the non-missing values against its scale."""

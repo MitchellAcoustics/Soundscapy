@@ -7,16 +7,20 @@ and of the two counts; every consumer calls them.
 import copy
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 import numpy as np
+from narwhals.stable.v2.typing import IntoDataFrameT
 from numpy.typing import ArrayLike, NDArray
 from pydantic import Field, StrictInt, StrictStr
 
-from soundscapy._frames import new_frame, readonly_copy
+from soundscapy._frames import Frame, new_frame, readonly_copy
 from soundscapy._model import COL_INCLUDED, COL_LANGUAGE, FrozenModel, axis_column
 from soundscapy.errors import MappingError
 from soundscapy.instrument import Circumplex, Scale
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 __all__ = ["Coordinates", "OriginSegment", "n", "n_valid", "valid_mask"]
 
@@ -133,7 +137,11 @@ class Coordinates:
         """Return which rows are valid; see :func:`valid_mask`."""
         return valid_mask(self)
 
-    def to_frame(self, like: object | None = None) -> Any:  # noqa: ANN401  # pandas or the library of like
+    @overload
+    def to_frame(self, like: None = None) -> "pd.DataFrame": ...
+    @overload
+    def to_frame(self, like: IntoDataFrameT) -> IntoDataFrameT: ...
+    def to_frame(self, like: object | None = None) -> Any:
         """Return the labels and coordinates as a data frame.
 
         Parameters
@@ -143,7 +151,7 @@ class Coordinates:
 
         Returns
         -------
-        object
+        pandas.DataFrame or the library of ``like``
             The label columns, then ``ssp_<axis id>`` for the x and the y axis (for
             example ``ssp_ISOPleasant`` and ``ssp_ISOEventful``).
         """
@@ -153,7 +161,10 @@ class Coordinates:
             axis_column(x_axis.id): self.xy[:, 0],
             axis_column(y_axis.id): self.xy[:, 1],
         }
-        return new_frame(columns, like=like)
+        if like is None:
+            return new_frame(columns)
+        # to_eager checks at run time that like is a frame; the cast picks the overload.
+        return new_frame(columns, like=cast("Frame", like))
 
     def select(self, mask: ArrayLike) -> "Coordinates":
         """Return the rows where ``mask`` is true.
