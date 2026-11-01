@@ -12,7 +12,7 @@ from soundscapy.instrument.scale import Scale
 __all__ = ["project_scores"]
 
 Formulation = Literal["canonical", "iso2019"]
-"""The projection formulas :func:`project_scores` implements."""
+"""The projection formulas ``project_scores()`` implements."""
 
 _FORMULATIONS: Final = get_args(Formulation)
 _NOMINAL_ANGLES_DEG = np.arange(0.0, 360.0, 45.0)

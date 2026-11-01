@@ -1,6 +1,6 @@
 """Bottom-layer building blocks: ``FrozenModel``, pair types, TOML I/O, column namespace.
 
-This module imports nothing from the rest of the package except :mod:`soundscapy.errors`.
+This module imports nothing from the rest of the package except ``soundscapy.errors``.
 """
 
 import enum
@@ -239,7 +239,7 @@ _PASSTHROUGH: Final = (DataIntegrityError, DataReferenceError, MappingError)
 
 
 def _passthrough_error(err: ValidationError) -> SoundscapyError | None:
-    """Return the first error of a :data:`_PASSTHROUGH` class that ``err`` wraps."""
+    """Return the first error of a ``_PASSTHROUGH`` class that ``err`` wraps."""
     for detail in err.errors():
         original = detail.get("ctx", {}).get("error")
         if isinstance(original, _PASSTHROUGH):
@@ -267,7 +267,7 @@ def from_toml(cls: type[M], text: str, *, error: type[SoundscapyError] = Setting
     Raises
     ------
     SoundscapyError
-        ``error`` (by default :class:`SettingsError`), if the text is not valid TOML or
+        ``error`` (by default ``SettingsError``), if the text is not valid TOML or
         fails validation; a validation message keeps pydantic's field paths.
     """
     return validate(cls, parse_toml(text, error=error), error=error)

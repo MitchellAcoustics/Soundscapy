@@ -1,8 +1,8 @@
 """Per-response inclusion status: why a response is excluded and what is flagged.
 
 No response row is ever dropped. Each row carries a tuple of exclusion
-:class:`Reason` codes (the row is included exactly when the tuple is empty) and a tuple
-of :class:`Flag` codes (the row is kept, with a note).
+``Reason`` codes (the row is included exactly when the tuple is empty) and a tuple
+of ``Flag`` codes (the row is kept, with a note).
 """
 
 import enum
@@ -201,7 +201,7 @@ class Status:
         ------
         ValueError
             If ``mask`` is not a boolean array with one entry per response, or
-            ``reason`` is not a :class:`Reason` (a :class:`Flag` or a plain str is
+            ``reason`` is not a ``Reason`` (a ``Flag`` or a plain str is
             rejected).
         """
         hit = self._mask(mask)
@@ -227,7 +227,7 @@ class Status:
         ------
         ValueError
             If ``mask`` is not a boolean array with one entry per response, or ``flag``
-            is not a :class:`Flag` (a :class:`Reason` or a plain str is rejected).
+            is not a ``Flag`` (a ``Reason`` or a plain str is rejected).
         """
         hit = self._mask(mask)
         return self._unchecked(self.included, self.reasons, _add_code(self.flags, hit, flag, Flag))
@@ -239,7 +239,7 @@ class Status:
         -------
         dict of str to int
             ``"n"``, ``"included"`` and ``"excluded"``, then ``"reason:<code>"`` for every
-            :class:`Reason` and ``"flag:<code>"`` for every :class:`Flag`, zero when absent.
+            ``Reason`` and ``"flag:<code>"`` for every ``Flag``, zero when absent.
             The keys do not depend on the data.
         """
         n_included = int(self.included.sum())
@@ -276,7 +276,7 @@ class Status:
         Returns
         -------
         pandas.DataFrame
-            One row per response with the columns of :meth:`label_arrays`.
+            One row per response with the columns of ``label_arrays()``.
         """
         return new_frame(self.label_arrays())
 

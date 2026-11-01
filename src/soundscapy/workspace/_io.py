@@ -158,7 +158,7 @@ def _match_ids(
 
 
 def _id_text(eager: EagerFrame, column: str) -> NDArray[np.object_]:
-    """Read a frame's id column as :func:`stripped_text` does, whole floats as integers.
+    """Read a frame's id column as ``stripped_text()`` does, whole floats as integers.
 
     pandas stores an integer column that holds a null as float64, so ``1`` comes back as
     ``1.0``; the survey's CSV cell read ``"1"``.

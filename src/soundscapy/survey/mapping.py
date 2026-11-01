@@ -1,8 +1,8 @@
 """Survey mappings: how a survey export's columns map onto an instrument, and how they are coded.
 
-A :class:`SurveyMapping` names the id, language and item columns of a user's export.
-:func:`apply_coding` turns the item texts into numbers on the instrument scale, and
-:func:`read_mapping` and :func:`write_mapping` store a mapping as TOML.
+A ``SurveyMapping`` names the id, language and item columns of a user's export.
+``apply_coding()`` turns the item texts into numbers on the instrument scale, and
+``read_mapping()`` and ``write_mapping()`` store a mapping as TOML.
 """
 
 import os
@@ -148,7 +148,7 @@ class ItemGroup(FrozenModel):
     columns : pairs of str
         Item key to column name, read from and written as a table.
     scale : Scale
-        The response scale of the items. Inside a :class:`SurveyMapping` it defaults to
+        The response scale of the items. Inside a ``SurveyMapping`` it defaults to
         the instrument's scale; built directly it must be given.
     coding : Coding, optional
         How the column texts are coded.
@@ -482,7 +482,7 @@ def write_mapping(mapping: SurveyMapping, path: str | os.PathLike[str]) -> None:
     Raises
     ------
     MappingError
-        If the mapping holds a blank value, which :func:`read_mapping` would reject.
+        If the mapping holds a blank value, which ``read_mapping()`` would reject.
     """
     circ = circumplex(mapping.instrument, mapping.instrument_version)
     data = _prune(mapping, mapping.model_dump(mode="json", by_alias=True))

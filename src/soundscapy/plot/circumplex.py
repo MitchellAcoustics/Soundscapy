@@ -71,7 +71,7 @@ def scatter(
 ) -> "Axes":
     """Draw projected responses on the circumplex, one series per group.
 
-    Only valid rows (see :func:`~soundscapy.distribution.coordinates.valid_mask`) are
+    Only valid rows (see ``Coordinates.valid_mask()``) are
     drawn. Groups are drawn in sorted key order, each labelled with its key in a legend:
     a blank key is labelled ``(blank)`` and a key starting with ``_`` is shown quoted
     (``'_x'``), as matplotlib would otherwise leave both out of the legend. Group

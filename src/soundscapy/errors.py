@@ -1,8 +1,8 @@
 """Errors and warnings raised by soundscapy.
 
-Every error subclasses :class:`SoundscapyError` and the built-in named in its docstring, so
+Every error subclasses ``SoundscapyError`` and the built-in named in its docstring, so
 callers can catch either. Every error takes ``(message, *, hint="")``; ``str(err)`` is the
-message and :attr:`SoundscapyError.hint` carries an optional second line for the CLI. No name
+message and ``SoundscapyError.hint`` carries an optional second line for the CLI. No name
 shadows a standard-library one.
 """
 

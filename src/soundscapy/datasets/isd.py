@@ -1,4 +1,4 @@
-"""The International Soundscape Database (ISD) as a :class:`~soundscapy.survey.read.Survey`.
+"""The International Soundscape Database (ISD) as a ``Survey``.
 
 The bundled subset holds 1552 responses from 15 locations of ISD 1.0.1-alpha.1 (Zenodo
 record 10672568, CC BY 4.0), 40 columns with cell text unchanged, so tutorials and tests

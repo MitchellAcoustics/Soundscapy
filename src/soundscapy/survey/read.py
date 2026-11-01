@@ -1,6 +1,6 @@
-"""Reading a survey export into a coded, validated :class:`Survey`.
+"""Reading a survey export into a coded, validated ``Survey``.
 
-:func:`read_survey` reads a CSV or TSV file with every cell as text, builds a response id
+``read_survey()`` reads a CSV or TSV file with every cell as text, builds a response id
 for every row, codes the language and the attribute items, checks the coded values
 against the response scale and records each response's inclusion status.
 """
@@ -101,13 +101,13 @@ class ReadOptions(FrozenModel):
 
 
 class ImportSettings(FrozenModel):
-    """Settings of :func:`read_survey`.
+    """Settings of ``read_survey()``.
 
     Attributes
     ----------
     on_scale_violation : {"error", "exclude"}, optional
         What a coded value outside the response scale does. In this version a violation
-        always raises :class:`~soundscapy.errors.ScaleViolationError`.
+        always raises ``ScaleViolationError``.
     """
 
     on_scale_violation: Literal["error", "exclude"] = "error"
@@ -135,7 +135,7 @@ class SourceRef(FrozenModel):
 class Survey:
     """A survey read and coded against its mapping, one entry per response.
 
-    Built by :func:`read_survey`. The arrays are copied and made read-only, and the
+    Built by ``read_survey()``. The arrays are copied and made read-only, and the
     provenance deep-copied, on construction.
 
     Parameters
@@ -239,10 +239,9 @@ def read_survey(
     source : str or os.PathLike
         A ``.csv`` or ``.tsv`` file. Data frames are not accepted in this version.
     mapping : SurveyMapping, str or os.PathLike
-        The mapping, or a mapping TOML file to read with
-        :func:`~soundscapy.survey.mapping.read_mapping`.
+        The mapping, or a mapping TOML file to read with ``read_mapping()``.
     read_options : ReadOptions or mapping, optional
-        How the file is read; a mapping is validated into :class:`ReadOptions`.
+        How the file is read; a mapping is validated into ``ReadOptions``.
 
     Returns
     -------
@@ -451,7 +450,7 @@ def stripped_text(frame: EagerFrame, name: str) -> NDArray[np.object_]:
 def join_id_parts(
     parts: Mapping[str, NDArray[np.object_]], blank_ok: Collection[str]
 ) -> tuple[NDArray[np.object_], NDArray[np.bool_]]:
-    """Join response-key parts into response ids, the way :func:`read_survey` builds them.
+    """Join response-key parts into response ids, the way ``read_survey()`` builds them.
 
     Parameters
     ----------

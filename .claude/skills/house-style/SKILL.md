@@ -30,7 +30,7 @@ when you configure the docs site, or write a tutorial or user-guide page.
 | Python floor | `requires-python = ">=3.11"`; ruff `target-version = "py311"`; ty reads it from `requires-python` | Product-owner decision. It is deliberately wider than the SPEC 0 window, so do not raise it to match SPEC 0 or a vendor default. Test every supported version in CI. |
 | Type checker | `ty` | Astral toolchain. Never add mypy, pyright, basedpyright or pyrefly, nor their LSP plugins. |
 | Lint / format | `ruff`, `select = ["ALL"]` with the commented ignores below | Maximum signal; every exemption is visible and justified. |
-| Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports | Matches the scientific Python ecosystem and great-docs rendering. |
+| Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports. Cross-references are great-docs code autolinks (plain code spans; `` [](`~pkg.obj`) `` only for custom text), never Sphinx roles (house rule in `reference.md` §1, "Cross-references"; it overrides `revise-docstrings`) | Matches the scientific Python ecosystem and great-docs rendering. |
 | Git hooks | `prek`, configured in its native `prek.toml` | The `builtin` hooks already make the setup prek-only, so a pre-commit-compatible YAML file buys nothing. Never install `pre-commit` itself. |
 | Task runner | `Taskfile.yml` (go-task), run as `task <name>` | One set of entry points for agents, humans and CI. go-task is installed outside the project, like uv (`uv tool install go-task-bin` recommended; CONTRIBUTING.md). The Taskfile's `version` is the minimum go-task it accepts and the only place that sets it; CONTRIBUTING.md repeats it for readers and `tests/test_project_config.py` fails when the two differ. Every command inside runs through `uv run`. |
 | Coverage gate | `fail_under = 95`, branch coverage on | Just below the measured coverage (99% at the end of S1), so a real loss of tests fails CI. Raise it as coverage allows, never lower it; review it at each milestone. |
@@ -199,7 +199,13 @@ rename them. Document and invoke them as `task <name>`.
 
 - `docs/` holds the great-docs site. The API reference is generated from docstrings,
   so a public object gets its documentation by writing its docstring well. Use the
-  `revise-docstrings` skill for docstring work.
+  `revise-docstrings` skill for docstring work, except for cross-references: those follow
+  the house rule under "Cross-references" in `reference.md` §1, which overrides it. In
+  short, a public object is a plain code span that great-docs autolinks (`read_survey()`,
+  `Survey`, `Coordinates.valid_mask()`), a private one is plain code with its dotted path
+  where the short name would link elsewhere, and an external one is plain code (no
+  interlinks are configured). Sphinx roles (`` :func:`x` ``) are never used: they print
+  as literal text, and `tests/test_docs_structure.py` fails on any in `src/`.
 - Tutorials are plain-text Quarto `.qmd` documents with executable `{python}` cells in
   `docs/tutorials/`, a great-docs custom section; paper reproductions (PRD FR-9.3) are
   `.qmd` documents in `docs/papers/`, a second custom section. How-to and explanation

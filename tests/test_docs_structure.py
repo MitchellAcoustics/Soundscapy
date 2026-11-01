@@ -1,4 +1,4 @@
-"""Structure checks for the docs sources (FR-12.3's four-part structure)."""
+"""Structure checks for the docs sources (FR-12.3's four-part structure) and docstrings."""
 
 import os
 import re
@@ -6,8 +6,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-GUIDE = Path(__file__).resolve().parents[1] / "docs" / "user_guide"
+ROOT = Path(__file__).resolve().parents[1]
+GUIDE = ROOT / "docs" / "user_guide"
 ALLOWED = {"How-to", "Explanation", "Reference"}
+# Any Sphinx role, including the forms great-docs' interlinks filter parses (:func:`x`,
+# :py:func:`x`, :external+numpy:py:class:`x`). Scoped to src/: design/ quotes pip's
+# ``--only-binary :all:``, which a pattern this broad would also match.
+SPHINX_ROLE = re.compile(r":[a-z]+(?:[+:][a-z]+)*:`")
 
 
 def test_every_user_guide_page_has_a_known_guide_section():
@@ -62,3 +67,41 @@ def test_quickstart_runs(tmp_path: Path):
     assert result.returncode == 0, result.stderr
     assert result.stdout == ""
     assert (tmp_path / "first-plot.png").exists()
+
+
+def test_docstrings_use_no_sphinx_roles():
+    # Under great-docs' numpy parser a role is not converted: ":func:" is printed as text,
+    # also in page descriptions and llms.txt, and the build gives no warning. Write a code
+    # span instead (house-style reference.md, "Cross-references").
+    sources = sorted((ROOT / "src" / "soundscapy").rglob("*.py"))
+    assert sources
+    hits = [
+        f"{path.relative_to(ROOT)}:{number}: {line.strip()}"
+        for path in sources
+        # Explicit UTF-8: Windows CI would otherwise decode with the locale code page, which
+        # fails on characters such as Greek rho, whose UTF-8 bytes cp1252 leaves undefined.
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1)
+        if SPHINX_ROLE.search(line)
+    ]
+    assert not hits, "\n".join(hits)
+
+
+def test_sphinx_role_pattern_matches_roles_and_nothing_else():
+    # Without this, a broken pattern would let the guard above pass on any source tree.
+    roles = (
+        ":func:`read_survey`",
+        ":class:`~soundscapy.Survey`",
+        ":py:exc:`ValueError`",
+        ":external+numpy:py:class:`numpy.ndarray`",
+        "[](:func:`read_survey`)",
+    )
+    others = (
+        "``read_survey()``",
+        "`Survey`",
+        "[](`~soundscapy.read_survey`)",
+        "pip install --only-binary :all: soundscapy",
+        '{"a":`b`}',
+        "https://example.org/a:b",
+    )
+    assert all(SPHINX_ROLE.search(text) for text in roles)
+    assert not any(SPHINX_ROLE.search(text) for text in others)

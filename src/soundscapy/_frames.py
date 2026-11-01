@@ -1,10 +1,10 @@
 """The frame boundary: the only module that touches pandas or polars.
 
-Every frame enters through :func:`to_eager` and leaves through :func:`to_native`,
-:func:`with_columns` or :func:`new_frame`. Library dispatch goes through
+Every frame enters through ``to_eager()`` and leaves through ``to_native()``,
+``with_columns()`` or ``new_frame()``. Library dispatch goes through
 ``narwhals.stable.v2``, following its typing pattern: a function given the user's frame returns
 the same library (``IntoDataFrameT`` in, ``IntoDataFrameT`` out). Frames soundscapy creates
-from a path or from nothing are pandas (:data:`DEFAULT_BACKEND`). Nulls follow each library's
+from a path or from nothing are pandas (``DEFAULT_BACKEND``). Nulls follow each library's
 own model, as narwhals presents it. This module imports pandas and never polars or pyarrow, so
 ``import soundscapy`` needs only the runtime dependencies.
 """
@@ -49,7 +49,7 @@ __all__ = [
 ]
 
 EagerFrame: TypeAlias = nw.DataFrame[Any]
-"""A frame wrapped by :func:`to_eager`, whatever library is behind it."""
+"""A frame wrapped by ``to_eager()``, whatever library is behind it."""
 
 DEFAULT_BACKEND: Final = "pandas"
 """The library of frames soundscapy creates where no user frame gives one (plan §4.10)."""
@@ -125,7 +125,7 @@ def to_native(frame: nw.DataFrame[IntoDataFrameT]) -> IntoDataFrameT:
     Parameters
     ----------
     frame : narwhals.stable.v2.DataFrame
-        A frame from :func:`to_eager`.
+        A frame from ``to_eager()``.
 
     Returns
     -------
@@ -157,7 +157,7 @@ def columns_float(frame: EagerFrame, names: Sequence[str]) -> NDArray[np.float64
     Parameters
     ----------
     frame : narwhals.stable.v2.DataFrame
-        A frame from :func:`to_eager`.
+        A frame from ``to_eager()``.
     names : sequence of str
         The columns to read, in order.
 
@@ -217,7 +217,7 @@ def column_text(frame: EagerFrame, name: str) -> NDArray[np.object_]:
     Parameters
     ----------
     frame : narwhals.stable.v2.DataFrame
-        A frame from :func:`to_eager`.
+        A frame from ``to_eager()``.
     name : str
         The column to read.
 

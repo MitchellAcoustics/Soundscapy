@@ -1,6 +1,6 @@
 """Shipped data files and their hash pins.
 
-Every read verifies the file's ``h1`` hash against :data:`PINS`, so an edited installed
+Every read verifies the file's ``h1`` hash against ``PINS``, so an edited installed
 file fails loudly at run time, not only in the test suite. Adding or changing a shipped
 file means adding or changing its pin in the same commit; a correction after release is a
 new version of the file, never an edit.
@@ -59,7 +59,7 @@ def pin(relpath: str) -> str:
     Returns
     -------
     str
-        The ``h1`` hash recorded in :data:`PINS`.
+        The ``h1`` hash recorded in ``PINS``.
 
     Raises
     ------
@@ -136,7 +136,7 @@ def as_path(relpath: str) -> AbstractContextManager[Path]:
     Returns
     -------
     contextlib.AbstractContextManager
-        A context manager yielding the file's :class:`~pathlib.Path`.
+        A context manager yielding the file's ``pathlib.Path``.
 
     Raises
     ------

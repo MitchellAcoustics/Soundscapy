@@ -3,11 +3,11 @@
 The default is visible (NFR-13): with no logging configured, INFO lines go to stderr, so a
 terminal or a notebook shows them. Once the application configures logging, its
 configuration decides: records reach its handlers only at or above the root logger's level,
-unless the level of the ``soundscapy`` logger was set deliberately, by :func:`set_log_level`
+unless the level of the ``soundscapy`` logger was set deliberately, by ``set_log_level()``
 or by the application itself. Records always propagate, so ``caplog`` and a GUI's own
 handler receive them.
 
-All of soundscapy logs through :data:`logger` itself, never through a child logger such as
+All of soundscapy logs through ``logger`` itself, never through a child logger such as
 ``soundscapy.survey``: the filter that applies the application's root level is attached to
 this logger, and Python consults a logger's filters only for records created on it.
 """
@@ -50,7 +50,7 @@ def _defer_to_application(record: logging.LogRecord) -> bool:
 
     An application that sets the ``soundscapy`` logger to any level but INFO keeps that
     level; one that sets it to INFO, or a GUI that adds its own handler to the
-    ``soundscapy`` logger, calls :func:`set_log_level` to keep INFO lines whatever the
+    ``soundscapy`` logger, calls ``set_log_level()`` to keep INFO lines whatever the
     root level is, because this filter cannot tell that choice from the default.
     """
     if logger.level != _DEFAULT_LEVEL or not _application_configured():
@@ -72,7 +72,7 @@ def set_log_level(level: int | str) -> None:
     Parameters
     ----------
     level : int or str
-        A :mod:`logging` level number or name, for example ``"WARNING"``.
+        A ``logging`` level number or name, for example ``"WARNING"``.
     """
     logger.setLevel(level)
     logger.removeFilter(_defer_to_application)  # an explicit level is the user's decision
