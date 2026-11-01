@@ -48,8 +48,45 @@ def test_default_handler_writes_to_stderr_without_root_handlers() -> None:
 
 
 def test_default_handler_defers_to_root_handlers() -> None:
+    # Printed once, by the application's handler, not a second time by soundscapy's.
     result = _run(
-        "import logging; logging.basicConfig()\n"
+        "import logging; logging.basicConfig(level=logging.INFO)\n"
         "from soundscapy._log import logger; logger.info('once')"
     )
     assert result.stderr.count("once") == 1
+
+
+# The application's logging configuration decides, as NFR-13 requires ("silence or redirect with
+# one call or with standard logging configuration"): records reach a root handler only at or
+# above the root level, unless soundscapy's level was set deliberately.
+_EMIT = (
+    "from soundscapy._log import logger; logger.info('info-line'); logger.warning('warn-line')\n"
+)
+
+
+def test_application_root_level_warning_silences_info() -> None:
+    result = _run("import logging; logging.basicConfig(level=logging.WARNING)\n" + _EMIT)
+    assert "info-line" not in result.stderr
+    assert result.stderr.count("warn-line") == 1
+
+
+def test_application_root_level_info_shows_info_once() -> None:
+    result = _run("import logging; logging.basicConfig(level=logging.INFO)\n" + _EMIT)
+    assert result.stderr.count("info-line") == 1
+
+
+def test_set_log_level_overrides_the_application_root_level() -> None:
+    result = _run(
+        "import logging; logging.basicConfig(level=logging.WARNING)\n"
+        "from soundscapy._log import set_log_level; set_log_level('INFO')\n" + _EMIT
+    )
+    assert result.stderr.count("info-line") == 1
+
+
+def test_application_level_on_the_soundscapy_logger_is_honoured() -> None:
+    result = _run(
+        "import logging; logging.basicConfig(level=logging.WARNING)\n"
+        "logging.getLogger('soundscapy').setLevel(logging.DEBUG)\n"
+        "from soundscapy._log import logger; logger.debug('debug-line')\n"
+    )
+    assert result.stderr.count("debug-line") == 1

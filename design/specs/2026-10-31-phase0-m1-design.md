@@ -1102,6 +1102,14 @@ class _DefaultHandler(logging.StreamHandler):
 logger.addHandler(_DefaultHandler())  # propagate stays True, so caplog and GUIs receive records
 ```
 
+(Amended 2026-11-01, review F8, `design/reviews/2026-10-31-s1-tool-idiom-review.md`: the INFO
+default is set only when the logger has no level, so an application's earlier
+`logging.getLogger("soundscapy").setLevel(...)` is kept. A `logging.Filter` on the logger applies
+the root logger's level once the root has handlers, unless `set_log_level` was called or the
+`soundscapy` level is not the default. Without it, a logger's own level alone decides
+propagation, so `logging.basicConfig(level=logging.WARNING)` did not silence soundscapy's INFO
+lines, contrary to NFR-13's "or with standard logging configuration".)
+
 `set_log_level(level)` sets the `soundscapy` logger's level and is the one silencing call; there is
 no environment variable. The package never prints. Importing `soundscapy` touches no third-party
 logger. Pooch's INFO lines ("Downloading file ...") are hidden inside `fetch` only: `fetch` adds a
