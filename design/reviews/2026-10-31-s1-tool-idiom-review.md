@@ -10,6 +10,28 @@ has been applied.
 The remote branch has since gained one commit, `e5c0506`, which adds only the S2 plan
 (`design/plans/2026-10-31-m1-s2-status-quality.md`). F2 and F18 say where that plan meets them.
 
+## Status (2026-11-01)
+
+Applied on `claude/dev-tools-idiom-review-qfncq4`, each with `task check` passing:
+
+- `eb43612`: F1 (hook commands).
+- `8e53c7b`: the move to `prek.toml` with a local `uv lock` hook, F14 and H10.
+- `8504ad1`:
+  - go-task installed outside the project (owner decision; see "Put `uv run` inside the
+    tasks" below);
+  - F10, F11, F12, F13;
+  - F7's Taskfile half;
+  - the wording of H1 and H2.
+- `6ba936a`: F7's test half, F15 to F21, H3, H4, H5, H6, H8 and H9.
+- `2d6fd53`: F2, F3, F4 and F9, following the owner's decision to keep pandas as scikit-lego
+  does. The suite also passes at the `lowest-direct` floors.
+
+Open:
+
+- F5, F6 and F8, owner decisions on plotting and logging;
+- F22, keep, with no action;
+- F23, once the docs site has an address.
+
 ## Method and limits
 
 The owner asked whether the code and tooling use each tool as its authors intend, or work
@@ -57,26 +79,26 @@ Several of these trace back to the house rules themselves. "House rules that are
 | ID | Area | Finding | Priority |
 |---|---|---|---|
 | F1 | Agent hooks | An old uv refuses every shell call via `required-version`; the Stop hook cannot exit | P1, applied |
-| F2 | narwhals | Frames typed `Any` (12 `noqa: ANN401`) instead of narwhals' `IntoDataFrameT` | P1 |
-| F3 | narwhals | Drop the pandas branch in `with_columns` for narwhals-native nulls | P2, owner decision |
-| F4 | narwhals | `to_eager` relies on an undocumented `TypeError` | P3 |
+| F2 | narwhals | Frames typed `Any` (12 `noqa: ANN401`) instead of narwhals' `IntoDataFrameT` | applied |
+| F3 | narwhals | Drop the pandas branch in `with_columns` for narwhals-native nulls | applied |
+| F4 | narwhals | `to_eager` relies on an undocumented `TypeError` | applied |
 | F5 | matplotlib | Pyplot-free `ax=None` departs from matplotlib's library pattern | Owner, P2 |
 | F6 | matplotlib | Hard-coded petroff10 ignores style sheets and property cycles (FR-8.3) | P2 |
-| F7 | matplotlib | `MPLBACKEND` set in the Taskfile, not in the test suite | P3 |
+| F7 | matplotlib | `MPLBACKEND` set in the Taskfile, not in the test suite | applied |
 | F8 | logging | The library logger's level bypasses the application's root level | Owner, P2 |
-| F9 | tomlkit | `_tables_last` probably duplicates tomlkit | P3 |
-| F10 | Taskfile, prek | `sp-repo-review` runs unpinned | P2 |
-| F11 | Taskfile | `check:fast` stops at the first failing step | P3 |
-| F12 | CI | Release job holds `id-token` through `task check`; no `--no-sources` | P2 |
-| F13 | CI | `--locked` per command rather than `UV_LOCKED` per job | P3 |
+| F9 | tomlkit | `_tables_last` probably duplicates tomlkit | applied |
+| F10 | Taskfile, prek | `sp-repo-review` runs unpinned | applied |
+| F11 | Taskfile | `check:fast` stops at the first failing step | applied |
+| F12 | CI | Release job holds `id-token` through `task check`; no `--no-sources` | applied |
+| F13 | CI | `--locked` per command rather than `UV_LOCKED` per job | applied |
 | F14 | CI | prek cache key leaves out the prek version | P3, applied |
-| F15 | ruff | `banned-module-level-imports` replaces three `noqa: PLC0415` and enforces lazy imports | P2 |
-| F16 | ruff | `allow-star-arg-any` for forwarded `**kwargs` | P3 |
-| F17 | ty | `[tool.ty.environment]` restates ty's defaults | P3 |
-| F18 | pytest | `tests._helpers` imports rely on undocumented importlib-mode behaviour | P2 |
-| F19 | pytest | `strict = true` replaces three settings | P3 |
-| F20 | import-linter | Ignores for imports that do not exist, with the alert silenced | P3 |
-| F21 | great-docs | Six keys restate defaults | P3 |
+| F15 | ruff | `banned-module-level-imports` replaces three `noqa: PLC0415` and enforces lazy imports | applied |
+| F16 | ruff | `allow-star-arg-any` for forwarded `**kwargs` | applied |
+| F17 | ty | `[tool.ty.environment]` restates ty's defaults | applied |
+| F18 | pytest | `tests._helpers` imports rely on undocumented importlib-mode behaviour | applied |
+| F19 | pytest | `strict = true` replaces three settings | applied |
+| F20 | import-linter | Ignores for imports that do not exist, with the alert silenced | applied |
+| F21 | great-docs | Six keys restate defaults | applied |
 | F22 | great-docs | Quarto from `quarto-cli` is off upstream's documented path (keep) | P3 |
 | F23 | great-docs | No `Documentation` URL | P3 |
 
@@ -157,6 +179,14 @@ sets `UV_OFFLINE`. The inner layer earns its keep when the Taskfile runs from an
 or a global `task`. **Recommendation: keep both layers,** and say why in a comment at the top of
 `Taskfile.yml`, so a later tidy-up does not remove one as duplication. F13 covers the lock
 assertion for the nested calls.
+
+**Decision (owner, 2026-11-01): go-task is installed outside the project, like uv.**
+Contributors install uv and go-task, by any method; `uv tool install go-task-bin` is
+recommended. They run `task <name>`. `go-task-bin` leaves the `dev` group, and
+`Taskfile.yml`'s `version: '3.54'` is the minimum go-task it accepts. *Run*: a `version`
+above the installed go-task stops with "Schema version (3.99.0) is greater than the current
+version of Task", so no other file pins it. Every command inside still runs through `uv run`.
+CI installs go-task the same way.
 
 ## Findings
 
@@ -658,8 +688,7 @@ once the site has an address.
 Several findings above are not agent mistakes: the code does what AGENTS.md, CLAUDE.md or the
 `house-style` skill told it to do. An agent that fixes the code without the rule will see the
 rule again and undo the fix. Each item below names the rule, what is wrong with it, and the
-proposed wording. The rules are the owner's, so these are proposals; none is applied here,
-except the hook command of H1 and the prek rules of H10.
+proposed wording. The owner approved them, and all ten are applied (see Status at the top).
 
 **H1. "uv only. Never run bare `pip` or `python`" made the hooks depend on project settings
 (AGENTS.md, CLAUDE.md, house-style hook paragraph).** The rule is right for agents' commands.
