@@ -22,7 +22,7 @@ from typing import Any, Final, TypeAlias, overload
 import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
-from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
+from narwhals.stable.v2.typing import IntoDataFrameT
 from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 from soundscapy.errors import (
@@ -35,9 +35,7 @@ from soundscapy.errors import (
 from soundscapy.provenance import canonical_json, hash_bytes
 
 __all__ = [
-    "DEFAULT_BACKEND",
     "EagerFrame",
-    "Frame",
     "TextTable",
     "column_text",
     "columns_float",
@@ -49,9 +47,6 @@ __all__ = [
     "to_native",
     "with_columns",
 ]
-
-Frame: TypeAlias = IntoDataFrame
-"""A native eager data frame narwhals accepts, such as a pandas or polars ``DataFrame``."""
 
 EagerFrame: TypeAlias = nw.DataFrame[Any]
 """A frame wrapped by :func:`to_eager`, whatever library is behind it."""
@@ -140,7 +135,7 @@ def to_native(frame: nw.DataFrame[IntoDataFrameT]) -> IntoDataFrameT:
     return frame.to_native()
 
 
-def _column(frame: nw.DataFrame[Any], name: str) -> nw.Series[Any]:
+def _column(frame: EagerFrame, name: str) -> nw.Series[Any]:
     """Return a column, raising a backend-neutral error when it is missing."""
     if name not in frame.columns:
         msg = f"column {name!r} is not in the frame; it has {frame.columns}"
@@ -156,7 +151,7 @@ def _float_values(series: nw.Series[Any]) -> NDArray[np.float64]:
     return values
 
 
-def columns_float(frame: nw.DataFrame[Any], names: Sequence[str]) -> NDArray[np.float64]:
+def columns_float(frame: EagerFrame, names: Sequence[str]) -> NDArray[np.float64]:
     """Read numeric columns as a float64 matrix.
 
     Parameters
@@ -212,7 +207,7 @@ def _texts(series: nw.Series[Any]) -> list[str | None]:
     ]
 
 
-def column_text(frame: nw.DataFrame[Any], name: str) -> NDArray[np.object_]:
+def column_text(frame: EagerFrame, name: str) -> NDArray[np.object_]:
     """Read one column as text.
 
     Text comes from each value's Python form: ``str`` as is, datetimes, dates and times
@@ -268,7 +263,8 @@ def with_columns(
     frame : pandas.DataFrame or polars.DataFrame
         The user's frame; it is not changed.
     columns : mapping of str to numpy.ndarray
-        The new columns, each with one value per row.
+        The new columns, each with one value per row. A polars result may share memory
+        with these arrays, so pass arrays nothing else will change.
     valid : numpy.ndarray of bool, optional
         Rows where this is False are null in every added column, as the frame's library
         represents a null: in polars a null of the column's type; with pandas' classic
@@ -302,17 +298,16 @@ def with_columns(
             raise ValueError(msg)
     backend = eager.implementation
     # No None goes into new_series: with pandas' classic dtypes it would turn a masked
-    # boolean into False. Rows are masked afterwards with when/then, which nulls them in
-    # each library's own way.
-    series = [
-        nw.new_series(name, values.tolist(), dtype=_nw_dtype(values), backend=backend)
+    # boolean into False. Masked rows are nulled by when/then instead, in each library's
+    # own way.
+    series = {
+        name: nw.new_series(name, values, dtype=_nw_dtype(values), backend=backend)
         for name, values in columns.items()
-    ]
-    out = eager.with_columns(*series)
-    if valid is not None:
-        keep = nw.new_series("valid", valid.tolist(), dtype=nw.Boolean, backend=backend)
-        out = out.with_columns(**{name: nw.when(keep).then(nw.col(name)) for name in columns})
-    return to_native(out)
+    }
+    if valid is None or valid.all():
+        return to_native(eager.with_columns(*series.values()))
+    keep = nw.new_series("valid", valid, dtype=nw.Boolean(), backend=backend)
+    return to_native(eager.with_columns(**{n: nw.when(keep).then(s) for n, s in series.items()}))
 
 
 @overload
@@ -442,7 +437,7 @@ def _is_blank(record: Sequence[str]) -> bool:
     return all(not cell.strip() for cell in record)
 
 
-def _hash_chunks(frame: nw.DataFrame[Any]) -> Iterator[bytes]:
+def _hash_chunks(frame: EagerFrame) -> Iterator[bytes]:
     """Yield the normalised byte stream of a frame (header, then column by column)."""
     dtypes: list[str] = []
     bodies: list[Iterable[bytes]] = []

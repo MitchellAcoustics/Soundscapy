@@ -7,7 +7,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from soundscapy._log import logger, set_log_level
+from soundscapy._log import _defer_to_application, logger, set_log_level
 
 
 @pytest.fixture
@@ -15,6 +15,7 @@ def restore_level() -> Iterator[None]:
     old = logger.level
     yield
     logger.setLevel(old)
+    logger.addFilter(_defer_to_application)  # set_log_level removes it; adding is idempotent
 
 
 def test_records_propagate_to_root(caplog: pytest.LogCaptureFixture) -> None:

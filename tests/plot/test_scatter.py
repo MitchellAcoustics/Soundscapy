@@ -256,3 +256,13 @@ def test_empty_coordinates_draw_without_legend_or_warning(isd_coords):
     ax = plot.scatter(empty, by="location")
     assert _collections(ax) == []
     assert ax.get_legend() is None
+
+
+def test_a_user_cycle_without_colours_falls_back_to_petroff10(isd_coords):
+    with mpl.rc_context({"axes.prop_cycle": cycler(linestyle=["-", "--"])}):
+        ax = plot.scatter(isd_coords)
+    (collection,) = _collections(ax)
+    # Exact: to_rgba of the sequence entry is the colour matplotlib stores.
+    np.testing.assert_array_equal(
+        collection.get_facecolor()[0], to_rgba(mpl.color_sequences["petroff10"][0])
+    )

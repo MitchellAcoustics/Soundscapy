@@ -1,5 +1,6 @@
 """Helpers shared by the plot functions: new Axes, group colours and the circumplex frame."""
 
+from contextlib import AbstractContextManager, nullcontext
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
@@ -20,15 +21,19 @@ _SIGN = {"+": 1.0, "-": -1.0}
 _TEXT_COLOUR = "0.3"
 
 
-def _user_styled() -> bool:
-    """Return whether the active colour cycle differs from matplotlib's own default.
+def _style_context() -> AbstractContextManager[object]:
+    """Return the context soundscapy's plots are drawn in: the user's style, or ``petroff10``.
 
-    A style sheet, ``rc_context`` or ``style.context`` the user applied changes it; then the
-    user's colours are used, otherwise soundscapy's default style (FR-8.3).
+    A style sheet, ``rc_context`` or ``style.context`` the user applied changes matplotlib's
+    colour cycle away from its own default; then nothing is changed. Otherwise the
+    ``petroff10`` style applies (FR-8.3).
     """
     import matplotlib as mpl
+    import matplotlib.style
 
-    return mpl.rcParams["axes.prop_cycle"] != mpl.rcParamsDefault["axes.prop_cycle"]
+    if mpl.rcParams["axes.prop_cycle"] != mpl.rcParamsDefault["axes.prop_cycle"]:
+        return nullcontext()
+    return matplotlib.style.context(DEFAULT_STYLE)
 
 
 def group_colours() -> list[str]:
@@ -38,17 +43,17 @@ def group_colours() -> list[str]:
     -------
     list of str
         The ``color`` entries of the active ``axes.prop_cycle`` when the user has styled
-        matplotlib, otherwise those of the ``petroff10`` style.
+        matplotlib, otherwise those of the ``petroff10`` style. A user cycle without
+        colours falls back to ``petroff10``.
     """
     import matplotlib as mpl
     import matplotlib.style
 
-    if _user_styled():
+    with _style_context():
         colours = mpl.rcParams["axes.prop_cycle"].by_key().get("color")
-        if colours:
-            return [str(colour) for colour in colours]
-    with matplotlib.style.context(DEFAULT_STYLE):
-        return [str(colour) for colour in mpl.rcParams["axes.prop_cycle"].by_key()["color"]]
+    if not colours:
+        colours = matplotlib.style.library[DEFAULT_STYLE]["axes.prop_cycle"].by_key()["color"]
+    return [str(colour) for colour in colours]
 
 
 def new_axes() -> "Axes":
@@ -65,11 +70,8 @@ def new_axes() -> "Axes":
         The one subplot of a new figure.
     """
     import matplotlib.pyplot as plt
-    import matplotlib.style
 
-    if _user_styled():
-        return plt.subplots()[1]
-    with matplotlib.style.context(DEFAULT_STYLE):
+    with _style_context():
         return plt.subplots()[1]
 
 

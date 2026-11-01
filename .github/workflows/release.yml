@@ -36,10 +36,7 @@ jobs:
             echo "tag $GITHUB_REF_NAME does not match project version $version" >&2
             exit 1
           fi
-      - name: Install go-task (Taskfile.yml's version is the minimum it accepts)
-        run: |
-          uv tool install go-task-bin
-          uv tool dir --bin >> "$GITHUB_PATH"
+      - uses: ./.github/actions/setup-task
       - run: task check
       # --no-sources: build as any other build frontend would, without [tool.uv.sources].
       - run: task build

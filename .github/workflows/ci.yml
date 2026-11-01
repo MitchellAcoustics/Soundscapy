@@ -38,11 +38,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           enable-cache: true
-      - name: Install go-task (Taskfile.yml's version is the minimum it accepts)
-        shell: bash
-        run: |
-          uv tool install go-task-bin
-          uv tool dir --bin >> "$GITHUB_PATH"
+      - uses: ./.github/actions/setup-task
       - run: task check
 
   lowest:
@@ -60,12 +56,7 @@ jobs:
         with:
           python-version: "3.11"
           enable-cache: true
-      # --resolution highest: the job's lowest-direct resolution must not pick an old go-task.
-      - name: Install go-task (Taskfile.yml's version is the minimum it accepts)
-        shell: bash
-        run: |
-          uv tool install --resolution highest go-task-bin
-          uv tool dir --bin >> "$GITHUB_PATH"
+      - uses: ./.github/actions/setup-task
       - run: uv sync
       - name: Print the installed direct dependency versions
         run: uv tree --depth 1
@@ -82,11 +73,7 @@ jobs:
         with:
           python-version: "3.14"
           enable-cache: true
-      - name: Install go-task (Taskfile.yml's version is the minimum it accepts)
-        shell: bash
-        run: |
-          uv tool install go-task-bin
-          uv tool dir --bin >> "$GITHUB_PATH"
+      - uses: ./.github/actions/setup-task
       - run: uv sync --group docs
       - name: Build the docs with no network
         # `task docs` must run offline (spec §5.9): the paper pages stay frozen and tutorials

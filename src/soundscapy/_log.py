@@ -20,39 +20,41 @@ if logger.level == logging.NOTSET:  # never override a level the application alr
     logger.setLevel(_DEFAULT_LEVEL)
 
 
+def _application_configured() -> bool:
+    """Return whether the application has configured logging (the root logger has handlers)."""
+    return bool(logging.getLogger().handlers)
+
+
 class _DefaultHandler(logging.StreamHandler):
     """Write to stderr unless the application configured logging."""
 
     def emit(self, record: logging.LogRecord) -> None:
         # Stream looked up at emit time, so notebooks capture it.
-        if logging.getLogger().handlers:
-            return  # the application configured logging: defer to it
+        if _application_configured():
+            return  # the application's handlers show the record
         self.stream = sys.stderr
         super().emit(record)
 
 
-class _DeferToApplication(logging.Filter):
+def _defer_to_application(record: logging.LogRecord) -> bool:
     """Apply the root logger's level once the application has configured logging.
 
     A logger's own level is all that decides whether a record propagates; ancestor levels
     are never consulted (Python ``Logger.propagate``). Without this filter, the INFO default
     above would pass soundscapy's INFO lines to the application's handlers even after
     ``logging.basicConfig(level=logging.WARNING)``.
+
+    An application that sets the ``soundscapy`` logger to any level but INFO keeps that
+    level; one that sets it to INFO, or a GUI that adds its own handler to the
+    ``soundscapy`` logger, calls :func:`set_log_level` to keep INFO lines whatever the
+    root level is, because this filter cannot tell that choice from the default.
     """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.level_set = False  # set_log_level was called
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        root = logging.getLogger()
-        if self.level_set or logger.level != _DEFAULT_LEVEL or not root.handlers:
-            return True
-        return record.levelno >= root.getEffectiveLevel()
+    if logger.level != _DEFAULT_LEVEL or not _application_configured():
+        return True
+    return record.levelno >= logging.getLogger().getEffectiveLevel()
 
 
-_defer = _DeferToApplication()
-logger.addFilter(_defer)
+logger.addFilter(_defer_to_application)
 logger.addHandler(_DefaultHandler())
 
 
@@ -69,4 +71,4 @@ def set_log_level(level: int | str) -> None:
         A :mod:`logging` level number or name, for example ``"WARNING"``.
     """
     logger.setLevel(level)
-    _defer.level_set = True
+    logger.removeFilter(_defer_to_application)  # an explicit level is the user's decision

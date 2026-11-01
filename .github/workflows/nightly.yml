@@ -45,11 +45,7 @@ jobs:
           path: ~/.cache/soundscapy-data
           key: soundscapy-data-reference-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
           restore-keys: soundscapy-data-reference-
-      - name: Install go-task (Taskfile.yml's version is the minimum it accepts)
-        shell: bash
-        run: |
-          uv tool install go-task-bin
-          uv tool dir --bin >> "$GITHUB_PATH"
+      - uses: ./.github/actions/setup-task
       - run: task test:reference
 
   network:
@@ -69,11 +65,7 @@ jobs:
           path: ~/.cache/soundscapy-data
           key: soundscapy-data-network-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
           restore-keys: soundscapy-data-network-
-      - name: Install go-task (Taskfile.yml's version is the minimum it accepts)
-        shell: bash
-        run: |
-          uv tool install go-task-bin
-          uv tool dir --bin >> "$GITHUB_PATH"
+      - uses: ./.github/actions/setup-task
       - run: task test:network
 
   docs-papers:
@@ -98,11 +90,7 @@ jobs:
           path: ~/.cache/soundscapy-data
           key: soundscapy-data-papers-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
           restore-keys: soundscapy-data-papers-
-      - name: Install go-task (Taskfile.yml's version is the minimum it accepts)
-        shell: bash
-        run: |
-          uv tool install go-task-bin
-          uv tool dir --bin >> "$GITHUB_PATH"
+      - uses: ./.github/actions/setup-task
       - run: uv sync --group docs
       - name: Re-execute the paper pages
         # Guarded until the first paper page lands; the freeze-diff step below still runs.

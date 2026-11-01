@@ -90,13 +90,14 @@ banned-module-level-imports = ["matplotlib"]  # imported inside plot functions o
 allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib artist
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001", "TID253"]  # asserts, literal expected values; tests import matplotlib directly
+"tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
 # Standalone PEP 723 hook scripts, kept short and dependency-free.
 ".claude/hooks/**" = [
   "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",
 ]
 "scripts/**" = ["INP001", "T201"]  # standalone PEP 723 generators that report
-"docs/**/*.py" = ["INP001", "T201", "TID253"]  # standalone user-facing scripts shown in the docs
+"docs/**/*.py" = ["INP001", "T201"]  # standalone user-facing scripts shown in the docs
+"!src/**" = ["TID253"]  # only the package imports matplotlib lazily
 ```
 
 Think before keeping `PLR2004` (magic numbers) on in package code. Physical constants
@@ -140,7 +141,7 @@ whose code blocks are illustrative or normative text, not package code. The vend
   needs at runtime.
 - `[tool.coverage.run]`: `branch = true`, `source = ["soundscapy"]`.
   `[tool.coverage.report]`: `fail_under = 95`, `show_missing = true`.
-- matplotlib's backend for the tests is set in `tests/conftest.py` (`matplotlib.use("Agg")`),
+- matplotlib's backend for the tests is set in `tests/plot/conftest.py` (`matplotlib.use("Agg")`),
   so it applies however the tests are started; nothing sets `MPLBACKEND` globally.
 
 ## Taskfile task names

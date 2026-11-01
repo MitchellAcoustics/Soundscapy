@@ -1,15 +1,8 @@
 """Shared fixtures."""
 
-# Before anything imports pyplot: the tests run headless however they are started
-# (task, plain pytest, an IDE), so the backend is fixed here, not by an environment variable.
-import matplotlib as mpl
-
-mpl.use("Agg")
-
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any, TypeAlias
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import polars as pl
 import pytest
@@ -20,13 +13,6 @@ from soundscapy.projection.project import project
 from soundscapy.survey.read import Survey
 
 MakeFrame: TypeAlias = Callable[[Mapping[str, Sequence[Any]]], Any]
-
-
-@pytest.fixture(autouse=True)
-def _close_figures() -> Iterator[None]:
-    """Close every pyplot figure a test made; plot functions create them for ax=None."""
-    yield
-    plt.close("all")
 
 
 @pytest.fixture(params=["pandas", "polars"])
