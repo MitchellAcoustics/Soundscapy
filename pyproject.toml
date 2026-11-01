@@ -22,6 +22,7 @@ dependencies = [
     "numpy>=1.26",
     "pandas>=2.2.1",
     "pydantic>=2.7",
+    "seaborn>=0.13.2",
     "tomlkit>=0.13.1",
 ]
 
@@ -90,7 +91,7 @@ convention = "numpy"
 max-args = 10  # keyword-only scientific signatures; the widest in the M1 spec (density) has 8
 
 [tool.ruff.lint.flake8-tidy-imports]
-banned-module-level-imports = ["matplotlib"]  # imported inside plot functions only (spec §6.15)
+banned-module-level-imports = ["matplotlib", "seaborn"]  # imported inside plot functions only (spec §6.15)
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib artist
@@ -163,11 +164,11 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "Core never imports matplotlib"
+name = "Core never imports matplotlib or seaborn"
 type = "forbidden"
 source_modules = ["soundscapy"]
-forbidden_modules = ["matplotlib"]
-ignore_imports = ["soundscapy.plot.** -> matplotlib"]
+forbidden_modules = ["matplotlib", "seaborn"]
+ignore_imports = ["soundscapy.plot.** -> matplotlib", "soundscapy.plot.** -> seaborn"]
 allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]

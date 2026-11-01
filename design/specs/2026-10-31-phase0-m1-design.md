@@ -105,7 +105,7 @@ M1 fails, even if every test passes, if any of these is true:
 - A wrong-scale export (0..4 declared as 1..5) produces coordinates without an error.
 - The default run of `task check` or `task docs` needs the network.
 - Importing `soundscapy` prints, logs or warns.
-- The core imports matplotlib, or any module outside `soundscapy._frames` imports pandas, polars or
+- The core imports matplotlib or seaborn, or any module outside `soundscapy._frames` imports pandas, polars or
   pyarrow.
 - A course participant on Windows cannot install with uv and plot within the hour.
 - Code is written for a milestone after M1 "while we are here".
@@ -395,11 +395,14 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "Core never imports matplotlib"
+name = "Core never imports matplotlib or seaborn"
 type = "forbidden"
 source_modules = ["soundscapy"]
-forbidden_modules = ["matplotlib"]
-ignore_imports = ["soundscapy.plot -> matplotlib", "soundscapy.plot.** -> matplotlib"]
+forbidden_modules = ["matplotlib", "seaborn"]
+ignore_imports = [
+  "soundscapy.plot -> matplotlib", "soundscapy.plot.** -> matplotlib",
+  "soundscapy.plot -> seaborn", "soundscapy.plot.** -> seaborn",
+]
 allow_indirect_imports = true
 unmatched_ignore_imports_alerting = "none"
 
@@ -429,6 +432,10 @@ type = "forbidden"
 source_modules = ["soundscapy.distribution"]
 forbidden_modules = ["soundscapy.survey"]
 ```
+
+(Amended 2026-11-01, owner comment on PR #171: seaborn joins matplotlib in the second contract,
+because it is a runtime dependency for the default palette (§6.15, §6.19) and imports matplotlib
+and pandas itself. Its own import of pandas is indirect, which `allow_indirect_imports` permits.)
 
 The GUI contract keeps the core free of any GUI technology (FR-14.7). Verified with import-linter
 2.15: forbidden modules that are not installed are ignored silently, and `import tkinter` (standard
@@ -2001,9 +2008,21 @@ label_language)` (the ±1 square, axis lines, axis and quadrant labels in the ch
 reference language by default); `check_n(groups, min_n, allow_small_n)`. No origin-label hook exists
 at M1, because no M1 function calls it; M2 adds it with its first caller. Colour: groups take the colours of the active `axes.prop_cycle`, so a style sheet,
 `rc_context` or `style.context` the user applies sets them; while that cycle is matplotlib's
-default, the `petroff10` style is used, and `ax=None` creates its Axes under it; `cividis` for
+default, seaborn's ten-colour `colorblind` palette (`seaborn.color_palette("colorblind")`) is used,
+applied as `axes.prop_cycle` in a `matplotlib.rc_context`, so rcParams are restored after the call,
+and `ax=None` creates its Axes with it as the colour cycle; `cividis` for
 fills (FR-8.3, NFR-10). (Amended 2026-11-01, review F6: hard-coded `petroff10` colours ignored
-matplotlib's own styling routes, which FR-8.3 names as the way to customise.) A single-group density with
+matplotlib's own styling routes, which FR-8.3 names as the way to customise.) (Amended 2026-11-01,
+owner comment on PR #171, "I prefer seaborn's `colorblind` palette as the default": seaborn's
+`colorblind` replaces `petroff10`, and seaborn becomes a runtime dependency (§6.19) so the colours
+come from seaborn itself rather than a copied list. The owner accepted the trade-off: in a simulation
+of full-severity dichromacy (colorspacious, CAM02-UCS), the closest pair of the ten colours is 5.8
+apart for protanopia (6.1 tritan, 8.5 deutan), against about 14.5 for `petroff10` and 1.6 for
+matplotlib's `tab10`. The close pairs (green and brown, green and grey, pink and brown) all sit in
+the first ten colours, before the marker changes. Docstrings call it seaborn's colour-blind palette,
+not colour-vision-deficiency-safe. The F6 rule is unchanged: a user's style sheet, `rc_context` or
+`style.context` still wins, detected as `axes.prop_cycle` differing from
+`rcParamsDefault["axes.prop_cycle"]`.) A single-group density with
 `n_valid < 30` raises `SmallSampleError` unless `allow_small_n=True`; a grouped density draws small
 groups as scatter with "N = 12 (< 30), scatter shown" in the legend and one `SmallSampleWarning`
 (FR-3.2, owner row
@@ -2015,7 +2034,17 @@ PNG, SVG and PDF with `ax.figure.savefig` (FR-9.1).
 top; type hints use `TYPE_CHECKING` imports. `import soundscapy` therefore never imports
 matplotlib, so matplotlib's first-run font-cache message cannot appear on import. The silent-import
 test stays, and a second test asserts `"matplotlib" not in sys.modules` after `import soundscapy`
-in a fresh interpreter.
+in a fresh interpreter. (Amended 2026-11-01, PR #171: seaborn, which imports matplotlib, is
+imported the same way, banned at module level by ruff's TID253 and outside `plot` by the import
+contract of §5.2.1; the second test also asserts `"seaborn" not in sys.modules`. Importing
+seaborn has three effects that the first default-coloured plot call now has, also when the caller
+passes its own `ax`: it imports `matplotlib.pyplot` (seaborn's `utils` does), so a GUI or web
+service that passes its own `ax` (the F5 note above) now has pyplot imported, though no pyplot
+figure is created; it registers seaborn's twelve
+colormaps (`rocket`, `mako`, `flare`, `crest`, `vlag`, `icefire` and their `_r`) in matplotlib's
+colormap registry; and, once scipy is installed (§6.19, from S2), it imports `scipy.stats` and
+`scipy.cluster`, and statsmodels if present. It changes no rcParams. A user cycle with colours
+skips the import.)
 
 **Notebook display.** With `ax=None` the figure is a pyplot figure, so a notebook shows it
 when the cell ends and a script saves it with `plt.savefig()`; no cell ends in `ax.figure`, which
@@ -2156,7 +2185,8 @@ floors.
 | pyarrow | 15 | Apache-2.0 | parquet (owner row #6) |
 | narwhals | 2.0 | MIT | the boundary (`stable.v2`) |
 | pydantic | 2.7 | MIT | settings and value types |
-| matplotlib | 3.10.7 | Matplotlib licence (PSF-based) | plotting; `petroff10`. (Amended at S1 plan review, 2026-10-31: 3.10.0 to 3.10.6 emit `PyparsingDeprecationWarning` on import against pyparsing 3.3.) |
+| matplotlib | 3.10.7 | Matplotlib licence (PSF-based) | plotting. (Amended at S1 plan review, 2026-10-31: 3.10.0 to 3.10.6 emit `PyparsingDeprecationWarning` on import against pyparsing 3.3.) (Amended 2026-11-01, PR #171: the default palette no longer needs `petroff10`; the 3.10.7 floor stays for the pyparsing reason.) |
+| seaborn | 0.13.2 | BSD-3-Clause | the default group colours, `color_palette("colorblind")` (§6.15); imported lazily inside `plot` only. 0.13.2 is the latest release and requires only numpy, pandas and matplotlib, all already here; it imports scipy and statsmodels too when they are installed. Measured warm on macOS (2026-11-01), `import seaborn` takes about 60 ms once pyplot is loaded, about 160 ms after only matplotlib and pandas (it imports pyplot), and about 550 ms with scipy installed (it imports `scipy.stats` and `scipy.cluster`); it is paid once, on the first default-coloured plot (§6.15). (Added 2026-11-01, owner comment on PR #171; checked to import cleanly under `-W error` at the `lowest-direct` floors: numpy 1.26.0, pandas 2.2.1, matplotlib 3.10.7.) |
 | pooch | 1.8 | BSD-3-Clause | ISD download and cache |
 | tqdm | 4.66 | MPL-2.0 AND MIT | pooch's progress bar needs it, and owner decision #4 makes `tqdm.auto` the default reporter; so core at M1, not M3 (a call made here, §11.2; a plan §5 edit, §11.1) |
 | click | 8.2 | BSD-3-Clause | CLI; 8.2 is the first with `CliRunner` stderr always separate |
@@ -2165,14 +2195,17 @@ floors.
 
 The licence column records each runtime dependency's licence (NFR-7), read from PyPI metadata on
 2026-10-31: `License-Expression` where the package sets it, else its `License` field or classifier
-(scipy declares only the classifier "BSD License"; its `LICENSE.txt` is BSD-3-Clause). All are
+(scipy declares only the classifier "BSD License"; its `LICENSE.txt` is BSD-3-Clause; seaborn,
+added 2026-11-01, is the same: classifier only, `LICENSE.md` BSD-3-Clause). All are
 permissive and compatible with BSD-3-Clause; tqdm's MPL-2.0 part is file-level copyleft and is
 used unmodified. The table is kept as `tests/licences.toml`, and a test fails if a runtime
 dependency in `pyproject.toml` has no entry there or its installed metadata declares no licence.
 
-Dev group adds `pandas-stubs`; test group adds `polars`. seaborn and statsmodels are not runtime
-dependencies (seaborn appears only in `scripts/make_seaborn_fixtures.py` via `uv run --with`;
-statsmodels only in the docs group).
+Dev group adds `pandas-stubs`; test group adds `polars`. statsmodels is not a runtime dependency
+(only in the docs group). (Amended 2026-11-01, owner comment on PR #171: seaborn is now a runtime
+dependency for its palette only, row above. No KDE or plotting is taken from it: density stays
+`scipy.stats.gaussian_kde` (§6.12), and the seaborn fixtures are still generated by
+`scripts/make_seaborn_fixtures.py` with its own pinned versions.)
 
 ### 6.20 The ISD loader and bundled data (FR-10.1)
 
@@ -2610,14 +2643,15 @@ network (§3.3).
 ### 7.6 Plot tests
 
 Plot tests assert on artist data, never on pixels: scatter offsets equal `coords.xy` of the valid
-rows; contour paths equal `ContourSet` polygons; the default colours are `petroff10`; axis labels
+rows; contour paths equal `ContourSet` polygons; the default colours are seaborn's `colorblind` (amended
+2026-11-01, PR #171), and the default cycle does not leak into rcParams; axis labels
 follow `label_language`; `plt.get_fignums()` is empty after a call with `ax=None`; the passed `ax`
 is returned; a kwarg (`color`) reaches the artist; the N rule's refuse, override and grouped
 fallback cases; saving to PNG, SVG and PDF succeeds; Likert bar widths equal `response_shares`;
 joint marginal curves equal `marginals`; `radar` with `ax=None` returns polar axes and with a
 Cartesian `ax` raises `AxesError`; a figure saved through `save_figure` has a sidecar whose
 provenance equals the source run's. A synthetic indoor circumplex (FR-2.0) runs every analysis and
-plot. `"matplotlib" not in sys.modules` after a bare `import soundscapy` (§6.15).
+plot. `"matplotlib" not in sys.modules` and `"seaborn" not in sys.modules` after a bare `import soundscapy` (§6.15).
 
 **Tutorial display check.** After `task docs`, a docs test reads `docs/_freeze/` for each
 `docs/tutorials/*.qmd` and asserts that every cell calling `sspy.plot` has an image output
@@ -2673,10 +2707,10 @@ contourpy lock fork.
 | NFR-7 | the licence column of §6.19 and the test that every runtime dependency has an entry and declared licence |
 | NFR-8 | CI runs the tests on all supported platforms (NFR-2 row), the science fixtures by default, and builds and executes the docs (`docs` job) |
 | NFR-9 | the layers and import contracts of §5.2.1 pass; the module layout of §6.1 holds at review, no module growing past one responsibility; ADRs written in S1 |
-| NFR-10 | `cividis` and `petroff10` defaults; English interface; translated attribute labels for the sourced languages (the 18 of Aletta et al. 2024), each with a citation, and the documented English fallback for pol, yue, tha, bra and alb (§6.2.3, §7.2) |
+| NFR-10 | `cividis` and seaborn `colorblind` defaults (amended 2026-11-01, PR #171; the owner accepted its weaker simulated separation, §6.15); English interface; translated attribute labels for the sourced languages (the 18 of Aletta et al. 2024), each with a citation, and the documented English fallback for pol, yue, tha, bra and alb (§6.2.3, §7.2) |
 | NFR-11 (in part) | `CITATION.cff` validates with `cffconvert --validate` in the `citation` job |
 | NFR-12 | GOVERNANCE.md and CODEOWNERS, which names `@MitchellAcoustics` on `src/soundscapy/_data/`, `tests/science/`, `tests/regression/` and `design/` |
-| NFR-13 | silent import, with matplotlib not imported; one INFO line per read and per download; pooch's own INFO lines hidden inside `fetch` only; `set_log_level("WARNING")` silences all |
+| NFR-13 | silent import, with matplotlib and seaborn not imported; one INFO line per read and per download; pooch's own INFO lines hidden inside `fetch` only; `set_log_level("WARNING")` silences all |
 | Journey A | tutorial A renders offline with every cell run, and every plot cell has an image output |
 
 ## 9. Build order
@@ -2731,6 +2765,7 @@ calls made in this spec (§11.2).
 | Document | Edit |
 |---|---|
 | Plan §5 | tqdm is a core dependency from M1 (pooch's bar; owner decision #4), not M3; `_log`, `_model` and `tables` join the bottom layer; `cli` is a layer above `workspace` (it calls it), not its independent sibling; the core never imports a GUI toolkit (an import contract, FR-14.7) |
+| Plan §5 (Dependencies) | (Added 2026-11-01, owner comment on PR #171.) seaborn is a runtime dependency for its `colorblind` palette, the default group colours (§6.15, §6.19); the plan's "seaborn is not a dependency" no longer holds. KDE still uses scipy, not seaborn (plan §4.9) |
 | Plan §6 (Docs convention) | the docs group pins great-docs as a git source at `af17c76` (owner decision, 2026-10-31) until the first PyPI release after 0.17.0; fallback `095db9b` |
 | Plan Appendix A (`Coordinates`) | `labels` is a dict of read-only numpy arrays, not a frame; `to_frame` converts at the return (plan rule 4) |
 | Plan §4.4 (hierarchy) | names the M1 functions: `survey.join_context` and `workspace.add_table` |
@@ -2744,6 +2779,7 @@ calls made in this spec (§11.2).
 | Plan §4.4 (quality) | the default rules reproduce the 0.x tutorials' processing of ISD v1.0 (56 excluded); `excessive_missing` stays configurable, from the 2021 paper's text |
 | house-style SKILL.md | add `soundscapy._model.FrozenModel` beside `pydantic.BaseModel` in `runtime-evaluated-base-classes`; add `minversion = "9.2"` and the `"-m", "not reference and not network"` entry to the pytest `addopts` (§5.2); add `CPY001` to the ignores with its reason; replace the `.claude/hooks/**` per-file ignore with the §5.2 list (INP001, T201, S603, S607, D103, PLW1510, PTH109, C901, PLR0911) and add the `scripts/**` ignore (INP001, T201) for the PEP 723 generators; add the `network` marker and `test:network`, `docs:papers` tasks; say that `tests/templates/` is created at M2 with the first FR-13.1 recipe, not at M1; replace the per-module filterwarnings advice: a scoped ignore names the soundscapy module that calls the library, or matches the message, never a third-party module whose warning uses `stacklevel ≥ 2`; record repo-review ignores; `uv run task` form; actionlint through `actionlint-py` |
 | house-style reference.md | its source label says great-docs 0.17.0 but describes main at 4232670; relabel it as main at `af17c76` after the re-copy, and re-check its statements against that commit; record the freeze behaviour check on `af17c76` and which §5.9 fallback step worked; note `{{< include >}}` for shared code; note `guide-section` and the `ax.figure` display convention |
+| house-style SKILL.md (added 2026-11-01, PR #171) | `banned-module-level-imports = ["matplotlib", "seaborn"]`, and the import contract renamed "Core never imports matplotlib or seaborn" (§5.2.1) |
 | `.claude/skills/VENDORED.md` and the three great-docs skills | re-copied at `af17c76`; rows bumped (§5.1) |
 | `.claude/hooks/*.py` | §5.4.1; the per-file ignore of §5.2; one `ruff format` run on the three scripts, committed on its own with no other change (commit message: "style: ruff format hook scripts (one-off, no behaviour change)") |
 | AGENTS.md | the Status paragraph rewritten for the state after Phase 0 (toolchain, CI and docs skeleton exist; `task check` is the definition of done); the `uv run task` line (§5.1) |
@@ -2820,7 +2856,7 @@ calls made in this spec (§11.2).
 | ~~Tutorial plot cells end with `ax.figure`~~ (superseded 2026-11-01: `ax=None` uses pyplot, review F5); a docs test checks each tutorial plot cell renders an image | §6.15 | notebooks show plot output |
 | Tutorial A's language section shows cmn projecting with the Medium warning under `satp@1.5`, and the Low and uncovered paths on the synthetic `qaa` to `qad` set | §6.22 | no ISD language is Low or uncovered under `satp@1.5` (C2, S4) |
 | The FR-1.5 acceptance test is PRD 0.9's 56 exclusions, run on the subset counts by default and on the full ISD nightly; it no longer awaits an owner input. `excessive_missing` keeps its 2021-paper definition and default (`exclude`, missing share > 0.5), and its denominator is the 2021 paper's wording, the 12 attribute and source-dominance items (B19; R6) | §6.7 | the acceptance criterion is testable now, and the ISD publishes no counts to wait for |
-| matplotlib imported inside `plot` functions only | §6.15 | `import soundscapy` cannot trigger matplotlib's font-cache message (NFR-13) |
+| matplotlib and seaborn imported inside `plot` functions only (seaborn added 2026-11-01, PR #171) | §6.15 | `import soundscapy` cannot trigger matplotlib's font-cache message (NFR-13) |
 | Pooch's INFO lines hidden by a filter inside `fetch`, not by `setLevel` at import | §6.3.9 | no third-party state changed on import; `setLevel` is ignored after pooch's first message |
 | `lowest` CI job sets `UV_RESOLUTION=lowest-direct` for the whole job | §5.6.1 | otherwise `uv run` re-resolves to the newest versions (B2) |
 | Hook scripts: one `ruff format` run and a narrowly scoped per-file ignore | §5.2 | standalone PEP 723 hook scripts, kept short and dependency-free (B1) |

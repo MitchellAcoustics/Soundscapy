@@ -84,7 +84,7 @@ convention = "numpy"
 max-args = 10  # keyword-only scientific signatures; the widest in the M1 spec (density) has 8
 
 [tool.ruff.lint.flake8-tidy-imports]
-banned-module-level-imports = ["matplotlib"]  # imported inside plot functions only (spec §6.15)
+banned-module-level-imports = ["matplotlib", "seaborn"]  # imported inside plot functions only (spec §6.15)
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib artist

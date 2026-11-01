@@ -29,6 +29,8 @@ Applied on `claude/dev-tools-idiom-review-qfncq4`, each with `task check` passin
 - `85ee3d0`: F5 and F6 (owner decision; spec §6.15 amended). Colours come from the active
   `axes.prop_cycle` and are passed explicitly, not left to each Axes' cycle. The marker
   change needs the cycle's length, which matplotlib does not expose per Axes.
+  Later (owner comment on PR #171, 2026-11-01): seaborn's `colorblind` palette replaces
+  `petroff10` as the default, applied through `rc_context` (spec §6.15 and §6.19 amended).
 - `8bc0569`: F8, option (b) (spec §6.3.9 amended). Option (a), INFO opt-in, was dropped:
   NFR-13 requires a default handler that shows informational messages, including a
   download's licence line (FR-10.1).

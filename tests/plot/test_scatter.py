@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.style
 import numpy as np
 import pytest
+import seaborn as sns
 from cycler import cycler
 from matplotlib.collections import PathCollection
-from matplotlib.colors import to_rgba
+from matplotlib.colors import to_hex, to_rgba
 from matplotlib.figure import Figure
 
 from soundscapy import plot
@@ -19,6 +20,9 @@ from soundscapy.errors import MappingError
 
 LABELS = ("pleasant", "annoying", "eventful", "uneventful")
 QUADRANTS = ("vibrant", "chaotic", "monotonous", "calm")
+
+# The default is seaborn's colour-blind palette itself (spec §6.15), so seaborn is the oracle.
+COLORBLIND = [to_hex(rgb) for rgb in sns.color_palette("colorblind")]
 
 
 def _collections(ax) -> list[PathCollection]:
@@ -50,22 +54,31 @@ def test_grouped_offsets(isd_coords):
     assert [t.get_text() for t in legend.get_texts()] == list(groups)
 
 
-def test_default_colours_are_petroff10(isd_coords):
+def test_default_colours_are_seaborn_colorblind(isd_coords):
     ax = plot.scatter(isd_coords, by="location")
-    petroff = mpl.color_sequences["petroff10"]
     faces = [c.get_facecolor()[0] for c in _collections(ax)]
+    assert len(faces) == 15
     for i, face in enumerate(faces):
-        # Exact: to_rgba of the sequence entry is the colour matplotlib stores.
-        np.testing.assert_array_equal(face, to_rgba(petroff[i % len(petroff)]))
+        # Exact: to_rgba of the palette entry is the colour matplotlib stores; the eleventh
+        # group starts the palette again.
+        np.testing.assert_array_equal(face, to_rgba(COLORBLIND[i % len(COLORBLIND)]))
 
 
-def test_ungrouped_colour_is_the_first_petroff10(isd_coords):
+def test_ungrouped_colour_is_the_first_default_colour(isd_coords):
     ax = plot.scatter(isd_coords)
     (collection,) = _collections(ax)
-    # Exact: to_rgba of the sequence entry is the colour matplotlib stores.
-    np.testing.assert_array_equal(
-        collection.get_facecolor()[0], to_rgba(mpl.color_sequences["petroff10"][0])
-    )
+    # Exact: to_rgba of the palette entry is the colour matplotlib stores.
+    np.testing.assert_array_equal(collection.get_facecolor()[0], to_rgba(COLORBLIND[0]))
+
+
+def test_the_default_cycle_does_not_leak(isd_coords):
+    # No hidden global state: the default palette is applied in an rc_context that restores
+    # rcParams, so later plots by the user or by another library see matplotlib's own cycle.
+    before = mpl.rcParams["axes.prop_cycle"]
+    plot.scatter(isd_coords, by="location")
+    assert mpl.rcParams["axes.prop_cycle"] == before == mpl.rcParamsDefault["axes.prop_cycle"]
+    (line,) = plt.figure().add_subplot().plot([0.0, 0.1], [0.0, 0.1])
+    assert to_hex(line.get_color()) == to_hex(before.by_key()["color"][0])
 
 
 def test_more_than_ten_groups_are_distinct(isd_coords):
@@ -107,14 +120,11 @@ def test_ax_none_creates_one_pyplot_figure(isd_coords):
     assert plt.gca() is ax
 
 
-def test_created_axes_carries_the_petroff10_cycle(isd_coords):
+def test_created_axes_carries_the_default_cycle(isd_coords):
     # Lines the user adds afterwards follow the same colours.
     ax = plot.scatter(isd_coords)
     (line,) = ax.plot([0.0, 0.1], [0.0, 0.1])
-    # Exact: to_rgba of the sequence entry is the colour matplotlib stores.
-    np.testing.assert_array_equal(
-        to_rgba(line.get_color()), to_rgba(mpl.color_sequences["petroff10"][0])
-    )
+    assert to_hex(line.get_color()) == COLORBLIND[0]
 
 
 def test_user_style_sets_the_group_colours(isd_coords):
@@ -259,14 +269,12 @@ def test_empty_coordinates_draw_without_legend_or_warning(isd_coords):
     assert ax.get_legend() is None
 
 
-def test_a_user_cycle_without_colours_falls_back_to_petroff10(isd_coords):
+def test_a_user_cycle_without_colours_falls_back_to_the_default_colours(isd_coords):
     with mpl.rc_context({"axes.prop_cycle": cycler(linestyle=["-", "--"])}):
         ax = plot.scatter(isd_coords)
     (collection,) = _collections(ax)
-    # Exact: to_rgba of the sequence entry is the colour matplotlib stores.
-    np.testing.assert_array_equal(
-        collection.get_facecolor()[0], to_rgba(mpl.color_sequences["petroff10"][0])
-    )
+    # Exact: to_rgba of the palette entry is the colour matplotlib stores.
+    np.testing.assert_array_equal(collection.get_facecolor()[0], to_rgba(COLORBLIND[0]))
 
 
 def test_a_user_cycle_of_rgb_tuples_is_drawn_as_given(isd_coords):

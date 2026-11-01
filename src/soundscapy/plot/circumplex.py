@@ -71,19 +71,18 @@ def scatter(
 ) -> "Axes":
     """Draw projected responses on the circumplex, one series per group.
 
-    Only valid rows (see ``Coordinates.valid_mask()``) are
-    drawn. Groups are drawn in sorted key order, each labelled with its key in a legend:
-    a blank key is labelled ``(blank)`` and a key starting with ``_`` is shown quoted
-    (``'_x'``), as matplotlib would otherwise leave both out of the legend. Group
-    colours follow matplotlib's colour cycle (``axes.prop_cycle``), so a style sheet,
-    ``rc_context`` or ``style.context`` the user applies sets them; while the cycle is
-    matplotlib's default, the colour-vision-deficiency-safe ``petroff10`` style is used.
-    On each full pass through the colours the marker changes (``"o"``, ``"s"``, ``"^"``,
-    in turn), so three times as many groups as colours stay distinguishable (30 with
-    ``petroff10``). A ``c``, ``color`` or ``facecolor`` keyword replaces the colours, and a
-    ``marker`` keyword the markers, for every group. A group with no valid rows still gets
-    an empty labelled series, so each group keeps its colour and marker across plots of
-    the same groups.
+    Only valid rows (see ``Coordinates.valid_mask()``) are drawn. Groups are drawn in sorted
+    key order, each labelled with its key in a legend: a blank key is labelled ``(blank)``
+    and a key starting with ``_`` is shown quoted (``'_x'``), as matplotlib would otherwise
+    leave both out of the legend. Group colours follow matplotlib's colour cycle
+    (``axes.prop_cycle``), so a style sheet, ``rc_context`` or ``style.context`` the user
+    applies sets them; while the cycle is matplotlib's default, seaborn's ten-colour
+    colour-blind palette is used. On each full pass through the colours the marker changes
+    (``"o"``, ``"s"``, ``"^"``, in turn), so three times as many groups as colours stay
+    distinguishable (30 with the ten default colours). A ``c``, ``color`` or ``facecolor``
+    keyword replaces the colours, and a ``marker`` keyword the markers, for every group. A
+    group with no valid rows still gets an empty labelled series, so each group keeps its
+    colour and marker across plots of the same groups.
 
     Parameters
     ----------

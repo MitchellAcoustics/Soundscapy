@@ -1,6 +1,8 @@
 # Runtime dependency licences, read from PyPI metadata on 2026-10-31 (spec section 6.19, NFR-7).
 # scipy declares only the classifier "BSD License"; its LICENSE.txt is BSD-3-Clause.
 # tqdm's MPL-2.0 part is file-level copyleft and is used unmodified.
+# seaborn (added 2026-11-01) declares only the classifier "BSD License"; its LICENSE.md is
+# BSD-3-Clause.
 # Rows for dependencies later slices add are listed now so those slices only edit pyproject.toml.
 [licences]
 numpy = "BSD-3-Clause (bundled parts 0BSD, MIT, Zlib, CC0-1.0)"
@@ -16,3 +18,4 @@ tqdm = "MPL-2.0 AND MIT"
 click = "BSD-3-Clause"
 tomlkit = "MIT"
 openpyxl = "MIT"
+seaborn = "BSD-3-Clause"
