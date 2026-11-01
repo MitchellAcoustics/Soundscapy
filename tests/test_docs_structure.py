@@ -1,5 +1,7 @@
 """Structure checks for the docs sources (FR-12.3's four-part structure) and docstrings."""
 
+from __future__ import annotations
+
 import os
 import re
 import subprocess

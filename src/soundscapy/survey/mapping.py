@@ -5,23 +5,27 @@ A ``SurveyMapping`` names the id, language and item columns of a user's export.
 ``read_mapping()`` and ``write_mapping()`` store a mapping as TOML.
 """
 
+from __future__ import annotations
+
 import os
 import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 import numpy as np
 import pydantic
 import tomlkit
-from numpy.typing import NDArray
 from pydantic import Field, StrictFloat, StrictStr, model_validator
 
 from soundscapy._model import FloatPairs, FrozenModel, StrPairs, _to_pairs, parse_toml, validate
 from soundscapy.errors import CodingError, MappingError, _shown
 from soundscapy.instrument import Circumplex, Scale, circumplex
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 __all__ = [
     "Coding",

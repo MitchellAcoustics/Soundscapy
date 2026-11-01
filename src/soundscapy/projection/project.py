@@ -1,6 +1,8 @@
 """Projecting a survey's attribute scores into circumplex ``Coordinates``."""
 
-from typing import Any, Final, Literal
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Final, Literal
 
 import numpy as np
 
@@ -18,7 +20,9 @@ from soundscapy.instrument import circumplex
 from soundscapy.instrument.angles import AngleSelection
 from soundscapy.projection.formulas import _FORMULATIONS, Formulation, project_scores
 from soundscapy.provenance import envelope, hash_json
-from soundscapy.survey.read import Survey
+
+if TYPE_CHECKING:
+    from soundscapy.survey.read import Survey
 
 __all__ = ["ProjectionSettings", "project"]
 

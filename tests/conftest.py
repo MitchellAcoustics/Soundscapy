@@ -2,22 +2,26 @@
 
 # Before anything imports pyplot: tests run headless however they are started (task, plain
 # pytest, an IDE), so the backend is fixed here, not by an environment variable.
+from __future__ import annotations
+
 import matplotlib as mpl
 
 mpl.use("Agg")
 
 import sys
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from typing import Any, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 import pandas as pd
 import polars as pl
 import pytest
 
 from soundscapy.datasets import isd
-from soundscapy.distribution.coordinates import Coordinates
 from soundscapy.projection.project import project
-from soundscapy.survey.read import Survey
+
+if TYPE_CHECKING:
+    from soundscapy.distribution.coordinates import Coordinates
+    from soundscapy.survey.read import Survey
 
 MakeFrame: TypeAlias = Callable[[Mapping[str, Sequence[Any]]], Any]
 

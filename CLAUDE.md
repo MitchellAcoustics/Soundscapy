@@ -2,8 +2,8 @@
 
 ## Claude-specific notes
 
-- Hooks enforce the house rules: after every `Edit`/`Write`, `ruff format` and
-  `ruff check --fix` run on that file. On Stop, `task check:fast` must pass. Both
+- Hooks enforce the house rules: after every `Edit`/`Write`, `ruff check --fix` and then
+  `ruff format` run on that file. On Stop, `task check:fast` must pass. Both
   do nothing until the toolchain exists. Every hook starts with
   `uv run --no-config --script`, because the scripts are standalone and take nothing from
   the project's uv settings; without the flag, a uv older than `required-version` refused

@@ -1,5 +1,7 @@
 """Circumplex instruments: attributes at angles, axes, quadrants and the shipped data."""
 
+from __future__ import annotations
+
 import functools
 import itertools
 import re

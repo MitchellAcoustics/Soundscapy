@@ -1,10 +1,10 @@
 """Moving results in and out of the user's workspace: attaching them to the user's frames."""
 
-from typing import Any, Final
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Final
 
 import numpy as np
-from narwhals.stable.v2.typing import IntoDataFrameT
-from numpy.typing import NDArray
 
 from soundscapy._frames import EagerFrame, to_eager, with_columns
 from soundscapy._log import logger
@@ -20,6 +20,10 @@ from soundscapy._model import (
 from soundscapy.distribution.coordinates import Coordinates, n
 from soundscapy.errors import AlignmentError, _plural, _shown
 from soundscapy.survey.read import check_unique, join_id_parts, stripped_text
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrameT
+    from numpy.typing import NDArray
 
 __all__ = ["attach"]
 

@@ -21,8 +21,9 @@ tasks:
   fmt:
     desc: Format and auto-fix the code
     cmds:
-      - uv run ruff format
+      # Fix first, then format: a fix such as an added import can leave a file unformatted.
       - uv run ruff check --fix
+      - uv run ruff format
 
   lint:
     desc: Check formatting, lint rules and import contracts

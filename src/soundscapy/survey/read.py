@@ -5,6 +5,8 @@ for every row, codes the language and the attribute items, checks the coded valu
 against the response scale and records each response's inclusion status.
 """
 
+from __future__ import annotations
+
 import codecs
 import copy
 import os
@@ -15,7 +17,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final, Literal, NoReturn
 
 import numpy as np
-from numpy.typing import NDArray
 from pydantic import StrictStr, field_validator
 
 from soundscapy import _data
@@ -49,6 +50,7 @@ from soundscapy.survey.status import Reason, Status
 
 if TYPE_CHECKING:
     import pandas as pd
+    from numpy.typing import NDArray
 
 __all__ = ["ImportSettings", "ReadOptions", "SourceRef", "Survey", "read_survey"]
 
@@ -169,7 +171,7 @@ class Survey:
         If the per-response arrays and the status differ in length.
     """
 
-    data: "pd.DataFrame"
+    data: pd.DataFrame
     mapping: SurveyMapping
     scores: dict[str, NDArray[np.float64]]
     response_id: NDArray[np.object_]

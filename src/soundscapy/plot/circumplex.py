@@ -1,6 +1,7 @@
 """Plots of projected responses on the circumplex."""
 
-from collections.abc import Mapping
+from __future__ import annotations
+
 from itertools import cycle
 from typing import TYPE_CHECKING, Any
 
@@ -11,6 +12,8 @@ from soundscapy.distribution.coordinates import valid_mask
 from soundscapy.plot._common import circumplex_axes, group_colours, new_axes
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from matplotlib.axes import Axes
 
     from soundscapy.distribution.coordinates import Coordinates
@@ -42,7 +45,7 @@ def _per_point(value: object, n_rows: int) -> bool:
 
 
 def _per_point_colours(
-    kwargs: Mapping[str, Any], coords: "Coordinates", *, grouped: bool
+    kwargs: Mapping[str, Any], coords: Coordinates, *, grouped: bool
 ) -> dict[str, Any]:
     """Return the per-point colour keywords of ``kwargs``, cut to the valid rows."""
     options: dict[str, Any] = {}
@@ -62,13 +65,13 @@ def _per_point_colours(
 
 
 def scatter(
-    coords: "Coordinates",
+    coords: Coordinates,
     *,
     by: str | _Unset = _UNSET,
-    ax: "Axes | None" = None,
+    ax: Axes | None = None,
     label_language: str | None = None,
     **kwargs: Any,  # forwarded unchanged to matplotlib's Axes.scatter
-) -> "Axes":
+) -> Axes:
     """Draw projected responses on the circumplex, one series per group.
 
     Only valid rows (see ``Coordinates.valid_mask()``) are drawn. Groups are drawn in sorted

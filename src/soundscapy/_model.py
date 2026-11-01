@@ -3,6 +3,8 @@
 This module imports nothing from the rest of the package except ``soundscapy.errors``.
 """
 
+from __future__ import annotations
+
 import enum
 import tomllib
 from collections.abc import Iterable, Mapping

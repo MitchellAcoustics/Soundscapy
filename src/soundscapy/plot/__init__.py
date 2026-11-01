@@ -6,6 +6,8 @@ colour cycle, so a style sheet the user applies sets them; otherwise seaborn's c
 palette is used. matplotlib and seaborn are imported only when a plot function runs.
 """
 
+from __future__ import annotations
+
 from soundscapy.plot.circumplex import scatter
 
 __all__ = ["scatter"]

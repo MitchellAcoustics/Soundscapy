@@ -6,8 +6,12 @@ message and ``SoundscapyError.hint`` carries an optional second line for the CLI
 shadows a standard-library one.
 """
 
-from collections.abc import Sequence
-from typing import Final
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__ = [
     "AlignmentError",

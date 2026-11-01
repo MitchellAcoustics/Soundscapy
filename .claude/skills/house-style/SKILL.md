@@ -89,6 +89,10 @@ banned-module-level-imports = ["matplotlib", "seaborn"]  # imported inside plot 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib artist
 
+[tool.ruff.lint.isort]
+# PEP 563: names imported under TYPE_CHECKING need no quotes. Drop at requires-python >= 3.14.
+required-imports = ["from __future__ import annotations"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
 # Standalone PEP 723 hook scripts, kept short and dependency-free.
@@ -96,7 +100,7 @@ allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib a
   "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",
 ]
 "scripts/**" = ["INP001", "T201"]  # standalone PEP 723 generators that report
-"docs/**/*.py" = ["INP001", "T201"]  # standalone user-facing scripts shown in the docs
+"docs/**/*.py" = ["INP001", "T201", "I002"]  # user-facing scripts shown verbatim: print, no __future__
 "!src/**" = ["TID253"]  # only the package imports matplotlib lazily
 ```
 
@@ -139,6 +143,17 @@ whose code blocks are illustrative or normative text, not package code. The vend
   ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]` from the first commit, so
   ruff's `TC` rules never move an import a pydantic model (or a `FrozenModel` record)
   needs at runtime.
+- Annotations: every module with code starts with `from __future__ import annotations`
+  (`required-imports`; ruff I002 adds it, the edit hook included). Imports used only in
+  annotations go under `if TYPE_CHECKING:` and are never quoted; the one exception is a
+  recursive type alias's own name (`JSONValue` in `provenance.py`), which PEP 563 does not
+  cover. TC001-TC003 fixes are unsafe, so the hook leaves them: move the import by hand or
+  run `ruff check --fix --unsafe-fixes --select TC` and review the result.
+  `runtime-evaluated-base-classes` covers direct subclasses only, so a pydantic model must
+  subclass `FrozenModel` (or `BaseModel`) directly, or its base must be added to that list;
+  otherwise ruff moves a field's import and construction fails with `PydanticUserError`.
+  Code that reads annotations at runtime (`typing.get_type_hints`, `TypeAdapter`,
+  `validate_call`) needs its names imported at runtime.
 - `[tool.coverage.run]`: `branch = true`, `source = ["soundscapy"]`.
   `[tool.coverage.report]`: `fail_under = 95`, `show_missing = true`.
 - matplotlib's backend for the tests is set in `tests/conftest.py` (`matplotlib.use("Agg")`),
@@ -154,7 +169,7 @@ rename them. Document and invoke them as `task <name>`.
 | --- | --- |
 | `default` | `{{.TASK_EXE}} --list` (silent), so a bare `task` lists the tasks. No `uv run`: it only prints |
 | `setup` | `uv sync --all-groups` then `uv run prek install` |
-| `fmt` | `ruff format` then `ruff check --fix` |
+| `fmt` | `ruff check --fix` then `ruff format` (fix first: an added import must be formatted) |
 | `lint` | `ruff format --check`, `ruff check` (no writes), then `uv run lint-imports` |
 | `typecheck` | `uv run ty check` |
 | `test` | `uv run pytest {{.CLI_ARGS}}` |

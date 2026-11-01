@@ -1,5 +1,7 @@
 """Circumplex: the shipped outdoor instrument, validators and round trips."""
 
+from __future__ import annotations
+
 import importlib
 import tomllib
 

@@ -55,9 +55,10 @@ def main() -> int:
     if relative.parts[:2] in {(".claude", "skills"), (".claude", "agents")}:
         return 0  # vendored verbatim and excluded from ruff; hook scripts are linted
 
+    # Fix first, then format: a fix such as an added import can leave the file unformatted.
     commands = [
-        ["uv", "run", "ruff", "format", str(path)],
         ["uv", "run", "ruff", "check", "--fix", str(path)],
+        ["uv", "run", "ruff", "format", str(path)],
     ]
 
     problems: list[str] = []

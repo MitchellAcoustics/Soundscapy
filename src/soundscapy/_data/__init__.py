@@ -6,16 +6,20 @@ file means adding or changing its pin in the same commit; a correction after rel
 new version of the file, never an edit.
 """
 
+from __future__ import annotations
+
 import importlib.resources
 import importlib.resources.abc
 import tomllib
-from collections.abc import Mapping
-from contextlib import AbstractContextManager
-from pathlib import Path
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from soundscapy.errors import DataIntegrityError, DataReferenceError
 from soundscapy.provenance import hash_bytes
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from contextlib import AbstractContextManager
+    from pathlib import Path
 
 __all__ = ["PINS", "as_path", "pin", "read_bytes", "read_toml"]
 

@@ -1,5 +1,7 @@
 """Every FrozenModel survives a TOML write and read with an equal value and an equal hash."""
 
+from __future__ import annotations
+
 import codecs
 import encodings.aliases
 import importlib

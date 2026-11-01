@@ -7,14 +7,14 @@ and every consumer calls them (the ``Coordinates`` methods of the same names too
 ``soundscapy.distribution.coordinates.n_valid()``.
 """
 
+from __future__ import annotations
+
 import copy
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, overload
 
 import numpy as np
-from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
-from numpy.typing import ArrayLike, NDArray
 from pydantic import Field, StrictInt, StrictStr
 
 from soundscapy._frames import new_frame, readonly_copy
@@ -24,6 +24,8 @@ from soundscapy.instrument import Circumplex, Scale
 
 if TYPE_CHECKING:
     import pandas as pd
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
+    from numpy.typing import ArrayLike, NDArray
 
 __all__ = ["Coordinates", "OriginSegment", "n", "n_valid", "valid_mask"]
 
@@ -144,7 +146,7 @@ class Coordinates:
         return valid_mask(self)
 
     @overload
-    def to_frame(self, like: None = None) -> "pd.DataFrame": ...
+    def to_frame(self, like: None = None) -> pd.DataFrame: ...
     @overload
     def to_frame(self, like: IntoDataFrameT) -> IntoDataFrameT: ...
     def to_frame(self, like: IntoDataFrame | None = None) -> Any:
@@ -169,7 +171,7 @@ class Coordinates:
         }
         return new_frame(columns, like=like)
 
-    def select(self, mask: ArrayLike) -> "Coordinates":
+    def select(self, mask: ArrayLike) -> Coordinates:
         """Return the rows where ``mask`` is true.
 
         Parameters
@@ -209,7 +211,7 @@ class Coordinates:
             provenance=self.provenance,
         )
 
-    def split(self, by: str) -> dict[str, "Coordinates"]:
+    def split(self, by: str) -> dict[str, Coordinates]:
         """Split the rows into groups by an id role, the language or a label column.
 
         Parameters

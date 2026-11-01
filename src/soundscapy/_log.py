@@ -12,6 +12,8 @@ All of soundscapy logs through ``logger`` itself, never through a child logger s
 this logger, and Python consults a logger's filters only for records created on it.
 """
 
+from __future__ import annotations
+
 import logging
 import sys
 

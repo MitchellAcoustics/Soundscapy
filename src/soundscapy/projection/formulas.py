@@ -1,13 +1,18 @@
 """The projection kernel: attribute scores to (x, y) circumplex coordinates."""
 
+from __future__ import annotations
+
 import math
-from typing import Final, Literal, get_args
+from typing import TYPE_CHECKING, Final, Literal, get_args
 
 import numpy as np
-from numpy.typing import NDArray
 
 from soundscapy.errors import FormulationError
-from soundscapy.instrument.scale import Scale
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from soundscapy.instrument.scale import Scale
 
 __all__ = ["project_scores"]
 

@@ -5,21 +5,24 @@ No response row is ever dropped. Each row carries a tuple of exclusion
 of ``Flag`` codes (the row is kept, with a note).
 """
 
+from __future__ import annotations
+
 import enum
 import itertools
 from collections import Counter
-from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Self, TypeVar
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
 
 from soundscapy._frames import new_frame, readonly_copy
 from soundscapy._model import COL_FLAGS, COL_INCLUDED, COL_REASONS
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     import pandas as pd
+    from numpy.typing import ArrayLike, NDArray
 
 __all__ = ["Flag", "Reason", "Status"]
 
@@ -270,7 +273,7 @@ class Status:
             COL_FLAGS: _joined(self.flags),
         }
 
-    def to_frame(self) -> "pd.DataFrame":
+    def to_frame(self) -> pd.DataFrame:
         """Return the status as a pandas data frame.
 
         Returns

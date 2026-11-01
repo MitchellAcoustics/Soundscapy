@@ -1,13 +1,18 @@
 """Tests for the soundscapy logger."""
 
+from __future__ import annotations
+
 import logging
 import subprocess
 import sys
-from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 import pytest
 
 from soundscapy._log import _defer_to_application, logger, set_log_level
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 @pytest.fixture

@@ -1,5 +1,7 @@
 """Helpers shared by the plot functions: new Axes, group colours and the circumplex frame."""
 
+from __future__ import annotations
+
 from contextlib import AbstractContextManager, nullcontext
 from typing import TYPE_CHECKING, Final
 
@@ -60,7 +62,7 @@ def _style_context() -> AbstractContextManager[object]:
     return mpl.rc_context({"axes.prop_cycle": matplotlib.rcsetup.cycler(color=_default_colours())})
 
 
-def group_colours() -> list["ColorType"]:
+def group_colours() -> list[ColorType]:
     """Return the colours groups are drawn in, in order.
 
     Returns
@@ -78,7 +80,7 @@ def group_colours() -> list["ColorType"]:
     return list(colours or _default_colours())
 
 
-def new_axes() -> "Axes":
+def new_axes() -> Axes:
     """Return the Axes of a new pyplot figure.
 
     The figure is created through pyplot, as matplotlib's pattern for libraries does, so a
@@ -98,7 +100,7 @@ def new_axes() -> "Axes":
         return plt.subplots()[1]
 
 
-def circumplex_axes(ax: "Axes", circumplex: "Circumplex", label_language: str | None) -> None:
+def circumplex_axes(ax: Axes, circumplex: Circumplex, label_language: str | None) -> None:
     """Draw the circumplex frame: the ±1 square, the axis lines and their labels.
 
     At each end of each axis the label of the attribute there is written, for the x axis

@@ -1,7 +1,9 @@
 """plot.scatter: responses on the circumplex, asserted on artist data, never on pixels."""
 
+from __future__ import annotations
+
 import dataclasses
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -17,6 +19,9 @@ from matplotlib.figure import Figure
 from soundscapy import plot
 from soundscapy.distribution.coordinates import Coordinates, valid_mask
 from soundscapy.errors import MappingError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 LABELS = ("pleasant", "annoying", "eventful", "uneventful")
 QUADRANTS = ("vibrant", "chaotic", "monotonous", "calm")

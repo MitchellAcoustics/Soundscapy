@@ -1,5 +1,7 @@
 """Tests for the frame boundary, the CSV text reader and ``frame_hash``."""
 
+from __future__ import annotations
+
 import csv
 import datetime as dt
 import subprocess

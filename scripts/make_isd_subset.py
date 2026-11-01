@@ -16,6 +16,8 @@ one, and writes into ``src/soundscapy/_data/datasets/isd/``:
 Running it twice gives identical bytes. Run with ``uv run scripts/make_isd_subset.py``.
 """
 
+from __future__ import annotations
+
 import argparse
 import csv
 import hashlib

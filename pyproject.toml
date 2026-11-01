@@ -99,6 +99,11 @@ allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib a
 [tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]
 
+[tool.ruff.lint.isort]
+# PEP 563: annotations are never evaluated, so names imported under TYPE_CHECKING need no
+# quotes. Drop once requires-python >= 3.14, whose lazy annotations (PEP 649/749) do the same.
+required-imports = ["from __future__ import annotations"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S603", "PLR2004", "D", "ANN", "INP001"]  # asserts, subprocess calls, literals
 # Standalone PEP 723 hook scripts, kept short and dependency-free.
@@ -106,7 +111,9 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.Froze
   "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",
 ]
 "scripts/**" = ["INP001", "T201"]  # standalone PEP 723 generators that report
-"docs/**/*.py" = ["INP001", "T201"]  # standalone user-facing scripts shown in the docs; they print by design
+# Standalone user-facing scripts shown verbatim in the docs: they print by design and carry
+# no __future__ line, which a reader copying them does not need.
+"docs/**/*.py" = ["INP001", "T201", "I002"]
 "!src/**" = ["TID253"]  # only the package imports matplotlib lazily; tests and user scripts import it as usual
 
 [tool.pytest.ini_options]

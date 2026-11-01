@@ -4,14 +4,18 @@
 here, so a signature that falls back to ``Any`` fails the type check.
 """
 
-from typing import assert_type
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, assert_type
 
 import pandas as pd
 import polars as pl
 
 from soundscapy import attach
-from soundscapy.distribution.coordinates import Coordinates
-from soundscapy.survey.read import Survey
+
+if TYPE_CHECKING:
+    from soundscapy.distribution.coordinates import Coordinates
+    from soundscapy.survey.read import Survey
 
 
 def test_attach_returns_the_callers_frame_type(isd_survey: Survey, isd_coords: Coordinates):

@@ -1,5 +1,7 @@
 """read_survey from a CSV path: response ids, language, coding, scale check, status, provenance."""
 
+from __future__ import annotations
+
 import dataclasses
 import logging
 import re

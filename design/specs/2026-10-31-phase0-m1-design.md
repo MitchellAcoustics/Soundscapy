@@ -305,6 +305,9 @@ convention = "numpy"
 [tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]
 
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]  # PEP 563; drop at requires-python >= 3.14
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
 # Standalone PEP 723 hook scripts, kept short and dependency-free.
@@ -365,6 +368,15 @@ lines that the formatter then wraps; after the format run the ignore list leaves
 `ty` does not accept `python-version` directly under `[tool.ty]` (verified); keep it under
 `[tool.ty.environment]`. Without `runtime-evaluated-base-classes`, ruff's TC003 fix moves imports a
 pydantic model needs at runtime under `TYPE_CHECKING` and construction fails (verified).
+(Amended 2026-11-01, owner comment on PR #171: every module with code starts with
+`from __future__ import annotations`, enforced by ruff's `required-imports` (I002; the user-facing
+`docs/**/*.py` scripts are exempt), so names imported under `TYPE_CHECKING` are never quoted. With
+the import, the TC rules also reach class-body annotations, and `runtime-evaluated-base-classes`
+protects only direct subclasses of the listed bases: a pydantic model that subclasses another model
+must subclass `FrozenModel` directly or be added to the list. TC001-TC003 fixes are unsafe, so
+the edit hook does not apply them; move such imports by hand or with
+`ruff check --fix --unsafe-fixes --select TC`. `fmt` and the edit hook now run `ruff check --fix`
+before `ruff format`, because I002 inserts the import without the blank line the formatter adds.)
 
 #### 5.2.1 Import contracts
 
@@ -455,7 +467,7 @@ every command runs through `uv run`; `env: {MPLBACKEND: Agg}` is set globally.
 | Task | Command |
 |---|---|
 | `setup` | `uv sync --all-groups`, then `uv run prek install` |
-| `fmt` | `uv run ruff format`, then `uv run ruff check --fix` |
+| `fmt` | `uv run ruff check --fix`, then `uv run ruff format` (amended 2026-11-01: fix first, so a fix that adds an import is formatted) |
 | `lint` | `uv run ruff format --check`, `uv run ruff check`, `uv run lint-imports` |
 | `typecheck` | `uv run ty check` |
 | `test` | `uv run pytest {{.CLI_ARGS}}` |
@@ -2031,7 +2043,8 @@ groups as scatter with "N = 12 (< 30), scatter shown" in the legend and one `Sma
 PNG, SVG and PDF with `ax.figure.savefig` (FR-9.1).
 
 **Lazy matplotlib.** `soundscapy.plot` imports matplotlib inside each function, never at module
-top; type hints use `TYPE_CHECKING` imports. `import soundscapy` therefore never imports
+top; type hints use `TYPE_CHECKING` imports, unquoted under `from __future__ import annotations`
+(amended 2026-11-01, PR #171). `import soundscapy` therefore never imports
 matplotlib, so matplotlib's first-run font-cache message cannot appear on import. The silent-import
 test stays, and a second test asserts `"matplotlib" not in sys.modules` after `import soundscapy`
 in a fresh interpreter. (Amended 2026-11-01, PR #171: seaborn, which imports matplotlib, is

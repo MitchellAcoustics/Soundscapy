@@ -9,21 +9,20 @@ own model, as narwhals presents it. This module imports pandas and never polars 
 ``import soundscapy`` needs only the runtime dependencies.
 """
 
+from __future__ import annotations
+
 import csv
 import datetime as dt
 import os
 import struct
 from collections import Counter
-from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final, TypeAlias, cast, overload
+from typing import TYPE_CHECKING, Any, Final, TypeAlias, cast, overload
 
 import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
-from narwhals.stable.v2.typing import IntoDataFrameT
-from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 from soundscapy.errors import (
     CodingError,
@@ -33,6 +32,12 @@ from soundscapy.errors import (
     MappingError,
 )
 from soundscapy.provenance import canonical_json, hash_bytes
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Mapping, Sequence
+
+    from narwhals.stable.v2.typing import IntoDataFrameT
+    from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 __all__ = [
     "EagerFrame",

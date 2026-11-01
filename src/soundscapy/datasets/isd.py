@@ -6,6 +6,8 @@ run offline. Each version's mapping file and read options come from the dataset
 registry shipped beside it.
 """
 
+from __future__ import annotations
+
 from typing import Any, Final
 
 from soundscapy import _data

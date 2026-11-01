@@ -4,23 +4,28 @@ This is the only module that imports ``hashlib``. Every hash is
 ``h1-sha256:<64 lowercase hex>``.
 """
 
+from __future__ import annotations
+
 import copy
 import datetime as dt
 import hashlib
 import importlib.metadata
 import json
 import math
-import os
 import platform
 import sys
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Final, TypeAlias
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 import pydantic
 
-from soundscapy._model import FrozenModel
 from soundscapy.errors import HashSchemeError
+
+if TYPE_CHECKING:
+    import os
+
+    from soundscapy._model import FrozenModel
 
 __all__ = [
     "HASH_PREFIX",

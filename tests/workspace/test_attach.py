@@ -1,5 +1,7 @@
 """attach: the projected coordinates and status columns appended to the user's own frame."""
 
+from __future__ import annotations
+
 import dataclasses
 import logging
 import re
