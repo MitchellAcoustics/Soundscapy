@@ -68,8 +68,9 @@ def attach(frame: IntoDataFrameT, result: Coordinates) -> IntoDataFrameT:
     -------
     pandas.DataFrame or polars.DataFrame
         A new frame of the same library as ``frame``, with the added columns last. Rows that
-        match no response are null in every added column, in the library's own way: with
-        pandas' classic dtypes, ``ssp_included`` is then an ``object`` column.
+        match no response are null in every added column, in the library's own way; in
+        pandas, ``ssp_included`` is then a nullable ``"boolean"`` column holding ``pd.NA``,
+        so ``frame[frame["ssp_included"]]`` still selects the included responses.
 
     Raises
     ------

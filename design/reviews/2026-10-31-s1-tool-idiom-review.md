@@ -37,13 +37,14 @@ Applied on `claude/dev-tools-idiom-review-qfncq4`, each with `task check` passin
 
 Open:
 
-- **Owner decision, raised by the code review.** With narwhals-native nulls (F3),
-  `attach` on a pandas frame with an unmatched row makes `ssp_included` an `object` column
-  holding NaN. `df[df["ssp_included"]]` then raises "Cannot mask with non-boolean array
-  containing NA / NaN values"; the earlier nullable `boolean` worked there. The options:
-  - accept this, and document `df[df["ssp_included"].eq(True)]`;
-  - return pandas' nullable `boolean` for that column only;
-  - revisit F3.
+- **Resolved (owner, 2026-11-01): `ssp_included` on pandas.** With narwhals-native nulls (F3),
+  `attach` on a pandas frame with an unmatched row gave `ssp_included` an `object` dtype
+  holding NaN, and `df[df["ssp_included"]]` raised. `with_columns` now gives a masked
+  boolean column pandas' nullable `"boolean"` dtype, holding `pd.NA`, so the filter works and
+  drops unmatched rows. This is the one pandas-specific step left at the boundary, because
+  narwhals' pandas `new_series` builds numpy `bool`. Other columns keep narwhals-native
+  nulls. pandas still marks `pd.NA` and `BooleanDtype` "experimental". The `lowest`
+  resolution (pandas 2.2.1) passes too.
 - **Code-review findings skipped, with reasons:**
   - Root logging at WARNING through an implicit `basicConfig()` hides INFO lines. That *is*
     standard logging configuration, which NFR-13 says the user may silence with.

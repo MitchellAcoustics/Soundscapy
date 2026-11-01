@@ -214,6 +214,15 @@ def test_attach_frame_with_extra_rows(column_coords, frame_lib, caplog):
     assert "3 of 4" in _attach_log(caplog)
 
 
+def test_attach_unmatched_rows_still_filter_on_ssp_included_in_pandas(column_coords):
+    # The unmatched row is pd.NA in a nullable "boolean" column, so the usual filter works and
+    # drops it; with an object column of NaN, pandas refuses to filter (review F3).
+    frame = pd.DataFrame({"ID": ["c", "zz", "a", "b"]})
+    out = attach(frame, column_coords)
+    assert str(out[COL_INCLUDED].dtype) == "boolean"
+    assert out[out[COL_INCLUDED]]["ID"].tolist() == ["c", "a", "b"]
+
+
 def test_attach_blank_response_cell_is_unmatched(column_coords):
     out = attach(pd.DataFrame({"ID": ["a", None, ""]}), column_coords)
     assert out[COL_INCLUDED].isna().tolist() == [False, True, True]

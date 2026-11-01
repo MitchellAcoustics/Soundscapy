@@ -17,7 +17,7 @@ from collections import Counter
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final, TypeAlias, overload
+from typing import Any, Final, TypeAlias, cast, overload
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -268,8 +268,9 @@ def with_columns(
     valid : numpy.ndarray of bool, optional
         Rows where this is False are null in every added column, as the frame's library
         represents a null: in polars a null of the column's type; with pandas' classic
-        dtypes NaN, so a masked boolean column becomes ``object`` and a masked integer
-        column ``float64``.
+        dtypes NaN, so a masked integer column becomes ``float64``. A masked boolean column
+        in pandas uses the nullable ``"boolean"`` dtype, with ``pd.NA``, so it still serves
+        as a filter mask.
 
     Returns
     -------
@@ -307,7 +308,13 @@ def with_columns(
     if valid is None or valid.all():
         return to_native(eager.with_columns(*series.values()))
     keep = nw.new_series("valid", valid, dtype=nw.Boolean(), backend=backend)
-    return to_native(eager.with_columns(**{n: nw.when(keep).then(s) for n, s in series.items()}))
+    out = to_native(eager.with_columns(**{n: nw.when(keep).then(s) for n, s in series.items()}))
+    if isinstance(out, pd.DataFrame):
+        # pandas' classic dtypes hold a null boolean as object, which pandas refuses as a
+        # filter mask; the nullable "boolean" dtype holds it as pd.NA and still filters.
+        flags = [name for name, values in columns.items() if values.dtype.kind == "b"]
+        return cast("IntoDataFrameT", out.astype(dict.fromkeys(flags, "boolean")))
+    return out
 
 
 @overload

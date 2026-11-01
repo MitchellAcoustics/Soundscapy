@@ -164,13 +164,13 @@ def test_with_columns_valid_mask_gives_nulls(frame_lib):
     assert frame["f"].to_list()[::2] == [0.5, 2.5]
     assert frame["t"].to_list()[::2] == ["x", "z"]
     assert frame["i"].to_list()[::2] == [1, 3]
-    # Nulls follow the library's own model, as narwhals presents it (review F3): polars keeps
-    # the types; pandas' classic dtypes hold a null boolean as object, a null integer as float.
+    # Nulls follow the library's own model, as narwhals presents it (review F3), except that a
+    # pandas boolean column becomes the nullable "boolean" dtype (pd.NA), so it still filters.
+    assert frame.schema["b"] == nw.Boolean
     if isinstance(native, pd.DataFrame):
-        assert frame.schema["b"] == nw.Object
-        assert frame.schema["i"] == nw.Float64
+        assert str(frame.to_native()["b"].dtype) == "boolean"
+        assert frame.schema["i"] == nw.Float64  # pandas' classic dtypes hold a null int as float
     else:
-        assert frame.schema["b"] == nw.Boolean
         assert frame.schema["i"] == nw.Int64
 
 
@@ -196,12 +196,7 @@ def test_with_columns_all_masked_keeps_dtypes(frame_lib, n_rows):
         assert masked[name].is_null().all()  # vacuously true with no rows
     assert masked.schema["f"] == populated["f"] == nw.Float64
     assert masked.schema["t"] == populated["t"]
-    if isinstance(native, pd.DataFrame) and n_rows:
-        # pandas' classic dtypes hold an all-null boolean as an object column of NaN, which
-        # narwhals reads as String (review F3). attach never masks every row: no match raises.
-        assert masked.schema["b"] == nw.String
-    else:
-        assert masked.schema["b"] == populated["b"] == nw.Boolean
+    assert masked.schema["b"] == populated["b"] == nw.Boolean
     floats = columns_float(masked, ["f"])
     assert floats.shape == (n_rows, 1)
     assert np.isnan(floats).all()
