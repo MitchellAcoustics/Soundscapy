@@ -43,6 +43,9 @@ metadata and sources are relative to the project root. Never edit files under `d
 
 ### Config keys that matter (`docs/great-docs.yml`)
 
+The file lists only settings that differ from these defaults (today `sections` and
+`bibliography`); restating a default adds nothing, because the pin moves only by a reviewed bump.
+
 | Key | Default | Notes |
 | --- | --- | --- |
 | `module` | `null` (auto) | Importable name when it differs from the project name. |
@@ -66,7 +69,7 @@ metadata and sources are relative to the project root. Never edit files under `d
 | `bibliography`, `csl` | `[]` | Project-wide `.bib`; cite with `[@key]` on any page or docstring. |
 | `markdown_pages: {enabled, widget}` | true | `.md` companion per HTML page. |
 | `skill: {enabled, file, skills, gotchas, best_practices, ...}` | enabled | Emits `skill.md` / SKILL.md for agents. |
-| `cli: {enabled, module, name}` | — | `enabled: true`; the click app in `soundscapy.cli` is discovered and documented as a CLI reference section (architecture plan §16.1). |
+| `cli: {enabled, module, name}` | `enabled: false` | From M1 slice S8: `enabled: true`, so the click app in `soundscapy.cli` is discovered and documented as a CLI reference section (architecture plan §16.1). |
 | `mcp: {...}`, `versions`, `changelog`, `authors`, `announcement`, `page_status`, `tags`, `seo` | — | Not needed for a first site. |
 
 Output dir is not a config key: it is always `<config dir>/_site/` (`docs/_site/`, or

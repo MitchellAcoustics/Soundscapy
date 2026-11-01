@@ -79,7 +79,6 @@ ignore = [
   "D105",              # magic-method docstrings add nothing
   "D107",              # numpy style documents __init__ parameters on the class
   "N803", "N806",      # mathematical names such as X, Pa, ISOPl match the papers
-  "PLR0913",           # scientific functions legitimately take many keyword arguments
   "TD002", "TD003",    # TODOs need no author or issue link while the rewrite is young
   "FIX002",            # allow TODO comments; review them before each release
 ]
@@ -87,11 +86,20 @@ ignore = [
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
+[tool.ruff.lint.pylint]
+max-args = 10  # keyword-only scientific signatures; the widest in the M1 spec (density) has 8
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = ["matplotlib"]  # imported inside plot functions only (spec §6.15)
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib artist
+
 [tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S603", "PLR2004", "D", "ANN", "INP001"]  # asserts, subprocess calls, literals
+"tests/**" = ["S101", "S603", "PLR2004", "D", "ANN", "INP001", "TID253"]  # asserts, subprocess calls, literals; tests import matplotlib directly
 # Standalone PEP 723 hook scripts, kept short and dependency-free.
 ".claude/hooks/**" = [
   "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",
@@ -99,18 +107,14 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.Froze
 "scripts/**" = ["INP001", "T201"]  # standalone PEP 723 generators that report
 "docs/**/*.py" = ["INP001", "T201"]  # standalone user-facing scripts shown in the docs; they print by design
 
-[tool.ty.environment]
-python-version = "3.11"
-root = ["./src", "."]  # "." resolves tests._helpers, the shared test constants
-
 [tool.pytest.ini_options]
 minversion = "9.2"
 testpaths = ["tests"]
 addopts = [
-  "--strict-markers", "--strict-config", "--import-mode=importlib", "-ra",
-  "-m", "not reference and not network",
+  "--import-mode=importlib", "-ra", "-m", "not reference and not network",
 ]
-xfail_strict = true
+strict = true  # strict config, markers, xfail and parametrisation ids (pytest 9; uv.lock pins pytest)
+pythonpath = ["."]  # so tests import shared helpers as tests._helpers under importlib mode
 log_level = "INFO"  # show captured logs on failure (repo-review PP304)
 filterwarnings = ["error"]
 markers = [
@@ -125,7 +129,7 @@ branch = true
 source = ["soundscapy"]
 
 [tool.coverage.report]
-fail_under = 80
+fail_under = 95  # just below the measured 99% (end of S1); raise it, never lower it
 show_missing = true
 
 [tool.repo-review]
@@ -162,22 +166,16 @@ name = "Core never imports matplotlib"
 type = "forbidden"
 source_modules = ["soundscapy"]
 forbidden_modules = ["matplotlib"]
-ignore_imports = ["soundscapy.plot -> matplotlib", "soundscapy.plot.** -> matplotlib"]
+ignore_imports = ["soundscapy.plot.** -> matplotlib"]
 allow_indirect_imports = true
-unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
 name = "Dataframe libraries only in soundscapy._frames"
 type = "forbidden"
 source_modules = ["soundscapy"]
 forbidden_modules = ["pandas", "polars", "pyarrow"]
-ignore_imports = [
-  "soundscapy._frames -> pandas",
-  "soundscapy._frames -> pyarrow",
-  "soundscapy._frames -> polars",
-]
+ignore_imports = ["soundscapy._frames -> pandas"]  # add a backend here in the commit that first imports it
 allow_indirect_imports = true
-unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
 name = "No GUI toolkit (FR-14.7)"

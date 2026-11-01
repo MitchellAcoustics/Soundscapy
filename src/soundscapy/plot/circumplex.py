@@ -34,7 +34,7 @@ def _legend_label(key: str) -> str:
 
 def _per_point(value: object, n_rows: int) -> bool:
     """Return whether a colour keyword's value gives one colour (or value) per row."""
-    import matplotlib.colors as mcolors  # noqa: PLC0415  # matplotlib is imported lazily
+    import matplotlib.colors as mcolors
 
     if isinstance(value, str) or mcolors.is_color_like(value):
         return False
@@ -67,7 +67,7 @@ def scatter(
     by: str | _Unset = _UNSET,
     ax: "Axes | None" = None,
     label_language: str | None = None,
-    **kwargs: Any,  # noqa: ANN401  # forwarded unchanged to matplotlib's Axes.scatter
+    **kwargs: Any,  # forwarded unchanged to matplotlib's Axes.scatter
 ) -> "Axes":
     """Draw projected responses on the circumplex, one series per group.
 
@@ -120,7 +120,7 @@ def scatter(
     >>> coords = sspy.project(sspy.load_isd(subset=True), angles="equal")
     >>> ax = sspy.plot.scatter(coords, by="location")
     """
-    import matplotlib as mpl  # noqa: PLC0415  # matplotlib is imported lazily
+    import matplotlib as mpl
 
     if ax is None:
         ax = new_axes()

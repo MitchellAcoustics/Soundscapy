@@ -26,7 +26,7 @@ def new_axes() -> "Axes":
         One subplot of a new ``matplotlib.figure.Figure``; no pyplot state is touched,
         so Jupyter shows it only through the figure's rich display.
     """
-    from matplotlib.figure import Figure  # noqa: PLC0415  # matplotlib is imported lazily
+    from matplotlib.figure import Figure
 
     return Figure().add_subplot()
 
