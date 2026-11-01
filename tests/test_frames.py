@@ -300,7 +300,7 @@ def test_read_text_table_numbers_records(tmp_path):
 
 def test_read_text_table_quoted_newline_is_one_record(tmp_path):
     path = tmp_path / "survey.csv"
-    path.write_text('id;note\na;"two\nlines"\nb;x\n', encoding="utf-8")
+    path.write_bytes(b'id;note\na;"two\nlines"\nb;x\n')  # bytes: write_text gives CRLF on Windows
     table = read_text_table(path, encoding="utf-8", delimiter=";")
     assert table.row_numbers.tolist() == [2, 3]
     assert table.frame["note"].tolist() == ["two\nlines", "x"]

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from matplotlib.axes import Axes
+    from numpy.typing import ArrayLike
 
     from soundscapy.distribution.coordinates import Coordinates
 
@@ -35,7 +36,7 @@ def _legend_label(key: str) -> str:
     return repr(key) if key.startswith("_") else key
 
 
-def _per_point(value: object, n_rows: int) -> bool:
+def _per_point(value: ArrayLike, n_rows: int) -> bool:
     """Return whether a colour keyword's value gives one colour (or value) per row."""
     import matplotlib.colors as mcolors
 
