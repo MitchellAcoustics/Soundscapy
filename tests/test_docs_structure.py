@@ -36,11 +36,13 @@ def test_quickstart_is_the_first_plot():
 
 
 def test_install_page_says_the_notebook_cell_shows_the_plot():
-    # The notebook cells end in .figure, which shows the plot, where the script saves it;
-    # the prose must not call them "the same code".
+    # The notebook cells are the script without pyplot's import and the savefig line: a
+    # notebook shows the pyplot figure itself. The prose must not call them "the same code".
     text = (GUIDE / "01-install.qmd").read_text()
     script = (GUIDE / "_quickstart.py").read_text()
-    notebook = script.replace('.figure.savefig("first-plot.png")', ".figure")
+    notebook = script.replace("import matplotlib.pyplot as plt\n\n", "").replace(
+        'plt.savefig("first-plot.png")\n', ""
+    )
     assert notebook != script
     assert "the same code" not in text
     assert text.count(f"```python\n{notebook}```") == 2

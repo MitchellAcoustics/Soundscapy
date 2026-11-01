@@ -8,7 +8,7 @@ import numpy as np
 
 from soundscapy._model import _UNSET, _Unset
 from soundscapy.distribution.coordinates import valid_mask
-from soundscapy.plot._common import circumplex_axes, new_axes
+from soundscapy.plot._common import circumplex_axes, group_colours, new_axes
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
 __all__ = ["scatter"]
 
-# Markers taken in turn on each full pass through the colour sequence, so every
-# (colour, marker) pair is unique for up to 30 groups.
+# Markers taken in turn on each full pass through the group colours, so every
+# (colour, marker) pair is unique for up to three times as many groups as colours.
 _MARKERS = ("o", "s", "^")
 
 # Keywords of Axes.scatter that set the face colour; any one of them replaces the cycle.
@@ -75,12 +75,15 @@ def scatter(
     drawn. Groups are drawn in sorted key order, each labelled with its key in a legend:
     a blank key is labelled ``(blank)`` and a key starting with ``_`` is shown quoted
     (``'_x'``), as matplotlib would otherwise leave both out of the legend. Group
-    colours follow matplotlib's ``petroff10`` colour sequence; on each full pass through
-    its ten colours the marker changes (``"o"``, ``"s"``, ``"^"``, in turn), so up to 30
-    groups stay distinguishable. A ``c``, ``color`` or ``facecolor`` keyword replaces the
-    colour cycle, and a ``marker`` keyword the marker cycle, for every group. A group
-    with no valid rows still gets an empty labelled series, so each group keeps its
-    colour and marker across plots of the same groups.
+    colours follow matplotlib's colour cycle (``axes.prop_cycle``), so a style sheet,
+    ``rc_context`` or ``style.context`` the user applies sets them; while the cycle is
+    matplotlib's default, the colour-vision-deficiency-safe ``petroff10`` style is used.
+    On each full pass through the colours the marker changes (``"o"``, ``"s"``, ``"^"``,
+    in turn), so three times as many groups as colours stay distinguishable (30 with
+    ``petroff10``). A ``c``, ``color`` or ``facecolor`` keyword replaces the colours, and a
+    ``marker`` keyword the markers, for every group. A group with no valid rows still gets
+    an empty labelled series, so each group keeps its colour and marker across plots of
+    the same groups.
 
     Parameters
     ----------
@@ -90,7 +93,8 @@ def scatter(
         An id role (such as ``"location"``), ``"language"`` or a label column to group
         by; left unset or ``""``, all responses form one series.
     ax : matplotlib.axes.Axes, optional
-        The Axes to draw on; by default the Axes of a new pyplot-free figure.
+        The Axes to draw on; by default the Axes of a new pyplot figure, which a notebook
+        shows and ``plt.savefig`` saves.
     label_language : str, optional
         ISO 639-3 code of the axis and quadrant labels; by default the circumplex's
         reference language. A language with no translation falls back to it.
@@ -100,8 +104,8 @@ def scatter(
     Returns
     -------
     matplotlib.axes.Axes
-        The Axes drawn on. ``show()`` is never called: in a notebook, end the cell with
-        ``ax.figure`` to display it.
+        The Axes drawn on. ``show()`` is never called; a notebook displays the figure, and
+        a script calls ``plt.show()`` or ``plt.savefig()``.
 
     Raises
     ------
@@ -120,14 +124,12 @@ def scatter(
     >>> coords = sspy.project(sspy.load_isd(subset=True), angles="equal")
     >>> ax = sspy.plot.scatter(coords, by="location")
     """
-    import matplotlib as mpl
-
     if ax is None:
         ax = new_axes()
     group_by = "" if isinstance(by, _Unset) else by
     per_point = _per_point_colours(kwargs, coords, grouped=bool(group_by))
     groups = coords.split(group_by) if group_by else {"": coords}
-    colours = mpl.color_sequences["petroff10"]
+    colours = group_colours()
     styles = ((colour, marker) for marker in cycle(_MARKERS) for colour in colours)
     for (key, group), (colour, marker) in zip(groups.items(), styles, strict=False):
         xy = group.xy[valid_mask(group)]

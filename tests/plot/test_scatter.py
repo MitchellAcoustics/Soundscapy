@@ -5,8 +5,10 @@ from pathlib import Path
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.style
 import numpy as np
 import pytest
+from cycler import cycler
 from matplotlib.collections import PathCollection
 from matplotlib.colors import to_rgba
 from matplotlib.figure import Figure
@@ -96,11 +98,39 @@ def test_group_with_no_valid_rows_keeps_an_empty_series(isd_coords):
     assert [_style(c) for c in collections[1:]] == styles[1:]
 
 
-def test_no_pyplot_figure_created(isd_coords):
+def test_ax_none_creates_one_pyplot_figure(isd_coords):
+    # matplotlib's pattern for libraries: a notebook shows it, plt.savefig reaches it.
     plt.close("all")
     ax = plot.scatter(isd_coords, by="location")
-    assert plt.get_fignums() == []
-    assert isinstance(ax.figure, Figure)
+    assert plt.get_fignums() == [plt.gcf().number]
+    assert plt.gca() is ax
+
+
+def test_created_axes_carries_the_petroff10_cycle(isd_coords):
+    # Lines the user adds afterwards follow the same colours.
+    ax = plot.scatter(isd_coords)
+    (line,) = ax.plot([0.0, 0.1], [0.0, 0.1])
+    # Exact: to_rgba of the sequence entry is the colour matplotlib stores.
+    np.testing.assert_array_equal(
+        to_rgba(line.get_color()), to_rgba(mpl.color_sequences["petroff10"][0])
+    )
+
+
+def test_user_style_sets_the_group_colours(isd_coords):
+    with mpl.style.context("ggplot"):
+        ggplot = mpl.rcParams["axes.prop_cycle"].by_key()["color"]
+        ax = plot.scatter(isd_coords, by="location")
+    faces = [c.get_facecolor()[0] for c in _collections(ax)]
+    for i, face in enumerate(faces):
+        # Exact: to_rgba of the cycle entry is the colour matplotlib stores.
+        np.testing.assert_array_equal(face, to_rgba(ggplot[i % len(ggplot)]))
+
+
+def test_a_short_user_cycle_keeps_groups_distinct(isd_coords):
+    with mpl.rc_context({"axes.prop_cycle": cycler(color=["k", "r", "b", "g", "m"])}):
+        ax = plot.scatter(isd_coords, by="location")
+    styles = [_style(c) for c in _collections(ax)]
+    assert len(styles) == len(set(styles)) == 15
 
 
 def test_returns_the_given_ax(isd_coords):

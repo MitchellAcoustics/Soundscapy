@@ -90,13 +90,13 @@ banned-module-level-imports = ["matplotlib"]  # imported inside plot functions o
 allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib artist
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
+"tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001", "TID253"]  # asserts, literal expected values; tests import matplotlib directly
 # Standalone PEP 723 hook scripts, kept short and dependency-free.
 ".claude/hooks/**" = [
   "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",
 ]
 "scripts/**" = ["INP001", "T201"]  # standalone PEP 723 generators that report
-"docs/**/*.py" = ["INP001", "T201"]  # standalone user-facing scripts shown in the docs
+"docs/**/*.py" = ["INP001", "T201", "TID253"]  # standalone user-facing scripts shown in the docs
 ```
 
 Think before keeping `PLR2004` (magic numbers) on in package code. Physical constants

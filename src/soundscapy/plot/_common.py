@@ -1,13 +1,16 @@
-"""Helpers shared by the plot functions: the circumplex axes and new Axes."""
+"""Helpers shared by the plot functions: new Axes, group colours and the circumplex frame."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
     from soundscapy.instrument import Circumplex
 
-__all__ = ["circumplex_axes", "new_axes"]
+__all__ = ["circumplex_axes", "group_colours", "new_axes"]
+
+DEFAULT_STYLE: Final = "petroff10"
+"""matplotlib's colour-vision-deficiency-safe style (matplotlib ≥ 3.10), the default (FR-8.3)."""
 
 # Text placement in data coordinates: the axis-end labels sit just inside the ±1 square,
 # the quadrant labels near its corners.
@@ -17,18 +20,57 @@ _SIGN = {"+": 1.0, "-": -1.0}
 _TEXT_COLOUR = "0.3"
 
 
+def _user_styled() -> bool:
+    """Return whether the active colour cycle differs from matplotlib's own default.
+
+    A style sheet, ``rc_context`` or ``style.context`` the user applied changes it; then the
+    user's colours are used, otherwise soundscapy's default style (FR-8.3).
+    """
+    import matplotlib as mpl
+
+    return mpl.rcParams["axes.prop_cycle"] != mpl.rcParamsDefault["axes.prop_cycle"]
+
+
+def group_colours() -> list[str]:
+    """Return the colours groups are drawn in, in order.
+
+    Returns
+    -------
+    list of str
+        The ``color`` entries of the active ``axes.prop_cycle`` when the user has styled
+        matplotlib, otherwise those of the ``petroff10`` style.
+    """
+    import matplotlib as mpl
+    import matplotlib.style
+
+    if _user_styled():
+        colours = mpl.rcParams["axes.prop_cycle"].by_key().get("color")
+        if colours:
+            return [str(colour) for colour in colours]
+    with matplotlib.style.context(DEFAULT_STYLE):
+        return [str(colour) for colour in mpl.rcParams["axes.prop_cycle"].by_key()["color"]]
+
+
 def new_axes() -> "Axes":
-    """Return the Axes of a new pyplot-free figure.
+    """Return the Axes of a new pyplot figure.
+
+    The figure is created through pyplot, as matplotlib's pattern for libraries does, so a
+    notebook shows it and ``plt.show()`` or ``plt.savefig()`` reach it; the plot functions
+    never call ``show()``. Unless the user has styled matplotlib, the Axes is created under
+    the ``petroff10`` style, so anything drawn on it later follows the same colours.
 
     Returns
     -------
     matplotlib.axes.Axes
-        One subplot of a new ``matplotlib.figure.Figure``; no pyplot state is touched,
-        so Jupyter shows it only through the figure's rich display.
+        The one subplot of a new figure.
     """
-    from matplotlib.figure import Figure
+    import matplotlib.pyplot as plt
+    import matplotlib.style
 
-    return Figure().add_subplot()
+    if _user_styled():
+        return plt.subplots()[1]
+    with matplotlib.style.context(DEFAULT_STYLE):
+        return plt.subplots()[1]
 
 
 def circumplex_axes(ax: "Axes", circumplex: "Circumplex", label_language: str | None) -> None:

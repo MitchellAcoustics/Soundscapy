@@ -134,11 +134,10 @@ review like code, and run wherever the package is installed.
   `{{< include _file.py >}}` on a bare line; great-docs fences a code-file include itself
   (§4). Prefix such files with `_` so Quarto does not render them as pages. A `#| file:`
   cell option does not work for this.
-- Plot display: with `ax=None` a soundscapy plot function builds a pyplot-free `Figure()`,
-  which Jupyter does not show on its own. Every tutorial plot cell, the quick-start and every
-  docs example therefore ends with the expression `ax.figure` (or
-  `sspy.plot.scatter(...).figure`). From M1 (spec §6.15) a docs test reads `docs/_freeze/`
-  and fails a tutorial cell that calls `sspy.plot` without an image output.
+- Plot display: with `ax=None` a soundscapy plot function draws on a new pyplot figure, so a
+  notebook shows it when the cell ends; do not end a cell in `ax.figure`, which would show it
+  twice. Scripts save with `plt.savefig()`. From M1 (spec §6.15) a docs test reads
+  `docs/_freeze/` and fails a tutorial cell that calls `sspy.plot` without an image output.
 - Freeze: keep `freeze: {mode: auto}` and commit `docs/_freeze/`, including
   `docs/_freeze/site_libs/` (Quarto output the frozen pages load), so unchanged pages are
   not re-executed on every build and CI does not need audio data or model weights for

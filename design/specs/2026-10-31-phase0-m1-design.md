@@ -1983,13 +1983,19 @@ column of `item_statistics` and changes no number) default to `None` or a value:
 | `likert(survey, *, by=_UNSET, item_group=_UNSET, ax=None, ...)` | stacked bars of response shares per item (from `survey.response_shares`) |
 | `radar(survey, *, by=_UNSET, statistic="median", ax=None, ...)` | per-attribute medians. With `ax=None` it creates `fig.add_subplot(projection="polar")`; a non-polar `ax` raises `AxesError` (§6.3.10) |
 
-The `ax` contract: `ax=None` creates `matplotlib.figure.Figure()` and `fig.add_subplot()` (polar for
-`radar`), with no pyplot state; the function returns the Axes and never calls `show()`; `**kwargs`
-go to the main artist. Shared helpers in `plot/_common.py`: `circumplex_axes(ax, circumplex,
+The `ax` contract: `ax=None` creates a new pyplot figure with `plt.subplots()` (polar for `radar`);
+the function returns the Axes and never calls `show()`; `**kwargs` go to the main artist.
+(Amended 2026-11-01, owner decision on review F5, `design/reviews/2026-10-31-s1-tool-idiom-review.md`:
+the earlier pyplot-free `Figure()` departed from matplotlib's documented pattern for libraries and
+made every notebook cell end in `ax.figure`; a GUI or web service passes its own `ax` and never takes
+the `ax=None` path.) Shared helpers in `plot/_common.py`: `circumplex_axes(ax, circumplex,
 label_language)` (the ±1 square, axis lines, axis and quadrant labels in the chosen language,
 reference language by default); `check_n(groups, min_n, allow_small_n)`. No origin-label hook exists
-at M1, because no M1 function calls it; M2 adds it with its first caller. Colour: the `petroff10`
-colour sequence for groups, `cividis` for fills (FR-8.3, NFR-10). A single-group density with
+at M1, because no M1 function calls it; M2 adds it with its first caller. Colour: groups take the colours of the active `axes.prop_cycle`, so a style sheet,
+`rc_context` or `style.context` the user applies sets them; while that cycle is matplotlib's
+default, the `petroff10` style is used, and `ax=None` creates its Axes under it; `cividis` for
+fills (FR-8.3, NFR-10). (Amended 2026-11-01, review F6: hard-coded `petroff10` colours ignored
+matplotlib's own styling routes, which FR-8.3 names as the way to customise.) A single-group density with
 `n_valid < 30` raises `SmallSampleError` unless `allow_small_n=True`; a grouped density draws small
 groups as scatter with "N = 12 (< 30), scatter shown" in the legend and one `SmallSampleWarning`
 (FR-3.2, owner row
@@ -2003,11 +2009,10 @@ matplotlib, so matplotlib's first-run font-cache message cannot appear on import
 test stays, and a second test asserts `"matplotlib" not in sys.modules` after `import soundscapy`
 in a fresh interpreter.
 
-**Notebook display.** With `ax=None` the function builds a pyplot-free `Figure()`, which Jupyter
-does not show on its own. The display convention: every tutorial plot cell, the quick-start and
-the docs examples end with the expression `ax.figure` (or `sspy.plot.scatter(...).figure`), which
-Jupyter renders through the Figure's rich display. Passing an `ax` made with `plt.subplots()`
-shows as usual. A docs test reads every executed `{python}` cell of `docs/tutorials/*.qmd` that
+**Notebook display.** With `ax=None` the figure is a pyplot figure, so a notebook shows it
+when the cell ends and a script saves it with `plt.savefig()`; no cell ends in `ax.figure`, which
+would now show the plot twice. (Amended 2026-11-01, review F5; this replaces the `ax.figure`
+display convention.) A docs test reads every executed `{python}` cell of `docs/tutorials/*.qmd` that
 calls `sspy.plot`, and asserts that its output in `docs/_freeze/` holds an image.
 
 ### 6.16 Tables, export and attach (FR-9.1, FR-14.2)
@@ -2804,7 +2809,7 @@ calls made in this spec (§11.2).
 | Location and session tables through `join_context` and `add_table` | §6.5.1 | FR-1.4's minimal hierarchy, plan §4.4 (B16) |
 | `Coordinates.labels` as read-only numpy arrays | §6.10 | no frame inside the core; plan rule 4 (B20) |
 | Workspace export named `export_run`; `sspy.export` unchanged | §6.18 | two functions with one name confused the API (B8) |
-| Tutorial plot cells end with `ax.figure`; a docs test checks each renders an image | §6.15 | keeps `ax=None` pyplot-free yet visible in notebooks (B7) |
+| ~~Tutorial plot cells end with `ax.figure`~~ (superseded 2026-11-01: `ax=None` uses pyplot, review F5); a docs test checks each tutorial plot cell renders an image | §6.15 | notebooks show plot output |
 | Tutorial A's language section shows cmn projecting with the Medium warning under `satp@1.5`, and the Low and uncovered paths on the synthetic `qaa` to `qad` set | §6.22 | no ISD language is Low or uncovered under `satp@1.5` (C2, S4) |
 | The FR-1.5 acceptance test is PRD 0.9's 56 exclusions, run on the subset counts by default and on the full ISD nightly; it no longer awaits an owner input. `excessive_missing` keeps its 2021-paper definition and default (`exclude`, missing share > 0.5), and its denominator is the 2021 paper's wording, the 12 attribute and source-dominance items (B19; R6) | §6.7 | the acceptance criterion is testable now, and the ISD publishes no counts to wait for |
 | matplotlib imported inside `plot` functions only | §6.15 | `import soundscapy` cannot trigger matplotlib's font-cache message (NFR-13) |
