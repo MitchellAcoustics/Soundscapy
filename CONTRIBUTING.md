@@ -7,12 +7,15 @@ branch.
 
 Install three tools:
 
-- [uv](https://docs.astral.sh/uv/getting-started/installation/), which manages Python and
-  every project dependency;
-- [git](https://git-scm.com/downloads);
-- [go-task](https://taskfile.dev/docs/installation), which provides the `task` command.
-  Any install method works. We recommend installing it with uv, so it lives beside uv's
-  other tools:
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.13.6 or later, which
+  manages Python and every project dependency. `pyproject.toml` states the oldest uv it
+  accepts (its `[tool.uv] required-version`); an older uv refuses every command in the
+  repository with a message saying so;
+- [git](https://git-scm.com/downloads) 2.28 or later, because prek, which runs the git
+  hooks, uses git options added in 2.28;
+- [go-task](https://taskfile.dev/docs/installation) 3.54 or later, which provides the `task`
+  command. Any install method works. We recommend installing it with uv, so it lives beside
+  uv's other tools:
 
   ```bash
   uv tool install go-task-bin
@@ -31,7 +34,7 @@ task setup
 `task setup` installs every dependency group and the git hooks (prek). Every task runs its
 commands through `uv run`, so they always use the project's locked environment; you never
 activate a virtual environment. The `docs` group brings `quarto-cli`, which fetches Quarto
-1.10.20, so you do not install Quarto yourself. `task --list` shows every task.
+1.10.20, so you do not install Quarto yourself. `task` on its own lists every task.
 
 ## Definition of done
 

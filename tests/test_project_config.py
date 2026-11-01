@@ -40,6 +40,7 @@ def test_every_dependency_has_a_floor():
 def test_taskfile_defines_the_normative_tasks():
     text = (ROOT / "Taskfile.yml").read_text()
     for task in (
+        "default",
         "setup",
         "fmt",
         "lint",
@@ -58,3 +59,37 @@ def test_taskfile_defines_the_normative_tasks():
         "repo-review",
     ):
         assert re.search(rf"^  {re.escape(task)}:", text, re.MULTILINE), task
+
+
+# A version such as 0.13.6 or 3.54.
+VERSION = r"\d+(?:\.\d+)+"
+
+
+def _uv_floor() -> str:
+    required = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["uv"][
+        "required-version"
+    ]
+    match = re.fullmatch(rf">=({VERSION})", required)
+    assert match, f"[tool.uv] required-version {required!r} is not a single >= floor"
+    return match.group(1)
+
+
+def _go_task_floor() -> str:
+    text = (ROOT / "Taskfile.yml").read_text()
+    match = re.search(rf"^version: '({VERSION})'$", text, re.MULTILINE)
+    assert match, "Taskfile.yml has no version line"
+    return match.group(1)
+
+
+def test_contributing_states_the_uv_and_go_task_floors():
+    # pyproject.toml and Taskfile.yml set these floors; CONTRIBUTING.md repeats them for
+    # readers, so this test keeps the copies in step.
+    text = (ROOT / "CONTRIBUTING.md").read_text()
+    for tool, floor in (("uv", _uv_floor()), ("go-task", _go_task_floor())):
+        line = rf"^- \[{re.escape(tool)}\]\([^)]+\) {re.escape(floor)} or later\b"
+        assert re.search(line, text, re.MULTILINE), f"CONTRIBUTING.md: {tool} {floor} or later"
+
+
+def test_cloud_setup_installs_at_least_the_uv_floor():
+    text = (ROOT / ".claude" / "cloud" / "setup.sh").read_text()
+    assert re.search(rf"^uv_min={re.escape(_uv_floor())}$", text, re.MULTILINE)

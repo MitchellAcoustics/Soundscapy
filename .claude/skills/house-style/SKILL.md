@@ -32,7 +32,7 @@ when you configure the docs site, or write a tutorial or user-guide page.
 | Lint / format | `ruff`, `select = ["ALL"]` with the commented ignores below | Maximum signal; every exemption is visible and justified. |
 | Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports | Matches the scientific Python ecosystem and great-docs rendering. |
 | Git hooks | `prek`, configured in its native `prek.toml` | The `builtin` hooks already make the setup prek-only, so a pre-commit-compatible YAML file buys nothing. Never install `pre-commit` itself. |
-| Task runner | `Taskfile.yml` (go-task), run as `task <name>` | One set of entry points for agents, humans and CI. go-task is installed outside the project, like uv (`uv tool install go-task-bin` recommended; CONTRIBUTING.md). The Taskfile's `version` (`'3.54'`) is the minimum go-task it accepts, so no other file pins it, and every command inside runs through `uv run`. |
+| Task runner | `Taskfile.yml` (go-task), run as `task <name>` | One set of entry points for agents, humans and CI. go-task is installed outside the project, like uv (`uv tool install go-task-bin` recommended; CONTRIBUTING.md). The Taskfile's `version` is the minimum go-task it accepts and the only place that sets it; CONTRIBUTING.md repeats it for readers and `tests/test_project_config.py` fails when the two differ. Every command inside runs through `uv run`. |
 | Coverage gate | `fail_under = 95`, branch coverage on | Just below the measured coverage (99% at the end of S1), so a real loss of tests fails CI. Raise it as coverage allows, never lower it; review it at each milestone. |
 | CI | GitHub Actions running `task` targets; the nightly workflow runs `test:reference`, `test:network`, `docs:papers` and the quick-start scripts on pushes to `soundscapy-rewrite` touching those paths, and on a schedule once the rewrite is the default branch; releases publish on tag by PyPI trusted publishing | CI runs exactly what developers run. Scheduled runs start only from the default branch, still `main`. |
 | Line length | 100 | Room for unit-suffixed names without wrapping every call. |
@@ -152,6 +152,7 @@ rename them. Document and invoke them as `task <name>`.
 
 | Task | Runs |
 | --- | --- |
+| `default` | `{{.TASK_EXE}} --list` (silent), so a bare `task` lists the tasks. No `uv run`: it only prints |
 | `setup` | `uv sync --all-groups` then `uv run prek install` |
 | `fmt` | `ruff format` then `ruff check --fix` |
 | `lint` | `ruff format --check`, `ruff check` (no writes), then `uv run lint-imports` |
@@ -185,7 +186,9 @@ rename them. Document and invoke them as `task <name>`.
 - `uv lock` runs the project's own uv, never `astral-sh/uv-pre-commit`. That hook installs
   `uv==<rev>` in its own environment, a second uv version beside `[tool.uv]
   required-version`, and nothing keeps the two in step. `required-version` in
-  `pyproject.toml` is the one place the uv version lives.
+  `pyproject.toml` is the one place the uv CLI version is set (the `uv_build` build-backend
+  pin moves with it). CONTRIBUTING.md and `.claude/cloud/setup.sh` (`uv_min`) repeat it,
+  and `tests/test_project_config.py` fails when a copy differs.
 - `sp-repo-review` comes from `scientific-python/cookie`, pinned by `rev` like every other
   hook, at `stages = ["manual"]`. It is advisory, not a commit blocker.
 - ty is **not** a prek hook. It needs the project environment and is slower than a

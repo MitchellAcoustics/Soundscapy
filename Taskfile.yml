@@ -5,6 +5,13 @@
 version: '3.54'
 
 tasks:
+  default:
+    desc: List the available tasks (what a bare `task` runs)
+    silent: true
+    cmds:
+      # TASK_EXE is the running go-task binary, so the list comes from the same version.
+      - '{{.TASK_EXE}} --list'
+
   setup:
     desc: Install every dependency group and the git hooks
     cmds:

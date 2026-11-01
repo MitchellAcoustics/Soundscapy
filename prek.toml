@@ -54,7 +54,7 @@ repo = "local"
 # The project's own uv, not astral-sh/uv-pre-commit: that hook installs uv==<rev> in its
 # own environment, a second uv version beside [tool.uv] required-version. Run as a system
 # command, `uv lock` is the uv that required-version already checks, so pyproject.toml is
-# the one place the uv version lives.
+# the one place the uv version is set.
 [[repos.hooks]]
 id = "uv-lock"
 name = "uv lock"
