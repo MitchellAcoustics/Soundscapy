@@ -268,9 +268,9 @@ def with_columns(
     valid : numpy.ndarray of bool, optional
         Rows where this is False are null in every added column, as the frame's library
         represents a null: in polars a null of the column's type; with pandas' classic
-        dtypes NaN, so a masked integer column becomes ``float64``. A masked boolean column
-        in pandas uses the nullable ``"boolean"`` dtype, with ``pd.NA``, so it still serves
-        as a filter mask.
+        dtypes NaN, so a masked integer column becomes ``float64``. Added boolean columns in
+        pandas always use the nullable ``"boolean"`` dtype, with ``pd.NA`` for a null, so
+        they serve as filter masks and their dtype does not depend on the data.
 
     Returns
     -------
@@ -306,13 +306,16 @@ def with_columns(
         for name, values in columns.items()
     }
     if valid is None or valid.all():
-        return to_native(eager.with_columns(*series.values()))
-    keep = nw.new_series("valid", valid, dtype=nw.Boolean(), backend=backend)
-    out = to_native(eager.with_columns(**{n: nw.when(keep).then(s) for n, s in series.items()}))
-    if isinstance(out, pd.DataFrame):
+        out = to_native(eager.with_columns(*series.values()))
+    else:
+        keep = nw.new_series("valid", valid, dtype=nw.Boolean(), backend=backend)
+        masked = {name: nw.when(keep).then(s) for name, s in series.items()}
+        out = to_native(eager.with_columns(**masked))
+    flags = [name for name, values in columns.items() if values.dtype.kind == "b"]
+    if flags and isinstance(out, pd.DataFrame):
         # pandas' classic dtypes hold a null boolean as object, which pandas refuses as a
-        # filter mask; the nullable "boolean" dtype holds it as pd.NA and still filters.
-        flags = [name for name, values in columns.items() if values.dtype.kind == "b"]
+        # filter mask. Every added boolean column uses the nullable "boolean" dtype (pd.NA),
+        # masked or not, so its dtype does not depend on whether any row was masked.
         return cast("IntoDataFrameT", out.astype(dict.fromkeys(flags, "boolean")))
     return out
 

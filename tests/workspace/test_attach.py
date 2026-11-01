@@ -223,6 +223,12 @@ def test_attach_unmatched_rows_still_filter_on_ssp_included_in_pandas(column_coo
     assert out[out[COL_INCLUDED]]["ID"].tolist() == ["c", "a", "b"]
 
 
+def test_attach_pandas_ssp_included_is_nullable_boolean_when_every_row_matches(column_coords):
+    # The dtype does not depend on whether any row was unmatched.
+    out = attach(pd.DataFrame({"ID": ["a", "b", "c"]}), column_coords)
+    assert str(out[COL_INCLUDED].dtype) == "boolean"
+
+
 def test_attach_blank_response_cell_is_unmatched(column_coords):
     out = attach(pd.DataFrame({"ID": ["a", None, ""]}), column_coords)
     assert out[COL_INCLUDED].isna().tolist() == [False, True, True]
