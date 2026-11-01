@@ -26,10 +26,32 @@ Applied on `claude/dev-tools-idiom-review-qfncq4`, each with `task check` passin
 - `2d6fd53`: F2, F3, F4 and F9, following the owner's decision to keep pandas as scikit-lego
   does. The suite also passes at the `lowest-direct` floors.
 
+- `85ee3d0`: F5 and F6 (owner decision; spec §6.15 amended). Colours come from the active
+  `axes.prop_cycle` and are passed explicitly, not left to each Axes' cycle. The marker
+  change needs the cycle's length, which matplotlib does not expose per Axes.
+- `8bc0569`: F8, option (b) (spec §6.3.9 amended). Option (a), INFO opt-in, was dropped:
+  NFR-13 requires a default handler that shows informational messages, including a
+  download's licence line (FR-10.1).
+- `efc7399` and `c553681`: the simplify pass and the code review (AGENTS.md, Review), and
+  their fixes.
+
 Open:
 
-- F5, F6 and F8, owner decisions on plotting and logging;
-- F22, keep, with no action;
+- **Owner decision, raised by the code review.** With narwhals-native nulls (F3),
+  `attach` on a pandas frame with an unmatched row makes `ssp_included` an `object` column
+  holding NaN. `df[df["ssp_included"]]` then raises "Cannot mask with non-boolean array
+  containing NA / NaN values"; the earlier nullable `boolean` worked there. The options:
+  - accept this, and document `df[df["ssp_included"].eq(True)]`;
+  - return pandas' nullable `boolean` for that column only;
+  - revisit F3.
+- **Code-review findings skipped, with reasons:**
+  - Root logging at WARNING through an implicit `basicConfig()` hides INFO lines. That *is*
+    standard logging configuration, which NFR-13 says the user may silence with.
+  - pyplot's figure registry as global state. This is owner decision F5; the figure is
+    returned to the caller, not hidden.
+  - The narwhals canary test asserts current behaviour. `uv.lock` pins narwhals, so the test
+    fails only on a deliberate upgrade, when the masking choice should be revisited.
+- F22, keep, with no action.
 - F23, once the docs site has an address.
 
 ## Method and limits
@@ -82,10 +104,10 @@ Several of these trace back to the house rules themselves. "House rules that are
 | F2 | narwhals | Frames typed `Any` (12 `noqa: ANN401`) instead of narwhals' `IntoDataFrameT` | applied |
 | F3 | narwhals | Drop the pandas branch in `with_columns` for narwhals-native nulls | applied |
 | F4 | narwhals | `to_eager` relies on an undocumented `TypeError` | applied |
-| F5 | matplotlib | Pyplot-free `ax=None` departs from matplotlib's library pattern | Owner, P2 |
-| F6 | matplotlib | Hard-coded petroff10 ignores style sheets and property cycles (FR-8.3) | P2 |
+| F5 | matplotlib | Pyplot-free `ax=None` departs from matplotlib's library pattern | applied |
+| F6 | matplotlib | Hard-coded petroff10 ignores style sheets and property cycles (FR-8.3) | applied |
 | F7 | matplotlib | `MPLBACKEND` set in the Taskfile, not in the test suite | applied |
-| F8 | logging | The library logger's level bypasses the application's root level | Owner, P2 |
+| F8 | logging | The library logger's level bypasses the application's root level | applied |
 | F9 | tomlkit | `_tables_last` probably duplicates tomlkit | applied |
 | F10 | Taskfile, prek | `sp-repo-review` runs unpinned | applied |
 | F11 | Taskfile | `check:fast` stops at the first failing step | applied |
