@@ -175,8 +175,13 @@ name = "Core never imports matplotlib or seaborn"
 type = "forbidden"
 source_modules = ["soundscapy"]
 forbidden_modules = ["matplotlib", "seaborn"]
-ignore_imports = ["soundscapy.plot.** -> matplotlib", "soundscapy.plot.** -> seaborn"]
+# `soundscapy.plot.**` matches only submodules, so the package itself is listed too (spec §5.2.1).
+ignore_imports = [
+  "soundscapy.plot -> matplotlib", "soundscapy.plot.** -> matplotlib",
+  "soundscapy.plot -> seaborn", "soundscapy.plot.** -> seaborn",
+]
 allow_indirect_imports = true
+unmatched_ignore_imports_alerting = "none"  # plot/__init__.py imports neither today
 
 [[tool.importlinter.contracts]]
 name = "Dataframe libraries only in soundscapy._frames"

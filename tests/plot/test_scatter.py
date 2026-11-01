@@ -26,8 +26,17 @@ if TYPE_CHECKING:
 LABELS = ("pleasant", "annoying", "eventful", "uneventful")
 QUADRANTS = ("vibrant", "chaotic", "monotonous", "calm")
 
-# The default is seaborn's colour-blind palette itself (spec §6.15), so seaborn is the oracle.
-COLORBLIND = [to_hex(rgb) for rgb in sns.color_palette("colorblind")]
+# The default is seaborn's colour-blind palette (spec §6.15). Its values are pinned here, as
+# seaborn 0.13.2 gives them, so a seaborn release that changed them, and with them every
+# default figure, fails a test instead of passing silently.
+COLORBLIND = [
+    "#0173b2", "#de8f05", "#029e73", "#d55e00", "#cc78bc",
+    "#ca9161", "#fbafe4", "#949494", "#ece133", "#56b4e9",
+]  # fmt: skip
+
+
+def test_seaborn_colorblind_is_still_the_pinned_palette():
+    assert [to_hex(rgb) for rgb in sns.color_palette("colorblind")] == COLORBLIND
 
 
 def _collections(ax) -> list[PathCollection]:
