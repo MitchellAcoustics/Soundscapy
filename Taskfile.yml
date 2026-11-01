@@ -1,7 +1,8 @@
-version: '3'
-
-env:
-  MPLBACKEND: Agg
+# go-task is installed outside the project (CONTRIBUTING.md recommends
+# `uv tool install go-task-bin`), so every command runs through `uv run`, which syncs the
+# project venv from uv.lock first. `version` is the minimum go-task this file needs: an older
+# `task` refuses to run it with a message saying so.
+version: '3.54'
 
 tasks:
   setup:
@@ -55,9 +56,8 @@ tasks:
 
   check:fast:
     desc: Lint and type-check (offline, a few seconds)
-    cmds:
-      - task: lint
-      - task: typecheck
+    # deps run concurrently, so one run reports lint and type errors together.
+    deps: [lint, typecheck]
 
   check:
     desc: Lint, type-check and test with coverage (done means this passes)
@@ -83,9 +83,9 @@ tasks:
   build:
     desc: Build the sdist and wheel
     cmds:
-      - uv build
+      - uv build --no-sources
 
   repo-review:
-    desc: Run sp-repo-review against the repository
+    desc: Run sp-repo-review against the repository (the hook pinned in prek.toml)
     cmds:
-      - uvx 'sp-repo-review[cli]' .
+      - uv run prek run sp-repo-review --stage manual --all-files

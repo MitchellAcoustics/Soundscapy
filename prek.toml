@@ -63,11 +63,12 @@ language = "system"
 files = '^(uv\.lock|pyproject\.toml)$'
 pass_filenames = false
 
-# Advisory, not a commit blocker: run with `uv run task repo-review`.
+# sp-repo-review, pinned like every other hook. Advisory, not a commit blocker: run it with
+# `task repo-review`.
+[[repos]]
+repo = "https://github.com/scientific-python/cookie"
+rev = "2026.08.14"
+
 [[repos.hooks]]
-id = "repo-review"
-name = "sp-repo-review"
-entry = "uvx 'sp-repo-review[cli]' ."
-language = "system"
-pass_filenames = false
+id = "sp-repo-review"
 stages = ["manual"]

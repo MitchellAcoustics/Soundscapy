@@ -2,6 +2,9 @@
 # publishing on a `v*` tag. The owner configures the PyPI trusted publisher (this repository,
 # workflow release.yml, environment `pypi`) when a dev release is ready; until then no `v*`
 # tag is pushed from this codebase and the workflow does not run.
+#
+# Two jobs, as uv's publishing guide shows: `build` runs the whole dev toolchain without the
+# publishing token; `publish` holds `id-token: write` and runs nothing but `uv publish`.
 name: Release
 
 on:
@@ -11,22 +14,19 @@ on:
 permissions:
   contents: read
 
+env:
+  UV_LOCKED: "1"
+
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    # Recommended: give the `pypi` environment required reviewers in the repository settings,
-    # so a pushed tag waits for a maintainer's approval before anything is published.
-    environment: pypi
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          # No cache in the publishing job: a restored cache is a cache-poisoning route into
+          # No cache in the release jobs: a restored cache is a cache-poisoning route into
           # the built artifacts, and a release build gains nothing from it.
           enable-cache: false
       - name: Fail unless the tag matches the project version
@@ -36,7 +36,34 @@ jobs:
             echo "tag $GITHUB_REF_NAME does not match project version $version" >&2
             exit 1
           fi
-      - run: uv sync --locked
-      - run: uv run --locked task check
-      - run: uv build
+      - name: Install go-task (Taskfile.yml's version is the minimum it accepts)
+        run: |
+          uv tool install go-task-bin
+          uv tool dir --bin >> "$GITHUB_PATH"
+      - run: task check
+      # --no-sources: build as any other build frontend would, without [tool.uv.sources].
+      - run: task build
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # Recommended: give the `pypi` environment required reviewers in the repository settings,
+    # so a pushed tag waits for a maintainer's approval before anything is published.
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
       - run: uv publish --trusted-publishing always

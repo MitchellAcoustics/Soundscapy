@@ -927,24 +927,6 @@ wheels = [
 ]
 
 [[package]]
-name = "go-task-bin"
-version = "3.54.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4e/71/b4c1c8d2db52eeabe43e2c742815596ad54d325952c4c65259e7c6cac80e/go_task_bin-3.54.0.tar.gz", hash = "sha256:43a696b0945fc3395d1aa81b29fcbd45b5c35976f8dce8681eeef05ea58b8f4d", size = 841157, upload-time = "2026-10-02T03:13:20.808Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/47/5ab70d3eb95013d16cc90f1c38d9a05fa03505d26001f3c6e0657495c785/go_task_bin-3.54.0-py3-none-android_33_arm64_v8a.whl", hash = "sha256:bf90483bc73c3c77f1ed1935f538fc0c85ea2372d32a97bd17929569c165a6f4", size = 15695682, upload-time = "2026-10-02T03:12:48.47Z" },
-    { url = "https://files.pythonhosted.org/packages/63/a2/a7398ecfcbcdffbb9d3f40c9a08f50d1f6c397ce7e68dea27493ab4565db/go_task_bin-3.54.0-py3-none-macosx_13_0_arm64.whl", hash = "sha256:f1edc4aa7fc61e25b17cb9cbb98687415432f722a278e214aff7c4d3019fd345", size = 15425435, upload-time = "2026-10-02T03:12:52.515Z" },
-    { url = "https://files.pythonhosted.org/packages/16/f2/a3bc7b95c5c127f259142e3a1f47b73b200315a9ba754f64e469efbfca84/go_task_bin-3.54.0-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:04ce899dd49628230ed810f12435105fcc77f6da03151e486d1648f8a380fa6c", size = 16736315, upload-time = "2026-10-02T03:12:55.803Z" },
-    { url = "https://files.pythonhosted.org/packages/7c/8c/ff249db358025c7acac43406b5859d64575232e0a3c92b1c157a2f4e0787/go_task_bin-3.54.0-py3-none-manylinux_2_28_aarch64.musllinux_1_2_aarch64.whl", hash = "sha256:015d8d8db424150cf70c071cb9e021a381f68fcdc925e334a9928778d0977ac6", size = 14625377, upload-time = "2026-10-02T03:12:59.106Z" },
-    { url = "https://files.pythonhosted.org/packages/15/00/7fd9eabea8aa0183fe157a580976629b50842006a39d3863e5c5be579fb8/go_task_bin-3.54.0-py3-none-manylinux_2_28_ppc64le.musllinux_1_2_ppc64le.whl", hash = "sha256:1e549d3c2e93cfc1224f9d9db13db28455a88a4a8b0c57459e3edbe498932ed5", size = 14675161, upload-time = "2026-10-02T03:13:02.202Z" },
-    { url = "https://files.pythonhosted.org/packages/6d/b9/237c9353c2c769f602da0a45b76a8e13bc8f93917a435368e91e5c79fb12/go_task_bin-3.54.0-py3-none-manylinux_2_28_riscv64.musllinux_1_2_riscv64.whl", hash = "sha256:70de4e8606255ca853649e99a9bcfa4f839ce58d2537a310d1de76ee59ba23a7", size = 15576771, upload-time = "2026-10-02T03:13:05.638Z" },
-    { url = "https://files.pythonhosted.org/packages/8d/5f/e177bf28b7e3a481ac7b00c533d5ace15f6daf9a16ab95854e6438cc698e/go_task_bin-3.54.0-py3-none-manylinux_2_28_s390x.musllinux_1_2_s390x.whl", hash = "sha256:707a1dce7de71cbbbf65920e1ede22fe56f84d3c6676ca62faaa011de6cf3b23", size = 16094565, upload-time = "2026-10-02T03:13:08.71Z" },
-    { url = "https://files.pythonhosted.org/packages/80/75/7a9768755c24abd77d60888650d2c780c931c551877278ae8c3145d02e92/go_task_bin-3.54.0-py3-none-manylinux_2_28_x86_64.musllinux_1_2_x86_64.whl", hash = "sha256:2a2ac75ab83a70921c5925f8741e47d599e70c8f1ee2639b247b10f36e73ffa6", size = 16326339, upload-time = "2026-10-02T03:13:11.992Z" },
-    { url = "https://files.pythonhosted.org/packages/b1/93/a35f76c9b638aec008932f064345389f8d8ee59a0fb016f7122126e8805f/go_task_bin-3.54.0-py3-none-win_amd64.whl", hash = "sha256:b54fef5e3d9f46df87036b7030395d58fb30b098dddd3b5d3a9565748546cad8", size = 16716442, upload-time = "2026-10-02T03:13:15.143Z" },
-    { url = "https://files.pythonhosted.org/packages/2e/4e/4e4f31d2542a13312d24202972578f8978c20f62ca3fd352fe6a0b8bef89/go_task_bin-3.54.0-py3-none-win_arm64.whl", hash = "sha256:aba9c13ec9dc6d313c3e5f057a3610a91942d576fe73f23025071124c3d9615e", size = 14800085, upload-time = "2026-10-02T03:13:18.319Z" },
-]
-
-[[package]]
 name = "great-docs"
 version = "0.17.1.dev1042+gaf17c76d6"
 source = { git = "https://github.com/posit-dev/great-docs?rev=af17c76d6ab2c775e438c6804c3b1b6feceef57e#af17c76d6ab2c775e438c6804c3b1b6feceef57e" }
@@ -3406,7 +3388,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "go-task-bin" },
     { name = "import-linter" },
     { name = "pandas-stubs" },
     { name = "prek" },
@@ -3439,7 +3420,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "go-task-bin", specifier = ">=3.54.0" },
     { name = "import-linter", specifier = ">=2.15" },
     { name = "pandas-stubs", specifier = ">=3.1.0.261029" },
     { name = "prek", specifier = ">=0.5.9" },

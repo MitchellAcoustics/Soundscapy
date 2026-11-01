@@ -27,13 +27,13 @@ when you configure the docs site, or write a tutorial or user-guide page.
 | Package / import name | `soundscapy` | Keeps the existing PyPI name and citations. |
 | Layout | `src/soundscapy/`, tests in `tests/` | Stops tests importing the working tree by accident. |
 | Build backend | `uv_build` | One toolchain. No hatchling, setuptools or VCS versioning. |
-| Python floor | `requires-python = ">=3.11"`; ruff `target-version = "py311"`; ty `python-version = "3.11"` | Product-owner decision. It is deliberately wider than the SPEC 0 window, so do not raise it to match SPEC 0 or a vendor default. Test every supported version in CI. |
+| Python floor | `requires-python = ">=3.11"`; ruff `target-version = "py311"`; ty reads it from `requires-python` | Product-owner decision. It is deliberately wider than the SPEC 0 window, so do not raise it to match SPEC 0 or a vendor default. Test every supported version in CI. |
 | Type checker | `ty` | Astral toolchain. Never add mypy, pyright, basedpyright or pyrefly, nor their LSP plugins. |
 | Lint / format | `ruff`, `select = ["ALL"]` with the commented ignores below | Maximum signal; every exemption is visible and justified. |
 | Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports | Matches the scientific Python ecosystem and great-docs rendering. |
 | Git hooks | `prek`, configured in its native `prek.toml` | The `builtin` hooks already make the setup prek-only, so a pre-commit-compatible YAML file buys nothing. Never install `pre-commit` itself. |
-| Task runner | `Taskfile.yml` (go-task, `version: '3'`), run as `uv run task <name>` | One set of entry points for agents, humans and CI. go-task comes from `go-task-bin` in the `dev` group, so contributors install only uv and git. Bare `task` works only with the venv activated. |
-| Coverage gate | `fail_under = 80`, branch coverage on | Matches the Trail of Bits default; raise it, never lower it. |
+| Task runner | `Taskfile.yml` (go-task), run as `task <name>` | One set of entry points for agents, humans and CI. go-task is installed outside the project, like uv (`uv tool install go-task-bin` recommended; CONTRIBUTING.md). The Taskfile's `version` (`'3.54'`) is the minimum go-task it accepts, so no other file pins it, and every command inside runs through `uv run`. |
+| Coverage gate | `fail_under = 95`, branch coverage on | Just below the measured coverage (99% at the end of S1), so a real loss of tests fails CI. Raise it as coverage allows, never lower it; review it at each milestone. |
 | CI | GitHub Actions running `task` targets; the nightly workflow runs `test:reference`, `test:network`, `docs:papers` and the quick-start scripts on pushes to `soundscapy-rewrite` touching those paths, and on a schedule once the rewrite is the default branch; releases publish on tag by PyPI trusted publishing | CI runs exactly what developers run. Scheduled runs start only from the default branch, still `main`. |
 | Line length | 100 | Room for unit-suffixed names without wrapping every call. |
 
@@ -50,7 +50,7 @@ Keep the whole configuration in `pyproject.toml`; no `ruff.toml`, `pytest.ini`,
 - Dev tooling goes in `[dependency-groups]`, never in `[project.optional-dependencies]`.
   Optional extras are for users (for example an `audio` extra), not for developers.
   - `dev`: ruff, ty, prek, import-linter (layer contracts from the architecture plan
-    §4, run by `task lint`), go-task-bin (the `task` command)
+    §4, run by `task lint`)
   - `test`: pytest, pytest-cov, pytest-xdist, hypothesis
   - `docs`: great-docs, a Jupyter kernel (`ipykernel`) for executing `.qmd` cells, and
     `quarto-cli` (pinned exactly; it fetches the Quarto binary great-docs runs)
@@ -73,13 +73,21 @@ ignore = [
   "D105",              # magic-method docstrings add nothing
   "D107",              # numpy style documents __init__ parameters on the class
   "N803", "N806",      # mathematical names such as X, Pa, ISOPl match the papers
-  "PLR0913",           # scientific functions legitimately take many keyword arguments
   "TD002", "TD003",    # TODOs need no author or issue link while the rewrite is young
   "FIX002",            # allow TODO comments; review them before each release
 ]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.pylint]
+max-args = 10  # keyword-only scientific signatures; the widest in the M1 spec (density) has 8
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = ["matplotlib"]  # imported inside plot functions only (spec §6.15)
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib artist
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
@@ -106,11 +114,16 @@ whose code blocks are illustrative or normative text, not package code. The vend
 
 ### Other tool sections
 
-- `[tool.ty]`: keep it minimal. Set the Python version and source roots only; verify
-  key names against the ty docs (`/astral:ty`) because ty is pre-1.0.
+- `[tool.ty]`: set only what ty cannot derive. It reads the Python version from
+  `requires-python` and finds `src/` and the project root itself, so today the section
+  holds `[tool.ty.src] exclude` and per-file overrides, each with a comment. Verify key
+  names against the ty docs (`/astral:ty`) because ty is pre-1.0.
 - `[tool.pytest.ini_options]`: `minversion = "9.2"`, `testpaths = ["tests"]`,
-  `addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib", "-ra",
-  "-m", "not reference and not network"]`, `xfail_strict = true`,
+  `strict = true` (pytest 9.0; strict config, markers, xfail and parametrisation ids,
+  safe because `uv.lock` pins pytest), `pythonpath = ["."]` (so `tests/_helpers.py` and
+  similar modules import as `tests._helpers`, which importlib mode does not otherwise
+  allow), `addopts = ["--import-mode=importlib", "-ra", "-m",
+  "not reference and not network"]`,
   `log_level = "INFO"` (captured logs shown on failure; repo-review PP304),
   `filterwarnings = ["error"]`. A later `-m` on the command line overrides the one in
   `addopts`, which is how `test:reference` and `test:network` select their markers
@@ -126,14 +139,15 @@ whose code blocks are illustrative or normative text, not package code. The vend
   ruff's `TC` rules never move an import a pydantic model (or a `FrozenModel` record)
   needs at runtime.
 - `[tool.coverage.run]`: `branch = true`, `source = ["soundscapy"]`.
-  `[tool.coverage.report]`: `fail_under = 80`, `show_missing = true`.
+  `[tool.coverage.report]`: `fail_under = 95`, `show_missing = true`.
+- matplotlib's backend for the tests is set in `tests/conftest.py` (`matplotlib.use("Agg")`),
+  so it applies however the tests are started; nothing sets `MPLBACKEND` globally.
 
 ## Taskfile task names
 
-Every task has a `desc`, every command runs through `uv run`, and `env: {MPLBACKEND: Agg}`
-is set globally. These names are referenced by AGENTS.md, the Stop hook and CI, so do not
-rename them. Document and invoke them as `uv run task <name>` (the Stop hook uses that form,
-and bare `task` only when `uv` is not on PATH).
+Every task has a `desc` and every command runs through `uv run`; the Taskfile sets no
+environment. These names are referenced by AGENTS.md, the Stop hook and CI, so do not
+rename them. Document and invoke them as `task <name>`.
 
 | Task | Runs |
 | --- | --- |
@@ -142,16 +156,16 @@ and bare `task` only when `uv` is not on PATH).
 | `lint` | `ruff format --check`, `ruff check` (no writes), then `uv run lint-imports` |
 | `typecheck` | `uv run ty check` |
 | `test` | `uv run pytest {{.CLI_ARGS}}` |
-| `test:cov` | pytest with coverage and the 80% gate |
-| `check:fast` | `lint` + `typecheck`; must finish in a few seconds (Stop hook) |
+| `test:cov` | pytest with coverage and the 95% gate |
+| `check:fast` | `lint` and `typecheck` as concurrent `deps`; must finish in a few seconds (Stop hook) |
 | `check` | `lint` + `typecheck` + `test:cov`: the definition of done |
 | `test:reference` | pytest `-m reference`: cross-implementation checks (R `sn` fixtures, ISO 532-1 signals, ArtemiS); nightly in CI and on demand |
 | `test:network` | pytest `-m network`: tests that download a dataset; nightly in CI and on demand |
 | `docs` | `uv run --group docs great-docs build`, which also executes the tutorials; offline, so the paper pages stay frozen |
 | `docs:papers` | `uv run --group docs great-docs freeze docs/papers/2022-how-to-analyse.qmd`: re-executes the frozen paper pages (needs the network; nightly in CI). See `reference.md` §4 for why `freeze` suffices |
 | `docs:preview` | great-docs local preview |
-| `build` | `uv build` |
-| `repo-review` | `uvx 'sp-repo-review[cli]' .` |
+| `build` | `uv build --no-sources`, as uv's publishing guide recommends |
+| `repo-review` | `uv run prek run sp-repo-review --stage manual --all-files`: the hook pinned in `prek.toml` |
 
 ## prek configuration
 
@@ -170,7 +184,8 @@ and bare `task` only when `uv` is not on PATH).
   `uv==<rev>` in its own environment, a second uv version beside `[tool.uv]
   required-version`, and nothing keeps the two in step. `required-version` in
   `pyproject.toml` is the one place the uv version lives.
-- `sp-repo-review` runs at `stages = ["manual"]`. It is advisory, not a commit blocker.
+- `sp-repo-review` comes from `scientific-python/cookie`, pinned by `rev` like every other
+  hook, at `stages = ["manual"]`. It is advisory, not a commit blocker.
 - ty is **not** a prek hook. It needs the project environment and is slower than a
   commit hook should be; it runs in `task check:fast` (the Stop hook) and in CI.
 - Pin every `rev` to a released tag and update with `prek auto-update`.

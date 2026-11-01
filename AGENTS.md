@@ -24,7 +24,7 @@ Before implementing or changing a scientific procedure, read its source in
 `Taskfile.yml`, prek hooks), CI and the docs skeleton exist, on an empty package with a
 small test suite. M1 slice S1 (contracts and the thin path `load_isd` → `project` →
 `plot.scatter`/`attach`, plan `design/plans/2026-10-31-m1-s1-thin-slice.md`) is in place;
-slice S2 is next. `uv run task check` passing is the definition of done.
+slice S2 is next. `task check` passing is the definition of done.
 
 ## Repo map (target layout)
 
@@ -41,8 +41,9 @@ slice S2 is next. `uv run task check` passing is the definition of done.
 
 ## Commands
 
-Run everything as `uv run task <name>` (go-task comes with the dev group); bare `task` works
-only with the venv active. `uv run task --list` shows the entry points. Key tasks: `setup`,
+Run everything as `task <name>`. go-task is installed outside the project (`uv tool install
+go-task-bin`, see CONTRIBUTING.md), and every task runs its commands through `uv run`.
+`task --list` shows the entry points. Key tasks: `setup`,
 `fmt`, `lint`, `typecheck`, `test`, `test:cov`, `test:reference`, `test:network`,
 `check:fast` (lint and typecheck, run by the Stop hook), `check`, `docs`, `docs:papers`,
 `docs:preview`, `build`, `repo-review`.
@@ -51,7 +52,9 @@ only with the venv active. `uv run task --list` shows the entry points. Key task
 
 ## Environment
 
-- uv only. Never run bare `pip` or `python`; use `uv run` and `uvx`.
+- uv only. Never run bare `pip` or `python`; use `uv run` and `uvx`. The agent hooks
+  start with `uv run --no-config --script`, so no project setting
+  can stop the agent's tools (see CLAUDE.md).
 - Runtime dependency: `uv add <pkg>`. Developer-only dependency: `uv add --group
   <group> <pkg>`, where the group is `dev` (tooling), `test` or `docs`.
 - Commit `uv.lock` with every dependency change, and give the reason in the commit
@@ -107,7 +110,9 @@ PRs target `soundscapy-rewrite`.
 
 ## Don't
 
-- Weaken lint or type rules to make errors go away. Fix the code, or add a narrowly
-  scoped ignore with a comment giving the reason.
+- Weaken lint or type rules to make errors go away. Fix the code. Where the tool has a
+  documented option for the pattern (a module that must be imported lazily, forwarded
+  `**kwargs`), use the option; otherwise add a narrowly scoped ignore with a comment giving
+  the reason.
 - Reformat files you did not otherwise change.
 - Add a dependency without saying why.

@@ -34,7 +34,6 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "go-task-bin>=3.54.0",
     "import-linter>=2.15",
     "pandas-stubs>=3.1.0.261029",
     "prek>=0.5.9",
