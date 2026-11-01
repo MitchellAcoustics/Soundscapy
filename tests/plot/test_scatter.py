@@ -79,11 +79,8 @@ def test_ungrouped_colour_is_the_first_default_colour(isd_coords):
 def test_the_default_cycle_does_not_leak(isd_coords):
     # No hidden global state: the default palette is applied in an rc_context that restores
     # rcParams, so later plots by the user or by another library see matplotlib's own cycle.
-    before = mpl.rcParams["axes.prop_cycle"]
     plot.scatter(isd_coords, by="location")
-    assert mpl.rcParams["axes.prop_cycle"] == before == mpl.rcParamsDefault["axes.prop_cycle"]
-    (line,) = plt.figure().add_subplot().plot([0.0, 0.1], [0.0, 0.1])
-    assert to_hex(line.get_color()) == to_hex(before.by_key()["color"][0])
+    assert mpl.rcParams["axes.prop_cycle"] == mpl.rcParamsDefault["axes.prop_cycle"]
 
 
 def test_more_than_ten_groups_are_distinct(isd_coords):

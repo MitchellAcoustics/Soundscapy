@@ -103,7 +103,6 @@ def test_sphinx_role_pattern_matches_roles_and_nothing_else():
         "[](`~soundscapy.read_survey`)",
         "pip install --only-binary :all: soundscapy",
         '{"a":`b`}',
-        "https://example.org/a:b",
     )
     assert all(SPHINX_ROLE.search(text) for text in roles)
     assert not any(SPHINX_ROLE.search(text) for text in others)

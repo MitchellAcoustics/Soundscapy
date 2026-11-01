@@ -1,10 +1,7 @@
 """Projected responses: their (x, y) coordinates, per-response labels and origin.
 
-Three functions of this module are the one definition of a valid row and of the two counts,
-and every consumer calls them (the ``Coordinates`` methods of the same names too):
-``soundscapy.distribution.coordinates.valid_mask()``,
-``soundscapy.distribution.coordinates.n()`` and
-``soundscapy.distribution.coordinates.n_valid()``.
+``valid_mask()``, ``n()`` and ``n_valid()`` are the one definition of a valid row and of the
+two counts; every consumer calls them (the ``Coordinates`` methods of the same names too).
 """
 
 from __future__ import annotations
@@ -293,9 +290,7 @@ def n(coords: Coordinates) -> int:
 
 
 def n_valid(coords: Coordinates) -> int:
-    """Return the number of valid rows.
-
-    A row is valid when ``soundscapy.distribution.coordinates.valid_mask()`` marks it so.
+    """Return the number of valid rows (see ``valid_mask()``).
 
     Parameters
     ----------
@@ -305,6 +300,6 @@ def n_valid(coords: Coordinates) -> int:
     Returns
     -------
     int
-        The number of rows that are included and have finite x and y.
+        The number of valid rows.
     """
     return int(valid_mask(coords).sum())
