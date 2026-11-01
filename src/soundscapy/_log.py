@@ -6,6 +6,10 @@ configuration decides: records reach its handlers only at or above the root logg
 unless the level of the ``soundscapy`` logger was set deliberately, by :func:`set_log_level`
 or by the application itself. Records always propagate, so ``caplog`` and a GUI's own
 handler receive them.
+
+All of soundscapy logs through :data:`logger` itself, never through a child logger such as
+``soundscapy.survey``: the filter that applies the application's root level is attached to
+this logger, and Python consults a logger's filters only for records created on it.
 """
 
 import logging

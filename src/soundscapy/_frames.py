@@ -129,8 +129,8 @@ def to_native(frame: nw.DataFrame[IntoDataFrameT]) -> IntoDataFrameT:
 
     Returns
     -------
-    object
-        The frame in the user's library.
+    pandas.DataFrame or polars.DataFrame
+        The native frame behind ``frame``, in the user's library.
     """
     return frame.to_native()
 
@@ -273,7 +273,7 @@ def with_columns(
 
     Returns
     -------
-    object
+    pandas.DataFrame or polars.DataFrame
         A frame of the same library as ``frame``.
 
     Raises
@@ -328,8 +328,9 @@ def new_frame(
 
     Returns
     -------
-    object
-        A new native frame; it owns copies of the arrays.
+    pandas.DataFrame or polars.DataFrame
+        A new frame, pandas without ``like`` and of ``like``'s library with it; it owns copies
+        of the arrays.
     """
     backend = DEFAULT_BACKEND if like is None else to_eager(like).implementation
     copied = {name: np.array(values, copy=True) for name, values in columns.items()}

@@ -141,7 +141,7 @@ whose code blocks are illustrative or normative text, not package code. The vend
   needs at runtime.
 - `[tool.coverage.run]`: `branch = true`, `source = ["soundscapy"]`.
   `[tool.coverage.report]`: `fail_under = 95`, `show_missing = true`.
-- matplotlib's backend for the tests is set in `tests/plot/conftest.py` (`matplotlib.use("Agg")`),
+- matplotlib's backend for the tests is set in `tests/conftest.py` (`matplotlib.use("Agg")`),
   so it applies however the tests are started; nothing sets `MPLBACKEND` globally.
 
 ## Taskfile task names

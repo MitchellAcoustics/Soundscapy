@@ -124,11 +124,11 @@ def scatter(
     >>> coords = sspy.project(sspy.load_isd(subset=True), angles="equal")
     >>> ax = sspy.plot.scatter(coords, by="location")
     """
-    if ax is None:
-        ax = new_axes()
     group_by = "" if isinstance(by, _Unset) else by
     per_point = _per_point_colours(kwargs, coords, grouped=bool(group_by))
     groups = coords.split(group_by) if group_by else {"": coords}
+    if ax is None:  # after the arguments are checked, so a refused call leaves no figure
+        ax = new_axes()
     colours = group_colours()
     styles = ((colour, marker) for marker in cycle(_MARKERS) for colour in colours)
     for (key, group), (colour, marker) in zip(groups.items(), styles, strict=False):

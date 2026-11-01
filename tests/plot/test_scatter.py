@@ -15,6 +15,7 @@ from matplotlib.figure import Figure
 
 from soundscapy import plot
 from soundscapy.distribution.coordinates import Coordinates, valid_mask
+from soundscapy.errors import MappingError
 
 LABELS = ("pleasant", "annoying", "eventful", "uneventful")
 QUADRANTS = ("vibrant", "chaotic", "monotonous", "calm")
@@ -266,3 +267,20 @@ def test_a_user_cycle_without_colours_falls_back_to_petroff10(isd_coords):
     np.testing.assert_array_equal(
         collection.get_facecolor()[0], to_rgba(mpl.color_sequences["petroff10"][0])
     )
+
+
+def test_a_user_cycle_of_rgb_tuples_is_drawn_as_given(isd_coords):
+    rgb = [(1.0, 0.0, 0.0), (0.0, 0.5, 0.0)]
+    with mpl.rc_context({"axes.prop_cycle": cycler(color=rgb)}):
+        ax = plot.scatter(isd_coords, by="location")
+    faces = [c.get_facecolor()[0] for c in _collections(ax)]
+    for i, face in enumerate(faces):
+        # Exact: to_rgba of the tuple is the colour matplotlib stores.
+        np.testing.assert_array_equal(face, to_rgba(rgb[i % 2]))
+
+
+def test_a_refused_call_leaves_no_figure(isd_coords):
+    plt.close("all")
+    with pytest.raises(MappingError):
+        plot.scatter(isd_coords, by="no_such_column")
+    assert plt.get_fignums() == []

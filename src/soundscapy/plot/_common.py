@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.typing import ColorType
 
     from soundscapy.instrument import Circumplex
 
@@ -36,24 +37,26 @@ def _style_context() -> AbstractContextManager[object]:
     return matplotlib.style.context(DEFAULT_STYLE)
 
 
-def group_colours() -> list[str]:
+def group_colours() -> list["ColorType"]:
     """Return the colours groups are drawn in, in order.
 
     Returns
     -------
-    list of str
-        The ``color`` entries of the active ``axes.prop_cycle`` when the user has styled
-        matplotlib, otherwise those of the ``petroff10`` style. A user cycle without
+    list of matplotlib colour
+        The ``color`` entries of the active ``axes.prop_cycle``, as given, when the user has
+        styled matplotlib, otherwise those of the ``petroff10`` style. A user cycle without
         colours falls back to ``petroff10``.
     """
     import matplotlib as mpl
     import matplotlib.style
 
-    with _style_context():
-        colours = mpl.rcParams["axes.prop_cycle"].by_key().get("color")
+    cycle = mpl.rcParams["axes.prop_cycle"]
+    colours = (
+        cycle.by_key().get("color") if cycle != mpl.rcParamsDefault["axes.prop_cycle"] else None
+    )
     if not colours:
         colours = matplotlib.style.library[DEFAULT_STYLE]["axes.prop_cycle"].by_key()["color"]
-    return [str(colour) for colour in colours]
+    return list(colours)
 
 
 def new_axes() -> "Axes":
