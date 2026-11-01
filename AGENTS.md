@@ -46,7 +46,7 @@ go-task-bin`, see CONTRIBUTING.md), and every task runs its commands through `uv
 `task --list` shows the entry points. Key tasks: `setup`,
 `fmt`, `lint`, `typecheck`, `test`, `test:cov`, `test:reference`, `test:network`,
 `check:fast` (lint and typecheck, run by the Stop hook), `check`, `docs`, `docs:papers`,
-`docs:preview`, `build`, `repo-review`.
+`docs:preview`, `build`, `clean`, `repo-review`.
 
 **Done means `task check` passes.**
 

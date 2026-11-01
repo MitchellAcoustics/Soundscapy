@@ -166,6 +166,7 @@ rename them. Document and invoke them as `task <name>`.
 | `docs:papers` | `uv run --group docs great-docs freeze docs/papers/2022-how-to-analyse.qmd`: re-executes the frozen paper pages (needs the network; nightly in CI). See `reference.md` §4 for why `freeze` suffices |
 | `docs:preview` | great-docs local preview |
 | `build` | `uv build --no-sources`, as uv's publishing guide recommends |
+| `clean` | `rm -rf` of the tool caches and build output, then `find` to drop `__pycache__`, `.pytest_cache`, `.DS_Store` and the folders left empty, skipping `.git`, `.venv` and `.pixi`. Plain shell, the one task outside `uv run`: a local, POSIX-only convenience that CI never runs |
 | `repo-review` | `uv run prek run sp-repo-review --stage manual --all-files`: the hook pinned in `prek.toml` |
 
 ## prek configuration

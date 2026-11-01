@@ -85,6 +85,17 @@ tasks:
     cmds:
       - uv build --no-sources
 
+  clean:
+    desc: Remove caches, build output, __pycache__ folders and the empty folders left behind
+    # Plain shell, not `uv run`: it deletes regenerable files only and needs no environment.
+    # Local convenience; `find` makes it POSIX-only, and CI never runs it.
+    cmds:
+      - rm -rf .pytest_cache .ruff_cache .import_linter_cache htmlcov .coverage coverage.xml dist build docs/_site docs/_quarto docs/.cache
+      - find . \( -path ./.git -o -path ./.venv -o -path ./.pixi \) -prune -o \( -name __pycache__ -o -name .pytest_cache -o -name .DS_Store \) -prune -exec rm -rf {} +
+      # Folders of deleted subpackages survive while they hold ignored files; once those are
+      # gone they are empty. -delete implies -depth, which disables -prune, so filter by path.
+      - find . -mindepth 1 -type d -empty -not -path './.git/*' -not -path './.venv/*' -not -path './.pixi/*' -delete
+
   repo-review:
     desc: Run sp-repo-review against the repository (the hook pinned in prek.toml)
     cmds:

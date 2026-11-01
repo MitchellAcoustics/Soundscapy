@@ -54,6 +54,7 @@ def test_taskfile_defines_the_normative_tasks():
         "docs:papers",
         "docs:preview",
         "build",
+        "clean",
         "repo-review",
     ):
         assert re.search(rf"^  {re.escape(task)}:", text, re.MULTILINE), task
