@@ -1,5 +1,7 @@
 """project_scores: input checks, refusals, NaN rows and the absence of clamping."""
 
+from __future__ import annotations
+
 import math
 
 import numpy as np

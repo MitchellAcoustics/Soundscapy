@@ -1,5 +1,7 @@
 """The data registry: every shipped file is pinned and verified on read."""
 
+from __future__ import annotations
+
 import importlib.resources
 
 import pytest

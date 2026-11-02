@@ -1,18 +1,23 @@
 """The projection kernel: attribute scores to (x, y) circumplex coordinates."""
 
+from __future__ import annotations
+
 import math
-from typing import Final, Literal, get_args
+from typing import TYPE_CHECKING, Final, Literal, get_args
 
 import numpy as np
-from numpy.typing import NDArray
 
 from soundscapy.errors import FormulationError
-from soundscapy.instrument.scale import Scale
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from soundscapy.instrument.scale import Scale
 
 __all__ = ["project_scores"]
 
 Formulation = Literal["canonical", "iso2019"]
-"""The projection formulas :func:`project_scores` implements."""
+"""The projection formulas ``project_scores()`` implements."""
 
 _FORMULATIONS: Final = get_args(Formulation)
 _NOMINAL_ANGLES_DEG = np.arange(0.0, 360.0, 45.0)

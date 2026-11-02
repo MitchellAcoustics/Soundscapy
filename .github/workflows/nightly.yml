@@ -22,6 +22,11 @@ on:
 permissions:
   contents: read
 
+# Every uv command asserts that uv.lock is current, including the `uv run` calls inside
+# Taskfile.yml. The quickstart job turns it off: its scripts create projects with `uv add`.
+env:
+  UV_LOCKED: "1"
+
 jobs:
   reference:
     runs-on: ubuntu-latest
@@ -40,8 +45,8 @@ jobs:
           path: ~/.cache/soundscapy-data
           key: soundscapy-data-reference-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
           restore-keys: soundscapy-data-reference-
-      - run: uv sync --locked
-      - run: uv run task test:reference
+      - uses: ./.github/actions/setup-task
+      - run: task test:reference
 
   network:
     runs-on: ubuntu-latest
@@ -60,8 +65,8 @@ jobs:
           path: ~/.cache/soundscapy-data
           key: soundscapy-data-network-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
           restore-keys: soundscapy-data-network-
-      - run: uv sync --locked
-      - run: uv run task test:network
+      - uses: ./.github/actions/setup-task
+      - run: task test:network
 
   docs-papers:
     # Re-executes the frozen paper pages, then opens an issue when docs/_freeze changed.
@@ -85,7 +90,8 @@ jobs:
           path: ~/.cache/soundscapy-data
           key: soundscapy-data-papers-${{ hashFiles('src/soundscapy/**/registry*') || 'no-registry' }}
           restore-keys: soundscapy-data-papers-
-      - run: uv sync --locked --group docs
+      - uses: ./.github/actions/setup-task
+      - run: uv sync --group docs
       - name: Re-execute the paper pages
         # Guarded until the first paper page lands; the freeze-diff step below still runs.
         run: |
@@ -93,7 +99,7 @@ jobs:
             echo "no paper page yet; skipping"
             exit 0
           fi
-          uv run task docs:papers
+          task docs:papers
       - name: Open an issue if docs/_freeze changed
         env:
           GH_TOKEN: ${{ github.token }}
@@ -129,6 +135,8 @@ jobs:
     # fresh temporary directory; on ubuntu also the one-cell hosted-notebook install (NFR-1).
     name: quickstart (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      UV_LOCKED: "false"
     strategy:
       fail-fast: false
       matrix:

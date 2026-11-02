@@ -70,7 +70,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard_push.py",
+            "command": "[ \"$CLAUDE_CODE_REMOTE\" = true ] || uv run --no-config --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard_push.py",
             "timeout": 30
           }
         ]
@@ -82,7 +82,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post_edit.py",
+            "command": "uv run --no-config --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post_edit.py",
             "timeout": 60
           }
         ]
@@ -93,7 +93,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop_check.py",
+            "command": "uv run --no-config --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop_check.py",
             "timeout": 180
           }
         ]

@@ -41,6 +41,16 @@ if ! uv_ok "$uv_current"; then
   rm -f "$log"
 fi
 
+# go-task is installed outside the project (CONTRIBUTING.md), as a uv tool beside uv itself.
+# Taskfile.yml's `version` states the minimum it accepts.
+if ! command -v task >/dev/null 2>&1; then
+  if uv tool install go-task-bin >/dev/null 2>&1; then
+    echo "installed go-task $(task --version 2>/dev/null)"
+  else
+    echo "FAILED to install go-task (uv tool install go-task-bin)" >&2
+  fi
+fi
+
 marketplaces=(
   anthropics/claude-plugins-official
   trailofbits/skills

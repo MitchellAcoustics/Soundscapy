@@ -507,12 +507,14 @@ and writes project files.
 3. pandas and polars are imported only in named IO boundary modules.
 
 **Dependencies.** Core follows from the commitments and owner decisions: numpy, scipy, pydantic,
-narwhals, pandas, pyarrow, matplotlib, pooch, click, a TOML writer and an Excel reader and writer
-(FR-1.1, FR-9.1). The list lives in `pyproject.toml`. Each extra is created in the milestone of its
-first module; the `phonometry` extra is an owner decision. tqdm arrives with the M3 batch runner
+narwhals, pandas, pyarrow, matplotlib, seaborn, pooch, click, a TOML writer and an Excel reader and
+writer (FR-1.1, FR-9.1). The list lives in `pyproject.toml`. Each extra is created in the milestone
+of its first module; the `phonometry` extra is an owner decision. tqdm arrives with the M3 batch runner
 (owner decision #4). scipy.stats covers the correlation and group tests of FR-2.6 and FR-2.6a;
 FR-2.6's regression and ANOVA are met through statsmodels, as a core dependency or a documented
-how-to, pending PRD §10.6. seaborn is not a dependency. Tooling detail lives in the `house-style`
+how-to, pending PRD §10.6. seaborn is a dependency for its `colorblind` palette, the default plot
+colours, and nothing else: its KDE is not used (§4.9). (Amended 2026-11-01, owner comment on PR #171;
+this replaces "seaborn is not a dependency", see §10.) Tooling detail lives in the `house-style`
 skill and `pyproject.toml`. Phase 0 exits with a clean install on Windows, macOS and Linux with no
 compiler, followed by the quick-start (NFR-1).
 
@@ -698,6 +700,7 @@ statements. Each overrides the text it names; the spec's §11.1 gives the detail
 | §8 G3-06 | Location and session tables join at M1 through `join_context`. |
 | Appendix A | `ProjectionResult` is dropped; `Coordinates` carries settings and provenance; its labels are read-only numpy arrays converted at returns. |
 | §9.1 | #36 superseded by PRD 0.9 FR-2.3; #39's test is the 56 exclusions (PRD 0.9 FR-1.5). |
+| §5 (2026-11-01) | Owner comment on PR #171: seaborn's `colorblind` palette is the default group colour cycle, so seaborn is a runtime dependency, imported inside `plot` only (spec §6.15, §6.19). Density stays on `scipy.stats.gaussian_kde` (§4.9). |
 
 ## Appendix A. M1 type sketches (non-normative)
 

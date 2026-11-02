@@ -1,5 +1,7 @@
 """The error and warning hierarchy of spec section 6.3.10."""
 
+from __future__ import annotations
+
 import builtins
 
 import pytest

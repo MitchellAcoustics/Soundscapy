@@ -1,5 +1,7 @@
 """attach: the projected coordinates and status columns appended to the user's own frame."""
 
+from __future__ import annotations
+
 import dataclasses
 import logging
 import re
@@ -212,6 +214,21 @@ def test_attach_frame_with_extra_rows(column_coords, frame_lib, caplog):
     for column in ADDED:
         assert _null(out, column).tolist() == [False, True, False, False], column
     assert "3 of 4" in _attach_log(caplog)
+
+
+def test_attach_unmatched_rows_still_filter_on_ssp_included_in_pandas(column_coords):
+    # The unmatched row is pd.NA in a nullable "boolean" column, so the usual filter works and
+    # drops it; with an object column of NaN, pandas refuses to filter (review F3).
+    frame = pd.DataFrame({"ID": ["c", "zz", "a", "b"]})
+    out = attach(frame, column_coords)
+    assert str(out[COL_INCLUDED].dtype) == "boolean"
+    assert out[out[COL_INCLUDED]]["ID"].tolist() == ["c", "a", "b"]
+
+
+def test_attach_pandas_ssp_included_is_nullable_boolean_when_every_row_matches(column_coords):
+    # The dtype does not depend on whether any row was unmatched.
+    out = attach(pd.DataFrame({"ID": ["a", "b", "c"]}), column_coords)
+    assert str(out[COL_INCLUDED].dtype) == "boolean"
 
 
 def test_attach_blank_response_cell_is_unmatched(column_coords):

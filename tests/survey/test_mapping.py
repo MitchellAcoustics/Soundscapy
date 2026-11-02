@@ -1,5 +1,7 @@
 """SurveyMapping, Coding and the mapping TOML: normalisation, validators, coding order."""
 
+from __future__ import annotations
+
 import math
 import re
 import tomllib

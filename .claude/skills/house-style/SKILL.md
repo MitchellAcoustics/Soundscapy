@@ -5,7 +5,7 @@ description: >
   tutorials. These rules override the vendor skills (modern-python, astral,
   prek, great-docs, quarto). Use this skill whenever you create or change
   pyproject.toml, uv.lock, ruff/ty/pytest/coverage settings, Taskfile.yml,
-  .pre-commit-config.yaml, CI workflows, great-docs config, the docs site, a
+  prek.toml, CI workflows, great-docs config, the docs site, a
   test file or a tutorial .qmd page. Also use it when you set the toolchain up
   for the first time, or when a vendor skill's default seems to disagree with
   this repo.
@@ -27,13 +27,13 @@ when you configure the docs site, or write a tutorial or user-guide page.
 | Package / import name | `soundscapy` | Keeps the existing PyPI name and citations. |
 | Layout | `src/soundscapy/`, tests in `tests/` | Stops tests importing the working tree by accident. |
 | Build backend | `uv_build` | One toolchain. No hatchling, setuptools or VCS versioning. |
-| Python floor | `requires-python = ">=3.11"`; ruff `target-version = "py311"`; ty `python-version = "3.11"` | Product-owner decision. It is deliberately wider than the SPEC 0 window, so do not raise it to match SPEC 0 or a vendor default. Test every supported version in CI. |
+| Python floor | `requires-python = ">=3.11"`; ruff `target-version = "py311"`; ty reads it from `requires-python` | Product-owner decision. It is deliberately wider than the SPEC 0 window, so do not raise it to match SPEC 0 or a vendor default. Test every supported version in CI. |
 | Type checker | `ty` | Astral toolchain. Never add mypy, pyright, basedpyright or pyrefly, nor their LSP plugins. |
 | Lint / format | `ruff`, `select = ["ALL"]` with the commented ignores below | Maximum signal; every exemption is visible and justified. |
-| Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports | Matches the scientific Python ecosystem and great-docs rendering. |
-| Git hooks | `prek`, reading `.pre-commit-config.yaml` | Fast drop-in for pre-commit. Never install `pre-commit` itself. |
-| Task runner | `Taskfile.yml` (go-task, `version: '3'`), run as `uv run task <name>` | One set of entry points for agents, humans and CI. go-task comes from `go-task-bin` in the `dev` group, so contributors install only uv and git. Bare `task` works only with the venv activated. |
-| Coverage gate | `fail_under = 80`, branch coverage on | Matches the Trail of Bits default; raise it, never lower it. |
+| Docstrings | numpy convention; every public function that implements a procedure carries a `References` section citing the standard clause or paper (PRD FR-12.4), using the `[@key]` bibliography great-docs supports. Cross-references are great-docs code autolinks (plain code spans; `` [](`~pkg.obj`) `` only for custom text), never Sphinx roles (house rule in `reference.md` §1, "Cross-references"; it overrides `revise-docstrings`) | Matches the scientific Python ecosystem and great-docs rendering. |
+| Git hooks | `prek`, configured in its native `prek.toml` | The `builtin` hooks already make the setup prek-only, so a pre-commit-compatible YAML file buys nothing. Never install `pre-commit` itself. |
+| Task runner | `Taskfile.yml` (go-task), run as `task <name>` | One set of entry points for agents, humans and CI. go-task is installed outside the project, like uv (`uv tool install go-task-bin` recommended; CONTRIBUTING.md). The Taskfile's `version` is the minimum go-task it accepts and the only place that sets it; CONTRIBUTING.md repeats it for readers and `tests/test_project_config.py` fails when the two differ. Every command inside runs through `uv run`. |
+| Coverage gate | `fail_under = 95`, branch coverage on | Just below the measured coverage (99% at the end of S1), so a real loss of tests fails CI. Raise it as coverage allows, never lower it; review it at each milestone. |
 | CI | GitHub Actions running `task` targets; the nightly workflow runs `test:reference`, `test:network`, `docs:papers` and the quick-start scripts on pushes to `soundscapy-rewrite` touching those paths, and on a schedule once the rewrite is the default branch; releases publish on tag by PyPI trusted publishing | CI runs exactly what developers run. Scheduled runs start only from the default branch, still `main`. |
 | Line length | 100 | Room for unit-suffixed names without wrapping every call. |
 
@@ -50,7 +50,7 @@ Keep the whole configuration in `pyproject.toml`; no `ruff.toml`, `pytest.ini`,
 - Dev tooling goes in `[dependency-groups]`, never in `[project.optional-dependencies]`.
   Optional extras are for users (for example an `audio` extra), not for developers.
   - `dev`: ruff, ty, prek, import-linter (layer contracts from the architecture plan
-    §4, run by `task lint`), go-task-bin (the `task` command)
+    §4, run by `task lint`)
   - `test`: pytest, pytest-cov, pytest-xdist, hypothesis
   - `docs`: great-docs, a Jupyter kernel (`ipykernel`) for executing `.qmd` cells, and
     `quarto-cli` (pinned exactly; it fetches the Quarto binary great-docs runs)
@@ -73,13 +73,25 @@ ignore = [
   "D105",              # magic-method docstrings add nothing
   "D107",              # numpy style documents __init__ parameters on the class
   "N803", "N806",      # mathematical names such as X, Pa, ISOPl match the papers
-  "PLR0913",           # scientific functions legitimately take many keyword arguments
   "TD002", "TD003",    # TODOs need no author or issue link while the rewrite is young
   "FIX002",            # allow TODO comments; review them before each release
 ]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.pylint]
+max-args = 10  # keyword-only scientific signatures; the widest in the M1 spec (density) has 8
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = ["matplotlib", "seaborn"]  # imported inside plot functions only (spec §6.15)
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true  # plot functions forward **kwargs to the matplotlib artist
+
+[tool.ruff.lint.isort]
+# PEP 563: names imported under TYPE_CHECKING need no quotes. Drop at requires-python >= 3.14.
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
@@ -88,7 +100,8 @@ convention = "numpy"
   "INP001", "T201", "S603", "S607", "D103", "PLW1510", "PTH109", "C901", "PLR0911",
 ]
 "scripts/**" = ["INP001", "T201"]  # standalone PEP 723 generators that report
-"docs/**/*.py" = ["INP001", "T201"]  # standalone user-facing scripts shown in the docs
+"docs/**/*.py" = ["INP001", "T201", "I002"]  # user-facing scripts shown verbatim: print, no __future__
+"!src/**" = ["TID253"]  # only the package imports matplotlib lazily
 ```
 
 Think before keeping `PLR2004` (magic numbers) on in package code. Physical constants
@@ -106,11 +119,16 @@ whose code blocks are illustrative or normative text, not package code. The vend
 
 ### Other tool sections
 
-- `[tool.ty]`: keep it minimal. Set the Python version and source roots only; verify
-  key names against the ty docs (`/astral:ty`) because ty is pre-1.0.
+- `[tool.ty]`: set only what ty cannot derive. It reads the Python version from
+  `requires-python` and finds `src/` and the project root itself, so today the section
+  holds `[tool.ty.src] exclude` and per-file overrides, each with a comment. Verify key
+  names against the ty docs (`/astral:ty`) because ty is pre-1.0.
 - `[tool.pytest.ini_options]`: `minversion = "9.2"`, `testpaths = ["tests"]`,
-  `addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib", "-ra",
-  "-m", "not reference and not network"]`, `xfail_strict = true`,
+  `strict = true` (pytest 9.0; strict config, markers, xfail and parametrisation ids,
+  safe because `uv.lock` pins pytest), `pythonpath = ["."]` (so `tests/_helpers.py` and
+  similar modules import as `tests._helpers`, which importlib mode does not otherwise
+  allow), `addopts = ["--import-mode=importlib", "-ra", "-m",
+  "not reference and not network"]`,
   `log_level = "INFO"` (captured logs shown on failure; repo-review PP304),
   `filterwarnings = ["error"]`. A later `-m` on the command line overrides the one in
   `addopts`, which is how `test:reference` and `test:network` select their markers
@@ -125,46 +143,69 @@ whose code blocks are illustrative or normative text, not package code. The vend
   ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]` from the first commit, so
   ruff's `TC` rules never move an import a pydantic model (or a `FrozenModel` record)
   needs at runtime.
+- Annotations: every module with code starts with `from __future__ import annotations`
+  (`required-imports`; ruff I002 adds it, the edit hook included). Imports used only in
+  annotations go under `if TYPE_CHECKING:` and are never quoted; the one exception is a
+  recursive type alias's own name (`JSONValue` in `provenance.py`), which PEP 563 does not
+  cover. TC001-TC003 fixes are unsafe, so the hook leaves them: move the import by hand or
+  run `ruff check --fix --unsafe-fixes --select TC` and review the result.
+  `runtime-evaluated-base-classes` covers direct subclasses only, so a pydantic model must
+  subclass `FrozenModel` (or `BaseModel`) directly, or its base must be added to that list;
+  otherwise ruff moves a field's import and construction fails with `PydanticUserError`.
+  Code that reads annotations at runtime (`typing.get_type_hints`, `TypeAdapter`,
+  `validate_call`) needs its names imported at runtime.
 - `[tool.coverage.run]`: `branch = true`, `source = ["soundscapy"]`.
-  `[tool.coverage.report]`: `fail_under = 80`, `show_missing = true`.
+  `[tool.coverage.report]`: `fail_under = 95`, `show_missing = true`.
+- matplotlib's backend for the tests is set in `tests/conftest.py` (`matplotlib.use("Agg")`),
+  so it applies however the tests are started; nothing sets `MPLBACKEND` globally.
 
 ## Taskfile task names
 
-Every task has a `desc`, every command runs through `uv run`, and `env: {MPLBACKEND: Agg}`
-is set globally. These names are referenced by AGENTS.md, the Stop hook and CI, so do not
-rename them. Document and invoke them as `uv run task <name>` (the Stop hook uses that form,
-and bare `task` only when `uv` is not on PATH).
+Every task has a `desc` and every command runs through `uv run`; the Taskfile sets no
+environment. These names are referenced by AGENTS.md, the Stop hook and CI, so do not
+rename them. Document and invoke them as `task <name>`.
 
 | Task | Runs |
 | --- | --- |
+| `default` | `{{.TASK_EXE}} --list` (silent), so a bare `task` lists the tasks. No `uv run`: it only prints |
 | `setup` | `uv sync --all-groups` then `uv run prek install` |
-| `fmt` | `ruff format` then `ruff check --fix` |
+| `fmt` | `ruff check --fix` then `ruff format` (fix first: an added import must be formatted) |
 | `lint` | `ruff format --check`, `ruff check` (no writes), then `uv run lint-imports` |
 | `typecheck` | `uv run ty check` |
 | `test` | `uv run pytest {{.CLI_ARGS}}` |
-| `test:cov` | pytest with coverage and the 80% gate |
-| `check:fast` | `lint` + `typecheck`; must finish in a few seconds (Stop hook) |
+| `test:cov` | pytest with coverage and the 95% gate |
+| `check:fast` | `lint` and `typecheck` as concurrent `deps`; must finish in a few seconds (Stop hook) |
 | `check` | `lint` + `typecheck` + `test:cov`: the definition of done |
 | `test:reference` | pytest `-m reference`: cross-implementation checks (R `sn` fixtures, ISO 532-1 signals, ArtemiS); nightly in CI and on demand |
 | `test:network` | pytest `-m network`: tests that download a dataset; nightly in CI and on demand |
 | `docs` | `uv run --group docs great-docs build`, which also executes the tutorials; offline, so the paper pages stay frozen |
 | `docs:papers` | `uv run --group docs great-docs freeze docs/papers/2022-how-to-analyse.qmd`: re-executes the frozen paper pages (needs the network; nightly in CI). See `reference.md` §4 for why `freeze` suffices |
 | `docs:preview` | great-docs local preview |
-| `build` | `uv build` |
-| `repo-review` | `uvx 'sp-repo-review[cli]' .` |
+| `build` | `uv build --no-sources`, as uv's publishing guide recommends |
+| `clean` | `rm -rf` of the tool caches and build output, then `find` to drop `__pycache__`, `.pytest_cache`, `.DS_Store` and the folders left empty, skipping `.git`, `.venv` and `.pixi`. Plain shell, the one task outside `uv run`: a local, POSIX-only convenience that CI never runs |
+| `repo-review` | `uv run prek run sp-repo-review --stage manual --all-files`: the hook pinned in `prek.toml` |
 
 ## prek configuration
 
 - Hooks: ruff (`ruff-check --fix`, `ruff-format`) from `astral-sh/ruff-pre-commit`;
   the standard hygiene hooks (trailing whitespace, end of file, check-toml, check-yaml,
   large files, merge conflicts) from prek's `repo: builtin`, which needs no download;
-  `uv-lock` from `astral-sh/uv-pre-commit`; `actionlint` for the CI workflows from
+  `uv lock` as a `repo = "local"`, `language = "system"` hook; `actionlint` for the CI workflows from
   `Mateusz-Grzelinski/actionlint-py`, a Python package whose build fetches the
   actionlint binary, so no Go toolchain or Docker is needed. prek caches it after the
   first run.
 - The hygiene hooks that rewrite files exclude the vendored `.claude/skills/` and
   `.claude/agents/` (copied verbatim) and `docs/_freeze/` (written by Quarto).
-- `sp-repo-review` runs at `stages: [manual]`. It is advisory, not a commit blocker.
+- Write `prek.toml` as plain TOML 1.0 (`[[repos.hooks]]` tables, not the multiline inline
+  tables `prek util yaml-to-toml` emits), so Python's `tomllib` can read it.
+- `uv lock` runs the project's own uv, never `astral-sh/uv-pre-commit`. That hook installs
+  `uv==<rev>` in its own environment, a second uv version beside `[tool.uv]
+  required-version`, and nothing keeps the two in step. `required-version` in
+  `pyproject.toml` is the one place the uv CLI version is set (the `uv_build` build-backend
+  pin moves with it). CONTRIBUTING.md and `.claude/cloud/setup.sh` (`uv_min`) repeat it,
+  and `tests/test_project_config.py` fails when a copy differs.
+- `sp-repo-review` comes from `scientific-python/cookie`, pinned by `rev` like every other
+  hook, at `stages = ["manual"]`. It is advisory, not a commit blocker.
 - ty is **not** a prek hook. It needs the project environment and is slower than a
   commit hook should be; it runs in `task check:fast` (the Stop hook) and in CI.
 - Pin every `rev` to a released tag and update with `prek auto-update`.
@@ -173,7 +214,13 @@ and bare `task` only when `uv` is not on PATH).
 
 - `docs/` holds the great-docs site. The API reference is generated from docstrings,
   so a public object gets its documentation by writing its docstring well. Use the
-  `revise-docstrings` skill for docstring work.
+  `revise-docstrings` skill for docstring work, except for cross-references: those follow
+  the house rule under "Cross-references" in `reference.md` §1, which overrides it. In
+  short, a public object is a plain code span that great-docs autolinks (`read_survey()`,
+  `Survey`, `Coordinates.valid_mask()`), a private one is plain code with its dotted path
+  where the short name would link elsewhere, and an external one is plain code (no
+  interlinks are configured). Sphinx roles (`` :func:`x` ``) are never used: they print
+  as literal text, and `tests/test_docs_structure.py` fails on any in `src/`.
 - Tutorials are plain-text Quarto `.qmd` documents with executable `{python}` cells in
   `docs/tutorials/`, a great-docs custom section; paper reproductions (PRD FR-9.3) are
   `.qmd` documents in `docs/papers/`, a second custom section. How-to and explanation
@@ -219,11 +266,8 @@ Recorded ignores (check id: reason):
 
 - PY007: the task runner is `Taskfile.yml` (go-task), which repo-review does not recognise.
 - GH200: no Dependabot. SHA-pinned Actions are bumped by hand in reviewed commits (resolve the new SHA with `git ls-remote`).
-- PC100: the hygiene hooks use prek's `builtin` repo, not `pre-commit/pre-commit-hooks`.
-- PC140: ty is not a hook. It needs the project environment; it runs in `task check:fast` and CI.
-- PC160: no spell-checker hook is adopted; prose is reviewed by hand.
-- PC170: there is no reStructuredText in the repo (numpy docstrings, Quarto docs).
-- PC180: no markdown formatter; `design/` prose and vendored skills are kept verbatim.
-- PC901, PC902, PC903: pre-commit.ci is not used; prek runs locally and in CI.
+- PY006: hooks are configured in `prek.toml`, which repo-review does not read (it looks for
+  `.pre-commit-config.yaml`). Its `PC` checks are skipped for the same reason, so they need
+  no ignores.
 - RF002: ruff `target-version = "py311"` is set explicitly beside `requires-python` (Python floor row).
 - SEC001: workflows are linted with actionlint; zizmor is not adopted in Phase 0.

@@ -1,9 +1,17 @@
-version: '3'
-
-env:
-  MPLBACKEND: Agg
+# go-task is installed outside the project (CONTRIBUTING.md recommends
+# `uv tool install go-task-bin`), so every command runs through `uv run`, which syncs the
+# project venv from uv.lock first. `version` is the minimum go-task this file needs: an older
+# `task` refuses to run it with a message saying so.
+version: '3.54'
 
 tasks:
+  default:
+    desc: List the available tasks (what a bare `task` runs)
+    silent: true
+    cmds:
+      # TASK_EXE is the running go-task binary, so the list comes from the same version.
+      - '"{{.TASK_EXE}}" --list'  # quoted: the path can contain spaces
+
   setup:
     desc: Install every dependency group and the git hooks
     cmds:
@@ -13,8 +21,9 @@ tasks:
   fmt:
     desc: Format and auto-fix the code
     cmds:
-      - uv run ruff format
+      # Fix first, then format: a fix such as an added import can leave a file unformatted.
       - uv run ruff check --fix
+      - uv run ruff format
 
   lint:
     desc: Check formatting, lint rules and import contracts
@@ -55,9 +64,8 @@ tasks:
 
   check:fast:
     desc: Lint and type-check (offline, a few seconds)
-    cmds:
-      - task: lint
-      - task: typecheck
+    # deps run concurrently, so one run reports lint and type errors together.
+    deps: [lint, typecheck]
 
   check:
     desc: Lint, type-check and test with coverage (done means this passes)
@@ -83,9 +91,24 @@ tasks:
   build:
     desc: Build the sdist and wheel
     cmds:
-      - uv build
+      - uv build --no-sources
+
+  clean:
+    desc: Remove caches, build output, __pycache__ folders and the empty folders left behind
+    # Plain shell, not `uv run`: it deletes regenerable files only and needs no environment.
+    # Local convenience; `find` makes it POSIX-only, and CI never runs it. Environments and
+    # repositories (.venv, .pixi, .git) are never entered, at any depth, so a nested worktree's
+    # are safe too. .hypothesis stays: it holds the failing examples Hypothesis replays first.
+    cmds:
+      - rm -rf .ruff_cache .import_linter_cache htmlcov .coverage coverage.xml dist build src/*.egg-info .great-docs .great-docs-build docs/_site docs/_quarto docs/.cache
+      - find . \( -name .git -o -name .venv -o -name .pixi \) -prune -o \( -name __pycache__ -o -name .pytest_cache -o -name .quarto -o -name .DS_Store \) -prune -exec rm -rf {} +
+      # Folders of deleted subpackages survive while they hold ignored files; once those are
+      # gone they are empty, and every empty untracked folder goes with them. -delete implies
+      # -depth, which disables -prune, so each top-level folder except .git, .venv and .pixi
+      # gets its own find (those trees are never walked), and nested ones are filtered by path.
+      - find . -mindepth 1 -maxdepth 1 -type d ! -name .git ! -name .venv ! -name .pixi -exec find {} -type d -empty ! -path '*/.git/*' ! -path '*/.venv/*' ! -path '*/.pixi/*' -delete \;
 
   repo-review:
-    desc: Run sp-repo-review against the repository
+    desc: Run sp-repo-review against the repository (the hook pinned in prek.toml)
     cmds:
-      - uvx 'sp-repo-review[cli]' .
+      - uv run prek run sp-repo-review --stage manual --all-files

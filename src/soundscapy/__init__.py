@@ -7,6 +7,8 @@ the circumplex, attaching the results to your own frame and plotting them
 (``sspy.plot``). matplotlib is imported only when a plot function runs.
 """
 
+from __future__ import annotations
+
 import importlib.metadata
 
 from soundscapy import datasets, errors, plot, workspace

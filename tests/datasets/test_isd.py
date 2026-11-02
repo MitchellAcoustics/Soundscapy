@@ -1,5 +1,7 @@
 """The ISD loader: the bundled subset read through its registry entry."""
 
+from __future__ import annotations
+
 import pytest
 
 from soundscapy import _data

@@ -11,6 +11,11 @@ on:
 permissions:
   contents: read
 
+# Every uv command asserts that uv.lock is current, including the `uv run` calls inside
+# Taskfile.yml. The `lowest` job turns it off, because it must re-resolve.
+env:
+  UV_LOCKED: "1"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   # Cancel superseded PR runs only; every push to the branch keeps its own complete record.
@@ -33,8 +38,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           enable-cache: true
-      - run: uv sync --locked
-      - run: uv run task check
+      - uses: ./.github/actions/setup-task
+      - run: task check
 
   lowest:
     # Proves the runtime floors of spec §6.19. The variable, not a `--resolution` flag, keeps
@@ -42,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       UV_RESOLUTION: lowest-direct
+      UV_LOCKED: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -50,10 +56,11 @@ jobs:
         with:
           python-version: "3.11"
           enable-cache: true
+      - uses: ./.github/actions/setup-task
       - run: uv sync
       - name: Print the installed direct dependency versions
         run: uv tree --depth 1
-      - run: uv run task test
+      - run: task test
 
   docs:
     # ubuntu x 3.14 is the canonical platform for frozen output.
@@ -66,7 +73,8 @@ jobs:
         with:
           python-version: "3.14"
           enable-cache: true
-      - run: uv sync --locked --group docs
+      - uses: ./.github/actions/setup-task
+      - run: uv sync --group docs
       - name: Build the docs with no network
         # `task docs` must run offline (spec §5.9): the paper pages stay frozen and tutorials
         # use bundled data. The build runs in a new network namespace with only loopback up
@@ -82,7 +90,7 @@ jobs:
               echo "the network is reachable inside the namespace" >&2
               exit 1
             fi &&
-            exec sudo --preserve-env -u "$1" env PATH="$2" uv run --locked task docs
+            exec sudo --preserve-env -u "$1" env PATH="$2" task docs
           ' sh "$(id -un)" "$PATH"
       - name: Fail if a page's freeze is stale
         # --intent-to-add makes new, untracked freeze entries show up in the diff too.
@@ -101,11 +109,12 @@ jobs:
         with:
           python-version: "3.14"
           enable-cache: true
-      - run: uv sync --locked
+      - run: uv sync
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/prek
-          key: prek-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          # prek's own version comes from uv.lock, and the cache depends on it too.
+          key: prek-${{ runner.os }}-${{ hashFiles('prek.toml', 'uv.lock') }}
       - run: uv run prek run --all-files --show-diff-on-failure
 
   citation:

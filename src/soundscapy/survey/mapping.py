@@ -1,9 +1,11 @@
 """Survey mappings: how a survey export's columns map onto an instrument, and how they are coded.
 
-A :class:`SurveyMapping` names the id, language and item columns of a user's export.
-:func:`apply_coding` turns the item texts into numbers on the instrument scale, and
-:func:`read_mapping` and :func:`write_mapping` store a mapping as TOML.
+A ``SurveyMapping`` names the id, language and item columns of a user's export.
+``apply_coding()`` turns the item texts into numbers on the instrument scale, and
+``read_mapping()`` and ``write_mapping()`` store a mapping as TOML.
 """
+
+from __future__ import annotations
 
 import os
 import re
@@ -11,17 +13,19 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 import numpy as np
 import pydantic
 import tomlkit
-from numpy.typing import NDArray
 from pydantic import Field, StrictFloat, StrictStr, model_validator
 
 from soundscapy._model import FloatPairs, FrozenModel, StrPairs, _to_pairs, parse_toml, validate
 from soundscapy.errors import CodingError, MappingError, _shown
 from soundscapy.instrument import Circumplex, Scale, circumplex
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 __all__ = [
     "Coding",
@@ -148,7 +152,7 @@ class ItemGroup(FrozenModel):
     columns : pairs of str
         Item key to column name, read from and written as a table.
     scale : Scale
-        The response scale of the items. Inside a :class:`SurveyMapping` it defaults to
+        The response scale of the items. Inside a ``SurveyMapping`` it defaults to
         the instrument's scale; built directly it must be given.
     coding : Coding, optional
         How the column texts are coded.
@@ -482,7 +486,7 @@ def write_mapping(mapping: SurveyMapping, path: str | os.PathLike[str]) -> None:
     Raises
     ------
     MappingError
-        If the mapping holds a blank value, which :func:`read_mapping` would reject.
+        If the mapping holds a blank value, which ``read_mapping()`` would reject.
     """
     circ = circumplex(mapping.instrument, mapping.instrument_version)
     data = _prune(mapping, mapping.model_dump(mode="json", by_alias=True))
@@ -495,7 +499,8 @@ def write_mapping(mapping: SurveyMapping, path: str | os.PathLike[str]) -> None:
             circ.label(p) for p in mapping.groups.attributes.coding.reverse
         ]
     _check_no_blanks(data, "")
-    text = tomlkit.dumps(_tables_last(data))
+    # tomlkit places plain keys before tables itself when it builds a document.
+    text = tomlkit.dumps(data)
     Path(path).write_text(text, encoding="utf-8", newline="\n")
 
 
@@ -514,13 +519,6 @@ def _prune(model: pydantic.BaseModel, dumped: dict[str, Any]) -> dict[str, Any]:
         entry = dumped[key]
         out[key] = _prune(value, entry) if isinstance(value, pydantic.BaseModel) else entry
     return out
-
-
-def _tables_last(data: dict[str, Any]) -> dict[str, Any]:
-    """Plain keys before tables (TOML needs them first), each kept in field order."""
-    plain = {k: v for k, v in data.items() if not isinstance(v, dict)}
-    tables = {k: _tables_last(v) for k, v in data.items() if isinstance(v, dict)}
-    return plain | tables
 
 
 def _check_no_blanks(data: Mapping[str, Any], prefix: str) -> None:

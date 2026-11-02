@@ -1,16 +1,18 @@
 """Projected responses: their (x, y) coordinates, per-response labels and origin.
 
-:func:`valid_mask`, :func:`n` and :func:`n_valid` are the one definition of a valid row
-and of the two counts; every consumer calls them.
+The module functions ``soundscapy.distribution.coordinates.valid_mask()``, ``.n()`` and
+``.n_valid()`` are the one definition of a valid row and of the two counts; every consumer
+calls them (the ``Coordinates`` methods of the same names too).
 """
+
+from __future__ import annotations
 
 import copy
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
 from pydantic import Field, StrictInt, StrictStr
 
 from soundscapy._frames import new_frame, readonly_copy
@@ -18,13 +20,18 @@ from soundscapy._model import COL_INCLUDED, COL_LANGUAGE, FrozenModel, axis_colu
 from soundscapy.errors import MappingError
 from soundscapy.instrument import Circumplex, Scale
 
+if TYPE_CHECKING:
+    import pandas as pd
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
+    from numpy.typing import ArrayLike, NDArray
+
 __all__ = ["Coordinates", "OriginSegment", "n", "n_valid", "valid_mask"]
 
 _XY_COLUMNS = 2
 
 
 class OriginSegment(FrozenModel):
-    """Where a run of rows of :class:`Coordinates` came from.
+    """Where a run of rows of ``Coordinates`` came from.
 
     Attributes
     ----------
@@ -122,18 +129,25 @@ class Coordinates:
         object.__setattr__(self, "provenance", copy.deepcopy(self.provenance))
 
     def n(self) -> int:
-        """Return the number of rows; see :func:`n`."""
+        """Return the number of rows, valid or not."""
         return n(self)
 
     def n_valid(self) -> int:
-        """Return the number of valid rows; see :func:`n_valid`."""
+        """Return the number of valid rows (see ``Coordinates.valid_mask()``)."""
         return n_valid(self)
 
     def valid_mask(self) -> NDArray[np.bool_]:
-        """Return which rows are valid; see :func:`valid_mask`."""
+        """Return which rows are valid.
+
+        A row is valid when it is included (``ssp_included``) and both its x and y are finite.
+        """
         return valid_mask(self)
 
-    def to_frame(self, like: object | None = None) -> Any:  # noqa: ANN401  # pandas or the library of like
+    @overload
+    def to_frame(self, like: None = None) -> pd.DataFrame: ...
+    @overload
+    def to_frame(self, like: IntoDataFrameT) -> IntoDataFrameT: ...
+    def to_frame(self, like: IntoDataFrame | None = None) -> Any:
         """Return the labels and coordinates as a data frame.
 
         Parameters
@@ -143,7 +157,7 @@ class Coordinates:
 
         Returns
         -------
-        object
+        pandas.DataFrame or the library of ``like``
             The label columns, then ``ssp_<axis id>`` for the x and the y axis (for
             example ``ssp_ISOPleasant`` and ``ssp_ISOEventful``).
         """
@@ -155,7 +169,7 @@ class Coordinates:
         }
         return new_frame(columns, like=like)
 
-    def select(self, mask: ArrayLike) -> "Coordinates":
+    def select(self, mask: ArrayLike) -> Coordinates:
         """Return the rows where ``mask`` is true.
 
         Parameters
@@ -195,7 +209,7 @@ class Coordinates:
             provenance=self.provenance,
         )
 
-    def split(self, by: str) -> dict[str, "Coordinates"]:
+    def split(self, by: str) -> dict[str, Coordinates]:
         """Split the rows into groups by an id role, the language or a label column.
 
         Parameters
@@ -277,7 +291,7 @@ def n(coords: Coordinates) -> int:
 
 
 def n_valid(coords: Coordinates) -> int:
-    """Return the number of valid rows (see :func:`valid_mask`).
+    """Return the number of valid rows (see ``soundscapy.distribution.coordinates.valid_mask()``).
 
     Parameters
     ----------
@@ -287,6 +301,6 @@ def n_valid(coords: Coordinates) -> int:
     Returns
     -------
     int
-        The number of rows that are included and have finite x and y.
+        The number of valid rows.
     """
     return int(valid_mask(coords).sum())

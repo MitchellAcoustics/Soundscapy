@@ -1,5 +1,7 @@
 """Circumplex instruments: attributes at angles, axes, quadrants and the shipped data."""
 
+from __future__ import annotations
+
 import functools
 import itertools
 import re
@@ -30,7 +32,7 @@ class Attribute(FrozenModel):
         Nominal angle in degrees, in ``[0, 360)``.
     labels : pairs of str
         Label of the attribute in the circumplex's reference language only, keyed by
-        ISO 639-3 code. Other languages go in :class:`Translation`.
+        ISO 639-3 code. Other languages go in ``Translation``.
     """
 
     position: StrictStr = Field(pattern=_POSITION.pattern)

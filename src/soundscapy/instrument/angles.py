@@ -1,5 +1,7 @@
 """Which attribute angles a projection uses."""
 
+from __future__ import annotations
+
 from typing import Literal
 
 from soundscapy._model import FrozenModel
