@@ -1,5 +1,7 @@
 """Coordinates: read-only arrays, valid rows, select, split and to_frame."""
 
+from __future__ import annotations
+
 import dataclasses
 
 import numpy as np

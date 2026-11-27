@@ -1,5 +1,7 @@
 """The S1 done-when check: the bundled ISD subset, projected and drawn by location."""
 
+from __future__ import annotations
+
 import matplotlib.axes
 import numpy as np
 import pytest

@@ -41,18 +41,16 @@ def main() -> int:
     project = Path(os.environ.get("CLAUDE_PROJECT_DIR") or payload.get("cwd") or os.getcwd())
     if not (project / "Taskfile.yml").exists():
         return 0
-    # Prefer the go-task pinned in uv.lock; a bare `task` on PATH may be another version or
-    # another program (Taskwarrior installs a `task` binary).
-    if shutil.which("uv"):
-        cmd = ["uv", "run", "task", "check:fast"]
-    elif shutil.which("task"):
-        cmd = ["task", "check:fast"]
-    else:
+    # go-task is installed outside the project (CONTRIBUTING.md); Taskfile.yml's `version`
+    # rejects a go-task that is too old.
+    if not shutil.which("task"):
         print(
-            "stop_check hook: neither `task` nor `uv` is on PATH; skipped check:fast",
+            "stop_check hook: `task` (go-task) is not on PATH; skipped check:fast. "
+            "Install it with `uv tool install go-task-bin`.",
             file=sys.stderr,
         )
         return 1
+    cmd = ["task", "check:fast"]
 
     try:
         result = subprocess.run(

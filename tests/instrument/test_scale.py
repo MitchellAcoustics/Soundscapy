@@ -1,5 +1,7 @@
 """Scale: bounds, derived properties, membership and TOML round trip."""
 
+from __future__ import annotations
+
 import math
 
 import numpy as np

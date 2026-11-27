@@ -1,8 +1,10 @@
 """Hashing and the provenance envelope.
 
-This is the only module that imports :mod:`hashlib`. Every hash is
+This is the only module that imports ``hashlib``. Every hash is
 ``h1-sha256:<64 lowercase hex>``.
 """
+
+from __future__ import annotations
 
 import copy
 import datetime as dt
@@ -10,17 +12,20 @@ import hashlib
 import importlib.metadata
 import json
 import math
-import os
 import platform
 import sys
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Final, TypeAlias
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 import pydantic
 
-from soundscapy._model import FrozenModel
 from soundscapy.errors import HashSchemeError
+
+if TYPE_CHECKING:
+    import os
+
+    from soundscapy._model import FrozenModel
 
 __all__ = [
     "HASH_PREFIX",
@@ -111,7 +116,7 @@ def hash_file(path: str | os.PathLike[str]) -> str:
 
 
 def _check_json(value: object, path: str) -> None:
-    """Raise if ``value`` is outside :data:`JSONValue` or holds a non-finite float."""
+    """Raise if ``value`` is outside ``JSONValue`` or holds a non-finite float."""
     if value is None or isinstance(value, (bool, int, str)):
         return
     if isinstance(value, float):
@@ -185,7 +190,7 @@ def hash_json(value: pydantic.BaseModel | JSONValue) -> str:
     Returns
     -------
     str
-        The ``h1`` hash of :func:`canonical_json`.
+        The ``h1`` hash of ``canonical_json()``.
     """
     return hash_bytes(canonical_json(value))
 
@@ -259,7 +264,7 @@ def envelope(  # the spec's normative keys are separate inputs
     upstream_run : str, optional
         The run name the input came from, ``""`` when none.
     **extra
-        Optional keys, each one of :data:`OPTIONAL_KEYS`.
+        Optional keys, each one of ``OPTIONAL_KEYS``.
 
     Returns
     -------
@@ -269,7 +274,7 @@ def envelope(  # the spec's normative keys are separate inputs
     Raises
     ------
     ValueError
-        If an extra key is not in :data:`OPTIONAL_KEYS`.
+        If an extra key is not in ``OPTIONAL_KEYS``.
     """
     unknown = sorted(set(extra) - OPTIONAL_KEYS)
     if unknown:

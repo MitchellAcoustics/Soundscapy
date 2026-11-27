@@ -1,5 +1,7 @@
 """Tests for the Claude Code hook scripts."""
 
+from __future__ import annotations
+
 import os
 import stat
 import subprocess
@@ -27,26 +29,27 @@ def _run_hook(tmp_path: Path, path_dir: Path) -> subprocess.CompletedProcess[str
     )
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="the fake uv is a /bin/sh script")
-def test_stop_hook_runs_uv_run_task(tmp_path):
-    # PATH holds only a fake uv that records its arguments; the hook must call
-    # `uv run task check:fast`.
+@pytest.mark.skipif(sys.platform == "win32", reason="the fake task is a /bin/sh script")
+def test_stop_hook_runs_task_check_fast(tmp_path):
+    # PATH holds only a fake task that records its arguments; the hook must call
+    # `task check:fast`.
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     argv = tmp_path / "argv.txt"
-    uv = bin_dir / "uv"
-    uv.write_text(f'#!/bin/sh\necho "$@" > "{argv}"\nexit 0\n')
-    uv.chmod(uv.stat().st_mode | stat.S_IXUSR)
+    task = bin_dir / "task"
+    task.write_text(f'#!/bin/sh\necho "$@" > "{argv}"\nexit 0\n')
+    task.chmod(task.stat().st_mode | stat.S_IXUSR)
     result = _run_hook(tmp_path, bin_dir)
     assert result.returncode == 0, result.stderr
-    assert argv.read_text().strip() == "run task check:fast"
+    assert argv.read_text().strip() == "check:fast"
 
 
-def test_stop_hook_reports_when_neither_tool_is_on_path(tmp_path):
+def test_stop_hook_reports_when_task_is_not_on_path(tmp_path):
     # Runs on every OS: PATH is one empty directory, and the hook is started through the
-    # absolute sys.executable, so no lookup on PATH is needed to launch it.
+    # absolute sys.executable, so no lookup on PATH is needed to launch it. Exit 1 does not
+    # block the agent from stopping; the message says how to install go-task.
     empty = tmp_path / "empty"
     empty.mkdir()
     result = _run_hook(tmp_path, empty)
     assert result.returncode == 1
-    assert "neither `task` nor `uv`" in result.stderr
+    assert "uv tool install go-task-bin" in result.stderr

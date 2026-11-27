@@ -1,7 +1,5 @@
-parser: numpy
-dynamic: true
-jupyter: python3
-user_guide: user_guide
+# Only settings that differ from great-docs' defaults (great_docs/assets/great-docs.default.yml
+# at the commit pyproject.toml pins). Add `cli: {enabled: true}` with the CLI (M1 slice S8).
 sections:
   - title: Tutorials
     dir: tutorials
@@ -10,7 +8,3 @@ sections:
     dir: papers
     index: true
 bibliography: references.bib
-freeze:
-  mode: auto
-cli:
-  enabled: false

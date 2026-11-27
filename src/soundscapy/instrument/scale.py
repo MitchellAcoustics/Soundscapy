@@ -1,12 +1,16 @@
 """The response scale of an instrument."""
 
-from typing import Literal, Self
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal, Self
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
 from pydantic import StrictFloat, model_validator
 
 from soundscapy._model import FrozenModel, StrTuplePairs
+
+if TYPE_CHECKING:
+    from numpy.typing import ArrayLike, NDArray
 
 __all__ = ["Scale"]
 

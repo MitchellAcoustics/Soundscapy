@@ -1,5 +1,7 @@
 """Tests for hashing and the provenance envelope."""
 
+from __future__ import annotations
+
 import importlib.metadata
 import re
 from pathlib import Path

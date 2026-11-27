@@ -1,5 +1,7 @@
 """FrozenModel, key-to-value pair types, TOML round trip and namespace constants."""
 
+from __future__ import annotations
+
 import math
 from typing import Literal
 

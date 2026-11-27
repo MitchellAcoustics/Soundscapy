@@ -13,6 +13,9 @@ FR-2.3 and FR-3.1), applies the owner's second round of answers of 2026-10-31, a
 consistency and builder checks. After it, no owner input blocks M1 (§10). Draft 0.5 applies the
 S1 plan review (2026-10-31), marked "Amended at S1 plan review" where it lands: §6.2.1, §6.2.3,
 §6.3.5, §6.3.6, §6.3.8, §6.3.10, §6.4.1, §6.9.1, §6.19, §6.23, §7.1, §9 (S3) and §11.2.
+The eight spec defects found while planning S2 (`design/plans/2026-10-31-m1-s2-status-quality.md`)
+were applied on 2026-11-27, marked "Amended at S2 plan review" where they land: §5.6.2, §6.3.4,
+§6.4.1, §6.5, §6.7, §6.9.2, §6.20.2, §6.20.4 and §9 (S2). The draft number is unchanged.
 
 The sources to cite are in `design/literature/` (its `README.md` lists them):
 Mitchell, Aletta and Kang 2022 (JASA Express Letters), Aletta et al. 2024 (Applied Acoustics) and
@@ -105,7 +108,7 @@ M1 fails, even if every test passes, if any of these is true:
 - A wrong-scale export (0..4 declared as 1..5) produces coordinates without an error.
 - The default run of `task check` or `task docs` needs the network.
 - Importing `soundscapy` prints, logs or warns.
-- The core imports matplotlib, or any module outside `soundscapy._frames` imports pandas, polars or
+- The core imports matplotlib or seaborn, or any module outside `soundscapy._frames` imports pandas, polars or
   pyarrow.
 - A course participant on Windows cannot install with uv and plot within the hour.
 - Code is written for a milestone after M1 "while we are here".
@@ -162,7 +165,7 @@ owner's remaining open questions are in §10 with fallbacks.
 | The loader's default `version` is the latest registered version, today ISD 1.0.1-alpha.1. "Latest" is resolved at release time by updating the registry, never at run time, so a result always records a pinned record and hash. The bundled subset is regenerated from 1.0.1-alpha.1; 1.0.1-alpha stays registered [owner 2026-10-31] | §6.20 |
 | SATP v1.5 tiers and High-tier angles come from Tables 4.7 and 4.8 of the 2026 chapter and ship at M1 as `satp@1.5`; `sal-2026` uses it from the first release, with no provisional fallback [owner 2026-10-31] | §6.3.4, §6.8.4 |
 | The Aletta et al. 2024 formulation is a full M1 Must, specified by the paper's Eqs. 1 to 3 and tested against values computed by hand from them; no further worked example is needed [owner 2026-10-31; PRD 0.9 FR-2.3, §10.5b] | §6.9.1, §7.2 |
-| The FR-1.5 acceptance test is the 0.x tutorials' processing of ISD v1.0: 56 responses excluded, 37 with a missing attribute item and 19 all-identical non-midpoint. The ISD publishes no counts of its own; the "more than half missing" rule of the 2021 paper stays configurable [owner 2026-10-31; PRD 0.9 FR-1.5] | §6.7 |
+| The FR-1.5 acceptance test is the 0.x tutorials' processing of ISD v1.0: 56 responses excluded, 37 with a missing attribute item and 19 all-identical non-midpoint. The ISD publishes no counts of its own; the "more than half missing" rule of Erfanian et al. (2021) stays configurable [owner 2026-10-31; PRD 0.9 FR-1.5] | §6.7 |
 | The 2022 page's 63 dB split is a split over the whole ISD v0.2.3 dataset the page uses, not per location [owner 2026-10-31; PRD 0.9 §10.5b] | §6.23 |
 | The owner's ORCID is 0000-0003-0978-5046 (Andrew Mitchell) and GitHub login `MitchellAcoustics`, for CITATION.cff and CODEOWNERS [owner 2026-10-31] | §5.1, §5.8 |
 | The chapter 4 author proof is not committed; the chapter is cited by reference, with its tables transcribed in the chapter notes file [owner 2026-10-31; PRD 0.9 §10.5b] | §1, §4.4 |
@@ -305,6 +308,9 @@ convention = "numpy"
 [tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = ["pydantic.BaseModel", "soundscapy._model.FrozenModel"]
 
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]  # PEP 563; drop at requires-python >= 3.14
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "D", "ANN", "INP001"]  # asserts, literal expected values
 # Standalone PEP 723 hook scripts, kept short and dependency-free.
@@ -365,6 +371,15 @@ lines that the formatter then wraps; after the format run the ignore list leaves
 `ty` does not accept `python-version` directly under `[tool.ty]` (verified); keep it under
 `[tool.ty.environment]`. Without `runtime-evaluated-base-classes`, ruff's TC003 fix moves imports a
 pydantic model needs at runtime under `TYPE_CHECKING` and construction fails (verified).
+(Amended 2026-11-01, owner comment on PR #171: every module with code starts with
+`from __future__ import annotations`, enforced by ruff's `required-imports` (I002; the user-facing
+`docs/**/*.py` scripts are exempt), so names imported under `TYPE_CHECKING` are never quoted. With
+the import, the TC rules also reach class-body annotations, and `runtime-evaluated-base-classes`
+protects only direct subclasses of the listed bases: a pydantic model that subclasses another model
+must subclass `FrozenModel` directly or be added to the list. TC001-TC003 fixes are unsafe, so
+the edit hook does not apply them; move such imports by hand or with
+`ruff check --fix --unsafe-fixes --select TC`. `fmt` and the edit hook now run `ruff check --fix`
+before `ruff format`, because I002 inserts the import without the blank line the formatter adds.)
 
 #### 5.2.1 Import contracts
 
@@ -395,11 +410,14 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "Core never imports matplotlib"
+name = "Core never imports matplotlib or seaborn"
 type = "forbidden"
 source_modules = ["soundscapy"]
-forbidden_modules = ["matplotlib"]
-ignore_imports = ["soundscapy.plot -> matplotlib", "soundscapy.plot.** -> matplotlib"]
+forbidden_modules = ["matplotlib", "seaborn"]
+ignore_imports = [
+  "soundscapy.plot -> matplotlib", "soundscapy.plot.** -> matplotlib",
+  "soundscapy.plot -> seaborn", "soundscapy.plot.** -> seaborn",
+]
 allow_indirect_imports = true
 unmatched_ignore_imports_alerting = "none"
 
@@ -430,6 +448,10 @@ source_modules = ["soundscapy.distribution"]
 forbidden_modules = ["soundscapy.survey"]
 ```
 
+(Amended 2026-11-01, owner comment on PR #171: seaborn joins matplotlib in the second contract,
+because it is a runtime dependency for the default palette (§6.15, §6.19) and imports matplotlib
+and pandas itself. Its own import of pandas is indirect, which `allow_indirect_imports` permits.)
+
 The GUI contract keeps the core free of any GUI technology (FR-14.7). Verified with import-linter
 2.15: forbidden modules that are not installed are ignored silently, and `import tkinter` (standard
 library) breaks the contract.
@@ -448,7 +470,7 @@ every command runs through `uv run`; `env: {MPLBACKEND: Agg}` is set globally.
 | Task | Command |
 |---|---|
 | `setup` | `uv sync --all-groups`, then `uv run prek install` |
-| `fmt` | `uv run ruff format`, then `uv run ruff check --fix` |
+| `fmt` | `uv run ruff check --fix`, then `uv run ruff format` (amended 2026-11-01: fix first, so a fix that adds an import is formatted) |
 | `lint` | `uv run ruff format --check`, `uv run ruff check`, `uv run lint-imports` |
 | `typecheck` | `uv run ty check` |
 | `test` | `uv run pytest {{.CLI_ARGS}}` |
@@ -573,7 +595,15 @@ versions unless `UV_RESOLUTION` is set for the whole job (verified with uv 0.13.
 existing lockfile due to change in resolution mode" and upgraded tomlkit 0.13.0 to 0.15.2; with the
 variable set it kept 0.13.0, and `uv tree --depth 1` printed `tomlkit v0.13.0`).
 
-#### 5.6.2 `nightly.yml` (cron, manual)
+#### 5.6.2 `nightly.yml` (cron, manual, push and pull requests touching its paths)
+
+Amended at S2 plan review (applied 2026-11-27). Scheduled and manual runs start only from the default branch, which is still
+`main` and has no `nightly.yml`, so until the rewrite becomes the default branch the jobs run on
+pushes to `soundscapy-rewrite` that touch the workflow's `paths`. Pull requests that touch the
+workflow, the network or reference tests, `tests/_downloads.py`, `src/soundscapy/survey/`,
+`src/soundscapy/datasets/` or `src/soundscapy/_data/datasets/` run the `network` and `reference`
+jobs; `docs-papers` and `quickstart` do not run on pull requests. S2 adds the pull-request
+trigger (§9).
 
 `uv run task test:reference`, `uv run task test:network`, `uv run task docs:papers`, then a
 freeze-diff check that opens an issue when `docs/_freeze` changed; these run on ubuntu × 3.14.
@@ -951,7 +981,7 @@ runs on the result:
 | Rank | Source |
 |---|---|
 | 1 | explicit keyword arguments, or CLI options |
-| 2 | `settings=` (a model, a mapping of fields, or a settings file; the CLI's `--settings`) |
+| 2 | `settings=` (a model, a mapping of fields, or a settings file; the CLI's `--settings`). Amended at S2 plan review (applied 2026-11-27): a settings file needs `extends`, which arrives with profiles in S3. Until then `settings=` is a model or a mapping, as the signatures are typed; in S3 the type of every `settings=` parameter gains `| str | os.PathLike[str]` |
 | 3 | the project's `settings.toml` (inside `workspace.run` and the CLI only) |
 | 4 | the base profile's section |
 
@@ -1102,6 +1132,14 @@ class _DefaultHandler(logging.StreamHandler):
 logger.addHandler(_DefaultHandler())  # propagate stays True, so caplog and GUIs receive records
 ```
 
+(Amended 2026-11-01, review F8, `design/reviews/2026-10-31-s1-tool-idiom-review.md`: the INFO
+default is set only when the logger has no level, so an application's earlier
+`logging.getLogger("soundscapy").setLevel(...)` is kept. A `logging.Filter` on the logger applies
+the root logger's level once the root has handlers, unless `set_log_level` was called or the
+`soundscapy` level is not the default. Without it, a logger's own level alone decides
+propagation, so `logging.basicConfig(level=logging.WARNING)` did not silence soundscapy's INFO
+lines, contrary to NFR-13's "or with standard logging configuration".)
+
 `set_log_level(level)` sets the `soundscapy` logger's level and is the one silencing call; there is
 no environment variable. The package never prints. Importing `soundscapy` touches no third-party
 logger. Pooch's INFO lines ("Downloading file ...") are hidden inside `fetch` only: `fetch` adds a
@@ -1180,6 +1218,9 @@ mapped. `source_dominance`: `traffic_noise`, `other_noise`, `human_sounds`, `nat
 `who5_5`. Default scales: the circumplex scale for attributes; 1..5 ordinal for source dominance,
 overall quality and appropriateness; 0..5 ordinal for WHO-5. The mapping hash covers the normalised
 model, so `pleasant = "x"` and `PAQ1 = "x"` hash equally.
+
+Amended at S2 plan review (applied 2026-11-27): an optional group may map any subset of its keys; an unknown key
+raises `MappingError`; keys are normalised to the order listed here.
 
 #### 6.4.2 Coding order
 
@@ -1305,6 +1346,10 @@ def read_survey(
 ) -> Survey: ...
 ```
 
+Amended at S2 plan review (applied 2026-11-27): the type of `settings` gains `| str | os.PathLike[str]` in S3, when settings
+files with `extends` arrive (§6.3.4 rank 2); until then it is a model or a mapping. The same
+holds for every other signature with `settings=`.
+
 Every optional argument uses the `_UNSET` sentinel (§6.3.4), never `None`. The sheet of a workbook
 is `ReadOptions.sheet`; there is no separate `sheet` argument, here or in `suggest_mapping`. Left
 unset, `profile` follows steps 3 and 4 of the §6.3.4 rule (a settings file's `extends`, else
@@ -1413,21 +1458,34 @@ material is written.
 
 ### 6.7 Quality rules (FR-1.5)
 
-`QualitySettings` holds one `Action` (`"exclude"`, `"flag"` or `"off"`) per rule plus thresholds.
+`QualitySettings` holds one action per rule plus thresholds; the actions each rule takes are listed
+after the table.
 **Normative** defaults. They reproduce the processing the 0.x tutorials applied to ISD v1.0, which
-is FR-1.5's acceptance test (PRD 0.9), and follow the 2021 JASA paper's rules where the 2022 code
-got them wrong (§6.24):
+is FR-1.5's acceptance test (PRD 0.9), and follow the rules of Erfanian et al. (2021) where the 2022 code got them wrong (§6.24). The source is
+Erfanian, M., Mitchell, A., Aletta, F. and Kang, J. (2021). Psychological well-being and demographic factors can mediate soundscape pleasantness and eventfulness: A large sample study. *Journal of Environmental Psychology* 77, 101660, doi 10.1016/j.jenvp.2021.101660.
+The defaults:
 
 | Rule | Default | Definition | Writes |
 |---|---|---|---|
 | `all_identical` | exclude | all attribute items present and equal, and the value is not the scale midpoint | reason `all_identical` |
-| `all_midpoint` | flag | all attribute items present and equal to the midpoint (kept, per the 2021 rule) | flag `all_midpoint` |
-| `excessive_missing` | exclude | missing share over mapped attribute and source-dominance items `> excessive_missing_share` (default 0.5; 12 items when both groups are mapped). From the 2021 paper's text; it fires on no ISD row | reason `excessive_missing` |
+| `all_midpoint` | flag | all attribute items present and equal to the midpoint (kept, per the Erfanian et al. (2021) rule) | flag `all_midpoint` |
+| `excessive_missing` | exclude | missing share over mapped attribute and source-dominance items `> excessive_missing_share` (default 0.5; 12 items when both groups are mapped). From the text of Erfanian et al. (2021); it fires on no ISD row | reason `excessive_missing` |
 | `incomplete_attributes` | always | any attribute item missing (FR-2.5a; not configurable at M1) | reason `incomplete_attributes` |
 | `no_consent` | exclude | consent column mapped and value not in `true_values` | reason `no_consent` |
 | `test_response` | exclude | test column mapped and value in `true_values` | reason `test_response` |
 | `paper_input` | flag | paper column mapped and value in `true_values` | flag `paper_input` |
 | `under_age` | flag | age mapped, parsed as a number, and `< min_age` (default 18) | flag `under_age` |
+
+Amended at S2 plan review (applied 2026-11-27). Each rule takes the actions its codes allow (§6.3.1):
+`all_identical`, `excessive_missing`, `no_consent` and `test_response` take `exclude` or `off`;
+`all_midpoint` takes `flag` or `off`; `paper_input` and `under_age` take all three
+(`"exclude"`, `"flag"` or `"off"`). `incomplete_attributes` has no settings field. "Every rule ×
+action" (§7.1, §9 S2) means every allowed pair, and each disallowed pair is refused with
+`SettingsError`.
+
+Age texts are coded with the default `Coding` (missing tokens are missing); any other text that is
+not a number raises `CodingError` naming the age column. Flag cells are compared with `true_values`
+after stripping, case-sensitively; a blank consent cell is not consent.
 
 A rule whose columns are not mapped is skipped, and the skip is recorded in the survey's
 provenance as `quality_skipped: [rule, ...]`. The code written follows the action: a flag code
@@ -1439,8 +1497,8 @@ under-age rows in).
 **Where the rules come from.** The ISD publishes no exclusion counts: its Zenodo `Scripts.zip`
 compiles and recodes the data only. The 0.x code never implemented a "more than half missing" rule
 (the early 2022 code filled missing PAQ items with 3 and left a TODO); the rule appears only in the
-text of the 2021 paper. So `excessive_missing` keeps its definition and default, documented as from
-the 2021 paper, and stays configurable. Its denominator is the 2021 paper's wording, the attribute
+text of Erfanian et al. (2021). So `excessive_missing` keeps its definition and default, documented as from
+Erfanian et al. (2021), and stays configurable. Its denominator is the wording of Erfanian et al. (2021), the attribute
 plus source-dominance items, 12 when both groups are mapped (a call made here, §11.2).
 
 **Pinned counts** (verified on ISD 1.0.1-alpha, Zenodo record 10639661, byte-identical to the CSV
@@ -1676,6 +1734,10 @@ def project(
     profile: str | _Unset = _UNSET,
 ) -> Coordinates: ...
 ```
+
+Amended at S2 plan review (applied 2026-11-27): the type of `settings` gains `| str | os.PathLike[str]` in S3, when settings
+files with `extends` arrive (§6.3.4 rank 2); until then it is a model or a mapping. The same
+holds for every other signature with `settings=`.
 
 `angles` accepts `"equal"`, an `AngleSetRef`, a string `"name@version"`, or a full `AngleSelection`.
 It resolves settings (§6.3.4), resolves angles per response (§6.8.3), builds the Coordinates'
@@ -1983,13 +2045,31 @@ column of `item_statistics` and changes no number) default to `None` or a value:
 | `likert(survey, *, by=_UNSET, item_group=_UNSET, ax=None, ...)` | stacked bars of response shares per item (from `survey.response_shares`) |
 | `radar(survey, *, by=_UNSET, statistic="median", ax=None, ...)` | per-attribute medians. With `ax=None` it creates `fig.add_subplot(projection="polar")`; a non-polar `ax` raises `AxesError` (§6.3.10) |
 
-The `ax` contract: `ax=None` creates `matplotlib.figure.Figure()` and `fig.add_subplot()` (polar for
-`radar`), with no pyplot state; the function returns the Axes and never calls `show()`; `**kwargs`
-go to the main artist. Shared helpers in `plot/_common.py`: `circumplex_axes(ax, circumplex,
+The `ax` contract: `ax=None` creates a new pyplot figure with `plt.subplots()` (polar for `radar`);
+the function returns the Axes and never calls `show()`; `**kwargs` go to the main artist.
+(Amended 2026-11-01, owner decision on review F5, `design/reviews/2026-10-31-s1-tool-idiom-review.md`:
+the earlier pyplot-free `Figure()` departed from matplotlib's documented pattern for libraries and
+made every notebook cell end in `ax.figure`; a GUI or web service passes its own `ax` and never takes
+the `ax=None` path.) Shared helpers in `plot/_common.py`: `circumplex_axes(ax, circumplex,
 label_language)` (the ±1 square, axis lines, axis and quadrant labels in the chosen language,
 reference language by default); `check_n(groups, min_n, allow_small_n)`. No origin-label hook exists
-at M1, because no M1 function calls it; M2 adds it with its first caller. Colour: the `petroff10`
-colour sequence for groups, `cividis` for fills (FR-8.3, NFR-10). A single-group density with
+at M1, because no M1 function calls it; M2 adds it with its first caller. Colour: groups take the colours of the active `axes.prop_cycle`, so a style sheet,
+`rc_context` or `style.context` the user applies sets them; while that cycle is matplotlib's
+default, seaborn's ten-colour `colorblind` palette (`seaborn.color_palette("colorblind")`) is used,
+applied as `axes.prop_cycle` in a `matplotlib.rc_context`, so rcParams are restored after the call,
+and `ax=None` creates its Axes with it as the colour cycle; `cividis` for
+fills (FR-8.3, NFR-10). (Amended 2026-11-01, review F6: hard-coded `petroff10` colours ignored
+matplotlib's own styling routes, which FR-8.3 names as the way to customise.) (Amended 2026-11-01,
+owner comment on PR #171, "I prefer seaborn's `colorblind` palette as the default": seaborn's
+`colorblind` replaces `petroff10`, and seaborn becomes a runtime dependency (§6.19) so the colours
+come from seaborn itself rather than a copied list. The owner accepted the trade-off: in a simulation
+of full-severity dichromacy (colorspacious, CAM02-UCS), the closest pair of the ten colours is 5.8
+apart for protanopia (6.1 tritan, 8.5 deutan), against about 14.5 for `petroff10` and 1.6 for
+matplotlib's `tab10`. The close pairs (green and brown, green and grey, pink and brown) all sit in
+the first ten colours, before the marker changes. Docstrings call it seaborn's colour-blind palette,
+not colour-vision-deficiency-safe. The F6 rule is unchanged: a user's style sheet, `rc_context` or
+`style.context` still wins, detected as `axes.prop_cycle` differing from
+`rcParamsDefault["axes.prop_cycle"]`.) A single-group density with
 `n_valid < 30` raises `SmallSampleError` unless `allow_small_n=True`; a grouped density draws small
 groups as scatter with "N = 12 (< 30), scatter shown" in the legend and one `SmallSampleWarning`
 (FR-3.2, owner row
@@ -1998,16 +2078,26 @@ groups as scatter with "N = 12 (< 30), scatter shown" in the legend and one `Sma
 PNG, SVG and PDF with `ax.figure.savefig` (FR-9.1).
 
 **Lazy matplotlib.** `soundscapy.plot` imports matplotlib inside each function, never at module
-top; type hints use `TYPE_CHECKING` imports. `import soundscapy` therefore never imports
+top; type hints use `TYPE_CHECKING` imports, unquoted under `from __future__ import annotations`
+(amended 2026-11-01, PR #171). `import soundscapy` therefore never imports
 matplotlib, so matplotlib's first-run font-cache message cannot appear on import. The silent-import
 test stays, and a second test asserts `"matplotlib" not in sys.modules` after `import soundscapy`
-in a fresh interpreter.
+in a fresh interpreter. (Amended 2026-11-01, PR #171: seaborn, which imports matplotlib, is
+imported the same way, banned at module level by ruff's TID253 and outside `plot` by the import
+contract of §5.2.1; the second test also asserts `"seaborn" not in sys.modules`. Importing
+seaborn has three effects that the first default-coloured plot call now has, also when the caller
+passes its own `ax`: it imports `matplotlib.pyplot` (seaborn's `utils` does), so a GUI or web
+service that passes its own `ax` (the F5 note above) now has pyplot imported, though no pyplot
+figure is created; it registers seaborn's twelve
+colormaps (`rocket`, `mako`, `flare`, `crest`, `vlag`, `icefire` and their `_r`) in matplotlib's
+colormap registry; and, once scipy is installed (§6.19, from S2), it imports `scipy.stats` and
+`scipy.cluster`, and statsmodels if present. It changes no rcParams. A user cycle with colours
+skips the import.)
 
-**Notebook display.** With `ax=None` the function builds a pyplot-free `Figure()`, which Jupyter
-does not show on its own. The display convention: every tutorial plot cell, the quick-start and
-the docs examples end with the expression `ax.figure` (or `sspy.plot.scatter(...).figure`), which
-Jupyter renders through the Figure's rich display. Passing an `ax` made with `plt.subplots()`
-shows as usual. A docs test reads every executed `{python}` cell of `docs/tutorials/*.qmd` that
+**Notebook display.** With `ax=None` the figure is a pyplot figure, so a notebook shows it
+when the cell ends and a script saves it with `plt.savefig()`; no cell ends in `ax.figure`, which
+would now show the plot twice. (Amended 2026-11-01, review F5; this replaces the `ax.figure`
+display convention.) A docs test reads every executed `{python}` cell of `docs/tutorials/*.qmd` that
 calls `sspy.plot`, and asserts that its output in `docs/_freeze/` holds an image.
 
 ### 6.16 Tables, export and attach (FR-9.1, FR-14.2)
@@ -2143,7 +2233,8 @@ floors.
 | pyarrow | 15 | Apache-2.0 | parquet (owner row #6) |
 | narwhals | 2.0 | MIT | the boundary (`stable.v2`) |
 | pydantic | 2.7 | MIT | settings and value types |
-| matplotlib | 3.10.7 | Matplotlib licence (PSF-based) | plotting; `petroff10`. (Amended at S1 plan review, 2026-10-31: 3.10.0 to 3.10.6 emit `PyparsingDeprecationWarning` on import against pyparsing 3.3.) |
+| matplotlib | 3.10.7 | Matplotlib licence (PSF-based) | plotting. (Amended at S1 plan review, 2026-10-31: 3.10.0 to 3.10.6 emit `PyparsingDeprecationWarning` on import against pyparsing 3.3.) (Amended 2026-11-01, PR #171: the default palette no longer needs `petroff10`; the 3.10.7 floor stays for the pyparsing reason.) |
+| seaborn | 0.13.2 | BSD-3-Clause | the default group colours, `color_palette("colorblind")` (§6.15); imported lazily inside `plot` only. 0.13.2 is the latest release and requires only numpy, pandas and matplotlib, all already here; it imports scipy and statsmodels too when they are installed. Measured warm on macOS (2026-11-01), `import seaborn` takes about 60 ms once pyplot is loaded, about 160 ms after only matplotlib and pandas (it imports pyplot), and about 550 ms with scipy installed (it imports `scipy.stats` and `scipy.cluster`); it is paid once, on the first default-coloured plot (§6.15). (Added 2026-11-01, owner comment on PR #171; checked to import cleanly under `-W error` at the `lowest-direct` floors: numpy 1.26.0, pandas 2.2.1, matplotlib 3.10.7.) |
 | pooch | 1.8 | BSD-3-Clause | ISD download and cache |
 | tqdm | 4.66 | MPL-2.0 AND MIT | pooch's progress bar needs it, and owner decision #4 makes `tqdm.auto` the default reporter; so core at M1, not M3 (a call made here, §11.2; a plan §5 edit, §11.1) |
 | click | 8.2 | BSD-3-Clause | CLI; 8.2 is the first with `CliRunner` stderr always separate |
@@ -2152,14 +2243,17 @@ floors.
 
 The licence column records each runtime dependency's licence (NFR-7), read from PyPI metadata on
 2026-10-31: `License-Expression` where the package sets it, else its `License` field or classifier
-(scipy declares only the classifier "BSD License"; its `LICENSE.txt` is BSD-3-Clause). All are
+(scipy declares only the classifier "BSD License"; its `LICENSE.txt` is BSD-3-Clause; seaborn,
+added 2026-11-01, is the same: classifier only, `LICENSE.md` BSD-3-Clause). All are
 permissive and compatible with BSD-3-Clause; tqdm's MPL-2.0 part is file-level copyleft and is
 used unmodified. The table is kept as `tests/licences.toml`, and a test fails if a runtime
 dependency in `pyproject.toml` has no entry there or its installed metadata declares no licence.
 
-Dev group adds `pandas-stubs`; test group adds `polars`. seaborn and statsmodels are not runtime
-dependencies (seaborn appears only in `scripts/make_seaborn_fixtures.py` via `uv run --with`;
-statsmodels only in the docs group).
+Dev group adds `pandas-stubs`; test group adds `polars`. statsmodels is not a runtime dependency
+(only in the docs group). (Amended 2026-11-01, owner comment on PR #171: seaborn is now a runtime
+dependency for its palette only, row above. No KDE or plotting is taken from it: density stays
+`scipy.stats.gaussian_kde` (§6.12), and the seaborn fixtures are still generated by
+`scripts/make_seaborn_fixtures.py` with its own pinned versions.)
 
 ### 6.20 The ISD loader and bundled data (FR-10.1)
 
@@ -2217,7 +2311,9 @@ counts are `network` tests (nightly): they fetch record 10672568 with its pinned
 `datasets.isd.load(*, subset=False, version=_UNSET, locations=_UNSET, quality=_UNSET,
 on_scale_violation=_UNSET, settings=_UNSET, profile=_UNSET) -> Survey` (top-level `load_isd`)
 reads with the mapping file and read options its registry entry names, and passes `quality`,
-`on_scale_violation`, `settings` and `profile` through to `read_survey` unchanged. `version` left
+`on_scale_violation`, `settings` and `profile` through to `read_survey` unchanged (`settings` is a
+model or a mapping until S3, when it also takes a settings file; amended at S2 plan review, applied
+2026-11-27, §6.3.4 rank 2). `version` left
 unset means the registry's `default`. `subset=True` reads the bundled file and accepts only the
 version it was made from, `1.0.1-alpha.1`. `fetch(*, version=_UNSET) -> Path` downloads via pooch
 into `pooch.os_cache("soundscapy")`, overridable with `SOUNDSCAPY_DATA_DIR`, with
@@ -2350,6 +2446,14 @@ K's course material and the tests have a realistic export with renamed columns.
 | Loader | `datasets.course_demo.load(*, quality=_UNSET, on_scale_violation=_UNSET, settings=_UNSET, profile=_UNSET) -> Survey`, offline |
 | Generator | `scripts/make_course_demo.py` reads the source from `origin/main` or `--source PATH`, checks its sha256, drops the three columns and writes the copy and sidecar |
 
+**Sidecar keys.** Amended at S2 plan review (applied 2026-11-27); the list is the S2 plan's (its Task 7), mirroring the
+ISD subset's sidecar. `course_demo.toml` holds `schema = "soundscapy.dataset_sidecar"`,
+`schema_version = 1`, `name = "course-demo"`, `version = "1"`, `source_file`, `source_ref`,
+`source_sha256`, `copy_hash` (the copy's `h1-sha256:` hash), `n_rows = 456`, `dropped_columns` (the
+three), `locations` (the four, in first-appearance order), `columns` (the 34),
+`[features] columns` (the eight acoustic columns), `units_verified = false`, then the `[citation]`
+block: `citation`, `doi_or_url`, `licence`, `date` and `notes`.
+
 The file has no language column. The ISD records 454 of its rows as eng and 2 as spa, so
 `language.value = "eng"` is right for all but two rows; the sidecar notes say so (a call made here,
 §11.2). The mapping doubles as the realistic "renamed columns" fixture of FR-1.3 and FR-1.3a:
@@ -2440,7 +2544,7 @@ The 36 rows without attribute answers are never dropped: they stay in the status
 reasons, and the page reports them.
 
 It uses a settings file committed beside it: profile `iso-12913-3-2019` (45°, the 2019 formula,
-the paper's Eqs. 1 and 2; amended at S1 plan review, 2026-10-31), the 2021 quality rules, and density with seaborn's KDE defaults and
+the paper's Eqs. 1 and 2; amended at S1 plan review, 2026-10-31), the Erfanian et al. (2021) quality rules, and density with seaborn's KDE defaults and
 `bw_adjust=1.2` (`bw_method="scott"`, `gridsize=200`, `extent="data"`, `cut=3`), `clip="none"` and
 per-group normalisation (owner decision, §4.3; the 0.x code at commit ece4e0c, which drew the
 figures, sets `default_bw_adjust = 1.2`). Panels, as drawn by the ece4e0c notebook:
@@ -2456,7 +2560,7 @@ The 63 dB split over the whole v0.2.3 dataset is confirmed by the owner (§4.3),
 ece4e0c code drew; the paper's text and caption say 65 dB. The page computes the split on the 1338
 rows and states the difference from the caption.
 
-A Deviations section lists what differs from the paper: recomputed coordinates, the 2021 quality
+A Deviations section lists what differs from the paper: recomputed coordinates, the Erfanian et al. (2021) quality
 rules instead of the 2022 code's (which excluded all-neutral responses and filled missing items
 with 3), and the 63 versus 65 dB wording. It prints `enclosed_share` per panel and group. No
 numeric baseline is kept (owner row #10). `task docs` uses the freeze; `task docs:papers`
@@ -2597,14 +2701,15 @@ network (§3.3).
 ### 7.6 Plot tests
 
 Plot tests assert on artist data, never on pixels: scatter offsets equal `coords.xy` of the valid
-rows; contour paths equal `ContourSet` polygons; the default colours are `petroff10`; axis labels
+rows; contour paths equal `ContourSet` polygons; the default colours are seaborn's `colorblind` (amended
+2026-11-01, PR #171), and the default cycle does not leak into rcParams; axis labels
 follow `label_language`; `plt.get_fignums()` is empty after a call with `ax=None`; the passed `ax`
 is returned; a kwarg (`color`) reaches the artist; the N rule's refuse, override and grouped
 fallback cases; saving to PNG, SVG and PDF succeeds; Likert bar widths equal `response_shares`;
 joint marginal curves equal `marginals`; `radar` with `ax=None` returns polar axes and with a
 Cartesian `ax` raises `AxesError`; a figure saved through `save_figure` has a sidecar whose
 provenance equals the source run's. A synthetic indoor circumplex (FR-2.0) runs every analysis and
-plot. `"matplotlib" not in sys.modules` after a bare `import soundscapy` (§6.15).
+plot. `"matplotlib" not in sys.modules` and `"seaborn" not in sys.modules` after a bare `import soundscapy` (§6.15).
 
 **Tutorial display check.** After `task docs`, a docs test reads `docs/_freeze/` for each
 `docs/tutorials/*.qmd` and asserts that every cell calling `sspy.plot` has an image output
@@ -2660,10 +2765,10 @@ contourpy lock fork.
 | NFR-7 | the licence column of §6.19 and the test that every runtime dependency has an entry and declared licence |
 | NFR-8 | CI runs the tests on all supported platforms (NFR-2 row), the science fixtures by default, and builds and executes the docs (`docs` job) |
 | NFR-9 | the layers and import contracts of §5.2.1 pass; the module layout of §6.1 holds at review, no module growing past one responsibility; ADRs written in S1 |
-| NFR-10 | `cividis` and `petroff10` defaults; English interface; translated attribute labels for the sourced languages (the 18 of Aletta et al. 2024), each with a citation, and the documented English fallback for pol, yue, tha, bra and alb (§6.2.3, §7.2) |
+| NFR-10 | `cividis` and seaborn `colorblind` defaults (amended 2026-11-01, PR #171; the owner accepted its weaker simulated separation, §6.15); English interface; translated attribute labels for the sourced languages (the 18 of Aletta et al. 2024), each with a citation, and the documented English fallback for pol, yue, tha, bra and alb (§6.2.3, §7.2) |
 | NFR-11 (in part) | `CITATION.cff` validates with `cffconvert --validate` in the `citation` job |
 | NFR-12 | GOVERNANCE.md and CODEOWNERS, which names `@MitchellAcoustics` on `src/soundscapy/_data/`, `tests/science/`, `tests/regression/` and `design/` |
-| NFR-13 | silent import, with matplotlib not imported; one INFO line per read and per download; pooch's own INFO lines hidden inside `fetch` only; `set_log_level("WARNING")` silences all |
+| NFR-13 | silent import, with matplotlib and seaborn not imported; one INFO line per read and per download; pooch's own INFO lines hidden inside `fetch` only; `set_log_level("WARNING")` silences all |
 | Journey A | tutorial A renders offline with every cell run, and every plot cell has an image output |
 
 ## 9. Build order
@@ -2675,7 +2780,7 @@ slice ends with the AGENTS.md sequence: `task check`, then `/simplify`, then `/c
 |---|---|---|
 | S0 Phase 0 | §5 | §5.10 |
 | S1 Thin slice, contracts first | (a) errors, `_model`, hashing with golden vectors, provenance envelope, `_log`, `_frames`, `Status`, namespace constants, `_data` registry with hash pins; (b) `Scale`, `Axis`, `Circumplex`, `iso-12913-outdoor/1.toml`; (c) the projection kernel on bare numpy; (d) the subset generator and CSV, a minimal `SurveyMapping` (attributes, ids, language), `read_survey` from a path, `response_id`, `Coding`; (e) `project` with equal angles, `Coordinates`, `OriginSegment`, `attach`; (f) `plot.scatter`, `load_isd(subset=True)`, the new `_quickstart.py`. Then ADRs: Coordinates carries settings, response_id, the `ssp_` namespace, h1 hashing | the science tests for exhaustive equality, bounds, neutral, constant shift and 2019 hand values pass; hash vectors, TOML round-trips, pandas 2.2, pandas 3.x and polars frame tests and the lazy-frame `TypeError` pass; `sspy.plot.scatter(sspy.project(sspy.load_isd(subset=True), angles="equal"), by="location")` returns Axes whose offsets equal xy; import is silent; `task check` passes |
-| S2 Status, quality, full mapping | all construct groups, flags, carry; missing codes, value maps, reverse; `ScaleViolationError` and `exclude`; `QualitySettings` with every rule; the course dataset, its generator, mapping and loader (§6.20.4) | subset counts 1552/16/0/10/8 pinned in the default run; full-ISD counts pinned in the nightly `network` test; the row-count property holds; every rule × action tested; the FR-1.5 acceptance test passes on the subset (default run) and is in place nightly on the full ISD; the course dataset reads through its mapping |
+| S2 Status, quality, full mapping | all construct groups, flags, carry; missing codes, value maps, reverse; `ScaleViolationError` and `exclude`; `QualitySettings` with every rule; `read_survey`'s `quality`, `on_scale_violation` and `settings` (a model or a mapping; settings files arrive in S3); the pull-request trigger of `nightly.yml` (§5.6.2); the course dataset, its generator, mapping and loader (§6.20.4) | (amended at S2 plan review, applied 2026-11-27) subset counts pinned in the default run: 1552 rows, 16 `incomplete_attributes`, 0 `all_identical`, 10 `all_midpoint`, 0 `excessive_missing`, 8 `under_age`, 16 excluded (§6.7); full-ISD counts pinned in the nightly `network` test; the row-count property holds; every allowed rule × action pair tested and every disallowed pair refused (§6.7); the FR-1.5 acceptance test passes on the subset (default run) and is in place nightly on the full ISD; the course dataset reads through its mapping; each course row equals its ISD row nightly (§7.5) |
 | S3 Angle sets, profiles, settings, labels | `AngleSet` with tier-only languages, `AngleSelection`, the resolver, `aletta-2024@1` and its generator (with the Table 2 tiers), `satp@1.5` from the chapter notes, the three profiles as versioned files (`<id>@1`, `sal-2026@1` on `satp@1.5`), the precedence rule, overrides and profile carry-over, `save_settings`, `register_angle_set`, `angle_sets=` recorded in full, the synthetic three-tier set (`qaa` to `qad`); the `aletta2024` formulation in the kernel and the `Literal` (§6.9.1); the translated labels of §6.2.3 transcribed into `iso-12913-outdoor/1.toml`, then checked cell by cell by the second agent pass; the §11.4 Table A.1 fixture `tests/science/fixtures/iso12913_3_table_a1.csv` (scale labels and direction per part, the 0.x wording until the owner's check) and a test comparing the shipped `[scale.labels]` with it (amended at S1 plan review, 2026-10-31: §11.4's row was in no slice) | the committed aletta and satp files match their pins and their sources offline (§7.2), and the aletta file regenerates byte-identically in the nightly `reference` run; error, exclude and equal paths tested on the synthetic three-tier set and the mixed-language subset sites; tier-only languages resolve as uncovered and name their tier; the 2019 profile carry-over test passes; the Medium warning fires once for cmn; `iso2019` refused on 1..7; the aletta2024 formulation passes its hand values, its 45° reduction and its neutral-off-origin property, and the ISO profiles refuse it; the 18 sourced languages have labels with a citation and the gap languages fall back to English; every model round-trips through TOML with an equal hash |
 | S4 Workspace | §6.18, `export`, `export_run`, `add_table` and `join_context` on `Survey` and `Coordinates` (§6.5.1), the precedence rule with `settings.toml` at rank 3 | init, add, project, save, then reopening and reading the run gives identical coordinates; re-running uses current settings and never the old sidecar; tampered raw raises; each sidecar validates back into its settings model (`read_coordinates` into `ProjectionSettings`); a location table joins without changing the row count |
 | S5 Distribution and density plots | `Region`, `describe`, `density` returning `Densities` (grouped by the `DensitySettings.by` field, with `z_points`), `contours` per group, `ContourSettings`, `marginals`, the per-group parquet and set sidecar of §6.12, the `Density` and `Densities` hash vectors, `save_figure`, the N rule, `plot.density`, `plot.fraction_contour`, `plot.joint` | seaborn grid, levels and line contours match to 1e-9; `enclosed_share` equals the share of points with `z_points >= level`; Σ quadrant proportion + `boundary_share` = 1; `read_density` and `read_contours` rebuild equal records; N < 30 warn, refuse and fallback tested; import contracts kept |
@@ -2702,7 +2807,7 @@ Resolved, citing PRD 0.9 §10.5b (row numbers are draft 0.1's, so older cross-re
 
 | Draft 0.3 row | Resolution |
 |---|---|
-| 4: ISD published exclusion counts; the missingness denominator | The ISD publishes no counts. FR-1.5's acceptance test is the 0.x tutorials' 56 exclusions on ISD v1.0 (§6.7). The denominator is the 2021 paper's wording, 12 items (a call made here, §11.2) |
+| 4: ISD published exclusion counts; the missingness denominator | The ISD publishes no counts. FR-1.5's acceptance test is the 0.x tutorials' 56 exclusions on ISD v1.0 (§6.7). The denominator is the wording of Erfanian et al. (2021), 12 items (a call made here, §11.2) |
 | 6: Aletta 2024 formulation worked example | Not needed: the formulation is a full M1 Must, tested against hand values from its Eqs. 1 to 3 (§6.9.1, §7.2) |
 | 13: the 63 dB split of the 2022 page's panel (d) | 63 dB over the whole v0.2.3 dataset the page uses, the 1338 pre-lockdown rows, confirmed by the owner (§6.23) |
 | 21: committing the chapter 4 author proof | Not committed; cited by reference, with the transcribed tables in the chapter notes file (§1, §4.4) |
@@ -2718,6 +2823,7 @@ calls made in this spec (§11.2).
 | Document | Edit |
 |---|---|
 | Plan §5 | tqdm is a core dependency from M1 (pooch's bar; owner decision #4), not M3; `_log`, `_model` and `tables` join the bottom layer; `cli` is a layer above `workspace` (it calls it), not its independent sibling; the core never imports a GUI toolkit (an import contract, FR-14.7) |
+| Plan §5 (Dependencies) | (Added 2026-11-01, owner comment on PR #171.) seaborn is a runtime dependency for its `colorblind` palette, the default group colours (§6.15, §6.19); the plan's "seaborn is not a dependency" no longer holds. KDE still uses scipy, not seaborn (plan §4.9) |
 | Plan §6 (Docs convention) | the docs group pins great-docs as a git source at `af17c76` (owner decision, 2026-10-31) until the first PyPI release after 0.17.0; fallback `095db9b` |
 | Plan Appendix A (`Coordinates`) | `labels` is a dict of read-only numpy arrays, not a frame; `to_frame` converts at the return (plan rule 4) |
 | Plan §4.4 (hierarchy) | names the M1 functions: `survey.join_context` and `workspace.add_table` |
@@ -2728,9 +2834,10 @@ calls made in this spec (§11.2).
 | Plan §4.2 | M1 formulations are canonical, iso2019 and aletta2024 (PRD 0.9 FR-2.3: the Aletta 2024 Eqs. 1 to 3, no centring; selectable, refused by the ISO profiles, used by no profile by default); `satp@1.5` ships at M1 and `sal-2026@1` uses it; an angle set may list tier-only languages, which resolve as uncovered |
 | Plan §4.11 | replace "per-run settings in a sidecar take precedence over project defaults" with: a run's sidecar records the settings it ran with; re-running an operation uses the current inputs and settings, and a sidecar is never an input (§6.3.4) |
 | Plan §9.1 register | annotate #36 as superseded by PRD 0.9 FR-2.3 and §10.5b (the Aletta 2024 formulation is a full M1 Must); annotate #39 with its PRD 0.9 test, the 0.x tutorials' 56 exclusions on ISD v1.0 (FR-1.5) |
-| Plan §4.4 (quality) | the default rules reproduce the 0.x tutorials' processing of ISD v1.0 (56 excluded); `excessive_missing` stays configurable, from the 2021 paper's text |
+| Plan §4.4 (quality) | the default rules reproduce the 0.x tutorials' processing of ISD v1.0 (56 excluded); `excessive_missing` stays configurable, from the text of Erfanian et al. (2021) |
 | house-style SKILL.md | add `soundscapy._model.FrozenModel` beside `pydantic.BaseModel` in `runtime-evaluated-base-classes`; add `minversion = "9.2"` and the `"-m", "not reference and not network"` entry to the pytest `addopts` (§5.2); add `CPY001` to the ignores with its reason; replace the `.claude/hooks/**` per-file ignore with the §5.2 list (INP001, T201, S603, S607, D103, PLW1510, PTH109, C901, PLR0911) and add the `scripts/**` ignore (INP001, T201) for the PEP 723 generators; add the `network` marker and `test:network`, `docs:papers` tasks; say that `tests/templates/` is created at M2 with the first FR-13.1 recipe, not at M1; replace the per-module filterwarnings advice: a scoped ignore names the soundscapy module that calls the library, or matches the message, never a third-party module whose warning uses `stacklevel ≥ 2`; record repo-review ignores; `uv run task` form; actionlint through `actionlint-py` |
 | house-style reference.md | its source label says great-docs 0.17.0 but describes main at 4232670; relabel it as main at `af17c76` after the re-copy, and re-check its statements against that commit; record the freeze behaviour check on `af17c76` and which §5.9 fallback step worked; note `{{< include >}}` for shared code; note `guide-section` and the `ax.figure` display convention |
+| house-style SKILL.md (added 2026-11-01, PR #171) | `banned-module-level-imports = ["matplotlib", "seaborn"]`, and the import contract renamed "Core never imports matplotlib or seaborn" (§5.2.1) |
 | `.claude/skills/VENDORED.md` and the three great-docs skills | re-copied at `af17c76`; rows bumped (§5.1) |
 | `.claude/hooks/*.py` | §5.4.1; the per-file ignore of §5.2; one `ruff format` run on the three scripts, committed on its own with no other change (commit message: "style: ruff format hook scripts (one-off, no behaviour change)") |
 | AGENTS.md | the Status paragraph rewritten for the state after Phase 0 (toolchain, CI and docs skeleton exist; `task check` is the definition of done); the `uv run task` line (§5.1) |
@@ -2748,7 +2855,7 @@ calls made in this spec (§11.2).
 | KDE defaults: seaborn's `kdeplot` defaults with `bw_adjust=1.2` (the 2022 paper's method) for every profile, the chapter's `sal-2026` included; clip to the [−1, 1] square for new work, no clip in the 2022 reproduction's settings (the meaning of the 50% contour is the owner's decision, §4.3) | §6.12 | new work and the 2022 paper agree; owner rows #10 and G4-07 |
 | `enclosed_share` computed from `z_points`, the density at each valid point from the same `gaussian_kde`, stored in each `Density`, its array hash and its parquet form (builder check Q5) | §6.12, §6.3.5 | the share is reproducible from the saved record alone |
 | `density` always returns `Densities`, with `by` a `DensitySettings` field; `contours` works per group; one parquet per group plus one sidecar for the set; the set's array-hash layout pinned (Q1) | §6.12, §6.3.5 | one return type whatever the grouping, and the grouping is recorded |
-| 2021 quality rules (all-midpoint kept with a flag) | §6.7 | the 2022 code's rule was a bug |
+| Erfanian et al. (2021) quality rules (all-midpoint kept with a flag) | §6.7 | the 2022 code's rule was a bug |
 | `under_age` and `paper_input` codes in both enums | §6.7 | the default can change without a schema change |
 | `under_age` flags by default (was owner's call 18) | §6.7 | keeps rows, as the 0.x tutorials' 56 exclusions did; switchable without a schema change |
 | One inclusion rule, `include="quality_passed"`, for every Survey analysis; only `incomplete_attributes` is tolerated | §6.13 | FR-2.5a, without letting straightliners into item medians; one rule instead of four (builder check C5) |
@@ -2804,10 +2911,10 @@ calls made in this spec (§11.2).
 | Location and session tables through `join_context` and `add_table` | §6.5.1 | FR-1.4's minimal hierarchy, plan §4.4 (B16) |
 | `Coordinates.labels` as read-only numpy arrays | §6.10 | no frame inside the core; plan rule 4 (B20) |
 | Workspace export named `export_run`; `sspy.export` unchanged | §6.18 | two functions with one name confused the API (B8) |
-| Tutorial plot cells end with `ax.figure`; a docs test checks each renders an image | §6.15 | keeps `ax=None` pyplot-free yet visible in notebooks (B7) |
+| ~~Tutorial plot cells end with `ax.figure`~~ (superseded 2026-11-01: `ax=None` uses pyplot, review F5); a docs test checks each tutorial plot cell renders an image | §6.15 | notebooks show plot output |
 | Tutorial A's language section shows cmn projecting with the Medium warning under `satp@1.5`, and the Low and uncovered paths on the synthetic `qaa` to `qad` set | §6.22 | no ISD language is Low or uncovered under `satp@1.5` (C2, S4) |
-| The FR-1.5 acceptance test is PRD 0.9's 56 exclusions, run on the subset counts by default and on the full ISD nightly; it no longer awaits an owner input. `excessive_missing` keeps its 2021-paper definition and default (`exclude`, missing share > 0.5), and its denominator is the 2021 paper's wording, the 12 attribute and source-dominance items (B19; R6) | §6.7 | the acceptance criterion is testable now, and the ISD publishes no counts to wait for |
-| matplotlib imported inside `plot` functions only | §6.15 | `import soundscapy` cannot trigger matplotlib's font-cache message (NFR-13) |
+| The FR-1.5 acceptance test is PRD 0.9's 56 exclusions, run on the subset counts by default and on the full ISD nightly; it no longer awaits an owner input. `excessive_missing` keeps its Erfanian et al. (2021) definition and default (`exclude`, missing share > 0.5), and its denominator is the wording of Erfanian et al. (2021), the 12 attribute and source-dominance items (B19; R6) | §6.7 | the acceptance criterion is testable now, and the ISD publishes no counts to wait for |
+| matplotlib and seaborn imported inside `plot` functions only (seaborn added 2026-11-01, PR #171) | §6.15 | `import soundscapy` cannot trigger matplotlib's font-cache message (NFR-13) |
 | Pooch's INFO lines hidden by a filter inside `fetch`, not by `setLevel` at import | §6.3.9 | no third-party state changed on import; `setLevel` is ignored after pooch's first message |
 | `lowest` CI job sets `UV_RESOLUTION=lowest-direct` for the whole job | §5.6.1 | otherwise `uv run` re-resolves to the newest versions (B2) |
 | Hook scripts: one `ruff format` run and a narrowly scoped per-file ignore | §5.2 | standalone PEP 723 hook scripts, kept short and dependency-free (B1) |

@@ -43,6 +43,9 @@ metadata and sources are relative to the project root. Never edit files under `d
 
 ### Config keys that matter (`docs/great-docs.yml`)
 
+The file lists only settings that differ from these defaults (today `sections` and
+`bibliography`); restating a default adds nothing, because the pin moves only by a reviewed bump.
+
 | Key | Default | Notes |
 | --- | --- | --- |
 | `module` | `null` (auto) | Importable name when it differs from the project name. |
@@ -59,14 +62,14 @@ metadata and sources are relative to the project root. Never edit files under `d
 | `homepage` | `index` | `user_guide` makes the first guide page the landing page. |
 | `site` | `theme: flatly, toc: true, toc-depth: 2, html-math-method: katex, lang: en` | Passed to Quarto. |
 | `navbar_style`, `content_style`, `accent_color`, `dark_mode_toggle`, `logo: {light, dark, show_title}`, `favicon` | theming | See upstream's `configure-site` skill (`docs/skills/configure-site`, not vendored). |
-| `interlinks.sources` | `{}` | `numpy: {url: https://numpy.org/doc/stable/, aliases: [np]}`; reads `<url>/objects.inv`. `interlinks.add_function_parentheses: true`. |
+| `interlinks.sources` | `{}` | `numpy: {url: https://numpy.org/doc/stable/, aliases: [np]}`; reads `<url>/objects.inv`. `interlinks.add_function_parentheses: true`. **House decision: none configured for now.** Each source makes `great-docs build` download its `objects.inv`, and `task docs` is an offline build, so external names (`pathlib.Path`, `logging`, `numpy.ndarray`) are written as plain code spans. Adding sources later (`python: {url: https://docs.python.org/3/}` covers today's stdlib names) is a separate decision. |
 | `source: {enabled, branch, path}` | enabled | "View source" links to GitHub. |
 | `repo`, `site_url`, `pypi`, `github_style` | auto | Repo URL override, canonical site URL, PyPI link, `widget`/`icon`. |
 | `freeze: {mode: auto, pre_render: []}`, `pre_render` | auto | Quarto freeze; commit `docs/_freeze/`. |
 | `bibliography`, `csl` | `[]` | Project-wide `.bib`; cite with `[@key]` on any page or docstring. |
 | `markdown_pages: {enabled, widget}` | true | `.md` companion per HTML page. |
 | `skill: {enabled, file, skills, gotchas, best_practices, ...}` | enabled | Emits `skill.md` / SKILL.md for agents. |
-| `cli: {enabled, module, name}` | — | `enabled: true`; the click app in `soundscapy.cli` is discovered and documented as a CLI reference section (architecture plan §16.1). |
+| `cli: {enabled, module, name}` | `enabled: false` | **House decision: great-docs builds the CLI reference** (the reason the CLI uses click; architecture plan §16.1). M1 slice S8 adds the click app and, with it, `cli: {enabled: true, module: soundscapy.cli, name: main}`. It is unset until then only because there is no CLI to document. |
 | `mcp: {...}`, `versions`, `changelog`, `authors`, `announcement`, `page_status`, `tags`, `seo` | — | Not needed for a first site. |
 
 Output dir is not a config key: it is always `<config dir>/_site/` (`docs/_site/`, or
@@ -94,13 +97,19 @@ Output dir is not a config key: it is always `<config dir>/_site/` (`docs/_site/
   `Parameters`, `Returns`, `Raises`, `Notes`, `Examples`, `See Also`, `Warnings`, `References`.
   Any custom underlined heading (e.g. `Thresholds\n----------`) becomes its own heading.
 - Parameters: `name` on its own line (type comes from annotations; do not repeat it), description indented 4 spaces. `Returns`: type line then indented description.
-- Markdown works inside docstrings: tables, callouts `::: {.callout-warning}`, lists, links. RST roles (`:py:exc:`) render as literal text under `parser: numpy`; `**Examples**::` pseudo-headings render as plain text (use real headings).
+- Markdown works inside docstrings: tables, callouts `::: {.callout-warning}`, lists, links. `**Examples**::` pseudo-headings render as plain text (use real headings).
+- Sphinx roles (`` :func:`x` ``, `` :class:`x` ``, `` :py:exc:`x` ``, `` :external+numpy:py:class:`x` ``) are not converted under `parser: numpy`: the `:func:` prefix is printed as literal text, on the page and in its meta description, `llms.txt` and the `.md` companion, and only the backticked name becomes a code span that may autolink. **Banned in `src/`**: `tests/test_docs_structure.py` fails on any role and names its file and line. Write cross-references by the house rule below.
 - `Examples`: executable ```` ```{python} ```` fences run at build and embed output; use a hidden setup cell (`#| echo: false`, `#| output: false`) for shared imports; keep examples self-contained. Non-executed: plain ```` ```python ````.
 - Cross-references:
   - `See Also` section: `other_func : Description.` (NumPy form) — merged and de-duplicated with `%seealso`.
   - `%seealso a, b` or `%seealso a : desc, b : desc` on its own line; multiple lines merge; dotted `Class.method` allowed; write bare names (parentheses auto-added for callables).
-  - Inline interlinks: `` [](`~pkg.Obj`) `` shows `Obj`; `` [](`pkg.Obj`) `` shows the full path; `` [text](`pkg.Obj`) `` custom text; targets without `()`. Short names (`` [](`Obj`) ``) work if unambiguous. External: `` [](`numpy.ndarray`) `` / `` [](`np.ndarray`) `` via `interlinks.sources`.
-  - Code autolinks: bare `` `my_func` `` / `` `my_func()` `` linking to a documented symbol automatically; suppress with `` `name`{.gd-no-link} ``.
+  - Inline interlinks: `` [](`~pkg.Obj`) `` shows `Obj` for a class and `Obj()` for a callable (`interlinks.add_function_parentheses: true`, the default); `` [](`pkg.Obj`) `` shows the full path; `` [text](`pkg.Obj`) `` custom text; targets without `()`. Short names (`` [](`Obj`) ``) work if unambiguous. External: `` [](`numpy.ndarray`) `` / `` [](`np.ndarray`) `` via `interlinks.sources` (none configured here; see the config table).
+  - Code autolinks: a bare code span (`` `my_func` ``, `` `my_func()` ``, or the double-backtick ``` ``my_func()`` ```, which is the same Markdown code span) that names a documented symbol links to it automatically. It shows exactly what you wrote and never adds `()`. `~~` drops the qualification from the text: `` `~~pkg.mod.Obj` `` shows `Obj`. Suppress with `` `name`{.gd-no-link} ``. Code autolinks stay inside this project.
+  - Unresolved references are silent: a code span or `[]()` target that matches nothing renders as plain code, with no build warning and no `great-docs lint` check (which checks only `%seealso`). Check the rendered page.
+  - **House rule** (overrides `revise-docstrings`, which covers only `%seealso`). Match the backtick style the docstring already uses (most of `src/` uses double backticks).
+    1. *Public object in the API reference* (function, class, method, attribute, exception): a plain code span, which autolinks. Write the parentheses on callables yourself (`read_survey()`), none on classes and exceptions (`Survey`, `ScaleViolationError`), and dot members onto their class (`Coordinates.valid_mask()`, `Circumplex.angles_deg`). Qualify a short name the build reports as ambiguous (today `n`, `MappingError`, `DataReferenceError`, `__post_init__`) with `~~`: `~~soundscapy.errors.MappingError`. Use `` [](`~soundscapy.x`) `` only to force a link, and `` [text](`soundscapy.x`) `` for custom link text.
+    2. *Private or undocumented object* (`_frames.to_eager()`, module constants, `Reason`/`Flag`): a plain code span; no link is expected. Where the bare short name would autolink to a *different* public object, write the full dotted path: `soundscapy.distribution.coordinates.valid_mask()`, not `valid_mask()`, which links to the `Coordinates.valid_mask()` method. A method docstring that names its module function by the bare name links to itself.
+    3. *External object* (stdlib, numpy, pandas, matplotlib): a plain code span (`pathlib.Path`, `logging`, `numpy.ndarray`). No interlinks, because none are configured.
 - Other `%` directives (stripped from output): `%nodoc`; `%versionadded 2.0`, `%versionchanged 3.1`, `%deprecated 2.6 Use x instead.`; callouts `%note`, `%warning`, `%caution`, `%danger`, `%important`, `%tip`, `%hint` with inline or indented body.
 - Citations: `.. [1]` in `References` + `[1]_` in prose render as linked numbered citations; `[@key]` with `bibliography:`.
 - Document constants, module vars, type aliases, TypeVars, properties and modules the same way (summary + sections); lead with intent, don't restate the annotation.
@@ -131,11 +140,10 @@ review like code, and run wherever the package is installed.
   `{{< include _file.py >}}` on a bare line; great-docs fences a code-file include itself
   (§4). Prefix such files with `_` so Quarto does not render them as pages. A `#| file:`
   cell option does not work for this.
-- Plot display: with `ax=None` a soundscapy plot function builds a pyplot-free `Figure()`,
-  which Jupyter does not show on its own. Every tutorial plot cell, the quick-start and every
-  docs example therefore ends with the expression `ax.figure` (or
-  `sspy.plot.scatter(...).figure`). From M1 (spec §6.15) a docs test reads `docs/_freeze/`
-  and fails a tutorial cell that calls `sspy.plot` without an image output.
+- Plot display: with `ax=None` a soundscapy plot function draws on a new pyplot figure, so a
+  notebook shows it when the cell ends; do not end a cell in `ax.figure`, which would show it
+  twice. Scripts save with `plt.savefig()`. From M1 (spec §6.15) a docs test reads
+  `docs/_freeze/` and fails a tutorial cell that calls `sspy.plot` without an image output.
 - Freeze: keep `freeze: {mode: auto}` and commit `docs/_freeze/`, including
   `docs/_freeze/site_libs/` (Quarto output the frozen pages load), so unchanged pages are
   not re-executed on every build and CI does not need audio data or model weights for
@@ -184,6 +192,15 @@ review like code, and run wherever the package is installed.
 - Offline build: `task docs` succeeds with the network off. great-docs tries `api.github.com`
   for releases, logs the failure and continues. In an `unshare -rn` namespace bring loopback up
   first, or the Jupyter kernel (TCP on 127.0.0.1) times out after 60 s.
+- **2026-11-01, great-docs `af17c76`: cross-references (§1, "Cross-references").** Sphinx roles
+  are converted only under `parser: sphinx` (`great_docs/_sphinx.py`); under `parser: numpy`
+  the S1 build rendered "Built by :func:read_survey()" on the `Survey` page and the same text
+  in its meta description, `llms.txt` and `Survey.md`. A scratch build showed that
+  `` [](`~soundscapy.read_survey`) `` renders `read_survey()`, a code span `` `read_survey` ``
+  renders without `()`, and four unresolvable targets left the warning count unchanged, with
+  no "no match" line in the log. `great-docs lint` checks only `%seealso` names
+  (`great_docs/_lint.py`). The interlinks Lua filter's code autolinker only links within
+  the project.
 
 ## Sources
 

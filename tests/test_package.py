@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib.metadata
 import subprocess
 import sys
@@ -21,8 +23,11 @@ def test_import_is_silent():
     assert result.stderr == ""
 
 
-def test_matplotlib_not_imported():
-    code = 'import sys; import soundscapy; assert "matplotlib" not in sys.modules'
+def test_matplotlib_and_seaborn_not_imported():
+    code = (
+        "import sys; import soundscapy; "
+        'assert "matplotlib" not in sys.modules; assert "seaborn" not in sys.modules'
+    )
     result = subprocess.run(
         [sys.executable, "-c", code], capture_output=True, text=True, check=False
     )

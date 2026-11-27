@@ -5,8 +5,8 @@
 # ///
 """PostToolUse hook: format and lint the single Python file that was just edited.
 
-Reads the hook payload from stdin. For a ``.py`` file it runs ``ruff format``
-then ``ruff check --fix`` on that file only. Unfixable problems are
+Reads the hook payload from stdin. For a ``.py`` file it runs ``ruff check --fix``
+then ``ruff format`` on that file only. Unfixable problems are
 printed to stderr with exit code 2 so the agent sees them.
 
 The hook is a no-op until the project has a ``pyproject.toml`` (the tools are
@@ -55,9 +55,10 @@ def main() -> int:
     if relative.parts[:2] in {(".claude", "skills"), (".claude", "agents")}:
         return 0  # vendored verbatim and excluded from ruff; hook scripts are linted
 
+    # Fix first, then format: a fix such as an added import can leave the file unformatted.
     commands = [
-        ["uv", "run", "ruff", "format", str(path)],
         ["uv", "run", "ruff", "check", "--fix", str(path)],
+        ["uv", "run", "ruff", "format", str(path)],
     ]
 
     problems: list[str] = []

@@ -1,9 +1,11 @@
-"""Reading a survey export into a coded, validated :class:`Survey`.
+"""Reading a survey export into a coded, validated ``Survey``.
 
-:func:`read_survey` reads a CSV or TSV file with every cell as text, builds a response id
+``read_survey()`` reads a CSV or TSV file with every cell as text, builds a response id
 for every row, codes the language and the attribute items, checks the coded values
 against the response scale and records each response's inclusion status.
 """
+
+from __future__ import annotations
 
 import codecs
 import copy
@@ -12,14 +14,13 @@ from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final, Literal, NoReturn
+from typing import TYPE_CHECKING, Final, Literal, NoReturn
 
 import numpy as np
-from numpy.typing import NDArray
 from pydantic import StrictStr, field_validator
 
 from soundscapy import _data
-from soundscapy._frames import column_text, read_text_table, readonly_copy, to_eager
+from soundscapy._frames import EagerFrame, column_text, read_text_table, readonly_copy, to_eager
 from soundscapy._log import logger
 from soundscapy._model import _UNSET, SSP_PREFIX, FrozenModel, _Unset, validate
 from soundscapy.errors import (
@@ -46,6 +47,10 @@ from soundscapy.survey.mapping import (
     read_mapping,
 )
 from soundscapy.survey.status import Reason, Status
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from numpy.typing import NDArray
 
 __all__ = ["ImportSettings", "ReadOptions", "SourceRef", "Survey", "read_survey"]
 
@@ -98,13 +103,13 @@ class ReadOptions(FrozenModel):
 
 
 class ImportSettings(FrozenModel):
-    """Settings of :func:`read_survey`.
+    """Settings of ``read_survey()``.
 
     Attributes
     ----------
     on_scale_violation : {"error", "exclude"}, optional
         What a coded value outside the response scale does. In this version a violation
-        always raises :class:`~soundscapy.errors.ScaleViolationError`.
+        always raises ``ScaleViolationError``.
     """
 
     on_scale_violation: Literal["error", "exclude"] = "error"
@@ -132,7 +137,7 @@ class SourceRef(FrozenModel):
 class Survey:
     """A survey read and coded against its mapping, one entry per response.
 
-    Built by :func:`read_survey`. The arrays are copied and made read-only, and the
+    Built by ``read_survey()``. The arrays are copied and made read-only, and the
     provenance deep-copied, on construction.
 
     Parameters
@@ -166,7 +171,7 @@ class Survey:
         If the per-response arrays and the status differ in length.
     """
 
-    data: Any
+    data: pd.DataFrame
     mapping: SurveyMapping
     scores: dict[str, NDArray[np.float64]]
     response_id: NDArray[np.object_]
@@ -236,10 +241,9 @@ def read_survey(
     source : str or os.PathLike
         A ``.csv`` or ``.tsv`` file. Data frames are not accepted in this version.
     mapping : SurveyMapping, str or os.PathLike
-        The mapping, or a mapping TOML file to read with
-        :func:`~soundscapy.survey.mapping.read_mapping`.
+        The mapping, or a mapping TOML file to read with ``read_mapping()``.
     read_options : ReadOptions or mapping, optional
-        How the file is read; a mapping is validated into :class:`ReadOptions`.
+        How the file is read; a mapping is validated into ``ReadOptions``.
 
     Returns
     -------
@@ -425,7 +429,7 @@ def _check_not_blank(
         raise MissingResponseIdError(msg, hint=hint)
 
 
-def stripped_text(frame: Any, name: str) -> NDArray[np.object_]:  # noqa: ANN401  # a narwhals frame
+def stripped_text(frame: EagerFrame, name: str) -> NDArray[np.object_]:
     """Read an id column as text, each cell stripped of surrounding whitespace.
 
     Parameters
@@ -448,7 +452,7 @@ def stripped_text(frame: Any, name: str) -> NDArray[np.object_]:  # noqa: ANN401
 def join_id_parts(
     parts: Mapping[str, NDArray[np.object_]], blank_ok: Collection[str]
 ) -> tuple[NDArray[np.object_], NDArray[np.bool_]]:
-    """Join response-key parts into response ids, the way :func:`read_survey` builds them.
+    """Join response-key parts into response ids, the way ``read_survey()`` builds them.
 
     Parameters
     ----------
@@ -584,7 +588,7 @@ def _check_unique(values: NDArray[np.object_], rows: NDArray[np.int64]) -> None:
 
 def _languages(
     spec: LanguageSpec,
-    frame: Any,  # noqa: ANN401  # a narwhals frame
+    frame: EagerFrame,
     response_ids: NDArray[np.object_],
 ) -> NDArray[np.object_]:
     """Return each response's ISO 639-3 code, ``""`` where blank or not mapped."""
@@ -618,7 +622,7 @@ def _languages(
 
 def _code_group(
     group: ItemGroup,
-    frame: Any,  # noqa: ANN401  # a narwhals frame
+    frame: EagerFrame,
     response_ids: NDArray[np.object_],
 ) -> NDArray[np.float64]:
     """Code an item group's columns and check the non-missing values against its scale."""

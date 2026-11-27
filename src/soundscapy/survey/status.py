@@ -1,22 +1,28 @@
 """Per-response inclusion status: why a response is excluded and what is flagged.
 
 No response row is ever dropped. Each row carries a tuple of exclusion
-:class:`Reason` codes (the row is included exactly when the tuple is empty) and a tuple
-of :class:`Flag` codes (the row is kept, with a note).
+``Reason`` codes (the row is included exactly when the tuple is empty) and a tuple
+of ``Flag`` codes (the row is kept, with a note).
 """
+
+from __future__ import annotations
 
 import enum
 import itertools
 from collections import Counter
-from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Self, TypeVar
+from typing import TYPE_CHECKING, Any, Self, TypeVar
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
 
 from soundscapy._frames import new_frame, readonly_copy
 from soundscapy._model import COL_FLAGS, COL_INCLUDED, COL_REASONS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import pandas as pd
+    from numpy.typing import ArrayLike, NDArray
 
 __all__ = ["Flag", "Reason", "Status"]
 
@@ -198,7 +204,7 @@ class Status:
         ------
         ValueError
             If ``mask`` is not a boolean array with one entry per response, or
-            ``reason`` is not a :class:`Reason` (a :class:`Flag` or a plain str is
+            ``reason`` is not a ``Reason`` (a ``Flag`` or a plain str is
             rejected).
         """
         hit = self._mask(mask)
@@ -224,7 +230,7 @@ class Status:
         ------
         ValueError
             If ``mask`` is not a boolean array with one entry per response, or ``flag``
-            is not a :class:`Flag` (a :class:`Reason` or a plain str is rejected).
+            is not a ``Flag`` (a ``Reason`` or a plain str is rejected).
         """
         hit = self._mask(mask)
         return self._unchecked(self.included, self.reasons, _add_code(self.flags, hit, flag, Flag))
@@ -236,7 +242,7 @@ class Status:
         -------
         dict of str to int
             ``"n"``, ``"included"`` and ``"excluded"``, then ``"reason:<code>"`` for every
-            :class:`Reason` and ``"flag:<code>"`` for every :class:`Flag`, zero when absent.
+            ``Reason`` and ``"flag:<code>"`` for every ``Flag``, zero when absent.
             The keys do not depend on the data.
         """
         n_included = int(self.included.sum())
@@ -267,13 +273,13 @@ class Status:
             COL_FLAGS: _joined(self.flags),
         }
 
-    def to_frame(self) -> Any:  # noqa: ANN401  # a pandas frame
+    def to_frame(self) -> pd.DataFrame:
         """Return the status as a pandas data frame.
 
         Returns
         -------
         pandas.DataFrame
-            One row per response with the columns of :meth:`label_arrays`.
+            One row per response with the columns of ``label_arrays()``.
         """
         return new_frame(self.label_arrays())
 

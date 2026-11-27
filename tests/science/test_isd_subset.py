@@ -4,6 +4,8 @@ The subset is ISD 1.0.1-alpha.1 (Zenodo record 10672568, CC BY 4.0) cut to 15 lo
 and 40 columns by ``scripts/make_isd_subset.py``; the counts were measured on that file.
 """
 
+from __future__ import annotations
+
 import csv
 import io
 import tomllib

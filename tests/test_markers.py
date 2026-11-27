@@ -1,5 +1,7 @@
 """Pin pytest's marker-selection behaviour that the project's addopts rely on."""
 
+from __future__ import annotations
+
 import subprocess
 import sys
 import textwrap

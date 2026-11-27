@@ -1,11 +1,16 @@
 """Constants and small builders shared by several test modules."""
 
-from collections.abc import Sequence
-from pathlib import Path
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from soundscapy.instrument.scale import Scale
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from pathlib import Path
 
 # The eight attribute labels of iso-12913-outdoor, in position order (PAQ1..PAQ8).
 LABELS = ("pleasant", "vibrant", "eventful", "chaotic", "annoying", "monotonous", "uneventful")

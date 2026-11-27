@@ -5,6 +5,8 @@ canonical formulation is Mitchell et al. (2026), chapter 4, proof p. 23, section
 Items are in position order (p, v, e, ch, a, m, u, ca) = PAQ1..PAQ8 at 0, 45, ..., 315 degrees.
 """
 
+from __future__ import annotations
+
 import math
 
 import numpy as np

@@ -1,5 +1,7 @@
 """project: a survey projected with equal angles into Coordinates."""
 
+from __future__ import annotations
+
 import dataclasses
 import math
 import tempfile

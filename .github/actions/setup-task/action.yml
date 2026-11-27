@@ -1,0 +1,13 @@
+# go-task is installed outside the project, as CONTRIBUTING.md recommends; Taskfile.yml's
+# `version` is the minimum it accepts. Runs after astral-sh/setup-uv.
+name: Install go-task
+description: Install go-task as a uv tool and put it on PATH.
+runs:
+  using: composite
+  steps:
+    - name: Install go-task
+      shell: bash
+      # --resolution highest: a job's UV_RESOLUTION (the lowest job) must not pick an old go-task.
+      run: |
+        uv tool install --resolution highest go-task-bin
+        uv tool dir --bin >> "$GITHUB_PATH"

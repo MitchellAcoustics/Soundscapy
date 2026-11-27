@@ -61,7 +61,7 @@ The pin `soundscapy==1.0.0.dev1` names a pre-release exactly, so uv installs it 
 needing `--prerelease`.
 
 Then open JupyterLab in the project and paste this into a notebook cell. It is the
-script's code, except that it ends in `.figure`, so the notebook
+script's code without the line that saves the plot, because a notebook
 shows the plot instead of saving it:
 
 ```bash
@@ -72,7 +72,7 @@ uv run jupyter lab
 import soundscapy as sspy
 
 coords = sspy.project(sspy.load_isd(subset=True), angles="equal")
-sspy.plot.scatter(coords, by="location").figure
+ax = sspy.plot.scatter(coords, by="location")
 ```
 
 ## Hosted notebook
@@ -90,5 +90,5 @@ shows the plot instead of saving it:
 import soundscapy as sspy
 
 coords = sspy.project(sspy.load_isd(subset=True), angles="equal")
-sspy.plot.scatter(coords, by="location").figure
+ax = sspy.plot.scatter(coords, by="location")
 ```

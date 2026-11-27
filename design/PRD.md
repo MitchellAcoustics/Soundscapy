@@ -80,6 +80,7 @@ Method C analysis are not [agreed].
 | Mitchell & Aletta 2023; Aletta et al. 2024 | The earlier language-specific adjusted-angle set and generalised projection, superseded by the 2026 chapter but still shipped as a selectable version |
 | Torresin et al. 2020 (indoor soundscape circumplex) | Evidence that other attribute sets and circumplexes exist; the tooling must not be tied to the eight outdoor English attributes |
 | Mitchell et al. 2024 (SPI) | Bivariate skew-normal targets (direct parameters), two-dimensional KS distance, SPI = 100(1 − D), bespoke and reference targets, NSGA-II derivation of reference targets from rankings |
+| Erfanian et al. 2021 (well-being and demographics) | Response quality rules: all-midpoint responses kept, responses with more than half of the items missing excluded |
 | Mitchell et al. 2021 (lockdown model) | Psychoacoustic feature set and conventions; multilevel model with location effects; evaluation by MAE and location-mean R² |
 | Mitchell et al. 2023 (framework) | Goals (accuracy, automation, comparison) and constraints (measurable inputs only, automatic calculation, generalisability, robustness to missing optional inputs) for predictive models |
 | Hou et al. 2023, 2026 | Deep audio predictors (DCNN-CaF, SoundAQnet): audio in, sound sources, scene, 8 PAQs and ISO coordinates out; single-response prediction |
@@ -282,8 +283,8 @@ requirement; "should" is desirable.
   reproduce the processing the 0.x tutorials applied to ISD v1.0, which is their
   acceptance test: 56 responses excluded, 37 with a missing attribute item and 19 that
   give one non-midpoint answer to all eight attributes. The ISD publishes no exclusion
-  counts of its own; a "more than half missing" rule appears only in the 2021 paper's
-  text and stays configurable [agreed 2026-10-31]. Every other reason a
+  counts of its own; a "more than half missing" rule appears only in the text of
+  Erfanian et al. (2021) and stays configurable [agreed 2026-10-31]. Every other reason a
   response is left out of a coordinate statistic (a missing item, FR-2.5a; an
   uncovered or Low-tier language, FR-2.4) shall be written to the same per-response
   status and reason, so one column explains every absence and a GUI can show it

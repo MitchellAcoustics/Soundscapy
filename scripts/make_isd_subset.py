@@ -16,6 +16,8 @@ one, and writes into ``src/soundscapy/_data/datasets/isd/``:
 Running it twice gives identical bytes. Run with ``uv run scripts/make_isd_subset.py``.
 """
 
+from __future__ import annotations
+
 import argparse
 import csv
 import hashlib
@@ -23,7 +25,6 @@ import io
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Any
 
 import tomlkit
 
@@ -122,7 +123,7 @@ REGISTRY_TAIL = {
 }
 
 
-def _lines(values: list[str]) -> Any:  # noqa: ANN401  # a tomlkit array
+def _lines(values: list[str]) -> tomlkit.items.Array:
     array = tomlkit.array()
     array.extend(values)
     return array.multiline(multiline=True)

@@ -1,5 +1,7 @@
 """Every runtime dependency has a recorded, non-empty licence (NFR-7, spec section 6.19)."""
 
+from __future__ import annotations
+
 import re
 import tomllib
 from importlib import metadata

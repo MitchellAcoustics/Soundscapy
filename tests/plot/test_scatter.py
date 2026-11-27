@@ -1,21 +1,42 @@
 """plot.scatter: responses on the circumplex, asserted on artist data, never on pixels."""
 
+from __future__ import annotations
+
 import dataclasses
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.style
 import numpy as np
 import pytest
+import seaborn as sns
+from cycler import cycler
 from matplotlib.collections import PathCollection
-from matplotlib.colors import to_rgba
+from matplotlib.colors import to_hex, to_rgba
 from matplotlib.figure import Figure
 
 from soundscapy import plot
 from soundscapy.distribution.coordinates import Coordinates, valid_mask
+from soundscapy.errors import MappingError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 LABELS = ("pleasant", "annoying", "eventful", "uneventful")
 QUADRANTS = ("vibrant", "chaotic", "monotonous", "calm")
+
+# The default is seaborn's colour-blind palette (spec §6.15). Its values are pinned here, as
+# seaborn 0.13.2 gives them, so a seaborn release that changed them, and with them every
+# default figure, fails a test instead of passing silently.
+COLORBLIND = [
+    "#0173b2", "#de8f05", "#029e73", "#d55e00", "#cc78bc",
+    "#ca9161", "#fbafe4", "#949494", "#ece133", "#56b4e9",
+]  # fmt: skip
+
+
+def test_seaborn_colorblind_is_still_the_pinned_palette():
+    assert [to_hex(rgb) for rgb in sns.color_palette("colorblind")] == COLORBLIND
 
 
 def _collections(ax) -> list[PathCollection]:
@@ -47,22 +68,28 @@ def test_grouped_offsets(isd_coords):
     assert [t.get_text() for t in legend.get_texts()] == list(groups)
 
 
-def test_default_colours_are_petroff10(isd_coords):
+def test_default_colours_are_seaborn_colorblind(isd_coords):
     ax = plot.scatter(isd_coords, by="location")
-    petroff = mpl.color_sequences["petroff10"]
     faces = [c.get_facecolor()[0] for c in _collections(ax)]
+    assert len(faces) == 15
     for i, face in enumerate(faces):
-        # Exact: to_rgba of the sequence entry is the colour matplotlib stores.
-        np.testing.assert_array_equal(face, to_rgba(petroff[i % len(petroff)]))
+        # Exact: to_rgba of the palette entry is the colour matplotlib stores; the eleventh
+        # group starts the palette again.
+        np.testing.assert_array_equal(face, to_rgba(COLORBLIND[i % len(COLORBLIND)]))
 
 
-def test_ungrouped_colour_is_the_first_petroff10(isd_coords):
+def test_ungrouped_colour_is_the_first_default_colour(isd_coords):
     ax = plot.scatter(isd_coords)
     (collection,) = _collections(ax)
-    # Exact: to_rgba of the sequence entry is the colour matplotlib stores.
-    np.testing.assert_array_equal(
-        collection.get_facecolor()[0], to_rgba(mpl.color_sequences["petroff10"][0])
-    )
+    # Exact: to_rgba of the palette entry is the colour matplotlib stores.
+    np.testing.assert_array_equal(collection.get_facecolor()[0], to_rgba(COLORBLIND[0]))
+
+
+def test_the_default_cycle_does_not_leak(isd_coords):
+    # No hidden global state: the default palette is applied in an rc_context that restores
+    # rcParams, so later plots by the user or by another library see matplotlib's own cycle.
+    plot.scatter(isd_coords, by="location")
+    assert mpl.rcParams["axes.prop_cycle"] == mpl.rcParamsDefault["axes.prop_cycle"]
 
 
 def test_more_than_ten_groups_are_distinct(isd_coords):
@@ -96,11 +123,36 @@ def test_group_with_no_valid_rows_keeps_an_empty_series(isd_coords):
     assert [_style(c) for c in collections[1:]] == styles[1:]
 
 
-def test_no_pyplot_figure_created(isd_coords):
+def test_ax_none_creates_one_pyplot_figure(isd_coords):
+    # matplotlib's pattern for libraries: a notebook shows it, plt.savefig reaches it.
     plt.close("all")
     ax = plot.scatter(isd_coords, by="location")
-    assert plt.get_fignums() == []
-    assert isinstance(ax.figure, Figure)
+    assert plt.get_fignums() == [plt.gcf().number]
+    assert plt.gca() is ax
+
+
+def test_created_axes_carries_the_default_cycle(isd_coords):
+    # Lines the user adds afterwards follow the same colours.
+    ax = plot.scatter(isd_coords)
+    (line,) = ax.plot([0.0, 0.1], [0.0, 0.1])
+    assert to_hex(line.get_color()) == COLORBLIND[0]
+
+
+def test_user_style_sets_the_group_colours(isd_coords):
+    with mpl.style.context("ggplot"):
+        ggplot = mpl.rcParams["axes.prop_cycle"].by_key()["color"]
+        ax = plot.scatter(isd_coords, by="location")
+    faces = [c.get_facecolor()[0] for c in _collections(ax)]
+    for i, face in enumerate(faces):
+        # Exact: to_rgba of the cycle entry is the colour matplotlib stores.
+        np.testing.assert_array_equal(face, to_rgba(ggplot[i % len(ggplot)]))
+
+
+def test_a_short_user_cycle_keeps_groups_distinct(isd_coords):
+    with mpl.rc_context({"axes.prop_cycle": cycler(color=["k", "r", "b", "g", "m"])}):
+        ax = plot.scatter(isd_coords, by="location")
+    styles = [_style(c) for c in _collections(ax)]
+    assert len(styles) == len(set(styles)) == 15
 
 
 def test_returns_the_given_ax(isd_coords):
@@ -226,3 +278,28 @@ def test_empty_coordinates_draw_without_legend_or_warning(isd_coords):
     ax = plot.scatter(empty, by="location")
     assert _collections(ax) == []
     assert ax.get_legend() is None
+
+
+def test_a_user_cycle_without_colours_falls_back_to_the_default_colours(isd_coords):
+    with mpl.rc_context({"axes.prop_cycle": cycler(linestyle=["-", "--"])}):
+        ax = plot.scatter(isd_coords)
+    (collection,) = _collections(ax)
+    # Exact: to_rgba of the palette entry is the colour matplotlib stores.
+    np.testing.assert_array_equal(collection.get_facecolor()[0], to_rgba(COLORBLIND[0]))
+
+
+def test_a_user_cycle_of_rgb_tuples_is_drawn_as_given(isd_coords):
+    rgb = [(1.0, 0.0, 0.0), (0.0, 0.5, 0.0)]
+    with mpl.rc_context({"axes.prop_cycle": cycler(color=rgb)}):
+        ax = plot.scatter(isd_coords, by="location")
+    faces = [c.get_facecolor()[0] for c in _collections(ax)]
+    for i, face in enumerate(faces):
+        # Exact: to_rgba of the tuple is the colour matplotlib stores.
+        np.testing.assert_array_equal(face, to_rgba(rgb[i % 2]))
+
+
+def test_a_refused_call_leaves_no_figure(isd_coords):
+    plt.close("all")
+    with pytest.raises(MappingError):
+        plot.scatter(isd_coords, by="no_such_column")
+    assert plt.get_fignums() == []

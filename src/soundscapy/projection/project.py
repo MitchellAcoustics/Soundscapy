@@ -1,6 +1,8 @@
-"""Projecting a survey's attribute scores into circumplex :class:`Coordinates`."""
+"""Projecting a survey's attribute scores into circumplex ``Coordinates``."""
 
-from typing import Any, Final, Literal
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Final, Literal
 
 import numpy as np
 
@@ -18,7 +20,9 @@ from soundscapy.instrument import circumplex
 from soundscapy.instrument.angles import AngleSelection
 from soundscapy.projection.formulas import _FORMULATIONS, Formulation, project_scores
 from soundscapy.provenance import envelope, hash_json
-from soundscapy.survey.read import Survey
+
+if TYPE_CHECKING:
+    from soundscapy.survey.read import Survey
 
 __all__ = ["ProjectionSettings", "project"]
 
@@ -37,13 +41,12 @@ _CARRIED: Final = (
 
 
 class ProjectionSettings(FrozenModel):
-    """Settings of :func:`project`.
+    """Settings of ``project()``.
 
     Attributes
     ----------
     formulation : {"canonical", "iso2019"}, optional
-        The projection formula; see
-        :func:`~soundscapy.projection.formulas.project_scores`.
+        The projection formula; see ``soundscapy.projection.formulas.project_scores()``.
     angles : AngleSelection, optional
         The angle set each response is projected with.
     """
@@ -100,7 +103,7 @@ def project(
     Parameters
     ----------
     survey : Survey
-        The survey, from :func:`~soundscapy.survey.read.read_survey`.
+        The survey, from ``read_survey()``.
     formulation : {"canonical", "iso2019"}, optional
         The projection formula; left unset, ``"canonical"``.
     angles : "equal" or AngleSelection, optional
