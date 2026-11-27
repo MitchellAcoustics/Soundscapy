@@ -13,6 +13,9 @@ FR-2.3 and FR-3.1), applies the owner's second round of answers of 2026-10-31, a
 consistency and builder checks. After it, no owner input blocks M1 (§10). Draft 0.5 applies the
 S1 plan review (2026-10-31), marked "Amended at S1 plan review" where it lands: §6.2.1, §6.2.3,
 §6.3.5, §6.3.6, §6.3.8, §6.3.10, §6.4.1, §6.9.1, §6.19, §6.23, §7.1, §9 (S3) and §11.2.
+The eight spec defects found while planning S2 (`design/plans/2026-10-31-m1-s2-status-quality.md`)
+were applied on 2026-11-27, marked "Amended at S2 plan review" where they land: §5.6.2, §6.3.4,
+§6.4.1, §6.5, §6.7, §6.9.2, §6.20.2, §6.20.4 and §9 (S2). The draft number is unchanged.
 
 The sources to cite are in `design/literature/` (its `README.md` lists them):
 Mitchell, Aletta and Kang 2022 (JASA Express Letters), Aletta et al. 2024 (Applied Acoustics) and
@@ -592,7 +595,15 @@ versions unless `UV_RESOLUTION` is set for the whole job (verified with uv 0.13.
 existing lockfile due to change in resolution mode" and upgraded tomlkit 0.13.0 to 0.15.2; with the
 variable set it kept 0.13.0, and `uv tree --depth 1` printed `tomlkit v0.13.0`).
 
-#### 5.6.2 `nightly.yml` (cron, manual)
+#### 5.6.2 `nightly.yml` (cron, manual, push and pull requests touching its paths)
+
+Amended at S2 plan review (applied 2026-11-27). Scheduled and manual runs start only from the default branch, which is still
+`main` and has no `nightly.yml`, so until the rewrite becomes the default branch the jobs run on
+pushes to `soundscapy-rewrite` that touch the workflow's `paths`. Pull requests that touch the
+workflow, the network or reference tests, `tests/_downloads.py`, `src/soundscapy/survey/`,
+`src/soundscapy/datasets/` or `src/soundscapy/_data/datasets/` run the `network` and `reference`
+jobs; `docs-papers` and `quickstart` do not run on pull requests. S2 adds the pull-request
+trigger (§9).
 
 `uv run task test:reference`, `uv run task test:network`, `uv run task docs:papers`, then a
 freeze-diff check that opens an issue when `docs/_freeze` changed; these run on ubuntu × 3.14.
@@ -970,7 +981,7 @@ runs on the result:
 | Rank | Source |
 |---|---|
 | 1 | explicit keyword arguments, or CLI options |
-| 2 | `settings=` (a model, a mapping of fields, or a settings file; the CLI's `--settings`) |
+| 2 | `settings=` (a model, a mapping of fields, or a settings file; the CLI's `--settings`). Amended at S2 plan review (applied 2026-11-27): a settings file needs `extends`, which arrives with profiles in S3. Until then `settings=` is a model or a mapping, as the signatures are typed; in S3 the type of every `settings=` parameter gains `| str | os.PathLike[str]` |
 | 3 | the project's `settings.toml` (inside `workspace.run` and the CLI only) |
 | 4 | the base profile's section |
 
@@ -1208,6 +1219,9 @@ mapped. `source_dominance`: `traffic_noise`, `other_noise`, `human_sounds`, `nat
 overall quality and appropriateness; 0..5 ordinal for WHO-5. The mapping hash covers the normalised
 model, so `pleasant = "x"` and `PAQ1 = "x"` hash equally.
 
+Amended at S2 plan review (applied 2026-11-27): an optional group may map any subset of its keys; an unknown key
+raises `MappingError`; keys are normalised to the order listed here.
+
 #### 6.4.2 Coding order
 
 **Normative**, per cell of a mapped item column (plan §4.4; the missing-token and parse steps only
@@ -1332,6 +1346,10 @@ def read_survey(
 ) -> Survey: ...
 ```
 
+Amended at S2 plan review (applied 2026-11-27): the type of `settings` gains `| str | os.PathLike[str]` in S3, when settings
+files with `extends` arrive (§6.3.4 rank 2); until then it is a model or a mapping. The same
+holds for every other signature with `settings=`.
+
 Every optional argument uses the `_UNSET` sentinel (§6.3.4), never `None`. The sheet of a workbook
 is `ReadOptions.sheet`; there is no separate `sheet` argument, here or in `suggest_mapping`. Left
 unset, `profile` follows steps 3 and 4 of the §6.3.4 rule (a settings file's `extends`, else
@@ -1440,7 +1458,8 @@ material is written.
 
 ### 6.7 Quality rules (FR-1.5)
 
-`QualitySettings` holds one `Action` (`"exclude"`, `"flag"` or `"off"`) per rule plus thresholds.
+`QualitySettings` holds one action per rule plus thresholds; the actions each rule takes are listed
+after the table.
 **Normative** defaults. They reproduce the processing the 0.x tutorials applied to ISD v1.0, which
 is FR-1.5's acceptance test (PRD 0.9), and follow the rules of Erfanian et al. (2021) where the 2022 code got them wrong (§6.24). The source is
 Erfanian, M., Mitchell, A., Aletta, F. and Kang, J. (2021). Psychological well-being and demographic factors can mediate soundscape pleasantness and eventfulness: A large sample study. *Journal of Environmental Psychology* 77, 101660, doi 10.1016/j.jenvp.2021.101660.
@@ -1456,6 +1475,17 @@ The defaults:
 | `test_response` | exclude | test column mapped and value in `true_values` | reason `test_response` |
 | `paper_input` | flag | paper column mapped and value in `true_values` | flag `paper_input` |
 | `under_age` | flag | age mapped, parsed as a number, and `< min_age` (default 18) | flag `under_age` |
+
+Amended at S2 plan review (applied 2026-11-27). Each rule takes the actions its codes allow (§6.3.1):
+`all_identical`, `excessive_missing`, `no_consent` and `test_response` take `exclude` or `off`;
+`all_midpoint` takes `flag` or `off`; `paper_input` and `under_age` take all three
+(`"exclude"`, `"flag"` or `"off"`). `incomplete_attributes` has no settings field. "Every rule ×
+action" (§7.1, §9 S2) means every allowed pair, and each disallowed pair is refused with
+`SettingsError`.
+
+Age texts are coded with the default `Coding` (missing tokens are missing); any other text that is
+not a number raises `CodingError` naming the age column. Flag cells are compared with `true_values`
+after stripping, case-sensitively; a blank consent cell is not consent.
 
 A rule whose columns are not mapped is skipped, and the skip is recorded in the survey's
 provenance as `quality_skipped: [rule, ...]`. The code written follows the action: a flag code
@@ -1704,6 +1734,10 @@ def project(
     profile: str | _Unset = _UNSET,
 ) -> Coordinates: ...
 ```
+
+Amended at S2 plan review (applied 2026-11-27): the type of `settings` gains `| str | os.PathLike[str]` in S3, when settings
+files with `extends` arrive (§6.3.4 rank 2); until then it is a model or a mapping. The same
+holds for every other signature with `settings=`.
 
 `angles` accepts `"equal"`, an `AngleSetRef`, a string `"name@version"`, or a full `AngleSelection`.
 It resolves settings (§6.3.4), resolves angles per response (§6.8.3), builds the Coordinates'
@@ -2277,7 +2311,9 @@ counts are `network` tests (nightly): they fetch record 10672568 with its pinned
 `datasets.isd.load(*, subset=False, version=_UNSET, locations=_UNSET, quality=_UNSET,
 on_scale_violation=_UNSET, settings=_UNSET, profile=_UNSET) -> Survey` (top-level `load_isd`)
 reads with the mapping file and read options its registry entry names, and passes `quality`,
-`on_scale_violation`, `settings` and `profile` through to `read_survey` unchanged. `version` left
+`on_scale_violation`, `settings` and `profile` through to `read_survey` unchanged (`settings` is a
+model or a mapping until S3, when it also takes a settings file; amended at S2 plan review, applied
+2026-11-27, §6.3.4 rank 2). `version` left
 unset means the registry's `default`. `subset=True` reads the bundled file and accepts only the
 version it was made from, `1.0.1-alpha.1`. `fetch(*, version=_UNSET) -> Path` downloads via pooch
 into `pooch.os_cache("soundscapy")`, overridable with `SOUNDSCAPY_DATA_DIR`, with
@@ -2409,6 +2445,14 @@ K's course material and the tests have a realistic export with renamed columns.
 | Mapping | `_data/datasets/course_demo/mapping.toml`: `response_key` the four ids; attributes `pleasant = "PAQ1"` to `calm = "PAQ8"`; source dominance by the same names; `overall_quality = "overall_sound_environment"`, `appropriateness = "appropriate"`; `age = "age"`; `language.value = "eng"`; carried `start_time`, `end_time`, `perceived_loud`, `visit_often`, `like_to_visit`, `gender`, `tourist_local` and the eight acoustic columns. There is no WHO-5 |
 | Loader | `datasets.course_demo.load(*, quality=_UNSET, on_scale_violation=_UNSET, settings=_UNSET, profile=_UNSET) -> Survey`, offline |
 | Generator | `scripts/make_course_demo.py` reads the source from `origin/main` or `--source PATH`, checks its sha256, drops the three columns and writes the copy and sidecar |
+
+**Sidecar keys.** Amended at S2 plan review (applied 2026-11-27); the list is the S2 plan's (its Task 7), mirroring the
+ISD subset's sidecar. `course_demo.toml` holds `schema = "soundscapy.dataset_sidecar"`,
+`schema_version = 1`, `name = "course-demo"`, `version = "1"`, `source_file`, `source_ref`,
+`source_sha256`, `copy_hash` (the copy's `h1-sha256:` hash), `n_rows = 456`, `dropped_columns` (the
+three), `locations` (the four, in first-appearance order), `columns` (the 34),
+`[features] columns` (the eight acoustic columns), `units_verified = false`, then the `[citation]`
+block: `citation`, `doi_or_url`, `licence`, `date` and `notes`.
 
 The file has no language column. The ISD records 454 of its rows as eng and 2 as spa, so
 `language.value = "eng"` is right for all but two rows; the sidecar notes say so (a call made here,
@@ -2736,7 +2780,7 @@ slice ends with the AGENTS.md sequence: `task check`, then `/simplify`, then `/c
 |---|---|---|
 | S0 Phase 0 | §5 | §5.10 |
 | S1 Thin slice, contracts first | (a) errors, `_model`, hashing with golden vectors, provenance envelope, `_log`, `_frames`, `Status`, namespace constants, `_data` registry with hash pins; (b) `Scale`, `Axis`, `Circumplex`, `iso-12913-outdoor/1.toml`; (c) the projection kernel on bare numpy; (d) the subset generator and CSV, a minimal `SurveyMapping` (attributes, ids, language), `read_survey` from a path, `response_id`, `Coding`; (e) `project` with equal angles, `Coordinates`, `OriginSegment`, `attach`; (f) `plot.scatter`, `load_isd(subset=True)`, the new `_quickstart.py`. Then ADRs: Coordinates carries settings, response_id, the `ssp_` namespace, h1 hashing | the science tests for exhaustive equality, bounds, neutral, constant shift and 2019 hand values pass; hash vectors, TOML round-trips, pandas 2.2, pandas 3.x and polars frame tests and the lazy-frame `TypeError` pass; `sspy.plot.scatter(sspy.project(sspy.load_isd(subset=True), angles="equal"), by="location")` returns Axes whose offsets equal xy; import is silent; `task check` passes |
-| S2 Status, quality, full mapping | all construct groups, flags, carry; missing codes, value maps, reverse; `ScaleViolationError` and `exclude`; `QualitySettings` with every rule; the course dataset, its generator, mapping and loader (§6.20.4) | subset counts 1552/16/0/10/8 pinned in the default run; full-ISD counts pinned in the nightly `network` test; the row-count property holds; every rule × action tested; the FR-1.5 acceptance test passes on the subset (default run) and is in place nightly on the full ISD; the course dataset reads through its mapping |
+| S2 Status, quality, full mapping | all construct groups, flags, carry; missing codes, value maps, reverse; `ScaleViolationError` and `exclude`; `QualitySettings` with every rule; `read_survey`'s `quality`, `on_scale_violation` and `settings` (a model or a mapping; settings files arrive in S3); the pull-request trigger of `nightly.yml` (§5.6.2); the course dataset, its generator, mapping and loader (§6.20.4) | (amended at S2 plan review, applied 2026-11-27) subset counts pinned in the default run: 1552 rows, 16 `incomplete_attributes`, 0 `all_identical`, 10 `all_midpoint`, 0 `excessive_missing`, 8 `under_age`, 16 excluded (§6.7); full-ISD counts pinned in the nightly `network` test; the row-count property holds; every allowed rule × action pair tested and every disallowed pair refused (§6.7); the FR-1.5 acceptance test passes on the subset (default run) and is in place nightly on the full ISD; the course dataset reads through its mapping; each course row equals its ISD row nightly (§7.5) |
 | S3 Angle sets, profiles, settings, labels | `AngleSet` with tier-only languages, `AngleSelection`, the resolver, `aletta-2024@1` and its generator (with the Table 2 tiers), `satp@1.5` from the chapter notes, the three profiles as versioned files (`<id>@1`, `sal-2026@1` on `satp@1.5`), the precedence rule, overrides and profile carry-over, `save_settings`, `register_angle_set`, `angle_sets=` recorded in full, the synthetic three-tier set (`qaa` to `qad`); the `aletta2024` formulation in the kernel and the `Literal` (§6.9.1); the translated labels of §6.2.3 transcribed into `iso-12913-outdoor/1.toml`, then checked cell by cell by the second agent pass; the §11.4 Table A.1 fixture `tests/science/fixtures/iso12913_3_table_a1.csv` (scale labels and direction per part, the 0.x wording until the owner's check) and a test comparing the shipped `[scale.labels]` with it (amended at S1 plan review, 2026-10-31: §11.4's row was in no slice) | the committed aletta and satp files match their pins and their sources offline (§7.2), and the aletta file regenerates byte-identically in the nightly `reference` run; error, exclude and equal paths tested on the synthetic three-tier set and the mixed-language subset sites; tier-only languages resolve as uncovered and name their tier; the 2019 profile carry-over test passes; the Medium warning fires once for cmn; `iso2019` refused on 1..7; the aletta2024 formulation passes its hand values, its 45° reduction and its neutral-off-origin property, and the ISO profiles refuse it; the 18 sourced languages have labels with a citation and the gap languages fall back to English; every model round-trips through TOML with an equal hash |
 | S4 Workspace | §6.18, `export`, `export_run`, `add_table` and `join_context` on `Survey` and `Coordinates` (§6.5.1), the precedence rule with `settings.toml` at rank 3 | init, add, project, save, then reopening and reading the run gives identical coordinates; re-running uses current settings and never the old sidecar; tampered raw raises; each sidecar validates back into its settings model (`read_coordinates` into `ProjectionSettings`); a location table joins without changing the row count |
 | S5 Distribution and density plots | `Region`, `describe`, `density` returning `Densities` (grouped by the `DensitySettings.by` field, with `z_points`), `contours` per group, `ContourSettings`, `marginals`, the per-group parquet and set sidecar of §6.12, the `Density` and `Densities` hash vectors, `save_figure`, the N rule, `plot.density`, `plot.fraction_contour`, `plot.joint` | seaborn grid, levels and line contours match to 1e-9; `enclosed_share` equals the share of points with `z_points >= level`; Σ quadrant proportion + `boundary_share` = 1; `read_density` and `read_contours` rebuild equal records; N < 30 warn, refuse and fallback tested; import contracts kept |

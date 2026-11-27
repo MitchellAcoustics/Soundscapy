@@ -334,7 +334,8 @@ Each is marked "Plan call:" where it is made.
 
 ## Spec defects found while planning
 
-Proposed amendments, to apply at plan review (not edited here):
+Proposed at planning; all eight were applied to the spec on 2026-11-27, each marked "Amended at S2 plan
+review" where it lands. The text below is kept as the record of why:
 
 1. **§6.7, `QualitySettings`.** "One `Action` (`"exclude"`, `"flag"` or `"off"`) per rule" and "every rule × action tested" (§7.1, §9 S2) cannot hold: §6.3.1 has no `Flag` for `all_identical`, `excessive_missing`, `no_consent` or `test_response`, and no `Reason` for `all_midpoint`. Amend §6.7 after the table: "Each rule takes the actions its codes allow: `all_identical`, `excessive_missing`, `no_consent` and `test_response` take `exclude` or `off`; `all_midpoint` takes `flag` or `off`; `paper_input` and `under_age` take all three. `incomplete_attributes` has no settings field. 'Every rule × action' means every allowed pair, and each disallowed pair is refused with `SettingsError`."
 2. **§9 S2 Done when.** "subset counts 1552/16/0/10/8" leaves the columns implicit and omits `excessive_missing` and the excluded total. Amend to "subset counts pinned in the default run: 1552 rows, 16 `incomplete_attributes`, 0 `all_identical`, 10 `all_midpoint`, 0 `excessive_missing`, 8 `under_age`, 16 excluded (§6.7)".
