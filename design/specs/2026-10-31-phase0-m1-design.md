@@ -2,7 +2,7 @@
 
 ## 1. Status
 
-**Spec draft 0.5, 2026-10-31.** Derived from PRD draft 0.9 (`design/PRD.md`) and architecture
+**Spec draft 0.6, 2026-11-27.** Derived from PRD draft 0.9 (`design/PRD.md`) and architecture
 plan draft 0.5 (`design/greenfield_architecture_plan.md`). It covers Phase 0 (the toolchain, CI,
 docs skeleton and governance files) and M1 (survey analysis: journey A, and journey I for the 2022
 paper). Draft 0.2 applied the consistency check and the builder check of draft 0.1, the owner's
@@ -15,7 +15,11 @@ S1 plan review (2026-10-31), marked "Amended at S1 plan review" where it lands: 
 §6.3.5, §6.3.6, §6.3.8, §6.3.10, §6.4.1, §6.9.1, §6.19, §6.23, §7.1, §9 (S3) and §11.2.
 The eight spec defects found while planning S2 (`design/plans/2026-10-31-m1-s2-status-quality.md`)
 were applied on 2026-11-27, marked "Amended at S2 plan review" where they land: §5.6.2, §6.3.4,
-§6.4.1, §6.5, §6.7, §6.9.2, §6.20.2, §6.20.4 and §9 (S2). The draft number is unchanged.
+§6.4.1, §6.5, §6.7, §6.9.2, §6.20.2, §6.20.4 and §9 (S2). The draft number was unchanged by those. **Draft 0.6, 2026-11-27,**
+rebases the spec on PRD draft 1.0 and plan draft 0.6: the CLI and mapping suggestion leave M1,
+narwhals and polars are dropped for pandas only, and FR-8.3 and FR-12.1 get their PRD 1.0 tests.
+§12 lists every edit; each lands where it is marked "Amended for PRD 1.0", and §12 overrides
+any passage it names that is not marked.
 
 The sources to cite are in `design/literature/` (its `README.md` lists them):
 Mitchell, Aletta and Kang 2022 (JASA Express Letters), Aletta et al. 2024 (Applied Acoustics) and
@@ -52,7 +56,8 @@ schema, raw data kept, one status per response, and pure functions that record t
 2. The 2022 reproduction document renders from ISD v0.2.3, the version the paper cites, with every
    cell run (PRD journey I, FR-9.3).
 3. A participant reaches a first circumplex plot from nothing within an hour by the documented
-   local path (FR-12.1), shown by a CI job and one owner-led dry run.
+   local path (FR-12.1), shown by CI on three operating systems; the hour itself is measured on
+   the course cohort (PRD 1.0 §1.2).
 
 ## 3. Goals, non-goals and anti-goals
 
@@ -62,7 +67,7 @@ schema, raw data kept, one status per response, and pure functions that record t
 |---|---|---|
 | Toolchain, CI on 3 OS and Python 3.11 to 3.14, docs skeleton, governance files | NFR-1, NFR-2, NFR-8, NFR-12 | §7 Phase 0 |
 | A generic circumplex instrument with the outdoor ISO instance shipped, labelled in every language Aletta et al. 2024 covers | FR-2.0, NFR-10 | §4.2 |
-| Mapping, intake from CSV and Excel, suggestion from known schemas (SSID, REDCap, Qualtrics), templates | FR-1.1, FR-1.2, FR-1.3, FR-1.3a | §4.4 |
+| Mapping, intake from CSV and Excel, templates (suggestion from known schemas is a Should after M2, §12) | FR-1.1, FR-1.2, FR-1.3 | §4.4 |
 | One per-response status with quality rules reproducing the 0.x tutorials' processing of ISD v1.0 | FR-1.5, FR-2.5a | §4.5 |
 | Projection: canonical, 2019 and Aletta 2024 formulations; equal, Aletta 2024 and SATP v1.5 angle sets with tiers | FR-2.1, FR-2.3, FR-2.4, FR-2.4a | §4.2 |
 | Profiles and recorded settings, shareable as TOML | FR-2.9, FR-11.1, FR-11.3 | §4.6 |
@@ -70,7 +75,7 @@ schema, raw data kept, one status per response, and pure functions that record t
 | Part 3 statistics: item median, IQR and range; correlations; group comparisons; WHO-5; source profiles | FR-2.2, FR-2.6, FR-2.6a, FR-2.6c | §4.4 |
 | Plots: scatter, density, fraction contour, joint, Likert, radar | FR-8.1 (M1 part), FR-8.2, FR-8.3 | §4.9 |
 | Export of tables to CSV, Excel and parquet; figures to PNG, SVG, PDF | FR-9.1, FR-14.2 | §4.11 |
-| A minimal project directory, journey A's CLI | FR-1.7 (M1 part), FR-14.1, FR-14.4, FR-14.5 (A) | §4.11, §6 |
+| A minimal project directory (journey A's CLI moves to M3, §12) | FR-1.7 (M1 part), FR-14.4 | §4.11, §6 |
 | ISD loader with bundled subset, integrity check, licence display, cache; the bundled course dataset | FR-10.1 | §5 |
 | Provenance on every result, cross-platform reproducibility | FR-11.1, FR-11.2, NFR-4 | §4.7, §4.8 |
 | Quick-start, tutorial A, the 2022 reproduction | FR-12.1, FR-12.3, FR-12.4, FR-9.3 | §6, §7 |
@@ -429,7 +434,6 @@ forbidden_modules = ["pandas", "polars", "pyarrow"]
 ignore_imports = [
   "soundscapy._frames -> pandas",
   "soundscapy._frames -> pyarrow",
-  "soundscapy._frames -> polars",
 ]
 allow_indirect_imports = true
 unmatched_ignore_imports_alerting = "none"
@@ -585,7 +589,7 @@ moving `v10` tag. The builder resolves checkout's SHA with `git ls-remote`. Ever
 | `lowest` | ubuntu × 3.11; job-level `env: {UV_RESOLUTION: lowest-direct}` | `uv sync`, `uv tree --depth 1` (prints the installed direct versions into the log), `uv run task test`. Proves the runtime floors of §6.19 (pandas 2.2 in particular) |
 | `docs` | ubuntu × 3.14 only, the canonical platform for frozen output | `uv sync --locked --group docs`, `uv run task docs`, then `git diff --exit-code docs/_freeze` to catch a page whose freeze is stale |
 | `citation` | ubuntu × 3.14 | `uvx cffconvert@2.0.0 --validate` (validates `CITATION.cff` against schema 1.2.0) |
-| `install` | ubuntu, windows, macos × 3.11, 3.14 | `uv build`; in a fresh venv `uv pip install --only-binary :all: dist/*.whl` in a step with `shell: bash`, so the `*.whl` glob expands on Windows too (PowerShell passes it literally); run `python -c "import soundscapy"`, `docs/user_guide/_quickstart.py` and `soundscapy --version` (the latter from M1 slice S8). This job, not `docs`, is what covers Windows and macOS: installation, the quick-start script and importing |
+| `install` | ubuntu, windows, macos × 3.11, 3.14 | `uv build`; in a fresh venv `uv pip install --only-binary :all: dist/*.whl` in a step with `shell: bash`, so the `*.whl` glob expands on Windows too (PowerShell passes it literally); run `python -c "import soundscapy"`, `docs/user_guide/_quickstart.py` and, from M3, `soundscapy --version` (Amended for PRD 1.0, 2026-11-27: the CLI moves to M3). This job, not `docs`, is what covers Windows and macOS: installation, the quick-start script and importing |
 | `install-win-arm` | `windows-11-arm` × 3.13 with x64 Python; `continue-on-error: true` | The `install` steps. x64 Python runs emulated on the Arm runner and installs win_amd64 wheels, which is the route a course participant on a Windows Arm laptop takes. Native arm64 Python is not tested, because pyarrow ships no win_arm64 wheel. The job records the state rather than gating, because emulated runs on a new runner image are not yet a stable signal |
 
 The environment variable, not a `--resolution` flag on `uv sync`, is what makes `lowest` test the
@@ -745,7 +749,7 @@ each other freely, and `survey` may import `distribution` but not the reverse.
 | | `errors.py` | Every exception and warning class (§6.3.10) |
 | | `provenance.py` | The hashing helper, the envelope builder, `show_versions()` |
 | | `_log.py` | The `soundscapy` logger, its default handler, `set_log_level()` |
-| | `_frames.py` | The only importer of pandas, polars and pyarrow: conversions, readers, writers, `frame_hash` |
+| | `_frames.py` | The only importer of pandas and pyarrow: conversions, readers, writers, `frame_hash` |
 | | `tables.py` | `Table` (used by `survey`, `distribution` and `workspace`, so it cannot live higher) |
 | | `_data/__init__.py` | Resource access (`importlib.resources`), the registry of shipped files with hash pins, the raw profile reader |
 | | `_data/circumplexes/iso-12913-outdoor/1.toml` | The default instrument, with translated labels (§6.2.3) |
@@ -1028,7 +1032,7 @@ identical numbers; recomputing after a settings edit is a new run.
 | A set of densities (`Densities`) | The canonical JSON of `{"groups": [keys in group order], "arrays": ["x", "y", "z", "z_points", "covariance"], "shapes": [[...] per group]}`, a 0x00 byte, then for each group in group order its five arrays in the `Density` order. Used as the upstream hash of a `ContourSet` (§6.12) |
 
 "Same content" means equal after this normalisation, so a pandas `int64` column, a pandas float
-column holding the same integers, and a polars `Int64` column with the same nulls all hash alike.
+column holding the same integers, and a nullable `Int64` column with the same nulls all hash alike.
 Integer and float columns are not told apart: that is deliberate, because pandas turns an integer
 column with a missing value into float. A string column whose values look numeric stays text.
 
@@ -1048,7 +1052,7 @@ Golden vectors, pinned in `tests/test_provenance.py`:
 | JSON `{"b": [1.5, "é"], "a": 1}` | `h1-sha256:2bb202b35963ad9e57f87e5828e072cc53f4720ecd10a7d625f850411a31c4c6` |
 | JSON `{"clip": "none"}` (the no-limit literal) | `h1-sha256:7c457b553a03102b7220154eb95650e02d2840d02f397a2d226afba1fa85a1dd` |
 | JSON `{"a": inf}` | raises `ValueError` (no hash) |
-| frame `{"i": [1, None, 3], "f": [0.5, 1.5, -2.0], "t": ["a", None, "é"]}` (pandas or polars) | `h1-sha256:0ef558dd8a05e2aa709ff3e49550a1d91eb4aeab621fde47153bfd3be5028ee8` |
+| frame `{"i": [1, None, 3], "f": [0.5, 1.5, -2.0], "t": ["a", None, "é"]}` (pandas, `float64` or `Int64` for `i`) | `h1-sha256:0ef558dd8a05e2aa709ff3e49550a1d91eb4aeab621fde47153bfd3be5028ee8` |
 
 (The third value is the hash of the bytes `{"a":1,"b":[1.5,"é"]}`, which shows key sorting and
 `ensure_ascii=False`. All four values recomputed for draft 0.2.) The frame vector was pinned in S1
@@ -1056,8 +1060,8 @@ Task 3 under the amended text rule, in `tests/test_frames.py`, where the hand-co
 `frame_hash` agree; the builder adds the `Density` and `Densities` vectors in S5 and pins them
 (amended at S1 plan review, 2026-10-31). The vectors are: one content (an
 integer column with one missing value, a float column and a text column with a null) held as a
-pandas frame, where the integer column becomes `float64`, and as a polars frame, where it stays
-`Int64`, with one hash; one `Density` vector (its arrays include `z_points`); and one `Densities`
+pandas frame with a `float64` column and as one with a nullable `Int64` column, with one hash
+(Amended for PRD 1.0, 2026-11-27: the polars form is dropped; the hash is unchanged); one `Density` vector (its arrays include `z_points`); and one `Densities`
 vector of two groups, which also shows that swapping the group order changes the hash.
 
 #### 6.3.6 Provenance envelope (commitment 8)
@@ -1068,7 +1072,7 @@ built by `provenance.envelope(...)`. **Normative** keys:
 | Key | Value |
 |---|---|
 | `soundscapy_version`, `python_version`, `platform` | strings |
-| `libraries` | `{name: version}` from `importlib.metadata` for numpy, scipy, pandas, pyarrow, narwhals, pydantic, contourpy; plus polars when it is the input library, openpyxl when an xlsx was read, and matplotlib in figure sidecars (§6.18) |
+| `libraries` | `{name: version}` from `importlib.metadata` for numpy, scipy, pandas, pyarrow, pydantic, contourpy; plus openpyxl when an xlsx was read, and matplotlib in figure sidecars (§6.18) |
 | `hash_scheme` | `"h1"` |
 | `data_refs` | list of `{kind, name, version, hash}` for shipped or registered data used (circumplex, angle sets, profile, dataset). An angle set passed as an object through `angle_sets=` is recorded with its full angle table as well (§6.9.2) |
 | `created_utc` | ISO 8601 with `Z` |
@@ -1095,24 +1099,23 @@ file cannot be edited silently (plan rule 15). A corrected table ships as a new 
 
 #### 6.3.8 Frame boundary (commitment 10)
 
-`_frames` uses `narwhals.stable.v2` and is the only module that imports pandas, polars or pyarrow
-(import contract, §5.2.1). Its functions:
+(Amended for PRD 1.0, 2026-11-27: rewritten for pandas only; plan §4.10 and owner row #2 reversed.)
+`_frames` is the only module that imports pandas or pyarrow (import contract, §5.2.1). polars stays
+in that contract's forbidden list, so no module imports it. Its functions:
 
 | Function | Behaviour |
 |---|---|
-| `to_eager(obj)` | `nw.from_native(obj, eager_only=True)`, never `pass_through`. A lazy frame raises `TypeError("lazy frames are not accepted; call .collect() first")`; a dict, Series or other object raises `TypeError` |
-| `columns_float(frame, names)` | Cast to `Float64`, `to_numpy`, `np.array(..., dtype=float64, copy=True)`, `setflags(write=False)`. NaN and null are both missing. Boolean, object and text columns raise `CodingError` naming the column (text must go through `Coding`) |
+| `require_frame(obj)` | Returns a `pandas.DataFrame` unchanged. Any other object raises `TypeError`; a polars or Arrow frame gets the message "only pandas DataFrames are accepted; convert with .to_pandas() first" |
+| `columns_float(frame, names)` | `to_numpy(dtype=float64, na_value=nan)`, `np.array(..., dtype=float64, copy=True)`, `setflags(write=False)`. NaN and `pd.NA` are both missing. Boolean, object and text columns raise `CodingError` naming the column (text must go through `Coding`) |
 | `column_text(frame, name)` | Values as Python `str` with nulls as `""` |
-| `to_native(frame)` | The user's library out |
-| `with_columns(frame, columns)` | Adds columns; raises `ColumnCollisionError` on an existing name |
-| `new_frame(columns, like=None)` | pandas, or the library of `like` |
+| `with_columns(frame, columns)` | Returns a copy with the columns added; raises `ColumnCollisionError` on an existing name |
+| `new_frame(columns)` | A pandas frame |
 | `read_text_table(path, *, encoding, delimiter)`, `read_xlsx_text(path, options)`, `write_csv`, `write_xlsx`, `write_parquet`, `read_parquet` | §6.5, §6.16. (Amended at S1 plan review, 2026-10-31: `read_text_table` takes keywords, because `ReadOptions` lives in `survey`, above `_frames`; S7 adds `header_row` and `skip_rows` keywords to it when `ReadOptions` gains them, and `read_xlsx_text`'s signature is provisional until S7 gives it the same keyword form plus `sheet`.) |
 | `frame_hash(frame)` | §6.3.5 |
 
-narwhals errors (`InvalidOperationError`, `ColumnNotFoundError`, `DuplicateError`) are re-raised as
-soundscapy errors with backend-neutral messages, because their text differs by backend. Copying on
-every conversion covers pandas 2.x, where `to_numpy` returns a writable view of the user's frame.
-Frames created from paths or from nothing are pandas (plan §4.10).
+pandas errors on a missing or duplicated column are re-raised as soundscapy errors naming the
+column. Copying on every conversion covers pandas 2.x, where `to_numpy` returns a writable view of
+the user's frame. The same tests pass on pandas 2.2 and on pandas 3 with copy-on-write.
 
 #### 6.3.9 Logging (NFR-13, owner row #25)
 
@@ -1335,7 +1338,7 @@ differs from the circumplex order.
 
 ```python
 def read_survey(
-    source: str | os.PathLike[str] | IntoDataFrame,
+    source: str | os.PathLike[str] | pandas.DataFrame,
     mapping: SurveyMapping | str | os.PathLike[str],
     *,
     read_options: ReadOptions | Mapping[str, object] | _Unset = _UNSET,
@@ -1380,7 +1383,7 @@ read-only `(n, k)` float64 array in item-key order; attributes in position order
 (read-only array of str), `ids: dict[str, ndarray]` (id roles), `language` (array of 639-3 codes,
 or `""` when not mapped), `status: Status`, `settings: ImportSettings`, `source:
 SourceRef(name, hash, read_options)`, `provenance`. Methods: `n`, `to_frame()` (the data with
-`ssp_response_id` and status columns, in the input's library), `select(mask)`.
+`ssp_response_id` and status columns, as a pandas frame; amended for PRD 1.0, 2026-11-27), `select(mask)`.
 
 #### 6.5.1 Location and session tables (FR-1.4)
 
@@ -1400,11 +1403,16 @@ the role), and checks that the row count never changes.
 
 ### 6.6 Mapping suggestion and templates (FR-1.2, FR-1.3a)
 
+(Amended for PRD 1.0, 2026-11-27: §6.6.1, §6.6.2 and Qualtrics label-row detection are a Should, delivered after M2
+and before GUI planning, so they leave M1. They are kept here as the design for that work. §6.6.3,
+the canonical template, stays in M1. Until then a user writes the mapping by hand from the template
+or the how-to, and sets `ReadOptions.skip_rows` for Qualtrics label rows.)
+
 #### 6.6.1 `suggest_mapping`
 
 ```python
 def suggest_mapping(
-    source: str | os.PathLike[str] | IntoDataFrame,
+    source: str | os.PathLike[str] | pandas.DataFrame,
     *,
     schema: Literal["auto", "ssid", "redcap", "qualtrics", "canonical"] = "auto",
     instrument: str = "iso-12913-outdoor",
@@ -1772,7 +1780,7 @@ provenance itself (plan Appendix A is updated, §11.1).
 keeps its own scale, angle sets and settings hash, so pooling at M2 changes no stored shape.
 
 Methods: `n`, `n_valid` (module functions with the same names exist and are the one definition),
-`to_frame(like=None)` (labels plus `ssp_<axis id>` columns, in the source's library),
+`to_frame()` (labels plus `ssp_<axis id>` columns, as a pandas frame; amended for PRD 1.0, 2026-11-27: `like` is removed),
 `select(mask)` (a new `Coordinates`, origin `n` updated), `split(by) -> dict[str, Coordinates]`
 where `by` is an id role (`"location"`, `"session"`, `"group"`), `"language"`, or a carried column.
 Groups are in sorted key order.
@@ -2102,7 +2110,7 @@ calls `sspy.plot`, and asserts that its output in `docs/_freeze/` holds an image
 
 ### 6.16 Tables, export and attach (FR-9.1, FR-14.2)
 
-`Table` (dataclass): `frame` (the input's library), `name`, `settings`, `provenance`,
+`Table` (dataclass): `frame` (a pandas frame; amended for PRD 1.0, 2026-11-27), `name`, `settings`, `provenance`,
 `notes: tuple[str, ...]`, `extra: dict[str, Table]`. `export(result, path)` chooses by suffix:
 
 | Suffix | Writes |
@@ -2132,6 +2140,10 @@ recommend attaching to `survey.data` (returned in the user's library), which alw
 `attach` never overwrites (`ColumnCollisionError`).
 
 ### 6.17 CLI (FR-14.1, FR-14.5)
+
+(Amended for PRD 1.0, 2026-11-27: the CLI moves to M3, for journeys A, B, C and E1 together, so it leaves M1 with
+slice S8, and click with it (§6.19). This section is kept as the design of journey A's commands
+for the M3 spec, which may revise it.)
 
 `soundscapy` (click; `[project.scripts] soundscapy = "soundscapy.cli:main"`; `python -m
 soundscapy`). Global options: `--dir/-C PATH` (project directory, default `.`), `--profile
@@ -2231,13 +2243,12 @@ floors.
 | contourpy | 1.2 | BSD-3-Clause | contour polygons without matplotlib (the core imports it, so it is declared) |
 | pandas | 2.2.1 | BSD-3-Clause | frames from paths; Anaconda course laptops have 2.2. (Amended at S1 plan review, 2026-10-31: 2.2.0 warns on import when pyarrow is absent, which it is in the `lowest` job until slice S4 adds pyarrow, and the warning is fatal under `filterwarnings = ["error"]`; 2.2.1 does not warn.) |
 | pyarrow | 15 | Apache-2.0 | parquet (owner row #6) |
-| narwhals | 2.0 | MIT | the boundary (`stable.v2`) |
 | pydantic | 2.7 | MIT | settings and value types |
 | matplotlib | 3.10.7 | Matplotlib licence (PSF-based) | plotting. (Amended at S1 plan review, 2026-10-31: 3.10.0 to 3.10.6 emit `PyparsingDeprecationWarning` on import against pyparsing 3.3.) (Amended 2026-11-01, PR #171: the default palette no longer needs `petroff10`; the 3.10.7 floor stays for the pyparsing reason.) |
 | seaborn | 0.13.2 | BSD-3-Clause | the default group colours, `color_palette("colorblind")` (§6.15); imported lazily inside `plot` only. 0.13.2 is the latest release and requires only numpy, pandas and matplotlib, all already here; it imports scipy and statsmodels too when they are installed. Measured warm on macOS (2026-11-01), `import seaborn` takes about 60 ms once pyplot is loaded, about 160 ms after only matplotlib and pandas (it imports pyplot), and about 550 ms with scipy installed (it imports `scipy.stats` and `scipy.cluster`); it is paid once, on the first default-coloured plot (§6.15). (Added 2026-11-01, owner comment on PR #171; checked to import cleanly under `-W error` at the `lowest-direct` floors: numpy 1.26.0, pandas 2.2.1, matplotlib 3.10.7.) |
 | pooch | 1.8 | BSD-3-Clause | ISD download and cache |
 | tqdm | 4.66 | MPL-2.0 AND MIT | pooch's progress bar needs it, and owner decision #4 makes `tqdm.auto` the default reporter; so core at M1, not M3 (a call made here, §11.2; a plan §5 edit, §11.1) |
-| click | 8.2 | BSD-3-Clause | CLI; 8.2 is the first with `CliRunner` stderr always separate |
+| click | 8.2 | BSD-3-Clause | CLI; 8.2 is the first with `CliRunner` stderr always separate. (Amended for PRD 1.0, 2026-11-27: joins at M3 with the CLI, not M1.) |
 | tomlkit | 0.13.1 | MIT | writing mapping drafts with TODO comments. (Amended at S1 Task 12, 2026-10-31: 0.13.0 writes different bytes for a mapping with non-default fields, so `write_mapping` does not round-trip byte for byte; 0.13.1 to 0.14.0 match.) |
 | openpyxl | 3.1 | MIT | Excel read and write (one library; called directly, so no Pandas4Warning) |
 
@@ -2249,11 +2260,12 @@ permissive and compatible with BSD-3-Clause; tqdm's MPL-2.0 part is file-level c
 used unmodified. The table is kept as `tests/licences.toml`, and a test fails if a runtime
 dependency in `pyproject.toml` has no entry there or its installed metadata declares no licence.
 
-Dev group adds `pandas-stubs`; test group adds `polars`. statsmodels is not a runtime dependency
+Dev group adds `pandas-stubs`. statsmodels is not a runtime dependency
 (only in the docs group). (Amended 2026-11-01, owner comment on PR #171: seaborn is now a runtime
 dependency for its palette only, row above. No KDE or plotting is taken from it: density stays
 `scipy.stats.gaussian_kde` (§6.12), and the seaborn fixtures are still generated by
-`scripts/make_seaborn_fixtures.py` with its own pinned versions.)
+`scripts/make_seaborn_fixtures.py` with its own pinned versions.) (Amended for PRD 1.0,
+2026-11-27: narwhals leaves the runtime dependencies and polars leaves the test group.)
 
 ### 6.20 The ISD loader and bundled data (FR-10.1)
 
@@ -2467,7 +2479,7 @@ course and freeze at the first non-alpha release):
 
 | Tier | Names |
 |---|---|
-| In | `read_survey`, `read_mapping`, `write_mapping`, `suggest_mapping`, `write_template`, `load_isd` |
+| In | `read_survey`, `read_mapping`, `write_mapping`, `write_template`, `load_isd` (`suggest_mapping` joins after M2, §6.6) |
 | Types | `Survey`, `SurveyMapping`, `Coding`, `ReadOptions`, `QualitySettings`, `Circumplex`, `Scale`, `AngleSelection`, `AngleSetRef`, `ProjectionSettings`, `Coordinates`, `DensitySettings`, `Density`, `Densities`, `ContourSet`, `Table` |
 | Analysis | `circumplex`, `project`, `describe`, `density`, `contours`, `marginals`, `item_statistics`, `response_shares`, `correlate`, `compare_groups`, `who5`, `source_profile`, `join_context` |
 | Out and admin | `attach`, `export`, `list_profiles`, `save_settings`, `show_versions`, `set_log_level`, `__version__` |
@@ -2494,13 +2506,13 @@ subset and show the status table; project with the default profile; the language
 Likert and radar plots; density by location and the 50% contour, printing `enclosed_share`;
 compare and correlate RegentsParkFields with RegentsParkJapan (course case 1), correlating the
 features joined on `group`, and a location table joined with `join_context`; WHO-5 and source
-profiles; a synthetic messy REDCap export (`;`-separated, cp1252, label-coded) taken through
-`suggest_mapping`, the `CodingError` and its fix; workspace save and reopen; the CLI as
-non-executed bash; xlsx and svg export. User-guide pages added at M1: mapping how-to (with the
+profiles; a synthetic messy REDCap export (`;`-separated, cp1252, label-coded) mapped by hand
+from the template, the `CodingError` and its fix; workspace save and reopen; xlsx and svg export
+(Amended for PRD 1.0, 2026-11-27: `suggest_mapping` and the CLI cell leave tutorial A until they exist). User-guide pages added at M1: mapping how-to (with the
 course dataset as its renamed-columns example, §6.20.4), settings and profiles explanation,
 projection explanation (formulations, angle sets, tiers), distributions explanation (the 2022
 50th-percentile contour, KDE mass fraction and `enclosed_share`, boundary rule), statistics how-to
-with statsmodels, the Qualtrics how-to, and the canonical layout reference (FR-1.2, FR-12.3). Each
+with statsmodels, and the canonical layout reference (the Qualtrics how-to follows `suggest_mapping`) (FR-1.2, FR-12.3). Each
 sets `guide-section` (§5.9).
 
 **Course case 1.** The course brief compares Regent's Park "Broadwalk" with the Japanese Garden.
@@ -2583,7 +2595,9 @@ re-executes it (§5.9).
 Tests mirror the package under `tests/`, plus `tests/science/`, `tests/regression/` and
 `tests/reference/` (house-style). `tests/templates/` is created at M2 with the first FR-13.1
 recipe, not at M1. A `frame_lib` fixture parametrises
-frame-taking tests over pandas and polars. Every float comparison states its tolerance and why.
+frame-taking tests over pandas with `float64` and with nullable dtypes; one test per public
+frame-taking function checks that a non-pandas object raises `TypeError` (amended for PRD 1.0,
+2026-11-27). Every float comparison states its tolerance and why.
 
 ### 7.1 Unit and property tests
 
@@ -2601,7 +2615,7 @@ Property tests use hypothesis. **Named invariants**:
 | finite floats | every FrozenModel float field rejects ±inf and NaN; `"none"` is the only no-limit value | exact |
 | status invariants | `included == (len(reasons) == 0)` for every row; codes unique and ordered; row count equals input row count | exact |
 | region sums | per group, the four quadrant `proportion` values plus `boundary_share` sum to 1 (§6.11); every proportion lies in [0, 1] | `1e-12` |
-| hashing | the same content in pandas and polars, and as int or float columns, has the same `frame_hash` after the §6.3.5 normalisation; golden vectors hold | exact |
+| hashing | the same content as int, nullable `Int64` or float columns has the same `frame_hash` after the §6.3.5 normalisation; golden vectors hold | exact |
 | profile carry-over | an operation with `profile` unset records its input's profile; an explicit different one is recorded as `profile`, the input's in `profile_inherited`, and `overrides` stays empty (§6.3.4) | exact |
 | immutability | arrays on every record are read-only; mutating the user's frame after `read_survey` changes nothing | exact |
 
@@ -2709,7 +2723,13 @@ fallback cases; saving to PNG, SVG and PDF succeeds; Likert bar widths equal `re
 joint marginal curves equal `marginals`; `radar` with `ax=None` returns polar axes and with a
 Cartesian `ax` raises `AxesError`; a figure saved through `save_figure` has a sidecar whose
 provenance equals the source run's. A synthetic indoor circumplex (FR-2.0) runs every analysis and
-plot. `"matplotlib" not in sys.modules` and `"seaborn" not in sys.modules` after a bare `import soundscapy` (§6.15).
+plot. The default seaborn `colorblind` and `cividis` palettes are tested under protanopia,
+deuteranopia and tritanopia simulation: the closest pair of `colorblind` colours stays no nearer
+than the separation the owner accepted in §6.15 (about 5.8 for protanopia), so a palette change
+that weakens it fails, and `cividis` stays monotonic in lightness (PRD 1.0 FR-8.3; the
+simulation is left to the builder, and the threshold is justified in a comment).
+`"matplotlib" not in sys.modules` and `"seaborn" not in sys.modules` after a bare
+`import soundscapy` (§6.15).
 
 **Tutorial display check.** After `task docs`, a docs test reads `docs/_freeze/` for each
 `docs/tutorials/*.qmd` and asserts that every cell calling `sspy.plot` has an image output
@@ -2727,14 +2747,14 @@ contourpy lock fork.
 |---|---|
 | Phase 0 exits | §5.10 |
 | M1 release gate | §9 S11: every owner-blocked M1 Must is a release blocker unless the owner waives it in writing in the release PR; today none is owner-blocked |
-| FR-1.1 | tests reading CSV (`,` and `;`), TSV, xlsx with one and several sheets, utf-8-sig and cp1252, on pandas and polars inputs |
+| FR-1.1 | tests reading CSV (`,` and `;`), TSV, xlsx with one and several sheets, utf-8-sig and cp1252 |
 | FR-1.2 | templates ship; `write_template` and `template` tested; the canonical layout reference page renders |
 | FR-1.3 | ISD, v0.2.3, course and canonical mappings round-trip; a non-English, relabelled export maps and reads; the course dataset (renamed columns) reads through its mapping |
-| FR-1.3a | `suggest_mapping` on ISD, canonical, the course dataset, a Qualtrics-shaped fixture and the messy REDCap fixture; ambiguous matches never picked; CLI and notebook paths give byte-identical `mapping.toml` |
+| FR-1.3a | not in M1: a Should after M2 (§6.6). The acceptance test (`suggest_mapping` on ISD, canonical, the course dataset, a Qualtrics-shaped fixture and the messy REDCap fixture; ambiguous matches never picked; CLI and notebook paths give byte-identical `mapping.toml`) stays for that work, with the CLI path from M3 |
 | FR-1.4 | `split` and `by` over location, session and group roles; a survey with only location ids works; `join_context` (on a `Survey` or `Coordinates`) and `add_table` join location and session tables without changing the row count, and the notes count unmatched keys (§6.5.1) |
 | FR-1.5 | rules × actions tested; the acceptance test of PRD 0.9: the default rules reproduce the 0.x tutorials' processing, as subset counts (default run, science) and the full-ISD 56 = 37 `incomplete_attributes` + 19 `all_identical`, with 53 `all_midpoint` flagged and 0 `excessive_missing` (nightly, `network`) (§6.7) |
 | FR-1.7, FR-14.4 | init, add, project, save, then reopening and reading the saved run gives identical coordinates; re-running after a settings edit makes a new run and never reads the old sidecar as input (§6.3.4); tampered raw raises `DataIntegrityError` |
-| FR-2.0 | the synthetic indoor circumplex runs every analysis and plot |
+| FR-2.0 | the synthetic indoor circumplex, a fixture under `tests/` that never ships, runs every analysis and plot (PRD 1.0 FR-2.0) |
 | FR-2.1 | `ScaleViolationError` on a 0..4 export; `exclude` path records reasons |
 | FR-2.2 | median, IQR and range by group, with the quantile method recorded |
 | FR-2.3 | science tests of §7.2: canonical equals iso2019 exhaustively at 45°; the 2019 hand values; the aletta2024 hand values from Eqs. 1 to 3, including the neutral response off the origin, and its reduction to the 2019 formula at 45° on 1..5; `FormulationError` for iso2019 on 1..7 |
@@ -2746,15 +2766,14 @@ contourpy lock fork.
 | FR-2.6c | WHO-5 complete-items rule; source profile table |
 | FR-2.9 | three profiles; ISO lock refusals; overrides recorded |
 | FR-3.1, FR-3.2 | seaborn fixtures; the 50th-percentile contour of the 2022 paper by default and other fractions on request, each with `enclosed_share` computed from `z_points`; `density` grouped and ungrouped returns `Densities`; N rule cases |
-| FR-8.1 (M1), FR-8.2, FR-8.3, FR-8.4 | plot tests of §7.6; geometry usable without matplotlib (import contract): `density`, `contours`, `marginals`, `response_shares` and `describe` return every number a plot draws, and each plot test compares the artists with them |
+| FR-8.1 (M1), FR-8.2, FR-8.3, FR-8.4 | plot tests of §7.6, including the colour-vision test of the default palettes (PRD 1.0 FR-8.3); geometry usable without matplotlib (import contract): `density`, `contours`, `marginals`, `response_shares` and `describe` return every number a plot draws, and each plot test compares the artists with them |
 | FR-9.1 | export to CSV, xlsx, parquet; figures to PNG, SVG, PDF |
 | FR-9.3, journey I (2022) | the 2022 page renders nightly from ISD v0.2.3 with every cell run, printing its row count beside the paper's 1338 |
 | FR-10.1 | subset and course dataset load offline with their pinned hashes; the default version is the registry's `default`, 1.0.1-alpha.1; nightly fetch of the three registered versions with size, md5 and sha256 checks; CC BY 4.0 licence and citation in the log line and the sidecars |
 | FR-11.1, FR-11.3 | provenance keys present on every result; settings files round-trip and reproduce results |
 | FR-11.2, NFR-4 | regression baselines pass on 3 OS and both lock forks |
-| FR-12.1 | the `install` job green; the nightly `quickstart` job runs `_quickstart.sh` and `_quickstart.ps1` end to end; an owner-led one-hour dry run on Windows |
+| FR-12.1 | the `install` job green; the nightly `quickstart` job runs `_quickstart.sh` and `_quickstart.ps1` end to end (PRD 1.0 FR-12.1: no timed trial) |
 | FR-12.3, FR-12.4 | every user-guide page has a valid `guide-section` (§5.9); great-docs lint clean; the API documentation test of §7.1 (every public object documented, every procedure with a `References` section) |
-| FR-14.1, FR-14.5 (A) | `CliRunner` runs journey A end to end without prompts, including `who5`, `sources`, `density`, `contours`, `angle-set add` and `context add`; exit codes |
 | FR-14.2 | parquet plus JSON sidecar, CSV and Excel export for every run, `Densities` and `ContourSet` included; figures saved with a provenance sidecar |
 | FR-14.3 | pooch progress bar on download; no cancel hook (owner row #38) |
 | FR-14.7 | the "No GUI toolkit" import contract (§5.2.1) passes in `task lint` |
@@ -2779,16 +2798,16 @@ slice ends with the AGENTS.md sequence: `task check`, then `/simplify`, then `/c
 | Slice | Delivers | Done when |
 |---|---|---|
 | S0 Phase 0 | §5 | §5.10 |
-| S1 Thin slice, contracts first | (a) errors, `_model`, hashing with golden vectors, provenance envelope, `_log`, `_frames`, `Status`, namespace constants, `_data` registry with hash pins; (b) `Scale`, `Axis`, `Circumplex`, `iso-12913-outdoor/1.toml`; (c) the projection kernel on bare numpy; (d) the subset generator and CSV, a minimal `SurveyMapping` (attributes, ids, language), `read_survey` from a path, `response_id`, `Coding`; (e) `project` with equal angles, `Coordinates`, `OriginSegment`, `attach`; (f) `plot.scatter`, `load_isd(subset=True)`, the new `_quickstart.py`. Then ADRs: Coordinates carries settings, response_id, the `ssp_` namespace, h1 hashing | the science tests for exhaustive equality, bounds, neutral, constant shift and 2019 hand values pass; hash vectors, TOML round-trips, pandas 2.2, pandas 3.x and polars frame tests and the lazy-frame `TypeError` pass; `sspy.plot.scatter(sspy.project(sspy.load_isd(subset=True), angles="equal"), by="location")` returns Axes whose offsets equal xy; import is silent; `task check` passes |
+| S1 Thin slice, contracts first | (a) errors, `_model`, hashing with golden vectors, provenance envelope, `_log`, `_frames`, `Status`, namespace constants, `_data` registry with hash pins; (b) `Scale`, `Axis`, `Circumplex`, `iso-12913-outdoor/1.toml`; (c) the projection kernel on bare numpy; (d) the subset generator and CSV, a minimal `SurveyMapping` (attributes, ids, language), `read_survey` from a path, `response_id`, `Coding`; (e) `project` with equal angles, `Coordinates`, `OriginSegment`, `attach`; (f) `plot.scatter`, `load_isd(subset=True)`, the new `_quickstart.py`. Then ADRs: Coordinates carries settings, response_id, the `ssp_` namespace, h1 hashing. Built with narwhals; §12's pandas-only rework lands before S4 | the science tests for exhaustive equality, bounds, neutral, constant shift and 2019 hand values pass; hash vectors, TOML round-trips, pandas 2.2, pandas 3.x and polars frame tests and the lazy-frame `TypeError` pass; `sspy.plot.scatter(sspy.project(sspy.load_isd(subset=True), angles="equal"), by="location")` returns Axes whose offsets equal xy; import is silent; `task check` passes |
 | S2 Status, quality, full mapping | all construct groups, flags, carry; missing codes, value maps, reverse; `ScaleViolationError` and `exclude`; `QualitySettings` with every rule; `read_survey`'s `quality`, `on_scale_violation` and `settings` (a model or a mapping; settings files arrive in S3); the pull-request trigger of `nightly.yml` (§5.6.2); the course dataset, its generator, mapping and loader (§6.20.4) | (amended at S2 plan review, applied 2026-11-27) subset counts pinned in the default run: 1552 rows, 16 `incomplete_attributes`, 0 `all_identical`, 10 `all_midpoint`, 0 `excessive_missing`, 8 `under_age`, 16 excluded (§6.7); full-ISD counts pinned in the nightly `network` test; the row-count property holds; every allowed rule × action pair tested and every disallowed pair refused (§6.7); the FR-1.5 acceptance test passes on the subset (default run) and is in place nightly on the full ISD; the course dataset reads through its mapping; each course row equals its ISD row nightly (§7.5) |
-| S3 Angle sets, profiles, settings, labels | `AngleSet` with tier-only languages, `AngleSelection`, the resolver, `aletta-2024@1` and its generator (with the Table 2 tiers), `satp@1.5` from the chapter notes, the three profiles as versioned files (`<id>@1`, `sal-2026@1` on `satp@1.5`), the precedence rule, overrides and profile carry-over, `save_settings`, `register_angle_set`, `angle_sets=` recorded in full, the synthetic three-tier set (`qaa` to `qad`); the `aletta2024` formulation in the kernel and the `Literal` (§6.9.1); the translated labels of §6.2.3 transcribed into `iso-12913-outdoor/1.toml`, then checked cell by cell by the second agent pass; the §11.4 Table A.1 fixture `tests/science/fixtures/iso12913_3_table_a1.csv` (scale labels and direction per part, the 0.x wording until the owner's check) and a test comparing the shipped `[scale.labels]` with it (amended at S1 plan review, 2026-10-31: §11.4's row was in no slice) | the committed aletta and satp files match their pins and their sources offline (§7.2), and the aletta file regenerates byte-identically in the nightly `reference` run; error, exclude and equal paths tested on the synthetic three-tier set and the mixed-language subset sites; tier-only languages resolve as uncovered and name their tier; the 2019 profile carry-over test passes; the Medium warning fires once for cmn; `iso2019` refused on 1..7; the aletta2024 formulation passes its hand values, its 45° reduction and its neutral-off-origin property, and the ISO profiles refuse it; the 18 sourced languages have labels with a citation and the gap languages fall back to English; every model round-trips through TOML with an equal hash |
+| S3 Angle sets, profiles, settings, labels | `AngleSet` with tier-only languages, `AngleSelection`, the resolver, `aletta-2024@1` and its generator (with the Table 2 tiers), `satp@1.5` from the chapter notes, the three profiles as versioned files (`<id>@1`, `sal-2026@1` on `satp@1.5`), the precedence rule, overrides and profile carry-over, `save_settings`, `register_angle_set`, `angle_sets=` recorded in full, the synthetic three-tier set (`qaa` to `qad`); the `aletta2024` formulation in the kernel and the `Literal` (§6.9.1); the synthetic indoor test circumplex of §7.6 under `tests/` (PRD 1.0 FR-2.0), which every later slice's analysis and plot tests also run; the translated labels of §6.2.3 transcribed into `iso-12913-outdoor/1.toml`, then checked cell by cell by the second agent pass; the §11.4 Table A.1 fixture `tests/science/fixtures/iso12913_3_table_a1.csv` (scale labels and direction per part, the 0.x wording until the owner's check) and a test comparing the shipped `[scale.labels]` with it (amended at S1 plan review, 2026-10-31: §11.4's row was in no slice) | the committed aletta and satp files match their pins and their sources offline (§7.2), and the aletta file regenerates byte-identically in the nightly `reference` run; error, exclude and equal paths tested on the synthetic three-tier set and the mixed-language subset sites; tier-only languages resolve as uncovered and name their tier; the 2019 profile carry-over test passes; the Medium warning fires once for cmn; `iso2019` refused on 1..7; the aletta2024 formulation passes its hand values, its 45° reduction and its neutral-off-origin property, and the ISO profiles refuse it; the 18 sourced languages have labels with a citation and the gap languages fall back to English; every model round-trips through TOML with an equal hash |
 | S4 Workspace | §6.18, `export`, `export_run`, `add_table` and `join_context` on `Survey` and `Coordinates` (§6.5.1), the precedence rule with `settings.toml` at rank 3 | init, add, project, save, then reopening and reading the run gives identical coordinates; re-running uses current settings and never the old sidecar; tampered raw raises; each sidecar validates back into its settings model (`read_coordinates` into `ProjectionSettings`); a location table joins without changing the row count |
-| S5 Distribution and density plots | `Region`, `describe`, `density` returning `Densities` (grouped by the `DensitySettings.by` field, with `z_points`), `contours` per group, `ContourSettings`, `marginals`, the per-group parquet and set sidecar of §6.12, the `Density` and `Densities` hash vectors, `save_figure`, the N rule, `plot.density`, `plot.fraction_contour`, `plot.joint` | seaborn grid, levels and line contours match to 1e-9; `enclosed_share` equals the share of points with `z_points >= level`; Σ quadrant proportion + `boundary_share` = 1; `read_density` and `read_contours` rebuild equal records; N < 30 warn, refuse and fallback tested; import contracts kept |
+| S5 Distribution and density plots | `Region`, `describe`, `density` returning `Densities` (grouped by the `DensitySettings.by` field, with `z_points`), `contours` per group, `ContourSettings`, `marginals`, the per-group parquet and set sidecar of §6.12, the `Density` and `Densities` hash vectors, `save_figure`, the N rule, `plot.density`, `plot.fraction_contour`, `plot.joint`, the colour-vision test of §7.6 | seaborn grid, levels and line contours match to 1e-9; `enclosed_share` equals the share of points with `z_points >= level`; Σ quadrant proportion + `boundary_share` = 1; `read_density` and `read_contours` rebuild equal records; N < 30 warn, refuse and fallback tested; import contracts kept |
 | S6 Part 3 statistics and item plots | `item_statistics`, `response_shares`, `correlate`, `compare_groups`, `who5`, `source_profile`, each with every number-changing argument a settings field (§6.13, §6.14), the shared inclusion rule, `plot.likert`, `plot.radar` with `AxesError`, the statsmodels how-to | Spearman identity; `include` and every other choice recorded on every result; effect-size hand cases; FR-2.6a fields present; the WHO-5 network test passes nightly |
-| S7 Intake breadth | xlsx, delimiter sniffing, encodings, `suggest_mapping` with ssid, redcap, qualtrics (provisional) and canonical, Qualtrics label-row detection, label detection, TOML drafts with TODOs, templates, the messy-export fixture | FR-1.1, FR-1.2 and FR-1.3a acceptance tests pass on pandas and polars; multi-sheet without `ReadOptions.sheet` raises; ambiguous matches never picked |
-| S8 CLI | §6.17, including `who5`, `sources`, `density` (a per-group run), `contours`, `angle-set add` and `context add`; `--profile` and `--settings` under the §6.3.4 rule; great-docs CLI pages (`name: main`) | `CliRunner` runs journey A without prompts; exit codes 0/1/2; the draft and rerun flow; stdout and stderr kept apart |
+| S7 Intake breadth | xlsx, delimiter sniffing, encodings, `ReadOptions.header_row` and `skip_rows`, label detection, templates, the messy-export fixture. (Amended for PRD 1.0, 2026-11-27: `suggest_mapping`, the schema tables, TOML drafts and Qualtrics detection leave M1, §6.6.) | FR-1.1 and FR-1.2 acceptance tests pass; multi-sheet without `ReadOptions.sheet` raises |
+| S8 CLI | Moved to M3 (Amended for PRD 1.0, 2026-11-27: PRD FR-14.5). The slice number is kept so later references hold | – |
 | S9 Full ISD loader | fetch and load via pooch, the three-version registry of §6.20.3 with default 1.0.1-alpha.1, the v0.2.3 mapping and sheet, pass-through arguments, download line, progress bar, the pooch log filter, error mapping | the nightly fetch verifies size, md5 and sha256 of the three versions; v0.2.3 reads through its mapping; the subset row checks pass nightly; a fake downloader covers the error paths; `set_log_level("WARNING")` silences everything |
-| S10 Docs | quick-start (with the exact pre-release pin), tutorial A with the cmn Medium-tier language section and grouped `Densities` (density by location), the 2022 page (frozen, from v0.2.3), explanation pages with `guide-section`, References sections, the nightly `quickstart` job | `task docs` renders offline with every cell run; every tutorial plot cell has an image; the API documentation test passes; `task docs:papers` renders, by whichever §5.9 step Phase 0 recorded; great-docs lint clean; the owner's one-hour dry run passes |
+| S10 Docs | quick-start (with the exact pre-release pin), tutorial A with the cmn Medium-tier language section and grouped `Densities` (density by location), the 2022 page (frozen, from v0.2.3), explanation pages with `guide-section`, References sections, the nightly `quickstart` job | `task docs` renders offline with every cell run; every tutorial plot cell has an image; the API documentation test passes; `task docs:papers` renders, by whichever §5.9 step Phase 0 recorded; great-docs lint clean |
 | S11 Release gate | owner fixtures that have arrived switched on, the Topp 2015 citation checked against the primary source, the version set to `1.0.0.dev1`, the PyPI release (owner decision, §4.3) | **The release gate**, one rule (also in §8): every owner-blocked M1 Must is a release blocker unless the owner waives it in writing in the release PR; today none is owner-blocked. No skip remains for an input that has arrived; owner review under GOVERNANCE.md; tagged `v1.0.0.dev1` and published to PyPI by `release.yml` once the trusted publisher is configured |
 
 ## 10. Owner inputs
@@ -2962,3 +2981,23 @@ in this spec that it contradicts.
 | Labels stored twice | `Attribute.labels` holds the reference language only; `Circumplex.translations` holds every other language. `label()` reads the reference language from the attribute and the rest from translations; a validator rejects a translation for the reference language. |
 | The quick-start scripts would launch JupyterLab in CI | The scripts stop after the first plot; launching JupyterLab is a separate line on the page, not in the scripts. |
 | FR-2.1's Table A.1 clause has no acceptance test | A science fixture transcribes Table A.1 (scale labels and direction per part); a test compares the shipped scales with it. The wording is checked by the owner (non-blocking list). |
+
+## 12. Amendments for PRD 1.0 and plan 0.6 (2026-11-27)
+
+The owner confirmed the PRD 1.0 changes (PRD §10.7) and reversed owner decision #2 on 2026-11-27
+(plan §11, rows 41 to 47). This spec follows them as below. Where a passage above still says
+otherwise and is not marked, this table wins.
+
+| Topic | Change | Where |
+|---|---|---|
+| Frames | pandas only, in and out; narwhals leaves the runtime dependencies and polars the test group; any other frame raises `TypeError`; the lazy-frame rule, `to_eager`, `to_native` and "same library out" go; the hashing vectors keep their hashes, written as pandas `float64` and nullable `Int64` frames; every "pandas and polars" test becomes pandas with `float64` and nullable dtypes | §5.2.1, §6.3.5, §6.3.6, §6.3.8, §6.5 and §6.6.1 (a frame `source` is `pandas.DataFrame`), §6.5.1, §6.10, §6.16, §6.19, §7.1, §8, `pyproject.toml` |
+| Reworking S1 | `_frames.py`, its callers (`provenance`, `survey.read`, `workspace._io`) and their tests move to pandas only before S4, which adds pyarrow and the workspace. The S2 plan's frame steps follow the new §6.3.8 | §6.3.8, §9 S1 |
+| Mapping suggestion | `suggest_mapping`, its schema tables, TOML drafts and Qualtrics detection leave M1 (a Should after M2, FR-1.3a); the template and the hand-edited mapping stay; `ReadOptions.skip_rows` covers Qualtrics label rows by hand | §3.1, §6.1, §6.6, §6.21, §6.22, §8, §9 S7 |
+| CLI | Leaves M1 for M3 (FR-14.5); click joins then; the `install` job adds `soundscapy --version` at M3; the CLI cell of tutorial A goes; the great-docs CLI pages wait | §3.1, §5.6.1, §6.1, §6.17, §6.19, §6.22, §8, §9 S8 |
+| FR-2.0 | The synthetic indoor circumplex is a test fixture that never ships, built in S3 and run by every later analysis and plot test | §7.6, §8, §9 S3 |
+| FR-8.3 | The default palettes are tested under colour-vision-deficiency simulation, in S5 | §7.6, §8, §9 S5 |
+| FR-12.1 | No owner-led dry run: CI on three operating systems tests the path, and PRD §1.2 measures the hour on the course cohort | §2, §8, §9 S10 |
+| M2 owner inputs | Requested during M1 (PRD §9.1): the KS variant and how its directions combine, the tie rule and truncation, the 2024 targets and sample size, one R `sn` run, the Example 6 data | §10 |
+
+The module layout of §6.1 drops `suggest.py`, `_data/schemas/` and `cli` from M1; they arrive with
+the work that needs them.

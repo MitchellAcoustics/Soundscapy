@@ -1,6 +1,6 @@
 # Architecture plan for the soundscapy rewrite
 
-Status: **draft 0.5** (2026-10-30, register updated 2026-10-31, §10 amendments from the Phase 0 and M1 spec), in step with PRD draft 0.9. This is the document AGENTS.md means
+Status: **draft 0.6** (2026-11-27), in step with PRD draft 1.0. Draft 0.6 applies the owner's confirmation of the PRD 1.0 changes and the reversal of owner decision #2 (pandas only, no narwhals), both on 2026-11-27; §11 lists every edit. Draft 0.5 (2026-10-30, register updated 2026-10-31, §10 amendments from the Phase 0 and M1 spec) was in step with PRD draft 0.9. This is the document AGENTS.md means
 by "the architecture plan". Draft 0.5 separates the load-bearing architecture from deferred detail.
 Draft 0.4 had the right shape, but it specified field lists, signatures and flags for five
 milestones in the same voice as the M1 contracts, and it missed several decisions M1 needs. A review
@@ -132,7 +132,7 @@ The only list of things that are not open. "Binds from" is the milestone whose c
 | 7 | Published data versioned and referenced by `{name, version}` plus hash; no machine paths; one hashing helper | M1 | 4.7 |
 | 8 | Every result carries `settings` plus one extensible `provenance` mapping; data files carry a citation block | M1 | 4.8 |
 | 9 | Geometry in `distribution`; plot `ax` contract; one KDE with recorded bandwidth; one region-boundary rule | M1 | 4.9 |
-| 10 | narwhals at the boundary only; lazy frames rejected; numpy inside | M1 | 4.10 |
+| 10 | pandas is the only frame type in and out; other frames refused with `TypeError`; numpy inside | M1 | 4.10 |
 | 11 | The project directory is the unit of exchange; named datasets; parquet plus authoritative JSON sidecar | M1 | 4.11 |
 | 12 | Extension contracts fixed in shape, grown when needed; framework owns metric statistics; predictor outer shape fixed | Shape now; discovery M2; code M3, M4 | 4.12 |
 | 13 | One feature-name vocabulary naming the quantity, not the backend, shared by the ISD feature table, audio results and predictor inputs | M2 | 4.13 |
@@ -249,8 +249,9 @@ dual-backend code.
   persist enabled rule names and thresholds, never callables.
 - Mapping suggestion is exact and alias matching against known export schemas, returning a draft
   mapping plus unmatched columns. The user confirms or corrects it (FR-1.3a) by editing the draft
-  in a notebook, by editing the TOML file, or through the CLI's interactive mode; all three end in
-  the same saved file.
+  in a notebook or by editing the TOML file; both end in the same saved file. Suggestion is a
+  Should, delivered after M2 and before GUI planning (PRD FR-1.3a); the hand-edited mapping and the
+  canonical template are M1 Musts.
 - Id roles are open beyond the SSID hierarchy (owner-accepted call) and are added when a loader
   first needs them. Hierarchy (FR-1.4) is id columns and joins: at M1 a dataset may carry optional
   location and session tables keyed by the mapping's id columns, joined on request, and tolerates
@@ -386,18 +387,20 @@ the same scipy estimator, so the 2022 figures reproduce without seaborn.
 **Left to the spec.** Plot and class names; the contour library; how the grouped view is
 parameterised; the `bw_adjust` conversion (reproduction spec).
 
-### 4.10 narwhals stays at the boundary
+### 4.10 pandas is the one frame type
 
-The package accepts any eager frame narwhals supports and rejects lazy frames with `TypeError`. One
-helper converts inbound and outbound; numpy is used inside. Frames the package creates, and frames
-read from paths, are pandas. polars is tested for frames passed in. The helper follows narwhals' own
-conventions, reviewed while building (owner).
+The package accepts and returns pandas `DataFrame`s only. Any other object, including a polars or
+Arrow frame, raises `TypeError` naming the fix (`.to_pandas()`). One private module converts frames
+to read-only numpy arrays on the way in and builds frames on the way out; numpy is used inside.
 
-**Why.** Dataframe-agnosticism is an owner decision. Its cost stays low only if narwhals appears
-where a frame enters or leaves. A feature that needs more converts to numpy.
+**Why.** Owner decision #2, reversed on 2026-11-27. narwhals bought native polars output, and no
+persona needs it: course participants, seaborn, statsmodels and the Excel path all speak pandas, and
+NFR-3's sizes are small. Its cost fell on every contributor and recipe, and S1's boundary module was
+its largest. Keeping the maths in numpy means the frame choice touches only intake, grouping and
+output, so it stays replaceable without touching the science.
 
-**Left to the spec.** The pandas floor, settled once; blank-cell handling across backends. A
-`backend=` argument waits for a user request (§8).
+**Left to the spec.** The pandas floor, settled once; how nullable and blank cells reach numpy. Accepting
+other frame libraries at intake waits for a user request (§8).
 
 ### 4.11 The project directory is the unit of exchange
 
@@ -489,7 +492,7 @@ survey, projection, distribution    mapping, import, quality, Part 3 statistics 
                           formulations | points, regions, describe, KDE, skew-normal, KS
 instrument                Scale, Attribute, Circumplex, angle sets        M1
 errors, provenance, _frames, _data, plugins    roots | envelope, hashing, citation |
-                          narwhals helper | shipped data and profile loader | discovery (M2)
+                          pandas conversion | shipped data and profile loader | discovery (M2)
 ```
 
 Read top to bottom: each layer may import only the layers below it. Within the middle layers,
@@ -504,12 +507,12 @@ and writes project files.
 
 1. one ordered `layers` contract matching the diagram;
 2. the core (everything below `plot`) never imports `plot`, `cli`, `workspace` or matplotlib;
-3. pandas and polars are imported only in named IO boundary modules.
+3. pandas and pyarrow are imported only in named IO boundary modules.
 
 **Dependencies.** Core follows from the commitments and owner decisions: numpy, scipy, pydantic,
-narwhals, pandas, pyarrow, matplotlib, seaborn, pooch, click, a TOML writer and an Excel reader and
-writer (FR-1.1, FR-9.1). The list lives in `pyproject.toml`. Each extra is created in the milestone
-of its first module; the `phonometry` extra is an owner decision. tqdm arrives with the M3 batch runner
+pandas, pyarrow, matplotlib, seaborn, pooch, a TOML writer and an Excel reader and writer
+(FR-1.1, FR-9.1); click joins with the CLI at M3. The list lives in `pyproject.toml`. Each extra is
+created in the milestone of its first module; the `phonometry` extra is an owner decision. tqdm arrives with the M3 batch runner
 (owner decision #4). scipy.stats covers the correlation and group tests of FR-2.6 and FR-2.6a;
 FR-2.6's regression and ANOVA are met through statsmodels, as a core dependency or a documented
 how-to, pending PRD §10.6. seaborn is a dependency for its `colorblind` palette, the default plot
@@ -525,7 +528,7 @@ compiler, followed by the quick-start (NFR-1).
 | API tiers | A small, curated narrative top level, plus complete module APIs as the reference. The M1 spec lists the names; they settle over the M2 course and freeze at the first non-alpha release. The top level imports M1 and M2 modules eagerly with an explicit `__all__`; `audio` and `predict` are imported explicitly. |
 | Inputs | Keyword arguments first; optional `settings=` or `profile=`; resolved into the operation's recorded model (§4.6). |
 | Randomness | Every random function takes `rng` exactly as SPEC 7 states; no global numpy state. If `None` is accepted, the seed used is recorded. SPI requires a seed (FR-6.1). |
-| Frames | Any eager frame in, same library out; pandas where a path or nothing went in (§4.10). |
+| Frames | pandas in, pandas out; any other frame refused with `TypeError` (§4.10). |
 | Columns | Derived columns use the reserved namespace and never overwrite (§4.5); features use the shared vocabulary (§4.13). |
 | Statistics tables | Tidy tables with the FR-2.6a fields (statistic, df or N, p, effect size), computed by scipy or a wrapped library, never re-implemented. |
 | Errors and warnings | Roots plus one class per condition (§4.14). A warning fires once per operation, never per row, never for a deliberate choice: a legacy profile is recorded, not warned about. |
@@ -546,11 +549,11 @@ Each milestone adds modules. Nothing here fixes fields, flags or library version
 | Milestone | Adds | Must decide in its spec | Owner inputs | Exit |
 |---|---|---|---|---|
 | Phase 0. Toolchain | The toolchain per `house-style`; the §5 protections; test markers; `GOVERNANCE.md`, `CITATION.cff`, `CONTRIBUTING.md`; the docs build with tutorials and paper reproductions separated (§6) | – | – | `task check` and `task docs` green on an empty package; a clean no-compiler install on three OS (NFR-1) |
-| M1. Survey analysis (A; I for the 2022 paper) | `errors`, `provenance`, `_frames`, `_data`, `instrument`, `survey` (mapping, import, quality, Part 3 statistics), `projection`, `distribution` (points, regions, describe, KDE geometry), `plot` basics, the ISD loader and bundled subset, a minimal `workspace`, journey A's CLI, the canonical layout as a CSV template (FR-1.2), the install quick-start, tutorial A, the 2022 reproduction | *Mechanisms for what §4 fixes:* the `response_id` mechanism, status and namespace column names, the hashing format, the profile identifiers, reference and file names. *Open for the spec:* whether a scale violation raises or flags, the region-boundary rule, KDE grid extent and normalisation, the top-level names, required survey labels, quality defaults, the ISD record version, the default CSV copy versus an `export` command | The Aletta 2024 worked example; ISD languages outside SATP v1.5 and Aletta 2024, and the Medium-tier list; ISD record versions; the 2022 KDE settings and angle choice; ISD exclusion counts | Journey A done; the 2022 `.qmd` renders with every cell run, following the paper's methodology; no numeric baseline for that paper (owner decision) |
-| M2. SPI and design, first alpha (C, E1, K; I for the 2024 paper) | The skew-normal and the KS distance; `spi` with a versioned targets library; `design` with briefs, scenario records and evaluation; the ISD feature table on the shared vocabulary; tutorials C and E; course acceptance cases; the 2024 reproduction with the SPI acceptance test last; the versioning policy; plugin discovery with the plot-type and dataset recipes; the C and E1 CLI: scoring against target files and `evaluate` with a brief (FR-14.5) | The axis-space fingerprint and the cross-axis override; skew-normal and fit types; SPI settings and the multi-seed helper; ranking table shape; target fields from fixtures; format compatibility; feature syntax and name lists; scenario and KPI fields | Example 6 data and target; the 2024 targets and sample size; the KS variant, direction combination, tie rule and truncation; one R `sn` run | The 2024 tables reproduce within tolerance; Example 6 runs; course exercises run unchanged |
-| M3. Audio (B) | `audio` with windowed reads, calibration applied once and recorded, built-in level metrics and IACC; MoSQITo as the default psychoacoustic backend, scikit-maad for ecoacoustic indices, phonometry as an opt-in extra, no backend that depends on PyQt6; a batch runner whose per-file cache is the resume mechanism; the metrics plugin group; journey B's CLI; the metric recipe; tutorial B; the ArtemiS comparison page | Signal and calibration types from real recorder files (at most two channels); the audio reader; metric attributes after two wrappers; the backend collision rule (MoSQITo and phonometry both offer ISO 532-1 and DIN 45692); the runner and its executor; progress, cancellation and whether partial results are needed; the backend roster, re-running the research note; Windows cache paths; audio formats; equalisation filter forms | Redistributable audio; which tonality each Table D.1 edition names | Journey B done; ISO 532-1 reference signals pass; a large batch resumes |
-| M4. Prediction (D, E2; I for the 2021 paper) | `predict` with the predictor contract as code; the predictors plugin group; the default model chosen at M4 planning; a linear predictor for the 2021 reproduction; the SoundAQnet plugin package; E2 and its CLI; the predictor recipe | Payload types against two real predictors; scenario inputs; the default model; weight fetching | The features the deployable 2021 models use | Journeys D and E2 done |
-| M5. Ecosystem (L, F, G) | SATP, ARAUS and DeLTA loaders; MOSAIQ import and export; target search behind an `optim` extra, returning a target with provenance; the contributor trial of each recipe | Participant and stimulus roles; the MOSAIQ boundary | – | Journeys F, G and L done |
+| M1. Survey analysis (A; I for the 2022 paper); a 1.0 requirement (PRD §9.1) | `errors`, `provenance`, `_frames`, `_data`, `instrument`, `survey` (mapping, import, quality, Part 3 statistics), `projection`, `distribution` (points, regions, describe, KDE geometry), `plot` basics, the ISD loader and bundled subset, a minimal `workspace`, the canonical layout as a CSV template (FR-1.2), the install quick-start, tutorial A, the 2022 reproduction | *Mechanisms for what §4 fixes:* the `response_id` mechanism, status and namespace column names, the hashing format, the profile identifiers, reference and file names. *Open for the spec:* whether a scale violation raises or flags, the region-boundary rule, KDE grid extent and normalisation, the top-level names, required survey labels, quality defaults, the ISD record version, the default CSV copy versus an `export` command | The Aletta 2024 worked example; ISD languages outside SATP v1.5 and Aletta 2024, and the Medium-tier list; ISD record versions; the 2022 KDE settings and angle choice; ISD exclusion counts | Journey A done; the 2022 `.qmd` renders with every cell run, following the paper's methodology; no numeric baseline for that paper (owner decision) |
+| M2. SPI and design, first alpha (C, E1, K; I for the 2024 paper); a 1.0 requirement (PRD §9.1) | The skew-normal and the KS distance; `spi` with a versioned targets library; `design` with briefs, scenario records and evaluation; the ISD feature table on the shared vocabulary; tutorials C and E; course acceptance cases; the 2024 reproduction with the SPI acceptance test last; the versioning policy; plugin discovery with the plot-type and dataset recipes | The axis-space fingerprint and the cross-axis override; skew-normal and fit types; SPI settings and the multi-seed helper; ranking table shape; target fields from fixtures; format compatibility; feature syntax and name lists; scenario and KPI fields | Example 6 data and target; the 2024 targets and sample size; the KS variant, direction combination, tie rule and truncation; one R `sn` run. Requested during M1, not at M2 planning (PRD §9.1) | The 2024 tables reproduce within tolerance; Example 6 runs; course exercises run unchanged |
+| M3. Audio (B); provisional until M3 planning (PRD §9.1) | `audio` with windowed reads, calibration applied once and recorded, built-in level metrics and IACC; MoSQITo as the default psychoacoustic backend, scikit-maad for ecoacoustic indices, phonometry as an opt-in extra, no backend that depends on PyQt6; a batch runner whose per-file cache is the resume mechanism; the metrics plugin group; the CLI for journeys A, B, C and E1 (FR-14.5: A's commands as sketched in Appendix A, C's scoring against target files, E1's `evaluate` with a brief), and `soundscapy --version` in the install check; mapping suggestion and Qualtrics detection (FR-1.3a, a Should) before GUI planning; the metric recipe; tutorial B; the ArtemiS comparison page | Signal and calibration types from real recorder files (at most two channels); the audio reader; metric attributes after two wrappers; the backend collision rule (MoSQITo and phonometry both offer ISO 532-1 and DIN 45692); the runner and its executor; progress, cancellation and whether partial results are needed; the backend roster, re-running the research note; Windows cache paths; audio formats; equalisation filter forms | Redistributable audio; which tonality each Table D.1 edition names | Journey B done; ISO 532-1 reference signals pass; a large batch resumes |
+| M4. Prediction (D, E2; I for the 2021 paper); provisional | `predict` with the predictor contract as code; the predictors plugin group; the default model chosen at M4 planning; a linear predictor for the 2021 reproduction; the SoundAQnet plugin package; E2 and its CLI; the predictor recipe | Payload types against two real predictors; scenario inputs; the default model; weight fetching | The features the deployable 2021 models use | Journeys D and E2 done |
+| M5. Ecosystem (L, F, G); provisional | SATP, ARAUS and DeLTA loaders; MOSAIQ import and export; target search behind an `optim` extra, returning a target with provenance; the contributor trial of each recipe | Participant and stimulus roles; the MOSAIQ boundary | – | Journeys F, G and L done |
 | GUI | To be designed (FR-14.7) | Its planning triggers the stateful project class, staleness logic, published schemas, and the in-process or out-of-process question | – | – |
 
 ## 8. Deferred decisions
@@ -564,7 +567,7 @@ Each milestone adds modules. Nothing here fixes fields, flags or library version
 | Group, session, recordings tables [G3-06] | Groups at M2; others at M3 | Keyed by id column names |
 | Renormalise, ipsatise, cluster [G3-17] | When each Should is scheduled; FR-2.4b at M5 | Renormalisation: every FR-2.5a constraint (§4.5) |
 | Loader `describe()` with MOSAIQ fields [G3-19] | MOSAIQ stable, or M5 | Plain citation metadata at M1 under another name |
-| `backend=` argument, polars extra [G3-09] | A user request or the M2 course | pandas from paths |
+| Accepting polars or Arrow frames at intake [G3-09] | A user request | pandas only (§4.10) |
 | Origin payloads [G4-04] | Sample M2; prediction M4 | `kind` discriminator from M1 |
 | `Coordinates` concat [G4-03] | Journey G, pooled E1 or the course | `origin` a sequence; refuse mismatch |
 | Skew-normal and fit layout [G4-10] | M2 spec, after `sn` fixtures | Direct parameters in `sn` terms; a frozen value object; positive-definiteness validated; inadmissible centred parameters refused with a specific error; fitting done in centred parameters, because direct-parameter MLE runs to the alpha boundary (FR-3.4). Validated against the owner's fresh R `sn` run; the 0.x `dp2cp` port is at most a starting point, recorded by an ADR because AGENTS.md says nothing carries over (research note §2) |
@@ -603,7 +606,7 @@ differently or later in 0.5, and need the owner's confirmation.
 | # | Decision | In 0.5 |
 |---|---|---|
 | 1 | Copyleft acceptable; licence recorded per backend, not a filter (NFR-7) | §4.12; research note |
-| 2 | Dataframe-agnostic via narwhals at the boundary; pandas and polars tested | §4.10 |
+| 2 | *Reversed 2026-11-27*: pandas only at the public surface; narwhals dropped (was: dataframe-agnostic via narwhals, pandas and polars tested) | §4.10 |
 | 3 | click CLI, documented by great-docs | §5, §6 |
 | 4 | Progress visible in notebooks via a default `tqdm.auto` reporter | *Later*: built with the M3 runner; pooch's bar at M1 |
 | 5 | Python 3.11 floor; phonometry its own 3.13+ extra, never an environment marker | §5, §7 |
@@ -622,8 +625,8 @@ differently or later in 0.5, and need the owner's confirmation.
 | 18 | `Coordinates` rows aligned, mandatory labels, one origin, `describe(by=)`, no weights | §4.3; origin a sequence (*changed*, same intent) |
 | 19 | N < 30 at the drawing layer, scatter fallback | §4.9 |
 | 20 | A `Settings` model; a profile is a preset | §4.6; per-operation records and bundles replace the root (*changed*) |
-| 21 | narwhals boundary per narwhals' conventions | §4.10 |
-| 22 | M1 re-scoped; skew-normal, KS, recipes, most CLI and plugins at M2 | §7, §4.12 |
+| 21 | *Void 2026-11-27* with #2 (was: narwhals boundary per narwhals' conventions) | – |
+| 22 | M1 re-scoped; skew-normal, KS, recipes and plugins at M2; the CLI at M3 (row 43) | §7, §4.12 |
 | 23 | Table D.1 not a gate; MoSQITo the single `audio` backend; no PyQt6; phonometry extra; substitutions named | §7; research note |
 | 24 | Predicted single-response distributions warned and labelled | §4.3, §4.9 |
 | 25 | Logging with a visible default; never prints; downloads announced | §4.14 |
@@ -667,7 +670,7 @@ them (§10.5a). They are registered here as rows 35 to 40.
 |---|---|---|
 | 35 | The scale belongs to the projection; coordinates on the same two named axes are cross-comparable regardless of original scale, labels or angles; scoring across axis spaces (indoor against outdoor) is an open scientific question, refused by default with a recorded override (FR-6.3) | §3 #2, §4.2, §8 |
 | 36 | The Aletta 2024 formulation is a Must only with a worked example before the M1 spec, otherwise a Should (FR-2.3) | §4.2, §7 |
-| 37 | The M2 CLI for C and E1 is scoring against target files and `evaluate` with a brief; fitting and editing targets wait for GUI planning (FR-14.5) | §7 |
+| 37 | The CLI for C and E1 is scoring against target files and `evaluate` with a brief; fitting and editing targets wait for GUI planning (FR-14.5). Moved from M2 to M3 by row 43 | §7 |
 | 38 | Downloads report progress but are not cancellable (FR-14.3) | §8 |
 | 39 | Default quality rules reproduce the ISD's published processing, tested against its exclusion counts (FR-1.5) | §4.4, §7 |
 | 40 | Per-language angle-set choice is from registered sets by name and version; user sets are registered into the project first (FR-2.4) | §4.2, §4.7 |
@@ -701,6 +704,26 @@ statements. Each overrides the text it names; the spec's §11.1 gives the detail
 | Appendix A | `ProjectionResult` is dropped; `Coordinates` carries settings and provenance; its labels are read-only numpy arrays converted at returns. |
 | §9.1 | #36 superseded by PRD 0.9 FR-2.3; #39's test is the 56 exclusions (PRD 0.9 FR-1.5). |
 | §5 (2026-11-01) | Owner comment on PR #171: seaborn's `colorblind` palette is the default group colour cycle, so seaborn is a runtime dependency, imported inside `plot` only (spec §6.15, §6.19). Density stays on `scipy.stats.gaussian_kde` (§4.9). |
+
+## 11. PRD 1.0 changes accepted on 2026-11-27
+
+The review `design/reviews/2026-11-27-prd-0.9-critique.md` led to PRD draft 1.0. The owner
+confirmed its nine changes (PRD §10.7) and reversed decision #2. They are registered as rows 41 to
+47.
+
+| # | Decision | In the plan |
+|---|---|---|
+| 41 | The 1.0 cut line: M1 and M2 Musts are 1.0 requirements; M3 to M5 Musts are provisional until each milestone is planned; M2 owner inputs are requested during M1 (PRD §9.1) | §7 |
+| 42 | Mapping suggestion and Qualtrics detection are a Should, after M2 and before GUI planning; the hand-edited mapping and the template stay M1 Musts (FR-1.3a) | §4.4, §7 |
+| 43 | The CLI starts at M3, for journeys A, B, C and E1 together; click joins then; `soundscapy --version` joins the install check then (FR-14.5) | §5, §7, Appendix A |
+| 44 | FR-2.0 is verified on a second instrument that exists only in the tests, from the first slice that builds a generic analysis | spec |
+| 45 | Provenance is the one accepted framework, bounded to one envelope, one hashing helper and one save routine (NFR-9) | §2.1, §4.8 unchanged |
+| 46 | "Publication-quality" means SVG, PDF and PNG export, a palette tested under colour-vision-deficiency simulation, and labels and legend by default; FR-12.1 is tested by CI on three operating systems and by the cohort measure of PRD §1.2, with no timed trial (FR-8.3, FR-12.1) | spec |
+| 47 | Decision #2 reversed: pandas only at the public surface, narwhals dropped; #21 void | §3 #10, §4.10, §5, §6 |
+
+PRD 1.0 states formats as needs (FR-14.2, FR-12.1), so §4.11's parquet and JSON and §6's Quarto
+are this plan's choice, unchanged. PRD 1.0 §10 no longer carries the decision history; the PRD
+§10.1 to §10.5b items summarised in §9.1 are in its git history at commit `08deba7`.
 
 ## Appendix A. M1 type sketches (non-normative)
 
@@ -756,8 +779,8 @@ draft 0.4: `scale_violation`, `all_identical`, `excessive_missing`, `under_age`,
 `test_response`, `incomplete_attributes`, `uncovered_language`, `low_confidence_language`. Candidate
 flag: `paper_input`. Thresholds come from the ISD's published processing.
 
-M1 CLI sketch: `import`, `validate`, `project`, `describe`, `plot`, and `export` if the spec chooses
-an export command over default CSV copies.
+M3 CLI sketch for journey A (PRD FR-14.5 moves it from M1): `import`, `validate`, `project`,
+`describe`, `plot`, and `export` if the spec chooses an export command over default CSV copies.
 
 ## Appendix B. Extension recipe outlines (non-normative)
 
