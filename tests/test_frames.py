@@ -280,6 +280,87 @@ def test_frame_hash_text_does_not_collide(left, right):
     assert frame_hash(left_frame) != frame_hash(right_frame)
 
 
+# pandas dtype families: the hashes and nulls that soundscapy's own column rules must reproduce.
+# Literal hashes were taken from the narwhals boundary before pandas became the only library.
+
+
+def _hash(columns):
+    return frame_hash(pd.DataFrame(columns))
+
+
+def test_frame_hash_nullable_numbers_match_classic_floats():
+    assert _hash({"i": pd.array([1, None, 3], dtype="Int64")}) == _hash({"i": [1.0, np.nan, 3.0]})
+    assert _hash({"f": pd.array([0.5, None], dtype="Float64")}) == _hash({"f": [0.5, np.nan]})
+    assert _hash({"u": np.array([1, 2], dtype=np.uint8)}) == _hash({"u": [1.0, 2.0]})
+
+
+def test_frame_hash_nullable_boolean_is_bool_only_without_nulls():
+    bools = _hash({"b": np.array([True, False])})
+    assert _hash({"b": pd.array([True, False], dtype="boolean")}) == bools
+    with_null = _hash({"b": pd.array([True, None], dtype="boolean")})
+    assert with_null == _hash({"b": pd.Series([True, None], dtype=object)})
+    assert with_null != _hash({"b": pd.array([True, False], dtype="boolean")})
+
+
+def test_frame_hash_string_dtypes_match_object_text():
+    text = _hash({"t": pd.Series(["a", None], dtype=object)})
+    assert _hash({"t": pd.array(["a", None], dtype="string")}) == text
+    assert _hash({"t": pd.Series(["a", None], dtype="str")}) == text
+
+
+def test_frame_hash_datetime_truncates_to_microseconds():
+    nanos = pd.DataFrame({"d": pd.to_datetime(["2020-01-01 00:00:00.000000500"])})
+    whole = pd.DataFrame({"d": pd.to_datetime(["2020-01-01 00:00:00"])})
+    assert str(nanos.dtypes["d"]) == "datetime64[ns]"
+    assert frame_hash(nanos) == frame_hash(whole)
+
+
+@pytest.mark.parametrize(
+    ("columns", "expected"),
+    [
+        (
+            {"td": pd.Series([pd.Timedelta("1s"), None])},
+            "h1-sha256:5c5f0830905ab4ff610892f9d298d9f42fff1d1220fa64e78f816fb993655022",
+        ),
+        (
+            {"p": pd.period_range("2020-01", periods=2, freq="M")},
+            "h1-sha256:ef070d0672c733d2f9d18f5ff17a79debc5187775d702e430055e95f0f788a8f",
+        ),
+        (
+            {0: [1.0]},
+            "h1-sha256:de56d6626d80ba04d2551b2cc27da0781923c19e8a329a3c6a58b2b3cf562253",
+        ),
+    ],
+    ids=["timedelta-as-text", "period-as-text", "integer-column-name"],
+)
+def test_frame_hash_pinned_text_and_name_cases(columns, expected):
+    assert _hash(columns) == expected
+
+
+def test_with_columns_masked_row_nulls_by_kind():
+    native = pd.DataFrame({"a": [1.0, 2.0, 3.0]})
+    columns = {
+        "b": np.array([True, False, True]),
+        "f": np.array([0.5, 1.5, 2.5]),
+        "t": np.array(["x", "y", "z"], dtype=object),
+        "i": np.array([1, 2, 3]),
+    }
+    out = with_columns(native, columns, valid=np.array([True, False, True]))
+    assert str(out["b"].dtype) == "boolean"
+    assert out["b"][1] is pd.NA
+    assert out["f"].dtype == np.float64
+    assert np.isnan(out["f"][1])
+    # A masked integer column becomes float64, the classic pandas way to hold a null int.
+    assert out["i"].dtype == np.float64
+    assert np.isnan(out["i"][1])
+    # A text column takes pandas' default text dtype (object on pandas 2, str on pandas 3).
+    assert out["t"].dtype == pd.Series(["x"]).dtype
+    assert out["t"].isna().tolist() == [False, True, False]
+    unmasked = with_columns(native, columns)
+    assert unmasked["i"].dtype == np.int64
+    assert str(unmasked["b"].dtype) == "boolean"
+
+
 # read_text_table
 
 

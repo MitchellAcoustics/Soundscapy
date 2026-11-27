@@ -262,6 +262,29 @@ def test_attach_integer_ids_made_float_by_a_null(tmp_path):
     np.testing.assert_array_equal(out[X].to_numpy()[:3], coords.xy[[2, 0, 1], 0])
 
 
+def test_attach_nullable_integer_ids_with_a_null(tmp_path):
+    header = ",".join(("site", "resp_no", *LABELS))
+    path = write_csv(tmp_path, header, f"s1,1,{ONES}", f"s1,2,{FIVES}", f"s2,1,{FIVES}")
+    coords = project(read_survey(path, _mapping({"response_key": ["site", "resp_no"]})))
+    frame = pd.DataFrame(
+        {"site": ["s2", "s1", "s1", "s1"], "resp_no": pd.array([1, 1, 2, None], dtype="Int64")}
+    )
+    out = attach(frame, coords)
+    assert out[COL_INCLUDED].isna().tolist() == [False, False, False, True]
+    # Exact: the values are copied, not computed.
+    np.testing.assert_array_equal(out[X].to_numpy()[:3], coords.xy[[2, 0, 1], 0])
+
+
+def test_attach_nullable_float_ids_holding_whole_numbers(tmp_path):
+    header = ",".join(("ID", *LABELS))
+    path = write_csv(tmp_path, header, f"1,{ONES}", f"2,{FIVES}")
+    coords = project(read_survey(path, _mapping({"response": "ID"})))
+    out = attach(pd.DataFrame({"ID": pd.array([2.0, 1.0, None], dtype="Float64")}), coords)
+    assert out[COL_INCLUDED].isna().tolist() == [False, False, True]
+    # Exact: the values are copied, not computed.
+    np.testing.assert_array_equal(out[X].to_numpy()[:2], coords.xy[[1, 0], 0])
+
+
 def test_attach_non_integral_float_ids_keep_their_text(tmp_path):
     header = ",".join(("ID", *LABELS))
     path = write_csv(tmp_path, header, f"1.5,{ONES}", f"2,{FIVES}")
