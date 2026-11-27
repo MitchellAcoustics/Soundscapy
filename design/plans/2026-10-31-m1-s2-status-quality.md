@@ -22,7 +22,7 @@
 - Every shipped data file is pinned in `_data.PINS` in the commit that adds or changes it.
 - Network tests carry `pytest.mark.network` and live in files matching `tests/**/test_*network*` (the nightly push trigger, `.github/workflows/nightly.yml`).
 - No dependency is added. The network tests download with `urllib.request` (stdlib), so pooch and tqdm stay S9's (S1 Plan call 3).
-- Quality-rule sources: the 2021 rules (`all_identical`, `all_midpoint`, `excessive_missing`) cite the 2021 JASA paper `[@mitchell2021lockdown]` (Task 1; owner question 1 covers its metadata) and the FR-1.5 counts cite the 0.x tutorials' processing via spec §6.7; `incomplete_attributes` cites `[@mitchell2022how]` as S1 does.
+- Quality-rule sources: the Erfanian et al. (2021) rules (`all_identical`, `all_midpoint`, `excessive_missing`) cite Erfanian et al. (2021) `[@erfanian2021psychological]` (Task 1; the owner gave the reference on 2026-11-27) and the FR-1.5 counts cite the 0.x tutorials' processing via spec §6.7; `incomplete_attributes` cites `[@mitchell2022how]` as S1 does.
 
 ## Review Focus
 
@@ -51,7 +51,7 @@
     - `RULES: Final = ("all_identical", "all_midpoint", "excessive_missing", "incomplete_attributes", "no_consent", "test_response", "paper_input", "under_age")` (§6.7 table order).
     - `QualityInputs` frozen dataclass (`slots=True`): `attributes: NDArray[np.float64]` (n, k), coded, a scale-violating cell already NaN under `exclude`; `midpoint: float` (the attribute scale's); `source_dominance: NDArray[np.float64] | None` ((n, m), `None` when the group is unmapped); `consent`, `test`, `paper_input: NDArray[np.bool_] | None` (the stripped cell is in `true_values`; `None` when unmapped); `age: NDArray[np.float64] | None` (NaN where missing; `None` when unmapped).
     - `apply_quality(status: Status, inputs: QualityInputs, settings: QualitySettings) -> tuple[Status, tuple[str, ...]]`: returns the status with every rule's codes added and the `quality_skipped` names, in `RULES` order. Definitions, §6.7 exactly: complete = no attribute NaN; constant = complete and every attribute equal to the first; `all_identical` = constant and value ≠ `midpoint`; `all_midpoint` = constant and value == `midpoint`; `excessive_missing` = NaN share over the attribute columns plus the mapped source-dominance columns `> excessive_missing_share`; `incomplete_attributes` = any attribute NaN (always, reason); `no_consent` = `~consent`; `test_response` = `test`; `paper_input` = `paper_input`; `under_age` = `age < min_age` (NaN never fires). The code follows the action: `exclude` adds the `Reason` of the rule's name, `flag` the `Flag`, `off` nothing. Every rule runs on every row, so a row collects every code that applies. Plan calls: a rule is skipped (and listed) only when it is not `off` and its input is `None`; an `off` rule is never listed (the settings record it); exact float equality is right because coded scores are the parsed numbers (plus `offset`, reversed against integer-valued bounds).
-  - `docs/references.bib` gains `mitchell2021lockdown`: Mitchell, A., Oberman, T., Aletta, F., Kachlicka, M., Lionello, M., Erfanian, M. and Kang, J. (2021). Investigating urban soundscapes of the COVID-19 lockdown: A predictive soundscape modeling approach. *JASA* 150(6), 4474–4488, doi 10.1121/10.0008928 (owner question 1: the metadata could not be checked from the planning session, where doi.org and Crossref are blocked; the builder resolves the DOI if the build session can, and the PR description asks the owner to confirm it either way). `apply_quality`'s `References`: the 2021 rules `[@mitchell2021lockdown]`; `incomplete_attributes` `[@mitchell2022how]`; the defaults reproduce the 0.x tutorials' processing of ISD v1.0 (FR-1.5).
+  - `docs/references.bib` gains `erfanian2021psychological`: Erfanian, M., Mitchell, A., Aletta, F. and Kang, J. (2021). Psychological well-being and demographic factors can mediate soundscape pleasantness and eventfulness: A large sample study. *Journal of Environmental Psychology* 77, 101660, doi 10.1016/j.jenvp.2021.101660 (the owner gave the reference on 2026-11-27; the metadata was checked against Crossref). `apply_quality`'s `References`: the Erfanian et al. (2021) rules `[@erfanian2021psychological]`; `incomplete_attributes` `[@mitchell2022how]`; the defaults reproduce the 0.x tutorials' processing of ISD v1.0 (FR-1.5).
 
 - [ ] **Step 0: Create the branch.**
 
@@ -288,7 +288,7 @@ Expected: `task check` green with coverage at 80% or more; the floor run passes 
 - [ ] **Step 2: AGENTS.md Status**: "M1 slice S2 (status, quality, full mapping, the course dataset; plan `design/plans/2026-10-31-m1-s2-status-quality.md`) is in place; slice S3 is next." Commit `docs: AGENTS.md status after M1 slice S2`.
 - [ ] **Step 3: `/simplify`** on the branch's change (`git diff soundscapy-rewrite...HEAD`), then `uv run task check`; commit `refactor: S2 simplify pass`.
 - [ ] **Step 4: `/code-review`** on the same range; address the findings; `uv run task check`; commit `fix: S2 code-review findings`. If that changes much, one more `/simplify` on just those changes.
-- [ ] **Step 5: Hand-off for the PR**: the working tree is clean on `m1-s2-status-quality`; give the controller a PR body that lists the tasks, the plan calls, owner question 1 (the `mitchell2021lockdown` metadata), the re-pinned `isd_mapping.toml`, the three new course pins, and the commands that prove the done-when (`uv run task check`, `uv run pytest tests/science/test_s2_done.py`, `uv run task test:network`). The PR targets `soundscapy-rewrite`; the controller opens it.
+- [ ] **Step 5: Hand-off for the PR**: the working tree is clean on `m1-s2-status-quality`; give the controller a PR body that lists the tasks, the plan calls, the re-pinned `isd_mapping.toml`, the three new course pins, and the commands that prove the done-when (`uv run task check`, `uv run pytest tests/science/test_s2_done.py`, `uv run task test:network`). The PR targets `soundscapy-rewrite`; the controller opens it.
 
 ---
 
@@ -326,9 +326,10 @@ Proposed amendments, to apply at plan review (not edited here):
 
 ## Owner questions
 
-1. **The 2021 paper behind the quality rules** (§6.7: "the 2021 JASA paper"). The plan reads it as Mitchell, Oberman, Aletta, Kachlicka, Lionello, Erfanian and Kang (2021), "Investigating urban soundscapes of the COVID-19 lockdown: A predictive soundscape modeling approach", *JASA* 150(6), 4474, doi 10.1121/10.0008928 (PRD §2's "Mitchell et al. 2021 (lockdown model)"). The DOI and pages could not be checked from the planning session. Please confirm, or give the right reference; nothing else waits on it.
+None is open.
 
-No question is open on the course dataset: its source, hash and licence are settled by §6.20.4 and the owner decision of §4.3, and were checked against `origin/main` above.
+- **The paper behind the quality rules** (answered 2026-11-27). It is Erfanian, M., Mitchell, A., Aletta, F. and Kang, J. (2021). Psychological well-being and demographic factors can mediate soundscape pleasantness and eventfulness: A large sample study. *Journal of Environmental Psychology* 77, 101660, doi 10.1016/j.jenvp.2021.101660. An earlier draft of this plan and spec §6.7 named the 2021 JASA lockdown paper, which was wrong.
+- The course dataset: its source, hash and licence are settled by §6.20.4 and the owner decision of §4.3, and were checked against `origin/main` above.
 
 ## Notes for later slices
 

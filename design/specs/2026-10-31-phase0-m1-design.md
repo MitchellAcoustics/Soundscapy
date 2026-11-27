@@ -162,7 +162,7 @@ owner's remaining open questions are in §10 with fallbacks.
 | The loader's default `version` is the latest registered version, today ISD 1.0.1-alpha.1. "Latest" is resolved at release time by updating the registry, never at run time, so a result always records a pinned record and hash. The bundled subset is regenerated from 1.0.1-alpha.1; 1.0.1-alpha stays registered [owner 2026-10-31] | §6.20 |
 | SATP v1.5 tiers and High-tier angles come from Tables 4.7 and 4.8 of the 2026 chapter and ship at M1 as `satp@1.5`; `sal-2026` uses it from the first release, with no provisional fallback [owner 2026-10-31] | §6.3.4, §6.8.4 |
 | The Aletta et al. 2024 formulation is a full M1 Must, specified by the paper's Eqs. 1 to 3 and tested against values computed by hand from them; no further worked example is needed [owner 2026-10-31; PRD 0.9 FR-2.3, §10.5b] | §6.9.1, §7.2 |
-| The FR-1.5 acceptance test is the 0.x tutorials' processing of ISD v1.0: 56 responses excluded, 37 with a missing attribute item and 19 all-identical non-midpoint. The ISD publishes no counts of its own; the "more than half missing" rule of the 2021 paper stays configurable [owner 2026-10-31; PRD 0.9 FR-1.5] | §6.7 |
+| The FR-1.5 acceptance test is the 0.x tutorials' processing of ISD v1.0: 56 responses excluded, 37 with a missing attribute item and 19 all-identical non-midpoint. The ISD publishes no counts of its own; the "more than half missing" rule of Erfanian et al. (2021) stays configurable [owner 2026-10-31; PRD 0.9 FR-1.5] | §6.7 |
 | The 2022 page's 63 dB split is a split over the whole ISD v0.2.3 dataset the page uses, not per location [owner 2026-10-31; PRD 0.9 §10.5b] | §6.23 |
 | The owner's ORCID is 0000-0003-0978-5046 (Andrew Mitchell) and GitHub login `MitchellAcoustics`, for CITATION.cff and CODEOWNERS [owner 2026-10-31] | §5.1, §5.8 |
 | The chapter 4 author proof is not committed; the chapter is cited by reference, with its tables transcribed in the chapter notes file [owner 2026-10-31; PRD 0.9 §10.5b] | §1, §4.4 |
@@ -1442,14 +1442,15 @@ material is written.
 
 `QualitySettings` holds one `Action` (`"exclude"`, `"flag"` or `"off"`) per rule plus thresholds.
 **Normative** defaults. They reproduce the processing the 0.x tutorials applied to ISD v1.0, which
-is FR-1.5's acceptance test (PRD 0.9), and follow the 2021 JASA paper's rules where the 2022 code
-got them wrong (§6.24):
+is FR-1.5's acceptance test (PRD 0.9), and follow the rules of Erfanian et al. (2021) where the 2022 code got them wrong (§6.24). The source is
+Erfanian, M., Mitchell, A., Aletta, F. and Kang, J. (2021). Psychological well-being and demographic factors can mediate soundscape pleasantness and eventfulness: A large sample study. *Journal of Environmental Psychology* 77, 101660, doi 10.1016/j.jenvp.2021.101660.
+The defaults:
 
 | Rule | Default | Definition | Writes |
 |---|---|---|---|
 | `all_identical` | exclude | all attribute items present and equal, and the value is not the scale midpoint | reason `all_identical` |
-| `all_midpoint` | flag | all attribute items present and equal to the midpoint (kept, per the 2021 rule) | flag `all_midpoint` |
-| `excessive_missing` | exclude | missing share over mapped attribute and source-dominance items `> excessive_missing_share` (default 0.5; 12 items when both groups are mapped). From the 2021 paper's text; it fires on no ISD row | reason `excessive_missing` |
+| `all_midpoint` | flag | all attribute items present and equal to the midpoint (kept, per the Erfanian et al. (2021) rule) | flag `all_midpoint` |
+| `excessive_missing` | exclude | missing share over mapped attribute and source-dominance items `> excessive_missing_share` (default 0.5; 12 items when both groups are mapped). From the text of Erfanian et al. (2021); it fires on no ISD row | reason `excessive_missing` |
 | `incomplete_attributes` | always | any attribute item missing (FR-2.5a; not configurable at M1) | reason `incomplete_attributes` |
 | `no_consent` | exclude | consent column mapped and value not in `true_values` | reason `no_consent` |
 | `test_response` | exclude | test column mapped and value in `true_values` | reason `test_response` |
@@ -1466,8 +1467,8 @@ under-age rows in).
 **Where the rules come from.** The ISD publishes no exclusion counts: its Zenodo `Scripts.zip`
 compiles and recodes the data only. The 0.x code never implemented a "more than half missing" rule
 (the early 2022 code filled missing PAQ items with 3 and left a TODO); the rule appears only in the
-text of the 2021 paper. So `excessive_missing` keeps its definition and default, documented as from
-the 2021 paper, and stays configurable. Its denominator is the 2021 paper's wording, the attribute
+text of Erfanian et al. (2021). So `excessive_missing` keeps its definition and default, documented as from
+Erfanian et al. (2021), and stays configurable. Its denominator is the wording of Erfanian et al. (2021), the attribute
 plus source-dominance items, 12 when both groups are mapped (a call made here, §11.2).
 
 **Pinned counts** (verified on ISD 1.0.1-alpha, Zenodo record 10639661, byte-identical to the CSV
@@ -2499,7 +2500,7 @@ The 36 rows without attribute answers are never dropped: they stay in the status
 reasons, and the page reports them.
 
 It uses a settings file committed beside it: profile `iso-12913-3-2019` (45°, the 2019 formula,
-the paper's Eqs. 1 and 2; amended at S1 plan review, 2026-10-31), the 2021 quality rules, and density with seaborn's KDE defaults and
+the paper's Eqs. 1 and 2; amended at S1 plan review, 2026-10-31), the Erfanian et al. (2021) quality rules, and density with seaborn's KDE defaults and
 `bw_adjust=1.2` (`bw_method="scott"`, `gridsize=200`, `extent="data"`, `cut=3`), `clip="none"` and
 per-group normalisation (owner decision, §4.3; the 0.x code at commit ece4e0c, which drew the
 figures, sets `default_bw_adjust = 1.2`). Panels, as drawn by the ece4e0c notebook:
@@ -2515,7 +2516,7 @@ The 63 dB split over the whole v0.2.3 dataset is confirmed by the owner (§4.3),
 ece4e0c code drew; the paper's text and caption say 65 dB. The page computes the split on the 1338
 rows and states the difference from the caption.
 
-A Deviations section lists what differs from the paper: recomputed coordinates, the 2021 quality
+A Deviations section lists what differs from the paper: recomputed coordinates, the Erfanian et al. (2021) quality
 rules instead of the 2022 code's (which excluded all-neutral responses and filled missing items
 with 3), and the 63 versus 65 dB wording. It prints `enclosed_share` per panel and group. No
 numeric baseline is kept (owner row #10). `task docs` uses the freeze; `task docs:papers`
@@ -2762,7 +2763,7 @@ Resolved, citing PRD 0.9 §10.5b (row numbers are draft 0.1's, so older cross-re
 
 | Draft 0.3 row | Resolution |
 |---|---|
-| 4: ISD published exclusion counts; the missingness denominator | The ISD publishes no counts. FR-1.5's acceptance test is the 0.x tutorials' 56 exclusions on ISD v1.0 (§6.7). The denominator is the 2021 paper's wording, 12 items (a call made here, §11.2) |
+| 4: ISD published exclusion counts; the missingness denominator | The ISD publishes no counts. FR-1.5's acceptance test is the 0.x tutorials' 56 exclusions on ISD v1.0 (§6.7). The denominator is the wording of Erfanian et al. (2021), 12 items (a call made here, §11.2) |
 | 6: Aletta 2024 formulation worked example | Not needed: the formulation is a full M1 Must, tested against hand values from its Eqs. 1 to 3 (§6.9.1, §7.2) |
 | 13: the 63 dB split of the 2022 page's panel (d) | 63 dB over the whole v0.2.3 dataset the page uses, the 1338 pre-lockdown rows, confirmed by the owner (§6.23) |
 | 21: committing the chapter 4 author proof | Not committed; cited by reference, with the transcribed tables in the chapter notes file (§1, §4.4) |
@@ -2789,7 +2790,7 @@ calls made in this spec (§11.2).
 | Plan §4.2 | M1 formulations are canonical, iso2019 and aletta2024 (PRD 0.9 FR-2.3: the Aletta 2024 Eqs. 1 to 3, no centring; selectable, refused by the ISO profiles, used by no profile by default); `satp@1.5` ships at M1 and `sal-2026@1` uses it; an angle set may list tier-only languages, which resolve as uncovered |
 | Plan §4.11 | replace "per-run settings in a sidecar take precedence over project defaults" with: a run's sidecar records the settings it ran with; re-running an operation uses the current inputs and settings, and a sidecar is never an input (§6.3.4) |
 | Plan §9.1 register | annotate #36 as superseded by PRD 0.9 FR-2.3 and §10.5b (the Aletta 2024 formulation is a full M1 Must); annotate #39 with its PRD 0.9 test, the 0.x tutorials' 56 exclusions on ISD v1.0 (FR-1.5) |
-| Plan §4.4 (quality) | the default rules reproduce the 0.x tutorials' processing of ISD v1.0 (56 excluded); `excessive_missing` stays configurable, from the 2021 paper's text |
+| Plan §4.4 (quality) | the default rules reproduce the 0.x tutorials' processing of ISD v1.0 (56 excluded); `excessive_missing` stays configurable, from the text of Erfanian et al. (2021) |
 | house-style SKILL.md | add `soundscapy._model.FrozenModel` beside `pydantic.BaseModel` in `runtime-evaluated-base-classes`; add `minversion = "9.2"` and the `"-m", "not reference and not network"` entry to the pytest `addopts` (§5.2); add `CPY001` to the ignores with its reason; replace the `.claude/hooks/**` per-file ignore with the §5.2 list (INP001, T201, S603, S607, D103, PLW1510, PTH109, C901, PLR0911) and add the `scripts/**` ignore (INP001, T201) for the PEP 723 generators; add the `network` marker and `test:network`, `docs:papers` tasks; say that `tests/templates/` is created at M2 with the first FR-13.1 recipe, not at M1; replace the per-module filterwarnings advice: a scoped ignore names the soundscapy module that calls the library, or matches the message, never a third-party module whose warning uses `stacklevel ≥ 2`; record repo-review ignores; `uv run task` form; actionlint through `actionlint-py` |
 | house-style reference.md | its source label says great-docs 0.17.0 but describes main at 4232670; relabel it as main at `af17c76` after the re-copy, and re-check its statements against that commit; record the freeze behaviour check on `af17c76` and which §5.9 fallback step worked; note `{{< include >}}` for shared code; note `guide-section` and the `ax.figure` display convention |
 | house-style SKILL.md (added 2026-11-01, PR #171) | `banned-module-level-imports = ["matplotlib", "seaborn"]`, and the import contract renamed "Core never imports matplotlib or seaborn" (§5.2.1) |
@@ -2810,7 +2811,7 @@ calls made in this spec (§11.2).
 | KDE defaults: seaborn's `kdeplot` defaults with `bw_adjust=1.2` (the 2022 paper's method) for every profile, the chapter's `sal-2026` included; clip to the [−1, 1] square for new work, no clip in the 2022 reproduction's settings (the meaning of the 50% contour is the owner's decision, §4.3) | §6.12 | new work and the 2022 paper agree; owner rows #10 and G4-07 |
 | `enclosed_share` computed from `z_points`, the density at each valid point from the same `gaussian_kde`, stored in each `Density`, its array hash and its parquet form (builder check Q5) | §6.12, §6.3.5 | the share is reproducible from the saved record alone |
 | `density` always returns `Densities`, with `by` a `DensitySettings` field; `contours` works per group; one parquet per group plus one sidecar for the set; the set's array-hash layout pinned (Q1) | §6.12, §6.3.5 | one return type whatever the grouping, and the grouping is recorded |
-| 2021 quality rules (all-midpoint kept with a flag) | §6.7 | the 2022 code's rule was a bug |
+| Erfanian et al. (2021) quality rules (all-midpoint kept with a flag) | §6.7 | the 2022 code's rule was a bug |
 | `under_age` and `paper_input` codes in both enums | §6.7 | the default can change without a schema change |
 | `under_age` flags by default (was owner's call 18) | §6.7 | keeps rows, as the 0.x tutorials' 56 exclusions did; switchable without a schema change |
 | One inclusion rule, `include="quality_passed"`, for every Survey analysis; only `incomplete_attributes` is tolerated | §6.13 | FR-2.5a, without letting straightliners into item medians; one rule instead of four (builder check C5) |
@@ -2868,7 +2869,7 @@ calls made in this spec (§11.2).
 | Workspace export named `export_run`; `sspy.export` unchanged | §6.18 | two functions with one name confused the API (B8) |
 | ~~Tutorial plot cells end with `ax.figure`~~ (superseded 2026-11-01: `ax=None` uses pyplot, review F5); a docs test checks each tutorial plot cell renders an image | §6.15 | notebooks show plot output |
 | Tutorial A's language section shows cmn projecting with the Medium warning under `satp@1.5`, and the Low and uncovered paths on the synthetic `qaa` to `qad` set | §6.22 | no ISD language is Low or uncovered under `satp@1.5` (C2, S4) |
-| The FR-1.5 acceptance test is PRD 0.9's 56 exclusions, run on the subset counts by default and on the full ISD nightly; it no longer awaits an owner input. `excessive_missing` keeps its 2021-paper definition and default (`exclude`, missing share > 0.5), and its denominator is the 2021 paper's wording, the 12 attribute and source-dominance items (B19; R6) | §6.7 | the acceptance criterion is testable now, and the ISD publishes no counts to wait for |
+| The FR-1.5 acceptance test is PRD 0.9's 56 exclusions, run on the subset counts by default and on the full ISD nightly; it no longer awaits an owner input. `excessive_missing` keeps its Erfanian et al. (2021) definition and default (`exclude`, missing share > 0.5), and its denominator is the wording of Erfanian et al. (2021), the 12 attribute and source-dominance items (B19; R6) | §6.7 | the acceptance criterion is testable now, and the ISD publishes no counts to wait for |
 | matplotlib and seaborn imported inside `plot` functions only (seaborn added 2026-11-01, PR #171) | §6.15 | `import soundscapy` cannot trigger matplotlib's font-cache message (NFR-13) |
 | Pooch's INFO lines hidden by a filter inside `fetch`, not by `setLevel` at import | §6.3.9 | no third-party state changed on import; `setLevel` is ignored after pooch's first message |
 | `lowest` CI job sets `UV_RESOLUTION=lowest-direct` for the whole job | §5.6.1 | otherwise `uv run` re-resolves to the newest versions (B2) |
