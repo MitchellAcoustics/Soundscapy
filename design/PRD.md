@@ -1,20 +1,21 @@
 # Product Requirements: an open-source soundscape assessment, analysis and design package
 
-Status: **draft 0.9, baseline for the architecture plan** (2026-10-31). Draft 0.4
-applied the review of 0.3 (`design/reviews/prd-0.3-review.md`); draft 0.5 recorded the
-owner's responses to it; draft 0.6 recorded the decisions the owner took while reviewing
-the architecture plan; draft 0.7 applied the owner's responses to the review of 0.6 and
-plan 0.3 (`design/reviews/prd-0.6-plan-0.3-review.md`, §10.5); draft 0.8 applies the
-owner's acceptance of the PRD changes proposed by the review of plan 0.4 (§10.5a); draft
-0.9 records the owner's answers while the Phase 0 and M1 spec was written (§10.5b). This
-document states what the package must do and for whom. It deliberately says nothing
-about how it is built; the architecture plan (`design/greenfield_architecture_plan.md`)
-is a separate document and must be checked against this one. From plan draft 0.5 the
-register of owner decisions is the plan's §9.
+Status: **draft 1.0** (2026-11-27), applying the review
+`design/reviews/2026-11-27-prd-0.9-critique.md`. Draft 1.0 keeps every scientific
+requirement of 0.9. It draws a 1.0 cut line (§9.1), moves the journey A CLI and mapping
+suggestion out of M1, states needs where 0.9 stated mechanisms, makes four Musts testable,
+adds measurable success criteria and missing risks, and moves the decision history out of
+§10. The owner confirmed these changes on 2026-11-27, and they are marked
+**[agreed 2026-11-27]**; §10.7 lists them, and the plan and spec amendments they need.
 
-Decisions taken with the product owner are marked **[agreed]**. The minor findings of
-the 0.6 review that the owner has not yet answered are listed in §10.6; nothing else is
-open.
+This document states what the package must do and for whom. It deliberately says nothing
+about how it is built; the architecture plan (`design/greenfield_architecture_plan.md`)
+is a separate document and must be checked against this one. The register of owner
+decisions is the plan's §9; the history of drafts 0.1 to 0.9 is in git and in
+`design/reviews/`.
+
+Decisions taken with the product owner are marked **[agreed]**. Open items are the owner
+inputs of §10.3, the minor findings of §10.6, and *N* and the course date in §1.2.
 
 ---
 
@@ -55,6 +56,16 @@ notebooks, and as the engine of a graphical application for non-programmers.
   installation.
 - New developers contribute, because the rebuild made contribution feasible; today
   the package is maintained by one unfunded developer as a side project [agreed].
+
+Measures that say when 1.0 is good enough [agreed 2026-11-27; *N* and the date still to be set by the owner]:
+
+- **Course install.** At least 80% of a certificate-course cohort reaches a first
+  circumplex plot by the documented local path inside the first hour, with no help from
+  the tutor (journey K, FR-12.1).
+- **SPI in use.** SPI from this package is reported in at least *N* external projects,
+  reports or papers within a year of the M2 alpha (journeys C and E).
+- **Course on the new tool.** The first course run after the M2 alpha teaches on it, by
+  *date*.
 
 ---
 
@@ -235,7 +246,8 @@ beyond them):*
 3. City-wide profiles: sound-source dominance profile and attribute scores per
    location, and a prioritisation of locations for intervention.
 *Done when:* a participant reaches a first circumplex plot inside the first hour by
-the documented local path, every course exercise runs unchanged, and each acceptance
+the documented local path (tested as FR-12.1 states), every course exercise runs
+unchanged, and each acceptance
 case can be completed with the package's own outputs. "Every course exercise" means
 the exercises rewritten for this package; 0.x exercises are not supported (§8).
 K becomes course-ready at M2, not M1: acceptance case 1 needs the ISD's published
@@ -248,7 +260,9 @@ and C [agreed].
 by following a written recipe, with tests that tell them whether the science still
 holds.
 *Done when:* each of the four extension types has a recipe, an example, and a test
-template, and a new contributor has done one in under a day.
+template, and a new contributor has done one in under a day. "A new contributor" is
+someone who has not committed to the package before; the trial is timed from cloning
+to a passing pull request, and its result is recorded (M5).
 
 ---
 
@@ -268,11 +282,13 @@ requirement; "should" is desirable.
   attributes of the chosen circumplex, source dominance, overall quality,
   appropriateness, WHO-5, demographics, identifiers), with the response scale and
   language declared, and shall persist that mapping.
-- **FR-1.3a** (A, K; Must) Shall make building that mapping easy for a non-programmer:
-  suggest matches from column names and known export schemas (REDCap/SSID codebook,
-  Qualtrics), let the user confirm or correct them,
-  and save the mapping for reuse on the next export from the same instrument
-  [agreed].
+- **FR-1.3a** (A, K; Should, Must for the GUI) Should suggest a mapping from column
+  names and known export schemas (REDCap/SSID codebook, Qualtrics) and let the user
+  confirm or correct it before saving. The Must part is in FR-1.2 and FR-1.3: a
+  documented, hand-editable mapping file with a template, saved and reused on the next
+  export from the same instrument. Suggestion is a non-programmer's convenience, and a
+  non-programmer's main tool is the GUI, so it is delivered after M2 and before GUI
+  planning [agreed 2026-11-27; 0.9 made suggestion a Must at M1].
 - **FR-1.4** (A, B; Must) Shall represent the SSID hierarchy Location → Session → Group
   → Response and link recordings to groups, environmental logs to sessions and static
   context to locations; shall tolerate datasets that have only some levels.
@@ -315,6 +331,11 @@ requirement; "should" is desirable.
   12913 circumplex is the default instance. Other circumplexes, for example the
   indoor soundscape circumplex of Torresin et al. 2020, shall be usable with every
   analysis, plot and score in the package without special-casing [agreed].
+  This is verified with a second instrument kept for testing, one that differs from
+  the default in its number of attributes, its axis names and its labels. Every public
+  analysis, plot and score shall have at least one test on it. A published non-outdoor
+  instrument (such as Torresin et al. 2020) ships as data only when a user brings data
+  for it [agreed 2026-11-27].
 - **FR-2.1** (A; Must) Shall code Method A responses exactly as Table A.1 (direction
   per part) and shall reject or flag data that violates the declared scale.
 - **FR-2.2** (A; Must) Shall compute per-item median and interquartile range (2024
@@ -612,10 +633,12 @@ requirement; "should" is desirable.
   shift arrows, target overlays and SPI annotation.
 - **FR-8.2** (A; Must) Shall produce item-level plots: stacked Likert bars and radar
   plots of the circumplex's attributes (eight for the default instance).
-- **FR-8.3** (A; Must) Shall produce publication-quality output (vector and raster)
-  with consistent, colour-blind-safe defaults, and shall let users customise through
-  the conventions of the underlying plotting library rather than a bespoke styling
-  system.
+- **FR-8.3** (A; Must) Shall produce publication-quality output, meaning: vector (SVG,
+  PDF) and raster (PNG at a stated resolution) export; a default palette that stays
+  distinguishable under simulated deuteranopia, protanopia and tritanopia (checked in a
+  test); axis labels, attribute labels and a legend on every circumplex figure by
+  default; and customisation through the plotting library users already know, with no
+  styling system of the package's own.
 - **FR-8.4** (K, GUI; Must) Shall separate the computation of plot geometry (density
   grids, contour polygons, proportions) from drawing, so that a GUI or an interactive
   backend can render the same results.
@@ -661,8 +684,11 @@ requirement; "should" is desirable.
 - **FR-12.1** (K; Must) Shall provide a documented, tested path from nothing to a
   first circumplex plot in under an hour for a non-programmer using a local install
   and local notebooks. Hosted-notebook provision is outside the package [agreed].
-  Tutorials are Quarto `.qmd` documents: plain text, executed when the
-  documentation is built, and runnable locally [agreed].
+  "Tested" means CI runs the documented path on a clean Windows, macOS and Linux
+  machine. The hour is measured on the course cohort itself (§1.2); there is no separate
+  timed trial [agreed 2026-11-27].
+  Tutorials are plain-text documents, executed when the documentation is built, and
+  runnable locally; the owner chose Quarto `.qmd` [agreed].
 - **FR-12.2** (K; Must) Shall provide course-aligned tutorials for journeys A, C and
   E on the bundled dataset at M2, and for journey B at M3 on shipped or synthetic
   audio (§10.3), runnable without modification.
@@ -696,10 +722,12 @@ possible without a rewrite.
   notebook or user interaction. A CLI command may offer an interactive mode, but
   never as its only mode.
 - **FR-14.2** (Must) Every input, setting and result shall be serialisable to a
-  documented format that is open and inspectable, with a text form available for every
-  result: settings and mappings as text; computed tables in an open columnar format
-  with a JSON record of their settings and a one-call export to CSV and Excel
-  [agreed 2026-10-30].
+  documented format that is open and inspectable without this package: settings and
+  mappings as human-readable text; every computed table readable by common tools, with
+  the settings that produced it beside it and a one-call export to CSV and Excel
+  [agreed 2026-10-30]. For a result that is not a table (a fitted target, an SPI score),
+  its settings and values written as text are its text form. The file formats are the
+  plan's choice (plan §4.11).
 - **FR-14.3** (Must) Long-running operations shall report progress and be
   cancellable. Dataset and model-weight downloads are the one exception: they report
   progress but are not cancellable, until a GUI needs it [agreed 2026-10-31].
@@ -707,11 +735,15 @@ possible without a rewrite.
   between library, CLI and GUI. A minimal project directory (mapping, settings,
   result tables, manifest) is a Must at M1; packaging, sharing and opening in a GUI
   stay Should (FR-1.7) [agreed].
-- **FR-14.5** (Must) A command-line interface shall cover journeys A, B, C and E so
-  that each can be run without writing Python. For C and E1 at M2 this means scoring
+- **FR-14.5** (Must, from M3) A command-line interface shall cover journeys A, B, C and
+  E so that each can be run without writing Python. For C and E1 this means scoring
   against shipped or bespoke target files and `evaluate` with a brief file; fitting
   and editing targets from the CLI wait for GUI planning, because the course runs in
-  notebooks [agreed 2026-10-31].
+  notebooks [agreed 2026-10-31]. No persona needs the CLI before M3: course participants
+  work in notebooks (FR-12.1), and consultants and designers get direct use with the GUI
+  (§3). The commands for A, C and E1 therefore arrive at M3 with journey B's, where
+  long batch runs give a CLI its first real user [agreed 2026-11-27; 0.9 put A's commands
+  at M1 and C and E1's at M2].
 - **FR-14.6** (Must) Audio and prediction shall be processable locally; nothing
   shall require uploading audio to a service [agreed, see NFR-5].
 - **FR-14.7** (Must) No GUI design is fixed by this document. The core shall not
@@ -774,6 +806,12 @@ possible without a rewrite.
   algorithms that exist in maintained libraries. Where no maintained library exists,
   as for bivariate skew-normal fitting and the two-dimensional KS distance, an
   implementation here is permitted if it is validated against a published reference.
+  The record-keeping that FR-11, FR-14.2 and FR-6.3 require (settings and provenance on
+  every result, content identity, serialisation) is the one piece of framework the
+  package accepts. It is bounded: one settings-and-provenance envelope, one hashing
+  helper and one save routine, and nothing more (no stateful project object, no
+  schema registry, no general reference type) until GUI planning asks for it
+  [agreed 2026-11-27].
   Scope must respect this: the Must
   list is sequenced so that each milestone is independently releasable and useful
   (§9).
@@ -847,9 +885,9 @@ later milestones will probably ship before any non-alpha version, so no API is
 frozen by M2 [agreed 2026-10-30].
 
 A requirement is delivered with the milestone of the earliest journey it serves, unless
-this section says otherwise. The CLI (FR-14.5) grows the same way: journey A's commands
-at M1, C and E1 at M2 (as FR-14.5 scopes them), B at M3, E2 at M4. The versioning
-policy (FR-13.4) is in place by M2, since 1.0 needs it.
+this section says otherwise. The CLI (FR-14.5) starts at M3 with the commands for A, B,
+C and E1, and adds E2 at M4 [agreed 2026-11-27]. The versioning policy (FR-13.4) is in
+place by M2, since 1.0 needs it.
 
 Each extension recipe (FR-13.1) is delivered with the milestone that first has a user
 for that extension type [agreed 2026-10-30]: plot type, dataset loader and plugin
@@ -858,66 +896,51 @@ a primary persona, so contribution should not wait for M5. M5 then holds F, G an
 trial in which a new contributor completes a recipe in under a day. M1 is kept to what
 journey A and the 2022 reproduction need.
 
+### 9.1 The 1.0 cut line [agreed 2026-11-27]
+
+"Must" in §4 and §5 means "required by the milestone that delivers it". It does not
+rank requirements against each other. This section does.
+
+- **1.0 requirements** are the Musts of M1 and M2. They are what the course (journey K)
+  and the first SPI users (journeys C and E1) need. When time is short, M1 work that
+  none of journeys A, C, E1, I or K needs is the first to move, and it moves to an M2
+  alpha or later. No 1.0 requirement moves.
+- **Provisional requirements** are the Musts of M3, M4 and M5. They stand as written,
+  but each is re-confirmed (kept, reworded, demoted or cut) when its milestone is
+  planned, against what M1 and M2 taught. Until then their detail is direction, not
+  specification, and no M1 or M2 design may be shaped to serve them beyond what the
+  architecture plan's commitments already require.
+- **Owner inputs on the critical path.** The inputs of §10.3 that M2 needs are
+  requested while M1 is being built, not when M2 is planned. They are the only M2
+  work agents cannot do.
+- **Moved out of M1 by draft 1.0:** the journey A CLI (FR-14.5, now from M3) and
+  mapping suggestion (FR-1.3a, now a Should after M2). The minimal project directory
+  (FR-14.4) stays at M1, because the course saves and reopens settings.
+
 ---
 
-## 10. Decisions recorded
+## 10. Decisions and open items
 
-Decisions resolved in review of drafts 0.1 to 0.2 are tagged **[agreed]** in the text:
-canonical robust projection (FR-2.3); generalised circumplex beyond the eight outdoor
-English attributes (FR-2.0); two shipped angle-set versions with the 2026 SATP v1.5
-set as default and confidence tiers enforced (FR-2.4, FR-2.4a); Methods B and C out
-(FR-1.9, §7); FR-2.8 and FR-5.7 moved to Later; local notebooks only (FR-12.1);
-English-only interface (NFR-10); equalisation filter user-supplied (FR-4.3);
-performance targets relaxed in favour of design quality (NFR-3); default predictor to
-be chosen after a suitability check (FR-5.3); MOSAIQ field dictionary treated as
-normative once stable (FR-1.8, FR-10.3). Course acceptance cases are recorded under
-journey K.
-
-### 10.1 Decided on review of 0.3 (2026-10-30)
-
-Python 3.11 floor (NFR-2). Tutorials as Quarto `.qmd` documents, not notebooks run in
-the browser (FR-12.1). Standards cited by their public editions, with texts supplied
-by the owner (§2). Prediction stands on its own, and single-response predictions form
-distributions when there are enough inputs (FR-5.9, journeys D and E). E split into E1
-and E2, and the course ready at M2 (§9). A minimal project directory at M1 (FR-14.4).
-Extension recipes delivered per milestone (§9). The 2024 revision profile with the
-SATP v1.5 angles as default (FR-2.9). Per-response angles with an overridable error
-for uncovered languages (FR-2.4). Tolerances set by significant figures (NFR-4).
-Performance a goal, not a gate (journey B, NFR-3). ArtemiS comparisons indicative and
-publishable (FR-4.10). Metric definitions surfaced from their source libraries
-(FR-4.0). Skew-normal parameterisation and terminology from Azzalini and `sn` (FR-3.4,
-FR-6.2). No GUI design fixed (FR-14.7). API design left to the architecture stage. No
-APA-style reporting requirement. No reference to the previous package's layouts. 1.0
-at M2 (§9). Linear models as the fallback default predictor (journey D). The 2021
-paper reproduced from the ISD feature table (journey I).
-
-### 10.2 Decided on review of the architecture plan (2026-10-30)
-
-Nothing remains open. The decisions, also registered in the architecture plan (§15 in
-drafts 0.2 to 0.4, §9 from draft 0.5): copyleft dependencies acceptable (NFR-7); no
-SPI uncertainty beyond the published method, with the paper's sample size as the
-default (FR-6.1, journey C); governance stated (NFR-12); responses with missing
-circumplex items excluded by default, with renormalisation under the canonical
-formulation only (FR-2.5a); the 2022 paper reproduced by methodology rather than
-numeric baseline (journey I). Implementation choices that are not requirements
-(dataframe-agnostic tables through narwhals, click for the CLI, TOML settings, parquet
-for computed tables and CSV for hand-made ones, a default progress reporter for
-notebooks, the 3.11 floor kept with phonometry as a 3.13-only backend) are recorded in
-the plan only.
+The decisions taken in drafts 0.1 to 0.9 are marked **[agreed]** where they apply, and
+are registered in the architecture plan's §9. Their history (the former §10, §10.1,
+§10.2, §10.5, §10.5a and §10.5b) is in PRD draft 0.9 (commit `08deba7`) and in the
+reviews under `design/reviews/`. A reference elsewhere to "PRD §10.5b" means that text.
+This section keeps only what is still open.
 
 ### 10.3 Inputs needed from the owner
 
 Facts and data only the owner holds. None changes a requirement, but each blocks the
-tests of the milestone shown, so request it before that milestone is planned in detail.
+tests of the milestone shown. Request each one while the milestone before it is being
+built (§9.1), not when its own milestone is planned. Rows answered in draft 0.9 say so.
 
 | Input | Needed for | Why |
 | --- | --- | --- |
 | Which ISD languages, if any, fall outside the SATP v1.5 and Aletta 2024 sets, and the v1.5 Medium-tier list | M1, M2 (course case 2) | Under the default profile, an uncovered ISD language raises the FR-2.4 error in the headline course exercise. |
-| The ISD record version each reproduced paper used, and whether it is public | M1 (2022), M2 (2024), M4 (2021) | Decides whether the loader must pin versions (journey I, FR-10.1). |
+| The ISD record version each reproduced paper used, and whether it is public (answered for 2022: v0.2.3) | M2 (2024), M4 (2021) | Decides whether the loader must pin versions (journey I, FR-10.1). |
 | Machine-readable fixtures: Part 4 Example 6 data and tranquil target, the 2024 paper's three demonstration targets and sample size | M2 | SPI acceptance is numeric (journey C, FR-6.1, FR-6.3). |
 | Whether redistributable audio exists (clips, a calibrator recording, clips with ArtemiS values) | M3 | Decides whether audio tests, the B tutorial and FR-4.10 use shipped clips or synthetic signals and user files. |
 | The features the deployable 2021 linear models use | M4 | If any is proprietary (FR-4.5), the linear models cannot run from audio and cannot be the default predictor (FR-5.3). |
-| The 2-D KS variant, direction combination, tie rule, truncation and sample size the 2024 paper used; the 2022 paper's KDE settings and whether it used equal angles | M2 (SPI), M1 (2022 reproduction) | FR-6.1's tables reproduce only with the same statistic; the 2022 figures only with the same estimator settings. |
+| The 2-D KS variant, direction combination, tie rule, truncation and sample size the 2024 paper used (the 2022 paper's KDE settings are answered: seaborn's default KDE with `bw_adjust=1.2`) | M2 (SPI) | FR-6.1's tables reproduce only with the same statistic; the 2022 figures only with the same estimator settings. |
 | One R `sn` run to generate the skew-normal reference fixtures | M2 | FR-3.4 is validated against `sn` (NFR-9). |
 | A worked example of the canonical projection with adjusted angles, from the chapter or blog | M1 | Without it M1's headline feature has no literature fixture; property tests and hand-computed 2019 values cover the rest. |
 
@@ -926,51 +949,6 @@ tests of the milestone shown, so request it before that milestone is planned in 
 1. Which candidate becomes the default predictor (FR-5.3), decided at M4 planning.
 2. Which wrapped libraries cover which metrics, and therefore what the metric list
    is at M3 (FR-4.0, FR-4.4).
-
-### 10.5 Decided on review of 0.6 and plan 0.3 (2026-10-30)
-
-Profiles named faithfully to their sources, the chapter profile as default (§2,
-FR-2.9). SPI acceptance from the 2024 paper's tables, Example 6 as a story, and the KS
-variant, tie rule and truncation recorded (journey C, FR-6.1). Optional multi-seed SPI
-summary as a Should (FR-6.1). FR-2.5a renormalisation demoted to a constrained Should.
-Three-way override for uncovered and Low-tier languages, with one per-response status
-column for every exclusion (FR-1.5, FR-2.4). N < 30 handled at the drawing layer with
-scatter fallback (FR-3.2). No overlap statistic; shift against a target uses the
-closed-form mean (FR-3.3). Skew-normal fitting stays a Must (FR-3.4). Table D.1
-coverage no longer a hard requirement; substitutions named; channel rule specified
-(FR-4.4, FR-4.6). No ECMA-418-2 backend that drags in PyQt6; phonometry as an explicit
-extra, never an environment marker; default backends never depend on the Python
-version (FR-4.0, FR-11.2). Predictor interface fixed now, model choice at M4
-(journey D, FR-5.3). Predicted single-response distributions labelled and warned
-(FR-5.9). Targets and angle sets versioned, old versions kept, circumplex identity by
-content (FR-6.3). Library logs through `logging`, never prints (NFR-13). Tutorials A,
-C, E at M2 and B at M3 (FR-12.2). CLI commands always have a non-interactive mode
-(FR-14.1). Releases from M2 are 1.0 alphas (§9). Recipes and plugin discovery at M2
-(§9). Implementation notes recorded in the plan only: M1 re-scoped; the narwhals
-boundary to follow narwhals' own API conventions, reviewed while building; optional
-imports and lazy loading per current Python practice.
-
-### 10.5b Decided while specifying Phase 0 and M1 (2026-10-31)
-
-The Aletta 2024 formulation is a full M1 Must, specified by the paper's own equations
-(FR-2.3). The FR-1.5 acceptance test is the 0.x tutorials' 56 exclusions on ISD v1.0.
-The ISD loader defaults to the latest version registered from Zenodo. The 2022 paper is
-reproduced from ISD v0.2.3, with Russell Square for panel (a), seaborn's default KDE with
-`bw_adjust=1.2`, and a 63 dB split over the whole v0.2.3 dataset. The 50% contour is the
-2022 paper's 50th-percentile contour, with the percentile selectable (FR-3.1). The
-SATP v1.5 tiers and angles come from the 2026 chapter (FR-2.4). The chapter's PDF is
-not redistributed. Reference literature lives in `design/literature/`.
-
-### 10.5a Decided on review of plan 0.4 (2026-10-31)
-
-The six proposals of plan 0.5 §9.2 were accepted, with the owner's reading of the
-first: the scale belongs to the projection, coordinates on the same two named axes are
-cross-comparable, and scoring across axis pairs is refused by default as an open
-scientific question (FR-6.3). The Aletta 2024 formulation is conditional on a worked
-example (FR-2.3). The M2 CLI for C and E1 is scoring and `evaluate` (FR-14.5).
-Downloads report progress but are not cancellable (FR-14.3). Default quality rules
-reproduce the ISD's published processing (FR-1.5). Per-language angle-set choice is
-from registered sets, with user sets registered first (FR-2.4).
 
 ### 10.6 Minor findings of the 0.6 review not yet answered by the owner
 
@@ -984,7 +962,28 @@ labels, timestamps and time zones, audio formats, missingness codes for other it
 structured errors for a GUI, weight-file safety, dataset licences, personal data,
 a CLI for journey D, `CITATION.cff`); angle sets keyed by circumplex as well as
 language; copyleft confined to extras; data-convention exemptions from the
-no-compatibility rule. None blocks M1 planning; each is applied when answered.
+no-compatibility rule. None blocks M1 planning; each is applied when answered. Draft
+1.0 answers the untestable wordings of FR-8.3, FR-12.1 and journeys K and L, and makes
+FR-1.3a a Should (§10.7).
+
+### 10.7 Draft 1.0 changes, confirmed by the owner on 2026-11-27
+
+Each reverses or extends an earlier decision, and is marked **[agreed 2026-11-27]** where
+it applies. All nine were confirmed. Change 1 is confirmed with *X* set to 80%; *N* and
+the date are still open. Change 8 is confirmed without the timed Windows install trial:
+CI on three operating systems and the cohort measure of §1.2 test FR-12.1.
+
+| # | Change | Where | Reverses or extends | Needs in the plan and spec |
+| --- | --- | --- | --- | --- |
+| 1 | Measurable success criteria; *X* = 80%, *N* and the date still open | §1.2 | Extends §1.2 | None |
+| 2 | Mapping suggestion becomes a Should after M2; the hand-edited mapping stays a Must | FR-1.3a | FR-1.3a as a Must at M1 [agreed] | Spec slice S7: suggestion and Qualtrics detection leave M1 |
+| 3 | The CLI starts at M3, for A, B, C and E1 together | FR-14.5, §9 | A at M1 and C, E1 at M2 [agreed 2026-10-31] | Plan §7 rows M1 to M3; spec slice S8 leaves M1; the M1 install check of `soundscapy --version` moves to M3 |
+| 4 | FR-2.0 verified on a second, test-only instrument | FR-2.0 | Extends FR-2.0 | Spec: a test instrument fixture, from the slice that first builds a generic analysis |
+| 5 | The provenance machinery named as the one accepted framework, and bounded | NFR-9 | Extends NFR-9 | Matches plan §2.1 as it stands |
+| 6 | The 1.0 cut line; M3 to M5 Musts provisional; M2 owner inputs requested during M1 | §9.1 | Extends §9 | Plan §7: an owner-input column already exists; mark M3 to M5 rows provisional |
+| 7 | Formats stated as needs; the plan names the formats | FR-14.2, FR-12.1 | Rewords [agreed] text, same intent | None |
+| 8 | Testable definitions for "publication-quality", the first hour and the contributor trial | FR-8.3, FR-12.1, journeys K and L | Answers part of §10.6 | Spec: a colour-vision test for the palette |
+| 9 | Owner bandwidth, the course calendar, dependence on the chapter and process overhead added as risks | §11 | Extends §11 | None |
 
 ---
 
@@ -998,6 +997,10 @@ no-compatibility rule. None blocks M1 planning; each is applied when answered.
 | No maintained Python library fits a bivariate skew-normal or computes a 2-D KS distance | Bespoke implementation risk | Permitted under NFR-9, following Azzalini and validated against `sn` and the published values. |
 | Weights, licences and feature needs of the candidate predictors (Tong et al. 2026, Ooi et al. 2022, the 2021 linear models, SoundAQnet) | No redistributable default | The interface and plugin mechanism are fixed now; the model is chosen at M4 planning from whatever is then available (journey D, FR-5.3). |
 | One part-time unfunded maintainer | Milestones slip | Each milestone releasable on its own (§9). |
+| The owner's time for inputs and review, not coding time, sets the pace: coding agents write code faster than one person can supply fixtures and review scientific changes (NFR-12) | Slices wait on review or inputs; unreviewed science piles up | The 1.0 cut line (§9.1); M2 inputs requested during M1 (§10.3); review effort spent on changes that move a baseline, not on every plan |
+| The certificate course runs on a calendar this document does not state | M2 is late without anyone noticing | The owner records the target course date in §1.2; M1 scope moves before M2's does (§9.1) |
+| The SATP v1.5 angles and tiers, the default profile's basis, come from notes on a chapter not yet published, with known proof inconsistencies | Published values differ from the shipped ones | Angle sets are versioned and never edited (FR-6.3); a corrected set ships as a new version, and the default moves to it with a changelog entry |
+| Design and review documents grow faster than the code (7,352 lines of design text against 4,589 of source at M1 slice S1) | Each slice pays the overhead again; the specification drifts from the code | Requirements here, decisions in the plan's register, detail in each milestone's spec only (§10); reviews scaled to the stakes of the change |
 
 ---
 
