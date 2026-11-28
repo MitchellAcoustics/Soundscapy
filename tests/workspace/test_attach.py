@@ -26,7 +26,7 @@ from soundscapy.projection.project import project
 from soundscapy.survey.mapping import SurveyMapping
 from soundscapy.survey.read import read_survey
 from soundscapy.workspace import attach
-from tests._helpers import LABELS, ONES, raw_mapping, write_csv
+from tests._helpers import LABELS, ONES, fake_frame, raw_mapping, write_csv
 
 SUBSET_CSV = Path(isd.__file__).parent.parent / "_data" / "datasets" / "isd" / "subset-v1.0.csv"
 FIVES = ",".join(["5"] * 8)
@@ -92,7 +92,7 @@ def test_attach_nullable_dtypes_frame(isd_survey, isd_coords, frame_lib):
 
 def test_attach_refuses_a_polars_frame(isd_coords):
     # Typed Any: passing a non-pandas object is the point of the test.
-    stub: Any = type("DataFrame", (), {"__module__": "polars.dataframe.frame"})()
+    stub: Any = fake_frame("polars.dataframe.frame")
     with pytest.raises(TypeError, match=r"convert with \.to_pandas\(\) first"):
         attach(stub, isd_coords)
 

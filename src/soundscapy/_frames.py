@@ -128,7 +128,7 @@ def _is_number(series: pd.Series) -> bool:
 
 def _float_values(series: pd.Series) -> NDArray[np.float64]:
     """Return a numeric column as a fresh float64 array, every null and NaN as NaN."""
-    return np.array(series.to_numpy(dtype=np.float64, na_value=np.nan), dtype=np.float64)
+    return series.to_numpy(dtype=np.float64, na_value=np.nan, copy=True)
 
 
 def columns_float(frame: pd.DataFrame, names: Sequence[str]) -> NDArray[np.float64]:
@@ -191,7 +191,9 @@ def float_column(frame: pd.DataFrame, name: str) -> NDArray[np.float64] | None:
     series = _column(frame, name)
     if not is_float_dtype(series.dtype):
         return None
-    return readonly_copy(_float_values(series))
+    out = _float_values(series)
+    out.setflags(write=False)
+    return out
 
 
 def _value_text(value: object) -> str:
@@ -302,9 +304,9 @@ def with_columns(
     ValueError
         If a column or ``valid`` does not have one value per row.
     """
-    native = require_frame(frame)
-    n_rows = len(native)
-    clashes = [name for name in columns if name in native.columns]
+    frame = require_frame(frame)
+    n_rows = len(frame)
+    clashes = [name for name in columns if name in frame.columns]
     if clashes:
         msg = f"columns {clashes} are already in the frame; rename or drop them first"
         raise ColumnCollisionError(msg)
@@ -315,8 +317,8 @@ def with_columns(
         if len(values) != n_rows:
             msg = f"{label} has {len(values)} values; the frame has {n_rows} rows"
             raise ValueError(msg)
-    added = {name: _added_column(values, valid, native.index) for name, values in columns.items()}
-    return native.assign(**added)
+    added = {name: _added_column(values, valid, frame.index) for name, values in columns.items()}
+    return frame.assign(**added)
 
 
 def new_frame(columns: Mapping[str, NDArray[Any]]) -> pd.DataFrame:

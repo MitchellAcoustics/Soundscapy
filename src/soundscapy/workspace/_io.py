@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any, Final
 
 import numpy as np
@@ -89,8 +90,8 @@ def attach(frame: pd.DataFrame, result: Coordinates) -> pd.DataFrame:
     ColumnCollisionError
         If an added column's name is already in the frame; ``attach`` never overwrites.
     """
-    eager = require_frame(frame)
-    n_rows = len(eager)
+    frame = require_frame(frame)
+    n_rows = len(frame)
     x_axis, y_axis = result.circumplex.axes
     columns: dict[str, NDArray[Any]] = {
         axis_column(x_axis.id): result.xy[:, 0],
@@ -106,12 +107,12 @@ def attach(frame: pd.DataFrame, result: Coordinates) -> pd.DataFrame:
         alignment, index, matched = "position", np.arange(n_rows), np.ones(n_rows, dtype=bool)
     elif source in ("column", "key"):
         alignment = "id"
-        index, matched = _match_ids(eager, result)
+        index, matched = _match_ids(frame, result)
     else:
         msg = f"the result records no known response id source: {source!r}"
         raise AlignmentError(msg)
     gathered = {name: values[index] for name, values in columns.items()}
-    out = with_columns(eager, gathered, valid=matched)
+    out = with_columns(frame, gathered, valid=matched)
     n_matched = int(matched.sum())
     message = f"attach: aligned by {alignment}; {n_matched} of {n_rows} frame rows matched"
     # Frame ids are unique, so each matched frame row is a distinct survey response.
@@ -134,18 +135,18 @@ def _str_list(result: Coordinates, key: str) -> list[str]:
 
 
 def _match_ids(
-    eager: pd.DataFrame, result: Coordinates
+    frame: pd.DataFrame, result: Coordinates
 ) -> tuple[NDArray[np.intp], NDArray[np.bool_]]:
     """Return, per frame row, its row in the result (0 if none) and whether it matched."""
     id_columns = _str_list(result, "response_id_columns")
     blank_ok = set(_str_list(result, "response_key_blank_ok"))
-    missing = [column for column in id_columns if column not in eager.columns]
+    missing = [column for column in id_columns if column not in frame.columns]
     if missing or not id_columns:
         msg = f"the frame lacks the response id columns {missing or id_columns}; "
         msg += f"the result's ids were built from {id_columns}"
         raise AlignmentError(msg, hint="attach to survey.data, which always aligns")
-    n_rows = len(eager)
-    parts = {column: _id_text(eager, column) for column in id_columns}
+    n_rows = len(frame)
+    parts = {column: _id_text(frame, column) for column in id_columns}
     ids, blank = join_id_parts(parts, blank_ok)
     usable = ~blank
     rows = np.flatnonzero(usable).tolist()
@@ -164,18 +165,18 @@ def _match_ids(
     return index, matched
 
 
-def _id_text(eager: pd.DataFrame, column: str) -> NDArray[np.object_]:
+def _id_text(frame: pd.DataFrame, column: str) -> NDArray[np.object_]:
     """Read a frame's id column as ``stripped_text()`` does, whole floats as integers.
 
     pandas stores an integer column that holds a null as float64, so ``1`` comes back as
     ``1.0``; the survey's CSV cell read ``"1"``.
     """
-    values = float_column(eager, column)
+    values = float_column(frame, column)
     if values is None:
-        return stripped_text(eager, column)
+        return stripped_text(frame, column)
     out = np.empty(len(values), dtype=object)
     out[:] = [
-        "" if np.isnan(value) else str(int(value)) if value.is_integer() else str(value)
+        "" if math.isnan(value) else str(int(value)) if value.is_integer() else str(value)
         for value in values.tolist()
     ]
     return out

@@ -375,7 +375,7 @@ def _read_survey(
         response_key_blank_ok=[c for c in ids.response_key if c in blank_ok],
     )
     return Survey(
-        data=table.frame,
+        data=frame,
         mapping=mapping,
         scores={"attributes": scores},
         response_id=response_id,

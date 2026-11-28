@@ -23,6 +23,11 @@ NOMINAL_ANGLES_DEG = np.arange(0.0, 360.0, 45.0)
 SCALE_1_5 = Scale(minimum=1.0, maximum=5.0)
 
 
+def fake_frame(module: str) -> object:
+    """An object whose type claims to come from ``module``, without that library installed."""
+    return type("DataFrame", (), {"__module__": module})()
+
+
 def raw_mapping(ids: dict, *, columns: Sequence[str] = LABELS) -> dict:
     """A minimal raw mapping dict: the given ids, each column mapped by its own label."""
     return {

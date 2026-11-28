@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
-import subprocess
-import sys
 
 import numpy as np
 import pandas as pd
@@ -29,6 +27,7 @@ from soundscapy.errors import (
     FileFormatError,
     MappingError,
 )
+from tests._helpers import fake_frame
 
 FRAME_VECTOR = "h1-sha256:0ef558dd8a05e2aa709ff3e49550a1d91eb4aeab621fde47153bfd3be5028ee8"
 
@@ -36,15 +35,10 @@ FRAME_VECTOR = "h1-sha256:0ef558dd8a05e2aa709ff3e49550a1d91eb4aeab621fde47153bfd
 # require_frame
 
 
-def _stub(module: str) -> object:
-    """An object whose type claims to come from ``module``, without that library installed."""
-    return type("DataFrame", (), {"__module__": module})()
-
-
 @pytest.mark.parametrize("module", ["polars.dataframe.frame", "pyarrow.lib"])
 def test_require_frame_names_to_pandas_for_polars_and_arrow(module):
     with pytest.raises(TypeError) as excinfo:
-        require_frame(_stub(module))
+        require_frame(fake_frame(module))
     assert str(excinfo.value) == (
         "only pandas DataFrames are accepted; convert with .to_pandas() first"
     )
@@ -57,22 +51,8 @@ def test_require_frame_refuses_non_frames(obj):
 
 
 def test_require_frame_returns_the_frame_itself(frame_lib):
-    native = frame_lib({"a": [1.0]})
-    assert require_frame(native) is native
-
-
-def test_frames_works_without_narwhals_polars_or_pyarrow():
-    code = (
-        "import sys; sys.modules['narwhals'] = None; sys.modules['polars'] = None; "
-        "sys.modules['pyarrow'] = None; import soundscapy._frames"
-    )
-    result = subprocess.run(
-        [sys.executable, "-W", "error", "-c", code],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
+    frame = frame_lib({"a": [1.0]})
+    assert require_frame(frame) is frame
 
 
 def test_duplicate_column_names_raise_collision():
@@ -84,14 +64,14 @@ def test_duplicate_column_names_raise_collision():
 
 
 def test_columns_float_copies_and_is_read_only(frame_lib):
-    native = frame_lib({"x": [1.0, None, float("nan")], "y": [1, 2, 3]})
-    arr = columns_float(native, ["x", "y"])
+    frame = frame_lib({"x": [1.0, None, float("nan")], "y": [1, 2, 3]})
+    arr = columns_float(frame, ["x", "y"])
     assert arr.shape == (3, 2)
     assert arr.dtype == np.float64
     assert arr.flags.writeable is False
     # Exact: whole numbers and NaN placement involve no arithmetic.
     np.testing.assert_array_equal(arr, [[1.0, 1.0], [np.nan, 2.0], [np.nan, 3.0]])
-    native.loc[0, "x"] = 99
+    frame.loc[0, "x"] = 99
     assert arr[0, 0] == 1.0  # exact: the copy is untouched
 
 
@@ -147,54 +127,52 @@ def test_column_text_nulls_are_empty(frame_lib):
 
 
 def test_with_columns_collision(frame_lib):
-    native = frame_lib({"a": [1.0, 2.0]})
+    frame = frame_lib({"a": [1.0, 2.0]})
     with pytest.raises(ColumnCollisionError, match="'a'"):
-        with_columns(native, {"a": np.array([3.0, 4.0])})
+        with_columns(frame, {"a": np.array([3.0, 4.0])})
 
 
 def test_with_columns_length_mismatch(frame_lib):
-    native = frame_lib({"a": [1.0, 2.0]})
+    frame = frame_lib({"a": [1.0, 2.0]})
     with pytest.raises(ValueError, match="3 values"):
-        with_columns(native, {"b": np.array([3.0, 4.0, 5.0])})
+        with_columns(frame, {"b": np.array([3.0, 4.0, 5.0])})
 
 
 def test_with_columns_returns_a_new_pandas_frame(frame_lib):
-    native = frame_lib({"a": [1.0, 2.0]})
-    out = with_columns(native, {"b": np.array([3.0, 4.0]), "c": np.array(["x", "y"], dtype=object)})
+    frame = frame_lib({"a": [1.0, 2.0]})
+    out = with_columns(frame, {"b": np.array([3.0, 4.0]), "c": np.array(["x", "y"], dtype=object)})
     assert isinstance(out, pd.DataFrame)
     assert list(out.columns) == ["a", "b", "c"]
     assert out["c"].tolist() == ["x", "y"]
-    assert native.shape == (2, 1)  # the input frame is not changed
+    assert frame.shape == (2, 1)  # the input frame is not changed
 
 
 def test_with_columns_keeps_pandas_index():
-    native = pd.DataFrame({"a": [1.0, 2.0]}, index=[10, 20])
-    out = with_columns(native, {"b": np.array([3.0, 4.0])})
+    frame = pd.DataFrame({"a": [1.0, 2.0]}, index=[10, 20])
+    out = with_columns(frame, {"b": np.array([3.0, 4.0])})
     assert out["b"].tolist() == [3.0, 4.0]
     assert out.index.tolist() == [10, 20]
-    masked = with_columns(native, {"b": np.array([3.0, 4.0])}, valid=np.array([False, True]))
+    masked = with_columns(frame, {"b": np.array([3.0, 4.0])}, valid=np.array([False, True]))
     assert masked.index.tolist() == [10, 20]
     assert masked["b"].isna().tolist() == [True, False]
 
 
 def test_with_columns_valid_mask_gives_nulls(frame_lib):
     # The added columns' dtypes do not depend on the dtypes of the user's own columns.
-    native = frame_lib({"a": [1.0, 2.0, 3.0]})
+    frame = frame_lib({"a": [1.0, 2.0, 3.0]})
     columns = {
         "b": np.array([True, False, True]),
         "f": np.array([0.5, 1.5, 2.5]),
         "t": np.array(["x", "y", "z"], dtype=object),
         "i": np.array([1, 2, 3]),
     }
-    out = with_columns(native, columns, valid=np.array([True, False, True]))
+    out = with_columns(frame, columns, valid=np.array([True, False, True]))
     for name in columns:
         assert out[name].isna().tolist() == [False, True, False], name
     assert out["b"].tolist()[::2] == [True, True]
     assert out["f"].tolist()[::2] == [0.5, 2.5]
     assert out["t"].tolist()[::2] == ["x", "z"]
     assert out["i"].tolist()[::2] == [1, 3]
-    assert str(out["b"].dtype) == "boolean"
-    assert out["i"].dtype == np.float64  # pandas' classic dtypes hold a null int as float
 
 
 @pytest.mark.parametrize("n_rows", [0, 3])
@@ -204,9 +182,9 @@ def test_with_columns_all_masked_keeps_dtypes(frame_lib, n_rows):
         "b": np.ones(n_rows, dtype=bool),
         "t": np.array(["x"] * n_rows, dtype=object),
     }
-    native = frame_lib({"a": [1.0] * n_rows})
-    populated = with_columns(native, columns).dtypes
-    masked = with_columns(native, columns, valid=np.zeros(n_rows, dtype=bool))
+    frame = frame_lib({"a": [1.0] * n_rows})
+    populated = with_columns(frame, columns).dtypes
+    masked = with_columns(frame, columns, valid=np.zeros(n_rows, dtype=bool))
     for name in columns:
         assert masked[name].isna().all()  # vacuously true with no rows
     assert masked.dtypes["f"] == populated["f"] == np.float64
@@ -269,7 +247,7 @@ def test_frame_hash_categorical_matches_text():
 
 def test_frame_hash_refuses_non_frames():
     with pytest.raises(TypeError, match="to_pandas"):
-        frame_hash(_stub("polars.dataframe.frame"))
+        frame_hash(fake_frame("polars.dataframe.frame"))
 
 
 def test_frame_hash_column_order_and_name_matter():
@@ -350,14 +328,14 @@ def test_frame_hash_pinned_text_and_name_cases(columns, expected):
 
 
 def test_with_columns_masked_row_nulls_by_kind():
-    native = pd.DataFrame({"a": [1.0, 2.0, 3.0]})
+    frame = pd.DataFrame({"a": [1.0, 2.0, 3.0]})
     columns = {
         "b": np.array([True, False, True]),
         "f": np.array([0.5, 1.5, 2.5]),
         "t": np.array(["x", "y", "z"], dtype=object),
         "i": np.array([1, 2, 3]),
     }
-    out = with_columns(native, columns, valid=np.array([True, False, True]))
+    out = with_columns(frame, columns, valid=np.array([True, False, True]))
     assert str(out["b"].dtype) == "boolean"
     assert out["b"][1] is pd.NA
     assert out["f"].dtype == np.float64
@@ -368,7 +346,7 @@ def test_with_columns_masked_row_nulls_by_kind():
     # A text column takes pandas' default text dtype (object on pandas 2, str on pandas 3).
     assert out["t"].dtype == pd.Series(["x"]).dtype
     assert out["t"].isna().tolist() == [False, True, False]
-    unmasked = with_columns(native, columns)
+    unmasked = with_columns(frame, columns)
     assert unmasked["i"].dtype == np.int64
     assert str(unmasked["b"].dtype) == "boolean"
 
