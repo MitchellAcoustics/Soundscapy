@@ -3,7 +3,9 @@
 # end to end on clean runners. Scheduled and manual runs start from the default branch
 # only, and the default branch is still `main` (the previous codebase), so until the rewrite
 # becomes the default branch the jobs run on pushes to soundscapy-rewrite that touch the
-# files they exercise.
+# files they exercise. Pull requests touching those paths run the `network` and `reference`
+# jobs too, so the full-ISD checks run before merge; the issue-opening `docs-papers` job
+# and the `quickstart` matrix stay off pull requests.
 name: Nightly
 
 on:
@@ -12,12 +14,18 @@ on:
   workflow_dispatch:
   push:
     branches: [soundscapy-rewrite]
-    paths:
+    paths: &paths
       - .github/workflows/nightly.yml
       - docs/user_guide/_quickstart.*
       - docs/papers/**
       - tests/**/test_*network*
       - tests/**/test_*reference*
+      - tests/_downloads.py
+      - src/soundscapy/survey/**
+      - src/soundscapy/datasets/**
+      - src/soundscapy/_data/datasets/**
+  pull_request:
+    paths: *paths
 
 permissions:
   contents: read
@@ -71,6 +79,7 @@ jobs:
   docs-papers:
     # Re-executes the frozen paper pages, then opens an issue when docs/_freeze changed.
     # The one job that writes (spec §5.6.2).
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -134,6 +143,7 @@ jobs:
     # The user-facing install scripts end to end on a clean runner with only uv, each in a
     # fresh temporary directory; on ubuntu also the one-cell hosted-notebook install (NFR-1).
     name: quickstart (${{ matrix.os }})
+    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
     env:
       UV_LOCKED: "false"
