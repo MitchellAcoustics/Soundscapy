@@ -67,6 +67,6 @@ def load_bundled(
             path,
             mapping,
             read_options=read_options,
-            settings=import_settings,
+            resolution=import_settings,
             data_refs=[dataset_ref],
         )

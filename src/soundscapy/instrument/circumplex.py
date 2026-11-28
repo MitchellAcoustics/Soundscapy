@@ -10,12 +10,13 @@ from typing import Literal, Self
 from pydantic import Field, StrictFloat, StrictStr, model_validator
 
 from soundscapy import _data
-from soundscapy._model import Citation, FrozenModel, StrPairs, from_toml
+from soundscapy._model import Citation, FrozenModel, StrPairs, from_toml, versioned_label
 from soundscapy.errors import DataReferenceError, MappingError
 from soundscapy.instrument.scale import Scale
 
 __all__ = ["Attribute", "Axis", "Circumplex", "Translation", "circumplex"]
 
+_DATA_PREFIX = "circumplexes"
 _POSITION = re.compile(r"^PAQ[1-9][0-9]*$")
 _QUADRANT_KEYS = frozenset({"++", "-+", "--", "+-"})
 _FULL_TURN_DEG = 360.0
@@ -299,13 +300,10 @@ def circumplex(name: str = "iso-12913-outdoor", version: str = "1") -> Circumple
     DataIntegrityError
         If the shipped file does not match its pin.
     """
-    relpath = f"circumplexes/{name}/{version}.toml"
-    if relpath not in _data.PINS:
-        shipped = sorted(
-            p.removeprefix("circumplexes/").removesuffix(".toml").replace("/", "@")
-            for p in _data.PINS
-            if p.startswith("circumplexes/")
-        )
-        msg = f"no circumplex {name!r} version {version!r}; shipped: {shipped}"
+    shipped = _data.shipped(_DATA_PREFIX)
+    if (name, version) not in shipped:
+        labels = [versioned_label(*pair) for pair in shipped]
+        msg = f"no circumplex {name!r} version {version!r}; shipped: {labels}"
         raise DataReferenceError(msg)
+    relpath = _data.relpath(_DATA_PREFIX, name, version)
     return from_toml(Circumplex, _data.read_bytes(relpath).decode("utf-8"))

@@ -6,8 +6,10 @@ This module imports nothing from the rest of the package except ``soundscapy.err
 from __future__ import annotations
 
 import enum
+import os
 import tomllib
 from collections.abc import Iterable, Mapping, Sequence
+from pathlib import Path
 from typing import Annotated, Any, Final, TypeVar
 
 import pydantic
@@ -47,6 +49,24 @@ def axis_column(axis_id: str) -> str:
         ``"ssp_<axis_id>"``.
     """
     return f"{SSP_PREFIX}{axis_id}"
+
+
+def versioned_label(name: str, version: str) -> str:
+    """Label a versioned object, such as an angle set or a profile.
+
+    Parameters
+    ----------
+    name : str
+        The name or id.
+    version : str
+        The version.
+
+    Returns
+    -------
+    str
+        ``"<name>@<version>"``.
+    """
+    return f"{name}@{version}"
 
 
 # --- Sentinel for "argument not given" (spec 6.3.4) ----------------------------------------------
@@ -148,6 +168,22 @@ FloatPairs = Annotated[
 M = TypeVar("M", bound=FrozenModel)
 
 
+def dump_json(model: FrozenModel) -> dict[str, Any]:
+    """Dump a model in its file form: JSON-compatible values under the file keys.
+
+    Parameters
+    ----------
+    model : FrozenModel
+        The model to dump.
+
+    Returns
+    -------
+    dict
+        ``model.model_dump(mode="json", by_alias=True)``.
+    """
+    return model.model_dump(mode="json", by_alias=True)
+
+
 def to_toml(model: FrozenModel) -> str:
     """Write a model as TOML text.
 
@@ -159,9 +195,9 @@ def to_toml(model: FrozenModel) -> str:
     Returns
     -------
     str
-        ``model_dump(mode="json", by_alias=True)`` rendered by tomlkit.
+        ``dump_json(model)`` rendered by tomlkit.
     """
-    return tomlkit.dumps(model.model_dump(mode="json", by_alias=True))
+    return tomlkit.dumps(dump_json(model))
 
 
 def parse_toml(
@@ -249,7 +285,9 @@ def _passthrough_error(err: ValidationError) -> SoundscapyError | None:
     return None
 
 
-def from_toml(cls: type[M], text: str, *, error: type[SoundscapyError] = SettingsError) -> M:
+def from_toml(
+    cls: type[M], text: str, *, error: type[SoundscapyError] = SettingsError, context: str = ""
+) -> M:
     """Read a model from TOML text.
 
     Parameters
@@ -260,6 +298,8 @@ def from_toml(cls: type[M], text: str, *, error: type[SoundscapyError] = Setting
         TOML text.
     error : type[SoundscapyError], optional
         The error raised on failure.
+    context : str, optional
+        What is read, such as ``"angle set <path>"``; it starts every message.
 
     Returns
     -------
@@ -272,7 +312,37 @@ def from_toml(cls: type[M], text: str, *, error: type[SoundscapyError] = Setting
         ``error`` (by default ``SettingsError``), if the text is not valid TOML or
         fails validation; a validation message keeps pydantic's field paths.
     """
-    return validate(cls, parse_toml(text, error=error), error=error)
+    table = parse_toml(text, error=error, source=context)
+    return validate(cls, table, error=error, context=context)
+
+
+def read_user_file(path: str | os.PathLike[str], *, what: str, error: type[SoundscapyError]) -> str:
+    """Read a user's text file, UTF-8 encoded.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+        The file.
+    what : str
+        What the file holds, such as ``"settings file"``; it starts the error message.
+    error : type[SoundscapyError]
+        The error raised when the file does not exist.
+
+    Returns
+    -------
+    str
+        The file's text.
+
+    Raises
+    ------
+    SoundscapyError
+        ``error``, if ``path`` is not a file; the message names the path.
+    """
+    file = Path(path)
+    if not file.is_file():
+        msg = f"{what} {os.fspath(path)!r} does not exist"
+        raise error(msg)
+    return file.read_text(encoding="utf-8")
 
 
 # --- Settings layers (spec 6.3.4, ranks 1 and 2) -------------------------------------------------
@@ -320,7 +390,7 @@ def _layer(value: Any) -> Any:  # noqa: ANN401  # a settings value of any JSON-l
     return value
 
 
-def _deep_merge(base: dict[str, Any], layer: Mapping[str, Any]) -> None:
+def _deep_merge(base: dict[str, Any], layer: dict[str, Any]) -> None:
     """Merge ``layer``, a fresh copy from ``_layer``, into ``base``; a later value wins."""
     for key, item in layer.items():
         current = base.get(key)
@@ -338,8 +408,9 @@ def merge_settings(model: type[M], layers: Sequence[Mapping[str, Any]], *, conte
     model : type[FrozenModel]
         The settings model to build.
     layers : sequence of mapping
-        Layers from ``settings_layer()``, lowest precedence first. Nested mappings
-        merge key by key; any other value replaces the earlier one.
+        Layers from ``settings_layer()``, lowest precedence first; each is copied before
+        it is merged, so the caller's tables are never adopted. Nested mappings merge key
+        by key; any other value replaces the earlier one.
     context : str
         What is validated; it starts the error message.
 
@@ -355,5 +426,5 @@ def merge_settings(model: type[M], layers: Sequence[Mapping[str, Any]], *, conte
     """
     merged: dict[str, Any] = {}
     for layer in layers:
-        _deep_merge(merged, layer)
+        _deep_merge(merged, _layer(layer))
     return validate(model, merged, error=SettingsError, context=context)

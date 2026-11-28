@@ -11,12 +11,16 @@ import numpy as np
 import pytest
 from hypothesis import strategies as st
 
+from soundscapy._model import COL_FLAGS
 from soundscapy.errors import MediumConfidenceLanguageWarning
 from soundscapy.instrument.scale import Scale
+from soundscapy.projection.project import ProjectionSettings
 from soundscapy.survey.quality import QualitySettings
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from soundscapy.distribution.coordinates import Coordinates
 
 # The synthetic three-tier angle set and the small survey that exercises every resolver
 # branch: qaa High, qab Medium, qac Low with angles, qad absent, qae Low tier-only.
@@ -88,3 +92,21 @@ def write_csv(tmp_path: Path, header: str, *rows: str, name: str = "survey.csv")
     path = tmp_path / name
     path.write_text("\n".join((header, *rows)) + "\n", encoding="utf-8")
     return path
+
+
+def write_text(tmp_path: Path, text: str, name: str = "settings.toml") -> Path:
+    """Write text as a UTF-8 file; return its path."""
+    path = tmp_path / name
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def projection_settings(coords: Coordinates) -> ProjectionSettings:
+    """The settings a projection recorded, narrowed to ``ProjectionSettings``."""
+    assert isinstance(coords.settings, ProjectionSettings)
+    return coords.settings
+
+
+def flag_mask(coords: Coordinates, flag: str) -> np.ndarray:
+    """Which rows carry ``flag`` in their ``ssp_flags`` label."""
+    return np.array([flag in cell.split(";") for cell in coords.labels[COL_FLAGS].tolist()])

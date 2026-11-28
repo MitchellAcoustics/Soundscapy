@@ -6,7 +6,6 @@ import functools
 import itertools
 import os
 import re
-from pathlib import Path
 from typing import Annotated, Final, Literal, Self
 
 from pydantic import (
@@ -19,22 +18,34 @@ from pydantic import (
 )
 
 from soundscapy import _data
-from soundscapy._model import Citation, FrozenModel, _to_pairs, _to_table, from_toml
-from soundscapy.errors import DataReferenceError, SettingsError
+from soundscapy._model import (
+    Citation,
+    FrozenModel,
+    _to_pairs,
+    _to_table,
+    from_toml,
+    read_user_file,
+    versioned_label,
+)
+from soundscapy.errors import DataReferenceError
 
 __all__ = [
+    "EQUAL",
     "AngleSelection",
     "AngleSet",
     "AngleSetRef",
     "LanguageAngles",
     "angle_set",
+    "angle_set_pin",
     "read_angle_set",
 ]
 
+EQUAL: Final = "equal"
+"""The angle choice that names the circumplex's nominal angles rather than a set."""
+
 _LANGUAGE_CODE = re.compile(r"^[a-z]{3}$")
 _FULL_TURN_DEG = 360.0
-_EQUAL: Final = "equal"
-_DATA_PREFIX: Final = "angle_sets/"
+_DATA_PREFIX: Final = "angle_sets"
 Tier = Literal["high", "medium", "low"]
 
 
@@ -131,8 +142,8 @@ class AngleSet(FrozenModel):
 
     @model_validator(mode="after")
     def _check(self) -> Self:
-        if self.name == "equal":
-            msg = "an angle set cannot be named 'equal': that names the nominal angles"
+        if self.name == EQUAL:
+            msg = f"an angle set cannot be named {EQUAL!r}: that names the nominal angles"
             raise ValueError(msg)
         for code, _ in self.languages:
             if not _LANGUAGE_CODE.match(code):
@@ -147,7 +158,13 @@ class AngleSet(FrozenModel):
     @property
     def label(self) -> str:
         """``name@version``."""
-        return f"{self.name}@{self.version}"
+        return versioned_label(self.name, self.version)
+
+    @property
+    def n_angles(self) -> int | None:
+        """The number of angles every language with angles has; ``None`` when none has any."""
+        with_angles = (len(entry.angles_deg) for _, entry in self.languages if entry.has_angles)
+        return next(with_angles, None)
 
     @property
     def by_language(self) -> dict[str, LanguageAngles]:
@@ -170,7 +187,7 @@ class AngleSetRef(FrozenModel):
     @property
     def label(self) -> str:
         """``name@version``."""
-        return f"{self.name}@{self.version}"
+        return versioned_label(self.name, self.version)
 
     @classmethod
     def parse(cls, text: str) -> Self:
@@ -200,11 +217,30 @@ class AngleSetRef(FrozenModel):
 
 
 def _shipped_labels() -> list[str]:
-    return sorted(
-        p.removeprefix(_DATA_PREFIX).removesuffix(".toml").replace("/", "@")
-        for p in _data.PINS
-        if p.startswith(_DATA_PREFIX)
-    )
+    return [versioned_label(name, version) for name, version in _data.shipped(_DATA_PREFIX)]
+
+
+def angle_set_pin(name: str, version: str) -> str:
+    """Return the ``h1`` pin of a shipped angle set.
+
+    Parameters
+    ----------
+    name : str
+        Set name, such as ``"satp"``.
+    version : str
+        Set version, such as ``"1.5"``.
+
+    Returns
+    -------
+    str
+        The hash recorded in ``_data.PINS`` for the set's file.
+
+    Raises
+    ------
+    DataReferenceError
+        If no such set ships.
+    """
+    return _data.pin(_data.relpath(_DATA_PREFIX, name, version))
 
 
 @functools.cache
@@ -238,10 +274,10 @@ def angle_set(name: str, version: str) -> AngleSet:
     ``aletta-2024@1`` is Table 4 of [@aletta2024soundscape]; ``satp@1.5`` is Tables 4.7 and
     4.8 of [@mitchell2026translation].
     """
-    relpath = f"{_DATA_PREFIX}{name}/{version}.toml"
-    if relpath not in _data.PINS:
+    if (name, version) not in _data.shipped(_DATA_PREFIX):
         msg = f"no angle set {name!r} version {version!r}; shipped: {_shipped_labels()}"
         raise DataReferenceError(msg)
+    relpath = _data.relpath(_DATA_PREFIX, name, version)
     return from_toml(AngleSet, _data.read_bytes(relpath).decode("utf-8"))
 
 
@@ -266,33 +302,20 @@ def read_angle_set(path: str | os.PathLike[str]) -> AngleSet:
         If the file is not valid TOML or fails validation; the message names the file and
         keeps pydantic's field paths.
     """
-    file = Path(path)
-    if not file.is_file():
-        msg = f"angle set file {os.fspath(path)!r} does not exist"
-        raise DataReferenceError(msg)
-    text = file.read_text(encoding="utf-8")
-    try:
-        return from_toml(AngleSet, text, error=SettingsError)
-    except SettingsError as err:
-        msg = f"invalid angle set {os.fspath(path)}: {err}"
-        raise SettingsError(msg, hint=err.hint) from err
+    text = read_user_file(path, what="angle set file", error=DataReferenceError)
+    return from_toml(AngleSet, text, context=f"angle set {os.fspath(path)}")
 
 
-def _parse_default(value: object) -> object:
-    """Read ``"name@version"`` as an ``AngleSetRef``; leave ``"equal"`` and models alone."""
-    if isinstance(value, str) and value != _EQUAL:
-        return AngleSetRef.parse(value)
-    return value
-
-
-def _parse_named_ref(value: object) -> object:
-    """Read ``"name@version"`` as an ``AngleSetRef``; ``"equal"`` is not a set."""
-    if isinstance(value, str):
-        if value == _EQUAL:
-            msg = f"per_language names angle sets only, not {_EQUAL!r}; leave the language out"
-            raise ValueError(msg)
-        return AngleSetRef.parse(value)
-    return value
+def _parse_ref(value: object, *, allow_equal: bool) -> object:
+    """Read ``"name@version"`` as an ``AngleSetRef``; a model passes, ``"equal"`` where allowed."""
+    if not isinstance(value, str):
+        return value
+    if value == EQUAL:
+        if allow_equal:
+            return value
+        msg = f"per_language names angle sets only, not {EQUAL!r}; leave the language out"
+        raise ValueError(msg)
+    return AngleSetRef.parse(value)
 
 
 def _ref_label(value: AngleSetRef | str) -> str:
@@ -305,14 +328,14 @@ def _per_language_table(pairs: tuple[tuple[str, AngleSetRef], ...]) -> dict[str,
 
 AngleChoice = Annotated[
     AngleSetRef | Literal["equal"],
-    BeforeValidator(_parse_default),
+    BeforeValidator(functools.partial(_parse_ref, allow_equal=True)),
     PlainSerializer(_ref_label, when_used="json"),
 ]
 """An ``AngleSetRef`` or ``"equal"``, read from and written as ``"name@version"`` or ``"equal"``."""
 
 NamedRef = Annotated[
     AngleSetRef,
-    BeforeValidator(_parse_named_ref),
+    BeforeValidator(functools.partial(_parse_ref, allow_equal=False)),
     PlainSerializer(_ref_label, when_used="json"),
 ]
 PerLanguagePairs = Annotated[
@@ -354,7 +377,7 @@ class AngleSelection(FrozenModel):
     set of language-specific angles: [@aletta2024soundscape].
     """
 
-    default: AngleChoice = _EQUAL
+    default: AngleChoice = EQUAL
     per_language: PerLanguagePairs = ()
     on_uncovered: Policy = "error"
     on_low_confidence: Policy = "error"

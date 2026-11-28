@@ -19,13 +19,13 @@ from soundscapy.datasets.isd import load as load_isd
 from soundscapy.distribution.coordinates import Coordinates
 from soundscapy.instrument import Circumplex, Scale, circumplex
 from soundscapy.instrument.angles import AngleSelection, AngleSet, AngleSetRef
-from soundscapy.profiles import list_profiles, save_settings
+from soundscapy.profiles import list_profiles
 from soundscapy.projection.project import ProjectionSettings, project
 from soundscapy.provenance import show_versions
 from soundscapy.survey.mapping import Coding, SurveyMapping, read_mapping, write_mapping
 from soundscapy.survey.quality import QualitySettings
 from soundscapy.survey.read import ReadOptions, Survey, read_survey
-from soundscapy.workspace import attach
+from soundscapy.workspace import attach, save_settings
 
 __version__ = importlib.metadata.version("soundscapy")
 __all__ = [

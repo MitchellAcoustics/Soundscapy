@@ -8,16 +8,17 @@ for the others, so the resolution rule itself stays testable on plain arrays.
 from __future__ import annotations
 
 import dataclasses
-from collections import Counter
+import functools
 from typing import TYPE_CHECKING, Final, Literal
 
 import numpy as np
 
+from soundscapy._model import versioned_label
 from soundscapy.errors import DataReferenceError
-from soundscapy.instrument.angles import AngleSelection, AngleSetRef
+from soundscapy.instrument.angles import EQUAL, AngleSelection, AngleSetRef
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
     from numpy.typing import NDArray
 
@@ -25,8 +26,6 @@ if TYPE_CHECKING:
     from soundscapy.instrument.circumplex import Circumplex
 
 __all__ = ["LanguageOutcome", "ResolvedAngles", "resolve_angles"]
-
-_EQUAL: Final = "equal"
 
 Outcome = Literal["error_low", "error_uncovered", "medium", "low_equal", "uncovered_equal"]
 # The error and the equal-angles outcome of each kind of language a policy applies to.
@@ -159,41 +158,64 @@ def resolve_angles(
     languages = np.asarray(languages, dtype=object)
     included = np.asarray(included, dtype=bool)
     per_language = dict(selection.per_language)
-    for ref in {*per_language.values(), selection.default}:
-        if isinstance(ref, AngleSetRef):
-            _check_match(sets[ref.label], circumplex)
+    named = {
+        ref.label: sets[ref.label]
+        for ref in {*per_language.values(), selection.default}
+        if isinstance(ref, AngleSetRef)
+    }
+    for angle_set in named.values():
+        _check_match(angle_set, circumplex)
+    entries = {label: angle_set.by_language for label, angle_set in named.items()}
 
     builder = _Builder(len(included), np.asarray(circumplex.angles_deg, dtype=np.float64))
-    for language, count in sorted(Counter(languages[included].tolist()).items()):
-        rows = included & (languages == language)
+    included_rows = np.flatnonzero(included)
+    # One pass over the included languages: their sorted distinct values, and for each row
+    # the index of its value, which is the row's language code below.
+    distinct, codes = np.unique(languages[included], return_inverse=True)
+    for code, language in enumerate(distinct.tolist()):
+        rows = included_rows[codes == code]
         choice = per_language.get(language, selection.default)
-        if choice == _EQUAL:
+        if choice == EQUAL:
             builder.equal(rows)
         else:
-            builder.named(rows, language, count, sets[choice.label], selection)
+            builder.named(rows, language, named[choice.label], entries[choice.label], selection)
     return builder.freeze()
 
 
 def _check_match(angle_set: AngleSet, circumplex: Circumplex) -> None:
     """Raise unless the set is for this circumplex and has one angle per position."""
+    survey_label = versioned_label(circumplex.name, circumplex.version)
     if (angle_set.circumplex, angle_set.circumplex_version) != (
         circumplex.name,
         circumplex.version,
     ):
         msg = (
             f"angle set {angle_set.label} is for circumplex "
-            f"{angle_set.circumplex}@{angle_set.circumplex_version}, the survey's is "
-            f"{circumplex.name}@{circumplex.version}"
+            f"{versioned_label(angle_set.circumplex, angle_set.circumplex_version)}, the "
+            f"survey's is {survey_label}"
         )
         raise DataReferenceError(msg)
-    counts = {len(entry.angles_deg) for _, entry in angle_set.languages if entry.has_angles}
     positions = len(circumplex.positions)
-    if counts and counts != {positions}:
+    if angle_set.n_angles not in (None, positions):
         msg = (
-            f"angle set {angle_set.label} has {counts.pop()} angles per language, "
-            f"the circumplex {circumplex.name}@{circumplex.version} has {positions} positions"
+            f"angle set {angle_set.label} has {angle_set.n_angles} angles per language, "
+            f"the circumplex {survey_label} has {positions} positions"
         )
         raise DataReferenceError(msg)
+
+
+def _language_outcome(
+    entry: LanguageAngles | None, outcome: Outcome, *, language: str, count: int, set_label: str
+) -> LanguageOutcome:
+    """Record ``outcome`` for a language from what its set says about it (``entry``)."""
+    return LanguageOutcome(
+        language=language,
+        outcome=outcome,
+        count=count,
+        tier=None if entry is None else entry.tier,
+        tier_only=entry is not None and not entry.has_angles,
+        set_label=set_label,
+    )
 
 
 class _Builder:
@@ -216,50 +238,52 @@ class _Builder:
         }
         self.outcomes: list[LanguageOutcome] = []
 
-    def equal(self, rows: NDArray[np.bool_]) -> None:
+    def equal(self, rows: NDArray[np.intp]) -> None:
         self.angles[rows] = self.nominal
-        self.labels[rows] = _EQUAL
+        self.labels[rows] = EQUAL
 
     def named(
         self,
-        rows: NDArray[np.bool_],
+        rows: NDArray[np.intp],
         language: str,
-        count: int,
         angle_set: AngleSet,
+        entries: Mapping[str, LanguageAngles],
         selection: AngleSelection,
     ) -> None:
         if not language:
             self.masks["blank_language"][rows] = True
             return
-        entry = angle_set.by_language.get(language)
-        record = _Record(language, count, entry, angle_set.label)
+        entry = entries.get(language)
+        report = functools.partial(
+            _language_outcome, entry, language=language, count=len(rows), set_label=angle_set.label
+        )
         if entry is None or not entry.has_angles:
-            self._policy(selection.on_uncovered, "uncovered", rows, record)
+            self._policy(selection.on_uncovered, "uncovered", rows, report)
         elif entry.tier == "low":
-            self._policy(selection.on_low_confidence, "low", rows, record)
+            self._policy(selection.on_low_confidence, "low", rows, report)
         else:
             self.angles[rows] = entry.angles_deg
             self.labels[rows] = angle_set.label
             if entry.tier == "medium":
                 self.masks["medium"][rows] = True
-                self.outcomes.append(record.outcome("medium"))
+                self.outcomes.append(report("medium"))
 
     def _policy(
         self,
         policy: Policy,
         kind: Literal["low", "uncovered"],
-        rows: NDArray[np.bool_],
-        record: _Record,
+        rows: NDArray[np.intp],
+        report: Callable[[Outcome], LanguageOutcome],
     ) -> None:
         error, equal = _OUTCOMES[kind]
         if policy == "error":
-            self.outcomes.append(record.outcome(error))
+            self.outcomes.append(report(error))
         elif policy == "exclude":
             self.masks[f"{kind}_exclude"][rows] = True
         else:
             self.equal(rows)
             self.masks[f"{kind}_equal"][rows] = True
-            self.outcomes.append(record.outcome(equal))
+            self.outcomes.append(report(equal))
 
     def freeze(self) -> ResolvedAngles:
         return ResolvedAngles(
@@ -267,24 +291,4 @@ class _Builder:
             labels=self.labels,
             outcomes=tuple(self.outcomes),
             **self.masks,
-        )
-
-
-@dataclasses.dataclass(frozen=True)
-class _Record:
-    """What one language looks like in its set, before the outcome is known."""
-
-    language: str
-    count: int
-    entry: LanguageAngles | None
-    set_label: str
-
-    def outcome(self, outcome: Outcome) -> LanguageOutcome:
-        return LanguageOutcome(
-            language=self.language,
-            outcome=outcome,
-            count=self.count,
-            tier=None if self.entry is None else self.entry.tier,
-            tier_only=self.entry is not None and not self.entry.has_angles,
-            set_label=self.set_label,
         )

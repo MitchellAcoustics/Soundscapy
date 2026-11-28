@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from pathlib import Path
 
-__all__ = ["PINS", "as_path", "pin", "read_bytes", "read_toml"]
+__all__ = ["PINS", "as_path", "pin", "read_bytes", "read_toml", "relpath", "shipped"]
 
 PINS: Final[Mapping[str, str]] = {
     "angle_sets/aletta-2024/1.toml": (
@@ -74,6 +74,49 @@ def _resource(relpath: str) -> importlib.resources.abc.Traversable:
 def _raw_bytes(relpath: str) -> bytes:
     """Read a shipped file without verifying it (the seam the tests tamper with)."""
     return _resource(relpath).read_bytes()
+
+
+def relpath(prefix: str, name: str, version: str) -> str:
+    """Name the shipped TOML file of a versioned object.
+
+    Parameters
+    ----------
+    prefix : str
+        The directory under ``_data`` holding the kind, such as ``"angle_sets"``.
+    name : str
+        The object's name or id.
+    version : str
+        The object's version.
+
+    Returns
+    -------
+    str
+        ``"<prefix>/<name>/<version>.toml"``, the key ``PINS`` uses.
+    """
+    return f"{prefix}/{name}/{version}.toml"
+
+
+def shipped(prefix: str) -> tuple[tuple[str, str], ...]:
+    """List the versioned objects pinned under a directory.
+
+    Parameters
+    ----------
+    prefix : str
+        The directory under ``_data`` holding the kind, such as ``"profiles"``.
+
+    Returns
+    -------
+    tuple of (str, str)
+        Sorted ``(name, version)`` pairs, one per ``<prefix>/<name>/<version>.toml`` in
+        ``PINS``.
+    """
+    pairs = []
+    for key in PINS:
+        head, _, rest = key.partition("/")
+        if head == prefix:
+            name, _, version = rest.partition("/")
+            pairs.append((name, version.removesuffix(".toml")))
+    return tuple(sorted(pairs))
 
 
 def pin(relpath: str) -> str:

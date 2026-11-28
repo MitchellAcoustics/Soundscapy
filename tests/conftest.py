@@ -21,6 +21,7 @@ from soundscapy.datasets import isd
 from soundscapy.instrument import circumplex
 from soundscapy.projection.project import project
 from soundscapy.provenance import hash_bytes
+from soundscapy.survey.read import read_survey
 from tests._helpers import medium_warning
 
 if TYPE_CHECKING:
@@ -34,6 +35,8 @@ MakeFrame: TypeAlias = Callable[[Mapping[str, Sequence[Any]]], Any]
 # The synthetic indoor circumplex (PRD FR-2.0) and the survey and mapping that use it.
 INDOOR = Path(__file__).parent / "fixtures" / "indoor"
 INDOOR_RELPATH = "circumplexes/indoor-test/1.toml"
+# The two-response survey behind the ISO/TS 12913-3:2019 hand values (spec section 7.2).
+PROJECTION_FIXTURES = Path(__file__).parent / "projection" / "fixtures"
 
 
 @pytest.fixture(autouse=True)
@@ -64,6 +67,14 @@ def frame_lib(request: pytest.FixtureRequest) -> MakeFrame:
 def isd_survey() -> Survey:
     """The bundled ISD subset, read once per session; tests must not mutate it."""
     return isd.load(subset=True)
+
+
+@pytest.fixture(scope="module")
+def hand_survey() -> Survey:
+    """The hand-values survey, read once per test module; tests must not mutate it."""
+    return read_survey(
+        PROJECTION_FIXTURES / "hand_values.csv", PROJECTION_FIXTURES / "mapping.toml"
+    )
 
 
 @pytest.fixture(scope="session")

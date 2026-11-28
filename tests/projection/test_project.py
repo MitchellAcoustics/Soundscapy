@@ -40,11 +40,6 @@ HAND_XY = np.array(
 )
 
 
-@pytest.fixture(scope="module")
-def hand_survey():
-    return read_survey(HAND_CSV, MAPPING)
-
-
 def test_hand_values_iso2019(hand_survey):
     coords = project(hand_survey, formulation="iso2019", angles="equal")
     # 1e-12: float64 sums of 8 terms against the closed form, as the kernel's tests.

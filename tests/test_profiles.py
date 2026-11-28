@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from types import MappingProxyType
 
 import pytest
 
@@ -14,13 +15,15 @@ from soundscapy.profiles import (
     SECTIONS,
     ProfileHeader,
     ProfileRef,
+    _freeze,
+    _thaw,
     list_profiles,
     read_profile,
     read_settings_file,
     resolve_settings,
-    save_settings,
 )
 from soundscapy.projection.project import ProjectionSettings
+from tests._helpers import write_text
 
 _PROFILES = ("iso-12913-3-2019@1", "iso-12913-3-2024@1", "sal-2026@1")
 _SATP = AngleSetRef(name="satp", version="1.5")
@@ -93,6 +96,18 @@ def test_shipped_profile_contents():
     assert "satp@1.5" in header_sal.notes
 
 
+def test_read_profile_gives_a_fresh_copy_and_keeps_arrays():
+    # The cached profile is frozen (tables become mapping proxies, arrays tuples); each
+    # read copies it back, so a caller's edits never reach the next read.
+    _, sections, _ = read_profile("sal-2026")
+    sections["projection"]["formulation"] = "edited"
+    assert read_profile("sal-2026")[1]["projection"]["formulation"] == "canonical"
+    frozen = _freeze({"a": [1, {"b": [2]}]})
+    assert isinstance(frozen, MappingProxyType)
+    assert frozen["a"] == (1, MappingProxyType({"b": (2,)}))
+    assert _thaw(frozen) == {"a": [1, {"b": [2]}]}
+
+
 def test_bare_id_means_latest_and_full_label_is_exact():
     assert _projection(profile="sal-2026").profile.version == "1"
     assert _projection(profile="sal-2026@1").profile.label == "sal-2026@1"
@@ -119,14 +134,8 @@ def test_profile_section_beats_model_default():
     assert _projection().settings.angles.default == _SATP
 
 
-def _write(tmp_path, text):
-    path = tmp_path / "settings.toml"
-    path.write_text(text, encoding="utf-8")
-    return path
-
-
 def test_ranks_file_settings_keyword(tmp_path):
-    path = _write(tmp_path, 'extends = "sal-2026"\n[describe]\na = 1\nb = "file"\n')
+    path = write_text(tmp_path, 'extends = "sal-2026"\n[describe]\na = 1\nb = "file"\n')
     assert _toy().settings == _Toy()  # no [describe] section: the model default
     assert _toy(settings=path).settings == _Toy(a=1, b="file")
     assert _toy(settings=path, keywords={"a": 3}).settings == _Toy(a=3, b="file")
@@ -235,7 +244,7 @@ def test_settings_file_extends_outranks_the_inherited_profile(tmp_path):
     # Spec 11.4: an explicit file's extends ranks with an explicit profile, above the
     # profile the input recorded; the replaced one is recorded as inherited.
     inherited = _projection(profile="iso-12913-3-2019").profile
-    path = _write(tmp_path, 'extends = "sal-2026"\n')
+    path = write_text(tmp_path, 'extends = "sal-2026"\n')
     resolved = _projection(settings=path, inherited=inherited)
     assert resolved.profile.label == "sal-2026@1"
     assert resolved.profile_inherited == inherited
@@ -246,7 +255,9 @@ def test_settings_file_extends_outranks_the_inherited_profile(tmp_path):
 
 
 def test_settings_file_extends_names_the_base(tmp_path):
-    path = _write(tmp_path, 'extends = "iso-12913-3-2019"\n[projection]\nformulation = "iso2019"\n')
+    path = write_text(
+        tmp_path, 'extends = "iso-12913-3-2019"\n[projection]\nformulation = "iso2019"\n'
+    )
     assert read_settings_file(path) == (
         "iso-12913-3-2019",
         {"projection": {"formulation": "iso2019"}},
@@ -258,7 +269,7 @@ def test_settings_file_extends_names_the_base(tmp_path):
 
 
 def test_settings_file_without_extends_lists_profiles_and_names_save_settings(tmp_path):
-    path = _write(tmp_path, '[projection]\nformulation = "iso2019"\n')
+    path = write_text(tmp_path, '[projection]\nformulation = "iso2019"\n')
     with pytest.raises(SettingsError, match="extends") as info:
         read_settings_file(path)
     message = str(info.value)
@@ -267,13 +278,13 @@ def test_settings_file_without_extends_lists_profiles_and_names_save_settings(tm
 
 
 def test_settings_file_unknown_section_is_refused(tmp_path):
-    path = _write(tmp_path, 'extends = "sal-2026"\n[projektion]\nformulation = "iso2019"\n')
+    path = write_text(tmp_path, 'extends = "sal-2026"\n[projektion]\nformulation = "iso2019"\n')
     with pytest.raises(SettingsError, match="projektion"):
         read_settings_file(path)
 
 
 def test_settings_file_other_section_is_ignored(tmp_path):
-    path = _write(tmp_path, 'extends = "sal-2026"\n[describe]\nby = "LocationID"\n')
+    path = write_text(tmp_path, 'extends = "sal-2026"\n[describe]\nby = "LocationID"\n')
     resolved = _projection(settings=path)
     assert resolved.settings == _projection().settings
     assert resolved.overrides == {}
@@ -283,19 +294,19 @@ def test_settings_file_missing_or_invalid_names_the_path(tmp_path):
     missing = tmp_path / "nope.toml"
     with pytest.raises(SettingsError, match=re.escape(str(missing))):
         read_settings_file(missing)
-    broken = _write(tmp_path, "extends = \n")
+    broken = write_text(tmp_path, "extends = \n")
     with pytest.raises(SettingsError, match=re.escape(str(broken))):
         _projection(settings=broken)
 
 
 def test_settings_file_section_must_be_a_table(tmp_path):
-    path = _write(tmp_path, 'extends = "sal-2026"\nprojection = 3\n')
+    path = write_text(tmp_path, 'extends = "sal-2026"\nprojection = 3\n')
     with pytest.raises(SettingsError, match="projection"):
         read_settings_file(path)
 
 
 def test_explicit_profile_wins_over_extends_and_the_file_still_applies(tmp_path):
-    path = _write(
+    path = write_text(
         tmp_path, 'extends = "iso-12913-3-2019"\n[projection.angles]\non_uncovered = "exclude"\n'
     )
     resolved = _projection(settings=path, profile="sal-2026")
@@ -306,74 +317,9 @@ def test_explicit_profile_wins_over_extends_and_the_file_still_applies(tmp_path)
 
 
 def test_settings_file_bad_value_fails_validation_with_the_path(tmp_path):
-    path = _write(tmp_path, 'extends = "sal-2026"\n[projection]\nformulation = 3\n')
+    path = write_text(tmp_path, 'extends = "sal-2026"\n[projection]\nformulation = 3\n')
     with pytest.raises(SettingsError, match="formulation"):
         _projection(settings=path)
-
-
-# --- save_settings --------------------------------------------------------------------------------
-
-
-def test_save_settings_writes_extends_and_sections(tmp_path):
-    path = tmp_path / "saved.toml"
-    save_settings(path, extends="sal-2026", overrides={"projection.formulation": "aletta2024"})
-    text = path.read_text(encoding="utf-8")
-    assert 'extends = "sal-2026@1"' in text
-    assert "[projection]" in text
-    assert read_settings_file(path) == ("sal-2026@1", {"projection": {"formulation": "aletta2024"}})
-    resolved = _projection(settings=path)
-    assert resolved.settings == _projection(keywords={"formulation": "aletta2024"}).settings
-    assert resolved.overrides == {"projection.formulation": "aletta2024"}
-
-
-def test_save_settings_nests_dotted_keys(tmp_path):
-    path = tmp_path / "saved.toml"
-    overrides = {
-        "projection.angles.on_uncovered": "exclude",
-        "projection.angles.per_language.cmn": "aletta-2024@1",
-        "item_statistics.dispersion": "range",
-    }
-    save_settings(path, extends="sal-2026@1", overrides=overrides)
-    _, sections = read_settings_file(path)
-    assert sections == {
-        "projection": {
-            "angles": {"on_uncovered": "exclude", "per_language": {"cmn": "aletta-2024@1"}}
-        },
-        "item_statistics": {"dispersion": "range"},
-    }
-    resolved = _projection(settings=path)
-    assert resolved.overrides == {
-        "projection.angles.on_uncovered": "exclude",
-        "projection.angles.per_language": {"cmn": "aletta-2024@1"},
-    }
-
-
-def test_save_settings_refuses_a_locked_override(tmp_path):
-    path = tmp_path / "saved.toml"
-    with pytest.raises(ProfileConstraintError, match=re.escape("projection.formulation")):
-        save_settings(
-            path, extends="iso-12913-3-2019", overrides={"projection.formulation": "canonical"}
-        )
-    assert not path.exists()
-
-
-def test_save_settings_validates_a_touched_section(tmp_path):
-    path = tmp_path / "saved.toml"
-    with pytest.raises(SettingsError, match="formulation"):
-        save_settings(path, extends="sal-2026", overrides={"projection.formulation": "nope"})
-    with pytest.raises(SettingsError, match="projektion"):
-        save_settings(path, extends="sal-2026", overrides={"projektion.formulation": "iso2019"})
-    with pytest.raises(SettingsError, match="formulation"):
-        save_settings(path, extends="sal-2026", overrides={"formulation": "iso2019"})
-    with pytest.raises(DataReferenceError):
-        save_settings(path, extends="nope", overrides={})
-
-
-def test_save_settings_overwrites(tmp_path):
-    path = tmp_path / "saved.toml"
-    save_settings(path, extends="sal-2026", overrides={"projection.formulation": "aletta2024"})
-    save_settings(path, extends="iso-12913-3-2024", overrides={})
-    assert read_settings_file(path) == ("iso-12913-3-2024@1", {})
 
 
 # --- Models ---------------------------------------------------------------------------------------

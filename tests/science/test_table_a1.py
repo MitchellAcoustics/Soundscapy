@@ -16,6 +16,7 @@ import csv
 from pathlib import Path
 
 from soundscapy.instrument import circumplex
+from tests._helpers import csv_rows
 
 TABLE_A1 = Path(__file__).parent / "fixtures" / "iso12913_3_table_a1.csv"
 # The sign and axis each Part 3 direction note stands for.
@@ -24,8 +25,7 @@ DIRECTIONS["-y"] = (1, "negative")
 
 
 def _rows(part: str) -> list[dict[str, str]]:
-    with TABLE_A1.open(encoding="utf-8", newline="") as handle:
-        return [row for row in csv.DictReader(handle) if row["part"] == part]
+    return [row for row in csv_rows(TABLE_A1.read_text(encoding="utf-8")) if row["part"] == part]
 
 
 def test_fixture_has_the_four_columns():

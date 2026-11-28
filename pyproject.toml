@@ -167,12 +167,6 @@ layers = [
   "(instrument)",
   "(errors) : (provenance) : (_frames) : (_data) : (_model) : (_log) : (tables) : (profiles)",
 ]
-# `save_settings` imports the two operations' settings models inside the function, to validate
-# the sections it writes; the modules sit above the bottom layer, so the lazy imports are listed.
-ignore_imports = [
-  "soundscapy.profiles -> soundscapy.survey.read",
-  "soundscapy.profiles -> soundscapy.projection.project",
-]
 
 [[tool.importlinter.contracts]]
 name = "Core never imports matplotlib or seaborn"

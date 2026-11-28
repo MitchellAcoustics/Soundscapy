@@ -6,14 +6,13 @@ import dataclasses
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 from soundscapy import _data
-from soundscapy._model import COL_FLAGS, COL_INCLUDED
+from soundscapy._model import COL_INCLUDED
 from soundscapy.instrument.angles import AngleSelection, AngleSetRef
 from soundscapy.projection.project import ProjectionSettings, project
 from soundscapy.survey.read import ImportSettings, read_survey
-from tests._helpers import medium_warning
+from tests._helpers import flag_mask, medium_warning, projection_settings, write_text
 
 FIXTURES = Path(__file__).parent / "projection" / "fixtures"
 HAND_CSV = FIXTURES / "hand_values.csv"
@@ -28,20 +27,6 @@ ISO_2019 = {
 SATP = AngleSetRef(name="satp", version="1.5")
 
 
-@pytest.fixture(scope="module")
-def hand_survey():
-    return read_survey(HAND_CSV, MAPPING)
-
-
-def _settings(coords) -> ProjectionSettings:
-    assert isinstance(coords.settings, ProjectionSettings)
-    return coords.settings
-
-
-def _flag_count(coords, flag: str) -> int:
-    return sum(flag in cell.split(";") for cell in coords.labels[COL_FLAGS].tolist())
-
-
 # --- The default run ------------------------------------------------------------------------------
 
 
@@ -54,7 +39,7 @@ def test_default_run_is_sal_2026_with_satp(isd_survey):
     assert "profile_inherited" not in coords.provenance
     assert coords.origin[0].angle_sets == ("satp@1.5",)
     assert coords.settings == ProjectionSettings(angles=AngleSelection(default=SATP))
-    assert _flag_count(coords, "medium_confidence_language") == 69
+    assert int(flag_mask(coords, "medium_confidence_language").sum()) == 69
     assert int(coords.labels[COL_INCLUDED].sum()) == 1536
 
 
@@ -87,7 +72,7 @@ def test_profile_named_on_read_survey_carries_into_project():
     assert coords.provenance["profile"] == ISO_2019
     assert "profile_inherited" not in coords.provenance
     assert coords.provenance["overrides"] == {}
-    assert _settings(coords).formulation == "iso2019"
+    assert projection_settings(coords).formulation == "iso2019"
     assert coords.origin[0].angle_sets == ("equal",)
 
 
@@ -97,7 +82,7 @@ def test_explicit_profile_on_project_records_the_inherited_one():
     assert coords.provenance["profile"] == SAL
     assert coords.provenance["profile_inherited"] == ISO_2019
     assert coords.provenance["overrides"] == {}
-    assert _settings(coords).formulation == "canonical"
+    assert projection_settings(coords).formulation == "canonical"
     assert coords.origin[0].angle_sets == ("satp@1.5",)
 
 
@@ -117,14 +102,8 @@ def test_a_survey_without_a_recorded_profile_falls_through_to_sal_2026(hand_surv
 # --- Settings files -------------------------------------------------------------------------------
 
 
-def _write(tmp_path: Path, text: str) -> Path:
-    path = tmp_path / "settings.toml"
-    path.write_text(text, encoding="utf-8")
-    return path
-
-
 def test_settings_file_names_the_profile_and_applies_to_the_call_it_is_passed_to(tmp_path):
-    path = _write(
+    path = write_text(
         tmp_path,
         'extends = "iso-12913-3-2019"\n'
         "[import]\n"
@@ -139,24 +118,24 @@ def test_settings_file_names_the_profile_and_applies_to_the_call_it_is_passed_to
 
     with_file = project(survey, settings=path)
     assert with_file.provenance["profile"] == ISO_2019
-    assert _settings(with_file).angles.on_uncovered == "exclude"
+    assert projection_settings(with_file).angles.on_uncovered == "exclude"
     assert with_file.provenance["overrides"] == {"projection.angles.on_uncovered": "exclude"}
 
     # The file given to read_survey does not reach project; only the profile carries over.
     without = project(survey)
     assert without.provenance["profile"] == ISO_2019
-    assert _settings(without).angles.on_uncovered == "error"
+    assert projection_settings(without).angles.on_uncovered == "error"
     assert without.provenance["overrides"] == {}
 
 
 def test_profile_keyword_wins_over_the_files_extends(tmp_path):
-    path = _write(
+    path = write_text(
         tmp_path, 'extends = "iso-12913-3-2019"\n[projection.angles]\non_uncovered = "exclude"\n'
     )
     survey = read_survey(HAND_CSV, MAPPING)
     coords = project(survey, settings=path, profile="sal-2026")
     assert coords.provenance["profile"] == SAL
-    assert _settings(coords).angles.on_uncovered == "exclude"
+    assert projection_settings(coords).angles.on_uncovered == "exclude"
     assert coords.origin[0].angle_sets == ("satp@1.5",)
 
 
@@ -165,7 +144,7 @@ def test_profile_keyword_wins_over_the_files_extends(tmp_path):
 
 def test_rerun_with_recorded_settings_reproduces_the_numbers(hand_survey):
     first = project(hand_survey, formulation="aletta2024", angles="equal")
-    again = project(hand_survey, settings=_settings(first))
+    again = project(hand_survey, settings=projection_settings(first))
     np.testing.assert_array_equal(again.xy, first.xy)  # exact: the same inputs and settings
     assert again.origin[0].settings_hash == first.origin[0].settings_hash
     assert again.settings == first.settings
@@ -175,6 +154,6 @@ def test_rerun_with_recorded_settings_reproduces_the_numbers(hand_survey):
 def test_rerun_under_an_explicit_profile_reproduces_the_numbers():
     survey = read_survey(HAND_CSV, MAPPING, profile="iso-12913-3-2019")
     first = project(survey, profile="sal-2026")
-    again = project(survey, settings=_settings(first), profile="sal-2026")
+    again = project(survey, settings=projection_settings(first), profile="sal-2026")
     np.testing.assert_array_equal(again.xy, first.xy)  # exact: the same inputs and settings
     assert again.origin[0].settings_hash == first.origin[0].settings_hash

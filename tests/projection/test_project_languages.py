@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 
@@ -26,9 +24,15 @@ from soundscapy.projection.project import ProjectionSettings, project
 from soundscapy.provenance import hash_json
 from soundscapy.survey.mapping import SurveyMapping
 from soundscapy.survey.read import read_survey
-from tests._helpers import SYNTHETIC_TIERS, medium_warning, raw_mapping, write_csv
+from tests._helpers import (
+    SYNTHETIC_TIERS,
+    flag_mask,
+    medium_warning,
+    projection_settings,
+    raw_mapping,
+    write_csv,
+)
 
-FIXTURES = Path(__file__).parent / "fixtures"
 SYNTHETIC = read_angle_set(SYNTHETIC_TIERS / "1.toml")
 LABEL = SYNTHETIC.label
 SATP = angle_set("satp", "1.5")
@@ -52,24 +56,10 @@ def synthetic_survey():
     return read_survey(SYNTHETIC_TIERS / "survey.csv", SYNTHETIC_TIERS / "mapping.toml")
 
 
-@pytest.fixture(scope="module")
-def hand_survey():
-    return read_survey(FIXTURES / "hand_values.csv", FIXTURES / "mapping.toml")
-
-
-def _settings(coords) -> ProjectionSettings:
-    assert isinstance(coords.settings, ProjectionSettings)
-    return coords.settings
-
-
 def _data_refs(coords) -> list:
     refs = coords.provenance["data_refs"]
     assert isinstance(refs, list)
     return refs
-
-
-def _has_flag(coords, flag: str) -> np.ndarray:
-    return np.array([flag in cell.split(";") for cell in coords.labels[COL_FLAGS].tolist()])
 
 
 def _user_set(**changes) -> AngleSet:
@@ -233,7 +223,7 @@ def test_per_language_sends_one_language_to_another_set(synthetic_survey):
     assert coords.origin[0].angle_sets == (LABEL,)
 
 
-def test_keywords_win_over_the_selection_and_settings(synthetic_survey):
+def test_keywords_win_over_the_selection_andprojection_settings(synthetic_survey):
     selection = AngleSelection.model_validate({"default": LABEL, "on_uncovered": "error"})
     with medium_warning():
         coords = project(
@@ -244,8 +234,8 @@ def test_keywords_win_over_the_selection_and_settings(synthetic_survey):
             on_low_confidence="exclude",
             angle_sets=[SYNTHETIC],
         )
-    assert _settings(coords).formulation == "aletta2024"
-    assert _settings(coords).angles == AngleSelection.model_validate(
+    assert projection_settings(coords).formulation == "aletta2024"
+    assert projection_settings(coords).angles == AngleSelection.model_validate(
         {"default": LABEL, "on_uncovered": "exclude", "on_low_confidence": "exclude"}
     )
 
@@ -258,9 +248,10 @@ def test_settings_mapping_supplies_the_selection(synthetic_survey):
             on_low_confidence="exclude",
             angle_sets=[SYNTHETIC],
         )
-    assert _settings(coords).angles.default == AngleSetRef(name="synthetic-tiers", version="1")
-    assert _settings(coords).angles.on_uncovered == "exclude"
-    assert _settings(coords).angles.on_low_confidence == "exclude"
+    angles = projection_settings(coords).angles
+    assert angles.default == AngleSetRef(name="synthetic-tiers", version="1")
+    assert angles.on_uncovered == "exclude"
+    assert angles.on_low_confidence == "exclude"
     assert coords.provenance["settings_hash"] == hash_json(coords.settings)
 
 
@@ -382,7 +373,7 @@ def test_satp_projects_english_with_its_angles(hand_survey):
     # exact: the same kernel on the same inputs
     expected = project_scores(scores, eng, coords.origin[0].effective_scale, "canonical")
     np.testing.assert_array_equal(coords.xy[:2], expected)
-    assert _settings(coords).angles.default == AngleSetRef(name="satp", version="1.5")
+    assert projection_settings(coords).angles.default == AngleSetRef(name="satp", version="1.5")
     assert coords.origin[0].angle_sets == ("satp@1.5",)
     assert _data_refs(coords)[-1] == {
         "kind": "angle_set",
@@ -396,7 +387,7 @@ def test_an_angle_set_ref_is_accepted(hand_survey):
     by_ref = project(hand_survey, angles=AngleSetRef(name="satp", version="1.5"))
     by_string = project(hand_survey, angles="satp@1.5")
     np.testing.assert_array_equal(by_ref.xy, by_string.xy)
-    assert _settings(by_ref) == _settings(by_string)
+    assert projection_settings(by_ref) == projection_settings(by_string)
 
 
 def test_satp_on_the_subset_flags_exactly_the_cmn_rows(isd_survey):
@@ -404,7 +395,7 @@ def test_satp_on_the_subset_flags_exactly_the_cmn_rows(isd_survey):
         coords = project(isd_survey, angles="satp@1.5")
     assert len(record) == 1
     assert "cmn (Medium in satp@1.5): 69 responses" in str(record[0].message)
-    flagged = _has_flag(coords, "medium_confidence_language")
+    flagged = flag_mask(coords, "medium_confidence_language")
     cmn = coords.labels[COL_LANGUAGE] == "cmn"
     included = coords.labels[COL_INCLUDED]
     np.testing.assert_array_equal(flagged, cmn & included)
@@ -421,14 +412,14 @@ def test_aletta_2024_covers_every_subset_language_without_warning(isd_survey):
     included = coords.labels[COL_INCLUDED]
     assert n_valid(coords) == int(included.sum()) == 1536
     assert set(coords.labels[COL_ANGLE_SET][included].tolist()) == {"aletta-2024@1"}
-    assert not _has_flag(coords, "medium_confidence_language").any()
-    assert not _has_flag(coords, "equal_angles_fallback").any()
+    assert not flag_mask(coords, "medium_confidence_language").any()
+    assert not flag_mask(coords, "equal_angles_fallback").any()
     assert coords.origin[0].angle_sets == ("aletta-2024@1",)
 
 
 def test_equal_keyword_stays_warning_free_on_the_subset(isd_survey):
     coords = project(isd_survey, angles="equal")  # filterwarnings = error: none fired
-    assert _settings(coords).angles == AngleSelection()
+    assert projection_settings(coords).angles == AngleSelection()
     assert coords.origin[0].angle_sets == ("equal",)
 
 

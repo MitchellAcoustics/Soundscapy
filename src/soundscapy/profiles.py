@@ -8,19 +8,19 @@ validated once. The result records which profile produced the numbers and every 
 differs from it.
 
 This module sits in the bottom layer beside ``_model`` and ``_data``; each operation
-validates its own section with its own model, so no operation module is imported here
-except lazily by ``save_settings``, which checks the two sections that have models.
+validates its own section with its own model, so no operation module is imported here.
+``soundscapy.workspace.save_settings`` writes the files this module reads.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import functools
 import os
 from collections.abc import Mapping
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, Generic, Literal, Self, TypeVar
+from types import MappingProxyType
+from typing import Any, Final, Generic, Literal, Self, TypeVar
 
-import tomlkit
 from pydantic import Field, StrictStr
 
 from soundscapy import _data
@@ -28,17 +28,16 @@ from soundscapy._model import (
     _UNSET,
     Citation,
     FrozenModel,
-    _layer,
     _Unset,
+    dump_json,
     merge_settings,
     parse_toml,
+    read_user_file,
     settings_layer,
     validate,
+    versioned_label,
 )
 from soundscapy.errors import DataReferenceError, ProfileConstraintError, SettingsError
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
 
 __all__ = [
     "SECTIONS",
@@ -49,7 +48,6 @@ __all__ = [
     "read_profile",
     "read_settings_file",
     "resolve_settings",
-    "save_settings",
 ]
 
 SECTIONS: Final = (
@@ -69,8 +67,9 @@ SECTIONS: Final = (
 DEFAULT_PROFILE: Final = "sal-2026"
 """The profile used when nothing names one."""
 
-_DATA_PREFIX: Final = "profiles/"
-_EXTENDS: Final = "extends"
+_DATA_PREFIX: Final = "profiles"
+EXTENDS: Final = "extends"
+"""The key of a settings file naming the profile it extends."""
 _SUGGESTION: Final = f'pass profile="{DEFAULT_PROFILE}" to change it'
 
 M = TypeVar("M", bound=FrozenModel)
@@ -120,7 +119,7 @@ class ProfileHeader(FrozenModel):
     @property
     def label(self) -> str:
         """``id@version``."""
-        return f"{self.id}@{self.version}"
+        return versioned_label(self.id, self.version)
 
 
 class ProfileRef(FrozenModel):
@@ -141,7 +140,7 @@ class ProfileRef(FrozenModel):
     @property
     def label(self) -> str:
         """``id@version``."""
-        return f"{self.id}@{self.version}"
+        return versioned_label(self.id, self.version)
 
     @classmethod
     def from_record(cls, value: Mapping[str, object] | Self) -> Self:
@@ -177,14 +176,6 @@ class ResolvedSettings(Generic[M]):
 # --- Shipped profiles -----------------------------------------------------------------------------
 
 
-def _shipped() -> Iterator[tuple[str, str]]:
-    """Yield ``(id, version)`` of every pinned profile file."""
-    for relpath in _data.PINS:
-        if relpath.startswith(_DATA_PREFIX):
-            ident, _, version = relpath.removeprefix(_DATA_PREFIX).partition("/")
-            yield ident, version.removesuffix(".toml")
-
-
 def list_profiles() -> tuple[str, ...]:
     """List the shipped profiles.
 
@@ -193,20 +184,12 @@ def list_profiles() -> tuple[str, ...]:
     tuple of str
         The sorted ``id@version`` labels.
     """
-    return tuple(sorted(f"{ident}@{version}" for ident, version in _shipped()))
+    return tuple(versioned_label(ident, version) for ident, version in _data.shipped(_DATA_PREFIX))
 
 
 def _version_key(version: str) -> tuple[int, ...]:
     """Order dotted numeric versions part by part, so ``"1.10"`` is after ``"1.9"``."""
     return tuple(int(part) for part in version.split("."))
-
-
-def _latest(ident: str) -> str:
-    versions = [version for shipped, version in _shipped() if shipped == ident]
-    if not versions:
-        msg = f"no profile {ident!r}; shipped: {list(list_profiles())}"
-        raise DataReferenceError(msg)
-    return max(versions, key=_version_key)
 
 
 def _parse_ref(ref: str) -> tuple[str, str]:
@@ -215,12 +198,48 @@ def _parse_ref(ref: str) -> tuple[str, str]:
     if not ident:
         msg = f"a profile is named 'id' or 'id@version', got {ref!r}"
         raise DataReferenceError(msg)
+    shipped = _data.shipped(_DATA_PREFIX)
     if not sep:
-        return ident, _latest(ident)
-    if f"{_DATA_PREFIX}{ident}/{version}.toml" not in _data.PINS:
+        versions = [shipped_version for name, shipped_version in shipped if name == ident]
+        if not versions:
+            msg = f"no profile {ident!r}; shipped: {list(list_profiles())}"
+            raise DataReferenceError(msg)
+        return ident, max(versions, key=_version_key)
+    if (ident, version) not in shipped:
         msg = f"no profile {ident!r} version {version!r}; shipped: {list(list_profiles())}"
         raise DataReferenceError(msg)
     return ident, version
+
+
+def _freeze(value: Any) -> Any:  # noqa: ANN401  # a TOML value of any type
+    """Make a parsed TOML value immutable: tables become mapping proxies, arrays tuples."""
+    if isinstance(value, dict):
+        return MappingProxyType({key: _freeze(item) for key, item in value.items()})
+    if isinstance(value, list):
+        return tuple(_freeze(item) for item in value)
+    return value
+
+
+def _thaw(value: Any) -> Any:  # noqa: ANN401  # a frozen TOML value of any type
+    """Copy a frozen value back into plain dicts and lists."""
+    if isinstance(value, Mapping):
+        return {key: _thaw(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw(item) for item in value]
+    return value
+
+
+@functools.cache
+def _load_profile(ident: str, version: str) -> tuple[ProfileHeader, Mapping[str, Any], str]:
+    """Read, verify and validate a shipped profile once per process.
+
+    Returns the header, the sections frozen (``_thaw`` copies one for use) and the pin.
+    """
+    relpath = _data.relpath(_DATA_PREFIX, ident, version)
+    raw = _data.read_toml(relpath)
+    sections = {key: raw.pop(key) for key in SECTIONS if key in raw}
+    header = validate(ProfileHeader, raw, context=f"profile {relpath}")
+    return header, _freeze(sections), _data.pin(relpath)
 
 
 def read_profile(ref: str) -> tuple[ProfileHeader, Sections, str]:
@@ -238,7 +257,7 @@ def read_profile(ref: str) -> tuple[ProfileHeader, Sections, str]:
         The validated header.
     sections : dict
         Section name to its raw table, for the sections the file holds; each operation
-        validates its own with its own model.
+        validates its own with its own model. A fresh copy on every call.
     hash : str
         The file's ``h1`` pin.
 
@@ -249,12 +268,8 @@ def read_profile(ref: str) -> tuple[ProfileHeader, Sections, str]:
     DataIntegrityError
         If the shipped file does not match its pin.
     """
-    ident, version = _parse_ref(ref)
-    relpath = f"{_DATA_PREFIX}{ident}/{version}.toml"
-    raw = _data.read_toml(relpath)
-    sections: Sections = {key: raw.pop(key) for key in SECTIONS if key in raw}
-    header = validate(ProfileHeader, raw, context=f"profile {relpath}")
-    return header, sections, _data.pin(relpath)
+    header, sections, digest = _load_profile(*_parse_ref(ref))
+    return header, _thaw(sections), digest
 
 
 # --- Settings files -------------------------------------------------------------------------------
@@ -282,19 +297,16 @@ def read_settings_file(path: str | os.PathLike[str]) -> tuple[str, Sections]:
         key that is not ``extends`` or a section name, or a section that is not a table.
         Every message names the path.
     """
-    file = Path(path)
     name = os.fspath(path)
-    if not file.is_file():
-        msg = f"settings file {name!r} does not exist"
-        raise SettingsError(msg)
-    raw = parse_toml(file.read_text(encoding="utf-8"), source=f"settings file {name}")
-    unknown = sorted(key for key in raw if key != _EXTENDS and key not in SECTIONS)
+    text = read_user_file(path, what="settings file", error=SettingsError)
+    raw = parse_toml(text, source=f"settings file {name}")
+    unknown = sorted(key for key in raw if key != EXTENDS and key not in SECTIONS)
     if unknown:
         msg = (
             f"settings file {name} has unknown top-level keys {unknown}; sections: {list(SECTIONS)}"
         )
         raise SettingsError(msg)
-    extends = raw.pop(_EXTENDS, None)
+    extends = raw.pop(EXTENDS, None)
     if not isinstance(extends, str):
         what = "no 'extends'" if extends is None else f"extends = {extends!r}, not a string"
         msg = (
@@ -312,15 +324,11 @@ def read_settings_file(path: str | os.PathLike[str]) -> tuple[str, Sections]:
 # --- Resolution -----------------------------------------------------------------------------------
 
 
-def _dotted(prefix: str, key: str) -> str:
-    return f"{prefix}.{key}" if prefix else key
-
-
 def _diff(base: Any, resolved: Any, prefix: str, out: dict[str, Any]) -> None:  # noqa: ANN401  # JSON values
     """Record where ``resolved`` differs from ``base``, recursing into tables of the same shape."""
     if isinstance(base, dict) and isinstance(resolved, dict) and base.keys() == resolved.keys():
         for key in base:
-            _diff(base[key], resolved[key], _dotted(prefix, key), out)
+            _diff(base[key], resolved[key], f"{prefix}.{key}", out)
     elif base != resolved:
         out[prefix] = resolved
 
@@ -353,8 +361,25 @@ def _check_locked(
             raise ProfileConstraintError(msg)
 
 
-def _dump(model: FrozenModel) -> dict[str, Any]:
-    return model.model_dump(mode="json", by_alias=True)
+def _resolve_section(
+    model: type[M],
+    header: ProfileHeader,
+    section: str,
+    profile_section: Mapping[str, Any],
+    layers: list[Mapping[str, Any]],
+    *,
+    context: str,
+) -> tuple[M, dict[str, Any], dict[str, Any]]:
+    """Merge ``layers`` over the profile's section and check the profile's locks.
+
+    Returns the resolved settings, the dump of the profile's section alone (merged onto
+    the model defaults) and the dump of the resolved settings, for the overrides.
+    """
+    base = merge_settings(model, [profile_section], context=f"profile {header.label} [{section}]")
+    resolved = merge_settings(model, [profile_section, *layers], context=context)
+    base_dump, resolved_dump = dump_json(base), dump_json(resolved)
+    _check_locked(header, section, base_dump, resolved_dump)
+    return resolved, base_dump, resolved_dump
 
 
 def _base_label(profile: str | _Unset, inherited: ProfileRef | None, extends: str | None) -> str:
@@ -422,112 +447,22 @@ def resolve_settings(
     """
     file_sections: Sections = {}
     extends: str | None = None
+    context = f"{section} settings"
     if isinstance(settings, str | os.PathLike):
         extends, file_sections = read_settings_file(settings)
+        context = f"{context} with settings file {os.fspath(settings)}"
     previous = None if inherited is None else ProfileRef.from_record(inherited)
-    header, sections, digest = read_profile(_base_label(profile, previous, extends))
+    header, sections, digest = _load_profile(*_parse_ref(_base_label(profile, previous, extends)))
     ref = ProfileRef(id=header.id, version=header.version, hash=digest)
 
-    # Each merge gets its own copy of the profile section: merging adopts nested tables.
-    profile_section = sections.get(section, {})
-    base = merge_settings(
-        model, [_layer(profile_section)], context=f"profile {ref.label} [{section}]"
-    )
-    layers: list[Mapping[str, Any]] = [
-        _layer(profile_section),
-        _layer(file_sections.get(section, {})),
-    ]
+    layers: list[Mapping[str, Any]] = [file_sections.get(section, {})]
     if settings is not _UNSET and extends is None:
         layers.append(settings_layer(settings, model=model, name="settings"))
-    layers.append({key: _layer(value) for key, value in keywords.items() if value is not _UNSET})
-    resolved = merge_settings(model, layers, context=f"{section} settings")
-
-    base_dump, resolved_dump = _dump(base), _dump(resolved)
-    _check_locked(header, section, base_dump, resolved_dump)
+    layers.append({key: value for key, value in keywords.items() if value is not _UNSET})
+    resolved, base_dump, resolved_dump = _resolve_section(
+        model, header, section, sections.get(section, {}), layers, context=context
+    )
     overrides: dict[str, Any] = {}
     _diff(base_dump, resolved_dump, section, overrides)
     replaced = previous if previous is not None and previous != ref else None
     return ResolvedSettings(resolved, ref, replaced, overrides)
-
-
-# --- Saving ---------------------------------------------------------------------------------------
-
-
-def _section_model(section: str) -> type[FrozenModel] | None:
-    """Give the settings model of a section, for the operations that have one so far.
-
-    The operation modules sit above this one, so they are imported here, when a file is
-    saved, rather than at import time.
-    """
-    if section == "import":
-        from soundscapy.survey.read import ImportSettings  # noqa: PLC0415  # layered above
-
-        return ImportSettings
-    if section == "projection":
-        from soundscapy.projection.project import ProjectionSettings  # noqa: PLC0415  # layered above
-
-        return ProjectionSettings
-    return None
-
-
-def _nest(overrides: Mapping[str, Any]) -> Sections:
-    """Turn dotted override keys into nested section tables."""
-    out: Sections = {}
-    for dotted, value in overrides.items():
-        section, _, rest = dotted.partition(".")
-        if section not in SECTIONS or not rest:
-            msg = (
-                f"override {dotted!r} must be '<section>.<field>' with a section in "
-                f"{list(SECTIONS)}"
-            )
-            raise SettingsError(msg)
-        table: dict[str, Any] = out.setdefault(section, {})
-        *parents, leaf = rest.split(".")
-        for part in parents:
-            table = table.setdefault(part, {})
-        table[leaf] = value
-    return out
-
-
-def save_settings(
-    path: str | os.PathLike[str], *, extends: str, overrides: Mapping[str, Any]
-) -> None:
-    """Write a settings file: the profile it extends and the overrides as sections.
-
-    Parameters
-    ----------
-    path : str or os.PathLike
-        Where to write; an existing file is overwritten.
-    extends : str
-        ``"id@version"`` or a bare id, written as ``id@version`` of the latest version.
-    overrides : mapping
-        Dotted key to value, as ``ResolvedSettings.overrides`` holds them; each becomes a
-        key in its section's table.
-
-    Raises
-    ------
-    DataReferenceError
-        If the profile does not ship.
-    SettingsError
-        If a key names no section, or a section with a settings model fails validation
-        when merged onto the profile. A section without a model yet is written unchecked.
-    ProfileConstraintError
-        If an override changes a field the profile locks, as the operation would refuse it.
-
-    References
-    ----------
-    Spec 6.3.4: a settings file holds ``extends`` and only the overrides.
-    """
-    header, sections, _ = read_profile(extends)
-    nested = _nest(overrides)
-    for section, table in nested.items():
-        model = _section_model(section)
-        if model is None:
-            continue
-        profile_section = sections.get(section, {})
-        context = f"[{section}] under profile {header.label}"
-        base = merge_settings(model, [_layer(profile_section)], context=context)
-        resolved = merge_settings(model, [_layer(profile_section), _layer(table)], context=context)
-        _check_locked(header, section, _dump(base), _dump(resolved))
-    document: dict[str, Any] = {_EXTENDS: header.label, **nested}
-    Path(path).write_text(tomlkit.dumps(document), encoding="utf-8")

@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, TypeVar
 
 import numpy as np
 
-from soundscapy import _data
 from soundscapy._frames import column_text
 from soundscapy._model import (
     _UNSET,
@@ -16,6 +15,7 @@ from soundscapy._model import (
     COL_RESPONSE_ID,
     FrozenModel,
     _Unset,
+    dump_json,
     settings_layer,
 )
 from soundscapy.distribution.coordinates import Coordinates, OriginSegment
@@ -25,12 +25,20 @@ from soundscapy.errors import (
     MappingError,
     MediumConfidenceLanguageWarning,
     SettingsError,
+    SoundscapyError,
     UncoveredLanguageError,
     _plural,
     _shown,
 )
 from soundscapy.instrument import circumplex
-from soundscapy.instrument.angles import AngleSelection, AngleSet, AngleSetRef, angle_set
+from soundscapy.instrument.angles import (
+    EQUAL,
+    AngleSelection,
+    AngleSet,
+    AngleSetRef,
+    angle_set,
+    angle_set_pin,
+)
 from soundscapy.profiles import resolve_settings
 from soundscapy.projection._angles import LanguageOutcome, ResolvedAngles, resolve_angles
 from soundscapy.projection.formulas import _FORMULATIONS, Formulation, project_scores
@@ -39,16 +47,13 @@ from soundscapy.survey.status import Flag, Reason, Status
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import Mapping, Sequence
-
-    from numpy.typing import NDArray
+    from collections.abc import Iterator, Mapping, Sequence
 
     from soundscapy.instrument.angles import Policy
     from soundscapy.survey.read import Survey
 
 __all__ = ["ProjectionSettings", "project"]
 
-_EQUAL: Final = "equal"
 # Provenance keys a projection carries over from the survey's envelope unchanged.
 _CARRIED: Final = (
     "input_hash",
@@ -60,7 +65,6 @@ _CARRIED: Final = (
     "response_key_blank_ok",
     "quality_skipped",
 )
-_TIER_NAMES: Final = {"high": "High", "medium": "Medium", "low": "Low"}
 
 
 class ProjectionSettings(FrozenModel):
@@ -91,7 +95,7 @@ def _angles_layer(angles: AngleSetRef | str | AngleSelection) -> dict[str, Any]:
     if isinstance(angles, str):
         return {"default": angles}
     msg = (
-        f'angles must be "{_EQUAL}", a "name@version" string, an AngleSetRef or an '
+        f'angles must be "{EQUAL}", a "name@version" string, an AngleSetRef or an '
         f"AngleSelection, got {angles!r}"
     )
     raise SettingsError(msg)
@@ -181,13 +185,13 @@ def _describe(outcome: LanguageOutcome) -> str:
     if outcome.tier is None:
         where = f"not in {outcome.set_label}"
     else:
-        where = f"{_TIER_NAMES[outcome.tier]} in {outcome.set_label}"
+        where = f"{outcome.tier.capitalize()} in {outcome.set_label}"
         if outcome.tier_only:
             where += ", no adjusted angles"
     return f"{outcome.language} ({where}): {outcome.count} {_plural(outcome.count, 'response')}"
 
 
-def _by_count(outcomes: tuple[LanguageOutcome, ...], *kinds: str) -> list[str]:
+def _by_count(outcomes: tuple[LanguageOutcome, ...], kinds: tuple[str, ...]) -> list[str]:
     """Describe the outcomes of ``kinds``, by count descending then language."""
     chosen = [o for o in outcomes if o.outcome in kinds]
     return [_describe(o) for o in sorted(chosen, key=lambda o: (-o.count, o.language))]
@@ -201,41 +205,63 @@ def _choices(override: str) -> str:
     )
 
 
+def _listing(items: list[str]) -> str:
+    """``N languages: a, b, c``."""
+    return f"{len(items)} {_plural(len(items), 'language')}: {_shown(items)}"
+
+
+C = TypeVar("C")
+# Per message: the outcomes it lists, the words before the listing, the words after it, and
+# the error or warning class it goes out as.
+Messages = tuple[tuple[tuple[str, ...], str, str, C], ...]
+_ERRORS: Final[Messages[type[SoundscapyError]]] = (
+    (
+        ("error_uncovered",),
+        "no validated angles for",
+        _choices("on_uncovered"),
+        UncoveredLanguageError,
+    ),
+    (
+        ("error_low",),
+        "only low-confidence angles for",
+        _choices("on_low_confidence"),
+        LowConfidenceLanguageError,
+    ),
+)
+_WARNINGS: Final[Messages[type[Warning]]] = (
+    (
+        ("medium",),
+        "medium-confidence angles for",
+        f"the responses carry the flag {Flag.MEDIUM_CONFIDENCE_LANGUAGE}",
+        MediumConfidenceLanguageWarning,
+    ),
+    (
+        ("low_equal", "uncovered_equal"),
+        "the nominal angles replaced the angle set for",
+        f"the responses carry the flag {Flag.EQUAL_ANGLES_FALLBACK}",
+        EqualAnglesFallbackWarning,
+    ),
+)
+
+
+def _messages(resolved: ResolvedAngles, table: Messages[C]) -> Iterator[tuple[str, C]]:
+    """Yield the message and class of each entry of ``table`` that has outcomes to list."""
+    for kinds, lead, tail, cls in table:
+        items = _by_count(resolved.outcomes, kinds)
+        if items:
+            yield f"{lead} {_listing(items)}; {tail}", cls
+
+
 def _raise_for_errors(resolved: ResolvedAngles) -> None:
     """Raise for the languages the settings refuse, every one of them listed."""
-    uncovered = _by_count(resolved.outcomes, "error_uncovered")
-    if uncovered:
-        msg = (
-            f"no validated angles for {len(uncovered)} {_plural(len(uncovered), 'language')}: "
-            f"{_shown(uncovered)}; {_choices('on_uncovered')}"
-        )
-        raise UncoveredLanguageError(msg)
-    low = _by_count(resolved.outcomes, "error_low")
-    if low:
-        msg = (
-            f"only low-confidence angles for {len(low)} {_plural(len(low), 'language')}: "
-            f"{_shown(low)}; {_choices('on_low_confidence')}"
-        )
-        raise LowConfidenceLanguageError(msg)
+    for msg, error in _messages(resolved, _ERRORS):
+        raise error(msg)
 
 
 def _warn(resolved: ResolvedAngles) -> None:
     """One warning per category, after the result exists; ``stacklevel`` is ``project``'s caller."""
-    medium = _by_count(resolved.outcomes, "medium")
-    if medium:
-        msg = (
-            f"medium-confidence angles for {len(medium)} {_plural(len(medium), 'language')}: "
-            f"{_shown(medium)}; the responses carry the flag {Flag.MEDIUM_CONFIDENCE_LANGUAGE}"
-        )
-        warnings.warn(msg, MediumConfidenceLanguageWarning, stacklevel=3)
-    fallback = _by_count(resolved.outcomes, "low_equal", "uncovered_equal")
-    if fallback:
-        msg = (
-            f"the nominal angles replaced the angle set for {len(fallback)} "
-            f"{_plural(len(fallback), 'language')}: {_shown(fallback)}; the responses carry "
-            f"the flag {Flag.EQUAL_ANGLES_FALLBACK}"
-        )
-        warnings.warn(msg, EqualAnglesFallbackWarning, stacklevel=3)
+    for msg, category in _messages(resolved, _WARNINGS):
+        warnings.warn(msg, category, stacklevel=3)
 
 
 def _status_after(status: Status, resolved: ResolvedAngles) -> Status:
@@ -254,15 +280,15 @@ def _set_refs(
     """One ``data_refs`` entry per set used: a shipped set by its pin, a passed one in full."""
     refs: list[dict[str, Any]] = []
     for label in labels:
-        if label == _EQUAL:
+        if label == EQUAL:
             continue
         used = sets[label]
         ref: dict[str, Any] = {"kind": "angle_set", "name": used.name, "version": used.version}
         if label in passed:
             ref["hash"] = hash_json(used)
-            ref["content"] = used.model_dump(mode="json", by_alias=True)
+            ref["content"] = dump_json(used)
         else:
-            ref["hash"] = _data.pin(f"angle_sets/{used.name}/{used.version}.toml")
+            ref["hash"] = angle_set_pin(used.name, used.version)
         refs.append(ref)
     return refs
 
@@ -458,15 +484,15 @@ def project(
     xy[included] = project_scores(
         scores[included], resolved.angles_deg[included], scale, resolved_settings.formulation
     )
-    angle_set_labels: NDArray[np.object_] = np.where(included, resolved.labels, "").astype(object)
-    used = sorted(set(angle_set_labels[included].tolist()))
+    # Only included rows were given labels, so these are the distinct labels in use.
+    used: list[str] = np.unique(resolved.labels[included]).tolist()
 
     id_labels = {getattr(survey.mapping.ids, role): values for role, values in survey.ids.items()}
     labels = {
         COL_RESPONSE_ID: survey.response_id,
         **status.label_arrays(),
         COL_LANGUAGE: survey.language,
-        COL_ANGLE_SET: angle_set_labels,
+        COL_ANGLE_SET: resolved.labels,
         **id_labels,
     }
     for column in _carried_columns(survey, carry, set(id_labels)):

@@ -416,7 +416,7 @@ def read_survey(
         quality=quality, on_scale_violation=on_scale_violation, settings=settings, profile=profile
     )
     return _read_survey(
-        source, resolved, read_options=_read_options(read_options), settings=import_settings
+        source, resolved, read_options=_read_options(read_options), resolution=import_settings
     )
 
 
@@ -498,11 +498,11 @@ def _read_survey(
     mapping: SurveyMapping,
     *,
     read_options: ReadOptions,
-    settings: ResolvedSettings[ImportSettings],
+    resolution: ResolvedSettings[ImportSettings],
     data_refs: Sequence[Mapping[str, str]] = (),
 ) -> Survey:
     """Read a survey from a path with resolved inputs; ``data_refs`` follow the circumplex's."""
-    resolved, import_settings = settings, settings.settings
+    import_settings = resolution.settings
     path = Path(source)
     options = _resolve(read_options, path)
     table = read_text_table(path, encoding=options.encoding, delimiter=options.delimiter)
@@ -556,8 +556,8 @@ def _read_survey(
         input_hash=source_ref.hash,
         mapping_hash=hash_json(mapping),
         data_refs=[circumplex_ref, *data_refs],
-        profile=resolved.profile.model_dump(),
-        overrides=resolved.overrides,
+        profile=resolution.profile.model_dump(),
+        overrides=resolution.overrides,
         response_id_source=id_source,
         read=options.model_dump(mode="json"),
         id_columns=role_columns,
