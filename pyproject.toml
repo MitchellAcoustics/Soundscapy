@@ -18,7 +18,6 @@ classifiers = [
 ]
 dependencies = [
     "matplotlib>=3.10.7",
-    "narwhals>=2.0",
     "numpy>=1.26",
     "pandas>=2.2.1",
     "pydantic>=2.7",
@@ -44,7 +43,6 @@ dev = [
 test = [
   "hypothesis>=6.170.14",
   "packaging>=26.3",
-  "polars>=2.1.0",
   "pytest>=9.2",
   "pytest-cov>=7.1.0",
   "pytest-xdist>=3.8.0",

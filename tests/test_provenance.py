@@ -126,7 +126,8 @@ def test_envelope_keys() -> None:
     assert re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", str(env["created_utc"]))
     libraries = env["libraries"]
     assert isinstance(libraries, dict)
-    assert {"numpy", "pandas", "narwhals", "pydantic"} <= set(libraries)
+    assert {"numpy", "pandas", "pydantic"} <= set(libraries)
+    assert "narwhals" not in libraries
 
 
 def test_envelope_accepts_optional_keys_and_rejects_typos() -> None:

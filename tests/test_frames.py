@@ -61,10 +61,10 @@ def test_require_frame_returns_the_frame_itself(frame_lib):
     assert require_frame(native) is native
 
 
-def test_frames_works_without_polars():
+def test_frames_works_without_narwhals_polars_or_pyarrow():
     code = (
-        "import sys; sys.modules['polars'] = None; sys.modules['pyarrow'] = None; "
-        "import soundscapy._frames"
+        "import sys; sys.modules['narwhals'] = None; sys.modules['polars'] = None; "
+        "sys.modules['pyarrow'] = None; import soundscapy._frames"
     )
     result = subprocess.run(
         [sys.executable, "-W", "error", "-c", code],
