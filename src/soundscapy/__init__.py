@@ -4,7 +4,8 @@ Soundscapy is a scientific package for soundscape engineering: survey analysis,
 psychoacoustic analysis of calibrated recordings, and perception modelling. Import it as
 ``import soundscapy as sspy``; the names here cover reading a survey, projecting it onto
 the circumplex, attaching the results to your own frame and plotting them
-(``sspy.plot``). matplotlib is imported only when a plot function runs.
+(``sspy.plot``); ``QualitySettings`` holds the response quality rules. matplotlib is
+imported only when a plot function runs.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from soundscapy.instrument.angles import AngleSelection
 from soundscapy.projection.project import ProjectionSettings, project
 from soundscapy.provenance import show_versions
 from soundscapy.survey.mapping import Coding, SurveyMapping, read_mapping, write_mapping
+from soundscapy.survey.quality import QualitySettings
 from soundscapy.survey.read import ReadOptions, Survey, read_survey
 from soundscapy.workspace import attach
 
@@ -30,6 +32,7 @@ __all__ = [
     "Coding",
     "Coordinates",
     "ProjectionSettings",
+    "QualitySettings",
     "ReadOptions",
     "Scale",
     "Survey",

@@ -18,6 +18,8 @@ from soundscapy._model import (
     _Unset,
     axis_column,
     from_toml,
+    merge_settings,
+    settings_layer,
     to_toml,
 )
 from soundscapy.errors import SettingsError
@@ -25,6 +27,16 @@ from soundscapy.errors import SettingsError
 
 class _Box(FrozenModel):
     x: StrictFloat = 0.0
+
+
+class _Q(FrozenModel):
+    x: StrictFloat = 0.0
+    y: StrictFloat = 0.0
+
+
+class _Nested(FrozenModel):
+    a: StrictFloat = 0.0
+    q: _Q = _Q()
 
 
 class _Rec(FrozenModel):
@@ -156,6 +168,43 @@ def test_axis_column_and_constants():
     assert all(c.startswith("ssp_") for c in cols)
     assert _model.COL_RESPONSE_ID == "ssp_response_id"
     assert _model.COL_ANGLE_SET == "ssp_angle_set"
+
+
+# merge_settings and settings_layer (spec 6.3.4 ranks 1 and 2)
+
+
+def test_merge_settings_later_layer_wins():
+    merged = merge_settings(
+        _Nested, [{"a": 1, "q": {"x": 1, "y": 2}}, {"q": {"y": 3}}], context="test"
+    )
+    assert (merged.a, merged.q.x, merged.q.y) == (1.0, 1.0, 3.0)
+
+
+def test_settings_layer_instance_contributes_set_fields_only():
+    layer = settings_layer(_Nested(q=_Q(y=5.0)), model=_Nested, name="settings")
+    assert layer == {"q": {"y": 5.0}}
+    merged = merge_settings(_Nested, [{"a": 2, "q": {"x": 9}}, layer], context="test")
+    assert (merged.a, merged.q.x, merged.q.y) == (2.0, 9.0, 5.0)
+
+
+def test_settings_layer_rejects_other_types():
+    with pytest.raises(SettingsError, match="settings") as info:
+        settings_layer("settings.toml", model=_Nested, name="settings")
+    assert "_Nested" in str(info.value)
+    assert "str" in str(info.value)
+
+
+def test_settings_layer_converts_nested_instances():
+    layer = settings_layer({"q": _Q(x=4.0)}, model=_Nested, name="settings")
+    assert layer == {"q": {"x": 4.0}}
+    merged = merge_settings(_Nested, [layer, {"q": {"y": 7.0}}], context="test")
+    assert (merged.q.x, merged.q.y) == (4.0, 7.0)
+
+
+def test_merge_settings_bad_value_is_settings_error():
+    # The context prefix, then pydantic's location of the bad field somewhere after it.
+    with pytest.raises(SettingsError, match=r"(?s)^test: .*q\.x"):
+        merge_settings(_Nested, [{"q": {"x": "nope"}}], context="test")
 
 
 def test_unset_sentinel():

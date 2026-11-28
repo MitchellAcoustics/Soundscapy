@@ -41,6 +41,19 @@ def test_out_of_order_reasons_stored_in_enum_order():
     assert s.reasons == ((Reason.SCALE_VIOLATION, Reason.ALL_IDENTICAL),)
 
 
+def test_status_select():
+    s = Status.all_included(4)
+    s = s.with_reason([True, False, False, True], Reason.NO_CONSENT)
+    s = s.with_flag([False, True, False, True], Flag.ALL_MIDPOINT)
+    picked = s.select(np.array([False, True, False, True]))
+    assert picked.included.tolist() == [True, False]
+    assert picked.reasons == ((), (Reason.NO_CONSENT,))
+    assert picked.flags == ((Flag.ALL_MIDPOINT,), (Flag.ALL_MIDPOINT,))
+    assert s.included.tolist() == [False, True, True, False]  # unchanged
+    with pytest.raises(ValueError, match="mask"):
+        s.select(np.array([True, False]))
+
+
 def test_with_methods_return_new_objects():
     base = Status.all_included(2)
     changed = base.with_reason([True, False], Reason.NO_CONSENT).with_flag(

@@ -22,13 +22,17 @@ from soundscapy.projection.project import ProjectionSettings
 from soundscapy.provenance import hash_file, hash_json
 from soundscapy.survey.mapping import (
     Coding,
+    FlagSpec,
+    FlagSpecs,
     Groups,
     IdSpec,
     ItemGroup,
     LanguageSpec,
     SurveyMapping,
 )
+from soundscapy.survey.quality import QualitySettings
 from soundscapy.survey.read import ImportSettings, ReadOptions, SourceRef
+from tests._helpers import quality_settings
 
 _CITATION = Citation(
     citation="A. Author (2026). A title.",
@@ -63,6 +67,31 @@ _ID_SPEC = IdSpec(
     record="RecordID",
 )
 _LANGUAGE = LanguageSpec(column="Lang", coding={"English": "eng", "Deutsch": "deu"})
+_FLAG = FlagSpec(column="consent", true_values=("yes", "Yes"))
+_FLAGS = FlagSpecs(
+    consent=_FLAG,
+    test=FlagSpec(column="test", true_values=("1",)),
+    paper_input=FlagSpec(column="paper", true_values=("yes",)),
+)
+_GROUPS = Groups(
+    attributes=_ITEM_GROUP,
+    source_dominance=ItemGroup(
+        columns=(("traffic_noise", "s1"), ("natural_sounds", "s4")),
+        scale=Scale(minimum=1.0, maximum=5.0),
+    ),
+    overall_quality=ItemGroup(
+        columns=(("overall_quality", "oq"),),
+        scale=Scale(minimum=1.0, maximum=5.0),
+        coding=Coding(value_map={"bad": 1.0, "good": 5.0}),
+    ),
+    appropriateness=ItemGroup(
+        columns=(("appropriateness", "ap"),), scale=Scale(minimum=1.0, maximum=5.0)
+    ),
+    who5=ItemGroup(
+        columns=tuple((f"who5_{i}", f"w{i}") for i in range(1, 6)),
+        scale=Scale(minimum=1.0, maximum=6.0, kind="interval"),
+    ),
+)
 
 
 def _source_ref() -> SourceRef:
@@ -92,16 +121,28 @@ MODELS: list[FrozenModel] = [
     _ID_SPEC,
     _LANGUAGE,
     _ITEM_GROUP,
-    Groups(attributes=_ITEM_GROUP),
+    _FLAG,
+    _FLAGS,
+    _GROUPS,
     SurveyMapping(
         schema_name="soundscapy.mapping",
         schema_version=1,
         ids=_ID_SPEC,
         language=_LANGUAGE,
-        groups=Groups(attributes=_ITEM_GROUP),
+        groups=_GROUPS,
+        age="age",
+        flags=_FLAGS,
+        carry=("start_time", "Survey_Version"),
     ),
     ReadOptions(format="tsv", encoding="cp1252", delimiter=";"),
-    ImportSettings(on_scale_violation="exclude"),
+    ImportSettings(quality=QualitySettings(min_age=16.0), on_scale_violation="exclude"),
+    QualitySettings(
+        all_midpoint="off",
+        excessive_missing_share=0.25,
+        under_age="exclude",
+        min_age=16.0,
+        paper_input="exclude",
+    ),
     _source_ref(),
     AngleSelection(),  # its one S1 field has one value
     ProjectionSettings(formulation="iso2019", angles=AngleSelection()),
@@ -154,9 +195,14 @@ def test_read_options_round_trip(fmt, encoding, delimiter):
     _assert_round_trips(ReadOptions(format=fmt, encoding=encoding, delimiter=delimiter))
 
 
-@given(st.sampled_from(["error", "exclude"]))
-def test_import_settings_round_trip(action):
-    _assert_round_trips(ImportSettings(on_scale_violation=action))
+@given(st.sampled_from(["error", "exclude"]), quality_settings())
+def test_import_settings_round_trip(action, quality):
+    _assert_round_trips(ImportSettings(quality=quality, on_scale_violation=action))
+
+
+@given(quality_settings())
+def test_quality_settings_round_trip(settings):
+    _assert_round_trips(settings)
 
 
 def _subclasses(cls: type) -> set[type]:

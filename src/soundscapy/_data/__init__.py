@@ -27,8 +27,17 @@ PINS: Final[Mapping[str, str]] = {
     "circumplexes/iso-12913-outdoor/1.toml": (
         "h1-sha256:4ef2208390747505a2ddb326802995891e8481927fa0832e7e99740d444b8686"
     ),
+    "datasets/course_demo/course_demo.csv": (
+        "h1-sha256:7f9e0933a0b6da290a612659420586617c0a1b0ddcd74d69c4e66c314c8b7386"
+    ),
+    "datasets/course_demo/course_demo.toml": (
+        "h1-sha256:3d6ebbbd72fa4333834de9ade671aa0561e0af9870f8d1eaabf4dd156d32bc42"
+    ),
+    "datasets/course_demo/mapping.toml": (
+        "h1-sha256:08554ad29d5b264b875d132c659fb80e843bc8a5e3cd691db664779678b3b31b"
+    ),
     "datasets/isd/isd_mapping.toml": (
-        "h1-sha256:0a602d47a260ea9dc0f6fe9e76b6f6c1c047c307760f554b140b0f478a24103c"
+        "h1-sha256:1c8c7af20fa8f75ad1fd81397cdd67d7fba05c47efd0fa1bd816aee96ab75974"
     ),
     "datasets/isd/registry.toml": (
         "h1-sha256:16118d3824d5a43feb8c5e383315a449b5326a76c46140bb991a0540927d783c"

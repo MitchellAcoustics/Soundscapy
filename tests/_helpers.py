@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import csv
+import io
+from typing import TYPE_CHECKING, get_args
 
 import numpy as np
+from hypothesis import strategies as st
 
 from soundscapy.instrument.scale import Scale
+from soundscapy.survey.quality import QualitySettings
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -19,8 +23,34 @@ LABELS += ("calm",)
 CSV_ORDER = ("pleasant", "chaotic", "vibrant", "uneventful", "calm", "annoying", "eventful")
 CSV_ORDER += ("monotonous",)
 ONES = ",".join(["1"] * 8)
+COMPLETE = "1,2,3,4,5,4,3,2"  # complete and not constant
+COMPLETE_B = "5,4,3,2,1,2,3,4"
+# The ISD subset's carried columns: the mapping's five, then the sidecar's ten features.
+ISD_MAPPING_CARRY = ("start_time", "Survey_Version", "sss03", "sss04", "sss05")
+ISD_FEATURES = ("LCeq_L(C)", "LAeq_L(A)", "LAeq_L10(A)", "LAeq_L90(A)", "N_N5", "S_S", "R_R")
+ISD_FEATURES += ("T_TonalityHMS", "FS_F", "I_I")
 NOMINAL_ANGLES_DEG = np.arange(0.0, 360.0, 45.0)
 SCALE_1_5 = Scale(minimum=1.0, maximum=5.0)
+
+
+def quality_settings() -> st.SearchStrategy[QualitySettings]:
+    """Draw a valid ``QualitySettings``: actions from their allowed sets, thresholds in range."""
+    actions = {
+        name: st.sampled_from(get_args(field.annotation))
+        for name, field in QualitySettings.model_fields.items()
+        if name not in ("excessive_missing_share", "min_age")
+    }
+    return st.builds(
+        QualitySettings,
+        excessive_missing_share=st.floats(0.0, 1.0),
+        min_age=st.floats(0.0, 120.0),
+        **actions,
+    )
+
+
+def csv_rows(text: str) -> list[dict[str, str]]:
+    """Read CSV text as one dict per row, every cell as text."""
+    return list(csv.DictReader(io.StringIO(text, newline="")))
 
 
 def fake_frame(module: str) -> object:

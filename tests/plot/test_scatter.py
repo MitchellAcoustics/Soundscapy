@@ -268,9 +268,11 @@ def test_by_ssp_reasons_labels_the_included_points(isd_coords):
     )
 
 
-def test_by_ssp_flags_draws_one_labelled_group(isd_coords):
+def test_by_ssp_flags_labels_each_flag_combination(isd_coords):
     ax = plot.scatter(isd_coords, by="ssp_flags")
-    assert _legend_texts(ax) == ["(blank)"]
+    keys = sorted(set(isd_coords.labels["ssp_flags"].tolist()))  # split draws keys in sorted order
+    assert _legend_texts(ax) == ["(blank)" if k == "" else k for k in keys]
+    assert "all_midpoint" in _legend_texts(ax)
 
 
 def test_empty_coordinates_draw_without_legend_or_warning(isd_coords):

@@ -20,10 +20,27 @@ import numpy as np
 from pydantic import StrictStr, field_validator
 
 from soundscapy import _data
-from soundscapy._frames import column_text, read_text_table, readonly_copy
+from soundscapy._frames import (
+    bool_mask,
+    column_text,
+    read_text_table,
+    readonly_copy,
+    take_rows,
+    with_columns,
+)
 from soundscapy._log import logger
-from soundscapy._model import _UNSET, SSP_PREFIX, FrozenModel, _Unset, validate
+from soundscapy._model import (
+    _UNSET,
+    COL_RESPONSE_ID,
+    SSP_PREFIX,
+    FrozenModel,
+    _Unset,
+    merge_settings,
+    settings_layer,
+    validate,
+)
 from soundscapy.errors import (
+    CodingError,
     ColumnCollisionError,
     DuplicateResponseIdError,
     FileFormatError,
@@ -37,8 +54,12 @@ from soundscapy.errors import (
 )
 from soundscapy.provenance import envelope, hash_file, hash_json
 from soundscapy.survey.mapping import (
+    _ID_ROLES,
     _LANGUAGE_CODE,
     _NOT_LANGUAGE_CODE,
+    Coding,
+    FlagSpecs,
+    Groups,
     IdSpec,
     ItemGroup,
     LanguageSpec,
@@ -46,17 +67,31 @@ from soundscapy.survey.mapping import (
     apply_coding,
     read_mapping,
 )
-from soundscapy.survey.status import Reason, Status
+from soundscapy.survey.quality import QualityInputs, QualitySettings, apply_quality
+from soundscapy.survey.status import Flag, Reason, Status
 
 if TYPE_CHECKING:
+    import enum
+
     import pandas as pd
-    from numpy.typing import NDArray
+    from numpy.typing import ArrayLike, NDArray
 
-__all__ = ["ImportSettings", "ReadOptions", "SourceRef", "Survey", "read_survey"]
+__all__ = [
+    "ImportSettings",
+    "ReadOptions",
+    "SourceRef",
+    "Survey",
+    "read_survey",
+    "resolve_import_settings",
+]
 
-_ROLES: Final = ("location", "session", "group", "record")
 _SUFFIX_FORMATS: Final[Mapping[str, Literal["csv", "tsv"]]] = {".csv": "csv", ".tsv": "tsv"}
 _DEFAULT_DELIMITERS: Final[Mapping[str, str]] = {"csv": ",", "tsv": "\t"}
+_SCALE_HINT: Final = (
+    "add a missing_values code for a value that means no answer, set coding.offset to "
+    'shift the scale (a 0..4 export needs offset = 1.0), or pass on_scale_violation="exclude" '
+    "to make each violating cell missing"
+)
 
 
 class ReadOptions(FrozenModel):
@@ -103,15 +138,19 @@ class ReadOptions(FrozenModel):
 
 
 class ImportSettings(FrozenModel):
-    """Settings of ``read_survey()``.
+    """Settings of ``read_survey()`` (spec 6.3.4).
 
     Attributes
     ----------
+    quality : QualitySettings, optional
+        The quality rules' actions and thresholds (spec 6.7).
     on_scale_violation : {"error", "exclude"}, optional
-        What a coded value outside the response scale does. In this version a violation
-        always raises ``ScaleViolationError``.
+        What a coded value outside its response scale does: ``"error"`` raises
+        ``ScaleViolationError`` naming every offending column; ``"exclude"`` makes each
+        violating cell missing and gives the response reason ``scale_violation``.
     """
 
+    quality: QualitySettings = QualitySettings()
     on_scale_violation: Literal["error", "exclude"] = "error"
 
 
@@ -212,23 +251,77 @@ class Survey:
         """
         return len(self.response_id)
 
+    def to_frame(self) -> pd.DataFrame:
+        """Return the data with the response id and status columns appended.
+
+        Returns
+        -------
+        pandas.DataFrame
+            ``data``'s columns, then ``ssp_response_id``, ``ssp_included``, ``ssp_reasons``
+            and ``ssp_flags``; ``data`` itself is unchanged.
+        """
+        columns = {COL_RESPONSE_ID: self.response_id, **self.status.label_arrays()}
+        return with_columns(self.data, columns)
+
+    def select(self, mask: ArrayLike) -> Survey:
+        """Return the responses where ``mask`` is true, in order.
+
+        Parameters
+        ----------
+        mask : array-like of bool
+            One entry per response.
+
+        Returns
+        -------
+        Survey
+            The chosen responses: every per-response array, score table, id column and the
+            status restricted to them, and ``data`` with a fresh index. The mapping,
+            settings, source and provenance are unchanged; ``self`` is unchanged.
+
+        Raises
+        ------
+        ValueError
+            If ``mask`` is not a boolean array with one entry per response.
+        """
+        keep = bool_mask(mask, self.n())
+        return Survey(
+            data=take_rows(self.data, keep),
+            mapping=self.mapping,
+            scores={name: values[keep] for name, values in self.scores.items()},
+            response_id=self.response_id[keep],
+            ids={role: values[keep] for role, values in self.ids.items()},
+            language=self.language[keep],
+            status=self.status.select(keep),
+            settings=self.settings,
+            source=self.source,
+            provenance=self.provenance,
+        )
+
 
 def read_survey(
     source: str | os.PathLike[str],
     mapping: SurveyMapping | str | os.PathLike[str],
     *,
     read_options: ReadOptions | Mapping[str, object] | _Unset = _UNSET,
+    quality: QualitySettings | Mapping[str, object] | _Unset = _UNSET,
+    on_scale_violation: Literal["error", "exclude"] | _Unset = _UNSET,
+    settings: ImportSettings | Mapping[str, object] | _Unset = _UNSET,
 ) -> Survey:
     """Read a survey export into a coded, validated survey.
 
     The file is read with every cell as text, and then, in order: a column starting with
     ``ssp_`` is refused; every mapped column must be in the header; each row gets a
-    response id; the language and the attribute items are coded; coded values are
-    checked against the response scale; and a response with a missing attribute item is
-    excluded with reason ``incomplete_attributes``. Id errors come before coding errors,
-    because coding and scale errors name responses by id. One INFO line on the
-    ``soundscapy`` logger summarises the rows read, blank rows skipped, and responses
-    included and excluded by reason.
+    response id; the language and every mapped item group are coded; coded values are
+    checked against their group's scale (raising, or under ``on_scale_violation="exclude"``
+    making the cell missing); the age and flag columns are read; and the quality rules of
+    ``settings.quality`` write each response's status, a response with a missing attribute
+    item always getting reason ``incomplete_attributes``. Id errors come before coding
+    errors, because coding and scale errors name responses by id. One INFO line on the
+    ``soundscapy`` logger summarises the rows read, blank rows skipped, responses included
+    and excluded by reason, and the flags given.
+
+    Settings resolve in the order of spec 6.3.4: an explicit keyword (``quality``,
+    ``on_scale_violation``) beats ``settings``, which beats the model defaults.
 
     The response id is, by the first rule that applies: the mapped ``response`` column,
     stripped; the mapped ``response_key`` columns, each stripped, joined with ``/``; or
@@ -244,6 +337,13 @@ def read_survey(
         The mapping, or a mapping TOML file to read with ``read_mapping()``.
     read_options : ReadOptions or mapping, optional
         How the file is read; a mapping is validated into ``ReadOptions``.
+    quality : QualitySettings or mapping, optional
+        The quality rules; a mapping holds the fields to change.
+    on_scale_violation : {"error", "exclude"}, optional
+        What a coded value outside its scale does; see ``ImportSettings``.
+    settings : ImportSettings or mapping, optional
+        Every import setting at once; the two keywords above override its fields.
+        Settings files arrive with profiles.
 
     Returns
     -------
@@ -255,7 +355,7 @@ def read_survey(
     TypeError
         If ``source`` is not a path, or ``mapping`` is neither a mapping nor a path.
     SettingsError
-        If ``read_options`` is neither a ReadOptions nor a mapping, or fails validation.
+        If ``read_options`` or a settings argument has the wrong type or fails validation.
     FileFormatError
         If the format cannot be told from the suffix, or the file is malformed.
     EncodingError
@@ -270,14 +370,17 @@ def read_survey(
     DuplicateResponseIdError
         If two rows share a response id.
     CodingError
-        If an attribute text is neither missing, a value-map key nor a number.
+        If an item text is neither missing, a value-map key nor a number, or an age text is
+        not a number.
     ScaleViolationError
-        If a coded attribute value lies outside the response scale.
+        If a coded value lies outside its group's scale and ``on_scale_violation`` is
+        ``"error"``.
 
     References
     ----------
-    The attribute items and their response scale: [@iso12913-2-2018]. Excluding
-    responses with missing attribute items before analysis: [@mitchell2022how].
+    The items and their response scales: [@iso12913-2-2018]. Excluding responses with
+    missing attribute items before analysis: [@mitchell2022how]. The quality rules:
+    [@erfanian2021psychological].
     """
     if not isinstance(source, str | os.PathLike):
         msg = (
@@ -292,7 +395,57 @@ def read_survey(
     else:
         msg = f"mapping must be a SurveyMapping or a path, got {type(mapping).__name__}"
         raise TypeError(msg)
-    return _read_survey(source, resolved, read_options=_read_options(read_options))
+    import_settings = resolve_import_settings(
+        quality=quality, on_scale_violation=on_scale_violation, settings=settings
+    )
+    return _read_survey(
+        source, resolved, read_options=_read_options(read_options), settings=import_settings
+    )
+
+
+def resolve_import_settings(
+    *,
+    quality: QualitySettings | Mapping[str, object] | _Unset = _UNSET,
+    on_scale_violation: Literal["error", "exclude"] | _Unset = _UNSET,
+    settings: ImportSettings | Mapping[str, object] | _Unset = _UNSET,
+) -> ImportSettings:
+    """Resolve the import settings from the keywords ``read_survey()`` and the loaders take.
+
+    Parameters
+    ----------
+    quality : QualitySettings or mapping, optional
+        The quality rules, or the fields of them to change.
+    on_scale_violation : {"error", "exclude"}, optional
+        What a coded value outside its scale does.
+    settings : ImportSettings or mapping, optional
+        Every import setting at once.
+
+    Returns
+    -------
+    ImportSettings
+        The layers merged, the keywords winning over ``settings`` and both over the model
+        defaults (spec 6.3.4 ranks 1 and 2), and validated once.
+
+    Raises
+    ------
+    SettingsError
+        If an argument has the wrong type, ``settings`` is a path (settings files arrive
+        with profiles), or the merged settings fail validation.
+    """
+    layers: list[Mapping[str, object]] = []
+    if settings is not _UNSET:
+        if isinstance(settings, str | os.PathLike):
+            msg = (
+                f"settings={os.fspath(settings)!r} is a path, but settings files arrive with "
+                "profiles; pass an ImportSettings or a mapping of its fields"
+            )
+            raise SettingsError(msg)
+        layers.append(settings_layer(settings, model=ImportSettings, name="settings"))
+    if quality is not _UNSET:
+        layers.append({"quality": settings_layer(quality, model=QualitySettings, name="quality")})
+    if on_scale_violation is not _UNSET:
+        layers.append({"on_scale_violation": on_scale_violation})
+    return merge_settings(ImportSettings, layers, context="invalid import settings")
 
 
 def _read_options(value: ReadOptions | Mapping[str, object] | _Unset) -> ReadOptions:
@@ -328,6 +481,7 @@ def _read_survey(
     mapping: SurveyMapping,
     *,
     read_options: ReadOptions,
+    settings: ImportSettings,
     data_refs: Sequence[Mapping[str, str]] = (),
 ) -> Survey:
     """Read a survey from a path with resolved inputs; ``data_refs`` follow the circumplex's."""
@@ -346,14 +500,30 @@ def _read_survey(
     rows = table.row_numbers
     response_id, id_source, id_columns = _response_ids(ids, stripped, rows)
     language = _languages(mapping.language, frame, response_id)
-    group = mapping.groups.attributes
-    scores = _code_group(group, frame, response_id)
-    status = Status.all_included(len(response_id)).with_reason(
-        np.isnan(scores).any(axis=1), Reason.INCOMPLETE_ATTRIBUTES
+    groups = dict(_mapped_groups(mapping))
+    coded = {name: _code_group(group, frame, response_id) for name, group in groups.items()}
+    status = Status.all_included(len(response_id))
+    if settings.on_scale_violation == "error" and any(out.any() for _, out in coded.values()):
+        msg = _scale_violation_message(groups, coded, response_id)
+        raise ScaleViolationError(msg, hint=_SCALE_HINT)
+    scores: dict[str, NDArray[np.float64]] = {}
+    violating_rows = np.zeros(len(response_id), dtype=np.bool_)
+    for name, (values, outside) in coded.items():
+        values[outside] = np.nan
+        violating_rows |= outside.any(axis=1)
+        scores[name] = values
+    status = status.with_reason(violating_rows, Reason.SCALE_VIOLATION)
+    attribute_scale = mapping.groups.attributes.scale
+    inputs = QualityInputs(
+        attributes=scores["attributes"],
+        midpoint=attribute_scale.midpoint,
+        source_dominance=scores.get("source_dominance"),
+        age=_age(frame, mapping, response_id),
+        **{name: _flag(frame, mapping, name) for name in FlagSpecs.model_fields},
     )
+    status, skipped = apply_quality(status, inputs, settings.quality)
     _log_summary(path.name, table.n_blank, status)
 
-    settings = ImportSettings()
     source_ref = SourceRef(name=path.name, hash=hash_file(path), read_options=options)
     circumplex_ref = {
         "kind": "circumplex",
@@ -373,11 +543,12 @@ def _read_survey(
         id_columns=role_columns,
         response_id_columns=id_columns,
         response_key_blank_ok=[c for c in ids.response_key if c in blank_ok],
+        quality_skipped=list(skipped),
     )
     return Survey(
         data=frame,
         mapping=mapping,
-        scores={"attributes": scores},
+        scores=scores,
         response_id=response_id,
         ids={role: stripped[column] for role, column in role_columns.items()},
         language=language,
@@ -389,7 +560,16 @@ def _read_survey(
 
 
 def _mapped_roles(ids: IdSpec) -> list[str]:
-    return [role for role in _ROLES if getattr(ids, role)]
+    return [role for role in _ID_ROLES if getattr(ids, role)]
+
+
+def _mapped_groups(mapping: SurveyMapping) -> list[tuple[str, ItemGroup]]:
+    """Return the item groups with columns, attributes first, then in ``Groups`` field order."""
+    return [
+        (name, group)
+        for name in Groups.model_fields
+        if (group := getattr(mapping.groups, name)).columns
+    ]
 
 
 def _check_columns(header: list[str], mapping: SurveyMapping) -> None:
@@ -407,7 +587,15 @@ def _check_columns(header: list[str], mapping: SurveyMapping) -> None:
     mapped += [(f"ids.{role}", getattr(ids, role)) for role in _mapped_roles(ids)]
     if mapping.language.column:
         mapped.append(("language.column", mapping.language.column))
-    mapped += [(f"groups.attributes.columns.{p}", c) for p, c in mapping.groups.attributes.columns]
+    for name, group in _mapped_groups(mapping):
+        mapped += [(f"groups.{name}.columns.{key}", column) for key, column in group.columns]
+    if mapping.age:
+        mapped.append(("age", mapping.age))
+    for name in FlagSpecs.model_fields:
+        column = getattr(mapping.flags, name).column
+        if column:
+            mapped.append((f"flags.{name}.column", column))
+    mapped += [(f"carry[{i}]", column) for i, column in enumerate(mapping.carry)]
     columns = set(header)
     missing = [f"{key} = {column!r}" for key, column in mapped if column not in columns]
     if missing:
@@ -624,8 +812,8 @@ def _code_group(
     group: ItemGroup,
     frame: pd.DataFrame,
     response_ids: NDArray[np.object_],
-) -> NDArray[np.float64]:
-    """Code an item group's columns and check the non-missing values against its scale."""
+) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
+    """Code an item group's columns; return the scores and which cells are off its scale."""
     cells = np.empty((len(response_ids), len(group.columns)), dtype=object)
     for j, (_, column) in enumerate(group.columns):
         cells[:, j] = column_text(frame, column)
@@ -634,8 +822,21 @@ def _code_group(
         cells, group.coding, group.scale, item_keys=keys, response_ids=response_ids
     )
     outside = ~np.isnan(scores) & ~group.scale.contains(scores)
-    if outside.any():
-        failures = []
+    return scores, outside
+
+
+def _scale_violation_message(
+    groups: Mapping[str, ItemGroup],
+    coded: Mapping[str, tuple[NDArray[np.float64], NDArray[np.bool_]]],
+    response_ids: NDArray[np.object_],
+) -> str:
+    """Return one message for every group with a violation, in coding order (spec 6.4.3)."""
+    segments = []
+    for name, (scores, outside) in coded.items():
+        if not outside.any():
+            continue
+        group = groups[name]
+        entries = []
         for j, (key, column) in enumerate(group.columns):
             hit = outside[:, j]
             if not hit.any():
@@ -643,28 +844,60 @@ def _code_group(
             counts = Counter(scores[hit, j].tolist())
             listed = ", ".join(f"{value:g} x{counts[value]}" for value in sorted(counts))
             ids = _shown(response_ids[hit].tolist())
-            failures.append(f"{column!r} ({key}): {listed} (responses {ids})")
+            entries.append(f"{column!r} ({key}): {listed} (responses {ids})")
         scale = group.scale
-        msg = f"coded values outside the {scale.minimum:g}..{scale.maximum:g} scale: " + "; ".join(
-            failures
+        segments.append(f"{name} ({scale.minimum:g}..{scale.maximum:g}): " + "; ".join(entries))
+    return "coded values outside their scales: " + " | ".join(segments)
+
+
+def _age(
+    frame: pd.DataFrame, mapping: SurveyMapping, response_ids: NDArray[np.object_]
+) -> NDArray[np.float64] | None:
+    """Code the age column as numbers, NaN where missing; ``None`` when unmapped."""
+    if not mapping.age:
+        return None
+    cells = column_text(frame, mapping.age)[:, np.newaxis]
+    try:
+        coded = apply_coding(
+            cells,
+            Coding(),
+            mapping.groups.attributes.scale,  # unused: nothing is reversed
+            item_keys=(mapping.age,),
+            response_ids=response_ids,
         )
-        hint = (
-            "add a missing_values code for a value that means no answer, or set "
-            "coding.offset to shift the scale (a 0..4 export needs offset = 1.0)"
-        )
-        raise ScaleViolationError(msg, hint=hint)
-    return scores
+    except CodingError as err:
+        listed = err.failures[mapping.age]
+        msg = f"the age column {mapping.age!r} holds texts that are not numbers: {listed}"
+        hint = "map age to a column of numbers, or leave age unmapped"
+        raise CodingError(msg, hint=hint, failures=err.failures) from err
+    return coded[:, 0]
+
+
+def _flag(frame: pd.DataFrame, mapping: SurveyMapping, name: str) -> NDArray[np.bool_] | None:
+    """Whether each response's flag cell, stripped, is a true value; ``None`` when unmapped."""
+    spec = getattr(mapping.flags, name)
+    if not spec.column:
+        return None
+    return np.isin(stripped_text(frame, spec.column), list(spec.true_values))
+
+
+def _nonzero_counts(counts: Mapping[str, int], kind: str, codes: type[enum.StrEnum]) -> list[str]:
+    """Return ``"<code>: <count>"`` for every code with a non-zero count, in enum order."""
+    out = []
+    for code in codes:
+        count = counts[f"{kind}:{code.value}"]
+        if count:
+            out.append(f"{code.value}: {count}")
+    return out
 
 
 def _log_summary(name: str, n_blank: int, status: Status) -> None:
     counts = status.counts()
-    by_reason = [
-        f"{reason.value}: {counts[f'reason:{reason.value}']}"
-        for reason in Reason
-        if counts[f"reason:{reason.value}"]
-    ]
+    by_reason = _nonzero_counts(counts, "reason", Reason)
+    by_flag = _nonzero_counts(counts, "flag", Flag)
     logger.info(
-        "read_survey: %d %s read from %s, %d blank %s skipped; %d included, %d excluded (%s)",
+        "read_survey: %d %s read from %s, %d blank %s skipped; %d included, %d excluded (%s); "
+        "flagged (%s)",
         counts["n"],
         _plural(counts["n"], "row"),
         name,
@@ -673,4 +906,5 @@ def _log_summary(name: str, n_blank: int, status: Status) -> None:
         counts["included"],
         counts["excluded"],
         ", ".join(by_reason) or "none",
+        ", ".join(by_flag) or "none",
     )

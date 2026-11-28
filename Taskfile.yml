@@ -58,9 +58,7 @@ tasks:
   test:network:
     desc: Run the tests that need network access
     cmds:
-      # Exit code 5 (no test carries the marker) counts as success; see test:reference.
-      # Remove it in the commit that adds the first network test (M1 slice S2).
-      - uv run pytest -m network {{.CLI_ARGS}} || test $? -eq 5
+      - uv run pytest -m network {{.CLI_ARGS}}
 
   check:fast:
     desc: Lint and type-check (offline, a few seconds)

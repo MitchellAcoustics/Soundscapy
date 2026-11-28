@@ -50,19 +50,20 @@ def test_import_and_project_without_narwhals_polars_or_pyarrow():
 
 
 # The public surface of slice S1, exactly; each later slice adds its own names to this set.
-S1_NAMES = frozenset(
+S2_NAMES = frozenset(
     {
         "AngleSelection", "Circumplex", "Coding", "Coordinates", "ProjectionSettings",
-        "ReadOptions", "Scale", "Survey", "SurveyMapping", "__version__", "attach",
-        "circumplex", "datasets", "errors", "load_isd", "plot", "project", "read_mapping",
-        "read_survey", "set_log_level", "show_versions", "workspace", "write_mapping",
+        "QualitySettings", "ReadOptions", "Scale", "Survey", "SurveyMapping", "__version__",
+        "attach", "circumplex", "datasets", "errors", "load_isd", "plot", "project",
+        "read_mapping", "read_survey", "set_log_level", "show_versions", "workspace",
+        "write_mapping",
     }
 )  # fmt: skip
 
 
-def test_all_is_the_s1_surface():
-    assert len(soundscapy.__all__) == len(S1_NAMES) == 23
-    assert set(soundscapy.__all__) == S1_NAMES
+def test_all_is_the_s2_surface():
+    assert len(soundscapy.__all__) == len(S2_NAMES) == 24
+    assert set(soundscapy.__all__) == S2_NAMES
     assert soundscapy.__all__ == sorted(soundscapy.__all__)
 
 

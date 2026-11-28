@@ -1,0 +1,38 @@
+schema = "soundscapy.mapping"
+schema_version = 1
+instrument = "iso-12913-outdoor"
+instrument_version = "1"
+age = "age"
+carry = ["start_time", "end_time", "perceived_loud", "visit_often", "like_to_visit", "gender", "tourist_local", "LAeq", "LA10", "LA90", "LCeq", "N5", "sharpness", "roughness", "tonality"]
+
+[ids]
+response_key = ["LocationID", "SessionID", "GroupID", "RecordID"]
+location = "LocationID"
+session = "SessionID"
+group = "GroupID"
+record = "RecordID"
+
+[language]
+value = "eng"
+
+[groups.attributes.columns]
+pleasant = "PAQ1"
+vibrant = "PAQ2"
+eventful = "PAQ3"
+chaotic = "PAQ4"
+annoying = "PAQ5"
+monotonous = "PAQ6"
+uneventful = "PAQ7"
+calm = "PAQ8"
+
+[groups.source_dominance.columns]
+traffic_noise = "traffic_noise"
+other_noise = "other_noise"
+human_sounds = "human_sounds"
+natural_sounds = "natural_sounds"
+
+[groups.overall_quality.columns]
+overall_quality = "overall_sound_environment"
+
+[groups.appropriateness.columns]
+appropriateness = "appropriate"

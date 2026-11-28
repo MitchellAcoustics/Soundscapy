@@ -1,0 +1,72 @@
+schema = "soundscapy.dataset_sidecar"
+schema_version = 1
+name = "course-demo"
+version = "1"
+source_file = "examples/data/DemoData.csv"
+source_ref = "soundscapy 0.x main, commit 325e97c1aff124b7d2d426af24592d8a8357b67f"
+source_sha256 = "d6d4f937b53f02f4bdaa28e8401fe90061d0d9fde9da89c0ec898baaa4fcdd3a"
+copy_hash = "h1-sha256:7f9e0933a0b6da290a612659420586617c0a1b0ddcd74d69c4e66c314c8b7386"
+n_rows = 456
+dropped_columns = ["free_response", "ISOPleasant", "ISOEventful"]
+locations = [
+    "CamdenTown",
+    "MarchmontGarden",
+    "TateModern",
+    "PancrasLock",
+]
+columns = [
+    "LocationID",
+    "SessionID",
+    "GroupID",
+    "RecordID",
+    "start_time",
+    "end_time",
+    "traffic_noise",
+    "other_noise",
+    "human_sounds",
+    "natural_sounds",
+    "PAQ1",
+    "PAQ2",
+    "PAQ3",
+    "PAQ4",
+    "PAQ5",
+    "PAQ6",
+    "PAQ7",
+    "PAQ8",
+    "overall_sound_environment",
+    "appropriate",
+    "perceived_loud",
+    "visit_often",
+    "like_to_visit",
+    "age",
+    "gender",
+    "tourist_local",
+    "LAeq",
+    "LA10",
+    "LA90",
+    "LCeq",
+    "N5",
+    "sharpness",
+    "roughness",
+    "tonality",
+]
+
+[features]
+columns = [
+    "LAeq",
+    "LA10",
+    "LA90",
+    "LCeq",
+    "N5",
+    "sharpness",
+    "roughness",
+    "tonality",
+]
+units_verified = false
+
+[citation]
+citation = "Mitchell, A., Oberman, T., Aletta, F., Erfanian, M., Kachlicka, M., Lionello, M., Fang, X., and Kang, J. (2024). The International Soundscape Database: An integrated multimedia database of urban soundscape surveys -- questionnaires with acoustical and contextual information (version 1.0.1-alpha.1) [Data set]. Zenodo."
+doi_or_url = "https://doi.org/10.5281/zenodo.10672568"
+licence = "CC-BY-4.0"
+date = "2024-02-16"
+notes = "Renamed extract of the ISD used in the IoA soundscape course (examples/data/DemoData.csv on soundscapy 0.x main): the ISD 1.0.1-alpha.1 rows of CamdenTown, MarchmontGarden, PancrasLock and TateModern through the four-part key, less PancrasLock/PancrasLock2/PL202/410 and TateModern/TateModern1/TM124/663. All versions: concept DOI 10.5281/zenodo.5578572. free_response, ISOPleasant and ISOEventful dropped; other cells unchanged. The file has no language column: the ISD records 454 rows as eng and 2 as spa (CamdenTown/CamdenTown3/CT323/10009 and 10010); the mapping sets eng for all. Made by scripts/make_course_demo.py."

@@ -2,6 +2,8 @@ schema = "soundscapy.mapping"
 schema_version = 1
 instrument = "iso-12913-outdoor"
 instrument_version = "1"
+age = "age00"
+carry = ["start_time", "Survey_Version", "sss03", "sss04", "sss05"]
 
 [ids]
 response_key = ["LocationID", "SessionID", "GroupID", "RecordID"]
@@ -22,3 +24,22 @@ annoying = "annoying"
 monotonous = "monotonous"
 uneventful = "uneventful"
 calm = "calm"
+
+[groups.source_dominance.columns]
+traffic_noise = "ssi01"
+other_noise = "ssi02"
+human_sounds = "ssi03"
+natural_sounds = "ssi04"
+
+[groups.overall_quality.columns]
+overall_quality = "sss01"
+
+[groups.appropriateness.columns]
+appropriateness = "sss02"
+
+[groups.who5.columns]
+who5_1 = "who01"
+who5_2 = "who02"
+who5_3 = "who03"
+who5_4 = "who04"
+who5_5 = "who05"

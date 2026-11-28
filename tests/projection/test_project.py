@@ -14,12 +14,13 @@ from hypothesis import strategies as st
 
 from soundscapy._model import COL_ANGLE_SET, COL_INCLUDED, COL_REASONS, COL_RESPONSE_ID
 from soundscapy.distribution.coordinates import n, n_valid, valid_mask
-from soundscapy.errors import FormulationError, SettingsError
+from soundscapy.errors import FormulationError, MappingError, SettingsError
 from soundscapy.instrument import circumplex
 from soundscapy.instrument.angles import AngleSelection
 from soundscapy.projection.project import ProjectionSettings, project
 from soundscapy.provenance import hash_json
 from soundscapy.survey.read import read_survey
+from tests._helpers import ISD_FEATURES, ISD_MAPPING_CARRY
 
 FIXTURES = Path(__file__).parent / "fixtures"
 MAPPING = FIXTURES / "mapping.toml"
@@ -27,6 +28,8 @@ MAPPING_1_7 = FIXTURES / "mapping_1_7.toml"
 HAND_CSV = FIXTURES / "hand_values.csv"
 SCALE_1_7_CSV = FIXTURES / "scale_1_7.csv"
 ORDER_CSV = FIXTURES / "order.csv"
+CARRY_CSV = FIXTURES / "carry.csv"
+CARRY_MAPPING = FIXTURES / "carry_mapping.toml"
 
 # The two ISO/TS 12913-3:2019 hand values, derived in closed form (spec section 7.2).
 HAND_XY = np.array(
@@ -226,7 +229,67 @@ def test_subset_square_bounds(isd_coords):
 
 
 def test_subset_labels_carry_the_id_columns(isd_coords):
-    assert list(isd_coords.labels)[6:] == ["LocationID", "SessionID", "GroupID", "RecordID"]
+    assert list(isd_coords.labels)[6:10] == ["LocationID", "SessionID", "GroupID", "RecordID"]
+    assert list(isd_coords.labels)[10:] == [*ISD_MAPPING_CARRY, *ISD_FEATURES]
+
+
+# --- carried columns (spec 6.9.2) ----------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def carry_survey():
+    return read_survey(CARRY_CSV, CARRY_MAPPING)
+
+
+def test_project_carries_mapping_columns(carry_survey):
+    coords = project(carry_survey)
+    assert list(coords.labels)[-2:] == ["Site", "start_time"]
+    # Verbatim cell text: padding kept, a blank cell is "".
+    assert coords.labels["start_time"].tolist() == [" 2019-05-02 11:40 ", "2019-05-02 11:41", ""]
+    assert coords.labels["start_time"].dtype == np.object_
+
+
+def test_project_carry_keyword_adds(carry_survey):
+    coords = project(carry_survey, carry=["Survey_Version", "start_time"])
+    assert list(coords.labels)[-3:] == ["Site", "start_time", "Survey_Version"]
+    assert coords.labels["Survey_Version"].tolist() == ["v1", "", "v2"]
+    assert list(project(carry_survey, carry=["start_time"]).labels) == list(
+        project(carry_survey).labels
+    )
+    assert project(carry_survey, carry=["start_time"]).settings == project(carry_survey).settings
+
+
+def test_project_carry_rejects_a_bare_string(carry_survey):
+    with pytest.raises(TypeError, match="carry"):
+        project(carry_survey, carry="start_time")
+
+
+def test_project_carry_unknown_column_raises(carry_survey):
+    with pytest.raises(MappingError, match="'nope'") as info:
+        project(carry_survey, carry=["nope"])
+    assert "Survey_Version" in str(info.value)  # the data's columns are listed
+
+
+def test_project_carry_label_column_raises(carry_survey):
+    with pytest.raises(MappingError, match="'Site'"):
+        project(carry_survey, carry=["Site"])
+
+
+def test_split_by_carried_column(carry_survey):
+    parts = project(carry_survey).split("start_time")
+    assert list(parts) == ["", " 2019-05-02 11:40 ", "2019-05-02 11:41"]
+    assert [n(part) for part in parts.values()] == [1, 1, 1]
+
+
+def test_provenance_carries_quality_skipped(carry_survey):
+    coords = project(carry_survey)
+    assert coords.provenance["quality_skipped"] == carry_survey.provenance["quality_skipped"]
+    assert coords.provenance["quality_skipped"] == [
+        "no_consent",
+        "test_response",
+        "paper_input",
+        "under_age",
+    ]
 
 
 def test_coordinates_is_frozen(hand_survey):

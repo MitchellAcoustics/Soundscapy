@@ -26,7 +26,11 @@ from soundscapy.instrument import Scale, circumplex
 from soundscapy.provenance import hash_json
 from soundscapy.survey import mapping as mapping_module
 from soundscapy.survey.mapping import (
+    GROUP_KEYS,
+    GROUP_SCALES,
     Coding,
+    FlagSpec,
+    FlagSpecs,
     Groups,
     IdSpec,
     ItemGroup,
@@ -41,6 +45,7 @@ from tests._helpers import LABELS, raw_mapping
 FIXTURES = Path(__file__).parent / "fixtures"
 MINIMAL = FIXTURES / "minimal_mapping.toml"
 NONDEFAULT = FIXTURES / "nondefault_mapping.toml"
+FULL = FIXTURES / "full_mapping.toml"
 POSITIONS = tuple(f"PAQ{i}" for i in range(1, 9))
 
 
@@ -346,7 +351,9 @@ def test_write_mapping_byte_round_trip(tmp_path):
     assert b"coding" not in text
 
 
-@pytest.mark.parametrize("fixture", [MINIMAL, NONDEFAULT], ids=["minimal", "nondefault"])
+@pytest.mark.parametrize(
+    "fixture", [MINIMAL, NONDEFAULT, FULL], ids=["minimal", "nondefault", "full"]
+)
 def test_mapping_model_round_trip(tmp_path, fixture):
     original = read_mapping(fixture)
     out = tmp_path / "out.toml"
@@ -355,6 +362,163 @@ def test_mapping_model_round_trip(tmp_path, fixture):
     assert again == original
     assert hash_json(again) == hash_json(original)
     assert out.read_bytes() == fixture.read_bytes()
+
+
+def test_full_mapping_byte_round_trip(tmp_path):
+    out = tmp_path / "out.toml"
+    mapping = read_mapping(FULL)
+    write_mapping(mapping, out)
+    assert out.read_bytes() == FULL.read_bytes()
+    assert mapping.age == "age00"
+    assert mapping.carry == ("start_time", "Survey_Version")
+    assert mapping.flags.consent == FlagSpec(column="consent", true_values=("yes",))
+    assert mapping.groups.who5.scale == Scale(minimum=1.0, maximum=6.0, kind="interval")
+    assert dict(mapping.groups.overall_quality.coding.value_map)["Neutral"] == 3.0
+
+
+# --- optional groups, flags, age and carry (S2) ------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("group", "key"),
+    [
+        ("source_dominance", "trafic_noise"),
+        ("who5", "who5_6"),
+        ("overall_quality", "Overall_Quality"),
+    ],
+)
+def test_unknown_construct_key_raises(tmp_path, group, key):
+    raw = _raw()
+    raw["groups"][group] = {"columns": {key: "x"}}
+    with pytest.raises(MappingError, match=re.escape(key)) as info:
+        read_mapping(_write_raw(tmp_path, raw))
+    message = str(info.value)
+    assert group in message
+    for allowed in GROUP_KEYS[group]:
+        assert allowed in message
+
+
+def test_group_keys_in_canonical_order():
+    raw = _raw()
+    raw["groups"]["source_dominance"] = {
+        "columns": {"natural_sounds": "d", "traffic_noise": "a", "human_sounds": "c"}
+    }
+    mapping = SurveyMapping.model_validate(raw)
+    assert mapping.groups.source_dominance.columns == (
+        ("traffic_noise", "a"),
+        ("human_sounds", "c"),
+        ("natural_sounds", "d"),
+    )
+    ordered = _raw()
+    ordered["groups"]["source_dominance"] = {
+        "columns": {"traffic_noise": "a", "human_sounds": "c", "natural_sounds": "d"}
+    }
+    assert hash_json(SurveyMapping.model_validate(ordered)) == hash_json(mapping)
+
+
+def test_group_default_scales():
+    raw = _raw()
+    raw["groups"]["source_dominance"] = {"columns": {"traffic_noise": "a"}}
+    raw["groups"]["who5"] = {"columns": {"who5_1": "w"}}
+    raw["groups"]["appropriateness"] = {
+        "columns": {"appropriateness": "p"},
+        "scale": {"minimum": 1.0, "maximum": 7.0, "kind": "interval"},
+    }
+    groups = SurveyMapping.model_validate(raw).groups
+    assert groups.source_dominance.scale == Scale(minimum=1.0, maximum=5.0)
+    assert groups.who5.scale == Scale(minimum=0.0, maximum=5.0)
+    assert groups.appropriateness.scale == Scale(minimum=1.0, maximum=7.0, kind="interval")
+    assert GROUP_SCALES["who5"] == Scale(minimum=0.0, maximum=5.0)
+
+
+def test_unmapped_groups_are_empty_and_not_written(tmp_path):
+    mapping = SurveyMapping.model_validate(_raw())
+    for name in ("source_dominance", "overall_quality", "appropriateness", "who5"):
+        group = getattr(mapping.groups, name)
+        assert group.columns == ()
+        assert group.scale == GROUP_SCALES[name]
+    out = tmp_path / "out.toml"
+    write_mapping(mapping, out)
+    data = tomllib.loads(out.read_text(encoding="utf-8"))
+    assert set(data["groups"]) == {"attributes"}
+    assert "flags" not in data
+    assert "age" not in data
+    assert "carry" not in data
+
+
+def test_reverse_in_other_group():
+    raw = _raw()
+    raw["groups"]["overall_quality"] = {
+        "columns": {"overall_quality": "q"},
+        "coding": {"reverse": ["overall_quality"]},
+    }
+    mapping = SurveyMapping.model_validate(raw)
+    assert mapping.groups.overall_quality.coding.reverse == ("overall_quality",)
+    raw = _raw()
+    raw["groups"]["source_dominance"] = {
+        "columns": {"other_noise": "b"},
+        "coding": {"reverse": ["traffic_noise"]},
+    }
+    with pytest.raises(ValidationError, match="traffic_noise"):
+        SurveyMapping.model_validate(raw)
+
+
+@pytest.mark.parametrize(
+    ("fields", "fragment"),
+    [
+        ({"column": "consent"}, "true_values"),
+        ({"true_values": ["yes"]}, "column"),
+        ({"column": "consent", "true_values": [""]}, "true_values"),
+        ({"column": "consent", "true_values": [" yes"]}, "true_values"),
+    ],
+)
+def test_flag_spec_rules(fields, fragment):
+    with pytest.raises(ValidationError, match=fragment):
+        FlagSpec.model_validate(fields)
+
+
+def test_flag_specs_default_to_unmapped():
+    assert FlagSpecs() == FlagSpecs(consent=FlagSpec(), test=FlagSpec(), paper_input=FlagSpec())
+    assert FlagSpec().column == ""
+
+
+@pytest.mark.parametrize(
+    ("carry", "ids", "fragment"),
+    [
+        (["a", "a"], {"response": "ID"}, "a"),
+        (["a", " "], {"response": "ID"}, "carry"),
+        (["LocationID"], {"response": "ID", "location": "LocationID"}, "LocationID"),
+    ],
+)
+def test_carry_rules(tmp_path, carry, ids, fragment):
+    raw = raw_mapping(ids)
+    raw["carry"] = carry
+    with pytest.raises(MappingError, match=re.escape(fragment)):
+        read_mapping(_write_raw(tmp_path, raw))
+
+
+def test_carry_may_name_the_raw_language_column(tmp_path):
+    raw = raw_mapping({"response": "ID"})
+    raw["language"] = {"column": "Language"}
+    raw["carry"] = ["Language"]
+    assert read_mapping(_write_raw(tmp_path, raw)).carry == ("Language",)
+
+
+def test_write_mapping_field_order(tmp_path):
+    raw = raw_mapping({"response": "ID"})
+    raw.update(
+        age="age",
+        carry=["start_time"],
+        flags={"consent": {"column": "consent", "true_values": ["yes"]}},
+    )
+    raw["groups"]["who5"] = {"columns": {"who5_1": "w1"}}
+    out = tmp_path / "out.toml"
+    write_mapping(SurveyMapping.model_validate(raw), out)
+    text = out.read_text(encoding="utf-8")
+    positions = [
+        text.index(s) for s in ("age = ", "carry = ", "[ids]", "[groups.", "[flags.consent]")
+    ]
+    assert positions == sorted(positions)
 
 
 def test_nondefault_fixture_values():
