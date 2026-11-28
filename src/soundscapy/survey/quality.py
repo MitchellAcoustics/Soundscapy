@@ -126,7 +126,9 @@ def _masks(inputs: QualityInputs, settings: QualitySettings) -> dict[str, NDArra
     """Return, per rule, which rows it fires on, or ``None`` when its input is unmapped."""
     attributes = inputs.attributes
     missing = np.isnan(attributes)
-    complete = ~missing.any(axis=1)
+    # The ufunc, not `~missing.any(axis=1)`: under Python 3.11 ty types `.any(axis=...)`
+    # as a scalar-or-array union, which `~` keeps, and the dict below needs arrays.
+    complete = np.logical_not(missing.any(axis=1))
     constant = complete & (attributes == attributes[:, :1]).all(axis=1)
     first = attributes[:, 0]
     items = [missing]
