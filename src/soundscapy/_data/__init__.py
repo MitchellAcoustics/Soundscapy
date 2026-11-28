@@ -54,6 +54,15 @@ PINS: Final[Mapping[str, str]] = {
     "datasets/isd/subset-v1.0.toml": (
         "h1-sha256:5e68eaadad19212470b07159affb340ba58547fd55b4adc52144013fe745ebef"
     ),
+    "profiles/iso-12913-3-2019/1.toml": (
+        "h1-sha256:740750313499412ec15ed1391d35ce4ee78e43f1298e219f445160d4120c5fa8"
+    ),
+    "profiles/iso-12913-3-2024/1.toml": (
+        "h1-sha256:2a042e7e9e15de96a3d99a613193ac21bf10c2b401a3d019e1eaede6973743d7"
+    ),
+    "profiles/sal-2026/1.toml": (
+        "h1-sha256:7efcda72c0d0b15c97143e449da8bef4731af3d70fc45da4dbe7c40681aa4934"
+    ),
 }
 """Posix path relative to ``_data/`` mapped to the ``h1`` hash of the file's bytes."""
 

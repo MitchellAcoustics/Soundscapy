@@ -69,7 +69,7 @@ After S2 every projection uses the circumplex's nominal 45° angles and the cano
 **Profiles and settings (§6.3.4)**
 
 - R10. Each operation's settings resolve by the one precedence rule: base profile section, then a settings file's section, then `settings=` (model or mapping), then explicit keywords; `_UNSET` keywords never override; one `model_validate` runs on the result.
-- R11. The base profile is an explicit `profile=`, else the profile recorded in the input's provenance, else a settings file's `extends`, else `sal-2026`; `profile=` takes `"<id>@<version>"` or a bare id meaning the latest shipped version; an unknown profile raises `DataReferenceError` listing `list_profiles()`.
+- R11. The base profile is an explicit `profile=`, else a settings file's `extends` (an explicit file ranks with an explicit profile, spec §11.4), else the profile recorded in the input's provenance, else `sal-2026`; `profile=` takes `"<id>@<version>"` or a bare id meaning the latest shipped version; an unknown profile raises `DataReferenceError` listing `list_profiles()`.
 - R12. Three profiles ship as `_data/profiles/<id>/1.toml` with `schema = "soundscapy.profile"`, `schema_version = 1`, `id`, `version`, `locked` (dotted keys), `notes`, a `[citation]` block and one section per operation: `sal-2026@1` (canonical, `satp@1.5`, `item_statistics.dispersion = "iqr"`, nothing locked), `iso-12913-3-2019@1` (`iso2019`, `equal`, `range`, locked `projection.formulation`, `projection.angles.default`, `projection.angles.per_language`, `item_statistics.dispersion`), `iso-12913-3-2024@1` (canonical with the "interpretation pending the owner's check of the text" note, `equal`, `iqr`, the same locks). A resolved locked field that differs from the profile's value raises `ProfileConstraintError` naming the field and suggesting `profile="sal-2026"`; the ISO profiles thereby refuse `aletta2024`.
 - R13. A settings file is TOML with a required top-level `extends` and the §6.3.4 section names; `extends` missing, an unknown top-level key, invalid TOML or a missing file raise `SettingsError` (the `extends` message lists the shipped profiles and names `save_settings`); a section for another operation is ignored by this call; when `profile=` and `extends` disagree, `profile=` is the base and the file's sections still apply.
 - R14. Every survey-derived result records `provenance["profile"] = {id, version, hash}` and `provenance["overrides"]` (dotted keys whose resolved value differs from the base profile's effective value); `project` left with `profile` unset inherits the survey's profile, and an explicit different profile records the survey's as `provenance["profile_inherited"]` with `overrides` computed against the explicit one. The profile is recorded only here, not in `data_refs`.
@@ -150,11 +150,11 @@ Settings resolution, one path for every operation (the `[import]` section in `re
 ```mermaid
 flowchart TB
   P{profile= given?} -->|yes| B1[base = profile=]
-  P -->|no| I{input records a profile?}
-  I -->|yes| B2[base = input's profile]
-  I -->|no| F{settings= is a file with extends?}
+  P -->|no| F{settings= is a file with extends?}
   F -->|yes| B3[base = extends]
-  F -->|no| B4[base = sal-2026]
+  F -->|no| I{input records a profile?}
+  I -->|yes| B2[base = input's profile]
+  I -->|no| B4[base = sal-2026]
   B1 --> L[layers: profile section, file section, settings= set fields, keywords]
   B2 --> L
   B3 --> L

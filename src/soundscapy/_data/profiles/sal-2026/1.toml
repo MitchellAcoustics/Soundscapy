@@ -1,0 +1,25 @@
+schema = "soundscapy.profile"
+schema_version = 1
+id = "sal-2026"
+version = "1"
+locked = []
+notes = "The default profile. It follows the chapter: the canonical projection with the language-specific angles of satp@1.5 (Tables 4.7 and 4.8, the equal-communality model), and the interquartile range as the dispersion of item statistics. Nothing is locked, so any field can be changed and is recorded as an override."
+
+[citation]
+citation = "Mitchell, A., Oberman, T., Aletta, F. and Kang, J. (2026). Soundscape Translation Data: Analysis, Validation, and Application. Chapter 4 in Soundscape Across Languages. Springer Nature Singapore."
+doi_or_url = ""
+licence = "BSD-3-Clause (this file)"
+date = "2026"
+notes = "The chapter's recommended analysis settings, read from design/literature/mitchell-et-al-2026-satp-chapter-4-notes.md (author proof dated 2026-08-13); to be checked against the published chapter."
+
+# Model defaults: every quality rule and scale violation handled as read_survey documents.
+[import]
+
+[projection]
+formulation = "canonical"
+
+[projection.angles]
+default = "satp@1.5"
+
+[item_statistics]
+dispersion = "iqr"

@@ -18,6 +18,7 @@ from soundscapy.distribution.coordinates import OriginSegment
 from soundscapy.instrument import Scale, circumplex
 from soundscapy.instrument.angles import AngleSelection, AngleSet, AngleSetRef, LanguageAngles
 from soundscapy.instrument.circumplex import Attribute, Axis, Circumplex, Translation
+from soundscapy.profiles import ProfileHeader, ProfileRef
 from soundscapy.projection.project import ProjectionSettings
 from soundscapy.provenance import hash_file, hash_json
 from soundscapy.survey.mapping import (
@@ -164,6 +165,16 @@ MODELS: list[FrozenModel] = [
         },
     ),
     AngleSetRef(name="satp", version="1.5"),
+    ProfileHeader(
+        schema_name="soundscapy.profile",
+        schema_version=1,
+        id="custom",
+        version="1.2",
+        locked=("projection.formulation", "item_statistics.dispersion"),
+        notes="Ünïcode notes",
+        citation=_CITATION,
+    ),
+    ProfileRef(id="sal-2026", version="1", hash="h1-sha256:" + "d" * 64),
     ProjectionSettings(formulation="iso2019", angles=AngleSelection()),
     OriginSegment(
         kind="survey",
