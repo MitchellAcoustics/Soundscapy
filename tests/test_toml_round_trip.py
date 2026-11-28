@@ -144,7 +144,11 @@ MODELS: list[FrozenModel] = [
         paper_input="exclude",
     ),
     _source_ref(),
-    AngleSelection(),  # its one S1 field has one value
+    AngleSelection(
+        default=AngleSetRef(name="satp", version="1.5"),
+        per_language=(("cmn", AngleSetRef(name="aletta-2024", version="1")),),
+        on_uncovered="exclude",
+    ),
     LanguageAngles(tier="medium", angles_deg=(0.0, 18.5, 270.0), note="Ünïcode note"),
     AngleSet(
         schema_name="soundscapy.angle_set",

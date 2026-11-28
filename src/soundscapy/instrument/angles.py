@@ -33,6 +33,7 @@ __all__ = [
 
 _LANGUAGE_CODE = re.compile(r"^[a-z]{3}$")
 _FULL_TURN_DEG = 360.0
+_EQUAL: Final = "equal"
 _DATA_PREFIX: Final = "angle_sets/"
 Tier = Literal["high", "medium", "low"]
 
@@ -277,15 +278,83 @@ def read_angle_set(path: str | os.PathLike[str]) -> AngleSet:
         raise SettingsError(msg, hint=err.hint) from err
 
 
+def _parse_default(value: object) -> object:
+    """Read ``"name@version"`` as an ``AngleSetRef``; leave ``"equal"`` and models alone."""
+    if isinstance(value, str) and value != _EQUAL:
+        return AngleSetRef.parse(value)
+    return value
+
+
+def _parse_named_ref(value: object) -> object:
+    """Read ``"name@version"`` as an ``AngleSetRef``; ``"equal"`` is not a set."""
+    if isinstance(value, str):
+        if value == _EQUAL:
+            msg = f"per_language names angle sets only, not {_EQUAL!r}; leave the language out"
+            raise ValueError(msg)
+        return AngleSetRef.parse(value)
+    return value
+
+
+def _ref_label(value: AngleSetRef | str) -> str:
+    return value if isinstance(value, str) else value.label
+
+
+def _per_language_table(pairs: tuple[tuple[str, AngleSetRef], ...]) -> dict[str, str]:
+    return {code: ref.label for code, ref in pairs}
+
+
+AngleChoice = Annotated[
+    AngleSetRef | Literal["equal"],
+    BeforeValidator(_parse_default),
+    PlainSerializer(_ref_label, when_used="json"),
+]
+"""An ``AngleSetRef`` or ``"equal"``, read from and written as ``"name@version"`` or ``"equal"``."""
+
+NamedRef = Annotated[
+    AngleSetRef,
+    BeforeValidator(_parse_named_ref),
+    PlainSerializer(_ref_label, when_used="json"),
+]
+PerLanguagePairs = Annotated[
+    tuple[tuple[str, NamedRef], ...],
+    BeforeValidator(_to_pairs),
+    PlainSerializer(_per_language_table, when_used="json"),
+]
+"""Language code to ``AngleSetRef`` pairs, read from and written as a ``[per_language]`` table."""
+
+Policy = Literal["error", "exclude", "equal"]
+
+
 class AngleSelection(FrozenModel):
-    """The angle set each response is projected with.
+    """The angle set each response is projected with, and what to do without validated angles.
+
+    Per response, the set is ``per_language[language]`` if the language is listed, else
+    ``default``. ``"equal"`` uses the circumplex's nominal angles and does not consult the
+    language. A named set projects a high-tier language with its angles, a medium-tier one
+    with its angles and a flag, a low-tier one per ``on_low_confidence``, and a language the
+    set does not cover, or lists with a tier and no angles, per ``on_uncovered``.
 
     Attributes
     ----------
-    default : {"equal"}, optional
-        The angle set of every response. ``"equal"`` uses the circumplex's nominal angles
-        and does not consult the response's language. Named, language-specific angle sets
-        are not available in this version.
+    default : AngleSetRef or "equal", optional
+        The set for languages not in ``per_language``. A ``"name@version"`` string is
+        accepted and is how the value is written; the model default is ``"equal"``.
+    per_language : pairs of str to AngleSetRef, optional
+        Language code to set, each a ``"name@version"`` string or an ``AngleSetRef``;
+        ``"equal"`` is not allowed here. In TOML a ``[per_language]`` table.
+    on_uncovered : {"error", "exclude", "equal"}, optional
+        For a language absent from its set or listed without angles: raise, exclude the
+        responses, or project them with the nominal angles and a flag.
+    on_low_confidence : {"error", "exclude", "equal"}, optional
+        The same three choices for a low-tier language that has angles.
+
+    References
+    ----------
+    The tiers and the rule for using them: [@mitchell2026translation]; the first published
+    set of language-specific angles: [@aletta2024soundscape].
     """
 
-    default: Literal["equal"] = "equal"
+    default: AngleChoice = _EQUAL
+    per_language: PerLanguagePairs = ()
+    on_uncovered: Policy = "error"
+    on_low_confidence: Policy = "error"
