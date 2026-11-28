@@ -24,9 +24,10 @@ Before implementing or changing a scientific procedure, read its source in
 **Status:** Phase 0 is in place: the toolchain (`pyproject.toml`, `uv.lock`,
 `Taskfile.yml`, prek hooks), CI and the docs skeleton exist, on an empty package with a
 small test suite. M1 slice S1 (contracts and the thin path `load_isd` → `project` →
-`plot.scatter`/`attach`, plan `design/plans/2026-10-31-m1-s1-thin-slice.md`) is in place;
-next come the pandas-only rework of S1 (spec §12; narwhals is dropped), then slice S2. `task check`
-passing is the definition of done.
+`plot.scatter`/`attach`, plan `design/plans/2026-10-31-m1-s1-thin-slice.md`) is in place, on a
+pandas-only frame boundary (spec §12). M1 slice S2 (status, quality, full mapping, the course
+dataset; plan `design/plans/2026-10-31-m1-s2-status-quality.md`) is in place; slice S3 is next.
+`task check` passing is the definition of done.
 
 ## Repo map (target layout)
 
