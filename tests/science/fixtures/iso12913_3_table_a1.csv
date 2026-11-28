@@ -1,0 +1,10 @@
+part,step,label,direction
+2,1,Strongly disagree,1 = strongly disagree to 5 = strongly agree
+2,2,Somewhat disagree,1 = strongly disagree to 5 = strongly agree
+2,3,Neutral,1 = strongly disagree to 5 = strongly agree
+2,4,Somewhat agree,1 = strongly disagree to 5 = strongly agree
+2,5,Strongly agree,1 = strongly disagree to 5 = strongly agree
+3,PAQ1,pleasant,+x
+3,PAQ5,annoying,-x
+3,PAQ3,eventful,+y
+3,PAQ7,uneventful,-y

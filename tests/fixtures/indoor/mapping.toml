@@ -1,0 +1,19 @@
+schema = "soundscapy.mapping"
+schema_version = 1
+instrument = "indoor-test"
+instrument_version = "1"
+
+[ids]
+response = "ID"
+
+[language]
+column = "lang"
+
+# Keys are positions or reference-language labels; both forms are used here on purpose.
+[groups.attributes.columns]
+PAQ1 = "comfortable"
+lively = "lively"
+PAQ3 = "engaging"
+uncomfortable = "uncomfortable"
+PAQ5 = "oppressive"
+dull = "dull"

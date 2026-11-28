@@ -10,20 +10,30 @@ mpl.use("Agg")
 
 import sys
 from collections.abc import Callable, Iterator, Mapping, Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeAlias
 
 import pandas as pd
 import pytest
 
+from soundscapy import _data
 from soundscapy.datasets import isd
+from soundscapy.instrument import circumplex
 from soundscapy.projection.project import project
+from soundscapy.provenance import hash_bytes
 from tests._helpers import medium_warning
 
 if TYPE_CHECKING:
+    from importlib.resources.abc import Traversable
+
     from soundscapy.distribution.coordinates import Coordinates
     from soundscapy.survey.read import Survey
 
 MakeFrame: TypeAlias = Callable[[Mapping[str, Sequence[Any]]], Any]
+
+# The synthetic indoor circumplex (PRD FR-2.0) and the survey and mapping that use it.
+INDOOR = Path(__file__).parent / "fixtures" / "indoor"
+INDOOR_RELPATH = "circumplexes/indoor-test/1.toml"
 
 
 @pytest.fixture(autouse=True)
@@ -65,3 +75,31 @@ def isd_coords(isd_survey: Survey) -> Coordinates:
     """
     with medium_warning():
         return project(isd_survey)
+
+
+@pytest.fixture
+def indoor_circumplex_registry(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
+    """Register the synthetic indoor circumplex as if it shipped, for one test.
+
+    ``_data.PINS`` gets a copy with the fixture file's real hash under
+    ``circumplexes/indoor-test/1.toml``, and ``_data._resource`` resolves that one path to
+    the fixture file, so ``read_survey``, ``project`` and the plot functions run unchanged.
+    The ``circumplex()`` cache is cleared on entry and exit, so no test sees a stale
+    instrument. Nothing is written to the repository. Yields the fixture directory, which
+    holds ``circumplex.toml``, ``survey.csv`` and ``mapping.toml``.
+    """
+    fixture = INDOOR / "circumplex.toml"
+    original_resource = _data._resource  # noqa: SLF001  # the registry seam the tests override
+
+    def resource(relpath: str) -> Traversable:
+        return fixture if relpath == INDOOR_RELPATH else original_resource(relpath)
+
+    pins = {**_data.PINS, INDOOR_RELPATH: hash_bytes(fixture.read_bytes())}
+    monkeypatch.setattr(_data, "PINS", pins)
+    monkeypatch.setattr(_data, "_resource", resource)
+    circumplex.cache_clear()
+    try:
+        yield INDOOR
+    finally:
+        monkeypatch.undo()
+        circumplex.cache_clear()

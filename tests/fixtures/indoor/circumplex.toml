@@ -1,0 +1,83 @@
+schema = "soundscapy.circumplex"
+schema_version = 1
+name = "indoor-test"
+version = "1"
+reference_language = "eng"
+translations = []
+
+[[attributes]]
+position = "PAQ1"
+angle_deg = 0.0
+
+[attributes.labels]
+eng = "comfortable"
+
+[[attributes]]
+position = "PAQ2"
+angle_deg = 60.0
+
+[attributes.labels]
+eng = "lively"
+
+[[attributes]]
+position = "PAQ3"
+angle_deg = 120.0
+
+[attributes.labels]
+eng = "engaging"
+
+[[attributes]]
+position = "PAQ4"
+angle_deg = 180.0
+
+[attributes.labels]
+eng = "uncomfortable"
+
+[[attributes]]
+position = "PAQ5"
+angle_deg = 240.0
+
+[attributes.labels]
+eng = "oppressive"
+
+[[attributes]]
+position = "PAQ6"
+angle_deg = 300.0
+
+[attributes.labels]
+eng = "dull"
+
+[[axes]]
+id = "Comfort"
+positive = "PAQ1"
+negative = "PAQ4"
+
+[axes.labels]
+
+[[axes]]
+id = "Content"
+positive = "PAQ3"
+negative = "PAQ6"
+
+[axes.labels]
+
+[scale]
+minimum = 1.0
+maximum = 7.0
+kind = "ordinal"
+
+[scale.labels]
+eng = ["Strongly disagree", "Disagree", "Somewhat disagree", "Neutral", "Somewhat agree", "Agree", "Strongly agree"]
+
+[quadrants]
+"++" = "PAQ2"
+"-+" = "PAQ3"
+-- = "PAQ5"
+"+-" = "PAQ6"
+
+[citation]
+citation = "Synthetic test instrument; no publication."
+doi_or_url = ""
+licence = "BSD-3-Clause (this file)"
+date = "2026"
+notes = "Synthetic test data: a second circumplex that differs from iso-12913-outdoor in attribute count, angles, axis ids, labels and scale (PRD FR-2.0). It never ships; tests reach it through a registry override."
