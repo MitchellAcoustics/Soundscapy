@@ -13,7 +13,7 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Self
+from typing import TYPE_CHECKING, Any, Final, Literal, Self
 
 import numpy as np
 import pydantic
@@ -28,7 +28,11 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 __all__ = [
+    "GROUP_KEYS",
+    "GROUP_SCALES",
     "Coding",
+    "FlagSpec",
+    "FlagSpecs",
     "Groups",
     "IdSpec",
     "ItemGroup",
@@ -48,6 +52,23 @@ _NUMBER = {
     ".": re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$"),
     ",": re.compile(r"^[+-]?(?:\d+(?:,\d*)?|,\d+)(?:[eE][+-]?\d+)?$"),
 }
+
+GROUP_KEYS: Final[Mapping[str, tuple[str, ...]]] = {
+    "source_dominance": ("traffic_noise", "other_noise", "human_sounds", "natural_sounds"),
+    "overall_quality": ("overall_quality",),
+    "appropriateness": ("appropriateness",),
+    "who5": ("who5_1", "who5_2", "who5_3", "who5_4", "who5_5"),
+}
+"""The item keys of each optional group, in their normalised order (spec 6.4.1)."""
+
+GROUP_SCALES: Final[Mapping[str, Scale]] = {
+    "source_dominance": Scale(minimum=1.0, maximum=5.0),
+    "overall_quality": Scale(minimum=1.0, maximum=5.0),
+    "appropriateness": Scale(minimum=1.0, maximum=5.0),
+    "who5": Scale(minimum=0.0, maximum=5.0),
+}
+"""The default response scale of each optional group (spec 6.4.1)."""
+_ID_ROLES: Final = ("location", "session", "group", "record")
 
 
 class IdSpec(FrozenModel):
@@ -144,6 +165,53 @@ class Coding(FrozenModel):
     reverse: tuple[StrictStr, ...] = ()
 
 
+class FlagSpec(FrozenModel):
+    """A column whose cells mark a response, such as consent given or a test entry.
+
+    Attributes
+    ----------
+    column : str, optional
+        The column; blank means the flag is not mapped.
+    true_values : tuple of str, optional
+        The stripped cell texts that mean "yes". Set together with ``column``.
+    """
+
+    column: StrictStr = ""
+    true_values: tuple[StrictStr, ...] = ()
+
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        if bool(self.column) != bool(self.true_values):
+            msg = "column and true_values must be set together, or both left empty"
+            raise ValueError(msg)
+        for value in self.true_values:
+            if not value.strip():
+                msg = "true_values must not hold a blank value"
+                raise ValueError(msg)
+            if value != value.strip():
+                msg = f"true_values entry {value!r} has surrounding whitespace; cells are stripped"
+                raise ValueError(msg)
+        return self
+
+
+class FlagSpecs(FrozenModel):
+    """The flag columns a survey maps (spec 6.4.1).
+
+    Attributes
+    ----------
+    consent : FlagSpec, optional
+        Consent given; a cell outside ``true_values`` means no consent.
+    test : FlagSpec, optional
+        A test entry.
+    paper_input : FlagSpec, optional
+        A response entered from paper.
+    """
+
+    consent: FlagSpec = FlagSpec()
+    test: FlagSpec = FlagSpec()
+    paper_input: FlagSpec = FlagSpec()
+
+
 class ItemGroup(FrozenModel):
     """A group of survey items: their columns, response scale and coding.
 
@@ -166,15 +234,53 @@ class ItemGroup(FrozenModel):
 class Groups(FrozenModel):
     """The item groups a survey maps.
 
+    The optional groups default to an empty group, which means not mapped. Each may map
+    any subset of its keys (``GROUP_KEYS``); keys are normalised to that order and a
+    missing scale is filled from ``GROUP_SCALES``.
+
     Attributes
     ----------
     attributes : ItemGroup
         The perceptual attributes. Keys are positions (``PAQ1``) or reference-language
         labels (``pleasant``) of the instrument, normalised to positions; every position
         must be mapped.
+    source_dominance : ItemGroup, optional
+        The four sound-source dominance items.
+    overall_quality : ItemGroup, optional
+        The overall sound-environment quality item.
+    appropriateness : ItemGroup, optional
+        The appropriateness item.
+    who5 : ItemGroup, optional
+        The five WHO-5 well-being items, 0..5 by default.
     """
 
     attributes: ItemGroup
+    source_dominance: ItemGroup = ItemGroup(columns=(), scale=GROUP_SCALES["source_dominance"])
+    overall_quality: ItemGroup = ItemGroup(columns=(), scale=GROUP_SCALES["overall_quality"])
+    appropriateness: ItemGroup = ItemGroup(columns=(), scale=GROUP_SCALES["appropriateness"])
+    who5: ItemGroup = ItemGroup(columns=(), scale=GROUP_SCALES["who5"])
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalise(cls, data: Any) -> Any:  # noqa: ANN401  # pydantic passes raw input of any type
+        if not isinstance(data, Mapping):
+            return data  # a Groups instance, or bad input pydantic reports
+        out = dict(data)
+        for name, keys in GROUP_KEYS.items():
+            group = _as_dict(out.get(name))
+            if group is None:
+                continue  # absent (the default applies), or malformed for pydantic to report
+            group.setdefault("scale", GROUP_SCALES[name])
+            columns = _pairs(group.get("columns"))
+            if columns is not None:
+                group["columns"] = _normalise_group_columns(columns, name, keys)
+                coding = _as_dict(group.get("coding"))
+                if coding is not None and "reverse" in coding:
+                    mapped = tuple(key for key, _ in group["columns"])
+                    coding["reverse"] = _normalise_group_reverse(coding["reverse"], name, mapped)
+                    group["coding"] = coding
+            out[name] = group
+        return out
 
 
 class SurveyMapping(FrozenModel):
@@ -198,6 +304,13 @@ class SurveyMapping(FrozenModel):
         Language source.
     groups : Groups
         Item groups.
+    age : str, optional
+        Column holding each respondent's age in years; blank means not mapped.
+    flags : FlagSpecs, optional
+        The consent, test and paper-input columns.
+    carry : tuple of str, optional
+        Columns carried as text labels into every result; none may be an id-role column,
+        which is already a label.
 
     Raises
     ------
@@ -214,6 +327,26 @@ class SurveyMapping(FrozenModel):
     ids: IdSpec
     language: LanguageSpec = LanguageSpec()
     groups: Groups
+    age: StrictStr = ""
+    flags: FlagSpecs = FlagSpecs()
+    carry: tuple[StrictStr, ...] = ()
+
+    @model_validator(mode="after")
+    def _check_carry(self) -> Self:
+        seen: set[str] = set()
+        roles = {getattr(self.ids, role) for role in _ID_ROLES} - {""}
+        for entry in self.carry:
+            if not entry.strip():
+                msg = "carry must not hold a blank entry"
+                raise ValueError(msg)
+            if entry in seen:
+                msg = f"carry repeats {entry!r}"
+                raise ValueError(msg)
+            if entry in roles:
+                msg = f"carry names {entry!r}, an id column, which is already a label"
+                raise ValueError(msg)
+            seen.add(entry)
+        return self
 
     @model_validator(mode="before")
     @classmethod
@@ -299,6 +432,38 @@ def _normalise_reverse(reverse: object, circ: Circumplex) -> object:
             raise ValueError(msg)
         positions[position] = key
     return tuple(p for p in circ.positions if p in positions)
+
+
+def _normalise_group_columns(
+    columns: list[tuple[str, Any]], name: str, keys: tuple[str, ...]
+) -> tuple[tuple[str, Any], ...]:
+    """Check an optional group's keys against ``GROUP_KEYS`` and put them in that order."""
+    by_key: dict[str, Any] = {}
+    for key, column in columns:
+        if key not in keys:
+            msg = (
+                f"groups.{name}.columns: unknown construct key {key!r}; "
+                f"the keys of {name} are {', '.join(keys)}"
+            )
+            raise ValueError(msg)
+        by_key[key] = column
+    return tuple((key, by_key[key]) for key in keys if key in by_key)
+
+
+def _normalise_group_reverse(reverse: object, name: str, mapped: tuple[str, ...]) -> object:
+    """Check an optional group's reverse keys are mapped and put them in ``GROUP_KEYS`` order."""
+    if not isinstance(reverse, Sequence) or isinstance(reverse, str):
+        return reverse  # pydantic reports the type
+    if not all(isinstance(key, str) for key in reverse):
+        return reverse
+    for key in reverse:
+        if key not in mapped:
+            msg = (
+                f"groups.{name}.coding.reverse: {key!r} is not a mapped key of {name}; "
+                f"its mapped keys are {', '.join(mapped) or 'none'}"
+            )
+            raise ValueError(msg)
+    return tuple(key for key in mapped if key in reverse)
 
 
 # --- coding (normative order) -----------------------------------------------------------------
@@ -472,7 +637,8 @@ def write_mapping(mapping: SurveyMapping, path: str | os.PathLike[str]) -> None:
     """Write a survey mapping as TOML.
 
     The output is deterministic: the identity keys are always written, other fields at
-    their default are omitted (the attribute scale when it equals the instrument's),
+    their default are omitted (each group's scale when it equals its default, unmapped
+    groups and flags),
     scalars and arrays come before tables, each in field order, and attribute keys are
     written as the instrument's reference-language labels.
 
@@ -493,6 +659,10 @@ def write_mapping(mapping: SurveyMapping, path: str | os.PathLike[str]) -> None:
     attributes = data["groups"]["attributes"]
     if mapping.groups.attributes.scale == circ.scale:
         del attributes["scale"]
+    for name, default_scale in GROUP_SCALES.items():
+        group = data["groups"].get(name)
+        if group is not None and getattr(mapping.groups, name).scale == default_scale:
+            del group["scale"]
     attributes["columns"] = {circ.label(p): col for p, col in mapping.groups.attributes.columns}
     if "coding" in attributes and "reverse" in attributes["coding"]:
         attributes["coding"]["reverse"] = [

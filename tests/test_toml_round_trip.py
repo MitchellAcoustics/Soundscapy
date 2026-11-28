@@ -22,6 +22,8 @@ from soundscapy.projection.project import ProjectionSettings
 from soundscapy.provenance import hash_file, hash_json
 from soundscapy.survey.mapping import (
     Coding,
+    FlagSpec,
+    FlagSpecs,
     Groups,
     IdSpec,
     ItemGroup,
@@ -65,6 +67,31 @@ _ID_SPEC = IdSpec(
     record="RecordID",
 )
 _LANGUAGE = LanguageSpec(column="Lang", coding={"English": "eng", "Deutsch": "deu"})
+_FLAG = FlagSpec(column="consent", true_values=("yes", "Yes"))
+_FLAGS = FlagSpecs(
+    consent=_FLAG,
+    test=FlagSpec(column="test", true_values=("1",)),
+    paper_input=FlagSpec(column="paper", true_values=("yes",)),
+)
+_GROUPS = Groups(
+    attributes=_ITEM_GROUP,
+    source_dominance=ItemGroup(
+        columns=(("traffic_noise", "s1"), ("natural_sounds", "s4")),
+        scale=Scale(minimum=1.0, maximum=5.0),
+    ),
+    overall_quality=ItemGroup(
+        columns=(("overall_quality", "oq"),),
+        scale=Scale(minimum=1.0, maximum=5.0),
+        coding=Coding(value_map={"bad": 1.0, "good": 5.0}),
+    ),
+    appropriateness=ItemGroup(
+        columns=(("appropriateness", "ap"),), scale=Scale(minimum=1.0, maximum=5.0)
+    ),
+    who5=ItemGroup(
+        columns=tuple((f"who5_{i}", f"w{i}") for i in range(1, 6)),
+        scale=Scale(minimum=1.0, maximum=6.0, kind="interval"),
+    ),
+)
 
 
 def _source_ref() -> SourceRef:
@@ -94,13 +121,18 @@ MODELS: list[FrozenModel] = [
     _ID_SPEC,
     _LANGUAGE,
     _ITEM_GROUP,
-    Groups(attributes=_ITEM_GROUP),
+    _FLAG,
+    _FLAGS,
+    _GROUPS,
     SurveyMapping(
         schema_name="soundscapy.mapping",
         schema_version=1,
         ids=_ID_SPEC,
         language=_LANGUAGE,
-        groups=Groups(attributes=_ITEM_GROUP),
+        groups=_GROUPS,
+        age="age",
+        flags=_FLAGS,
+        carry=("start_time", "Survey_Version"),
     ),
     ReadOptions(format="tsv", encoding="cp1252", delimiter=";"),
     ImportSettings(on_scale_violation="exclude"),
