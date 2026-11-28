@@ -8,6 +8,8 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from soundscapy._frames import (
     TextTable,
@@ -42,6 +44,12 @@ def test_require_frame_names_to_pandas_for_polars_and_arrow(module):
     assert str(excinfo.value) == (
         "only pandas DataFrames are accepted; convert with .to_pandas() first"
     )
+
+
+def test_require_frame_tells_a_lazy_polars_frame_to_collect():
+    with pytest.raises(TypeError) as excinfo:
+        require_frame(fake_frame("polars.lazyframe.frame"))
+    assert str(excinfo.value) == ("lazy frames are not accepted; call .collect().to_pandas() first")
 
 
 @pytest.mark.parametrize("obj", [{"a": [1]}, [1, 2], pd.Series([1])])
@@ -243,6 +251,19 @@ def test_frame_hash_normalisation():
 def test_frame_hash_categorical_matches_text():
     text = frame_hash(pd.DataFrame({"c": ["a", "b", None]}))
     assert text == frame_hash(pd.DataFrame({"c": pd.Categorical(["a", "b", None])}))
+
+
+_CELLS = st.one_of(st.none(), st.integers(-1000, 1000))
+
+
+@given(st.lists(st.lists(_CELLS, min_size=1, max_size=4), min_size=1, max_size=20))
+def test_frame_hash_classic_and_nullable_dtypes_agree(rows):
+    # Every column has the same length, so build the frame column by column from the rows.
+    n_cols = min(len(row) for row in rows)
+    columns = {f"c{j}": [row[j] for row in rows] for j in range(n_cols)}
+    classic = pd.DataFrame(columns)  # int64, or float64 with NaN where a null appeared
+    nullable = classic.convert_dtypes()  # Int64 with pd.NA
+    assert frame_hash(classic) == frame_hash(nullable)
 
 
 def test_frame_hash_refuses_non_frames():

@@ -50,6 +50,7 @@ __all__ = [
 ]
 
 _CONVERT_MESSAGE: Final = "only pandas DataFrames are accepted; convert with .to_pandas() first"
+_LAZY_MESSAGE: Final = "lazy frames are not accepted; call .collect().to_pandas() first"
 _CONVERTIBLE: Final = frozenset({"polars", "pyarrow"})
 _QUIET_NAN: Final = np.uint64(0x7FF8000000000000)
 _NULL_TEXT: Final = struct.pack("<Q", 0xFFFFFFFFFFFFFFFF)
@@ -92,12 +93,16 @@ def require_frame(obj: object) -> pd.DataFrame:
     ------
     TypeError
         If ``obj`` is not a pandas ``DataFrame``. A polars or Arrow table gets a message
-        naming ``.to_pandas()``.
+        naming ``.to_pandas()``, and a polars ``LazyFrame`` one naming ``.collect()`` first.
     ColumnCollisionError
         If two columns of ``obj`` share a name.
     """
     if not isinstance(obj, pd.DataFrame):
-        if type(obj).__module__.partition(".")[0] in _CONVERTIBLE:
+        # Detected by the type's module, so neither library is imported.
+        module = type(obj).__module__
+        if module.startswith("polars.lazyframe"):
+            raise TypeError(_LAZY_MESSAGE)
+        if module.partition(".")[0] in _CONVERTIBLE:
             raise TypeError(_CONVERT_MESSAGE)
         msg = f"expected a pandas DataFrame, got {type(obj).__name__}"
         raise TypeError(msg)
