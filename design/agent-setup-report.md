@@ -81,9 +81,9 @@ startup files or system settings.
   problems exit 2 so the agent sees them.
 - **Stop** runs `.claude/hooks/stop_check.py`, which runs `task check:fast`, exits 2 on
   failure, and exits 0 at once when `stop_hook_active` is set.
-- **PreToolUse** on `Bash` runs `.claude/hooks/guard_push.py`, which denies `git push`
-  in local sessions and allows it in cloud sessions (`CLAUDE_CODE_REMOTE=true`).
-  Permission rules cannot be scoped by session type, so a hook does it.
+- A **PreToolUse** hook on `Bash` (`guard_push.py`) used to deny pushes from local
+  sessions; the owner removed it on 2026-11-28, so agents push their own feature branches
+  in every session type.
 - The edit and Stop hooks do nothing until `pyproject.toml` and `Taskfile.yml` exist.
   All three were tested: an unfixable error blocked with exit 2, auto-fixable errors were
   fixed, the loop guard worked, and every `git push` form tried was denied locally and

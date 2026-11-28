@@ -24,7 +24,8 @@
   - `skill-creator` (from the claude.ai account): creating or improving project
     skills. If a local session lacks it, enable
     `skill-creator@claude-plugins-official` in `.claude/settings.local.json`.
-- Pushing: in cloud sessions agents push their own branches. In local sessions a
-  hook blocks `git push`, and the user pushes or approves the push.
+- Pushing: agents push their own feature branches, in cloud and local sessions alike
+  (the local push guard was removed on 2026-11-28). Never push to `soundscapy-rewrite`
+  or `main` directly; PRs are how changes land there.
 - Cloud sessions do not install the plugins above on their own; the environment's
   setup script must contain `.claude/cloud/setup.sh`.
