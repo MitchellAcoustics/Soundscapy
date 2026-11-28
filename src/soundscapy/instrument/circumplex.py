@@ -196,6 +196,19 @@ class Circumplex(FrozenModel):
         """Nominal angles in degrees, in position order."""
         return tuple(a.angle_deg for a in self.attributes)
 
+    @property
+    def languages(self) -> tuple[str, ...]:
+        """Language codes with labels: the reference language, then the translations.
+
+        The shipped outdoor circumplex lists ``eng`` and the seventeen other languages of
+        Aletta et al. (2024), in that paper's order.
+
+        References
+        ----------
+        The translated labels are Table 4 of [@aletta2024soundscape].
+        """
+        return (self.reference_language, *(tr.language for tr in self.translations))
+
     def label(self, position: str, language: str = "") -> str:
         """Return the label of a position in a language.
 
@@ -204,8 +217,12 @@ class Circumplex(FrozenModel):
         position : str
             A position such as ``"PAQ6"``.
         language : str, optional
-            ISO 639-3 code; blank means the reference language. A language with no
-            translation falls back to the reference language.
+            ISO 639-3 code (or the code an angle set uses); blank means the reference
+            language. A language with no translation falls back to the reference language:
+            for the shipped outdoor circumplex that is any code outside ``languages``, in
+            particular the ``satp@1.5`` languages ``pol``, ``yue``, ``tha``, ``bra`` and
+            ``alb``, for which no published labels exist. Labels in a non-Latin script need
+            a font with those glyphs when drawn.
 
         Returns
         -------
@@ -216,6 +233,10 @@ class Circumplex(FrozenModel):
         ------
         MappingError
             If the position does not exist.
+
+        References
+        ----------
+        The translated labels are Table 4 of [@aletta2024soundscape].
         """
         if position not in self.positions:
             msg = f"unknown position {position!r}; positions are {self.positions}"

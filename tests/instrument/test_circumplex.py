@@ -33,14 +33,18 @@ def test_shipped_outdoor_instrument():
     assert (c.scale.minimum, c.scale.maximum, c.scale.kind) == (1.0, 5.0, "ordinal")
     assert c.scale.labels[0][0] == "eng"
     assert c.axes[0].labels == ()
-    assert c.translations == ()
+    assert len(c.translations) == 17  # Aletta et al. 2024 Table 4, less the English row
+    assert c.languages[0] == "eng"
+    assert c.languages == ("eng", *(tr.language for tr in c.translations))
 
 
 def test_label_and_fallback():
     c = circumplex()
     assert c.label("PAQ6") == "monotonous"
-    assert c.label("PAQ1", "deu") == "pleasant"  # no translation: reference language
+    assert c.label("PAQ1", "deu") == "angenehm"
+    assert c.label("PAQ8", "nld") == "kalm / rustgevend"
     assert c.label("PAQ1", "eng") == "pleasant"
+    assert c.label("PAQ1", "pol") == "pleasant"  # no translation: reference language
     with pytest.raises(MappingError):
         c.label("PAQ9")
 

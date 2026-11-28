@@ -177,9 +177,19 @@ def test_axis_and_quadrant_labels(isd_coords):
     # Exact: the limits are set to these values, not computed.
     assert ax.get_xlim() == (-1.0, 1.0)
     assert ax.get_ylim() == (-1.0, 1.0)
-    # The S1 circumplex file ships no translations, so German falls back to English.
-    german = plot.scatter(isd_coords, label_language="deu")
-    assert {t.get_text() for t in german.texts} == texts
+
+
+def test_translated_labels(isd_coords):
+    english = {t.get_text() for t in plot.scatter(isd_coords).texts}
+    # Latin-script languages only: DejaVu Sans lacks the glyphs of the other scripts and
+    # matplotlib warns on them, which the warning filter turns into an error.
+    german = {t.get_text() for t in plot.scatter(isd_coords, label_language="deu").texts}
+    assert {"angenehm", "störend / lästig", "ereignisreich / dynamisch"} <= german
+    assert {"lebendig / abwechslungsreich", "ruhig / erholsam"} <= german
+    assert not german & (set(LABELS) | set(QUADRANTS))
+    # A language with no translation falls back to the reference language.
+    unknown = {t.get_text() for t in plot.scatter(isd_coords, label_language="xyz").texts}
+    assert unknown == english
 
 
 @pytest.mark.parametrize("suffix", ["png", "svg", "pdf"])

@@ -31,7 +31,7 @@ PINS: Final[Mapping[str, str]] = {
         "h1-sha256:7757bdf1ad40b017f0b75aa3e9394cef3a11cacd4c6a12c84383fdf024d5e6ce"
     ),
     "circumplexes/iso-12913-outdoor/1.toml": (
-        "h1-sha256:4ef2208390747505a2ddb326802995891e8481927fa0832e7e99740d444b8686"
+        "h1-sha256:43f2d4989032786fc2dfb8c34e3f999afaad39ac466beb07f66f6b7b1d60a0d3"
     ),
     "datasets/course_demo/course_demo.csv": (
         "h1-sha256:7f9e0933a0b6da290a612659420586617c0a1b0ddcd74d69c4e66c314c8b7386"
