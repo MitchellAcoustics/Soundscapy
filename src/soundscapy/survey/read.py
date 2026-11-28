@@ -20,7 +20,7 @@ import numpy as np
 from pydantic import StrictStr, field_validator
 
 from soundscapy import _data
-from soundscapy._frames import EagerFrame, column_text, read_text_table, readonly_copy, to_eager
+from soundscapy._frames import column_text, read_text_table, readonly_copy
 from soundscapy._log import logger
 from soundscapy._model import _UNSET, SSP_PREFIX, FrozenModel, _Unset, validate
 from soundscapy.errors import (
@@ -334,7 +334,7 @@ def _read_survey(
     path = Path(source)
     options = _resolve(read_options, path)
     table = read_text_table(path, encoding=options.encoding, delimiter=options.delimiter)
-    frame = to_eager(table.frame)
+    frame = table.frame
     _check_columns(list(frame.columns), mapping)
     ids = mapping.ids
     role_columns = {role: getattr(ids, role) for role in _mapped_roles(ids)}
@@ -375,7 +375,7 @@ def _read_survey(
         response_key_blank_ok=[c for c in ids.response_key if c in blank_ok],
     )
     return Survey(
-        data=table.frame,
+        data=frame,
         mapping=mapping,
         scores={"attributes": scores},
         response_id=response_id,
@@ -429,12 +429,12 @@ def _check_not_blank(
         raise MissingResponseIdError(msg, hint=hint)
 
 
-def stripped_text(frame: EagerFrame, name: str) -> NDArray[np.object_]:
+def stripped_text(frame: pd.DataFrame, name: str) -> NDArray[np.object_]:
     """Read an id column as text, each cell stripped of surrounding whitespace.
 
     Parameters
     ----------
-    frame : narwhals.stable.v2.DataFrame
+    frame : pandas.DataFrame
         The frame.
     name : str
         The column.
@@ -588,7 +588,7 @@ def _check_unique(values: NDArray[np.object_], rows: NDArray[np.int64]) -> None:
 
 def _languages(
     spec: LanguageSpec,
-    frame: EagerFrame,
+    frame: pd.DataFrame,
     response_ids: NDArray[np.object_],
 ) -> NDArray[np.object_]:
     """Return each response's ISO 639-3 code, ``""`` where blank or not mapped."""
@@ -622,7 +622,7 @@ def _languages(
 
 def _code_group(
     group: ItemGroup,
-    frame: EagerFrame,
+    frame: pd.DataFrame,
     response_ids: NDArray[np.object_],
 ) -> NDArray[np.float64]:
     """Code an item group's columns and check the non-missing values against its scale."""

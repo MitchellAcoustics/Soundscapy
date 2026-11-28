@@ -34,9 +34,14 @@ def test_matplotlib_and_seaborn_not_imported():
     assert result.returncode == 0, result.stderr
 
 
-def test_import_without_polars_or_pyarrow():
+def test_import_and_project_without_narwhals_polars_or_pyarrow():
+    # A None entry in sys.modules makes importing that name fail.
     code = (
-        "import sys; sys.modules['polars'] = None; sys.modules['pyarrow'] = None; import soundscapy"
+        "import sys\n"
+        "for name in ('narwhals', 'polars', 'pyarrow'):\n"
+        "    sys.modules[name] = None\n"
+        "import soundscapy as sspy\n"
+        "sspy.project(sspy.load_isd(subset=True))\n"
     )
     result = subprocess.run(
         [sys.executable, "-c", code], capture_output=True, text=True, check=False

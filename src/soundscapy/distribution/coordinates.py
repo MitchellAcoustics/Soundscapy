@@ -10,7 +10,7 @@ from __future__ import annotations
 import copy
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 from pydantic import Field, StrictInt, StrictStr
@@ -22,7 +22,6 @@ from soundscapy.instrument import Circumplex, Scale
 
 if TYPE_CHECKING:
     import pandas as pd
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
     from numpy.typing import ArrayLike, NDArray
 
 __all__ = ["Coordinates", "OriginSegment", "n", "n_valid", "valid_mask"]
@@ -143,21 +142,12 @@ class Coordinates:
         """
         return valid_mask(self)
 
-    @overload
-    def to_frame(self, like: None = None) -> pd.DataFrame: ...
-    @overload
-    def to_frame(self, like: IntoDataFrameT) -> IntoDataFrameT: ...
-    def to_frame(self, like: IntoDataFrame | None = None) -> Any:
-        """Return the labels and coordinates as a data frame.
-
-        Parameters
-        ----------
-        like : object, optional
-            A frame whose library the result uses; pandas when omitted.
+    def to_frame(self) -> pd.DataFrame:
+        """Return the labels and coordinates as a pandas frame.
 
         Returns
         -------
-        pandas.DataFrame or the library of ``like``
+        pandas.DataFrame
             The label columns, then ``ssp_<axis id>`` for the x and the y axis (for
             example ``ssp_ISOPleasant`` and ``ssp_ISOEventful``).
         """
@@ -167,7 +157,7 @@ class Coordinates:
             axis_column(x_axis.id): self.xy[:, 0],
             axis_column(y_axis.id): self.xy[:, 1],
         }
-        return new_frame(columns, like=like)
+        return new_frame(columns)
 
     def select(self, mask: ArrayLike) -> Coordinates:
         """Return the rows where ``mask`` is true.

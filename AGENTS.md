@@ -12,9 +12,10 @@ soundscape perception, and scoring and design with the Soundscape Perception Ind
 (SPI). It must work as a library, in teaching material, and as the engine of a GUI
 for acoustic engineers, architects and urban designers.
 
-`design/PRD.md` (draft 0.9) states the requirements; read it before designing
-anything, and check every design decision against it.
-`design/greenfield_architecture_plan.md` (draft 0.5, amended by the M1 spec) is the architecture: it was
+`design/PRD.md` (draft 1.0; §10.7 lists the changes the owner confirmed on 2026-11-27) states the
+requirements; read it before designing anything, and check every design decision against
+it.
+`design/greenfield_architecture_plan.md` (draft 0.6, amended by the M1 spec) is the architecture: it was
 written from the PRD and its §9 registers the owner's decisions. Specs and plans are
 derived from both. Nothing from the previous soundscapy codebase carries over.
 Before implementing or changing a scientific procedure, read its source in
@@ -24,7 +25,8 @@ Before implementing or changing a scientific procedure, read its source in
 `Taskfile.yml`, prek hooks), CI and the docs skeleton exist, on an empty package with a
 small test suite. M1 slice S1 (contracts and the thin path `load_isd` → `project` →
 `plot.scatter`/`attach`, plan `design/plans/2026-10-31-m1-s1-thin-slice.md`) is in place;
-slice S2 is next. `task check` passing is the definition of done.
+next come the pandas-only rework of S1 (spec §12; narwhals is dropped), then slice S2. `task check`
+passing is the definition of done.
 
 ## Repo map (target layout)
 

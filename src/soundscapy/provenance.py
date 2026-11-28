@@ -67,7 +67,6 @@ _LIBRARIES: Final = (
     "scipy",
     "pandas",
     "pyarrow",
-    "narwhals",
     "pydantic",
     "contourpy",
 )
@@ -260,7 +259,7 @@ def envelope(  # the spec's normative keys are separate inputs
         ``{kind, name, version, hash}`` for each shipped or registered data
         item used.
     extra_libraries : sequence of str, optional
-        Further installed libraries to record, such as ``"polars"``.
+        Further installed libraries to record, such as ``"openpyxl"``.
     upstream_run : str, optional
         The run name the input came from, ``""`` when none.
     **extra

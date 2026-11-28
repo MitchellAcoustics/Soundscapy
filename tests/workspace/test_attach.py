@@ -6,13 +6,13 @@ import dataclasses
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
-import polars as pl
 import pytest
 
-from soundscapy._frames import column_text, to_eager
+from soundscapy._frames import column_text
 from soundscapy._model import (
     COL_ANGLE_SET,
     COL_FLAGS,
@@ -26,7 +26,7 @@ from soundscapy.projection.project import project
 from soundscapy.survey.mapping import SurveyMapping
 from soundscapy.survey.read import read_survey
 from soundscapy.workspace import attach
-from tests._helpers import LABELS, ONES, raw_mapping, write_csv
+from tests._helpers import LABELS, ONES, fake_frame, raw_mapping, write_csv
 
 SUBSET_CSV = Path(isd.__file__).parent.parent / "_data" / "datasets" / "isd" / "subset-v1.0.csv"
 FIVES = ",".join(["5"] * 8)
@@ -43,13 +43,6 @@ def _attach_log(caplog: pytest.LogCaptureFixture, level: int = logging.INFO) -> 
     assert len(records) == 1
     assert records[0].levelno == level
     return records[0].getMessage()
-
-
-def _null(native: object, column: str) -> np.ndarray:
-    if isinstance(native, pd.DataFrame):
-        return native[column].isna().to_numpy()
-    assert isinstance(native, pl.DataFrame)
-    return native[column].is_null().to_numpy()
 
 
 # --- the subset, by id -------------------------------------------------------------------------
@@ -78,7 +71,7 @@ def test_attach_to_reread_frame_with_int_ids(isd_coords):
     frame = pd.read_csv(SUBSET_CSV).iloc[::-1].reset_index(drop=True)
     assert frame["RecordID"].dtype == np.int64
     # An int64 id reads as the CSV cell's text ("22"), not "22.0".
-    assert column_text(to_eager(frame), "RecordID")[-1] == "22"
+    assert column_text(frame, "RecordID")[-1] == "22"
     out = attach(frame, coords)
     assert out[COL_INCLUDED].notna().all()
     # Exact: the values are copied, not computed.
@@ -86,15 +79,22 @@ def test_attach_to_reread_frame_with_int_ids(isd_coords):
     assert out[COL_REASONS].tolist() == coords.labels[COL_REASONS][::-1].tolist()
 
 
-def test_attach_polars(isd_survey, isd_coords, frame_lib):
+def test_attach_nullable_dtypes_frame(isd_survey, isd_coords, frame_lib):
     survey, coords = isd_survey, isd_coords
     frame = frame_lib({name: survey.data[name].tolist() for name in survey.data.columns})
     out = attach(frame, coords)
-    assert type(out) is type(frame)
+    assert isinstance(out, pd.DataFrame)
     assert out.shape == (1552, 47)
     # Exact: the values are copied, not computed.
     np.testing.assert_array_equal(np.asarray(out[X].to_numpy(), dtype=float), coords.xy[:, 0])
     assert out[COL_INCLUDED].to_list() == coords.labels[COL_INCLUDED].tolist()
+
+
+def test_attach_refuses_a_polars_frame(isd_coords):
+    # Typed Any: passing a non-pandas object is the point of the test.
+    stub: Any = fake_frame("polars.dataframe.frame")
+    with pytest.raises(TypeError, match=r"convert with \.to_pandas\(\) first"):
+        attach(stub, isd_coords)
 
 
 def test_attach_partial_frame(isd_survey, isd_coords, caplog):
@@ -212,7 +212,7 @@ def test_attach_frame_with_extra_rows(column_coords, frame_lib, caplog):
     with caplog.at_level(logging.INFO, logger="soundscapy"):
         out = attach(frame, column_coords)
     for column in ADDED:
-        assert _null(out, column).tolist() == [False, True, False, False], column
+        assert out[column].isna().tolist() == [False, True, False, False], column
     assert "3 of 4" in _attach_log(caplog)
 
 
@@ -260,6 +260,29 @@ def test_attach_integer_ids_made_float_by_a_null(tmp_path):
     assert out[COL_INCLUDED].isna().tolist() == [False, False, False, True]
     # Exact: the values are copied, not computed.
     np.testing.assert_array_equal(out[X].to_numpy()[:3], coords.xy[[2, 0, 1], 0])
+
+
+def test_attach_nullable_integer_ids_with_a_null(tmp_path):
+    header = ",".join(("site", "resp_no", *LABELS))
+    path = write_csv(tmp_path, header, f"s1,1,{ONES}", f"s1,2,{FIVES}", f"s2,1,{FIVES}")
+    coords = project(read_survey(path, _mapping({"response_key": ["site", "resp_no"]})))
+    frame = pd.DataFrame(
+        {"site": ["s2", "s1", "s1", "s1"], "resp_no": pd.array([1, 1, 2, None], dtype="Int64")}
+    )
+    out = attach(frame, coords)
+    assert out[COL_INCLUDED].isna().tolist() == [False, False, False, True]
+    # Exact: the values are copied, not computed.
+    np.testing.assert_array_equal(out[X].to_numpy()[:3], coords.xy[[2, 0, 1], 0])
+
+
+def test_attach_nullable_float_ids_holding_whole_numbers(tmp_path):
+    header = ",".join(("ID", *LABELS))
+    path = write_csv(tmp_path, header, f"1,{ONES}", f"2,{FIVES}")
+    coords = project(read_survey(path, _mapping({"response": "ID"})))
+    out = attach(pd.DataFrame({"ID": pd.array([2.0, 1.0, None], dtype="Float64")}), coords)
+    assert out[COL_INCLUDED].isna().tolist() == [False, False, True]
+    # Exact: the values are copied, not computed.
+    np.testing.assert_array_equal(out[X].to_numpy()[:2], coords.xy[[1, 0], 0])
 
 
 def test_attach_non_integral_float_ids_keep_their_text(tmp_path):
