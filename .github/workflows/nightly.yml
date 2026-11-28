@@ -20,10 +20,12 @@ on:
       - docs/papers/**
       - tests/**/test_*network*
       - tests/**/test_*reference*
+      - tests/reference/**
       - tests/_downloads.py
+      - scripts/**
       - src/soundscapy/survey/**
       - src/soundscapy/datasets/**
-      - src/soundscapy/_data/datasets/**
+      - src/soundscapy/_data/**
   pull_request:
     paths: *paths
 

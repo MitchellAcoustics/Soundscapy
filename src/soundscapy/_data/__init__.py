@@ -24,6 +24,12 @@ if TYPE_CHECKING:
 __all__ = ["PINS", "as_path", "pin", "read_bytes", "read_toml"]
 
 PINS: Final[Mapping[str, str]] = {
+    "angle_sets/aletta-2024/1.toml": (
+        "h1-sha256:9677722398d03cd02e109d0b25795495e4e2a9eaf9fa7f74126f1af6c0eb5e99"
+    ),
+    "angle_sets/satp/1.5.toml": (
+        "h1-sha256:7757bdf1ad40b017f0b75aa3e9394cef3a11cacd4c6a12c84383fdf024d5e6ce"
+    ),
     "circumplexes/iso-12913-outdoor/1.toml": (
         "h1-sha256:4ef2208390747505a2ddb326802995891e8481927fa0832e7e99740d444b8686"
     ),
