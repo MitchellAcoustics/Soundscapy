@@ -54,7 +54,6 @@ from soundscapy.errors import (
 )
 from soundscapy.provenance import envelope, hash_file, hash_json
 from soundscapy.survey.mapping import (
-    _CANNOT_CODE,
     _ID_ROLES,
     _LANGUAGE_CODE,
     _NOT_LANGUAGE_CODE,
@@ -867,10 +866,10 @@ def _age(
             response_ids=response_ids,
         )
     except CodingError as err:
-        listed = str(err).removeprefix(_CANNOT_CODE).removeprefix(f"{mapping.age}: ")
+        listed = err.failures[mapping.age]
         msg = f"the age column {mapping.age!r} holds texts that are not numbers: {listed}"
         hint = "map age to a column of numbers, or leave age unmapped"
-        raise CodingError(msg, hint=hint) from err
+        raise CodingError(msg, hint=hint, failures=err.failures) from err
     return coded[:, 0]
 
 

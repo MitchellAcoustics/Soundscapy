@@ -101,6 +101,31 @@ def test_exclude_path_records_both_reasons():
     assert project(survey).n_valid() == 0
 
 
+def test_exclude_path_covers_every_group(tmp_path):
+    # Row a's attributes are complete; its only violations are a 6 in ssi01 (1..5) and in
+    # who01 (0..5), so scale_violation must be the row's only reason.
+    who = tuple(f"who0{i}" for i in range(1, 6))
+    header = ",".join(("ID", *LABELS, *SOURCE_COLUMNS, *who))
+    path = write_csv(
+        tmp_path, header, f"a,{COMPLETE},6,1,1,1,6,1,1,1,1", f"b,{COMPLETE},1,1,1,1,1,1,1,1,1"
+    )
+    raw = raw_mapping({"response": "ID"})
+    raw["groups"]["source_dominance"] = {
+        "columns": dict(zip(SOURCE_KEYS, SOURCE_COLUMNS, strict=True))
+    }
+    raw["groups"]["who5"] = {"columns": {f"who5_{i}": col for i, col in enumerate(who, 1)}}
+    survey = read_survey(path, SurveyMapping.model_validate(raw), on_scale_violation="exclude")
+    assert survey.status.reasons == ((Reason.SCALE_VIOLATION,), ())
+    assert survey.status.included.tolist() == [False, True]
+    source = survey.scores["source_dominance"]
+    assert np.isnan(source).tolist() == [[True, False, False, False], [False] * 4]
+    assert np.isnan(survey.scores["who5"]).tolist() == [
+        [True, False, False, False, False],
+        [False] * 5,
+    ]
+    assert not np.isnan(survey.scores["attributes"]).any()
+
+
 def test_offset_fixes_the_0_4_export():
     raw = raw_mapping({"response": "ID"})
     raw["groups"]["attributes"]["coding"] = {"offset": 1.0}
@@ -182,6 +207,9 @@ def test_age_text_not_a_number_raises(tmp_path, text):
     assert f"{text!r} x1" in message
     assert "r1" in message
     assert "leave age unmapped" in info.value.hint
+    # The failure list is passed on structurally, so the age message never has to parse
+    # apply_coding's own wording.
+    assert info.value.failures == {"age00": f"{text!r} x1 (responses r1)"}
 
 
 def test_missing_flag_column_raises(tmp_path):

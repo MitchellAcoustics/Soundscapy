@@ -69,7 +69,6 @@ GROUP_SCALES: Final[Mapping[str, Scale]] = {
 }
 """The default response scale of each optional group (spec 6.4.1)."""
 _ID_ROLES: Final = ("location", "session", "group", "record")
-_CANNOT_CODE: Final = "cannot code these texts as numbers: "
 
 
 class IdSpec(FrozenModel):
@@ -537,15 +536,16 @@ def apply_coding(
         decimal=coding.decimal,
     )
     out = np.empty(texts.shape, dtype=np.float64)
-    failures: list[str] = []
+    failures: dict[str, str] = {}
     for j, key in enumerate(keys):
-        failure = _code_column(texts[:, j], out[:, j], rules, key, response_ids)
+        failure = _code_column(texts[:, j], out[:, j], rules, response_ids)
         if failure:
-            failures.append(failure)
+            failures[key] = failure
     if failures:
-        msg = _CANNOT_CODE + "; ".join(failures)
+        listed = "; ".join(f"{key}: {failure}" for key, failure in failures.items())
+        msg = f"cannot code these texts as numbers: {listed}"
         hint = "add a value_map entry for label responses, or a missing_values code"
-        raise CodingError(msg, hint=hint)
+        raise CodingError(msg, hint=hint, failures=failures)
     out += coding.offset
     reversed_columns = [j for j, key in enumerate(keys) if key in coding.reverse]
     out[:, reversed_columns] = scale.minimum + scale.maximum - out[:, reversed_columns]
@@ -577,7 +577,6 @@ def _code_column(
     column: NDArray[np.object_],
     out: NDArray[np.float64],
     rules: _Rules,
-    key: str,
     response_ids: NDArray[np.object_],
 ) -> str:
     """Code one column into ``out``; return a description of its failures, or ``""``."""
@@ -585,7 +584,7 @@ def _code_column(
     bad_rows: list[int] = []
     for i, cell in enumerate(column.tolist()):
         if not isinstance(cell, str):
-            msg = f"item {key}: every cell must be a str, got {cell!r}"
+            msg = f"every cell must be a str, got {cell!r}"
             raise TypeError(msg)
         text = cell.strip()
         value = rules.code(text)
@@ -597,7 +596,7 @@ def _code_column(
     if not bad:
         return ""
     listed = ", ".join(f"{text!r} x{count}" for text, count in bad.items())
-    return f"{key}: {listed} (responses {_shown([response_ids[i] for i in bad_rows])})"
+    return f"{listed} (responses {_shown([response_ids[i] for i in bad_rows])})"
 
 
 # --- TOML ------------------------------------------------------------------------------------

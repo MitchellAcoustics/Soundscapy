@@ -1,9 +1,9 @@
 """Errors and warnings raised by soundscapy.
 
 Every error subclasses ``SoundscapyError`` and the built-in named in its docstring, so
-callers can catch either. Every error takes ``(message, *, hint="")``; ``str(err)`` is the
-message and ``SoundscapyError.hint`` carries an optional second line for the CLI. No name
-shadows a standard-library one.
+callers can catch either. Every error takes ``(message, *, hint="")``, some with further
+keyword-only details; ``str(err)`` is the message and ``SoundscapyError.hint`` carries an
+optional second line for the CLI. No name shadows a standard-library one.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
 __all__ = [
     "AlignmentError",
@@ -75,7 +75,25 @@ class MappingError(SoundscapyError, ValueError):
 
 
 class CodingError(SoundscapyError, ValueError):
-    """A text value matches no missing token, value-map key or number."""
+    """A text value matches no missing token, value-map key or number.
+
+    Parameters
+    ----------
+    message : str
+        What went wrong; this is ``str(err)``.
+    hint : str, optional
+        What to try next.
+    failures : mapping of str to str, optional
+        Per item key, the texts that could not be coded, as the message lists them:
+        ``"'<text>' x<count>, ... (responses <ids>)"``. Empty when the error does not come
+        from coding a table of texts.
+    """
+
+    def __init__(
+        self, message: str, *, hint: str = "", failures: Mapping[str, str] | None = None
+    ) -> None:
+        super().__init__(message, hint=hint)
+        self.failures: dict[str, str] = dict(failures or {})
 
 
 class EncodingError(SoundscapyError, ValueError):

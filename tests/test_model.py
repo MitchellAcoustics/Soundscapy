@@ -202,7 +202,8 @@ def test_settings_layer_converts_nested_instances():
 
 
 def test_merge_settings_bad_value_is_settings_error():
-    with pytest.raises(SettingsError, match=r"test.*q\.x|test.*q -> x|q\.x|q -> x"):
+    # The context prefix, then pydantic's location of the bad field somewhere after it.
+    with pytest.raises(SettingsError, match=r"(?s)^test: .*q\.x"):
         merge_settings(_Nested, [{"q": {"x": "nope"}}], context="test")
 
 
