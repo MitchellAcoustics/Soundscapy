@@ -1,0 +1,40 @@
+# A relabelled, non-English export (spec 8, FR-1.3). The Spanish headers and agreement labels
+# were written for this fixture and are not an official translation of ISO 12913-2.
+schema = "soundscapy.mapping"
+schema_version = 1
+instrument = "iso-12913-outdoor"
+instrument_version = "1"
+
+[ids]
+response = "ID"
+
+[language]
+value = "spa"
+
+[groups.attributes.columns]
+pleasant = "agradable"
+vibrant = "vibrante"
+eventful = "con_actividad"
+chaotic = "caótico"
+annoying = "molesto"
+monotonous = "monotono"
+uneventful = "sin_actividad"
+calm = "tranquilo"
+
+[groups.attributes.coding]
+missing_values = ["", "NA", "N/A", "NaN", "nan", "#N/A", "-99", "No sé"]
+reverse = ["calm"]
+
+[groups.attributes.coding.value_map]
+"Totalmente en desacuerdo" = 1.0
+"En desacuerdo" = 2.0
+"Ni de acuerdo ni en desacuerdo" = 3.0
+"De acuerdo" = 4.0
+"de acuerdo" = 4.0
+"Totalmente de acuerdo" = 5.0
+
+[groups.overall_quality.columns]
+overall_quality = "calidad"
+
+[groups.overall_quality.coding]
+offset = 1.0

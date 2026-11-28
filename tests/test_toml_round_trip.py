@@ -135,7 +135,7 @@ MODELS: list[FrozenModel] = [
         carry=("start_time", "Survey_Version"),
     ),
     ReadOptions(format="tsv", encoding="cp1252", delimiter=";"),
-    ImportSettings(on_scale_violation="exclude"),
+    ImportSettings(quality=QualitySettings(min_age=16.0), on_scale_violation="exclude"),
     QualitySettings(
         all_midpoint="off",
         excessive_missing_share=0.25,
@@ -195,9 +195,9 @@ def test_read_options_round_trip(fmt, encoding, delimiter):
     _assert_round_trips(ReadOptions(format=fmt, encoding=encoding, delimiter=delimiter))
 
 
-@given(st.sampled_from(["error", "exclude"]))
-def test_import_settings_round_trip(action):
-    _assert_round_trips(ImportSettings(on_scale_violation=action))
+@given(st.sampled_from(["error", "exclude"]), quality_settings())
+def test_import_settings_round_trip(action, quality):
+    _assert_round_trips(ImportSettings(quality=quality, on_scale_violation=action))
 
 
 @given(quality_settings())

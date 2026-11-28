@@ -26,10 +26,9 @@ from soundscapy.projection.project import project
 from soundscapy.survey.mapping import SurveyMapping
 from soundscapy.survey.read import read_survey
 from soundscapy.workspace import attach
-from tests._helpers import LABELS, ONES, fake_frame, raw_mapping, write_csv
+from tests._helpers import COMPLETE, COMPLETE_B, LABELS, fake_frame, raw_mapping, write_csv
 
 SUBSET_CSV = Path(isd.__file__).parent.parent / "_data" / "datasets" / "isd" / "subset-v1.0.csv"
-FIVES = ",".join(["5"] * 8)
 X, Y = "ssp_ISOPleasant", "ssp_ISOEventful"
 ADDED = (X, Y, COL_INCLUDED, COL_REASONS, COL_FLAGS, COL_LANGUAGE, COL_ANGLE_SET)
 
@@ -135,7 +134,7 @@ def test_attach_unmatched_survey_rows_warning_names_the_remedy(tmp_path, caplog)
     # A user re-reading the CSV with pd.read_csv turns "007" into 7; that is not
     # recoverable, so the warning names the cause and the remedy.
     header = ",".join(("ID", *LABELS))
-    path = write_csv(tmp_path, header, f"007,{ONES}", f"8,{FIVES}")
+    path = write_csv(tmp_path, header, f"007,{COMPLETE}", f"8,{COMPLETE_B}")
     coords = project(read_survey(path, _mapping({"response": "ID"})))
     with caplog.at_level(logging.INFO, logger="soundscapy"):
         out = attach(pd.read_csv(path), coords)
@@ -150,7 +149,7 @@ def test_attach_unmatched_survey_rows_warning_names_the_remedy(tmp_path, caplog)
 
 def test_attach_no_match_hint_names_the_remedy(tmp_path):
     header = ",".join(("ID", *LABELS))
-    path = write_csv(tmp_path, header, f"007,{ONES}", f"008,{FIVES}")
+    path = write_csv(tmp_path, header, f"007,{COMPLETE}", f"008,{COMPLETE_B}")
     coords = project(read_survey(path, _mapping({"response": "ID"})))
     with pytest.raises(AlignmentError, match="no frame row") as info:
         attach(pd.read_csv(path), coords)
@@ -192,13 +191,13 @@ def test_attach_duplicate_frame_ids_raise(isd_survey, isd_coords):
 @pytest.fixture
 def column_coords(tmp_path):
     header = ",".join(("ID", "site", *LABELS))
-    path = write_csv(tmp_path, header, f"a,s1,{ONES}", f"b,s1,{FIVES}", f"c,s2,{ONES}")
+    path = write_csv(tmp_path, header, f"a,s1,{COMPLETE}", f"b,s1,{COMPLETE_B}", f"c,s2,{COMPLETE}")
     return project(read_survey(path, _mapping({"response": "ID", "location": "site"})))
 
 
 def test_attach_column_source(tmp_path):
     header = ",".join(("ID", "site", *LABELS))
-    path = write_csv(tmp_path, header, f"a,s1,{ONES}", f"b,s2,{FIVES}")
+    path = write_csv(tmp_path, header, f"a,s1,{COMPLETE}", f"b,s2,{COMPLETE_B}")
     # ID holds no id role, only the response id.
     coords = project(read_survey(path, _mapping({"response": "ID", "location": "site"})))
     assert coords.provenance["response_id_source"] == "column"
@@ -238,7 +237,9 @@ def test_attach_blank_response_cell_is_unmatched(column_coords):
 
 def test_attach_key_not_equal_to_roles(tmp_path):
     header = ",".join(("site", "resp_no", *LABELS))
-    path = write_csv(tmp_path, header, f"s1,1,{ONES}", f"s1,2,{FIVES}", f"s2,1,{FIVES}")
+    path = write_csv(
+        tmp_path, header, f"s1,1,{COMPLETE}", f"s1,2,{COMPLETE_B}", f"s2,1,{COMPLETE_B}"
+    )
     mapping = _mapping({"response_key": ["site", "resp_no"], "location": "site"})
     coords = project(read_survey(path, mapping))
     assert coords.provenance["response_id_columns"] == ["site", "resp_no"]
@@ -252,7 +253,9 @@ def test_attach_integer_ids_made_float_by_a_null(tmp_path):
     # pd.read_csv turns an integer column with a blank cell into float64 (1 -> 1.0);
     # the frame id must still read "1", as the survey's CSV cell does.
     header = ",".join(("site", "resp_no", *LABELS))
-    path = write_csv(tmp_path, header, f"s1,1,{ONES}", f"s1,2,{FIVES}", f"s2,1,{FIVES}")
+    path = write_csv(
+        tmp_path, header, f"s1,1,{COMPLETE}", f"s1,2,{COMPLETE_B}", f"s2,1,{COMPLETE_B}"
+    )
     coords = project(read_survey(path, _mapping({"response_key": ["site", "resp_no"]})))
     frame = pd.DataFrame({"site": ["s2", "s1", "s1", "s1"], "resp_no": [1, 1, 2, None]})
     assert frame["resp_no"].dtype == np.float64
@@ -264,7 +267,9 @@ def test_attach_integer_ids_made_float_by_a_null(tmp_path):
 
 def test_attach_nullable_integer_ids_with_a_null(tmp_path):
     header = ",".join(("site", "resp_no", *LABELS))
-    path = write_csv(tmp_path, header, f"s1,1,{ONES}", f"s1,2,{FIVES}", f"s2,1,{FIVES}")
+    path = write_csv(
+        tmp_path, header, f"s1,1,{COMPLETE}", f"s1,2,{COMPLETE_B}", f"s2,1,{COMPLETE_B}"
+    )
     coords = project(read_survey(path, _mapping({"response_key": ["site", "resp_no"]})))
     frame = pd.DataFrame(
         {"site": ["s2", "s1", "s1", "s1"], "resp_no": pd.array([1, 1, 2, None], dtype="Int64")}
@@ -277,7 +282,7 @@ def test_attach_nullable_integer_ids_with_a_null(tmp_path):
 
 def test_attach_nullable_float_ids_holding_whole_numbers(tmp_path):
     header = ",".join(("ID", *LABELS))
-    path = write_csv(tmp_path, header, f"1,{ONES}", f"2,{FIVES}")
+    path = write_csv(tmp_path, header, f"1,{COMPLETE}", f"2,{COMPLETE_B}")
     coords = project(read_survey(path, _mapping({"response": "ID"})))
     out = attach(pd.DataFrame({"ID": pd.array([2.0, 1.0, None], dtype="Float64")}), coords)
     assert out[COL_INCLUDED].isna().tolist() == [False, False, True]
@@ -287,7 +292,7 @@ def test_attach_nullable_float_ids_holding_whole_numbers(tmp_path):
 
 def test_attach_non_integral_float_ids_keep_their_text(tmp_path):
     header = ",".join(("ID", *LABELS))
-    path = write_csv(tmp_path, header, f"1.5,{ONES}", f"2,{FIVES}")
+    path = write_csv(tmp_path, header, f"1.5,{COMPLETE}", f"2,{COMPLETE_B}")
     coords = project(read_survey(path, _mapping({"response": "ID"})))
     out = attach(pd.DataFrame({"ID": [2.0, 1.5, np.nan]}), coords)
     assert out[COL_INCLUDED].isna().tolist() == [False, False, True]
@@ -295,7 +300,7 @@ def test_attach_non_integral_float_ids_keep_their_text(tmp_path):
 
 def test_attach_blank_ok_key_part_matches(tmp_path):
     header = ",".join(("site", "resp_no", *LABELS))
-    path = write_csv(tmp_path, header, f"s1,,{ONES}", f"s2,1,{FIVES}")
+    path = write_csv(tmp_path, header, f"s1,,{COMPLETE}", f"s2,1,{COMPLETE_B}")
     mapping = _mapping({"response_key": ["site", "resp_no"], "response_key_blank_ok": ["resp_no"]})
     coords = project(read_survey(path, mapping))
     out = attach(pd.DataFrame({"site": ["s2", "s1"], "resp_no": ["1", None]}), coords)
@@ -304,7 +309,7 @@ def test_attach_blank_ok_key_part_matches(tmp_path):
 
 
 def test_attach_row_ids_by_position(tmp_path, caplog):
-    path = write_csv(tmp_path, ",".join(LABELS), ONES, FIVES, ONES)
+    path = write_csv(tmp_path, ",".join(LABELS), COMPLETE, COMPLETE_B, COMPLETE)
     coords = project(read_survey(path, _mapping({})))
     assert coords.provenance["response_id_source"] == "row"
     with caplog.at_level(logging.INFO, logger="soundscapy"):

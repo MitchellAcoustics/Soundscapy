@@ -26,7 +26,7 @@ from soundscapy.provenance import envelope, hash_file
 from soundscapy.survey.mapping import SurveyMapping
 from soundscapy.survey.read import ImportSettings, ReadOptions, check_unique, read_survey
 from soundscapy.survey.status import Reason
-from tests._helpers import CSV_ORDER, ONES, raw_mapping, write_csv
+from tests._helpers import COMPLETE, CSV_ORDER, ONES, raw_mapping, write_csv
 
 FIXTURES = Path(__file__).parent / "fixtures"
 KEY_CSV = FIXTURES / "survey_key.csv"
@@ -345,11 +345,32 @@ def test_scale_violation_raises():
     hint = info.value.hint
     assert "missing" in hint
     assert "offset" in hint
-    assert "on_scale_violation" not in hint
+    assert "on_scale_violation" in hint
+
+
+def test_scale_violation_lists_every_group(tmp_path):
+    who = tuple(f"who0{i}" for i in range(1, 6))
+    ssi = tuple(f"ssi0{i}" for i in range(1, 5))
+    header = ",".join(("ID", *CSV_ORDER, *who, *ssi))
+    path = _csv(
+        tmp_path, f"a,{ONES},6,1,1,1,1,6,1,1,1", f"b,{ONES},1,1,1,1,1,1,1,1,1", header=header
+    )
+    raw = _raw({"response": "ID"})
+    who_keys = [f"who5_{i}" for i in range(1, 6)]
+    raw["groups"]["who5"] = {"columns": dict(zip(who_keys, who, strict=True))}
+    source_keys = ("traffic_noise", "other_noise", "human_sounds", "natural_sounds")
+    raw["groups"]["source_dominance"] = {"columns": dict(zip(source_keys, ssi, strict=True))}
+    with pytest.raises(ScaleViolationError) as info:
+        read_survey(path, SurveyMapping.model_validate(raw))
+    message = str(info.value)
+    assert message.startswith("coded values outside their scales: ")
+    assert "'who01' (who5_1): 6 x1" in message
+    assert "'ssi01' (traffic_noise): 6 x1" in message
+    assert message.index("source_dominance (1..5)") < message.index(" | who5 (0..5)")
 
 
 def test_incomplete_attributes_excluded(tmp_path):
-    path = _csv(tmp_path, f"a,{ONES}", f"b,{ONES[:-1]}", header=ID_HEADER)
+    path = _csv(tmp_path, f"a,{COMPLETE}", f"b,{ONES[:-1]}", header=ID_HEADER)
     survey = read_survey(path, _mapping({"response": "ID"}))
     assert survey.status.included.tolist() == [True, False]
     assert survey.status.reasons[1] == (Reason.INCOMPLETE_ATTRIBUTES,)
@@ -357,7 +378,7 @@ def test_incomplete_attributes_excluded(tmp_path):
 
 
 def test_info_summary_logged(caplog, tmp_path):
-    path = _csv(tmp_path, f"a,{ONES}", ",,,,,,,,", f"b,{ONES[:-1]}", header=ID_HEADER)
+    path = _csv(tmp_path, f"a,{COMPLETE}", ",,,,,,,,", f"b,{ONES[:-1]}", header=ID_HEADER)
     with caplog.at_level(logging.INFO, logger="soundscapy"):
         read_survey(path, _mapping({"response": "ID"}))
     records = [r for r in caplog.records if r.name == "soundscapy"]
@@ -390,7 +411,7 @@ def test_survey_arrays_read_only():
 def _expected_keys() -> set[str]:
     base = envelope(operation="x", settings=ImportSettings(), input_hash="")
     extra = {"response_id_source", "read", "id_columns", "response_id_columns"}
-    return set(base) | extra | {"response_key_blank_ok"}
+    return set(base) | extra | {"response_key_blank_ok", "quality_skipped"}
 
 
 @pytest.mark.parametrize(
@@ -419,6 +440,7 @@ def test_provenance_keys(path, ids, source, id_columns, response_id_columns):
     assert prov["id_columns"] == id_columns
     assert prov["response_id_columns"] == response_id_columns
     assert prov["response_key_blank_ok"] == []
+    assert prov["quality_skipped"] == ["no_consent", "test_response", "paper_input", "under_age"]
     assert prov["read"] == {"format": "csv", "encoding": "utf-8-sig", "delimiter": ","}
     assert prov["data_refs"] == [
         {

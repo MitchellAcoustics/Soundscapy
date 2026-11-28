@@ -14,7 +14,7 @@ from soundscapy import _data
 from soundscapy._model import _UNSET, _Unset
 from soundscapy.errors import DataReferenceError
 from soundscapy.survey.mapping import read_mapping
-from soundscapy.survey.read import ReadOptions, Survey, _read_survey
+from soundscapy.survey.read import ImportSettings, ReadOptions, Survey, _read_survey
 
 __all__ = ["load"]
 
@@ -89,5 +89,6 @@ def load(*, subset: bool = False, version: str | _Unset = _UNSET) -> Survey:
             path,
             mapping,
             read_options=ReadOptions(**entry["read_options"]),
+            settings=ImportSettings(),
             data_refs=[dataset_ref],
         )
