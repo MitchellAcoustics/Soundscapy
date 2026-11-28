@@ -128,12 +128,12 @@ def _masks(inputs: QualityInputs, settings: QualitySettings) -> dict[str, NDArra
     missing = np.isnan(attributes)
     complete = ~missing.any(axis=1)
     constant = complete & (attributes == attributes[:, :1]).all(axis=1)
-    first = attributes[:, 0] if attributes.shape[1] else np.full(len(attributes), np.nan)
+    first = attributes[:, 0]
     items = [missing]
     if inputs.source_dominance is not None:
         items.append(np.isnan(inputs.source_dominance))
     cells = np.concatenate(items, axis=1)
-    share = cells.mean(axis=1) if cells.shape[1] else np.zeros(len(attributes))
+    share = cells.mean(axis=1)
     return {
         "all_identical": constant & (first != inputs.midpoint),
         "all_midpoint": constant & (first == inputs.midpoint),

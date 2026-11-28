@@ -12,19 +12,14 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from soundscapy import _data
 from soundscapy._model import _UNSET, _Unset
+from soundscapy.datasets._bundled import load_bundled
 from soundscapy.survey.mapping import read_mapping
-from soundscapy.survey.read import (
-    ImportSettings,
-    ReadOptions,
-    Survey,
-    _read_survey,
-    resolve_import_settings,
-)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from soundscapy.survey.quality import QualitySettings
+    from soundscapy.survey.read import ImportSettings, Survey
 
 __all__ = ["load"]
 
@@ -74,20 +69,12 @@ def load(
     """
     with _data.as_path(_MAPPING) as mapping_path:
         mapping = read_mapping(mapping_path)
-    import_settings = resolve_import_settings(
-        quality=quality, on_scale_violation=on_scale_violation, settings=settings
+    return load_bundled(
+        _CSV,
+        mapping,
+        name="course-demo",
+        version=_VERSION,
+        quality=quality,
+        on_scale_violation=on_scale_violation,
+        settings=settings,
     )
-    dataset_ref = {
-        "kind": "dataset",
-        "name": "course-demo",
-        "version": _VERSION,
-        "hash": _data.pin(_CSV),
-    }
-    with _data.as_path(_CSV) as path:
-        return _read_survey(
-            path,
-            mapping,
-            read_options=ReadOptions(),
-            settings=import_settings,
-            data_refs=[dataset_ref],
-        )

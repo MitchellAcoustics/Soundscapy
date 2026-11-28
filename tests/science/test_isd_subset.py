@@ -6,8 +6,6 @@ and 40 columns by ``scripts/make_isd_subset.py``; the counts were measured on th
 
 from __future__ import annotations
 
-import csv
-import io
 import tomllib
 from collections import Counter
 
@@ -15,6 +13,7 @@ import pytest
 
 from soundscapy import _data
 from soundscapy.provenance import hash_bytes
+from tests._helpers import csv_rows
 
 pytestmark = pytest.mark.science
 
@@ -65,8 +64,7 @@ _CITATION = {
 
 @pytest.fixture(scope="module")
 def rows() -> list[dict[str, str]]:
-    text = _data.read_bytes(_CSV).decode("utf-8")
-    return list(csv.DictReader(io.StringIO(text, newline="")))
+    return csv_rows(_data.read_bytes(_CSV).decode("utf-8"))
 
 
 def test_subset_matches_its_pin():

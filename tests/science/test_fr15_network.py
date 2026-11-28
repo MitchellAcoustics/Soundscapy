@@ -8,7 +8,6 @@ carry the ``network`` marker and run in the nightly ``network`` job, not the def
 from __future__ import annotations
 
 import csv
-import io
 import os
 from pathlib import Path
 
@@ -18,6 +17,7 @@ from soundscapy import _data
 from soundscapy.survey.mapping import read_mapping
 from soundscapy.survey.read import read_survey
 from tests._downloads import ISD_FILES, isd_csv
+from tests._helpers import csv_rows
 
 pytestmark = [pytest.mark.science, pytest.mark.network]
 
@@ -56,8 +56,9 @@ def isd_cache(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return Path(base) / "test-downloads" if base else tmp_path_factory.mktemp("downloads")
 
 
-def _rows(path: Path) -> list[dict[str, str]]:
-    return list(csv.DictReader(io.StringIO(path.read_text(encoding="utf-8-sig"), newline="")))
+@pytest.fixture(scope="module")
+def isd_rows(isd_cache) -> list[dict[str, str]]:
+    return csv_rows(isd_csv(DEFAULT, isd_cache).read_text(encoding="utf-8-sig"))
 
 
 def _key(row: dict[str, str]) -> str:
@@ -85,19 +86,18 @@ def test_fr15_full_isd(isd_cache, version):
 
 
 def test_registry_feature_columns_match_the_header(isd_cache):
-    header = _rows(isd_csv(DEFAULT, isd_cache))[0]
-    columns = list(header)
+    with isd_csv(DEFAULT, isd_cache).open(encoding="utf-8-sig", newline="") as handle:
+        columns = next(csv.reader(handle))
     features = columns[columns.index("RecordingLength") + 1 :]
     registry = _data.read_toml("datasets/isd/registry.toml")
     assert features == registry["versions"][DEFAULT]["feature_columns"]
     assert len(features) == 96
 
 
-def test_course_rows_equal_isd_rows(isd_cache):
+def test_course_rows_equal_isd_rows(isd_rows):
     """Spec 7.5: every course row is its ISD row on the four-part key, cell for cell."""
-    isd_rows = {_key(row): row for row in _rows(isd_csv(DEFAULT, isd_cache))}
-    course_rows = _data.read_bytes("datasets/course_demo/course_demo.csv").decode("utf-8")
-    course = list(csv.DictReader(io.StringIO(course_rows, newline="")))
+    isd_rows = {_key(row): row for row in isd_rows}
+    course = csv_rows(_data.read_bytes("datasets/course_demo/course_demo.csv").decode("utf-8"))
     assert len(course) == 456
     sites = {row["LocationID"] for row in course}
     for row in course:

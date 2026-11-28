@@ -12,15 +12,10 @@ from typing import TYPE_CHECKING, Any, Final, Literal
 
 from soundscapy import _data
 from soundscapy._model import _UNSET, _Unset
+from soundscapy.datasets._bundled import load_bundled
 from soundscapy.errors import DataReferenceError
-from soundscapy.survey.mapping import SurveyMapping, read_mapping
-from soundscapy.survey.read import (
-    ImportSettings,
-    ReadOptions,
-    Survey,
-    _read_survey,
-    resolve_import_settings,
-)
+from soundscapy.survey.mapping import read_mapping
+from soundscapy.survey.read import ImportSettings, ReadOptions, Survey
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -108,23 +103,16 @@ def load(
     with _data.as_path(_DIR + entry["mapping"]) as mapping_path:
         mapping = read_mapping(mapping_path)
     features = _data.read_toml(_SIDECAR)["features"]["columns"]
-    mapping = SurveyMapping.model_validate(
-        {**mapping.model_dump(by_alias=True), "carry": [*mapping.carry, *features]}
+    # A copy without re-validation: the pinned feature names are not blank, repeated or id
+    # columns, and reading checks they are in the file.
+    mapping = mapping.model_copy(update={"carry": (*mapping.carry, *features)})
+    return load_bundled(
+        _SUBSET,
+        mapping,
+        name="isd-subset",
+        version=resolved,
+        read_options=ReadOptions(**entry["read_options"]),
+        quality=quality,
+        on_scale_violation=on_scale_violation,
+        settings=settings,
     )
-    import_settings = resolve_import_settings(
-        quality=quality, on_scale_violation=on_scale_violation, settings=settings
-    )
-    dataset_ref = {
-        "kind": "dataset",
-        "name": "isd-subset",
-        "version": resolved,
-        "hash": _data.pin(_SUBSET),
-    }
-    with _data.as_path(_SUBSET) as path:
-        return _read_survey(
-            path,
-            mapping,
-            read_options=ReadOptions(**entry["read_options"]),
-            settings=import_settings,
-            data_refs=[dataset_ref],
-        )

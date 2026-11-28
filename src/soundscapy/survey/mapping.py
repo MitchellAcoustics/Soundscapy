@@ -69,6 +69,7 @@ GROUP_SCALES: Final[Mapping[str, Scale]] = {
 }
 """The default response scale of each optional group (spec 6.4.1)."""
 _ID_ROLES: Final = ("location", "session", "group", "record")
+_CANNOT_CODE: Final = "cannot code these texts as numbers: "
 
 
 class IdSpec(FrozenModel):
@@ -542,7 +543,7 @@ def apply_coding(
         if failure:
             failures.append(failure)
     if failures:
-        msg = "cannot code these texts as numbers: " + "; ".join(failures)
+        msg = _CANNOT_CODE + "; ".join(failures)
         hint = "add a value_map entry for label responses, or a missing_values code"
         raise CodingError(msg, hint=hint)
     out += coding.offset

@@ -20,7 +20,14 @@ import numpy as np
 from pydantic import StrictStr, field_validator
 
 from soundscapy import _data
-from soundscapy._frames import column_text, read_text_table, readonly_copy, take_rows, with_columns
+from soundscapy._frames import (
+    bool_mask,
+    column_text,
+    read_text_table,
+    readonly_copy,
+    take_rows,
+    with_columns,
+)
 from soundscapy._log import logger
 from soundscapy._model import (
     _UNSET,
@@ -47,9 +54,12 @@ from soundscapy.errors import (
 )
 from soundscapy.provenance import envelope, hash_file, hash_json
 from soundscapy.survey.mapping import (
+    _CANNOT_CODE,
+    _ID_ROLES,
     _LANGUAGE_CODE,
     _NOT_LANGUAGE_CODE,
     Coding,
+    FlagSpecs,
     Groups,
     IdSpec,
     ItemGroup,
@@ -62,6 +72,8 @@ from soundscapy.survey.quality import QualityInputs, QualitySettings, apply_qual
 from soundscapy.survey.status import Flag, Reason, Status
 
 if TYPE_CHECKING:
+    import enum
+
     import pandas as pd
     from numpy.typing import ArrayLike, NDArray
 
@@ -74,10 +86,8 @@ __all__ = [
     "resolve_import_settings",
 ]
 
-_ROLES: Final = ("location", "session", "group", "record")
 _SUFFIX_FORMATS: Final[Mapping[str, Literal["csv", "tsv"]]] = {".csv": "csv", ".tsv": "tsv"}
 _DEFAULT_DELIMITERS: Final[Mapping[str, str]] = {"csv": ",", "tsv": "\t"}
-_FLAG_NAMES: Final = ("consent", "test", "paper_input")
 _SCALE_HINT: Final = (
     "add a missing_values code for a value that means no answer, set coding.offset to "
     'shift the scale (a 0..4 export needs offset = 1.0), or pass on_scale_violation="exclude" '
@@ -274,11 +284,7 @@ class Survey:
         ValueError
             If ``mask`` is not a boolean array with one entry per response.
         """
-        keep = np.asarray(mask)
-        if keep.shape != (self.n(),) or keep.dtype != np.bool_:
-            msg = f"mask must be a boolean array of shape ({self.n()},), got {keep.dtype} "
-            msg += f"{keep.shape}"
-            raise ValueError(msg)
+        keep = bool_mask(mask, self.n())
         return Survey(
             data=take_rows(self.data, keep),
             mapping=self.mapping,
@@ -495,19 +501,12 @@ def _read_survey(
     rows = table.row_numbers
     response_id, id_source, id_columns = _response_ids(ids, stripped, rows)
     language = _languages(mapping.language, frame, response_id)
-    coded = {
-        name: _code_group(group, frame, response_id) for name, group in _mapped_groups(mapping)
-    }
+    groups = dict(_mapped_groups(mapping))
+    coded = {name: _code_group(group, frame, response_id) for name, group in groups.items()}
     status = Status.all_included(len(response_id))
-    violated = [name for name, (_, outside) in coded.items() if outside.any()]
-    if violated and settings.on_scale_violation == "error":
-        groups = dict(_mapped_groups(mapping))
-        raise ScaleViolationError(
-            _scale_violation_message(
-                [(name, groups[name], *coded[name]) for name in violated], response_id
-            ),
-            hint=_SCALE_HINT,
-        )
+    if settings.on_scale_violation == "error" and any(out.any() for _, out in coded.values()):
+        msg = _scale_violation_message(groups, coded, response_id)
+        raise ScaleViolationError(msg, hint=_SCALE_HINT)
     scores: dict[str, NDArray[np.float64]] = {}
     violating_rows = np.zeros(len(response_id), dtype=np.bool_)
     for name, (values, outside) in coded.items():
@@ -518,12 +517,10 @@ def _read_survey(
     attribute_scale = mapping.groups.attributes.scale
     inputs = QualityInputs(
         attributes=scores["attributes"],
-        midpoint=(attribute_scale.minimum + attribute_scale.maximum) / 2,
+        midpoint=attribute_scale.midpoint,
         source_dominance=scores.get("source_dominance"),
-        consent=_flag(frame, mapping, "consent"),
-        test=_flag(frame, mapping, "test"),
-        paper_input=_flag(frame, mapping, "paper_input"),
         age=_age(frame, mapping, response_id),
+        **{name: _flag(frame, mapping, name) for name in FlagSpecs.model_fields},
     )
     status, skipped = apply_quality(status, inputs, settings.quality)
     _log_summary(path.name, table.n_blank, status)
@@ -564,7 +561,7 @@ def _read_survey(
 
 
 def _mapped_roles(ids: IdSpec) -> list[str]:
-    return [role for role in _ROLES if getattr(ids, role)]
+    return [role for role in _ID_ROLES if getattr(ids, role)]
 
 
 def _mapped_groups(mapping: SurveyMapping) -> list[tuple[str, ItemGroup]]:
@@ -595,7 +592,7 @@ def _check_columns(header: list[str], mapping: SurveyMapping) -> None:
         mapped += [(f"groups.{name}.columns.{key}", column) for key, column in group.columns]
     if mapping.age:
         mapped.append(("age", mapping.age))
-    for name in _FLAG_NAMES:
+    for name in FlagSpecs.model_fields:
         column = getattr(mapping.flags, name).column
         if column:
             mapped.append((f"flags.{name}.column", column))
@@ -830,12 +827,16 @@ def _code_group(
 
 
 def _scale_violation_message(
-    violated: Sequence[tuple[str, ItemGroup, NDArray[np.float64], NDArray[np.bool_]]],
+    groups: Mapping[str, ItemGroup],
+    coded: Mapping[str, tuple[NDArray[np.float64], NDArray[np.bool_]]],
     response_ids: NDArray[np.object_],
 ) -> str:
-    """One message for every group with a violation, in coding order (spec 6.4.3)."""
+    """Return one message for every group with a violation, in coding order (spec 6.4.3)."""
     segments = []
-    for name, group, scores, outside in violated:
+    for name, (scores, outside) in coded.items():
+        if not outside.any():
+            continue
+        group = groups[name]
         entries = []
         for j, (key, column) in enumerate(group.columns):
             hit = outside[:, j]
@@ -862,11 +863,12 @@ def _age(
             cells,
             Coding(),
             mapping.groups.attributes.scale,  # unused: nothing is reversed
-            item_keys=("age",),
+            item_keys=(mapping.age,),
             response_ids=response_ids,
         )
     except CodingError as err:
-        msg = f"the age column {mapping.age!r} holds texts that are not numbers; {err}"
+        listed = str(err).removeprefix(_CANNOT_CODE).removeprefix(f"{mapping.age}: ")
+        msg = f"the age column {mapping.age!r} holds texts that are not numbers: {listed}"
         hint = "map age to a column of numbers, or leave age unmapped"
         raise CodingError(msg, hint=hint) from err
     return coded[:, 0]
@@ -880,18 +882,20 @@ def _flag(frame: pd.DataFrame, mapping: SurveyMapping, name: str) -> NDArray[np.
     return np.isin(stripped_text(frame, spec.column), list(spec.true_values))
 
 
+def _nonzero_counts(counts: Mapping[str, int], kind: str, codes: type[enum.StrEnum]) -> list[str]:
+    """Return ``"<code>: <count>"`` for every code with a non-zero count, in enum order."""
+    out = []
+    for code in codes:
+        count = counts[f"{kind}:{code.value}"]
+        if count:
+            out.append(f"{code.value}: {count}")
+    return out
+
+
 def _log_summary(name: str, n_blank: int, status: Status) -> None:
     counts = status.counts()
-    by_reason = [
-        f"{reason.value}: {counts[f'reason:{reason.value}']}"
-        for reason in Reason
-        if counts[f"reason:{reason.value}"]
-    ]
-    by_flag = [
-        f"{flag.value}: {counts[f'flag:{flag.value}']}"
-        for flag in Flag
-        if counts[f"flag:{flag.value}"]
-    ]
+    by_reason = _nonzero_counts(counts, "reason", Reason)
+    by_flag = _nonzero_counts(counts, "flag", Flag)
     logger.info(
         "read_survey: %d %s read from %s, %d blank %s skipped; %d included, %d excluded (%s); "
         "flagged (%s)",

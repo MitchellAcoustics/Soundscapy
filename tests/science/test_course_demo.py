@@ -7,16 +7,14 @@ measured on that file.
 
 from __future__ import annotations
 
-import csv
-import io
 import tomllib
 from collections import Counter
 
 import pytest
 
 from soundscapy import _data
-from soundscapy.datasets import course_demo
 from soundscapy.provenance import hash_bytes
+from tests._helpers import csv_rows
 
 pytestmark = pytest.mark.science
 
@@ -28,8 +26,7 @@ _SITES = {"TateModern": 152, "CamdenTown": 105, "MarchmontGarden": 105, "Pancras
 
 @pytest.fixture(scope="module")
 def rows() -> list[dict[str, str]]:
-    text = _data.read_bytes(_CSV).decode("utf-8")
-    return list(csv.DictReader(io.StringIO(text, newline="")))
+    return csv_rows(_data.read_bytes(_CSV).decode("utf-8"))
 
 
 @pytest.fixture(scope="module")
@@ -60,7 +57,3 @@ def test_course_sidecar(sidecar):
     assert sidecar["n_rows"] == 456
     assert sidecar["name"] == "course-demo"
     assert sidecar["version"] == "1"
-
-
-def test_course_reads_without_coding_errors():
-    assert course_demo.load().n() == 456

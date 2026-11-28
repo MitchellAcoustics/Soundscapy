@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "TextTable",
+    "bool_mask",
     "column_text",
     "columns_float",
     "float_column",
@@ -327,14 +328,41 @@ def with_columns(
     return frame.assign(**added)
 
 
-def take_rows(frame: pd.DataFrame, mask: NDArray[np.bool_]) -> pd.DataFrame:
+def bool_mask(mask: ArrayLike, n: int) -> NDArray[np.bool_]:
+    """Check that ``mask`` is a boolean array with ``n`` entries and return it as one.
+
+    Parameters
+    ----------
+    mask : array-like of bool
+        One entry per row.
+    n : int
+        The number of rows.
+
+    Returns
+    -------
+    numpy.ndarray of bool
+        ``mask`` as a boolean array; an empty mask of any dtype is accepted.
+
+    Raises
+    ------
+    ValueError
+        If ``mask`` does not have shape ``(n,)`` or is not boolean.
+    """
+    array = np.asarray(mask)
+    if array.shape != (n,) or (array.size and array.dtype != np.bool_):
+        msg = f"mask must be a boolean array of shape ({n},), got {array.dtype} {array.shape}"
+        raise ValueError(msg)
+    return array.astype(np.bool_)
+
+
+def take_rows(frame: pd.DataFrame, mask: ArrayLike) -> pd.DataFrame:
     """Return the rows of a frame where ``mask`` is true, in order, with a fresh index.
 
     Parameters
     ----------
     frame : pandas.DataFrame
         The frame; it is not changed.
-    mask : numpy.ndarray of bool
+    mask : array-like of bool
         One entry per row.
 
     Returns
@@ -351,12 +379,7 @@ def take_rows(frame: pd.DataFrame, mask: NDArray[np.bool_]) -> pd.DataFrame:
         If ``mask`` is not a boolean array with one entry per row.
     """
     frame = require_frame(frame)
-    if mask.shape != (len(frame),) or mask.dtype != np.bool_:
-        msg = (
-            f"mask must be a boolean array of shape ({len(frame)},), got {mask.dtype} {mask.shape}"
-        )
-        raise ValueError(msg)
-    return frame.loc[mask].reset_index(drop=True)
+    return frame.loc[bool_mask(mask, len(frame))].reset_index(drop=True)
 
 
 def new_frame(columns: Mapping[str, NDArray[Any]]) -> pd.DataFrame:

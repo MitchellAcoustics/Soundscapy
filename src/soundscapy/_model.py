@@ -303,35 +303,31 @@ def settings_layer(value: object, *, model: type[FrozenModel], name: str) -> dic
     SettingsError
         If ``value`` is neither an instance of ``model`` nor a mapping.
     """
-    if isinstance(value, model):
-        return value.model_dump(mode="json", by_alias=True, exclude_unset=True)
-    if isinstance(value, Mapping):
-        return _copy_layer(value)
+    if isinstance(value, model) or isinstance(value, Mapping):  # noqa: SIM101  # `model` is a variable, not a class literal
+        return _layer(value)
     msg = (
         f"{name} must be a {model.__name__} or a mapping of its fields, got {type(value).__name__}"
     )
     raise SettingsError(msg)
 
 
-def _copy_layer(mapping: Mapping[str, Any]) -> dict[str, Any]:
-    out: dict[str, Any] = {}
-    for key, item in mapping.items():
-        if isinstance(item, FrozenModel):
-            out[key] = item.model_dump(mode="json", by_alias=True, exclude_unset=True)
-        elif isinstance(item, Mapping):
-            out[key] = _copy_layer(item)
-        else:
-            out[key] = item
-    return out
+def _layer(value: Any) -> Any:  # noqa: ANN401  # a settings value of any JSON-like type
+    """Copy a layer: a model becomes its set fields, a mapping a fresh dict, recursively."""
+    if isinstance(value, FrozenModel):
+        return value.model_dump(mode="json", by_alias=True, exclude_unset=True)
+    if isinstance(value, Mapping):
+        return {key: _layer(item) for key, item in value.items()}
+    return value
 
 
 def _deep_merge(base: dict[str, Any], layer: Mapping[str, Any]) -> None:
+    """Merge ``layer``, a fresh copy from ``_layer``, into ``base``; a later value wins."""
     for key, item in layer.items():
         current = base.get(key)
-        if isinstance(item, Mapping) and isinstance(current, dict):
+        if isinstance(item, dict) and isinstance(current, dict):
             _deep_merge(current, item)
         else:
-            base[key] = dict(item) if isinstance(item, Mapping) else item
+            base[key] = item
 
 
 def merge_settings(model: type[M], layers: Sequence[Mapping[str, Any]], *, context: str) -> M:

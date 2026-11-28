@@ -9,13 +9,11 @@ from __future__ import annotations
 
 import pytest
 
-from soundscapy.datasets import isd
-
 pytestmark = pytest.mark.science
 
 
-def test_fr15_subset_counts():
-    survey = isd.load(subset=True)
+def test_fr15_subset_counts(isd_survey):
+    survey = isd_survey
     counts = survey.status.counts()
     assert counts["n"] == 1552
     assert counts["reason:incomplete_attributes"] == 16

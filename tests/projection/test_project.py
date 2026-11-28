@@ -20,6 +20,7 @@ from soundscapy.instrument.angles import AngleSelection
 from soundscapy.projection.project import ProjectionSettings, project
 from soundscapy.provenance import hash_json
 from soundscapy.survey.read import read_survey
+from tests._helpers import ISD_FEATURES, ISD_MAPPING_CARRY
 
 FIXTURES = Path(__file__).parent / "fixtures"
 MAPPING = FIXTURES / "mapping.toml"
@@ -229,10 +230,7 @@ def test_subset_square_bounds(isd_coords):
 
 def test_subset_labels_carry_the_id_columns(isd_coords):
     assert list(isd_coords.labels)[6:10] == ["LocationID", "SessionID", "GroupID", "RecordID"]
-    carried = ["start_time", "Survey_Version", "sss03", "sss04", "sss05"]
-    carried += ["LCeq_L(C)", "LAeq_L(A)", "LAeq_L10(A)", "LAeq_L90(A)", "N_N5", "S_S", "R_R"]
-    carried += ["T_TonalityHMS", "FS_F", "I_I"]
-    assert list(isd_coords.labels)[10:] == carried
+    assert list(isd_coords.labels)[10:] == [*ISD_MAPPING_CARRY, *ISD_FEATURES]
 
 
 # --- carried columns (spec 6.9.2) ----------------------------------------------------------------

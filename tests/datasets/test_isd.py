@@ -9,6 +9,7 @@ from soundscapy.datasets import isd
 from soundscapy.errors import DataReferenceError
 from soundscapy.survey.mapping import read_mapping, write_mapping
 from soundscapy.survey.read import Survey
+from tests._helpers import ISD_FEATURES, ISD_MAPPING_CARRY
 
 _MAPPING = "datasets/isd/isd_mapping.toml"
 # Spec 6.4.4's normative example, which the shipped file must equal byte for byte.
@@ -59,11 +60,6 @@ who5_3 = "who03"
 who5_4 = "who04"
 who5_5 = "who05"
 """
-_MAPPING_CARRY = ["start_time", "Survey_Version", "sss03", "sss04", "sss05"]
-_SIDECAR_FEATURES = [
-    "LCeq_L(C)", "LAeq_L(A)", "LAeq_L10(A)", "LAeq_L90(A)", "N_N5", "S_S", "R_R",
-    "T_TonalityHMS", "FS_F", "I_I",
-]  # fmt: skip
 
 
 def test_load_subset(isd_survey):
@@ -113,12 +109,12 @@ def test_isd_mapping_is_the_normative_example():
 
 
 def test_load_subset_carries_features(isd_survey, isd_coords):
-    assert list(isd_survey.mapping.carry) == _MAPPING_CARRY + _SIDECAR_FEATURES
+    assert isd_survey.mapping.carry == (*ISD_MAPPING_CARRY, *ISD_FEATURES)
     assert isd_coords.labels["LAeq_L(A)"].dtype == object
     assert isd_coords.labels["LAeq_L(A)"][0] == isd_survey.data["LAeq_L(A)"].iloc[0]
 
 
-def test_load_passes_settings_through():
+def test_load_passes_settings_through(isd_survey):
     off = isd.load(subset=True, quality={"all_midpoint": "off"})
     assert off.status.counts()["flag:all_midpoint"] == 0
     assert off.settings.quality.all_midpoint == "off"
@@ -127,7 +123,7 @@ def test_load_passes_settings_through():
     assert counts["reason:under_age"] == 8  # the 8 under-age rows are all complete
     assert counts["excluded"] == 24
     same = isd.load(subset=True, on_scale_violation="exclude")
-    assert same.status.counts() == isd.load(subset=True).status.counts()  # no violations
+    assert same.status.counts() == isd_survey.status.counts()  # no violations
 
 
 def test_registry_feature_columns():
@@ -135,7 +131,7 @@ def test_registry_feature_columns():
     columns = columns["feature_columns"]
     assert len(columns) == len(set(columns)) == 96
     assert columns[0] == "LZeq_L"
-    assert set(_SIDECAR_FEATURES) <= set(columns)
+    assert set(ISD_FEATURES) <= set(columns)
 
 
 def test_isd_mapping_byte_round_trip(tmp_path):

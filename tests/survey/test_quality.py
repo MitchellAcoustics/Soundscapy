@@ -100,8 +100,12 @@ def test_the_matrix_has_sixteen_allowed_pairs():
     assert "incomplete_attributes" not in QualitySettings.model_fields
 
 
+def _mask(codes: tuple[tuple[object, ...], ...], code: object) -> np.ndarray:
+    return np.array([code in row for row in codes], dtype=bool)
+
+
 def _rows_with(codes: tuple[tuple[object, ...], ...], code: object) -> list[int]:
-    return [i for i, row in enumerate(codes) if code in row]
+    return np.flatnonzero(_mask(codes, code)).tolist()
 
 
 @pytest.mark.parametrize(("rule", "action"), _PAIRS, ids=[f"{r}-{a}" for r, a in _PAIRS])
@@ -210,10 +214,6 @@ def test_under_age_boundary():
     assert _rows_with(status.flags, Flag.UNDER_AGE) == [0, 2, 8]  # strict <, spec 6.7
     status, _ = _apply(QualitySettings(min_age=16.0), age=age)
     assert _rows_with(status.flags, Flag.UNDER_AGE) == [2]  # 16.0 itself no longer fires
-
-
-def _mask(codes: tuple[tuple[object, ...], ...], code: object) -> np.ndarray:
-    return np.array([code in row for row in codes], dtype=bool)
 
 
 @given(

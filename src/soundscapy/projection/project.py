@@ -100,13 +100,15 @@ def _carried_columns(survey: Survey, carry: Sequence[str] | _Unset, taken: set[s
         raise TypeError(msg)
     else:
         extra = carry
-    columns = list(survey.mapping.carry)
-    columns += [column for column in extra if column not in columns]
-    data_columns = list(survey.data.columns)
-    for column in columns:
+    columns = list(survey.mapping.carry)  # already checked against the id columns by the mapping
+    new = [column for column in extra if column not in columns]
+    for column in new:
         if column in taken:
             msg = f"carry names {column!r}, an id column, which is already a label"
             raise MappingError(msg)
+    columns += new
+    data_columns = list(survey.data.columns)
+    for column in columns:
         if column not in data_columns:
             msg = (
                 f"carry names {column!r}, which is not a column of the survey's data; "

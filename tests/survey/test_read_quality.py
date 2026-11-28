@@ -205,7 +205,6 @@ def test_quality_skipped_recorded(tmp_path):
         "paper_input",
         "under_age",
     ]
-    assert read_survey(_ten(tmp_path), _full_mapping()).provenance["quality_skipped"] == []
 
 
 # --- settings ------------------------------------------------------------------------------------

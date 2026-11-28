@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, Self, TypeVar
 
 import numpy as np
 
-from soundscapy._frames import new_frame, readonly_copy
+from soundscapy._frames import bool_mask, new_frame, readonly_copy
 from soundscapy._model import COL_FLAGS, COL_INCLUDED, COL_REASONS
 
 if TYPE_CHECKING:
@@ -176,14 +176,7 @@ class Status:
         return cls._unchecked(np.ones(n, dtype=np.bool_), ((),) * n, ((),) * n)
 
     def _mask(self, mask: ArrayLike) -> NDArray[np.bool_]:
-        array = np.asarray(mask)
-        if array.shape != self.included.shape or (array.size and array.dtype != np.bool_):
-            msg = (
-                f"mask must be a boolean array of shape {self.included.shape}, "
-                f"got {array.dtype} {array.shape}"
-            )
-            raise ValueError(msg)
-        return array.astype(np.bool_)
+        return bool_mask(mask, len(self.included))
 
     def with_reason(self, mask: ArrayLike, reason: Reason) -> Self:
         """Return a new status with ``reason`` added where ``mask`` is true.
@@ -254,11 +247,10 @@ class Status:
             If ``mask`` is not a boolean array with one entry per response.
         """
         keep = self._mask(mask)
-        rows = np.flatnonzero(keep).tolist()
         return self._unchecked(
             self.included[keep],
-            tuple(self.reasons[i] for i in rows),
-            tuple(self.flags[i] for i in rows),
+            tuple(itertools.compress(self.reasons, keep)),
+            tuple(itertools.compress(self.flags, keep)),
         )
 
     def counts(self) -> dict[str, int]:
