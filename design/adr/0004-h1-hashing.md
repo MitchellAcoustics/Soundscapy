@@ -1,6 +1,7 @@
 # 0004. One hashing helper, scheme `h1`
 
 - Status: Accepted, 2026-10-31
+- Amended 2026-11-27: pandas is the only frame library (plan §4.10, owner decision #2 reversed). The claim that pandas and polars agree no longer applies: the agreement that matters is between pandas' classic and nullable dtypes, which hash alike, and `test_frame_hash_vector` now holds its content as a classic and as a nullable pandas frame. The `h1` scheme and every pinned hash are unchanged.
 - Spec: §6.3.5 (as amended at the S1 plan review), §6.3.6, §6.2.1
 
 ## Context

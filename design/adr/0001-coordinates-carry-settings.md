@@ -1,6 +1,7 @@
 # 0001. Coordinates carry their settings and provenance
 
 - Status: Accepted, 2026-10-31
+- Amended 2026-11-27: pandas is the only frame library (plan §4.10, owner decision #2 reversed), so `_frames.new_frame` keeps pandas, not "pandas and polars", out of the other modules. The decision is unchanged.
 - Spec: phase 0 and M1 design §6.10, §11.1
 
 ## Context

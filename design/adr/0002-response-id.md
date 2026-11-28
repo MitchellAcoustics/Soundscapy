@@ -1,6 +1,7 @@
 # 0002. How a response id is built and found again
 
 - Status: Accepted, 2026-10-31
+- Amended 2026-11-27: pandas is the only frame library (plan §4.10, owner decision #2 reversed). `attach` takes a pandas frame, so "in pandas or polars" no longer holds; the id rules are unchanged.
 - Spec: §6.3.2, §6.3.6 (as amended at the S1 plan review), §6.16
 
 ## Context
