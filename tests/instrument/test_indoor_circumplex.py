@@ -4,12 +4,14 @@ The synthetic indoor circumplex under ``tests/fixtures/indoor/`` has six attribu
 degree steps, axes ``Comfort`` and ``Content`` and a 1..7 scale, so it differs from the
 shipped outdoor instrument in attribute count, axis ids, labels and scale (PRD FR-2.0). It
 reaches ``read_survey`` through the ``indoor_circumplex_registry`` fixture, which overrides
-the shipped-data registry for one test; the package code runs unchanged.
+the shipped-data registry for one test; the package code runs unchanged. An autouse
+fixture checks after every such test that the override is gone again.
 """
 
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -23,9 +25,27 @@ from soundscapy.projection.project import project
 from soundscapy.survey.read import read_survey
 from soundscapy.survey.status import Reason
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
 INDOOR_REL = "circumplexes/indoor-test/1.toml"
 LABELS = ("comfortable", "lively", "engaging", "uncomfortable", "oppressive", "dull")
 SCALE_1_7 = (1.0, 7.0, "ordinal")  # minimum, maximum, kind
+
+
+@pytest.fixture(autouse=True)
+def _registry_restored(request: pytest.FixtureRequest) -> Iterator[None]:
+    """After each test that used the override, check that its teardown left nothing behind.
+
+    Autouse fixtures set up before the ones a test requests, so this teardown runs after
+    ``indoor_circumplex_registry``'s, whatever order the tests run in.
+    """
+    yield
+    if "indoor_circumplex_registry" not in request.fixturenames:
+        return
+    assert INDOOR_REL not in _data.PINS
+    with pytest.raises(DataReferenceError, match="indoor-test"):
+        circumplex("indoor-test", "1")
 
 
 def _bounds(scale: Scale) -> tuple[float, float, str]:
@@ -122,8 +142,7 @@ def test_override_is_visible_inside_the_fixture():
     assert circumplex("indoor-test", "1").name == "indoor-test"
 
 
-def test_registry_is_restored_after_the_fixture():
-    """Runs after the test above: the override left nothing behind."""
+def test_without_the_fixture_only_the_shipped_instrument_resolves():
     assert INDOOR_REL not in _data.PINS
     with pytest.raises(DataReferenceError, match="indoor-test"):
         circumplex("indoor-test", "1")

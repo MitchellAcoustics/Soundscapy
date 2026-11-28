@@ -161,7 +161,8 @@ class ResolvedSettings(Generic[M]):
     profile : ProfileRef
         The base profile; ``profile.model_dump()`` is the provenance record.
     profile_inherited : ProfileRef or None
-        The input's profile when an explicit, different ``profile=`` replaced it.
+        The input's profile when an explicit, different profile replaced it: a ``profile=``
+        keyword, or the ``extends`` of a settings file passed as ``settings``.
     overrides : dict
         Dotted key to JSON value for every field that differs from the base profile, such
         as ``{"projection.angles.on_uncovered": "exclude"}``.
@@ -430,9 +431,10 @@ def resolve_settings(
     Returns
     -------
     ResolvedSettings
-        The validated settings, the profile, the replaced inherited profile (or None) and
-        the overrides: every field whose value differs from the profile's section merged
-        onto the model defaults.
+        The validated settings, the profile, the inherited profile that an explicit
+        ``profile`` or a settings file's ``extends`` replaced (or None) and the overrides:
+        every field whose value differs from the profile's section merged onto the model
+        defaults.
 
     Raises
     ------

@@ -201,11 +201,15 @@ def test_origin_segment(hand_survey):
 def test_all_rows_excluded_projects_nothing(tmp_path):
     path = tmp_path / "blank.csv"
     lines = HAND_CSV.read_text(encoding="utf-8").splitlines()
-    path.write_text("\n".join([lines[0], lines[3]]) + "\n", encoding="utf-8")
+    # Row h3 has a blank attribute; two copies of it with new ids exclude every row.
+    rows = [lines[3], lines[3].replace("h3", "h4", 1)]
+    path.write_text("\n".join([lines[0], *rows]) + "\n", encoding="utf-8")
     coords = project(read_survey(path, MAPPING))
-    assert coords.xy.shape == (1, 2)
+    assert coords.xy.shape == (2, 2)
     assert np.isnan(coords.xy).all()
     assert n_valid(coords) == 0
+    assert coords.labels[COL_ANGLE_SET].tolist() == ["", ""]
+    assert coords.origin[0].angle_sets == ()
 
 
 # Each example writes and reads a file: no deadline, and 25 of the 5040 permutations.

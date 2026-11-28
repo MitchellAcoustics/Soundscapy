@@ -61,6 +61,15 @@ def test_read_survey_records_import_overrides():
     assert survey.provenance["overrides"] == {"import.on_scale_violation": "exclude"}
 
 
+def test_bare_angle_selection_leaves_the_profiles_angle_set(isd_survey):
+    # A bare instance sets no fields, so the profile's default applies.
+    with medium_warning():
+        bare = project(isd_survey, angles=AngleSelection())
+    assert bare.origin[0].angle_sets == ("satp@1.5",)
+    equal = project(isd_survey, angles=AngleSelection(default="equal"))  # warning-free
+    assert equal.origin[0].angle_sets == ("equal",)
+
+
 # --- Carry-over (spec 6.3.4) ----------------------------------------------------------------------
 
 
@@ -137,6 +146,15 @@ def test_profile_keyword_wins_over_the_files_extends(tmp_path):
     assert coords.provenance["profile"] == SAL
     assert projection_settings(coords).angles.on_uncovered == "exclude"
     assert coords.origin[0].angle_sets == ("satp@1.5",)
+
+
+def test_settings_file_extends_replaces_the_inherited_profile_and_records_it(tmp_path):
+    path = write_text(tmp_path, 'extends = "sal-2026"\n')
+    survey = read_survey(HAND_CSV, MAPPING, profile="iso-12913-3-2019")
+    coords = project(survey, settings=path)  # English only: no medium-confidence warning
+    assert coords.provenance["profile"] == SAL
+    assert coords.provenance["profile_inherited"] == ISO_2019
+    assert coords.provenance["overrides"] == {}
 
 
 # --- Re-running with the recorded settings --------------------------------------------------------

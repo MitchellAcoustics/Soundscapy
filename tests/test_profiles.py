@@ -190,6 +190,11 @@ def test_locked_formulation_is_refused_with_a_suggestion():
         _projection(profile="iso-12913-3-2024", keywords={"formulation": "aletta2024"})
 
 
+def test_locked_angle_default_is_refused():
+    with pytest.raises(ProfileConstraintError, match=re.escape("projection.angles.default")):
+        _projection(profile="iso-12913-3-2019", keywords={"angles": {"default": "satp@1.5"}})
+
+
 def test_locked_value_equal_to_the_profile_passes():
     resolved = _projection(profile="iso-12913-3-2019", keywords={"angles": {"default": "equal"}})
     assert resolved.settings.angles.default == "equal"

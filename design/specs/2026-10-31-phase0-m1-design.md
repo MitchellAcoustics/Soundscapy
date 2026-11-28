@@ -1086,7 +1086,7 @@ built by `provenance.envelope(...)`. **Normative** keys:
 | `upstream_run` | the run name the input came from, `""` when none |
 | `upstream` | `{settings_hash, input_hash}` copied from the input result, on results derived from another result's record rather than from its data (`contours`, from its density, §6.12) |
 | `quality_skipped` | on a `Survey` and results derived from it: the list of quality rules skipped because their columns are not mapped (§6.7), `[]` when none |
-| `profile`, `profile_inherited`, `overrides` | §6.3.4; `profile` is `{id, version, hash}`, `profile_inherited` is present only when an explicit profile replaced the input's |
+| `profile`, `profile_inherited`, `overrides` | §6.3.4; `profile` is `{id, version, hash}`, `profile_inherited` is present only when an explicit profile replaced the input's (an explicit `profile=` or a settings file's `extends`; amended at S3 plan review, 2026-11-28) |
 | `response_id_source`, `read` | on survey-derived results: §6.3.2, and the resolved `ReadOptions` |
 | `id_columns`, `response_id_columns`, `response_key_blank_ok` | on survey-derived results: `{role: user column}` for each mapped id role, `{}` when none (how `split(by=<role>)` finds its column, §6.10); the columns the response id was built from (`[response]` for `column`, the `response_key` columns in key order for `key`, `[]` for `row`); the key columns that may be blank (`[]` unless the source is `key`). `attach` rebuilds ids from exactly these (§6.16). (Amended at S1 plan review, 2026-10-31: §6.10 and §6.16 named no place for them.) |
 
