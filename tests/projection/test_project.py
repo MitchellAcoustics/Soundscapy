@@ -122,7 +122,15 @@ def test_project_rejects_unknown_angles(hand_survey, angles):
     assert "validation error" not in str(info.value)
 
 
-@pytest.mark.parametrize("formulation", ["aletta2024", "iso", 3])
+def test_project_accepts_aletta2024(hand_survey):
+    coords = project(hand_survey, formulation="aletta2024")
+    assert isinstance(coords.settings, ProjectionSettings)
+    assert coords.settings.formulation == "aletta2024"
+    # 1e-12: aletta2024 equals iso2019 at 45 degrees on 1..5 up to float64 rounding.
+    np.testing.assert_allclose(coords.xy[:2], HAND_XY, rtol=0, atol=1e-12)
+
+
+@pytest.mark.parametrize("formulation", ["nope", "iso", 3])
 def test_project_rejects_unknown_formulation(hand_survey, formulation):
     with pytest.raises(SettingsError) as info:
         project(hand_survey, formulation=formulation)
@@ -130,6 +138,7 @@ def test_project_rejects_unknown_formulation(hand_survey, formulation):
     assert "formulation" in str(info.value)
     assert '"canonical"' in str(info.value)
     assert '"iso2019"' in str(info.value)
+    assert '"aletta2024"' in str(info.value)
     assert "validation error" not in str(info.value)
 
 

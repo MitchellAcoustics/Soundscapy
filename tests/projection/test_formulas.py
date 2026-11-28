@@ -12,7 +12,7 @@ from soundscapy.instrument.scale import Scale
 from soundscapy.projection.formulas import project_scores
 from tests._helpers import NOMINAL_ANGLES_DEG, SCALE_1_5
 
-_FORMULATIONS = ["canonical", "iso2019"]
+_FORMULATIONS = ["canonical", "iso2019", "aletta2024"]
 
 
 def _nominal(n):
@@ -89,24 +89,42 @@ def test_non_finite_angles_raise():
 
 
 def test_unknown_formulation_raises():
-    with pytest.raises(ValueError, match="aletta2024"):
+    with pytest.raises(ValueError, match="nope") as info:
         project_scores(
             np.full((1, 8), 3.0),
             _nominal(1),
             SCALE_1_5,
-            "aletta2024",  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
+            "nope",  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime ValueError
         )
 
+    for name in _FORMULATIONS:
+        assert repr(name) in str(info.value)
 
+
+def test_aletta2024_accepts_other_scales_and_angles():
+    # Hand value on 1..7 at 0, 46, ..., 340: with rho = 6, lambda_P = 3 * sum|cos| and
+    # lambda_E = 3 * sum|sin|, and x, y are the raw weighted sums over those.
+    angles = np.array([[0.0, 46.0, 94.0, 138.0, 177.0, 231.0, 275.0, 340.0]])
+    scores = np.array([[7.0, 4.0, 4.0, 4.0, 1.0, 4.0, 4.0, 4.0]])
+    xy = project_scores(scores, angles, Scale(minimum=1.0, maximum=7.0), "aletta2024")
+    cos, sin = np.cos(np.deg2rad(angles[0])), np.sin(np.deg2rad(angles[0]))
+    expected = [
+        (cos * scores[0]).sum() / (3.0 * np.abs(cos).sum()),
+        (sin * scores[0]).sum() / (3.0 * np.abs(sin).sum()),
+    ]
+    np.testing.assert_allclose(xy[0], expected, rtol=0, atol=1e-12)  # float64 sums of 8 terms
+
+
+@pytest.mark.parametrize("formulation", ["canonical", "aletta2024"])
 @pytest.mark.parametrize(
     ("angles", "axis"),
     [((90.0, 270.0), "x axis"), ((0.0, 180.0), "y axis")],
 )
-def test_degenerate_angle_sums_raise(angles, axis):
+def test_degenerate_angle_sums_raise(angles, axis, formulation):
     # Sums are float64 residues of about 1e-16 here, never exactly 0.
     rows = np.array([[0.0, 90.0], angles])
     with pytest.raises(FormulationError, match=axis):
-        project_scores(np.full((2, 2), 3.0), rows, SCALE_1_5, "canonical")
+        project_scores(np.full((2, 2), 3.0), rows, SCALE_1_5, formulation)
 
 
 @pytest.mark.parametrize("formulation", _FORMULATIONS)
