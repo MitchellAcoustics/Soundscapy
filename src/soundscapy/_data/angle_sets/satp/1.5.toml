@@ -1,0 +1,97 @@
+schema = "soundscapy.angle_set"
+schema_version = 1
+name = "satp"
+version = "1.5"
+circumplex = "iso-12913-outdoor"
+circumplex_version = "1"
+
+[citation]
+citation = "Mitchell, A., Oberman, T., Aletta, F. and Kang, J. (2026). Soundscape Translation Data: Analysis, Validation, and Application. Chapter 4 in Soundscape Across Languages. Springer Nature Singapore."
+doi_or_url = ""
+licence = "Copyright the authors, under exclusive licence to Springer Nature; the tables are factual data"
+date = "2026"
+notes = "Written by hand from design/literature/mitchell-et-al-2026-satp-chapter-4-notes.md, transcribed from the author proof dated 2026-08-13; to be checked against the published chapter. Tiers: Table 4.7, p. 19. Angles: Table 4.8, p. 20 (equal-communality CircE model, PAQ1 fixed at 0 degrees), which lists the 13 High languages only. cmn passed Step 2 and moved to Medium because of Step 3; its SEM results and angles are identical to Aletta et al. (2024)'s (section 4.6.1, p. 24), so its angles are those of aletta-2024@1. The other Medium and the Low languages have no published angles."
+
+[languages.alb]
+tier = "low"
+
+[languages.arb]
+tier = "high"
+angles_deg = [0.0, 36.0, 45.0, 135.0, 167.0, 201.0, 242.0, 308.0]
+
+[languages.bra]
+tier = "medium"
+
+[languages.cmn]
+tier = "medium"
+angles_deg = [0.0, 18.0, 38.0, 154.0, 171.0, 196.0, 217.0, 318.0]
+note = "Medium because of Step 3 (minimum SSM R-squared 0.611); angles equal to aletta-2024@1's, per section 4.6.1, p. 24."
+
+[languages.deu]
+tier = "high"
+angles_deg = [0.0, 64.0, 97.0, 132.0, 182.0, 254.0, 282.0, 336.0]
+
+[languages.ell]
+tier = "high"
+angles_deg = [0.0, 72.0, 86.0, 133.0, 161.0, 233.0, 267.0, 328.0]
+
+[languages.eng]
+tier = "high"
+angles_deg = [0.0, 46.0, 94.0, 138.0, 177.0, 231.0, 275.0, 340.0]
+
+[languages.fra]
+tier = "medium"
+
+[languages.hrv]
+tier = "high"
+angles_deg = [0.0, 84.0, 93.0, 160.0, 173.0, 243.0, 273.0, 354.0]
+
+[languages.ind]
+tier = "high"
+angles_deg = [0.0, 53.0, 104.0, 123.0, 139.0, 202.0, 284.0, 308.0]
+
+[languages.ita]
+tier = "high"
+angles_deg = [0.0, 57.0, 104.0, 142.0, 170.0, 274.0, 285.0, 336.0]
+
+[languages.jpn]
+tier = "medium"
+
+[languages.kor]
+tier = "medium"
+
+[languages.nld]
+tier = "high"
+angles_deg = [0.0, 43.0, 111.0, 125.0, 174.0, 257.0, 307.0, 341.0]
+
+[languages.pol]
+tier = "high"
+angles_deg = [0.0, 69.0, 91.0, 128.0, 176.0, 266.0, 274.0, 339.0]
+
+[languages.por]
+tier = "medium"
+
+[languages.spa]
+tier = "high"
+angles_deg = [0.0, 41.0, 103.0, 147.0, 174.0, 238.0, 279.0, 332.0]
+
+[languages.swe]
+tier = "high"
+angles_deg = [0.0, 66.0, 87.0, 146.0, 175.0, 249.0, 275.0, 335.0]
+
+[languages.tha]
+tier = "medium"
+
+[languages.tur]
+tier = "high"
+angles_deg = [0.0, 55.0, 97.0, 106.0, 157.0, 254.0, 289.0, 313.0]
+
+[languages.vie]
+tier = "low"
+
+[languages.yue]
+tier = "high"
+angles_deg = [0.0, 39.0, 43.0, 159.0, 168.0, 240.0, 282.0, 329.0]
+
+[languages.zsm]
+tier = "low"

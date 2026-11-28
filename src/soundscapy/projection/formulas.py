@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 __all__ = ["project_scores"]
 
-Formulation = Literal["canonical", "iso2019"]
+Formulation = Literal["canonical", "iso2019", "aletta2024"]
 """The projection formulas ``project_scores()`` implements."""
 
 _FORMULATIONS: Final = get_args(Formulation)
@@ -52,8 +52,23 @@ def project_scores(
 
     Both bound each axis separately to [-1, 1] for in-scale scores; the radius can exceed 1
     (up to 1.0824 at 45° on 1 to 5), and nothing is clipped or clamped. At the nominal angles
-    on a 1 to 5 scale the two formulations are algebraically identical. Sums run in position
-    order in float64.
+    on a 1 to 5 scale the two formulations are algebraically identical.
+
+    The ``"aletta2024"`` formulation is Eqs. 1 to 3 of Aletta et al. (2024), on the raw,
+    uncentred scores s_i, with rho = ``scale.range`` from the declared scale:
+
+    ```
+    x = Σ_i cos θ_i s_i / λ_P,   λ_P = (rho/2) Σ_i |cos θ_i|
+    y = Σ_i sin θ_i s_i / λ_E,   λ_E = (rho/2) Σ_i |sin θ_i|
+    ```
+
+    It accepts any declared scale and any non-degenerate angle set and emits no warning.
+    Because it does not centre the scores, a neutral response does not map to the origin
+    whenever Σ cos θ_i ≠ 0 (x = μ Σ cos θ_i / λ_P), and likewise for y with Σ sin θ_i: under
+    the eng angles of ``aletta-2024@1`` all items at 3 on 1 to 5 give (0.0815, 0.1064). For the
+    same reason its coordinates can leave [-1, 1]. At the nominal angles on 1 to 5 the sums
+    cancel and λ_P = λ_E = 4 + √32, so it equals the 2019 formula. The canonical formulation
+    removes the offset. Sums run in position order in float64.
 
     Parameters
     ----------
@@ -64,7 +79,7 @@ def project_scores(
         Angle of each attribute for each response, in degrees; must be finite.
     scale : Scale
         The declared response scale of the scores.
-    formulation : {"canonical", "iso2019"}
+    formulation : {"canonical", "iso2019", "aletta2024"}
         Which projection formula to apply.
 
     Returns
@@ -87,24 +102,10 @@ def project_scores(
     References
     ----------
     The canonical formulation: [@mitchell2026translation], proof p. 23, §4.5. The 2019
-    formulation: [@iso12913-3-2019], as written in [@mitchell2022how], Eqs. 1 and 2.
+    formulation: [@iso12913-3-2019], as written in [@mitchell2022how], Eqs. 1 and 2. The
+    aletta2024 formulation: [@aletta2024soundscape], p. 14, Eqs. 1 to 3.
     """
-    for name, arr in (("scores", scores), ("angles_deg", angles_deg)):
-        if arr.dtype != np.float64:
-            msg = f"{name} must be a float64 array, got {arr.dtype}"
-            raise TypeError(msg)
-    if scores.ndim != 2 or scores.shape != angles_deg.shape:  # noqa: PLR2004  # (n, k)
-        msg = (
-            f"scores and angles_deg must be 2-D with equal shape (n, k), "
-            f"got {scores.shape} and {angles_deg.shape}"
-        )
-        raise ValueError(msg)
-    if not np.isfinite(angles_deg).all():
-        msg = "angles_deg must be finite"
-        raise ValueError(msg)
-    if formulation not in _FORMULATIONS:
-        msg = f"unknown formulation {formulation!r}; expected one of {_FORMULATIONS}"
-        raise ValueError(msg)
+    _check_inputs(scores, angles_deg, formulation)
 
     if formulation == "iso2019":
         _check_iso2019(angles_deg, scale)
@@ -126,12 +127,36 @@ def project_scores(
         centred = scores - scale.midpoint
         x = (cos * centred).sum(axis=1) / (scale.half_range * abs_cos)
         y = (sin * centred).sum(axis=1) / (scale.half_range * abs_sin)
+    elif formulation == "aletta2024":
+        x = (cos * scores).sum(axis=1) / (scale.range / 2 * abs_cos)
+        y = (sin * scores).sum(axis=1) / (scale.range / 2 * abs_sin)
     else:
         x, y = _iso2019(scores)
 
     out = np.column_stack([x, y])
     out[np.isnan(scores).any(axis=1)] = np.nan
     return out
+
+
+def _check_inputs(
+    scores: NDArray[np.float64], angles_deg: NDArray[np.float64], formulation: str
+) -> None:
+    for name, arr in (("scores", scores), ("angles_deg", angles_deg)):
+        if arr.dtype != np.float64:
+            msg = f"{name} must be a float64 array, got {arr.dtype}"
+            raise TypeError(msg)
+    if scores.ndim != 2 or scores.shape != angles_deg.shape:  # noqa: PLR2004  # (n, k)
+        msg = (
+            f"scores and angles_deg must be 2-D with equal shape (n, k), "
+            f"got {scores.shape} and {angles_deg.shape}"
+        )
+        raise ValueError(msg)
+    if not np.isfinite(angles_deg).all():
+        msg = "angles_deg must be finite"
+        raise ValueError(msg)
+    if formulation not in _FORMULATIONS:
+        msg = f"unknown formulation {formulation!r}; expected one of {_FORMULATIONS}"
+        raise ValueError(msg)
 
 
 def _check_iso2019(angles_deg: NDArray[np.float64], scale: Scale) -> None:

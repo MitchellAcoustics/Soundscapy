@@ -16,6 +16,7 @@ from soundscapy.datasets._bundled import load_bundled
 from soundscapy.survey.mapping import read_mapping
 
 if TYPE_CHECKING:
+    import os
     from collections.abc import Mapping
 
     from soundscapy.survey.quality import QualitySettings
@@ -33,7 +34,8 @@ def load(
     *,
     quality: QualitySettings | Mapping[str, object] | _Unset = _UNSET,
     on_scale_violation: Literal["error", "exclude"] | _Unset = _UNSET,
-    settings: ImportSettings | Mapping[str, object] | _Unset = _UNSET,
+    settings: ImportSettings | Mapping[str, object] | str | os.PathLike[str] | _Unset = _UNSET,
+    profile: str | _Unset = _UNSET,
 ) -> Survey:
     """Load the course dataset as a survey.
 
@@ -48,8 +50,12 @@ def load(
         The quality rules, as ``read_survey()`` takes them.
     on_scale_violation : {"error", "exclude"}, optional
         What a coded value outside its scale does, as ``read_survey()`` takes it.
-    settings : ImportSettings or mapping, optional
-        Every import setting at once; the two keywords above override its fields.
+    settings : ImportSettings, mapping, str or os.PathLike, optional
+        Every import setting at once, or the path of a settings file; the two keywords
+        above override its fields. Passed to ``read_survey()`` unchanged.
+    profile : str, optional
+        The profile to resolve under, as ``read_survey()`` takes it; passed through
+        unchanged.
 
     Returns
     -------
@@ -61,7 +67,10 @@ def load(
     DataIntegrityError
         If a shipped file does not match its pinned hash.
     SettingsError
-        If a settings argument has the wrong type or fails validation.
+        If a settings argument has the wrong type or fails validation, or the settings
+        file is invalid.
+    ProfileConstraintError
+        If a field the profile locks resolved to another value than the profile's.
 
     References
     ----------
@@ -77,4 +86,5 @@ def load(
         quality=quality,
         on_scale_violation=on_scale_violation,
         settings=settings,
+        profile=profile,
     )

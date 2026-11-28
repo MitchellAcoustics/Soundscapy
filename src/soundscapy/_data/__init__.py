@@ -21,11 +21,17 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from pathlib import Path
 
-__all__ = ["PINS", "as_path", "pin", "read_bytes", "read_toml"]
+__all__ = ["PINS", "as_path", "pin", "read_bytes", "read_toml", "relpath", "shipped"]
 
 PINS: Final[Mapping[str, str]] = {
+    "angle_sets/aletta-2024/1.toml": (
+        "h1-sha256:9677722398d03cd02e109d0b25795495e4e2a9eaf9fa7f74126f1af6c0eb5e99"
+    ),
+    "angle_sets/satp/1.5.toml": (
+        "h1-sha256:7757bdf1ad40b017f0b75aa3e9394cef3a11cacd4c6a12c84383fdf024d5e6ce"
+    ),
     "circumplexes/iso-12913-outdoor/1.toml": (
-        "h1-sha256:4ef2208390747505a2ddb326802995891e8481927fa0832e7e99740d444b8686"
+        "h1-sha256:43f2d4989032786fc2dfb8c34e3f999afaad39ac466beb07f66f6b7b1d60a0d3"
     ),
     "datasets/course_demo/course_demo.csv": (
         "h1-sha256:7f9e0933a0b6da290a612659420586617c0a1b0ddcd74d69c4e66c314c8b7386"
@@ -48,6 +54,15 @@ PINS: Final[Mapping[str, str]] = {
     "datasets/isd/subset-v1.0.toml": (
         "h1-sha256:5e68eaadad19212470b07159affb340ba58547fd55b4adc52144013fe745ebef"
     ),
+    "profiles/iso-12913-3-2019/1.toml": (
+        "h1-sha256:740750313499412ec15ed1391d35ce4ee78e43f1298e219f445160d4120c5fa8"
+    ),
+    "profiles/iso-12913-3-2024/1.toml": (
+        "h1-sha256:2a042e7e9e15de96a3d99a613193ac21bf10c2b401a3d019e1eaede6973743d7"
+    ),
+    "profiles/sal-2026/1.toml": (
+        "h1-sha256:7efcda72c0d0b15c97143e449da8bef4731af3d70fc45da4dbe7c40681aa4934"
+    ),
 }
 """Posix path relative to ``_data/`` mapped to the ``h1`` hash of the file's bytes."""
 
@@ -59,6 +74,49 @@ def _resource(relpath: str) -> importlib.resources.abc.Traversable:
 def _raw_bytes(relpath: str) -> bytes:
     """Read a shipped file without verifying it (the seam the tests tamper with)."""
     return _resource(relpath).read_bytes()
+
+
+def relpath(prefix: str, name: str, version: str) -> str:
+    """Name the shipped TOML file of a versioned object.
+
+    Parameters
+    ----------
+    prefix : str
+        The directory under ``_data`` holding the kind, such as ``"angle_sets"``.
+    name : str
+        The object's name or id.
+    version : str
+        The object's version.
+
+    Returns
+    -------
+    str
+        ``"<prefix>/<name>/<version>.toml"``, the key ``PINS`` uses.
+    """
+    return f"{prefix}/{name}/{version}.toml"
+
+
+def shipped(prefix: str) -> tuple[tuple[str, str], ...]:
+    """List the versioned objects pinned under a directory.
+
+    Parameters
+    ----------
+    prefix : str
+        The directory under ``_data`` holding the kind, such as ``"profiles"``.
+
+    Returns
+    -------
+    tuple of (str, str)
+        Sorted ``(name, version)`` pairs, one per ``<prefix>/<name>/<version>.toml`` in
+        ``PINS``.
+    """
+    pairs = []
+    for key in PINS:
+        head, _, rest = key.partition("/")
+        if head == prefix:
+            name, _, version = rest.partition("/")
+            pairs.append((name, version.removesuffix(".toml")))
+    return tuple(sorted(pairs))
 
 
 def pin(relpath: str) -> str:

@@ -35,7 +35,6 @@ from soundscapy._model import (
     SSP_PREFIX,
     FrozenModel,
     _Unset,
-    merge_settings,
     settings_layer,
     validate,
 )
@@ -52,6 +51,7 @@ from soundscapy.errors import (
     _plural,
     _shown,
 )
+from soundscapy.profiles import ResolvedSettings, resolve_settings
 from soundscapy.provenance import envelope, hash_file, hash_json
 from soundscapy.survey.mapping import (
     _ID_ROLES,
@@ -305,7 +305,8 @@ def read_survey(
     read_options: ReadOptions | Mapping[str, object] | _Unset = _UNSET,
     quality: QualitySettings | Mapping[str, object] | _Unset = _UNSET,
     on_scale_violation: Literal["error", "exclude"] | _Unset = _UNSET,
-    settings: ImportSettings | Mapping[str, object] | _Unset = _UNSET,
+    settings: ImportSettings | Mapping[str, object] | str | os.PathLike[str] | _Unset = _UNSET,
+    profile: str | _Unset = _UNSET,
 ) -> Survey:
     """Read a survey export into a coded, validated survey.
 
@@ -321,7 +322,13 @@ def read_survey(
     and excluded by reason, and the flags given.
 
     Settings resolve in the order of spec 6.3.4: an explicit keyword (``quality``,
-    ``on_scale_violation``) beats ``settings``, which beats the model defaults.
+    ``on_scale_violation``) beats ``settings``, which beats a settings file's ``[import]``
+    section, which beats the base profile's. The base profile is ``profile``, else the
+    ``extends`` of a settings file passed as ``settings``, else ``sal-2026``: a file records
+    no profile, so nothing is inherited here. A settings file applies to the call it is
+    passed to; the profile carries over to ``project()`` through the survey's provenance.
+    The result records ``provenance["profile"]`` (``{id, version, hash}``) and
+    ``provenance["overrides"]``, every field that differs from the profile's section.
 
     The response id is, by the first rule that applies: the mapped ``response`` column,
     stripped; the mapped ``response_key`` columns, each stripped, joined with ``/``; or
@@ -341,9 +348,14 @@ def read_survey(
         The quality rules; a mapping holds the fields to change.
     on_scale_violation : {"error", "exclude"}, optional
         What a coded value outside its scale does; see ``ImportSettings``.
-    settings : ImportSettings or mapping, optional
-        Every import setting at once; the two keywords above override its fields.
-        Settings files arrive with profiles.
+    settings : ImportSettings, mapping, str or os.PathLike, optional
+        Every import setting at once, or the path of a settings file (``extends`` plus
+        sections, as ``save_settings()`` writes it); the two keywords above override its
+        fields. An instance contributes only the fields that were set on it.
+    profile : str, optional
+        The profile to resolve under: ``"id@version"``, or a bare id meaning the latest
+        shipped version; ``list_profiles()`` lists them. It wins over a settings file's
+        ``extends``, whose sections still apply.
 
     Returns
     -------
@@ -355,7 +367,12 @@ def read_survey(
     TypeError
         If ``source`` is not a path, or ``mapping`` is neither a mapping nor a path.
     SettingsError
-        If ``read_options`` or a settings argument has the wrong type or fails validation.
+        If ``read_options`` or a settings argument has the wrong type or fails validation,
+        or the settings file is missing or invalid.
+    DataReferenceError
+        If ``profile`` names no shipped profile; the message lists the shipped ones.
+    ProfileConstraintError
+        If a field the profile locks resolved to another value than the profile's.
     FileFormatError
         If the format cannot be told from the suffix, or the file is malformed.
     EncodingError
@@ -396,10 +413,10 @@ def read_survey(
         msg = f"mapping must be a SurveyMapping or a path, got {type(mapping).__name__}"
         raise TypeError(msg)
     import_settings = resolve_import_settings(
-        quality=quality, on_scale_violation=on_scale_violation, settings=settings
+        quality=quality, on_scale_violation=on_scale_violation, settings=settings, profile=profile
     )
     return _read_survey(
-        source, resolved, read_options=_read_options(read_options), settings=import_settings
+        source, resolved, read_options=_read_options(read_options), resolution=import_settings
     )
 
 
@@ -407,8 +424,9 @@ def resolve_import_settings(
     *,
     quality: QualitySettings | Mapping[str, object] | _Unset = _UNSET,
     on_scale_violation: Literal["error", "exclude"] | _Unset = _UNSET,
-    settings: ImportSettings | Mapping[str, object] | _Unset = _UNSET,
-) -> ImportSettings:
+    settings: ImportSettings | Mapping[str, object] | str | os.PathLike[str] | _Unset = _UNSET,
+    profile: str | _Unset = _UNSET,
+) -> ResolvedSettings[ImportSettings]:
     """Resolve the import settings from the keywords ``read_survey()`` and the loaders take.
 
     Parameters
@@ -417,35 +435,34 @@ def resolve_import_settings(
         The quality rules, or the fields of them to change.
     on_scale_violation : {"error", "exclude"}, optional
         What a coded value outside its scale does.
-    settings : ImportSettings or mapping, optional
-        Every import setting at once.
+    settings : ImportSettings, mapping, str or os.PathLike, optional
+        Every import setting at once, or the path of a settings file.
+    profile : str, optional
+        The base profile; left unset, the settings file's ``extends``, else ``sal-2026``.
 
     Returns
     -------
-    ImportSettings
-        The layers merged, the keywords winning over ``settings`` and both over the model
-        defaults (spec 6.3.4 ranks 1 and 2), and validated once.
+    ResolvedSettings
+        The ``[import]`` section resolved by the one rule of spec 6.3.4 (the profile's
+        section, the file's section, ``settings``, then the keywords, validated once), with
+        the profile record and the overrides.
 
     Raises
     ------
     SettingsError
-        If an argument has the wrong type, ``settings`` is a path (settings files arrive
-        with profiles), or the merged settings fail validation.
+        If an argument has the wrong type, the settings file is invalid, or the merged
+        settings fail validation.
+    DataReferenceError
+        If ``profile`` or the file's ``extends`` names no shipped profile.
+    ProfileConstraintError
+        If a field the profile locks resolved to another value than the profile's.
     """
-    layers: list[Mapping[str, object]] = []
-    if settings is not _UNSET:
-        if isinstance(settings, str | os.PathLike):
-            msg = (
-                f"settings={os.fspath(settings)!r} is a path, but settings files arrive with "
-                "profiles; pass an ImportSettings or a mapping of its fields"
-            )
-            raise SettingsError(msg)
-        layers.append(settings_layer(settings, model=ImportSettings, name="settings"))
+    keywords: dict[str, object] = {"on_scale_violation": on_scale_violation, "quality": quality}
     if quality is not _UNSET:
-        layers.append({"quality": settings_layer(quality, model=QualitySettings, name="quality")})
-    if on_scale_violation is not _UNSET:
-        layers.append({"on_scale_violation": on_scale_violation})
-    return merge_settings(ImportSettings, layers, context="invalid import settings")
+        keywords["quality"] = settings_layer(quality, model=QualitySettings, name="quality")
+    return resolve_settings(
+        ImportSettings, "import", keywords=keywords, settings=settings, profile=profile
+    )
 
 
 def _read_options(value: ReadOptions | Mapping[str, object] | _Unset) -> ReadOptions:
@@ -481,10 +498,11 @@ def _read_survey(
     mapping: SurveyMapping,
     *,
     read_options: ReadOptions,
-    settings: ImportSettings,
+    resolution: ResolvedSettings[ImportSettings],
     data_refs: Sequence[Mapping[str, str]] = (),
 ) -> Survey:
     """Read a survey from a path with resolved inputs; ``data_refs`` follow the circumplex's."""
+    import_settings = resolution.settings
     path = Path(source)
     options = _resolve(read_options, path)
     table = read_text_table(path, encoding=options.encoding, delimiter=options.delimiter)
@@ -503,7 +521,7 @@ def _read_survey(
     groups = dict(_mapped_groups(mapping))
     coded = {name: _code_group(group, frame, response_id) for name, group in groups.items()}
     status = Status.all_included(len(response_id))
-    if settings.on_scale_violation == "error" and any(out.any() for _, out in coded.values()):
+    if import_settings.on_scale_violation == "error" and any(o.any() for _, o in coded.values()):
         msg = _scale_violation_message(groups, coded, response_id)
         raise ScaleViolationError(msg, hint=_SCALE_HINT)
     scores: dict[str, NDArray[np.float64]] = {}
@@ -521,7 +539,7 @@ def _read_survey(
         age=_age(frame, mapping, response_id),
         **{name: _flag(frame, mapping, name) for name in FlagSpecs.model_fields},
     )
-    status, skipped = apply_quality(status, inputs, settings.quality)
+    status, skipped = apply_quality(status, inputs, import_settings.quality)
     _log_summary(path.name, table.n_blank, status)
 
     source_ref = SourceRef(name=path.name, hash=hash_file(path), read_options=options)
@@ -534,10 +552,12 @@ def _read_survey(
     blank_ok = set(ids.response_key_blank_ok)
     provenance = envelope(
         operation="read_survey",
-        settings=settings,
+        settings=import_settings,
         input_hash=source_ref.hash,
         mapping_hash=hash_json(mapping),
         data_refs=[circumplex_ref, *data_refs],
+        profile=resolution.profile.model_dump(),
+        overrides=resolution.overrides,
         response_id_source=id_source,
         read=options.model_dump(mode="json"),
         id_columns=role_columns,
@@ -553,7 +573,7 @@ def _read_survey(
         ids={role: stripped[column] for role, column in role_columns.items()},
         language=language,
         status=status,
-        settings=settings,
+        settings=import_settings,
         source=source_ref,
         provenance=provenance,
     )

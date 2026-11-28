@@ -16,8 +16,9 @@ from soundscapy import _data
 from soundscapy._model import Citation, FrozenModel, from_toml, to_toml
 from soundscapy.distribution.coordinates import OriginSegment
 from soundscapy.instrument import Scale, circumplex
-from soundscapy.instrument.angles import AngleSelection
+from soundscapy.instrument.angles import AngleSelection, AngleSet, AngleSetRef, LanguageAngles
 from soundscapy.instrument.circumplex import Attribute, Axis, Circumplex, Translation
+from soundscapy.profiles import ProfileHeader, ProfileRef
 from soundscapy.projection.project import ProjectionSettings
 from soundscapy.provenance import hash_file, hash_json
 from soundscapy.survey.mapping import (
@@ -144,7 +145,36 @@ MODELS: list[FrozenModel] = [
         paper_input="exclude",
     ),
     _source_ref(),
-    AngleSelection(),  # its one S1 field has one value
+    AngleSelection(
+        default=AngleSetRef(name="satp", version="1.5"),
+        per_language=(("cmn", AngleSetRef(name="aletta-2024", version="1")),),
+        on_uncovered="exclude",
+    ),
+    LanguageAngles(tier="medium", angles_deg=(0.0, 18.5, 270.0), note="Ünïcode note"),
+    AngleSet(
+        schema_name="soundscapy.angle_set",
+        schema_version=1,
+        name="custom",
+        version="2",
+        circumplex="iso-12913-outdoor",
+        circumplex_version="1",
+        citation=_CITATION,
+        languages={
+            "eng": LanguageAngles(tier="high", angles_deg=(0.0, 46.5, 94.0)),
+            "fra": LanguageAngles(tier="low", note="tier only"),
+        },
+    ),
+    AngleSetRef(name="satp", version="1.5"),
+    ProfileHeader(
+        schema_name="soundscapy.profile",
+        schema_version=1,
+        id="custom",
+        version="1.2",
+        locked=("projection.formulation", "item_statistics.dispersion"),
+        notes="Ünïcode notes",
+        citation=_CITATION,
+    ),
+    ProfileRef(id="sal-2026", version="1", hash="h1-sha256:" + "d" * 64),
     ProjectionSettings(formulation="iso2019", angles=AngleSelection()),
     OriginSegment(
         kind="survey",

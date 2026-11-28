@@ -26,7 +26,9 @@ Before implementing or changing a scientific procedure, read its source in
 small test suite. M1 slice S1 (contracts and the thin path `load_isd` → `project` →
 `plot.scatter`/`attach`, plan `design/plans/2026-10-31-m1-s1-thin-slice.md`) is in place, on a
 pandas-only frame boundary (spec §12). M1 slice S2 (status, quality, full mapping, the course
-dataset; plan `design/plans/2026-10-31-m1-s2-status-quality.md`) is in place; slice S3 is next.
+dataset; plan `design/plans/2026-10-31-m1-s2-status-quality.md`) is in place. M1 slice S3 (angle
+sets, profiles, settings, labels; plan `design/plans/2026-11-28-m1-s3-angle-sets-profiles.md`) is
+in place; slice S4 is next.
 `task check` passing is the definition of done.
 
 ## Repo map (target layout)

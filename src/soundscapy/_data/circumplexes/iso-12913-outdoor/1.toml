@@ -3,7 +3,6 @@ schema_version = 1
 name = "iso-12913-outdoor"
 version = "1"
 reference_language = "eng"
-translations = []
 
 [[attributes]]
 position = "PAQ1"
@@ -88,6 +87,346 @@ eng = ["Strongly disagree", "Somewhat disagree", "Neutral", "Somewhat agree", "S
 "-+" = "PAQ4"
 -- = "PAQ6"
 "+-" = "PAQ8"
+
+[[translations]]
+language = "arb"
+
+[translations.labels]
+PAQ1 = "ممتع / سار"
+PAQ2 = "ديناميكي / محمس / حيوي"
+PAQ3 = "نابض بالحياة / حافل بالأحداث"
+PAQ4 = "فوضوي / صاخب"
+PAQ5 = "غير ممتع / غير سار / مزعج"
+PAQ6 = "رتيب / ممل"
+PAQ7 = "هامد / خالي من الأحداث"
+PAQ8 = "هادئ"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "cmn"
+
+[translations.labels]
+PAQ1 = "愉快的"
+PAQ2 = "热闹的 / 有活力的"
+PAQ3 = "引人注意的 / 有故事性的 / 引人遐想的 / 身临其境的"
+PAQ4 = "喧闹的 / 混乱的"
+PAQ5 = "恼人的 / 烦人的 / 烦躁的"
+PAQ6 = "枯燥的 / 无趣的 / 单调乏味的"
+PAQ7 = "平淡无奇的 / 难以共鸣的 / 无体验感的"
+PAQ8 = "平静的"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "hrv"
+
+[translations.labels]
+PAQ1 = "ugodan"
+PAQ2 = "uzbudljiv / živahan"
+PAQ3 = "sadržajan / pun događaja"
+PAQ4 = "kaotičan / uznemirujuć"
+PAQ5 = "neugodan"
+PAQ6 = "dosadan"
+PAQ7 = "besadržajan / prazan"
+PAQ8 = "smirujuć"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "nld"
+
+[translations.labels]
+PAQ1 = "aangenaam / prettig"
+PAQ2 = "levendig / vrolijk"
+PAQ3 = "druk / dynamisch"
+PAQ4 = "chaotisch / hectisch"
+PAQ5 = "onaangenaam / onprettig"
+PAQ6 = "saai / eentonig"
+PAQ7 = "rustig / statisch"
+PAQ8 = "kalm / rustgevend"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "fra"
+
+[translations.labels]
+PAQ1 = "agréable / plaisant"
+PAQ2 = "stimulant / dynamique"
+PAQ3 = "animé / mouvementé"
+PAQ4 = "agité / chaotique"
+PAQ5 = "gênant / dérangeant"
+PAQ6 = "ennuyeux / monotone"
+PAQ7 = "inerte / amorphe"
+PAQ8 = "calme / tranquille"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "deu"
+
+[translations.labels]
+PAQ1 = "angenehm"
+PAQ2 = "lebendig / abwechslungsreich"
+PAQ3 = "ereignisreich / dynamisch"
+PAQ4 = "chaotisch / hektisch"
+PAQ5 = "störend / lästig"
+PAQ6 = "monoton / eintönig"
+PAQ7 = "ereignisarm / statisch"
+PAQ8 = "ruhig / erholsam"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "ell"
+
+[translations.labels]
+PAQ1 = "ευχάριστο"
+PAQ2 = "ζωντανό"
+PAQ3 = "με πολλά ή / και σημαντικά γεγονότα"
+PAQ4 = "χαοτικό"
+PAQ5 = "ενοχλητικό"
+PAQ6 = "μονότονο / βαρετό"
+PAQ7 = "χωρίς πολλά ή / και σημαντικά γεγονότα"
+PAQ8 = "ήρεμο"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "ind"
+
+[translations.labels]
+PAQ1 = "menyenangkan"
+PAQ2 = "bersemangat"
+PAQ3 = "ramai"
+PAQ4 = "ribut"
+PAQ5 = "mengganggu"
+PAQ6 = "menjemukan"
+PAQ7 = "sepi"
+PAQ8 = "tenang"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "ita"
+
+[translations.labels]
+PAQ1 = "piacevole / confortevole"
+PAQ2 = "vivace / stimolante"
+PAQ3 = "dinamico / vario"
+PAQ4 = "caotico / confuso"
+PAQ5 = "spiacevole / irritante"
+PAQ6 = "monotono / noioso"
+PAQ7 = "stabile / stazionario"
+PAQ8 = "calmo / tranquillo"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "jpn"
+
+[translations.labels]
+PAQ1 = "快い"
+PAQ2 = "楽しい"
+PAQ3 = "色々なことが起こる"
+PAQ4 = "雑然とした"
+PAQ5 = "うるさい"
+PAQ6 = "単調な"
+PAQ7 = "何も起こらない"
+PAQ8 = "穏やかな"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "kor"
+
+[translations.labels]
+PAQ1 = "유쾌한 / 기분 좋은"
+PAQ2 = "활기찬 / 생동한"
+PAQ3 = "활동적인 / 역동적인"
+PAQ4 = "혼란스러운 / 혼잡한"
+PAQ5 = "불쾌한 / 성가신"
+PAQ6 = "단조로운 / 지루한"
+PAQ7 = "비활동적인 / 정적인"
+PAQ8 = "조용한 / 차분한"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "zsm"
+
+[translations.labels]
+PAQ1 = "menyenangkan"
+PAQ2 = "rancak"
+PAQ3 = "meriah"
+PAQ4 = "huru-hara"
+PAQ5 = "membingitkan"
+PAQ6 = "membosankan"
+PAQ7 = "tidak meriah"
+PAQ8 = "tenang"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "por"
+
+[translations.labels]
+PAQ1 = "agradável / prazeroso"
+PAQ2 = "animado / vibrante"
+PAQ3 = "agitado / movimentado"
+PAQ4 = "caótico"
+PAQ5 = "irritante / desagradável"
+PAQ6 = "monótono / entediante"
+PAQ7 = "sem acontecimentos / estático"
+PAQ8 = "tranquilo / calmo"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "spa"
+
+[translations.labels]
+PAQ1 = "agradable / placentero"
+PAQ2 = "estimulante / vibrante"
+PAQ3 = "con actividad / dinámico"
+PAQ4 = "caótico / confuso"
+PAQ5 = "desagradable / molesto"
+PAQ6 = "monótono / aburrido"
+PAQ7 = "sin actividad / estático"
+PAQ8 = "calmado / tranquilo"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "swe"
+
+[translations.labels]
+PAQ1 = "behagligt / trivsamt / tilltalande"
+PAQ2 = "levande / spännande / uttrycksfullt"
+PAQ3 = "händelserikt / livligt / aktivt"
+PAQ4 = "kaotiskt / rörigt / bullrigt"
+PAQ5 = "störande / obehagligt / otrivsamt"
+PAQ6 = "enformigt / andefattigt / livlöst"
+PAQ7 = "händelselöst / inaktivt / passivt"
+PAQ8 = "lugnt / stilla / rogivande"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "tur"
+
+[translations.labels]
+PAQ1 = "keyifli"
+PAQ2 = "coşkulu"
+PAQ3 = "hareketli"
+PAQ4 = "karmaşık"
+PAQ5 = "rahatsız edici"
+PAQ6 = "tekdüze"
+PAQ7 = "durağan"
+PAQ8 = "sakin"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
+
+[[translations]]
+language = "vie"
+
+[translations.labels]
+PAQ1 = "dễ chịu / thoải mái"
+PAQ2 = "sống động / náo nhiệt"
+PAQ3 = "sôi động / sinh động"
+PAQ4 = "hỗn loạn / hỗn độn"
+PAQ5 = "khó chịu / phiền toái"
+PAQ6 = "đơn điệu / buồn tẻ"
+PAQ7 = "tẻ nhạt / nhàm chán"
+PAQ8 = "yên bình / tĩnh mịch"
+
+[translations.citation]
+citation = "Aletta, F., Mitchell, A., Oberman, T., Kang, J., et al. (2024). Soundscape descriptors in eighteen languages: Translation and validation through listening experiments. Applied Acoustics 224, 110109."
+doi_or_url = "https://doi.org/10.1016/j.apacoust.2024.110109"
+licence = "CC-BY-4.0"
+date = "2024"
+notes = "Table 4, p. 12, transcribed by hand from the rendered page (the table has no text layer); labels as printed in the native script, alternatives joined with ' / ', transliterations left out."
 
 [citation]
 citation = "ISO/TS 12913-2:2018, Acoustics - Soundscape - Part 2: Data collection and reporting requirements (the attribute set); ISO/TS 12913-3:2019, Acoustics - Soundscape - Part 3: Data analysis (the 45 degree angles)."

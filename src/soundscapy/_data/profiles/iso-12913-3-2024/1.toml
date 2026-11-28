@@ -1,0 +1,30 @@
+schema = "soundscapy.profile"
+schema_version = 1
+id = "iso-12913-3-2024"
+version = "1"
+locked = [
+  "projection.formulation",
+  "projection.angles.default",
+  "projection.angles.per_language",
+  "item_statistics.dispersion",
+]
+notes = "The 2024 revision of ISO 12913-3, read as the canonical projection with the nominal 45 degree angles and the interquartile range as the dispersion of item statistics: interpretation pending the owner's check of the text. The formulation, the angles and the dispersion are locked: changing one raises ProfileConstraintError, because the result would no longer be the standard's."
+
+[citation]
+citation = "ISO 12913-3:2024, Acoustics - Soundscape - Part 3: Data analysis (the 2024 revision of ISO/TS 12913-3:2019)."
+doi_or_url = ""
+licence = "BSD-3-Clause (this file)"
+date = "2024"
+notes = "The standard is paywalled, so no DOI or URL is given. The designation and the settings above await the owner's check of the text."
+
+# Model defaults: every quality rule and scale violation handled as read_survey documents.
+[import]
+
+[projection]
+formulation = "canonical"
+
+[projection.angles]
+default = "equal"
+
+[item_statistics]
+dispersion = "iqr"

@@ -126,6 +126,25 @@ def test_load_passes_settings_through(isd_survey):
     assert same.status.counts() == isd_survey.status.counts()  # no violations
 
 
+def test_load_passes_profile_and_settings_file_through(tmp_path):
+    survey = isd.load(subset=True, profile="iso-12913-3-2024")
+    assert survey.provenance["profile"] == {
+        "id": "iso-12913-3-2024",
+        "version": "1",
+        "hash": _data.pin("profiles/iso-12913-3-2024/1.toml"),
+    }
+    path = tmp_path / "settings.toml"
+    path.write_text('extends = "iso-12913-3-2019"\n[import]\non_scale_violation = "exclude"\n')
+    from_file = isd.load(subset=True, settings=path)
+    assert from_file.provenance["profile"] == {
+        "id": "iso-12913-3-2019",
+        "version": "1",
+        "hash": _data.pin("profiles/iso-12913-3-2019/1.toml"),
+    }
+    assert from_file.settings.on_scale_violation == "exclude"
+    assert from_file.provenance["overrides"] == {"import.on_scale_violation": "exclude"}
+
+
 def test_registry_feature_columns():
     columns = _data.read_toml("datasets/isd/registry.toml")["versions"]["1.0.1-alpha.1"]
     columns = columns["feature_columns"]

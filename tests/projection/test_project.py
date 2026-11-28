@@ -1,4 +1,4 @@
-"""project: a survey projected with equal angles into Coordinates."""
+"""project: a survey projected into Coordinates; named angle sets are in test_project_languages."""
 
 from __future__ import annotations
 
@@ -14,9 +14,9 @@ from hypothesis import strategies as st
 
 from soundscapy._model import COL_ANGLE_SET, COL_INCLUDED, COL_REASONS, COL_RESPONSE_ID
 from soundscapy.distribution.coordinates import n, n_valid, valid_mask
-from soundscapy.errors import FormulationError, MappingError, SettingsError
+from soundscapy.errors import DataReferenceError, FormulationError, MappingError, SettingsError
 from soundscapy.instrument import circumplex
-from soundscapy.instrument.angles import AngleSelection
+from soundscapy.instrument.angles import AngleSelection, AngleSetRef
 from soundscapy.projection.project import ProjectionSettings, project
 from soundscapy.provenance import hash_json
 from soundscapy.survey.read import read_survey
@@ -40,20 +40,25 @@ HAND_XY = np.array(
 )
 
 
-@pytest.fixture(scope="module")
-def hand_survey():
-    return read_survey(HAND_CSV, MAPPING)
-
-
 def test_hand_values_iso2019(hand_survey):
     coords = project(hand_survey, formulation="iso2019", angles="equal")
     # 1e-12: float64 sums of 8 terms against the closed form, as the kernel's tests.
     np.testing.assert_allclose(coords.xy[:2], HAND_XY, rtol=0, atol=1e-12)
 
 
-def test_default_is_canonical_with_the_same_values(hand_survey):
+def test_default_is_canonical_under_the_default_profile(hand_survey):
     coords = project(hand_survey)
-    assert coords.settings == ProjectionSettings()
+    assert isinstance(coords.settings, ProjectionSettings)
+    assert coords.settings.formulation == "canonical"
+    # The recorded settings are the resolved model: the profile's satp@1.5, not the
+    # model default "equal".
+    satp = AngleSelection(default=AngleSetRef(name="satp", version="1.5"))
+    assert coords.settings == ProjectionSettings(angles=satp)
+    assert ProjectionSettings().angles.default == "equal"
+
+
+def test_canonical_with_equal_angles_gives_the_iso2019_values(hand_survey):
+    coords = project(hand_survey, angles="equal")
     assert isinstance(coords.settings, ProjectionSettings)
     assert coords.settings.formulation == "canonical"
     # 1e-12: canonical equals iso2019 at 45 degrees on 1..5 up to float64 rounding.
@@ -61,7 +66,7 @@ def test_default_is_canonical_with_the_same_values(hand_survey):
 
 
 def test_excluded_row_is_nan_and_has_no_angle_set(hand_survey):
-    coords = project(hand_survey)
+    coords = project(hand_survey, angles="equal")
     assert np.isnan(coords.xy[2]).all()
     assert coords.labels[COL_INCLUDED].tolist() == [True, True, False]
     assert coords.labels[COL_REASONS].tolist() == ["", "", "incomplete_attributes"]
@@ -102,27 +107,39 @@ def test_survey_is_unchanged(hand_survey):
 
 def test_project_uses_the_declared_scale():
     survey = read_survey(SCALE_1_7_CSV, MAPPING_1_7)
-    coords = project(survey)
+    coords = project(survey, angles="equal")
     # abs=1e-12: closed form x = 2 / (2 + 2*sqrt(2)) = sqrt(2) - 1 on the 1..7 scale; the
     # circumplex's 1..5 scale would give 3 / (2 + 2*sqrt(2)) = 0.6213.
     assert coords.xy[0, 0] == pytest.approx(math.sqrt(2) - 1, abs=1e-12)
     assert coords.xy[0, 1] == pytest.approx(0.0, abs=1e-12)  # closed form
     assert coords.origin[0].effective_scale == survey.mapping.groups.attributes.scale
     with pytest.raises(FormulationError):
-        project(survey, formulation="iso2019")
+        project(survey, formulation="iso2019", angles="equal")
 
 
 @pytest.mark.parametrize("angles", ["satp@1.5", "aletta-2024@1"])
-def test_project_rejects_unknown_angles(hand_survey, angles):
-    with pytest.raises(SettingsError) as info:
+def test_project_accepts_the_shipped_angle_sets(hand_survey, angles):
+    coords = project(hand_survey, angles=angles)
+    assert coords.labels[COL_ANGLE_SET].tolist() == [angles, angles, ""]
+    assert coords.origin[0].angle_sets == (angles,)
+
+
+@pytest.mark.parametrize("angles", ["nope@1", "satp"])
+def test_project_rejects_an_unknown_angle_set(hand_survey, angles):
+    with pytest.raises(DataReferenceError) as info:
         project(hand_survey, angles=angles)
-    assert type(info.value) is SettingsError
-    assert "angles" in str(info.value)
-    assert '"equal"' in str(info.value)
-    assert "validation error" not in str(info.value)
+    assert "satp@1.5" in str(info.value)  # the shipped sets are listed
 
 
-@pytest.mark.parametrize("formulation", ["aletta2024", "iso", 3])
+def test_project_accepts_aletta2024(hand_survey):
+    coords = project(hand_survey, formulation="aletta2024", angles="equal")
+    assert isinstance(coords.settings, ProjectionSettings)
+    assert coords.settings.formulation == "aletta2024"
+    # 1e-12: aletta2024 equals iso2019 at 45 degrees on 1..5 up to float64 rounding.
+    np.testing.assert_allclose(coords.xy[:2], HAND_XY, rtol=0, atol=1e-12)
+
+
+@pytest.mark.parametrize("formulation", ["nope", "iso", 3])
 def test_project_rejects_unknown_formulation(hand_survey, formulation):
     with pytest.raises(SettingsError) as info:
         project(hand_survey, formulation=formulation)
@@ -130,6 +147,7 @@ def test_project_rejects_unknown_formulation(hand_survey, formulation):
     assert "formulation" in str(info.value)
     assert '"canonical"' in str(info.value)
     assert '"iso2019"' in str(info.value)
+    assert '"aletta2024"' in str(info.value)
     assert "validation error" not in str(info.value)
 
 
@@ -140,14 +158,15 @@ def test_project_rejects_angles_of_another_type(hand_survey):
 
 def test_angle_selection_equals_equal(hand_survey):
     by_name = project(hand_survey, angles="equal")
-    by_model = project(hand_survey, angles=AngleSelection())
+    # A bare AngleSelection() sets nothing, so it would leave the profile's set in place.
+    by_model = project(hand_survey, angles=AngleSelection(default="equal"))
     np.testing.assert_array_equal(by_model.xy, by_name.xy)
     assert by_model.settings == by_name.settings
     assert by_model.provenance["settings_hash"] == hash_json(by_model.settings)
 
 
 def test_settings_and_provenance(hand_survey):
-    coords = project(hand_survey, formulation="iso2019")
+    coords = project(hand_survey, formulation="iso2019", angles="equal")
     assert coords.settings == ProjectionSettings(formulation="iso2019")
     prov = coords.provenance
     assert prov["operation"] == "project"
@@ -155,7 +174,6 @@ def test_settings_and_provenance(hand_survey):
     for key in (
         "input_hash",
         "mapping_hash",
-        "data_refs",
         "response_id_source",
         "read",
         "id_columns",
@@ -163,11 +181,13 @@ def test_settings_and_provenance(hand_survey):
         "response_key_blank_ok",
     ):
         assert prov[key] == hand_survey.provenance[key], key
+    # The survey's refs come first; a named angle set would follow them, "equal" adds none.
+    assert prov["data_refs"] == hand_survey.provenance["data_refs"]
     assert coords.circumplex == circumplex("iso-12913-outdoor", "1")
 
 
 def test_origin_segment(hand_survey):
-    coords = project(hand_survey)
+    coords = project(hand_survey, angles="equal")
     (segment,) = coords.origin
     assert segment.kind == "survey"
     assert segment.dataset == "hand_values.csv"
@@ -181,11 +201,15 @@ def test_origin_segment(hand_survey):
 def test_all_rows_excluded_projects_nothing(tmp_path):
     path = tmp_path / "blank.csv"
     lines = HAND_CSV.read_text(encoding="utf-8").splitlines()
-    path.write_text("\n".join([lines[0], lines[3]]) + "\n", encoding="utf-8")
+    # Row h3 has a blank attribute; two copies of it with new ids exclude every row.
+    rows = [lines[3], lines[3].replace("h3", "h4", 1)]
+    path.write_text("\n".join([lines[0], *rows]) + "\n", encoding="utf-8")
     coords = project(read_survey(path, MAPPING))
-    assert coords.xy.shape == (1, 2)
+    assert coords.xy.shape == (2, 2)
     assert np.isnan(coords.xy).all()
     assert n_valid(coords) == 0
+    assert coords.labels[COL_ANGLE_SET].tolist() == ["", ""]
+    assert coords.origin[0].angle_sets == ()
 
 
 # Each example writes and reads a file: no deadline, and 25 of the 5040 permutations.

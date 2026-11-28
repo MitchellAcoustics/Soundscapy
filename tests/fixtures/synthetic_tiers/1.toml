@@ -1,0 +1,26 @@
+schema = "soundscapy.angle_set"
+schema_version = 1
+name = "synthetic-tiers"
+version = "1"
+circumplex = "iso-12913-outdoor"
+circumplex_version = "1"
+
+[citation]
+citation = "Synthetic test data for soundscapy's test suite; not a published angle set."
+notes = "One language per tier so every branch of the per-response angle resolver is exercised: qaa High with angles, qab Medium with angles, qac Low with angles, qae Low tier-only (no angles). qad is deliberately absent. The language codes are ISO 639-3 private-use codes and the angles are invented. Never shipped."
+
+[languages.qaa]
+tier = "high"
+angles_deg = [0.0, 46.0, 94.0, 138.0, 177.0, 231.0, 275.0, 340.0]
+
+[languages.qab]
+tier = "medium"
+angles_deg = [0.0, 50.0, 90.0, 140.0, 180.0, 230.0, 270.0, 330.0]
+
+[languages.qac]
+tier = "low"
+angles_deg = [0.0, 40.0, 100.0, 130.0, 170.0, 240.0, 280.0, 350.0]
+
+[languages.qae]
+tier = "low"
+note = "Tier only: assessed Low, no angles published."

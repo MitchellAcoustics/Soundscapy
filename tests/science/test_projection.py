@@ -1,7 +1,8 @@
 """Science tests of the projection kernel against its sources.
 
 The ISO/TS 12913-3:2019 formula is Eqs. 1 and 2 of Mitchell, Aletta & Kang (2022); the
-canonical formulation is Mitchell et al. (2026), chapter 4, proof p. 23, section 4.5.
+canonical formulation is Mitchell et al. (2026), chapter 4, proof p. 23, section 4.5; the
+aletta2024 formulation is Eqs. 1 to 3 of Aletta et al. (2024), p. 14.
 Items are in position order (p, v, e, ch, a, m, u, ca) = PAQ1..PAQ8 at 0, 45, ..., 315 degrees.
 """
 
@@ -75,6 +76,52 @@ def test_canonical_equals_iso2019_exhaustively():
     canon = project_scores(scores, angles, SCALE_1_5, "canonical")
     iso = project_scores(scores, angles, SCALE_1_5, "iso2019")
     np.testing.assert_allclose(canon, iso, rtol=0, atol=1e-12)  # spec §7.2; measured max 2.8e-16
+
+
+# The eng angles of aletta-2024@1, in position order (Aletta et al. 2024, Table 3).
+_ALETTA_ENG_DEG = (0.0, 46.0, 94.0, 138.0, 177.0, 231.0, 275.0, 340.0)
+
+
+@pytest.mark.parametrize(
+    ("scores", "expected"),
+    [
+        ((3, 3, 3, 3, 3, 3, 3, 3), (0.081548638586, 0.106399432136)),
+        ((5, 3, 3, 3, 1, 3, 3, 3), (0.468703026294, 0.094906448962)),
+        ((4, 5, 2, 1, 2, 1, 4, 5), (0.872773717478, -0.011682271564)),
+    ],
+)
+def test_aletta2024_hand_values(scores, expected):
+    """Hand values from Eqs. 1 to 3 of Aletta et al. (2024) under the eng angles on 1..5.
+
+    With rho = 4, λ_P = 2·Σ|cos θ_i| and λ_E = 2·Σ|sin θ_i|. The neutral response lands off the
+    origin because Σcos θ_i = 0.280655509 is not 0. Values checked at 30 digits with mpmath.
+    """
+    x, y = _one(scores, _ALETTA_ENG_DEG, SCALE_1_5, "aletta2024")
+    assert x == pytest.approx(expected[0], abs=1e-12)  # spec §7.2: float64 sums of 8 terms
+    assert y == pytest.approx(expected[1], abs=1e-12)  # spec §7.2: float64 sums of 8 terms
+
+
+@pytest.mark.parametrize(
+    "scores", [(5, 3, 3, 3, 1, 3, 3, 3), (4, 5, 2, 1, 2, 1, 4, 5)], ids=["hand-1", "hand-2"]
+)
+def test_aletta2024_equals_iso2019_on_hand_values(scores):
+    """At 45 degrees on 1..5, λ = 4 + √32 (Aletta et al. 2024, Eq. 3) and the sums cancel."""
+    aletta = _one(scores, NOMINAL_ANGLES_DEG, SCALE_1_5, "aletta2024")
+    iso = _one(scores, NOMINAL_ANGLES_DEG, SCALE_1_5, "iso2019")
+    np.testing.assert_allclose(aletta, iso, rtol=0, atol=1e-12)  # spec §7.2
+
+
+def test_aletta2024_equals_iso2019_exhaustively():
+    """aletta2024 equals ISO/TS 12913-3:2019 at 45 degrees on 1..5, for all 5^8 responses.
+
+    At the nominal angles Σcos θ_i = Σsin θ_i = 0 and λ_P = λ_E = 4 + √32, so Eqs. 1 to 3 of
+    Aletta et al. (2024) reduce to Eqs. 1 and 2 of Mitchell, Aletta & Kang (2022).
+    """
+    scores = np.indices((5,) * 8, dtype=np.float64).reshape(8, -1).T + 1.0
+    angles = np.broadcast_to(NOMINAL_ANGLES_DEG, scores.shape)
+    aletta = project_scores(scores, angles, SCALE_1_5, "aletta2024")
+    iso = project_scores(scores, angles, SCALE_1_5, "iso2019")
+    np.testing.assert_allclose(aletta, iso, rtol=0, atol=1e-12)  # spec §7.2
 
 
 # --- Property tests (named invariants) ------------------------------------------------------
@@ -161,6 +208,35 @@ def test_neutral_maps_to_origin_iso2019():
     x, y = _one([3.0] * 8, NOMINAL_ANGLES_DEG, SCALE_1_5, "iso2019")
     assert x == pytest.approx(0.0, abs=1e-12)  # float rounding of sums of 8 terms
     assert y == pytest.approx(0.0, abs=1e-12)  # float rounding of sums of 8 terms
+
+
+def _sums_clear_of_zero(case):
+    _, angles = case
+    theta = np.deg2rad(angles)
+    return abs(np.cos(theta).sum()) > 1e-6 and abs(np.sin(theta).sum()) > 1e-6
+
+
+@given(
+    st.tuples(_scales().filter(lambda scale: scale.midpoint > 0), _angle_sets).filter(
+        _sums_clear_of_zero
+    )
+)
+def test_neutral_off_origin_aletta2024(case):
+    """All items at a positive midpoint map off the origin under aletta2024.
+
+    Eqs. 1 to 3 of Aletta et al. (2024) do not centre the scores, so a neutral response gives
+    x = μ·Σcos θ_i / λ_P with λ_P = (rho/2)·Σ|cos θ_i|, which has the sign of Σcos θ_i; y
+    likewise with sin. The angle sets keep |Σcos θ_i| and |Σsin θ_i| above 1e-6 (spec §7.1).
+    """
+    scale, angles = case
+    x, y = _one([scale.midpoint] * 8, angles, scale, "aletta2024")
+    theta = np.deg2rad(angles)
+    cos, sin = np.cos(theta), np.sin(theta)
+    lam_p, lam_e = scale.range / 2 * np.abs(cos).sum(), scale.range / 2 * np.abs(sin).sum()
+    assert x == pytest.approx(scale.midpoint * cos.sum() / lam_p, abs=1e-12)  # spec §7.1
+    assert y == pytest.approx(scale.midpoint * sin.sum() / lam_e, abs=1e-12)  # spec §7.1
+    assert np.sign(x) == np.sign(cos.sum())
+    assert np.sign(y) == np.sign(sin.sum())
 
 
 @given(_canonical_shift_case())

@@ -1,0 +1,30 @@
+schema = "soundscapy.profile"
+schema_version = 1
+id = "iso-12913-3-2019"
+version = "1"
+locked = [
+  "projection.formulation",
+  "projection.angles.default",
+  "projection.angles.per_language",
+  "item_statistics.dispersion",
+]
+notes = "The analysis of ISO/TS 12913-3:2019 as published: its projection formula (iso2019, the 1 to 5 scale with the nominal 45 degree angles), no language-specific angles, and the range as the dispersion of item statistics. The formulation, the angles and the dispersion are locked: changing one raises ProfileConstraintError, because the result would no longer be the standard's."
+
+[citation]
+citation = "ISO/TS 12913-3:2019, Acoustics - Soundscape - Part 3: Data analysis."
+doi_or_url = ""
+licence = "BSD-3-Clause (this file)"
+date = "2019"
+notes = "The standard is paywalled, so no DOI or URL is given."
+
+# Model defaults: every quality rule and scale violation handled as read_survey documents.
+[import]
+
+[projection]
+formulation = "iso2019"
+
+[projection.angles]
+default = "equal"
+
+[item_statistics]
+dispersion = "range"

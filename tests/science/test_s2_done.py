@@ -15,7 +15,7 @@ from soundscapy.projection.project import project
 from soundscapy.survey.mapping import SurveyMapping
 from soundscapy.survey.read import read_survey
 from soundscapy.survey.status import Reason
-from tests._helpers import raw_mapping
+from tests._helpers import medium_warning, raw_mapping
 
 pytestmark = pytest.mark.science
 
@@ -41,4 +41,5 @@ def test_s2_done():
     both = (Reason.SCALE_VIOLATION, Reason.INCOMPLETE_ATTRIBUTES)
     assert excluded.status.reasons == (both, both, both)
 
-    assert project(subset).n_valid() == 1536
+    with medium_warning():  # the default profile's angle set flags the Mandarin rows
+        assert project(subset).n_valid() == 1536
