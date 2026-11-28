@@ -6,7 +6,6 @@ import dataclasses
 
 import numpy as np
 import pandas as pd
-import polars as pl
 import pytest
 
 from soundscapy._model import COL_INCLUDED, COL_LANGUAGE, COL_RESPONSE_ID
@@ -146,10 +145,9 @@ def test_to_frame(isd_coords):
     )
 
 
-def test_to_frame_like_polars(isd_coords):
-    frame = isd_coords.to_frame(like=pl.DataFrame({"a": [1]}))
-    assert isinstance(frame, pl.DataFrame)
-    assert frame.columns[-2:] == ["ssp_ISOPleasant", "ssp_ISOEventful"]
+def test_to_frame_takes_no_like(isd_coords):
+    with pytest.raises(TypeError, match="like"):
+        isd_coords.to_frame(like=pd.DataFrame({"a": [1]}))
 
 
 def test_origin_segment_rejects_non_int_n():

@@ -1,12 +1,10 @@
-"""The frame boundary: the only module that touches pandas or polars.
+"""The frame boundary: the only module that touches pandas.
 
-Every frame enters through ``to_eager()`` and leaves through ``to_native()``,
-``with_columns()`` or ``new_frame()``. Library dispatch goes through
-``narwhals.stable.v2``, following its typing pattern: a function given the user's frame returns
-the same library (``IntoDataFrameT`` in, ``IntoDataFrameT`` out). Frames soundscapy creates
-from a path or from nothing are pandas (``DEFAULT_BACKEND``). Nulls follow each library's
-own model, as narwhals presents it. This module imports pandas and never polars or pyarrow, so
-``import soundscapy`` needs only the runtime dependencies.
+pandas is the only frame library soundscapy accepts or returns (plan §4.10). A user's frame
+enters through ``require_frame()``, which refuses anything else; columns leave as read-only
+numpy arrays through ``columns_float()`` and ``column_text()``, and frames are built by
+``with_columns()`` and ``new_frame()``. The column rules here decide what counts as a number,
+a boolean or text, and so decide ``frame_hash``.
 """
 
 from __future__ import annotations
@@ -18,11 +16,11 @@ import struct
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, TypeAlias, cast, overload
+from typing import TYPE_CHECKING, Any, Final
 
-import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_bool_dtype, is_float_dtype, is_integer_dtype
 
 from soundscapy.errors import (
     CodingError,
@@ -36,30 +34,23 @@ from soundscapy.provenance import canonical_json, hash_bytes
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping, Sequence
 
-    from narwhals.stable.v2.typing import IntoDataFrameT
     from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 __all__ = [
-    "EagerFrame",
     "TextTable",
     "column_text",
     "columns_float",
+    "float_column",
     "frame_hash",
     "new_frame",
     "read_text_table",
     "readonly_copy",
-    "to_eager",
-    "to_native",
+    "require_frame",
     "with_columns",
 ]
 
-EagerFrame: TypeAlias = nw.DataFrame[Any]
-"""A frame wrapped by ``to_eager()``, whatever library is behind it."""
-
-DEFAULT_BACKEND: Final = "pandas"
-"""The library of frames soundscapy creates where no user frame gives one (plan §4.10)."""
-
-_LAZY_MESSAGE: Final = "lazy frames are not accepted; call .collect() first"
+_CONVERT_MESSAGE: Final = "only pandas DataFrames are accepted; convert with .to_pandas() first"
+_CONVERTIBLE: Final = frozenset({"polars", "pyarrow"})
 _QUIET_NAN: Final = np.uint64(0x7FF8000000000000)
 _NULL_TEXT: Final = struct.pack("<Q", 0xFFFFFFFFFFFFFFFF)
 
@@ -84,85 +75,69 @@ def readonly_copy(values: ArrayLike, dtype: DTypeLike | None = None) -> NDArray[
     return out
 
 
-@overload
-def to_eager(obj: IntoDataFrameT) -> nw.DataFrame[IntoDataFrameT]: ...
-@overload
-def to_eager(obj: object) -> EagerFrame: ...
-def to_eager(obj: object) -> EagerFrame:
-    """Wrap a native eager data frame for use inside soundscapy.
+def require_frame(obj: object) -> pd.DataFrame:
+    """Return ``obj`` if it is a pandas ``DataFrame`` soundscapy can read.
 
     Parameters
     ----------
     obj : object
-        A pandas or polars ``DataFrame`` (or a narwhals ``DataFrame``).
+        The frame to check.
 
     Returns
     -------
-    narwhals.stable.v2.DataFrame
-        The wrapped frame; it shares data with ``obj``.
+    pandas.DataFrame
+        ``obj`` itself; it is not copied.
 
     Raises
     ------
     TypeError
-        If ``obj`` is a lazy frame, a series, a dict or any other object.
+        If ``obj`` is not a pandas ``DataFrame``. A polars or Arrow table gets a message
+        naming ``.to_pandas()``.
     ColumnCollisionError
         If two columns of ``obj`` share a name.
     """
-    try:
-        # pass_through returns anything narwhals does not support unchanged (documented), so
-        # one call tells an eager frame from a lazy one and from a non-frame.
-        wrapped = nw.from_native(obj, pass_through=True)
-    except nw.exceptions.DuplicateError as err:
-        names = sorted({str(n) for n, k in Counter(getattr(obj, "columns", ())).items() if k > 1})
+    if not isinstance(obj, pd.DataFrame):
+        if type(obj).__module__.partition(".")[0] in _CONVERTIBLE:
+            raise TypeError(_CONVERT_MESSAGE)
+        msg = f"expected a pandas DataFrame, got {type(obj).__name__}"
+        raise TypeError(msg)
+    if obj.columns.has_duplicates:
+        names = sorted({str(n) for n, k in Counter(obj.columns).items() if k > 1})
         msg = f"the frame has duplicate column names: {', '.join(map(repr, names))}"
-        raise ColumnCollisionError(msg) from err
-    if isinstance(wrapped, nw.DataFrame):
-        return wrapped
-    if isinstance(wrapped, nw.LazyFrame):
-        raise TypeError(_LAZY_MESSAGE)
-    msg = f"expected a pandas or polars data frame, got {type(obj).__name__}"
-    raise TypeError(msg)
+        raise ColumnCollisionError(msg)
+    return obj
 
 
-def to_native(frame: nw.DataFrame[IntoDataFrameT]) -> IntoDataFrameT:
-    """Return the native frame behind a narwhals frame.
-
-    Parameters
-    ----------
-    frame : narwhals.stable.v2.DataFrame
-        A frame from ``to_eager()``.
-
-    Returns
-    -------
-    pandas.DataFrame or polars.DataFrame
-        The native frame behind ``frame``, in the user's library.
-    """
-    return frame.to_native()
-
-
-def _column(frame: EagerFrame, name: str) -> nw.Series[Any]:
-    """Return a column, raising a backend-neutral error when it is missing."""
+def _column(frame: pd.DataFrame, name: str) -> pd.Series:
+    """Return a column, raising a soundscapy error when it is missing."""
     if name not in frame.columns:
-        msg = f"column {name!r} is not in the frame; it has {frame.columns}"
+        msg = f"column {name!r} is not in the frame; it has {list(frame.columns)}"
         raise MappingError(msg)
-    return frame.get_column(name)
+    return frame[name]
 
 
-def _float_values(series: nw.Series[Any]) -> NDArray[np.float64]:
-    """Return a numeric series as a fresh float64 array, null and NaN as NaN."""
-    null = series.is_null().to_numpy()
-    values = np.array(series.cast(nw.Float64).to_numpy(), dtype=np.float64, copy=True)
-    values[null] = np.nan
-    return values
+def _is_number(series: pd.Series) -> bool:
+    """Whether a column holds numbers: integer or float, numpy or nullable, never boolean.
+
+    pandas' own dtype predicates decide, so nullable and Arrow-backed integer and float
+    dtypes count as numbers too.
+    """
+    dtype = series.dtype
+    return not is_bool_dtype(dtype) and (is_integer_dtype(dtype) or is_float_dtype(dtype))
 
 
-def columns_float(frame: EagerFrame, names: Sequence[str]) -> NDArray[np.float64]:
+def _float_values(series: pd.Series) -> NDArray[np.float64]:
+    """Return a numeric column as a fresh float64 array, every null and NaN as NaN."""
+    return np.array(series.to_numpy(dtype=np.float64, na_value=np.nan), dtype=np.float64)
+
+
+def columns_float(frame: pd.DataFrame, names: Sequence[str]) -> NDArray[np.float64]:
     """Read numeric columns as a float64 matrix.
 
     Parameters
     ----------
-    frame : narwhals.stable.v2.DataFrame
-        A frame from ``to_eager()``.
+    frame : pandas.DataFrame
+        A frame from ``require_frame()`` or read by soundscapy.
     names : sequence of str
         The columns to read, in order.
 
@@ -181,7 +156,7 @@ def columns_float(frame: EagerFrame, names: Sequence[str]) -> NDArray[np.float64
     out = np.empty((len(frame), len(names)), dtype=np.float64)
     for index, name in enumerate(names):
         series = _column(frame, name)
-        if not series.dtype.is_numeric():
+        if not _is_number(series):
             msg = (
                 f"column {name!r} holds {series.dtype} values, not numbers; "
                 "text and boolean columns must be coded first"
@@ -192,8 +167,35 @@ def columns_float(frame: EagerFrame, names: Sequence[str]) -> NDArray[np.float64
     return out
 
 
+def float_column(frame: pd.DataFrame, name: str) -> NDArray[np.float64] | None:
+    """Read a column as float64 if its dtype is a float dtype, else return ``None``.
+
+    Parameters
+    ----------
+    frame : pandas.DataFrame
+        A frame from ``require_frame()`` or read by soundscapy.
+    name : str
+        The column to read.
+
+    Returns
+    -------
+    numpy.ndarray or None
+        A read-only float64 copy, null as NaN, for a numpy or nullable float column;
+        ``None`` for any other dtype, integer included.
+
+    Raises
+    ------
+    MappingError
+        If the column is not in the frame.
+    """
+    series = _column(frame, name)
+    if not is_float_dtype(series.dtype):
+        return None
+    return readonly_copy(_float_values(series))
+
+
 def _value_text(value: object) -> str:
-    """Return the backend-independent text of one non-null value."""
+    """Return the text of one non-null value."""
     if isinstance(value, str):
         return value
     if isinstance(value, pd.Timestamp):
@@ -203,26 +205,26 @@ def _value_text(value: object) -> str:
     return str(value)
 
 
-def _texts(series: nw.Series[Any]) -> list[str | None]:
+def _texts(series: pd.Series) -> list[str | None]:
     """Return each value's text, with ``None`` for a null."""
-    null = series.is_null().to_list()
+    null = series.isna().to_list()
     return [
         None if is_null else _value_text(value)
         for value, is_null in zip(series.to_list(), null, strict=True)
     ]
 
 
-def column_text(frame: EagerFrame, name: str) -> NDArray[np.object_]:
+def column_text(frame: pd.DataFrame, name: str) -> NDArray[np.object_]:
     """Read one column as text.
 
     Text comes from each value's Python form: ``str`` as is, datetimes, dates and times
     truncated to whole microseconds and written by ``isoformat()``, anything else by
-    ``str()``. The result is the same for pandas and polars.
+    ``str()``.
 
     Parameters
     ----------
-    frame : narwhals.stable.v2.DataFrame
-        A frame from ``to_eager()``.
+    frame : pandas.DataFrame
+        A frame from ``require_frame()`` or read by soundscapy.
     name : str
         The column to read.
 
@@ -243,55 +245,66 @@ def column_text(frame: EagerFrame, name: str) -> NDArray[np.object_]:
     return out
 
 
-def _nw_dtype(values: NDArray[Any]) -> nw.dtypes.DType:
-    """Return the narwhals dtype of an added column (kept under nulls where the library can)."""
+def _added_column(
+    values: NDArray[Any], valid: NDArray[np.bool_] | None, index: pd.Index
+) -> pd.Series:
+    """Build one added column, null where ``valid`` is False.
+
+    A float column holds NaN for a null and an integer column becomes ``float64`` with NaN.
+    A boolean column is always the nullable ``"boolean"`` dtype, with ``pd.NA`` for a null,
+    so it filters rows whether or not any is null. Any other column is text in pandas'
+    default text dtype, NaN for a null.
+    """
     kind = values.dtype.kind
-    if kind == "f":
-        return nw.Float64()
     if kind == "b":
-        return nw.Boolean()
-    if kind in "iu":
-        return nw.Int64()
-    return nw.String()
+        flags = pd.Series(pd.array(values, dtype="boolean"), index=index)
+        return flags if valid is None else flags.mask(~valid)
+    if kind == "f":
+        column = pd.Series(values, index=index, dtype=np.float64, copy=True)
+    elif kind in "iu":
+        column = pd.Series(values, index=index, dtype=np.int64, copy=True)
+    else:
+        column = pd.Series(values, index=index, dtype=str, copy=True)
+    return column if valid is None or valid.all() else column.where(valid)
 
 
 def with_columns(
-    frame: IntoDataFrameT,
+    frame: pd.DataFrame,
     columns: Mapping[str, NDArray[Any]],
     *,
     valid: NDArray[np.bool_] | None = None,
-) -> IntoDataFrameT:
-    """Return a copy of a native frame with columns added.
+) -> pd.DataFrame:
+    """Return a copy of a frame with columns added.
 
     Parameters
     ----------
-    frame : pandas.DataFrame or polars.DataFrame
+    frame : pandas.DataFrame
         The user's frame; it is not changed.
     columns : mapping of str to numpy.ndarray
-        The new columns, each with one value per row. A polars result may share memory
-        with these arrays, so pass arrays nothing else will change.
+        The new columns, each with one value per row.
     valid : numpy.ndarray of bool, optional
-        Rows where this is False are null in every added column, as the frame's library
-        represents a null: in polars a null of the column's type; with pandas' classic
-        dtypes NaN, so a masked integer column becomes ``float64``. Added boolean columns in
-        pandas always use the nullable ``"boolean"`` dtype, with ``pd.NA`` for a null, so
-        they serve as filter masks and their dtype does not depend on the data.
+        Rows where this is False are null in every added column: NaN in a float or text
+        column, and a masked integer column becomes ``float64``. Added boolean columns
+        always use the nullable ``"boolean"`` dtype, with ``pd.NA`` for a null, so they
+        serve as filter masks and their dtype does not depend on the data.
 
     Returns
     -------
-    pandas.DataFrame or polars.DataFrame
-        A frame of the same library as ``frame``.
+    pandas.DataFrame
+        A new frame with the added columns last; it keeps ``frame``'s index.
 
     Raises
     ------
+    TypeError
+        If ``frame`` is not a pandas ``DataFrame``.
     ColumnCollisionError
         If a new column's name is already in the frame.
     ValueError
         If a column or ``valid`` does not have one value per row.
     """
-    eager = to_eager(frame)
-    n_rows = len(eager)
-    clashes = [name for name in columns if name in eager.columns]
+    native = require_frame(frame)
+    n_rows = len(native)
+    clashes = [name for name in columns if name in native.columns]
     if clashes:
         msg = f"columns {clashes} are already in the frame; rename or drop them first"
         raise ColumnCollisionError(msg)
@@ -302,54 +315,24 @@ def with_columns(
         if len(values) != n_rows:
             msg = f"{label} has {len(values)} values; the frame has {n_rows} rows"
             raise ValueError(msg)
-    backend = eager.implementation
-    # No None goes into new_series: with pandas' classic dtypes it would turn a masked
-    # boolean into False. Masked rows are nulled by when/then instead, in each library's
-    # own way.
-    series = {
-        name: nw.new_series(name, values, dtype=_nw_dtype(values), backend=backend)
-        for name, values in columns.items()
-    }
-    if valid is None or valid.all():
-        out = to_native(eager.with_columns(*series.values()))
-    else:
-        keep = nw.new_series("valid", valid, dtype=nw.Boolean(), backend=backend)
-        masked = {name: nw.when(keep).then(s) for name, s in series.items()}
-        out = to_native(eager.with_columns(**masked))
-    flags = [name for name, values in columns.items() if values.dtype.kind == "b"]
-    if flags and isinstance(out, pd.DataFrame):
-        # pandas' classic dtypes hold a null boolean as object, which pandas refuses as a
-        # filter mask. Every added boolean column uses the nullable "boolean" dtype (pd.NA),
-        # masked or not, so its dtype does not depend on whether any row was masked.
-        return cast("IntoDataFrameT", out.astype(dict.fromkeys(flags, "boolean")))
-    return out
+    added = {name: _added_column(values, valid, native.index) for name, values in columns.items()}
+    return native.assign(**added)
 
 
-@overload
-def new_frame(columns: Mapping[str, NDArray[Any]], like: None = None) -> pd.DataFrame: ...
-@overload
-def new_frame(columns: Mapping[str, NDArray[Any]], like: IntoDataFrameT) -> IntoDataFrameT: ...
-def new_frame(
-    columns: Mapping[str, NDArray[Any]], like: object | None = None
-) -> Any:  # the overloads above give the precise types
-    """Build a frame from columns.
+def new_frame(columns: Mapping[str, NDArray[Any]]) -> pd.DataFrame:
+    """Build a pandas frame from columns.
 
     Parameters
     ----------
     columns : mapping of str to numpy.ndarray
         The columns, each of the same length.
-    like : object, optional
-        A frame whose library the result uses; pandas when omitted.
 
     Returns
     -------
-    pandas.DataFrame or polars.DataFrame
-        A new frame, pandas without ``like`` and of ``like``'s library with it; it owns copies
-        of the arrays.
+    pandas.DataFrame
+        A new frame; it owns copies of the arrays.
     """
-    backend = DEFAULT_BACKEND if like is None else to_eager(like).implementation
-    copied = {name: np.array(values, copy=True) for name, values in columns.items()}
-    return to_native(nw.from_dict(copied, backend=backend))
+    return pd.DataFrame({name: np.array(values, copy=True) for name, values in columns.items()})
 
 
 @dataclass(frozen=True)
@@ -453,21 +436,21 @@ def _is_blank(record: Sequence[str]) -> bool:
     return all(not cell.strip() for cell in record)
 
 
-def _hash_chunks(frame: EagerFrame) -> Iterator[bytes]:
+def _hash_chunks(frame: pd.DataFrame) -> Iterator[bytes]:
     """Yield the normalised byte stream of a frame (header, then column by column)."""
     dtypes: list[str] = []
     bodies: list[Iterable[bytes]] = []
     for name in frame.columns:
-        series = frame.get_column(name)
-        if series.dtype.is_numeric():
+        series = frame[name]
+        if _is_number(series):
             values = _float_values(series).astype("<f8")
             bits = values.view("<u8")
             bits[np.isnan(values)] = _QUIET_NAN
             dtypes.append("float64")
             bodies.append([bits.tobytes()])
-        elif series.dtype == nw.Boolean and not series.is_null().any():
+        elif is_bool_dtype(series.dtype) and not series.isna().any():
             dtypes.append("bool")
-            bodies.append([series.to_numpy().astype(np.uint8).tobytes()])
+            bodies.append([series.to_numpy(dtype=bool).astype(np.uint8).tobytes()])
         else:
             dtypes.append("string")
             bodies.append(_text_bytes(_texts(series)))
@@ -490,20 +473,20 @@ def _text_bytes(texts: Iterable[str | None]) -> Iterator[bytes]:
 
 
 def frame_hash(frame: object) -> str:
-    """Hash a frame's content, independent of its library and integer representation.
+    """Hash a frame's content, independent of its integer and null representation.
 
-    Numeric columns become float64 with null as NaN; boolean columns without nulls stay
-    boolean; every other column becomes text from each value's Python form. The hashed
-    stream is the canonical JSON of ``{"columns", "dtypes", "n_rows"}``, a 0x00 byte, then
-    each column: float64 little-endian with every NaN as the quiet NaN
-    ``0x7FF8000000000000``, booleans as ``uint8``, and text value by value as a
+    Numeric columns (integer or float, numpy or nullable) become float64 with null as NaN;
+    boolean columns without nulls stay boolean; every other column becomes text from each
+    value's Python form. The hashed stream is the canonical JSON of ``{"columns", "dtypes",
+    "n_rows"}``, a 0x00 byte, then each column: float64 little-endian with every NaN as the
+    quiet NaN ``0x7FF8000000000000``, booleans as ``uint8``, and text value by value as a
     little-endian ``uint64`` UTF-8 byte length followed by the bytes, a null as the
     ``uint64`` ``0xFFFFFFFFFFFFFFFF`` alone.
 
     Parameters
     ----------
-    frame : object
-        A pandas or polars ``DataFrame``.
+    frame : pandas.DataFrame
+        The frame to hash.
 
     Returns
     -------
@@ -513,6 +496,8 @@ def frame_hash(frame: object) -> str:
     Raises
     ------
     TypeError
-        If ``frame`` is not an eager data frame.
+        If ``frame`` is not a pandas ``DataFrame``.
+    ColumnCollisionError
+        If two columns of ``frame`` share a name.
     """
-    return hash_bytes(_hash_chunks(to_eager(frame)))
+    return hash_bytes(_hash_chunks(require_frame(frame)))

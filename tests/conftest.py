@@ -13,7 +13,6 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, TypeAlias
 
 import pandas as pd
-import polars as pl
 import pytest
 
 from soundscapy.datasets import isd
@@ -38,12 +37,16 @@ def _close_figures() -> Iterator[None]:
         pyplot.close("all")
 
 
-@pytest.fixture(params=["pandas", "polars"])
+@pytest.fixture(params=["classic", "nullable"])
 def frame_lib(request: pytest.FixtureRequest) -> MakeFrame:
-    """Return a callable that builds a native frame in pandas or in polars."""
-    if request.param == "pandas":
+    """Return a callable that builds a pandas frame with classic or with nullable dtypes.
+
+    The nullable form is what ``DataFrame.convert_dtypes()`` gives: ``Int64``, ``Float64``,
+    ``boolean`` and ``string`` columns with ``pd.NA`` for a missing value.
+    """
+    if request.param == "classic":
         return lambda data: pd.DataFrame(dict(data))
-    return lambda data: pl.DataFrame(dict(data))
+    return lambda data: pd.DataFrame(dict(data)).convert_dtypes()
 
 
 @pytest.fixture(scope="session")
