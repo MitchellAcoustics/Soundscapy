@@ -11,8 +11,10 @@ import pytest
 from soundscapy._model import COL_INCLUDED, COL_LANGUAGE, COL_RESPONSE_ID
 from soundscapy.distribution.coordinates import Coordinates, OriginSegment, n_valid
 from soundscapy.errors import MappingError
-from soundscapy.instrument import Scale
+from soundscapy.instrument import AngleSet, Scale, angle_set
+from soundscapy.instrument.angles import AngleSelection
 from soundscapy.projection.project import project
+from tests._helpers import medium_warning
 
 LOCATIONS = sorted(
     [
@@ -118,6 +120,31 @@ def test_select_updates_origin_n(isd_coords):
     np.testing.assert_array_equal(chosen.xy, isd_coords.xy[mask])
     assert chosen.settings == isd_coords.settings
     assert n_valid(chosen) <= chosen.n()
+
+
+def test_select_keeps_the_reasons_a_projection_added(isd_survey):
+    # Rows a projection excluded (not the survey) keep their reason through select.
+    with medium_warning():
+        coords = project(isd_survey, angles="satp@1.5")
+    excluded = project(
+        isd_survey,
+        angles=AngleSelection.model_validate({"default": "satp@1.5", "per_language": {}}),
+        on_uncovered="exclude",
+        angle_sets=[_without_cmn()],
+    )
+    cmn = excluded.labels[COL_LANGUAGE] == "cmn"
+    chosen = excluded.select(cmn)
+    assert set(chosen.labels["ssp_reasons"].tolist()) == {"uncovered_language"}
+    assert n_valid(chosen) == 0
+    assert chosen.origin[0].angle_sets == excluded.origin[0].angle_sets == ("satp@1.5",)
+    assert n_valid(coords) - n_valid(excluded) == int(cmn.sum()) == 69
+
+
+def _without_cmn() -> AngleSet:
+    """The shipped satp@1.5 with cmn dropped, so that the subset's cmn rows are uncovered."""
+    data = angle_set("satp", "1.5").model_dump(mode="json", by_alias=True)
+    data["languages"] = {code: entry for code, entry in data["languages"].items() if code != "cmn"}
+    return AngleSet.model_validate(data)
 
 
 def test_select_rejects_a_bad_mask(isd_coords):

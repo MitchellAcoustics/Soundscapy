@@ -4,17 +4,23 @@ from __future__ import annotations
 
 import csv
 import io
+from pathlib import Path
 from typing import TYPE_CHECKING, get_args
 
 import numpy as np
+import pytest
 from hypothesis import strategies as st
 
+from soundscapy.errors import MediumConfidenceLanguageWarning
 from soundscapy.instrument.scale import Scale
 from soundscapy.survey.quality import QualitySettings
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
+
+# The synthetic three-tier angle set and the small survey that exercises every resolver
+# branch: qaa High, qab Medium, qac Low with angles, qad absent, qae Low tier-only.
+SYNTHETIC_TIERS = Path(__file__).parent / "fixtures" / "synthetic_tiers"
 
 # The eight attribute labels of iso-12913-outdoor, in position order (PAQ1..PAQ8).
 LABELS = ("pleasant", "vibrant", "eventful", "chaotic", "annoying", "monotonous", "uneventful")
@@ -46,6 +52,15 @@ def quality_settings() -> st.SearchStrategy[QualitySettings]:
         min_age=st.floats(0.0, 120.0),
         **actions,
     )
+
+
+def medium_warning() -> pytest.WarningsRecorder:
+    """The context a projection with a medium-confidence language runs in.
+
+    The suite turns warnings into errors, so a call that warns once about such a language
+    is wrapped in this; the recorder lets a test assert that exactly one warning fired.
+    """
+    return pytest.warns(MediumConfidenceLanguageWarning)
 
 
 def csv_rows(text: str) -> list[dict[str, str]]:

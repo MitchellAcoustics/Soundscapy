@@ -1,4 +1,4 @@
-"""project: a survey projected with equal angles into Coordinates."""
+"""project: a survey projected into Coordinates; named angle sets are in test_project_languages."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from hypothesis import strategies as st
 
 from soundscapy._model import COL_ANGLE_SET, COL_INCLUDED, COL_REASONS, COL_RESPONSE_ID
 from soundscapy.distribution.coordinates import n, n_valid, valid_mask
-from soundscapy.errors import FormulationError, MappingError, SettingsError
+from soundscapy.errors import DataReferenceError, FormulationError, MappingError, SettingsError
 from soundscapy.instrument import circumplex
 from soundscapy.instrument.angles import AngleSelection
 from soundscapy.projection.project import ProjectionSettings, project
@@ -113,13 +113,17 @@ def test_project_uses_the_declared_scale():
 
 
 @pytest.mark.parametrize("angles", ["satp@1.5", "aletta-2024@1"])
-def test_project_rejects_unknown_angles(hand_survey, angles):
-    with pytest.raises(SettingsError) as info:
+def test_project_accepts_the_shipped_angle_sets(hand_survey, angles):
+    coords = project(hand_survey, angles=angles)
+    assert coords.labels[COL_ANGLE_SET].tolist() == [angles, angles, ""]
+    assert coords.origin[0].angle_sets == (angles,)
+
+
+@pytest.mark.parametrize("angles", ["nope@1", "satp"])
+def test_project_rejects_an_unknown_angle_set(hand_survey, angles):
+    with pytest.raises(DataReferenceError) as info:
         project(hand_survey, angles=angles)
-    assert type(info.value) is SettingsError
-    assert "angles" in str(info.value)
-    assert '"equal"' in str(info.value)
-    assert "validation error" not in str(info.value)
+    assert "satp@1.5" in str(info.value)  # the shipped sets are listed
 
 
 def test_project_accepts_aletta2024(hand_survey):
@@ -164,7 +168,6 @@ def test_settings_and_provenance(hand_survey):
     for key in (
         "input_hash",
         "mapping_hash",
-        "data_refs",
         "response_id_source",
         "read",
         "id_columns",
@@ -172,6 +175,8 @@ def test_settings_and_provenance(hand_survey):
         "response_key_blank_ok",
     ):
         assert prov[key] == hand_survey.provenance[key], key
+    # The survey's refs come first; a named angle set would follow them, "equal" adds none.
+    assert prov["data_refs"] == hand_survey.provenance["data_refs"]
     assert coords.circumplex == circumplex("iso-12913-outdoor", "1")
 
 
