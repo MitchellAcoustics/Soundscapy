@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import enum
 import tomllib
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Annotated, Any, Final, TypeVar
 
 import pydantic
@@ -273,3 +273,91 @@ def from_toml(cls: type[M], text: str, *, error: type[SoundscapyError] = Setting
         fails validation; a validation message keeps pydantic's field paths.
     """
     return validate(cls, parse_toml(text, error=error), error=error)
+
+
+# --- Settings layers (spec 6.3.4, ranks 1 and 2) -------------------------------------------------
+
+
+def settings_layer(value: object, *, model: type[FrozenModel], name: str) -> dict[str, Any]:
+    """Turn a settings argument into one layer for ``merge_settings()``.
+
+    Parameters
+    ----------
+    value : object
+        An instance of ``model``, or a mapping of its fields. A nested mapping becomes a
+        ``dict``; a nested ``FrozenModel`` instance becomes its set fields, so
+        ``{"quality": QualitySettings(min_age=16.0)}`` merges leaf by leaf.
+    model : type[FrozenModel]
+        The settings model the layer is for.
+    name : str
+        The argument's name, for the error message.
+
+    Returns
+    -------
+    dict
+        A fresh dict: an instance contributes only the fields that were set
+        (``exclude_unset``), in JSON form; a mapping is deep-copied.
+
+    Raises
+    ------
+    SettingsError
+        If ``value`` is neither an instance of ``model`` nor a mapping.
+    """
+    if isinstance(value, model):
+        return value.model_dump(mode="json", by_alias=True, exclude_unset=True)
+    if isinstance(value, Mapping):
+        return _copy_layer(value)
+    msg = (
+        f"{name} must be a {model.__name__} or a mapping of its fields, got {type(value).__name__}"
+    )
+    raise SettingsError(msg)
+
+
+def _copy_layer(mapping: Mapping[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key, item in mapping.items():
+        if isinstance(item, FrozenModel):
+            out[key] = item.model_dump(mode="json", by_alias=True, exclude_unset=True)
+        elif isinstance(item, Mapping):
+            out[key] = _copy_layer(item)
+        else:
+            out[key] = item
+    return out
+
+
+def _deep_merge(base: dict[str, Any], layer: Mapping[str, Any]) -> None:
+    for key, item in layer.items():
+        current = base.get(key)
+        if isinstance(item, Mapping) and isinstance(current, dict):
+            _deep_merge(current, item)
+        else:
+            base[key] = dict(item) if isinstance(item, Mapping) else item
+
+
+def merge_settings(model: type[M], layers: Sequence[Mapping[str, Any]], *, context: str) -> M:
+    """Merge settings layers, a later layer winning, and validate the result.
+
+    Parameters
+    ----------
+    model : type[FrozenModel]
+        The settings model to build.
+    layers : sequence of mapping
+        Layers from ``settings_layer()``, lowest precedence first. Nested mappings
+        merge key by key; any other value replaces the earlier one.
+    context : str
+        What is validated; it starts the error message.
+
+    Returns
+    -------
+    FrozenModel
+        An instance of ``model``.
+
+    Raises
+    ------
+    SettingsError
+        If the merged settings fail validation; the message keeps pydantic's field paths.
+    """
+    merged: dict[str, Any] = {}
+    for layer in layers:
+        _deep_merge(merged, layer)
+    return validate(model, merged, error=SettingsError, context=context)

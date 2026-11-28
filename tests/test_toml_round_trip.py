@@ -28,7 +28,9 @@ from soundscapy.survey.mapping import (
     LanguageSpec,
     SurveyMapping,
 )
+from soundscapy.survey.quality import QualitySettings
 from soundscapy.survey.read import ImportSettings, ReadOptions, SourceRef
+from tests._helpers import quality_settings
 
 _CITATION = Citation(
     citation="A. Author (2026). A title.",
@@ -102,6 +104,13 @@ MODELS: list[FrozenModel] = [
     ),
     ReadOptions(format="tsv", encoding="cp1252", delimiter=";"),
     ImportSettings(on_scale_violation="exclude"),
+    QualitySettings(
+        all_midpoint="off",
+        excessive_missing_share=0.25,
+        under_age="exclude",
+        min_age=16.0,
+        paper_input="exclude",
+    ),
     _source_ref(),
     AngleSelection(),  # its one S1 field has one value
     ProjectionSettings(formulation="iso2019", angles=AngleSelection()),
@@ -157,6 +166,11 @@ def test_read_options_round_trip(fmt, encoding, delimiter):
 @given(st.sampled_from(["error", "exclude"]))
 def test_import_settings_round_trip(action):
     _assert_round_trips(ImportSettings(on_scale_violation=action))
+
+
+@given(quality_settings())
+def test_quality_settings_round_trip(settings):
+    _assert_round_trips(settings)
 
 
 def _subclasses(cls: type) -> set[type]:
