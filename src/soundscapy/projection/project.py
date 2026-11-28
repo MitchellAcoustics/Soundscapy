@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Final, Literal
 
 import numpy as np
 
+from soundscapy._frames import column_text
 from soundscapy._model import (
     _UNSET,
     COL_ANGLE_SET,
@@ -15,13 +16,15 @@ from soundscapy._model import (
     _Unset,
 )
 from soundscapy.distribution.coordinates import Coordinates, OriginSegment
-from soundscapy.errors import SettingsError
+from soundscapy.errors import MappingError, SettingsError
 from soundscapy.instrument import circumplex
 from soundscapy.instrument.angles import AngleSelection
 from soundscapy.projection.formulas import _FORMULATIONS, Formulation, project_scores
 from soundscapy.provenance import envelope, hash_json
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from soundscapy.survey.read import Survey
 
 __all__ = ["ProjectionSettings", "project"]
@@ -37,6 +40,7 @@ _CARRIED: Final = (
     "id_columns",
     "response_id_columns",
     "response_key_blank_ok",
+    "quality_skipped",
 )
 
 
@@ -87,11 +91,37 @@ def _settings(
     return ProjectionSettings.model_validate(fields)
 
 
+def _carried_columns(survey: Survey, carry: Sequence[str] | _Unset, taken: set[str]) -> list[str]:
+    """Return the mapping's ``carry`` columns, then the keyword's new ones, each checked."""
+    if carry is _UNSET:
+        extra: Sequence[str] = ()
+    elif isinstance(carry, str):
+        msg = f"carry must be a list of column names, got the string {carry!r}"
+        raise TypeError(msg)
+    else:
+        extra = carry
+    columns = list(survey.mapping.carry)
+    columns += [column for column in extra if column not in columns]
+    data_columns = list(survey.data.columns)
+    for column in columns:
+        if column in taken:
+            msg = f"carry names {column!r}, an id column, which is already a label"
+            raise MappingError(msg)
+        if column not in data_columns:
+            msg = (
+                f"carry names {column!r}, which is not a column of the survey's data; "
+                f"its columns are {data_columns}"
+            )
+            raise MappingError(msg)
+    return columns
+
+
 def project(
     survey: Survey,
     *,
     formulation: Formulation | _Unset = _UNSET,
     angles: Literal["equal"] | AngleSelection | _Unset = _UNSET,
+    carry: Sequence[str] | _Unset = _UNSET,
 ) -> Coordinates:
     """Project a survey's attribute scores onto the two circumplex axes.
 
@@ -99,6 +129,11 @@ def project(
     empty ``ssp_angle_set`` label. Every response uses the circumplex's nominal angles.
     The scale is the mapping's declared attribute scale, never the data's range. The
     status labels are the survey's own, and the survey is unchanged.
+
+    After the id-role labels come the carried columns, one text label each: the mapping's
+    ``carry`` entries in order, then ``carry=`` entries not already among them. A carried
+    cell is the file's text verbatim, ``""`` where blank; it is never parsed, and carrying
+    changes no number, so ``carry`` is not a settings field.
 
     Parameters
     ----------
@@ -108,6 +143,8 @@ def project(
         The projection formula; left unset, ``"canonical"``.
     angles : "equal" or AngleSelection, optional
         The angles; left unset, ``"equal"`` (the nominal angles).
+    carry : sequence of str, optional
+        Further columns of the survey's data to carry as labels, beyond the mapping's.
 
     Returns
     -------
@@ -121,6 +158,11 @@ def project(
         If ``formulation`` or ``angles`` is not a value this version accepts.
     FormulationError
         If ``"iso2019"`` is used with a scale other than 1 to 5.
+    TypeError
+        If ``carry`` is a single string rather than a sequence of column names.
+    MappingError
+        If a carried column is not in the survey's data, or is an id column, which is
+        already a label.
 
     References
     ----------
@@ -142,13 +184,16 @@ def project(
     xy[included] = project_scores(scores[included], angles_deg, scale, settings.formulation)
 
     angle_set = np.where(included, _EQUAL, "").astype(object)
+    id_labels = {getattr(survey.mapping.ids, role): values for role, values in survey.ids.items()}
     labels = {
         COL_RESPONSE_ID: survey.response_id,
         **status,
         COL_LANGUAGE: survey.language,
         COL_ANGLE_SET: angle_set,
-        **{getattr(survey.mapping.ids, role): values for role, values in survey.ids.items()},
+        **id_labels,
     }
+    for column in _carried_columns(survey, carry, set(id_labels)):
+        labels[column] = column_text(survey.data, column)
 
     # read_survey wrote these keys with the types envelope takes; Any passes them on as is.
     carried: dict[str, Any] = {key: survey.provenance[key] for key in _CARRIED}
