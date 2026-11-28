@@ -11,6 +11,59 @@ from soundscapy.survey.mapping import read_mapping, write_mapping
 from soundscapy.survey.read import Survey
 
 _MAPPING = "datasets/isd/isd_mapping.toml"
+# Spec 6.4.4's normative example, which the shipped file must equal byte for byte.
+_NORMATIVE = """\
+schema = "soundscapy.mapping"
+schema_version = 1
+instrument = "iso-12913-outdoor"
+instrument_version = "1"
+age = "age00"
+carry = ["start_time", "Survey_Version", "sss03", "sss04", "sss05"]
+
+[ids]
+response_key = ["LocationID", "SessionID", "GroupID", "RecordID"]
+location = "LocationID"
+session = "SessionID"
+group = "GroupID"
+record = "RecordID"
+
+[language]
+column = "Language"
+
+[groups.attributes.columns]
+pleasant = "pleasant"
+vibrant = "vibrant"
+eventful = "eventful"
+chaotic = "chaotic"
+annoying = "annoying"
+monotonous = "monotonous"
+uneventful = "uneventful"
+calm = "calm"
+
+[groups.source_dominance.columns]
+traffic_noise = "ssi01"
+other_noise = "ssi02"
+human_sounds = "ssi03"
+natural_sounds = "ssi04"
+
+[groups.overall_quality.columns]
+overall_quality = "sss01"
+
+[groups.appropriateness.columns]
+appropriateness = "sss02"
+
+[groups.who5.columns]
+who5_1 = "who01"
+who5_2 = "who02"
+who5_3 = "who03"
+who5_4 = "who04"
+who5_5 = "who05"
+"""
+_MAPPING_CARRY = ["start_time", "Survey_Version", "sss03", "sss04", "sss05"]
+_SIDECAR_FEATURES = [
+    "LCeq_L(C)", "LAeq_L(A)", "LAeq_L10(A)", "LAeq_L90(A)", "N_N5", "S_S", "R_R",
+    "T_TonalityHMS", "FS_F", "I_I",
+]  # fmt: skip
 
 
 def test_load_subset(isd_survey):
@@ -53,6 +106,36 @@ def test_load_uses_the_registry_mapping(monkeypatch):
     monkeypatch.setattr(isd, "_registry", lambda: registry)
     with pytest.raises(DataReferenceError, match=r"datasets/isd/missing\.toml"):
         isd.load(subset=True)
+
+
+def test_isd_mapping_is_the_normative_example():
+    assert _data.read_bytes(_MAPPING).decode("utf-8") == _NORMATIVE
+
+
+def test_load_subset_carries_features(isd_survey, isd_coords):
+    assert list(isd_survey.mapping.carry) == _MAPPING_CARRY + _SIDECAR_FEATURES
+    assert isd_coords.labels["LAeq_L(A)"].dtype == object
+    assert isd_coords.labels["LAeq_L(A)"][0] == isd_survey.data["LAeq_L(A)"].iloc[0]
+
+
+def test_load_passes_settings_through():
+    off = isd.load(subset=True, quality={"all_midpoint": "off"})
+    assert off.status.counts()["flag:all_midpoint"] == 0
+    assert off.settings.quality.all_midpoint == "off"
+    strict = isd.load(subset=True, settings={"quality": {"under_age": "exclude"}})
+    counts = strict.status.counts()
+    assert counts["reason:under_age"] == 8  # the 8 under-age rows are all complete
+    assert counts["excluded"] == 24
+    same = isd.load(subset=True, on_scale_violation="exclude")
+    assert same.status.counts() == isd.load(subset=True).status.counts()  # no violations
+
+
+def test_registry_feature_columns():
+    columns = _data.read_toml("datasets/isd/registry.toml")["versions"]["1.0.1-alpha.1"]
+    columns = columns["feature_columns"]
+    assert len(columns) == len(set(columns)) == 96
+    assert columns[0] == "LZeq_L"
+    assert set(_SIDECAR_FEATURES) <= set(columns)
 
 
 def test_isd_mapping_byte_round_trip(tmp_path):

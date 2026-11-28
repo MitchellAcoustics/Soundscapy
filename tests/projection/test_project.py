@@ -228,7 +228,11 @@ def test_subset_square_bounds(isd_coords):
 
 
 def test_subset_labels_carry_the_id_columns(isd_coords):
-    assert list(isd_coords.labels)[6:] == ["LocationID", "SessionID", "GroupID", "RecordID"]
+    assert list(isd_coords.labels)[6:10] == ["LocationID", "SessionID", "GroupID", "RecordID"]
+    carried = ["start_time", "Survey_Version", "sss03", "sss04", "sss05"]
+    carried += ["LCeq_L(C)", "LAeq_L(A)", "LAeq_L10(A)", "LAeq_L90(A)", "N_N5", "S_S", "R_R"]
+    carried += ["T_TonalityHMS", "FS_F", "I_I"]
+    assert list(isd_coords.labels)[10:] == carried
 
 
 # --- carried columns (spec 6.9.2) ----------------------------------------------------------------

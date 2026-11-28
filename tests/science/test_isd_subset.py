@@ -97,6 +97,12 @@ def test_subset_feature_rows(rows):
     assert sum(row["LAeq_L(A)"].strip() != "" for row in rows) == 1350
 
 
+def test_sidecar_features():
+    sidecar = tomllib.loads(_data.read_bytes(_SIDECAR).decode("utf-8"))
+    assert sidecar["features"]["columns"] == _COLUMNS[-10:]
+    assert sidecar["features"]["units_verified"] is False
+
+
 def test_sidecar_citation_and_hash():
     sidecar = tomllib.loads(_data.read_bytes(_SIDECAR).decode("utf-8"))
     assert sidecar["citation"] == _CITATION

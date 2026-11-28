@@ -28,7 +28,7 @@ PINS: Final[Mapping[str, str]] = {
         "h1-sha256:4ef2208390747505a2ddb326802995891e8481927fa0832e7e99740d444b8686"
     ),
     "datasets/isd/isd_mapping.toml": (
-        "h1-sha256:0a602d47a260ea9dc0f6fe9e76b6f6c1c047c307760f554b140b0f478a24103c"
+        "h1-sha256:1c8c7af20fa8f75ad1fd81397cdd67d7fba05c47efd0fa1bd816aee96ab75974"
     ),
     "datasets/isd/registry.toml": (
         "h1-sha256:16118d3824d5a43feb8c5e383315a449b5326a76c46140bb991a0540927d783c"
