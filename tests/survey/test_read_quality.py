@@ -303,5 +303,6 @@ def test_row_count_property(case):
         survey = read_survey(path, mapping, quality=quality, on_scale_violation="exclude")
     status = survey.status
     assert survey.n() == len(status.reasons) == len(status.flags) == project(survey).n() == n
+    assert len(survey.to_frame()) == n
     assert status.included.tolist() == [len(r) == 0 for r in status.reasons]
     assert survey.response_id.tolist() == [f"r{i}" for i in range(n)]

@@ -20,10 +20,11 @@ import numpy as np
 from pydantic import StrictStr, field_validator
 
 from soundscapy import _data
-from soundscapy._frames import column_text, read_text_table, readonly_copy
+from soundscapy._frames import column_text, read_text_table, readonly_copy, take_rows, with_columns
 from soundscapy._log import logger
 from soundscapy._model import (
     _UNSET,
+    COL_RESPONSE_ID,
     SSP_PREFIX,
     FrozenModel,
     _Unset,
@@ -62,7 +63,7 @@ from soundscapy.survey.status import Flag, Reason, Status
 
 if TYPE_CHECKING:
     import pandas as pd
-    from numpy.typing import NDArray
+    from numpy.typing import ArrayLike, NDArray
 
 __all__ = [
     "ImportSettings",
@@ -240,6 +241,56 @@ class Survey:
             The number of rows read, blank rows excluded.
         """
         return len(self.response_id)
+
+    def to_frame(self) -> pd.DataFrame:
+        """Return the data with the response id and status columns appended.
+
+        Returns
+        -------
+        pandas.DataFrame
+            ``data``'s columns, then ``ssp_response_id``, ``ssp_included``, ``ssp_reasons``
+            and ``ssp_flags``; ``data`` itself is unchanged.
+        """
+        columns = {COL_RESPONSE_ID: self.response_id, **self.status.label_arrays()}
+        return with_columns(self.data, columns)
+
+    def select(self, mask: ArrayLike) -> Survey:
+        """Return the responses where ``mask`` is true, in order.
+
+        Parameters
+        ----------
+        mask : array-like of bool
+            One entry per response.
+
+        Returns
+        -------
+        Survey
+            The chosen responses: every per-response array, score table, id column and the
+            status restricted to them, and ``data`` with a fresh index. The mapping,
+            settings, source and provenance are unchanged; ``self`` is unchanged.
+
+        Raises
+        ------
+        ValueError
+            If ``mask`` is not a boolean array with one entry per response.
+        """
+        keep = np.asarray(mask)
+        if keep.shape != (self.n(),) or keep.dtype != np.bool_:
+            msg = f"mask must be a boolean array of shape ({self.n()},), got {keep.dtype} "
+            msg += f"{keep.shape}"
+            raise ValueError(msg)
+        return Survey(
+            data=take_rows(self.data, keep),
+            mapping=self.mapping,
+            scores={name: values[keep] for name, values in self.scores.items()},
+            response_id=self.response_id[keep],
+            ids={role: values[keep] for role, values in self.ids.items()},
+            language=self.language[keep],
+            status=self.status.select(keep),
+            settings=self.settings,
+            source=self.source,
+            provenance=self.provenance,
+        )
 
 
 def read_survey(

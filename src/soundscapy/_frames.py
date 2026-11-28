@@ -46,6 +46,7 @@ __all__ = [
     "read_text_table",
     "readonly_copy",
     "require_frame",
+    "take_rows",
     "with_columns",
 ]
 
@@ -324,6 +325,38 @@ def with_columns(
             raise ValueError(msg)
     added = {name: _added_column(values, valid, frame.index) for name, values in columns.items()}
     return frame.assign(**added)
+
+
+def take_rows(frame: pd.DataFrame, mask: NDArray[np.bool_]) -> pd.DataFrame:
+    """Return the rows of a frame where ``mask`` is true, in order, with a fresh index.
+
+    Parameters
+    ----------
+    frame : pandas.DataFrame
+        The frame; it is not changed.
+    mask : numpy.ndarray of bool
+        One entry per row.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A copy of the chosen rows with a ``RangeIndex``, so a selected survey's data looks
+        like a fresh read.
+
+    Raises
+    ------
+    TypeError
+        If ``frame`` is not a pandas ``DataFrame``.
+    ValueError
+        If ``mask`` is not a boolean array with one entry per row.
+    """
+    frame = require_frame(frame)
+    if mask.shape != (len(frame),) or mask.dtype != np.bool_:
+        msg = (
+            f"mask must be a boolean array of shape ({len(frame)},), got {mask.dtype} {mask.shape}"
+        )
+        raise ValueError(msg)
+    return frame.loc[mask].reset_index(drop=True)
 
 
 def new_frame(columns: Mapping[str, NDArray[Any]]) -> pd.DataFrame:

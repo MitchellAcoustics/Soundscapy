@@ -13,6 +13,7 @@ import pytest
 import tomlkit
 
 from soundscapy import _data
+from soundscapy._model import COL_FLAGS, COL_INCLUDED, COL_REASONS, COL_RESPONSE_ID
 from soundscapy.errors import (
     ColumnCollisionError,
     DuplicateResponseIdError,
@@ -403,6 +404,47 @@ def test_survey_arrays_read_only():
     for array in arrays:
         with pytest.raises(ValueError, match="read-only"):
             array[0] = array[1]
+
+
+# --- to_frame and select -----------------------------------------------------------------------
+
+
+def test_survey_to_frame(isd_survey):
+    frame = isd_survey.to_frame()
+    assert frame.shape == (1552, 40 + 4)
+    pd.testing.assert_frame_equal(frame.iloc[:, :40], isd_survey.data)
+    assert frame[COL_RESPONSE_ID].tolist() == isd_survey.response_id.tolist()
+    labels = isd_survey.status.label_arrays()
+    assert frame[COL_INCLUDED].tolist() == labels[COL_INCLUDED].tolist()
+    assert frame[COL_REASONS].tolist() == labels[COL_REASONS].tolist()
+    assert frame[COL_FLAGS].tolist() == labels[COL_FLAGS].tolist()
+    assert isd_survey.data.shape == (1552, 40)  # the survey's data is unchanged
+
+
+def test_survey_select(isd_survey):
+    mask = isd_survey.ids["location"] == "CamdenTown"
+    picked = isd_survey.select(mask)
+    assert picked.n() == int(mask.sum()) > 0
+    assert picked.to_frame()[COL_RESPONSE_ID].tolist() == isd_survey.response_id[mask].tolist()
+    for name, scores in isd_survey.scores.items():
+        np.testing.assert_array_equal(picked.scores[name], scores[mask])  # exact: a row pick
+    assert picked.status.reasons == tuple(
+        row for row, keep in zip(isd_survey.status.reasons, mask, strict=True) if keep
+    )
+    assert picked.ids["location"].tolist() == ["CamdenTown"] * picked.n()
+    assert picked.language.tolist() == isd_survey.language[mask].tolist()
+    assert picked.data.index.tolist() == list(range(picked.n()))
+    assert picked.mapping == isd_survey.mapping
+    assert picked.settings == isd_survey.settings
+    assert picked.source == isd_survey.source
+    assert picked.provenance == isd_survey.provenance
+
+
+def test_survey_select_bad_mask_raises(isd_survey):
+    with pytest.raises(ValueError, match="mask"):
+        isd_survey.select(np.ones(3, dtype=bool))
+    with pytest.raises(ValueError, match="mask"):
+        isd_survey.select(np.ones(isd_survey.n(), dtype=int))
 
 
 # --- provenance --------------------------------------------------------------------------------

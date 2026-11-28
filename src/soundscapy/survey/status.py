@@ -235,6 +235,32 @@ class Status:
         hit = self._mask(mask)
         return self._unchecked(self.included, self.reasons, _add_code(self.flags, hit, flag, Flag))
 
+    def select(self, mask: ArrayLike) -> Self:
+        """Return the status of the responses where ``mask`` is true, in order.
+
+        Parameters
+        ----------
+        mask : array-like of bool
+            One entry per response.
+
+        Returns
+        -------
+        Status
+            A new status; ``self`` is unchanged.
+
+        Raises
+        ------
+        ValueError
+            If ``mask`` is not a boolean array with one entry per response.
+        """
+        keep = self._mask(mask)
+        rows = np.flatnonzero(keep).tolist()
+        return self._unchecked(
+            self.included[keep],
+            tuple(self.reasons[i] for i in rows),
+            tuple(self.flags[i] for i in rows),
+        )
+
     def counts(self) -> dict[str, int]:
         """Count responses overall, by reason and by flag.
 

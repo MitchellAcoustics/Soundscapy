@@ -20,6 +20,7 @@ from soundscapy._frames import (
     new_frame,
     read_text_table,
     require_frame,
+    take_rows,
     with_columns,
 )
 from soundscapy.errors import (
@@ -201,6 +202,20 @@ def test_with_columns_all_masked_keeps_dtypes(frame_lib, n_rows):
     floats = columns_float(masked, ["f"])
     assert floats.shape == (n_rows, 1)
     assert np.isnan(floats).all()
+
+
+def test_take_rows(frame_lib):
+    frame = frame_lib({"a": [1.0, 2.0, 3.0, 4.0], "t": ["w", "x", "y", "z"]})
+    frame.index = [10, 20, 30, 40]
+    out = take_rows(frame, np.array([True, False, True, True]))
+    assert out["a"].tolist() == [1.0, 3.0, 4.0]
+    assert out["t"].tolist() == ["w", "y", "z"]
+    assert out.index.tolist() == [0, 1, 2]  # a fresh RangeIndex, like a fresh read
+    assert frame.shape == (4, 2)  # the input is unchanged
+    with pytest.raises(ValueError, match="mask"):
+        take_rows(frame, np.array([True, False]))
+    with pytest.raises(ValueError, match="mask"):
+        take_rows(frame, np.array([1, 0, 1, 1]))
 
 
 def test_new_frame_builds_pandas():
