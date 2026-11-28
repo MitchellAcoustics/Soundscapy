@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import warnings
 from typing import TYPE_CHECKING, Any, Final
 
@@ -17,7 +16,6 @@ from soundscapy._model import (
     COL_RESPONSE_ID,
     FrozenModel,
     _Unset,
-    merge_settings,
     settings_layer,
 )
 from soundscapy.distribution.coordinates import Coordinates, OriginSegment
@@ -33,12 +31,14 @@ from soundscapy.errors import (
 )
 from soundscapy.instrument import circumplex
 from soundscapy.instrument.angles import AngleSelection, AngleSet, AngleSetRef, angle_set
+from soundscapy.profiles import resolve_settings
 from soundscapy.projection._angles import LanguageOutcome, ResolvedAngles, resolve_angles
 from soundscapy.projection.formulas import _FORMULATIONS, Formulation, project_scores
 from soundscapy.provenance import envelope, hash_json
 from soundscapy.survey.status import Flag, Reason, Status
 
 if TYPE_CHECKING:
+    import os
     from collections.abc import Mapping, Sequence
 
     from numpy.typing import NDArray
@@ -97,38 +97,29 @@ def _angles_layer(angles: AngleSetRef | str | AngleSelection) -> dict[str, Any]:
     raise SettingsError(msg)
 
 
-def _settings(
+def _keywords(
     formulation: Formulation | _Unset,
     angles: AngleSetRef | str | AngleSelection | _Unset,
     on_uncovered: Policy | _Unset,
     on_low_confidence: Policy | _Unset,
-    settings: ProjectionSettings | Mapping[str, object] | _Unset,
-) -> ProjectionSettings:
-    """Merge ``settings=`` and the keywords over the defaults; the keywords win."""
-    layers: list[Mapping[str, Any]] = []
-    if settings is not _UNSET:
-        if isinstance(settings, str | os.PathLike):
-            msg = (
-                f"settings={os.fspath(settings)!r} is a path, but settings files arrive with "
-                "profiles; pass a ProjectionSettings or a mapping of its fields"
-            )
-            raise SettingsError(msg)
-        layers.append(settings_layer(settings, model=ProjectionSettings, name="settings"))
-    if formulation is not _UNSET:
-        if formulation not in _FORMULATIONS:
-            msg = (
-                f"formulation must be one of {_quoted(_FORMULATIONS)} in this version, "
-                f"got {formulation!r}"
-            )
-            raise SettingsError(msg)
-        layers.append({"formulation": formulation})
-    if angles is not _UNSET:
-        layers.append({"angles": _angles_layer(angles)})
+) -> dict[str, object]:
+    """Gather the explicit keywords as one nested layer.
+
+    The two policies join the ``angles`` table so every leaf merges over a profile's or a
+    file's ``angles`` table rather than replacing it.
+    """
+    if formulation is not _UNSET and formulation not in _FORMULATIONS:
+        msg = (
+            f"formulation must be one of {_quoted(_FORMULATIONS)} in this version, "
+            f"got {formulation!r}"
+        )
+        raise SettingsError(msg)
+    selection: dict[str, Any] = {} if angles is _UNSET else _angles_layer(angles)
     if on_uncovered is not _UNSET:
-        layers.append({"angles": {"on_uncovered": on_uncovered}})
+        selection["on_uncovered"] = on_uncovered
     if on_low_confidence is not _UNSET:
-        layers.append({"angles": {"on_low_confidence": on_low_confidence}})
-    return merge_settings(ProjectionSettings, layers, context="invalid projection settings")
+        selection["on_low_confidence"] = on_low_confidence
+    return {"formulation": formulation, "angles": selection or _UNSET}
 
 
 def _passed_sets(angle_sets: Sequence[AngleSet] | _Unset) -> dict[str, AngleSet]:
@@ -311,8 +302,9 @@ def project(
     on_uncovered: Policy | _Unset = _UNSET,
     on_low_confidence: Policy | _Unset = _UNSET,
     angle_sets: Sequence[AngleSet] | _Unset = _UNSET,
-    settings: ProjectionSettings | Mapping[str, object] | _Unset = _UNSET,
+    settings: ProjectionSettings | Mapping[str, object] | str | os.PathLike[str] | _Unset = _UNSET,
     carry: Sequence[str] | _Unset = _UNSET,
+    profile: str | _Unset = _UNSET,
 ) -> Coordinates:
     """Project a survey's attribute scores onto the two circumplex axes.
 
@@ -334,9 +326,18 @@ def project(
     ``EqualAnglesFallbackWarning``. The status labels are the survey's own plus these
     reasons and flags.
 
-    Settings merge in rank order: the model defaults, then ``settings=``, then the
-    keywords, and are validated once. A ``ProjectionSettings`` or ``AngleSelection``
-    instance contributes only the fields that were set on it.
+    Settings resolve by the one rule of spec 6.3.4. The base profile is ``profile``, else
+    the ``extends`` of a settings file passed as ``settings``, else the profile the survey
+    records (so a profile named on ``read_survey()`` carries over), else ``sal-2026``, whose
+    projection section names ``satp@1.5``. Then each field takes the first value set, in
+    this order: a keyword, ``settings=``, the file's ``[projection]`` section, the
+    profile's section, the model default; the result validates once. A
+    ``ProjectionSettings`` or ``AngleSelection`` instance contributes only the fields that
+    were set on it. A settings file applies to the call it is passed to; one given to
+    ``read_survey()`` does not reach this call. The result records
+    ``provenance["profile"]`` (``{id, version, hash}``), ``provenance["overrides"]`` (every
+    field that differs from the profile's section) and, when an explicit ``profile``
+    replaced the survey's, ``provenance["profile_inherited"]``.
 
     After the id-role labels come the carried columns, one text label each: the mapping's
     ``carry`` entries in order, then ``carry=`` entries not already among them. A carried
@@ -348,24 +349,31 @@ def project(
     survey : Survey
         The survey, from ``read_survey()``.
     formulation : {"canonical", "iso2019", "aletta2024"}, optional
-        The projection formula; left unset, ``"canonical"``.
+        The projection formula; left unset, the profile's (``"canonical"`` under
+        ``sal-2026``).
     angles : AngleSetRef, "equal", "name@version" or AngleSelection, optional
         The angles: a set for every language (an ``AngleSetRef`` or its ``"name@version"``
         string), ``"equal"`` for the nominal angles, or a full ``AngleSelection``. Left
-        unset, ``"equal"``.
+        unset, the profile's (``satp@1.5`` under ``sal-2026``).
     on_uncovered : {"error", "exclude", "equal"}, optional
         What a language absent from its set, or listed without angles, does; left unset,
-        ``"error"``.
+        the profile's (``"error"`` in every shipped profile).
     on_low_confidence : {"error", "exclude", "equal"}, optional
-        The same for a low-tier language that has angles; left unset, ``"error"``.
+        The same for a low-tier language that has angles; left unset, the profile's
+        (``"error"`` in every shipped profile).
     angle_sets : sequence of AngleSet, optional
         Sets to resolve names against before the shipped ones; a passed set shadows a
         shipped set of the same ``name@version`` for this call, and its full table is
         recorded in the provenance so the result does not depend on a file.
-    settings : ProjectionSettings or mapping, optional
-        Every projection setting at once; the keywords win over it.
+    settings : ProjectionSettings, mapping, str or os.PathLike, optional
+        Every projection setting at once, or the path of a settings file (``extends`` plus
+        sections, as ``save_settings()`` writes it); the keywords win over it.
     carry : sequence of str, optional
         Further columns of the survey's data to carry as labels, beyond the mapping's.
+    profile : str, optional
+        The profile to resolve under: ``"id@version"``, or a bare id meaning the latest
+        shipped version; ``list_profiles()`` lists them. It wins over a settings file's
+        ``extends`` and over the survey's recorded profile.
 
     Returns
     -------
@@ -380,11 +388,16 @@ def project(
     ------
     SettingsError
         If ``formulation``, ``angles``, an override or ``settings`` is not a value this
-        version accepts, or ``angle_sets`` lists one label twice.
+        version accepts, the settings file is missing or invalid, or ``angle_sets`` lists
+        one label twice.
     DataReferenceError
-        If a named set is neither passed nor shipped, or is for another circumplex or
+        If ``profile`` names no shipped profile (the message lists the shipped ones); or if
+        a named set is neither passed nor shipped, or is for another circumplex or
         circumplex version than the survey's, or has another number of angles than the
         circumplex has positions.
+    ProfileConstraintError
+        If a field the profile locks resolved to another value than the profile's; the
+        message names the field and suggests ``profile="sal-2026"``.
     MappingError
         If a named set is used and the mapping has no language column or value, or an
         included response has a blank language (the message names the responses); or if
@@ -416,7 +429,17 @@ def project(
     tiers, and the rule that a language without validated angles is not projected with
     another language's: [@mitchell2026translation], chapter 4.
     """
-    resolved_settings = _settings(formulation, angles, on_uncovered, on_low_confidence, settings)
+    # A survey built from a record without a profile (an earlier version's) inherits none.
+    inherited: Any = survey.provenance.get("profile")
+    resolution = resolve_settings(
+        ProjectionSettings,
+        "projection",
+        keywords=_keywords(formulation, angles, on_uncovered, on_low_confidence),
+        settings=settings,
+        profile=profile,
+        inherited=inherited,
+    )
+    resolved_settings = resolution.settings
     passed = _passed_sets(angle_sets)
     sets = _named_sets(resolved_settings.angles, passed)
     _check_language_mapped(survey, sets)
@@ -451,11 +474,15 @@ def project(
 
     # read_survey wrote these keys with the types envelope takes; Any passes them on as is.
     carried: dict[str, Any] = {key: survey.provenance[key] for key in _CARRIED}
+    if resolution.profile_inherited is not None:
+        carried["profile_inherited"] = resolution.profile_inherited.model_dump()
     survey_refs: Any = survey.provenance["data_refs"]
     provenance = envelope(
         operation="project",
         settings=resolved_settings,
         data_refs=[*survey_refs, *_set_refs(used, sets, passed)],
+        profile=resolution.profile.model_dump(),
+        overrides=resolution.overrides,
         **carried,
     )
     segment = OriginSegment(

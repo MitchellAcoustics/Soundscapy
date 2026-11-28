@@ -49,21 +49,21 @@ def test_import_and_project_without_narwhals_polars_or_pyarrow():
     assert result.returncode == 0, result.stderr
 
 
-# The public surface of slice S1, exactly; each later slice adds its own names to this set.
-S2_NAMES = frozenset(
+# The public surface of slice S3, exactly; each later slice adds its own names to this set.
+S3_NAMES = frozenset(
     {
-        "AngleSelection", "Circumplex", "Coding", "Coordinates", "ProjectionSettings",
-        "QualitySettings", "ReadOptions", "Scale", "Survey", "SurveyMapping", "__version__",
-        "attach", "circumplex", "datasets", "errors", "load_isd", "plot", "project",
-        "read_mapping", "read_survey", "set_log_level", "show_versions", "workspace",
-        "write_mapping",
+        "AngleSelection", "AngleSet", "AngleSetRef", "Circumplex", "Coding", "Coordinates",
+        "ProjectionSettings", "QualitySettings", "ReadOptions", "Scale", "Survey",
+        "SurveyMapping", "__version__", "attach", "circumplex", "datasets", "errors",
+        "list_profiles", "load_isd", "plot", "project", "read_mapping", "read_survey",
+        "save_settings", "set_log_level", "show_versions", "workspace", "write_mapping",
     }
 )  # fmt: skip
 
 
-def test_all_is_the_s2_surface():
-    assert len(soundscapy.__all__) == len(S2_NAMES) == 24
-    assert set(soundscapy.__all__) == S2_NAMES
+def test_all_is_the_s3_surface():
+    assert len(soundscapy.__all__) == len(S3_NAMES) == 28
+    assert set(soundscapy.__all__) == S3_NAMES
     assert soundscapy.__all__ == sorted(soundscapy.__all__)
 
 

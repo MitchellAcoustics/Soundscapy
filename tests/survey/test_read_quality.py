@@ -98,7 +98,7 @@ def test_exclude_path_records_both_reasons():
     expected[2, [0, 4]] = True  # c: pleasant 0, annoying blank
     assert nan.tolist() == expected.tolist()
     assert survey.settings.on_scale_violation == "exclude"
-    assert project(survey).n_valid() == 0
+    assert project(survey, angles="equal").n_valid() == 0
 
 
 def test_exclude_path_covers_every_group(tmp_path):
@@ -270,8 +270,8 @@ def test_settings_precedence(tmp_path):
         read_survey(path, _full_mapping(), quality={"all_identical": "flag"})
     with pytest.raises(SettingsError, match="on_scale_violation"):
         read_survey(path, _full_mapping(), on_scale_violation="drop")  # ty: ignore[invalid-argument-type]  # deliberate: exercises the runtime SettingsError
-    with pytest.raises(SettingsError, match="settings file"):
-        read_survey(path, _full_mapping(), settings="settings.toml")  # ty: ignore[invalid-argument-type]  # deliberate: the S2 type has no path member
+    with pytest.raises(SettingsError, match="does not exist"):
+        read_survey(path, _full_mapping(), settings=tmp_path / "missing.toml")
 
 
 def test_rerun_with_recorded_settings(tmp_path):
@@ -329,7 +329,8 @@ def test_row_count_property(case):
         path = write_csv(Path(folder), header, *rows)
         survey = read_survey(path, mapping, quality=quality, on_scale_violation="exclude")
     status = survey.status
-    assert survey.n() == len(status.reasons) == len(status.flags) == project(survey).n() == n
+    coords = project(survey, angles="equal")
+    assert survey.n() == len(status.reasons) == len(status.flags) == coords.n() == n
     assert len(survey.to_frame()) == n
     assert status.included.tolist() == [len(r) == 0 for r in status.reasons]
     assert survey.response_id.tolist() == [f"r{i}" for i in range(n)]

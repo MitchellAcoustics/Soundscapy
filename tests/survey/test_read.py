@@ -453,7 +453,7 @@ def test_survey_select_bad_mask_raises(isd_survey):
 def _expected_keys() -> set[str]:
     base = envelope(operation="x", settings=ImportSettings(), input_hash="")
     extra = {"response_id_source", "read", "id_columns", "response_id_columns"}
-    return set(base) | extra | {"response_key_blank_ok", "quality_skipped"}
+    return set(base) | extra | {"response_key_blank_ok", "quality_skipped", "profile", "overrides"}
 
 
 @pytest.mark.parametrize(

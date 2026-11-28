@@ -16,7 +16,7 @@ from soundscapy._model import COL_ANGLE_SET, COL_INCLUDED, COL_REASONS, COL_RESP
 from soundscapy.distribution.coordinates import n, n_valid, valid_mask
 from soundscapy.errors import DataReferenceError, FormulationError, MappingError, SettingsError
 from soundscapy.instrument import circumplex
-from soundscapy.instrument.angles import AngleSelection
+from soundscapy.instrument.angles import AngleSelection, AngleSetRef
 from soundscapy.projection.project import ProjectionSettings, project
 from soundscapy.provenance import hash_json
 from soundscapy.survey.read import read_survey
@@ -51,9 +51,19 @@ def test_hand_values_iso2019(hand_survey):
     np.testing.assert_allclose(coords.xy[:2], HAND_XY, rtol=0, atol=1e-12)
 
 
-def test_default_is_canonical_with_the_same_values(hand_survey):
+def test_default_is_canonical_under_the_default_profile(hand_survey):
     coords = project(hand_survey)
-    assert coords.settings == ProjectionSettings()
+    assert isinstance(coords.settings, ProjectionSettings)
+    assert coords.settings.formulation == "canonical"
+    # The recorded settings are the resolved model: the profile's satp@1.5, not the
+    # model default "equal".
+    satp = AngleSelection(default=AngleSetRef(name="satp", version="1.5"))
+    assert coords.settings == ProjectionSettings(angles=satp)
+    assert ProjectionSettings().angles.default == "equal"
+
+
+def test_canonical_with_equal_angles_gives_the_iso2019_values(hand_survey):
+    coords = project(hand_survey, angles="equal")
     assert isinstance(coords.settings, ProjectionSettings)
     assert coords.settings.formulation == "canonical"
     # 1e-12: canonical equals iso2019 at 45 degrees on 1..5 up to float64 rounding.
@@ -61,7 +71,7 @@ def test_default_is_canonical_with_the_same_values(hand_survey):
 
 
 def test_excluded_row_is_nan_and_has_no_angle_set(hand_survey):
-    coords = project(hand_survey)
+    coords = project(hand_survey, angles="equal")
     assert np.isnan(coords.xy[2]).all()
     assert coords.labels[COL_INCLUDED].tolist() == [True, True, False]
     assert coords.labels[COL_REASONS].tolist() == ["", "", "incomplete_attributes"]
@@ -102,14 +112,14 @@ def test_survey_is_unchanged(hand_survey):
 
 def test_project_uses_the_declared_scale():
     survey = read_survey(SCALE_1_7_CSV, MAPPING_1_7)
-    coords = project(survey)
+    coords = project(survey, angles="equal")
     # abs=1e-12: closed form x = 2 / (2 + 2*sqrt(2)) = sqrt(2) - 1 on the 1..7 scale; the
     # circumplex's 1..5 scale would give 3 / (2 + 2*sqrt(2)) = 0.6213.
     assert coords.xy[0, 0] == pytest.approx(math.sqrt(2) - 1, abs=1e-12)
     assert coords.xy[0, 1] == pytest.approx(0.0, abs=1e-12)  # closed form
     assert coords.origin[0].effective_scale == survey.mapping.groups.attributes.scale
     with pytest.raises(FormulationError):
-        project(survey, formulation="iso2019")
+        project(survey, formulation="iso2019", angles="equal")
 
 
 @pytest.mark.parametrize("angles", ["satp@1.5", "aletta-2024@1"])
@@ -127,7 +137,7 @@ def test_project_rejects_an_unknown_angle_set(hand_survey, angles):
 
 
 def test_project_accepts_aletta2024(hand_survey):
-    coords = project(hand_survey, formulation="aletta2024")
+    coords = project(hand_survey, formulation="aletta2024", angles="equal")
     assert isinstance(coords.settings, ProjectionSettings)
     assert coords.settings.formulation == "aletta2024"
     # 1e-12: aletta2024 equals iso2019 at 45 degrees on 1..5 up to float64 rounding.
@@ -153,14 +163,15 @@ def test_project_rejects_angles_of_another_type(hand_survey):
 
 def test_angle_selection_equals_equal(hand_survey):
     by_name = project(hand_survey, angles="equal")
-    by_model = project(hand_survey, angles=AngleSelection())
+    # A bare AngleSelection() sets nothing, so it would leave the profile's set in place.
+    by_model = project(hand_survey, angles=AngleSelection(default="equal"))
     np.testing.assert_array_equal(by_model.xy, by_name.xy)
     assert by_model.settings == by_name.settings
     assert by_model.provenance["settings_hash"] == hash_json(by_model.settings)
 
 
 def test_settings_and_provenance(hand_survey):
-    coords = project(hand_survey, formulation="iso2019")
+    coords = project(hand_survey, formulation="iso2019", angles="equal")
     assert coords.settings == ProjectionSettings(formulation="iso2019")
     prov = coords.provenance
     assert prov["operation"] == "project"
@@ -181,7 +192,7 @@ def test_settings_and_provenance(hand_survey):
 
 
 def test_origin_segment(hand_survey):
-    coords = project(hand_survey)
+    coords = project(hand_survey, angles="equal")
     (segment,) = coords.origin
     assert segment.kind == "survey"
     assert segment.dataset == "hand_values.csv"

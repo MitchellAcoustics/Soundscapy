@@ -17,6 +17,7 @@ import pytest
 
 from soundscapy.datasets import isd
 from soundscapy.projection.project import project
+from tests._helpers import medium_warning
 
 if TYPE_CHECKING:
     from soundscapy.distribution.coordinates import Coordinates
@@ -57,5 +58,10 @@ def isd_survey() -> Survey:
 
 @pytest.fixture(scope="session")
 def isd_coords(isd_survey: Survey) -> Coordinates:
-    """The ISD subset projected with the default settings; tests must not mutate it."""
-    return project(isd_survey)
+    """The ISD subset projected with the default settings; tests must not mutate it.
+
+    Under the default profile the subset's 69 Mandarin rows project with medium-confidence
+    angles, so the one warning that fires is expected here.
+    """
+    with medium_warning():
+        return project(isd_survey)

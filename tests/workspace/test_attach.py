@@ -34,7 +34,8 @@ ADDED = (X, Y, COL_INCLUDED, COL_REASONS, COL_FLAGS, COL_LANGUAGE, COL_ANGLE_SET
 
 
 def _mapping(ids: dict) -> SurveyMapping:
-    return SurveyMapping.model_validate(raw_mapping(ids))
+    # English for every row: the default profile's angle set needs each response's language.
+    return SurveyMapping.model_validate({**raw_mapping(ids), "language": {"value": "eng"}})
 
 
 def _attach_log(caplog: pytest.LogCaptureFixture, level: int = logging.INFO) -> str:

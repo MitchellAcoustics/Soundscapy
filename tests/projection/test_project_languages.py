@@ -426,8 +426,8 @@ def test_aletta_2024_covers_every_subset_language_without_warning(isd_survey):
     assert coords.origin[0].angle_sets == ("aletta-2024@1",)
 
 
-def test_equal_default_stays_warning_free_on_the_subset(isd_survey):
-    coords = project(isd_survey)
+def test_equal_keyword_stays_warning_free_on_the_subset(isd_survey):
+    coords = project(isd_survey, angles="equal")  # filterwarnings = error: none fired
     assert _settings(coords).angles == AngleSelection()
     assert coords.origin[0].angle_sets == ("equal",)
 
@@ -441,7 +441,8 @@ def test_a_named_set_needs_a_mapped_language(tmp_path):
     survey = read_survey(path, SurveyMapping.model_validate(raw_mapping({"response": "ID"})))
     with pytest.raises(MappingError, match="language"):
         project(survey, angles="satp@1.5")
-    assert project(survey).origin[0].angle_sets == ("equal",)  # equal never reads the language
+    # equal never reads the language
+    assert project(survey, angles="equal").origin[0].angle_sets == ("equal",)
 
 
 def test_a_blank_language_on_an_included_row_raises_naming_it(tmp_path):

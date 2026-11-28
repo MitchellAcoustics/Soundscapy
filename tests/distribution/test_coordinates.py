@@ -209,11 +209,13 @@ def _id_columns(provenance: dict[str, object]) -> dict:
 
 def test_provenance_is_not_shared_with_the_survey_or_parent(isd_survey):
     # Mutates only fresh projections; the shared survey is checked to be unchanged.
-    coords = project(isd_survey)
+    with medium_warning():
+        coords = project(isd_survey)
     location = _id_columns(isd_survey.provenance)["location"]
     _id_columns(coords.provenance)["location"] = "X"
     assert _id_columns(isd_survey.provenance)["location"] == location
-    fresh = project(isd_survey)
+    with medium_warning():
+        fresh = project(isd_survey)
     group = next(iter(fresh.split("location").values()))
     _id_columns(group.provenance)["location"] = "X"
     assert _id_columns(fresh.provenance)["location"] == location
